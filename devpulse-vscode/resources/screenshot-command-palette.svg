@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" width="1200" height="720" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">
+  <rect width="1200" height="720" fill="#1e1e1e"/>
+  <!-- Editor dim -->
+  <rect x="0" y="0" width="1200" height="720" fill="#1e1e1e" opacity="0.6"/>
+  <text x="28" y="40" fill="#6b7280" font-size="13">OpenAPI file · 238 lines</text>
+
+  <!-- Command palette -->
+  <rect x="260" y="72" width="680" height="400" fill="#252526" rx="6" stroke="#3c3c3c"/>
+  <rect x="272" y="84" width="656" height="40" fill="#3c3c3c" rx="4"/>
+  <text x="286" y="110" fill="#9ca3af" font-size="14">&gt;</text>
+  <text x="304" y="110" fill="#fff" font-size="14" font-weight="600">DevPulse: </text>
+
+  <g font-size="13">
+    <!-- row template: rect highlight on selected -->
+    <rect x="272" y="136" width="656" height="32" fill="#094771" rx="3"/>
+    <text x="288" y="156" fill="#fff">DevPulse: Run Security Scan</text>
+    <text x="816" y="156" fill="#9ca3af" text-anchor="end">▸ scan a collection</text>
+
+    <text x="288" y="188" fill="#e5e7eb">DevPulse: Sign In with API Key</text>
+    <text x="816" y="188" fill="#9ca3af" text-anchor="end">▸ paste / generate</text>
+
+    <text x="288" y="220" fill="#e5e7eb">DevPulse: Generate API Key</text>
+    <text x="816" y="220" fill="#9ca3af" text-anchor="end">▸ opens dashboard</text>
+
+    <text x="288" y="252" fill="#e5e7eb">DevPulse: Refresh Findings</text>
+    <text x="816" y="252" fill="#9ca3af" text-anchor="end">▸ reload tree</text>
+
+    <text x="288" y="284" fill="#e5e7eb">DevPulse: Open Dashboard</text>
+    <text x="816" y="284" fill="#9ca3af" text-anchor="end">▸ browser</text>
+
+    <text x="288" y="316" fill="#e5e7eb">DevPulse: Mark Finding Resolved</text>
+    <text x="816" y="316" fill="#9ca3af" text-anchor="end">▸ context menu</text>
+
+    <text x="288" y="348" fill="#e5e7eb">DevPulse: Mark Finding In Progress</text>
+    <text x="816" y="348" fill="#9ca3af" text-anchor="end">▸ context menu</text>
+
+    <text x="288" y="380" fill="#e5e7eb">DevPulse: Sign Out</text>
+    <text x="816" y="380" fill="#9ca3af" text-anchor="end">▸ clear token</text>
+  </g>
+
+  <rect x="272" y="426" width="656" height="32" fill="#2d2d30" rx="3"/>
+  <text x="288" y="446" fill="#9ca3af" font-size="12">↑ ↓ to navigate · Enter to run · Esc to close</text>
+
+  <!-- Status bar -->
+  <rect x="0" y="696" width="1200" height="24" fill="#007acc"/>
+  <text x="16" y="712" fill="#fff" font-size="12" font-weight="600">DevPulse · 8 open · $1.24/wk</text>
+</svg>

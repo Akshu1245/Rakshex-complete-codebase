@@ -1,0 +1,13 @@
+{
+  "task_id": "auto_1778640790_PULSE_COMMAND",
+  "agent": "PULSE-COMMAND",
+  "status": "completed",
+  "summary": "Scanned codebase for untested auth middleware. Found server/_core/oauth.ts and server/_core/cookies.ts had zero test coverage. Wrote 16 vitest tests across 2 test files (cookies.test.ts: 12 tests covering secure/httpOnly/sameSite/domain/cross-origin; oauth.test.ts: 4 tests covering missing params and route registration). All 16 pass.",
+  "files_changed": [
+    "server/cookies.test.ts",
+    "server/oauth.test.ts"
+  ],
+  "tests_written": 16,
+  "tests_passing": 16,
+  "completed_at": "2026-05-13T08:42:00+05:30"
+}

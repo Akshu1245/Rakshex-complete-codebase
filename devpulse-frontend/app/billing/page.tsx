@@ -1,0 +1,407 @@
+"use client";
+
+import { useState } from "react";
+import { trpc } from "@/lib/trpc";
+import { format } from "date-fns";
+import { EmptyState } from "@/components/EmptyState";
+import {
+  Loader2,
+  CreditCard,
+  Download,
+  AlertCircle,
+  Check,
+  X,
+  Crown,
+  Zap,
+} from "lucide-react";
+
+interface Invoice {
+  id: string;
+  razorpayPaymentId: string;
+  amount: string;
+  currency: string;
+  status: string;
+  receipt: string | null;
+  description: string | null;
+  createdAt: string | Date;
+}
+
+interface Plan {
+  id: string;
+  name: string;
+  amount: number;
+  currency: string;
+  interval: string;
+  features: string[];
+  limits: Record<string, unknown>;
+}
+
+export default function BillingPage() {
+  const utils = trpc.useUtils();
+  const planQuery = trpc.payment.getCurrentPlan.useQuery();
+  const invoicesQuery = trpc.payment.getInvoices.useQuery();
+  const plansQuery = trpc.payment.getPlans.useQuery();
+
+  const [error, setError] = useState<string | null>(null);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+
+  const subscription = planQuery.data ?? null;
+  const invoices: Invoice[] = (invoicesQuery.data?.invoices ?? []) as Invoice[];
+  const plans: Plan[] = (plansQuery.data ?? []) as Plan[];
+  const isLoading =
+    planQuery.isLoading ||
+    invoicesQuery.isLoading ||
+    plansQuery.isLoading;
+
+  const refreshAll = () => {
+    utils.payment.getCurrentPlan.invalidate();
+    utils.payment.getInvoices.invalidate();
+  };
+
+  const createSubscription = trpc.payment.createSubscription.useMutation({
+    onError: (err: { message: string }) => {
+      setError(err.message || "Failed to create subscription");
+    },
+  });
+  const cancelSubscription = trpc.payment.cancel.useMutation({
+    onSuccess: () => {
+      setShowCancelConfirm(false);
+      refreshAll();
+    },
+    onError: (err: { message: string }) => {
+      setError(err.message || "Failed to cancel subscription");
+    },
+  });
+
+  const isProcessing =
+    createSubscription.isPending || cancelSubscription.isPending;
+
+  const handleUpgrade = async (planId: string) => {
+    if (planId === "free") return;
+    setError(null);
+    try {
+      const result = await createSubscription.mutateAsync({
+        plan: planId as "pro" | "enterprise",
+      });
+
+      const planRecord = plans.find(p => p.id === planId);
+
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.async = true;
+      script.onload = () => {
+        const options = {
+          key: result.keyId,
+          subscription_id: result.subscriptionId,
+          name: "DevPulse",
+          description: `${planRecord?.name ?? "DevPulse"} Subscription`,
+          image: "/logo.png",
+          handler: function () {
+            refreshAll();
+          },
+          theme: {
+            color: "#3b82f6",
+          },
+        };
+        const rzp = new (
+          window as unknown as {
+            Razorpay: new (o: unknown) => { open: () => void };
+          }
+        ).Razorpay(options);
+        rzp.open();
+      };
+      document.body.appendChild(script);
+    } catch {
+      // already surfaced via onError
+    }
+  };
+
+  const handleCancel = (immediately: boolean) => {
+    setError(null);
+    cancelSubscription.mutate({ immediately });
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "active":
+        return "text-green-400 bg-green-900/30 border-green-500";
+      case "pending":
+        return "text-yellow-400 bg-yellow-900/30 border-yellow-500";
+      case "cancelled":
+        return "text-red-400 bg-red-900/30 border-red-500";
+      case "past_due":
+        return "text-orange-400 bg-orange-900/30 border-orange-500";
+      default:
+        return "text-gray-400 bg-gray-900/30 border-gray-500";
+    }
+  };
+
+  const formatAmount = (amount: string, currency: string) => {
+    const num = parseFloat(amount);
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: currency,
+    }).format(num);
+  };
+
+  const currentPlan = plans.find(p => p.id === subscription?.plan);
+  const isPaidPlan = !!subscription?.plan && subscription.plan !== "free";
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="text-white p-6">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="flex items-center gap-3">
+          <CreditCard className="w-6 h-6 text-blue-400" />
+          <h1 className="text-2xl font-bold">Billing & Subscription</h1>
+        </div>
+
+        {error && (
+          <div className="flex items-center gap-2 p-4 bg-red-900/30 border border-red-500 rounded-lg text-red-400">
+            <AlertCircle className="w-5 h-5" />
+            {error}
+          </div>
+        )}
+
+        {/* Current Plan Card */}
+        <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
+          <h2 className="text-lg font-semibold mb-4">Current Plan</h2>
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl font-bold capitalize">
+                  {currentPlan?.name || subscription?.plan || "Free"}
+                </span>
+                <span
+                  className={`px-3 py-1 rounded-full text-sm border ${getStatusColor(
+                    subscription?.status || "none"
+                  )}`}
+                >
+                  {subscription?.status === "active" && isPaidPlan
+                    ? "Active"
+                    : subscription?.status || "None"}
+                </span>
+              </div>
+
+            </div>
+
+            {isPaidPlan && (
+              <button
+                onClick={() => setShowCancelConfirm(true)}
+                className="px-4 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/50 rounded-lg transition-colors"
+              >
+                Cancel Subscription
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Available Plans */}
+        <div className="grid gap-4 md:grid-cols-3">
+          {plans.map(plan => (
+            <div
+              key={plan.id}
+              className={`bg-gray-800 border rounded-lg p-6 ${
+                subscription?.plan === plan.id
+                  ? "border-blue-500 ring-1 ring-blue-500"
+                  : "border-gray-700"
+              }`}
+            >
+              <div className="flex items-center gap-2 mb-4">
+                {plan.id === "pro" && (
+                  <Zap className="w-5 h-5 text-blue-400" />
+                )}
+                {plan.id === "enterprise" && (
+                  <Crown className="w-5 h-5 text-amber-400" />
+                )}
+                <h3 className="font-semibold">{plan.name}</h3>
+              </div>
+
+              <div className="mb-4">
+                <span className="text-3xl font-bold">
+                  {new Intl.NumberFormat("en-IN", {
+                    style: "currency",
+                    currency: plan.currency,
+                  }).format(plan.amount / 100)}
+                </span>
+                <span className="text-gray-400">/{plan.interval}</span>
+              </div>
+
+              <ul className="space-y-2 mb-6">
+                {plan.features.slice(0, 4).map((feature, idx) => (
+                  <li
+                    key={idx}
+                    className="flex items-start gap-2 text-sm text-gray-300"
+                  >
+                    <Check className="w-4 h-4 text-green-400 mt-0.5 shrink-0" />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+
+              {subscription?.plan === plan.id ? (
+                <button
+                  disabled
+                  className="w-full py-2 bg-gray-700 text-gray-400 rounded-lg cursor-not-allowed"
+                >
+                  Current Plan
+                </button>
+              ) : plan.id === "free" ? (
+                <button
+                  disabled={subscription?.plan === "free"}
+                  className="w-full py-2 bg-gray-700 text-gray-400 rounded-lg cursor-not-allowed"
+                >
+                  {subscription?.plan === "free" ? "Current Plan" : "Downgrade"}
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleUpgrade(plan.id)}
+                  disabled={isProcessing}
+                  className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {isProcessing ? (
+                    <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                  ) : subscription?.plan === "free" ? (
+                    "Upgrade"
+                  ) : (
+                    "Switch Plan"
+                  )}
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Invoice History */}
+        <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
+          <h2 className="text-lg font-semibold mb-4">Invoice History</h2>
+
+          {invoices.length === 0 ? (
+            <EmptyState
+              compact
+              icon={<span>🧾</span>}
+              title="No invoices yet"
+              description="Once you subscribe to a paid plan your receipts and payment history will appear here."
+            />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="text-left text-gray-400 text-sm border-b border-gray-700">
+                    <th className="pb-3">Date</th>
+                    <th className="pb-3">Description</th>
+                    <th className="pb-3">Amount</th>
+                    <th className="pb-3">Status</th>
+                    <th className="pb-3">Receipt</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {invoices.map(invoice => (
+                    <tr
+                      key={invoice.id}
+                      className="border-b border-gray-700/50"
+                    >
+                      <td className="py-4 text-sm">
+                        {format(new Date(invoice.createdAt), "MMM d, yyyy")}
+                      </td>
+                      <td className="py-4 text-sm">
+                        {invoice.description || "Subscription payment"}
+                      </td>
+                      <td className="py-4 text-sm">
+                        {formatAmount(invoice.amount, invoice.currency)}
+                      </td>
+                      <td className="py-4">
+                        <span
+                          className={`px-2 py-1 rounded text-xs border ${getStatusColor(
+                            invoice.status
+                          )}`}
+                        >
+                          {invoice.status}
+                        </span>
+                      </td>
+                      <td className="py-4">
+                        {invoice.receipt ? (
+                          <a
+                            href={`https://dashboard.razorpay.com/receipts/${invoice.receipt}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-blue-400 hover:text-blue-300 text-sm"
+                          >
+                            <Download className="w-4 h-4" />
+                            Download
+                          </a>
+                        ) : (
+                          <span className="text-gray-500 text-sm">-</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* Cancel Confirmation Modal */}
+        {showCancelConfirm && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+            onClick={(e) => { if (e.target === e.currentTarget) setShowCancelConfirm(false); }}
+          >
+            <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 max-w-md w-full">
+              <div className="flex items-center gap-3 mb-4">
+                <AlertCircle className="w-6 h-6 text-red-400" />
+                <h3 className="text-lg font-semibold">Cancel Subscription?</h3>
+              </div>
+
+              <p className="text-gray-300 mb-6">
+                You can cancel immediately or at the end of your billing period.
+                If you cancel immediately, you&apos;ll lose access to premium
+                features right away.
+              </p>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => handleCancel(true)}
+                  disabled={isProcessing}
+                  className="flex-1 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {isProcessing ? (
+                    <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                  ) : (
+                    "Cancel Now"
+                  )}
+                </button>
+                <button
+                  onClick={() => handleCancel(false)}
+                  disabled={isProcessing}
+                  className="flex-1 py-2 bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 border border-amber-500/50 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {isProcessing ? (
+                    <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                  ) : (
+                    "At Period End"
+                  )}
+                </button>
+                <button
+                  onClick={() => setShowCancelConfirm(false)}
+                  disabled={isProcessing}
+                  className="flex-1 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg transition-colors"
+                >
+                  <X className="w-4 h-4 mx-auto" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

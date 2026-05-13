@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" width="1200" height="760" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">
+  <rect width="1200" height="760" fill="#1e1e1e"/>
+  <!-- Activity bar -->
+  <rect x="0" y="0" width="52" height="760" fill="#252526"/>
+  <rect x="4" y="8" width="44" height="44" fill="#007acc" rx="4"/>
+  <text x="26" y="36" text-anchor="middle" fill="#fff" font-size="14" font-weight="700">DP</text>
+  <circle cx="26" cy="96" r="10" fill="#333"/>
+  <circle cx="26" cy="136" r="10" fill="#333"/>
+  <circle cx="26" cy="176" r="10" fill="#333"/>
+
+  <!-- Side bar (findings tree) -->
+  <rect x="52" y="0" width="340" height="760" fill="#252526"/>
+  <text x="64" y="30" fill="#9ca3af" font-size="11" font-weight="700" letter-spacing="1">DEVPULSE — FINDINGS</text>
+  <!-- Critical group -->
+  <rect x="64" y="48" width="312" height="28" fill="#2d2d30" rx="3"/>
+  <text x="76" y="66" fill="#ff6b6b" font-size="12" font-weight="700">▾ CRITICAL · 3</text>
+  <g font-size="12" fill="#e5e7eb">
+    <text x="94" y="94">🔴 Exposed API key in Header</text>
+    <text x="94" y="116">🔴 No authentication on /admin</text>
+    <text x="94" y="138">🔴 SQL injection in query param</text>
+  </g>
+  <!-- High group -->
+  <rect x="64" y="154" width="312" height="28" fill="#2d2d30" rx="3"/>
+  <text x="76" y="172" fill="#ffb020" font-size="12" font-weight="700">▾ HIGH · 5</text>
+  <g font-size="12" fill="#d1d5db">
+    <text x="94" y="200">🟠 CORS wildcard origin</text>
+    <text x="94" y="222">🟠 Verbose error stack in response</text>
+    <text x="94" y="244">🟠 Weak TLS cipher negotiation</text>
+    <text x="94" y="266">🟠 Missing rate limit on /auth</text>
+    <text x="94" y="288">🟠 JWT without audience claim</text>
+  </g>
+  <!-- Medium group -->
+  <rect x="64" y="304" width="312" height="28" fill="#2d2d30" rx="3"/>
+  <text x="76" y="322" fill="#facc15" font-size="12" font-weight="700">▸ MEDIUM · 12</text>
+  <!-- Low group -->
+  <rect x="64" y="340" width="312" height="28" fill="#2d2d30" rx="3"/>
+  <text x="76" y="358" fill="#34d399" font-size="12" font-weight="700">▸ LOW · 8</text>
+
+  <!-- Editor area placeholder -->
+  <rect x="392" y="0" width="808" height="736" fill="#1e1e1e"/>
+  <text x="412" y="44" fill="#cfd2d6" font-size="13">openapi.yaml</text>
+  <g font-family="JetBrains Mono, Menlo, Consolas, monospace" font-size="12" fill="#d1d5db">
+    <text x="412" y="80">  1  paths:</text>
+    <text x="412" y="100">  2    /users/{id}:</text>
+    <text x="412" y="120">  3      get:</text>
+    <text x="412" y="140">  4        security: []</text>
+    <text x="412" y="160">  5        responses:</text>
+    <text x="412" y="180">  6          '200':</text>
+    <text x="412" y="200">  7            content:</text>
+    <text x="412" y="220">  8              application/json:</text>
+    <text x="412" y="240">  9                schema:</text>
+    <text x="412" y="260"> 10                  $ref: '#/components/schemas/User'</text>
+  </g>
+  <!-- Inline squiggle on line 4 -->
+  <rect x="412" y="142" width="150" height="2" fill="#ff6b6b"/>
+
+  <!-- Status bar -->
+  <rect x="0" y="736" width="1200" height="24" fill="#007acc"/>
+  <text x="16" y="752" fill="#fff" font-size="12" font-weight="600">DevPulse · 8 open · $1.24/wk · last scan 2m ago</text>
+  <text x="1080" y="752" fill="#fff" font-size="12">Ln 4, Col 21</text>
+</svg>

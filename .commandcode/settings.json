@@ -1,0 +1,7 @@
+{
+  "caveman": {
+    "defaultMode": "ultra",
+    "autoActivate": true,
+    "exceptions": ["plan", "explain", "document"]
+  }
+}

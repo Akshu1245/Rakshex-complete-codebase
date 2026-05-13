@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "codemem": {
+      "command": "cmd.exe",
+      "args": ["/c", "call", "%USERPROFILE%\\.commandcode\\codemem\\codemem.bat", "serve", "--stdio"],
+      "autoStart": true
+    }
+  }
+}

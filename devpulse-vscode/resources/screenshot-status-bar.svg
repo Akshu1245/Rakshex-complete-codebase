@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 520" width="1200" height="520" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">
+  <rect width="1200" height="520" fill="#1e1e1e"/>
+  <!-- Editor body -->
+  <rect x="0" y="0" width="1200" height="480" fill="#1e1e1e"/>
+  <text x="28" y="40" fill="#cfd2d6" font-size="13">DevPulse VS Code extension — live status bar</text>
+  <g font-family="JetBrains Mono, Menlo, Consolas, monospace" font-size="12" fill="#9ca3af">
+    <text x="28" y="88">// Open findings roll up in the status bar without</text>
+    <text x="28" y="108">// leaving the editor. Click to jump to the dashboard.</text>
+  </g>
+  <!-- Zoom-in callout -->
+  <rect x="80" y="160" width="1040" height="260" fill="#121212" rx="8" stroke="#2d2d30"/>
+  <text x="104" y="196" fill="#9ca3af" font-size="12" letter-spacing="1">STATUS BAR — ZOOMED</text>
+  <rect x="104" y="212" width="992" height="36" fill="#007acc" rx="4"/>
+  <text x="124" y="236" fill="#fff" font-size="14" font-weight="700">DevPulse · 8 open · $1.24/wk</text>
+  <text x="560" y="236" fill="#cfe9ff" font-size="13">Kill switch: Armed</text>
+  <text x="820" y="236" fill="#cfe9ff" font-size="13">Last scan: 2m ago</text>
+  <text x="1012" y="236" fill="#fff" font-size="13">↗</text>
+
+  <g font-family="JetBrains Mono, Menlo, Consolas, monospace" font-size="12" fill="#d1d5db">
+    <text x="104" y="292">• 8 open     = open findings across your collections</text>
+    <text x="104" y="312">• $1.24/wk   = rolling 7-day LLM spend</text>
+    <text x="104" y="332">• Kill switch state from server/api/killSwitch.ts</text>
+    <text x="104" y="352">• Click anywhere to open the DevPulse dashboard</text>
+  </g>
+
+  <!-- VSCode status bar mock -->
+  <rect x="0" y="496" width="1200" height="24" fill="#007acc"/>
+  <text x="16" y="512" fill="#fff" font-size="12" font-weight="600">DevPulse · 8 open · $1.24/wk</text>
+  <text x="380" y="512" fill="#fff" font-size="12">main* ↕</text>
+  <text x="480" y="512" fill="#fff" font-size="12">TypeScript 5.4</text>
+  <text x="1080" y="512" fill="#fff" font-size="12">UTF-8 · LF · Spaces: 2</text>
+</svg>

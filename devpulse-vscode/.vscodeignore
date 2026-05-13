@@ -1,0 +1,15 @@
+.vscode/**
+.vscode-test/**
+node_modules/**
+src/**
+.gitignore
+.vscodeignore
+tsconfig.json
+vsc-extension-quickstart.md
+**/*.map
+**/*.ts
+!out/**/*.d.ts
+PUBLISHING.md
+CHANGELOG.md.bak
+resources/icon-128.svg
+resources/screenshot-*.svg

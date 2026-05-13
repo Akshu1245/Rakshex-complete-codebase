@@ -1,0 +1,148 @@
+{
+  "stripe_integration": {
+    "title": "Stripe Payment Integration",
+    "description": "Add Stripe checkout, webhooks, and subscription management",
+    "agents": [
+      "DEV-BACKEND",
+      "DEV-FRONTEND",
+      "DEV-SECURITY"
+    ],
+    "pipeline": "code_review_flow",
+    "prompt": "Implement Stripe payment integration:\n1. Create checkout session endpoint (server/api/stripe/)\n2. Add Stripe webhook handler with signature verification\n3. Create subscription management page (devpulse-frontend/app/billing/)\n4. Implement pricing tiers from PRODUCT_ROADMAP.md\n5. Add PCI compliance checks\n6. Write webhook tests with mock Stripe service",
+    "handoff_required": true,
+    "handoff_operations": [
+      "stripe_config",
+      "package_change"
+    ]
+  },
+  "auth_flow": {
+    "title": "OAuth/SSO Authentication Flow",
+    "description": "Add OAuth provider, JWT management, and session handling",
+    "agents": [
+      "DEV-BACKEND",
+      "DEV-SECURITY",
+      "DEV-DATABASE"
+    ],
+    "pipeline": "security_audit",
+    "prompt": "Implement authentication flow:\n1. Add JWT middleware with refresh token rotation\n2. Create OAuth provider integration (Google/GitHub)\n3. Add session management with Redis\n4. Implement RBAC guard middleware\n5. Add rate limiting on auth endpoints\n6. Write auth integration tests covering all flows",
+    "handoff_required": true,
+    "handoff_operations": [
+      "security_rule",
+      "package_change"
+    ]
+  },
+  "ai_api_integration": {
+    "title": "AI Provider API Integration",
+    "description": "Integrate OpenAI/Anthropic/Google AI APIs with guardrails",
+    "agents": [
+      "DEV-BACKEND",
+      "DEV-API",
+      "DEV-SECURITY"
+    ],
+    "pipeline": "code_review_flow",
+    "prompt": "Integrate AI provider APIs:\n1. Create unified AI client abstraction (server/services/ai/)\n2. Add OpenAI/Anthropic/Google provider implementations\n3. Implement prompt guardrails and content safety\n4. Add cost tracking per provider\n5. Create tRPC router for AI endpoints\n6. Write provider mock tests"
+  },
+  "database_migration": {
+    "title": "Database Migration Runner",
+    "description": "Safe database migrations with backup and rollback",
+    "agents": [
+      "DEV-DATABASE",
+      "DEV-DEVOPS",
+      "REVIEWER"
+    ],
+    "prompt": "Run database migration safely:\n1. Create backup snapshot\n2. Generate migration via Drizzle\n3. Run migration on staging first\n4. Verify data integrity\n5. Promote to production after 15min monitoring\n6. Document migration in changelog",
+    "handoff_required": true,
+    "handoff_operations": [
+      "db_migration",
+      "deployment"
+    ]
+  },
+  "security_audit_full": {
+    "title": "Full Security Audit",
+    "description": "Complete OWASP Top 10 audit with remediation",
+    "agents": [
+      "DEV-SECURITY",
+      "DEPENDENCY-GUARDIAN",
+      "PERFORMANCE-AUDITOR"
+    ],
+    "pipeline": "security_audit",
+    "prompt": "Run complete security audit:\n1. npm audit + Snyk scan for dependency vulns\n2. SAST scan on all TypeScript files\n3. CSP and security header audit\n4. Rate limiting and brute-force protection check\n5. SQL injection and XSS scan\n6. Secret detection (hardcoded keys, tokens)\n7. Generate remediation report with priority levels"
+  },
+  "performance_tune": {
+    "title": "Performance Tuning Sprint",
+    "description": "Identify and fix performance bottlenecks",
+    "agents": [
+      "PERFORMANCE-AUDITOR",
+      "DEV-BACKEND",
+      "DEV-DATABASE"
+    ],
+    "prompt": "Run performance tuning:\n1. Profile server endpoint latencies\n2. Find N+1 queries (database query analysis)\n3. Check bundle sizes (frontend chunk analysis)\n4. Audit cache hit rates\n5. Load test top 5 endpoints\n6. Document before/after metrics"
+  },
+  "dependency_upgrade": {
+    "title": "Dependency Version Upgrade",
+    "description": "Safe major version upgrades with compatibility checks",
+    "agents": [
+      "DEPENDENCY-GUARDIAN",
+      "QA-TESTER",
+      "DEV-DEVOPS"
+    ],
+    "pipeline": "code_review_flow",
+    "prompt": "Upgrade dependencies safely:\n1. npm outdated \u2014 list all outdated packages\n2. Group upgrades by semver (patch/minor/major)\n3. Upgrade patch + minor together, test\n4. Upgrade major one at a time, test each\n5. Run full test suite after each upgrade\n6. Check for breaking API changes\n7. Auto-merge if all tests pass"
+  },
+  "competitor_analysis": {
+    "title": "Competitor Analysis Deep Dive",
+    "description": "Multi-platform competitor scan with differentiation analysis",
+    "agents": [
+      "COMPETITIVE-WATCH",
+      "CEO-STRATEGY",
+      "RESEARCH-ORCHESTRATOR"
+    ],
+    "pipeline": "competitor_brief",
+    "prompt": "Run competitor analysis:\n1. Scan Helicone, Lakera, Portkey, LangSmith, Datadog, AWS Bedrock\n2. Compare pricing, features, API design\n3. Analyze market positioning and recent changes\n4. Identify gaps in our offering vs competitors\n5. Generate differentiation recommendations\n6. Create executive brief with action items"
+  },
+  "codebase_onboarding": {
+    "title": "Project Onboarding Scan",
+    "description": "Complete new project analysis for agent context",
+    "agents": [
+      "RESEARCH-ORCHESTRATOR",
+      "DEPENDENCY-GUARDIAN",
+      "DOCS-WRITER"
+    ],
+    "pipeline": "onboarding_scan",
+    "prompt": "Onboard a new project:\n1. Generate DEVPULSE.md with stack detection\n2. Scan dependencies and audit for vulns\n3. Calculate test coverage baseline\n4. Find documentation gaps\n5. Map codebase structure\n6. Generate onboarding guide for new agents"
+  },
+  "release_prep": {
+    "title": "Release Preparation Checklist",
+    "description": "Complete pre-release validation workflow",
+    "agents": [
+      "QA-TESTER",
+      "REVIEWER",
+      "OPS-RELEASE",
+      "OPS-MONITOR"
+    ],
+    "pipeline": "release_pipeline",
+    "prompt": "Prepare release:\n1. Run full test suite (unit + integration + E2E)\n2. Check all PRs are merged or closed\n3. Generate changelog from merged PRs\n4. Bump version following semver\n5. Create release branch\n6. Deploy to staging, run smoke tests\n7. Monitor staging for 15 minutes\n8. Promote to production (requires handoff approval)",
+    "handoff_required": true,
+    "handoff_operations": [
+      "deployment"
+    ]
+  },
+  "docs_refresh": {
+    "title": "Documentation Refresh",
+    "description": "Regenerate all project documentation from code",
+    "agents": [
+      "DOCS-WRITER",
+      "DEV-API"
+    ],
+    "prompt": "Refresh documentation:\n1. Generate API docs from tRPC routers\n2. Update README with latest features\n3. Generate architecture diagrams\n4. Update changelog with recent changes\n5. Regenerate CODE_OF_CONDUCT, CONTRIBUTING, LICENSE\n6. Verify all links are valid"
+  },
+  "test_coverage_sprint": {
+    "title": "Test Coverage Sprint",
+    "description": "Identify and fill test coverage gaps",
+    "agents": [
+      "QA-TESTER",
+      "QA-LEAD"
+    ],
+    "prompt": "Improve test coverage:\n1. Find .ts files without .test.ts counterparts\n2. Identify low-coverage modules (< 60%)\n3. Generate tests for untested code paths\n4. Add edge case tests for critical paths\n5. Run existing tests to verify no regressions\n6. Report final coverage numbers"
+  }
+}

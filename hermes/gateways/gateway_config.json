@@ -1,0 +1,14 @@
+{
+  "telegram": {
+    "enabled": false,
+    "token": "YOUR_BOT_TOKEN_HERE",
+    "allowed_users": [],
+    "polling_interval": 2
+  },
+  "slack": {
+    "enabled": false,
+    "bot_token": "xoxb-YOUR-BOT-TOKEN",
+    "app_token": "xapp-YOUR-APP-TOKEN",
+    "allowed_channels": []
+  }
+}

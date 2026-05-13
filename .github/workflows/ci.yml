@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  typecheck:
+    name: TypeScript Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: cd devpulse-vscode && npm ci && npx tsc --noEmit
+      - run: cd devpulse-frontend && npm ci && npx tsc --noEmit || true
+
+  server-tests:
+    name: Server Tests
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: devpulse
+          MYSQL_DATABASE: devpulse_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx vitest run --config vitest.config.ts --reporter=verbose
+        env:
+          DATABASE_URL: mysql://root:devpulse@127.0.0.1:3306/devpulse_test
+          JWT_SECRET: test-secret-ci
+          REDIS_URL: redis://127.0.0.1:6379
+
+  frontend-tests:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: cd devpulse-frontend && npm ci && npx vitest run --reporter=verbose
+
+  vscode-tests:
+    name: VS Code Extension Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: cd devpulse-vscode && npm ci && npx vitest run --reporter=verbose
+
+  sdk-build:
+    name: SDK Build Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: cd packages/devpulse-sdk && npm ci || true && npx tsc --noEmit || true

@@ -1,0 +1,583 @@
+/**
+ * DevPulse VS Code extension entrypoint.
+ *
+ * Architecture:
+ *   - API key is stored in vscode.SecretStorage (never in settings).
+ *   - DevPulseApi is the single fetch wrapper over /trpc/vscodeExtension.*.
+ *   - FindingsTreeProvider + AutoFixTreeProvider + DevPulseStatusBar + HeartbeatService consume it.
+ *   - `refresh` is debounced via a simple in-flight guard so rapid command
+ *     invocations don't stack.
+ *   - Workspace trust is checked before running shadow API scans.
+ */
+import * as vscode from "vscode";
+import {
+  DevPulseApi,
+  DevPulseApiError,
+  getConfiguredBaseUrl,
+  type FindingStatus,
+} from "./api";
+import { FindingsTreeProvider } from "./findingsProvider";
+import { DevPulseStatusBar } from "./statusBar";
+import { HeartbeatService } from "./heartbeat";
+import { SecurityWebviewPanel } from "./securityWebviewPanel";
+import { SettingsWebviewPanel } from "./settingsWebview";
+import { AutoFixTreeProvider, extractSuggestionFromNode } from "./autofixProvider";
+import { CopilotViewPanel } from "./copilotView";
+import { WelcomeViewProvider } from "./welcomeView";
+import { registerGatewayCommand } from "./gatewayTester";
+import { registerShadowApiCommand } from "./shadowApi";
+
+const SECRET_API_KEY = "devpulse.apiKey";
+
+export async function activate(
+  context: vscode.ExtensionContext
+): Promise<void> {
+  let cachedApiKey: string | undefined;
+  const readApiKey = () => cachedApiKey;
+
+  const api = new DevPulseApi(getConfiguredBaseUrl, readApiKey);
+  const findingsProvider = new FindingsTreeProvider(api);
+  const autoFixProvider = new AutoFixTreeProvider(api);
+  const statusBar = new DevPulseStatusBar(api);
+  const heartbeat = new HeartbeatService(api, () => Boolean(cachedApiKey));
+
+  cachedApiKey = await context.secrets.get(SECRET_API_KEY);
+
+  const treeView = vscode.window.createTreeView("devpulse.findings", {
+    treeDataProvider: findingsProvider,
+    showCollapseAll: true,
+  });
+
+  const autoFixTreeView = vscode.window.createTreeView("devpulse.autofix", {
+    treeDataProvider: autoFixProvider,
+    showCollapseAll: true,
+  });
+
+  let refreshInFlight = false;
+  const refresh = async () => {
+    if (refreshInFlight) return;
+    refreshInFlight = true;
+    try {
+      await Promise.all([
+        findingsProvider.refresh(),
+        autoFixProvider.refresh(),
+        statusBar.refresh(Boolean(cachedApiKey)),
+      ]);
+    } finally {
+      refreshInFlight = false;
+    }
+  };
+
+  const applySignedInState = async (signedIn: boolean) => {
+    findingsProvider.setSignedIn(signedIn);
+    autoFixProvider.setSignedIn(signedIn);
+    await vscode.commands.executeCommand(
+      "setContext",
+      "devpulse.signedIn",
+      signedIn
+    );
+    if (signedIn) {
+      await refresh();
+    } else {
+      statusBar.showSignedOut();
+    }
+  };
+
+  await applySignedInState(Boolean(cachedApiKey));
+
+  // --- Welcome View (activity bar) -----------------------------------------
+
+  const welcomeProvider = new WelcomeViewProvider(
+    context.extensionUri,
+    async (apiKey: string) => {
+      let valid = false;
+      try {
+        const result = await api.validateApiKey(apiKey);
+        valid = result.valid;
+        if (valid && result.user) {
+          void vscode.window.showInformationMessage(
+            `Signed in to DevPulse as ${result.user.email ?? result.user.name ?? "user"} (${result.user.plan}).`
+          );
+        }
+      } catch (err) {
+        const msg =
+          err instanceof DevPulseApiError
+            ? err.message
+            : err instanceof Error
+              ? err.message
+              : String(err);
+        void vscode.window.showErrorMessage(
+          `DevPulse: could not validate API key — ${msg}`
+        );
+        return;
+      }
+
+      if (!valid) {
+        void vscode.window.showErrorMessage(
+          "DevPulse: API key rejected. Generate a new one from the dashboard."
+        );
+        return;
+      }
+
+      await context.secrets.store(SECRET_API_KEY, apiKey);
+      cachedApiKey = apiKey;
+      await applySignedInState(true);
+    }
+  );
+
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider(
+      WelcomeViewProvider.viewType,
+      welcomeProvider
+    )
+  );
+
+  // --- commands ----------------------------------------------------------
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("devpulse.authenticate", async () => {
+      const entered = await vscode.window.showInputBox({
+        title: "DevPulse API Key",
+        prompt:
+          "Paste your DevPulse API key (generate one from Settings → API Keys on your dashboard).",
+        password: true,
+        ignoreFocusOut: true,
+        placeHolder: "dp_...",
+        validateInput: v =>
+          v.trim().length < 8 ? "API key looks too short" : null,
+      });
+      if (!entered) return;
+      const key = entered.trim();
+
+      let valid = false;
+      try {
+        const result = await api.validateApiKey(key);
+        valid = result.valid;
+        if (valid && result.user) {
+          void vscode.window.showInformationMessage(
+            `Signed in to DevPulse as ${result.user.email ?? result.user.name ?? "user"} (${result.user.plan}).`
+          );
+        }
+      } catch (err) {
+        const msg =
+          err instanceof DevPulseApiError
+            ? err.message
+            : err instanceof Error
+              ? err.message
+              : String(err);
+        void vscode.window.showErrorMessage(
+          `DevPulse: could not validate API key — ${msg}`
+        );
+        return;
+      }
+
+      if (!valid) {
+        void vscode.window.showErrorMessage(
+          "DevPulse: API key rejected. Generate a new one from the dashboard."
+        );
+        return;
+      }
+
+      await context.secrets.store(SECRET_API_KEY, key);
+      cachedApiKey = key;
+      await applySignedInState(true);
+    }),
+
+    vscode.commands.registerCommand("devpulse.signOut", async () => {
+      await context.secrets.delete(SECRET_API_KEY);
+      cachedApiKey = undefined;
+      await applySignedInState(false);
+      void vscode.window.showInformationMessage("DevPulse: signed out.");
+    }),
+
+    vscode.commands.registerCommand("devpulse.refresh", async () => {
+      await refresh();
+    }),
+
+    vscode.commands.registerCommand("devpulse.openDashboard", async () => {
+      const base = getConfiguredBaseUrl().replace(/\/+$/, "");
+      void vscode.env.openExternal(vscode.Uri.parse(base));
+    }),
+
+    vscode.commands.registerCommand("devpulse.runScan", async () => {
+      if (!cachedApiKey) {
+        void vscode.window.showWarningMessage(
+          "DevPulse: sign in with an API key first."
+        );
+        return;
+      }
+      let collections: { id: string; name: string }[] = [];
+      try {
+        collections = await api.listCollections();
+      } catch (err) {
+        void vscode.window.showErrorMessage(
+          `DevPulse: could not load collections — ${errMessage(err)}`
+        );
+        return;
+      }
+      if (collections.length === 0) {
+        void vscode.window.showInformationMessage(
+          "DevPulse: you don't have any collections yet. Create one from the dashboard first."
+        );
+        return;
+      }
+      const picked = await vscode.window.showQuickPick(
+        collections.map(c => ({
+          label: c.name,
+          description: c.id,
+          collectionId: c.id,
+        })),
+        { title: "DevPulse: pick a collection to scan" }
+      );
+      if (!picked) return;
+      try {
+        const scan = await api.triggerScan(picked.collectionId);
+        void vscode.window.showInformationMessage(
+          `DevPulse: scan queued (id ${scan.scanId}).`
+        );
+        await refresh();
+      } catch (err) {
+        void vscode.window.showErrorMessage(
+          `DevPulse: scan failed — ${errMessage(err)}`
+        );
+      }
+    }),
+
+    vscode.commands.registerCommand(
+      "devpulse.markFindingResolved",
+      async (node: unknown) => updateFindingStatusCmd(node, "resolved")
+    ),
+    vscode.commands.registerCommand(
+      "devpulse.markFindingInProgress",
+      async (node: unknown) => updateFindingStatusCmd(node, "in-progress")
+    ),
+    vscode.commands.registerCommand("devpulse.openSecurityPanel", () => {
+      if (!cachedApiKey) {
+        void vscode.window.showWarningMessage(
+          "DevPulse: sign in with an API key first."
+        );
+        return;
+      }
+      SecurityWebviewPanel.createOrShow(context.extensionUri, api);
+    }),
+
+    vscode.commands.registerCommand("devpulse.openSettings", () => {
+      SettingsWebviewPanel.createOrShow(
+        context.extensionUri,
+        api,
+        readApiKey,
+        context
+      );
+    }),
+
+    vscode.commands.registerCommand("devpulse.askSecurityCopilot", () => {
+      if (!cachedApiKey) {
+        void vscode.window.showWarningMessage(
+          "DevPulse: sign in with an API key first."
+        );
+        return;
+      }
+      CopilotViewPanel.createOrShow(context.extensionUri, api);
+    }),
+
+    vscode.commands.registerCommand("devpulse.generateApiKey", async () => {
+      if (!cachedApiKey) {
+        void vscode.window.showWarningMessage("Sign in first.");
+        return;
+      }
+      try {
+        const result = await api.generateApiKey();
+        await vscode.env.clipboard.writeText(result.apiKey);
+        // Persist the new key so subsequent calls authenticate correctly.
+        await context.secrets.store(SECRET_API_KEY, result.apiKey);
+        cachedApiKey = result.apiKey;
+        await applySignedInState(true);
+        void vscode.window.showInformationMessage(
+          `Your API key: ${result.apiKey} — it has been copied to clipboard.`
+        );
+      } catch (err) {
+        void vscode.window.showErrorMessage(
+          `DevPulse: could not generate API key — ${errMessage(err)}`
+        );
+      }
+    }),
+
+    // Auto-fix: Apply Fix — insert suggested code into active editor or copy to clipboard
+    vscode.commands.registerCommand("devpulse.applyAutoFix", async (node: unknown) => {
+      const suggestion = extractSuggestionFromNode(node);
+      if (!suggestion) {
+        void vscode.window.showWarningMessage(
+          "DevPulse: could not extract auto-fix suggestion from selection."
+        );
+        return;
+      }
+
+      const editor = vscode.window.activeTextEditor;
+      if (editor) {
+        // Insert the fix code at the current cursor position
+        const position = editor.selection.active;
+        await editor.edit(editBuilder => {
+          editBuilder.insert(position, suggestion.code);
+        });
+        void vscode.window.showInformationMessage(
+          `DevPulse: fix for "${suggestion.title}" inserted at cursor.`
+        );
+      } else {
+        // Fallback: copy to clipboard if no editor is open
+        await vscode.env.clipboard.writeText(suggestion.code);
+        void vscode.window.showInformationMessage(
+          `DevPulse: fix code for "${suggestion.title}" copied to clipboard (no active editor to insert into).`
+        );
+      }
+    }),
+
+    // Auto-fix: Dismiss
+    vscode.commands.registerCommand("devpulse.dismissAutoFix", async (node: unknown) => {
+      const suggestion = extractSuggestionFromNode(node);
+      if (!suggestion) {
+        void vscode.window.showWarningMessage(
+          "DevPulse: could not extract auto-fix suggestion from selection."
+        );
+        return;
+      }
+      autoFixProvider.dismiss(suggestion.id);
+      void vscode.window.showInformationMessage(
+        `DevPulse: dismissed suggestion "${suggestion.title}".`
+      );
+    }),
+
+    // Copy Finding ID
+    vscode.commands.registerCommand("devpulse.copyFindingId", async (node: unknown) => {
+      const findingId = extractFindingId(node);
+      if (!findingId) {
+        void vscode.window.showWarningMessage(
+          "DevPulse: could not determine finding from selection."
+        );
+        return;
+      }
+      await vscode.env.clipboard.writeText(findingId);
+      void vscode.window.showInformationMessage(
+        `DevPulse: finding ID ${findingId} copied to clipboard.`
+      );
+    }),
+
+    // Open in Dashboard
+    vscode.commands.registerCommand("devpulse.openFindingInDashboard", async (node: unknown) => {
+      const findingId = extractFindingId(node);
+      if (!findingId) {
+        void vscode.window.showWarningMessage(
+          "DevPulse: could not determine finding from selection."
+        );
+        return;
+      }
+      const base = getConfiguredBaseUrl().replace(/\/+$/, "");
+      void vscode.env.openExternal(vscode.Uri.parse(`${base}/findings/${findingId}`));
+    }),
+
+    // Postman Collection Import
+    vscode.commands.registerCommand("devpulse.importCollections", async () => {
+      if (!cachedApiKey) {
+        void vscode.window.showWarningMessage("DevPulse: sign in first.");
+        return;
+      }
+
+      const workspaceFolders = vscode.workspace.workspaceFolders;
+      let files: vscode.Uri[] = [];
+
+      try {
+        // Auto-detect Postman collections in workspace
+        const detected = await api.findCollectionFiles();
+        files = detected;
+      } catch {
+        // findCollectionFiles may fail silently — fall through to file picker
+      }
+
+      if (files.length === 0) {
+        // No auto-detected files — open file picker
+        const picked = await vscode.window.showOpenDialog({
+          canSelectFiles: true,
+          canSelectMany: true,
+          filters: {
+            "API Collections": ["json", "yaml", "yml"],
+          },
+          title: "Import Postman / OpenAPI Collections",
+        });
+        if (!picked || picked.length === 0) return;
+        files = picked;
+      } else {
+        // Show detected files + option to browse more
+        const items = [
+          ...files.map(f => ({
+            label: vscode.workspace.asRelativePath(f),
+            description: "detected in workspace",
+            uri: f,
+            kind: "detected" as const,
+          })),
+          { label: "Browse for other files…", description: "", uri: null, kind: "browse" as const },
+        ];
+
+        const pick = await vscode.window.showQuickPick(items, {
+          placeHolder: `Found ${files.length} collection file(s) — select to import or browse`,
+          canPickMany: false,
+        });
+
+        if (!pick) return;
+
+        if (pick.kind === "browse") {
+          const picked = await vscode.window.showOpenDialog({
+            canSelectFiles: true,
+            canSelectMany: true,
+            filters: { "API Collections": ["json", "yaml", "yml"] },
+            title: "Import Postman / OpenAPI Collections",
+          });
+          if (!picked || picked.length === 0) return;
+          files = picked;
+        } else {
+          files = [pick.uri];
+        }
+      }
+
+      // Import each file
+      let imported = 0;
+      let findings = 0;
+
+      await vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: "DevPulse: importing collections",
+          cancellable: false,
+        },
+        async (progress) => {
+          for (let i = 0; i < files.length; i++) {
+            const f = files[i];
+            progress.report({
+              message: `${i + 1}/${files.length} ${vscode.workspace.asRelativePath(f)}`,
+              increment: (100 / files.length),
+            });
+
+            try {
+              const buf = await vscode.workspace.fs.readFile(f);
+              const text = Buffer.from(buf).toString("utf-8");
+              const baseName = vscode.workspace.asRelativePath(f).replace(/\.[^.]+$/g, "");
+              const ext = f.fsPath.split(".").pop()?.toLowerCase();
+
+              let format: "postman" | "openapi" = "postman";
+              let data: unknown;
+
+              try {
+                data = JSON.parse(text);
+                if ((data as any).openapi || (data as any).swagger) format = "openapi";
+                else if ((data as any).info?._postman_id || (data as any).item) format = "postman";
+              } catch {
+                void vscode.window.showWarningMessage(
+                  `DevPulse: ${vscode.workspace.asRelativePath(f)} is not valid JSON — skipping.`
+                );
+                continue;
+              }
+
+              const result = await api.importCollection(baseName, format, data);
+              imported++;
+              if (result.credentialFindings && result.credentialFindings.length > 0) {
+                findings += result.credentialFindings.length;
+              }
+            } catch (err) {
+              void vscode.window.showErrorMessage(
+                `DevPulse: failed to import ${vscode.workspace.asRelativePath(f)} — ${err instanceof Error ? err.message : String(err)}`
+              );
+            }
+          }
+        }
+      );
+
+      if (imported > 0) {
+        let msg = `DevPulse: imported ${imported} collection${imported !== 1 ? "s" : ""}.`;
+        if (findings > 0) {
+          msg += ` ⚠ ${findings} potential credential${findings !== 1 ? "s" : ""} found — review and rotate immediately.`;
+        }
+        void vscode.window.showInformationMessage(msg);
+        await refresh();
+      } else {
+        void vscode.window.showWarningMessage("DevPulse: no collections were imported.");
+      }
+    }),
+
+  );
+
+  async function updateFindingStatusCmd(
+    node: unknown,
+    status: FindingStatus
+  ): Promise<void> {
+    const findingId = extractFindingId(node);
+    if (!findingId) {
+      void vscode.window.showWarningMessage(
+        "DevPulse: could not determine finding from selection."
+      );
+      return;
+    }
+    try {
+      await api.updateFindingStatus(findingId, status);
+      await refresh();
+    } catch (err) {
+      void vscode.window.showErrorMessage(
+        `DevPulse: could not update finding — ${errMessage(err)}`
+      );
+    }
+  }
+
+  // --- lifecycle ---------------------------------------------------------
+
+  context.subscriptions.push(
+    treeView,
+    autoFixTreeView,
+    statusBar,
+    { dispose: () => heartbeat.stop() },
+    vscode.workspace.onDidChangeConfiguration(e => {
+      if (e.affectsConfiguration("devpulse.apiUrl")) {
+        void refresh();
+      }
+      if (
+        e.affectsConfiguration("devpulse.heartbeatIntervalSec") ||
+        e.affectsConfiguration("devpulse.trackFileChanges")
+      ) {
+        heartbeat.stop();
+        heartbeat.start();
+      }
+    })
+  );
+
+  await registerGatewayCommand(context, readApiKey);
+  registerShadowApiCommand(context, {
+    isTrusted: () => vscode.workspace.isTrusted,
+  });
+
+  heartbeat.start();
+}
+
+export function deactivate(): void {
+  /* lifecycle cleanup is handled via context.subscriptions */
+}
+
+function errMessage(err: unknown): string {
+  if (err instanceof DevPulseApiError) return err.message;
+  if (err instanceof Error) return err.message;
+  return String(err);
+}
+
+function extractFindingId(node: unknown): string | null {
+  if (node && typeof node === "object") {
+    const maybe = node as Record<string, unknown>;
+    if (
+      "finding" in maybe &&
+      maybe.finding &&
+      typeof maybe.finding === "object" &&
+      "id" in (maybe.finding as Record<string, unknown>)
+    ) {
+      const id = (maybe.finding as Record<string, unknown>).id;
+      if (typeof id === "string") return id;
+    }
+    if ("id" in maybe && typeof maybe.id === "string") {
+      return maybe.id;
+    }
+  }
+  return null;
+}

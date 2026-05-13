@@ -1,0 +1,590 @@
+{
+  "nodes": {
+    "00-master-orchestrator": {
+      "layer": "command",
+      "tldr": "Autonomous master orchestrator"
+    },
+    "01-ceo-strategy": {
+      "layer": "leadership",
+      "tldr": "Vision, roadmap, competitive positioning"
+    },
+    "02-cto-architect": {
+      "layer": "leadership",
+      "tldr": "Technical decisions, architecture, tech debt"
+    },
+    "03-cpo-product": {
+      "layer": "leadership",
+      "tldr": "Feature design, user stories, UX"
+    },
+    "04-vp-engineering": {
+      "layer": "leadership",
+      "tldr": "Sprint planning, velocity, resource allocation"
+    },
+    "05-em-delivery": {
+      "layer": "management",
+      "tldr": "Daily task coordination, PR flow, blockers"
+    },
+    "06-qa-lead": {
+      "layer": "management",
+      "tldr": "Test strategy, quality gates, coverage"
+    },
+    "07-dev-backend": {
+      "layer": "development",
+      "tldr": "server/ Express, tRPC, services"
+    },
+    "08-dev-frontend": {
+      "layer": "development",
+      "tldr": "devpulse-frontend/ Next"
+    },
+    "09-dev-vscode": {
+      "layer": "development",
+      "tldr": "devpulse-vscode/ Extension, webviews"
+    },
+    "10-dev-database": {
+      "layer": "development",
+      "tldr": "drizzle/ Schema, migrations, MySQL"
+    },
+    "11-dev-api": {
+      "layer": "development",
+      "tldr": "server/api/ tRPC routers, contracts"
+    },
+    "12-dev-security": {
+      "layer": "development",
+      "tldr": "Scanners, injection prevention, secrets"
+    },
+    "13-dev-devops": {
+      "layer": "development",
+      "tldr": "Docker, CI/CD, deployment, infra"
+    },
+    "14-dev-fullstack": {
+      "layer": "development",
+      "tldr": "Cross-layer features, integration"
+    },
+    "15-qa-tester": {
+      "layer": "specialized",
+      "tldr": "Unit tests (Vitest), E2E (Playwright)"
+    },
+    "16-docs-writer": {
+      "layer": "specialized",
+      "tldr": "README, API docs, architecture, wiki"
+    },
+    "17-reviewer": {
+      "layer": "specialized",
+      "tldr": "PR reviews, code quality, standards"
+    },
+    "18-bug-hunter": {
+      "layer": "specialized",
+      "tldr": "Bug finding, root cause, regression tests"
+    },
+    "19-ops-release": {
+      "layer": "operations",
+      "tldr": "Versioning, changelogs, release management"
+    },
+    "20-ops-monitor": {
+      "layer": "operations",
+      "tldr": "Sentry, Prometheus, health, incidents"
+    },
+    "22-agent-factory": {
+      "layer": "autonomy",
+      "tldr": "Spawns, clones, splits, retires agents"
+    },
+    "23-research-orchestrator": {
+      "layer": "autonomy",
+      "tldr": "Gap analysis, discovery, competitive intel"
+    },
+    "24-error-recovery": {
+      "layer": "autonomy",
+      "tldr": "Error tracking, root cause, auto-retry"
+    },
+    "25-dependency-guardian": {
+      "layer": "guardians",
+      "tldr": "Supply chain security, version alignment, vuln audits"
+    },
+    "26-api-steward": {
+      "layer": "guardians",
+      "tldr": "tRPC/OpenAPI contract stability, breaking change detection"
+    },
+    "27-competitive-watch": {
+      "layer": "guardians",
+      "tldr": "Continuous competitor monitoring, weekly briefs"
+    },
+    "28-performance-auditor": {
+      "layer": "guardians",
+      "tldr": "Gateway latency, N+1 queries, load testing, regression gates"
+    }
+  },
+  "edges": [
+    {
+      "from": "00-master-orchestrator",
+      "to": "01-ceo-strategy"
+    },
+    {
+      "from": "00-master-orchestrator",
+      "to": "02-cto-architect"
+    },
+    {
+      "from": "00-master-orchestrator",
+      "to": "22-agent-factory"
+    },
+    {
+      "from": "00-master-orchestrator",
+      "to": "23-research-orchestrator"
+    },
+    {
+      "from": "00-master-orchestrator",
+      "to": "24-error-recovery"
+    },
+    {
+      "from": "01-ceo-strategy",
+      "to": "00-master-orchestrator"
+    },
+    {
+      "from": "01-ceo-strategy",
+      "to": "02-cto-architect"
+    },
+    {
+      "from": "01-ceo-strategy",
+      "to": "03-cpo-product"
+    },
+    {
+      "from": "01-ceo-strategy",
+      "to": "27-competitive-watch"
+    },
+    {
+      "from": "02-cto-architect",
+      "to": "00-master-orchestrator"
+    },
+    {
+      "from": "02-cto-architect",
+      "to": "01-ceo-strategy"
+    },
+    {
+      "from": "02-cto-architect",
+      "to": "04-vp-engineering"
+    },
+    {
+      "from": "02-cto-architect",
+      "to": "07-dev-backend"
+    },
+    {
+      "from": "02-cto-architect",
+      "to": "25-dependency-guardian"
+    },
+    {
+      "from": "03-cpo-product",
+      "to": "00-master-orchestrator"
+    },
+    {
+      "from": "03-cpo-product",
+      "to": "01-ceo-strategy"
+    },
+    {
+      "from": "03-cpo-product",
+      "to": "04-vp-engineering"
+    },
+    {
+      "from": "03-cpo-product",
+      "to": "08-dev-frontend"
+    },
+    {
+      "from": "03-cpo-product",
+      "to": "11-dev-api"
+    },
+    {
+      "from": "04-vp-engineering",
+      "to": "00-master-orchestrator"
+    },
+    {
+      "from": "04-vp-engineering",
+      "to": "02-cto-architect"
+    },
+    {
+      "from": "04-vp-engineering",
+      "to": "05-em-delivery"
+    },
+    {
+      "from": "04-vp-engineering",
+      "to": "06-qa-lead"
+    },
+    {
+      "from": "05-em-delivery",
+      "to": "00-master-orchestrator"
+    },
+    {
+      "from": "05-em-delivery",
+      "to": "04-vp-engineering"
+    },
+    {
+      "from": "05-em-delivery",
+      "to": "07-dev-backend"
+    },
+    {
+      "from": "05-em-delivery",
+      "to": "08-dev-frontend"
+    },
+    {
+      "from": "05-em-delivery",
+      "to": "17-reviewer"
+    },
+    {
+      "from": "06-qa-lead",
+      "to": "00-master-orchestrator"
+    },
+    {
+      "from": "06-qa-lead",
+      "to": "04-vp-engineering"
+    },
+    {
+      "from": "06-qa-lead",
+      "to": "15-qa-tester"
+    },
+    {
+      "from": "06-qa-lead",
+      "to": "17-reviewer"
+    },
+    {
+      "from": "06-qa-lead",
+      "to": "18-bug-hunter"
+    },
+    {
+      "from": "07-dev-backend",
+      "to": "02-cto-architect"
+    },
+    {
+      "from": "07-dev-backend",
+      "to": "05-em-delivery"
+    },
+    {
+      "from": "07-dev-backend",
+      "to": "10-dev-database"
+    },
+    {
+      "from": "07-dev-backend",
+      "to": "11-dev-api"
+    },
+    {
+      "from": "07-dev-backend",
+      "to": "13-dev-devops"
+    },
+    {
+      "from": "08-dev-frontend",
+      "to": "03-cpo-product"
+    },
+    {
+      "from": "08-dev-frontend",
+      "to": "05-em-delivery"
+    },
+    {
+      "from": "08-dev-frontend",
+      "to": "11-dev-api"
+    },
+    {
+      "from": "08-dev-frontend",
+      "to": "14-dev-fullstack"
+    },
+    {
+      "from": "08-dev-frontend",
+      "to": "16-docs-writer"
+    },
+    {
+      "from": "09-dev-vscode",
+      "to": "05-em-delivery"
+    },
+    {
+      "from": "09-dev-vscode",
+      "to": "07-dev-backend"
+    },
+    {
+      "from": "09-dev-vscode",
+      "to": "08-dev-frontend"
+    },
+    {
+      "from": "09-dev-vscode",
+      "to": "14-dev-fullstack"
+    },
+    {
+      "from": "10-dev-database",
+      "to": "02-cto-architect"
+    },
+    {
+      "from": "10-dev-database",
+      "to": "07-dev-backend"
+    },
+    {
+      "from": "10-dev-database",
+      "to": "13-dev-devops"
+    },
+    {
+      "from": "10-dev-database",
+      "to": "28-performance-auditor"
+    },
+    {
+      "from": "11-dev-api",
+      "to": "02-cto-architect"
+    },
+    {
+      "from": "11-dev-api",
+      "to": "07-dev-backend"
+    },
+    {
+      "from": "11-dev-api",
+      "to": "08-dev-frontend"
+    },
+    {
+      "from": "11-dev-api",
+      "to": "26-api-steward"
+    },
+    {
+      "from": "12-dev-security",
+      "to": "02-cto-architect"
+    },
+    {
+      "from": "12-dev-security",
+      "to": "07-dev-backend"
+    },
+    {
+      "from": "12-dev-security",
+      "to": "25-dependency-guardian"
+    },
+    {
+      "from": "12-dev-security",
+      "to": "26-api-steward"
+    },
+    {
+      "from": "13-dev-devops",
+      "to": "02-cto-architect"
+    },
+    {
+      "from": "13-dev-devops",
+      "to": "07-dev-backend"
+    },
+    {
+      "from": "13-dev-devops",
+      "to": "19-ops-release"
+    },
+    {
+      "from": "13-dev-devops",
+      "to": "20-ops-monitor"
+    },
+    {
+      "from": "14-dev-fullstack",
+      "to": "05-em-delivery"
+    },
+    {
+      "from": "14-dev-fullstack",
+      "to": "07-dev-backend"
+    },
+    {
+      "from": "14-dev-fullstack",
+      "to": "08-dev-frontend"
+    },
+    {
+      "from": "14-dev-fullstack",
+      "to": "10-dev-database"
+    },
+    {
+      "from": "14-dev-fullstack",
+      "to": "11-dev-api"
+    },
+    {
+      "from": "15-qa-tester",
+      "to": "06-qa-lead"
+    },
+    {
+      "from": "15-qa-tester",
+      "to": "07-dev-backend"
+    },
+    {
+      "from": "15-qa-tester",
+      "to": "08-dev-frontend"
+    },
+    {
+      "from": "15-qa-tester",
+      "to": "18-bug-hunter"
+    },
+    {
+      "from": "16-docs-writer",
+      "to": "05-em-delivery"
+    },
+    {
+      "from": "16-docs-writer",
+      "to": "07-dev-backend"
+    },
+    {
+      "from": "16-docs-writer",
+      "to": "08-dev-frontend"
+    },
+    {
+      "from": "16-docs-writer",
+      "to": "11-dev-api"
+    },
+    {
+      "from": "17-reviewer",
+      "to": "05-em-delivery"
+    },
+    {
+      "from": "17-reviewer",
+      "to": "06-qa-lead"
+    },
+    {
+      "from": "17-reviewer",
+      "to": "07-dev-backend"
+    },
+    {
+      "from": "17-reviewer",
+      "to": "08-dev-frontend"
+    },
+    {
+      "from": "18-bug-hunter",
+      "to": "06-qa-lead"
+    },
+    {
+      "from": "18-bug-hunter",
+      "to": "15-qa-tester"
+    },
+    {
+      "from": "18-bug-hunter",
+      "to": "20-ops-monitor"
+    },
+    {
+      "from": "18-bug-hunter",
+      "to": "24-error-recovery"
+    },
+    {
+      "from": "19-ops-release",
+      "to": "13-dev-devops"
+    },
+    {
+      "from": "19-ops-release",
+      "to": "20-ops-monitor"
+    },
+    {
+      "from": "19-ops-release",
+      "to": "04-vp-engineering"
+    },
+    {
+      "from": "20-ops-monitor",
+      "to": "13-dev-devops"
+    },
+    {
+      "from": "20-ops-monitor",
+      "to": "19-ops-release"
+    },
+    {
+      "from": "20-ops-monitor",
+      "to": "18-bug-hunter"
+    },
+    {
+      "from": "20-ops-monitor",
+      "to": "24-error-recovery"
+    },
+    {
+      "from": "22-agent-factory",
+      "to": "00-master-orchestrator"
+    },
+    {
+      "from": "22-agent-factory",
+      "to": "02-cto-architect"
+    },
+    {
+      "from": "22-agent-factory",
+      "to": "23-research-orchestrator"
+    },
+    {
+      "from": "22-agent-factory",
+      "to": "24-error-recovery"
+    },
+    {
+      "from": "23-research-orchestrator",
+      "to": "00-master-orchestrator"
+    },
+    {
+      "from": "23-research-orchestrator",
+      "to": "01-ceo-strategy"
+    },
+    {
+      "from": "23-research-orchestrator",
+      "to": "22-agent-factory"
+    },
+    {
+      "from": "23-research-orchestrator",
+      "to": "27-competitive-watch"
+    },
+    {
+      "from": "24-error-recovery",
+      "to": "00-master-orchestrator"
+    },
+    {
+      "from": "24-error-recovery",
+      "to": "18-bug-hunter"
+    },
+    {
+      "from": "24-error-recovery",
+      "to": "20-ops-monitor"
+    },
+    {
+      "from": "24-error-recovery",
+      "to": "22-agent-factory"
+    },
+    {
+      "from": "25-dependency-guardian",
+      "to": "12-dev-security"
+    },
+    {
+      "from": "25-dependency-guardian",
+      "to": "02-cto-architect"
+    },
+    {
+      "from": "25-dependency-guardian",
+      "to": "13-dev-devops"
+    },
+    {
+      "from": "25-dependency-guardian",
+      "to": "28-performance-auditor"
+    },
+    {
+      "from": "26-api-steward",
+      "to": "11-dev-api"
+    },
+    {
+      "from": "26-api-steward",
+      "to": "12-dev-security"
+    },
+    {
+      "from": "26-api-steward",
+      "to": "02-cto-architect"
+    },
+    {
+      "from": "26-api-steward",
+      "to": "07-dev-backend"
+    },
+    {
+      "from": "27-competitive-watch",
+      "to": "01-ceo-strategy"
+    },
+    {
+      "from": "27-competitive-watch",
+      "to": "03-cpo-product"
+    },
+    {
+      "from": "27-competitive-watch",
+      "to": "23-research-orchestrator"
+    },
+    {
+      "from": "28-performance-auditor",
+      "to": "10-dev-database"
+    },
+    {
+      "from": "28-performance-auditor",
+      "to": "07-dev-backend"
+    },
+    {
+      "from": "28-performance-auditor",
+      "to": "13-dev-devops"
+    },
+    {
+      "from": "28-performance-auditor",
+      "to": "20-ops-monitor"
+    }
+  ]
+}

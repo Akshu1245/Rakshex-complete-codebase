@@ -1,0 +1,154 @@
+version: "3.8"
+
+services:
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme_in_production}
+      MYSQL_DATABASE: devpulse_db
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "root",
+          "-p${MYSQL_ROOT_PASSWORD:-changeme_in_production}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - devpulse-network
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - devpulse-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    command: node dist/index.js
+    ports:
+      - "3000:3000"
+    environment:
+      # ── Server ──────────────────────────────────────────────────
+      NODE_ENV: production
+      PORT: 3000
+      APP_URL: ${APP_URL}
+
+      # ── Database ─────────────────────────────────────────────────
+      DATABASE_URL: mysql://root:${MYSQL_ROOT_PASSWORD:-changeme_in_production}@db:3306/devpulse_db
+
+      # ── Redis Cache ───────────────────────────────────────────────────────
+      REDIS_URL: redis://redis:6379
+
+      # ── Auth (JWT) ───────────────────────────────────────────────
+      JWT_SECRET: ${JWT_SECRET}
+
+      # ── Manus OAuth (optional) ───────────────────────────────────
+      VITE_APP_ID: ${VITE_APP_ID:-}
+      OAUTH_SERVER_URL: ${OAUTH_SERVER_URL:-https://auth.manus.app}
+      OWNER_OPEN_ID: ${OWNER_OPEN_ID:-}
+
+      # ── Google OAuth ─────────────────────────────────────────────
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+
+      # ── MiniMax M2.7 (Primary LLM Brain) ─────────────────────────
+      MINIMAX_API_KEY: ${MINIMAX_API_KEY:-}
+      MINIMAX_API_URL: ${MINIMAX_API_URL:-https://api.minimax.io/v1}
+
+      # ── Forge API (Fallback LLM) ──────────────────────────────────
+      BUILT_IN_FORGE_API_URL: ${BUILT_IN_FORGE_API_URL:-https://api.manus.app/forge}
+      BUILT_IN_FORGE_API_KEY: ${BUILT_IN_FORGE_API_KEY:-}
+
+      # ── Email (SMTP) ─────────────────────────────────────────────
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-noreply@devpulse.in}
+
+      # ── Notifications ─────────────────────────────────────────────
+      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:-}
+
+      # ── Error Monitoring ─────────────────────────────────────────────
+      SENTRY_DSN: ${SENTRY_DSN:-}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - devpulse-network
+
+  # ── Next.js Frontend (DevPulse Command Center) ────────────────────────
+  frontend:
+    build:
+      context: ./devpulse-frontend
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3001:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://app:3000
+      NEXT_PUBLIC_WS_URL: ws://app:3000/ws
+    depends_on:
+      - app
+    networks:
+      - devpulse-network
+
+  # ── Backup Service (Cron) ─────────────────────────────────────────────
+  backup:
+    image: amazon/aws-cli:latest
+    restart: unless-stopped
+    volumes:
+      - ./scripts:/scripts
+      - /backups:/backups
+    environment:
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_DEFAULT_REGION: ${AWS_REGION:-us-east-1}
+      S3_BACKUP_BUCKET: ${S3_BACKUP_BUCKET:-devpulse-backups}
+      DB_HOST: db
+      DB_NAME: devpulse_db
+      DB_USER: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme_in_production}
+    command: >
+      sh -c "
+        yum install -y mysql gzip &&
+        echo '0 2 * * * /scripts/backup.sh daily' | crontab - &&
+        echo '0 3 1 * * /scripts/backup.sh monthly' | crontab - &&
+        crond -f
+      "
+    depends_on:
+      - db
+    networks:
+      - devpulse-network
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  devpulse-network:
+    driver: bridge
