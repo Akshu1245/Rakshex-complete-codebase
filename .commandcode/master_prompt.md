@@ -5,7 +5,17 @@
 1. Read `.commandcode/memory/session_state.md`
 2. Use the Current Task and Recent Decisions as session context
 3. If the file is empty or missing, run: `node scripts/session-memory.js load`
-4. When the session ends, run: `node scripts/session-memory.js save`
+4. **Load Hermes autonomous swarm context (cross-project):**
+   ```
+   python C:\Users\aksha\hermes-autonomous\scripts\session_loader.py --quick
+   type C:\Users\aksha\hermes-autonomous\.team\memory\session_*.md 2>nul | findstr /C:"Projects" /C:"Stack" /C:"Coverage"
+   ```
+5. Check Hermes inbox for pending autonomous tasks:
+   ```
+   dir C:\Users\aksha\hermes-autonomous\.team\inbox\auto_*.json 2>nul
+   ```
+   If tasks exist: process them as autonomous swarm work.
+6. When the session ends, run: `node scripts/session-memory.js save`
 
 ## AGGRESSIVE AUTO-SAVE RULES (session-watch daemon)
 The `session-watch.js` daemon auto-saves state every 30s in the background. It runs independently — survives agent crashes.
