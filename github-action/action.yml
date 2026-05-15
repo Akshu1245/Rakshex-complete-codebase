@@ -1,0 +1,48 @@
+name: 'DevPulse Security Scan'
+description: 'Scan API endpoints for OWASP vulnerabilities and LLM cost anomalies on every pull request'
+author: 'Rashi Technologies'
+branding:
+  icon: 'shield'
+  color: 'purple'
+
+inputs:
+  api-key:
+    description: 'DevPulse API key'
+    required: true
+  api-url:
+    description: 'DevPulse API base URL'
+    required: false
+    default: 'https://api.devpulse.in'
+  fail-on-critical:
+    description: 'Fail the workflow if Critical severity findings exist'
+    required: false
+    default: 'true'
+  fail-on-high:
+    description: 'Fail the workflow if High severity findings exist'
+    required: false
+    default: 'false'
+  scan-openapi:
+    description: 'Path to OpenAPI spec file (optional)'
+    required: false
+  scan-postman:
+    description: 'Path to Postman collection file (optional)'
+    required: false
+  post-comment:
+    description: 'Post findings as PR comment'
+    required: false
+    default: 'true'
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  env:
+    DEVPULSE_API_KEY: ${{ inputs.api-key }}
+    DEVPULSE_API_URL: ${{ inputs.api-url }}
+    FAIL_ON_CRITICAL: ${{ inputs.fail-on-critical }}
+    FAIL_ON_HIGH: ${{ inputs.fail-on-high }}
+    SCAN_OPENAPI: ${{ inputs.scan-openapi }}
+    SCAN_POSTMAN: ${{ inputs.scan-postman }}
+    POST_COMMENT: ${{ inputs.post-comment }}
+    GITHUB_TOKEN: ${{ github.token }}
+    GITHUB_REPOSITORY: ${{ github.repository }}
+    GITHUB_EVENT_PATH: ${{ github.event_path }}

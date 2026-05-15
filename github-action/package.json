@@ -1,0 +1,9 @@
+{
+  "name": "devpulse-github-action",
+  "version": "1.0.0",
+  "description": "DevPulse Security Scan GitHub Action",
+  "main": "index.js",
+  "dependencies": {
+    "@octokit/rest": "^20.0.2"
+  }
+}
