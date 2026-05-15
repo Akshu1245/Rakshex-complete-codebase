@@ -19,7 +19,7 @@ jobs:
       - run: npm ci
       - run: npx tsc --noEmit
       - run: cd devpulse-vscode && npm ci && npx tsc --noEmit
-      - run: cd devpulse-frontend && npm ci && npx tsc --noEmit || true
+      - run: cd devpulse-frontend && npm ci && npx tsc --noEmit --skipLibCheck
 
   server-tests:
     name: Server Tests
@@ -83,4 +83,4 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: cd packages/devpulse-sdk && npm ci || true && npx tsc --noEmit || true
+      - run: cd packages/devpulse-sdk && npm ci && npx tsc --noEmit --skipLibCheck
