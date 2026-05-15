@@ -58,7 +58,7 @@ export interface ScanOptions {
 export async function runCollectionScan(
   userId: number,
   collectionId: string,
-  options: ScanOptions
+  options: ScanOptions,
 ): Promise<ScanResult> {
   const collection = await db.getCollectionById(collectionId);
   if (!collection) {
@@ -92,7 +92,7 @@ export async function runCollectionScan(
     // (endpoint, method, payloadId) that the generic finding pipeline
     // doesn't persist — we ignore those when writing to DB but keep them
     // in the in-memory findings list so the API caller can see them.
-    findings = piResult.findings.map(f => ({
+    findings = piResult.findings.map((f) => ({
       id: f.id,
       title: f.title,
       severity: f.severity,
@@ -117,21 +117,29 @@ export async function runCollectionScan(
     riskScore,
     riskLevel,
     findings.length,
-    findings
+    findings,
   );
 
-  // Save individual findings
-  for (const finding of findings) {
-    await db.createFinding(
-      scan.id,
-      collectionId,
-      userId,
-      finding.title,
-      finding.severity,
-      finding.description,
-      finding.category,
-      finding.remediation,
-      finding.cweId
+  // Save individual findings — each is independent; partial failure is logged
+  // but does not roll back the scan record (scan remains queryable with 0 findings).
+  try {
+    for (const finding of findings) {
+      await db.createFinding(
+        scan.id,
+        collectionId,
+        userId,
+        finding.title,
+        finding.severity,
+        finding.description,
+        finding.category,
+        finding.remediation,
+        finding.cweId,
+      );
+    }
+  } catch (err) {
+    logger.error(
+      { err, scanId: scan.id, totalFindings: findings.length },
+      "[ScanService] findings insert failed partially — scan record preserved",
     );
   }
 
@@ -142,10 +150,10 @@ export async function runCollectionScan(
   const user = await db.getUserById(userId);
 
   // Count findings by severity
-  const criticalCount = findings.filter(f => f.severity === "Critical").length;
-  const highCount = findings.filter(f => f.severity === "High").length;
-  const mediumCount = findings.filter(f => f.severity === "Medium").length;
-  const lowCount = findings.filter(f => f.severity === "Low").length;
+  const criticalCount = findings.filter((f) => f.severity === "Critical").length;
+  const highCount = findings.filter((f) => f.severity === "High").length;
+  const mediumCount = findings.filter((f) => f.severity === "Medium").length;
+  const lowCount = findings.filter((f) => f.severity === "Low").length;
 
   // Send email notification if user has email
   if (user?.email) {
@@ -162,10 +170,7 @@ export async function runCollectionScan(
         dashboardUrl: `${process.env.APP_URL || "http://localhost:3000"}/collections/${collectionId}`,
       });
     } catch (error) {
-      logger.warn(
-        { err: error },
-        "[ScanService] Failed to send scan completion email"
-      );
+      logger.warn({ err: error }, "[ScanService] Failed to send scan completion email");
     }
   }
 
@@ -213,12 +218,10 @@ export async function runCollectionScan(
   // Per-finding webhooks for Critical & High only — we don't want to
   // spam subscribers with every Medium/Low item. Fire in parallel but
   // never fail the scan if a single one errors.
-  const notable = findings.filter(
-    f => f.severity === "Critical" || f.severity === "High"
-  );
+  const notable = findings.filter((f) => f.severity === "Critical" || f.severity === "High");
   if (notable.length > 0) {
     await Promise.allSettled(
-      notable.map(f =>
+      notable.map((f) =>
         deliverWebhook(userId, "finding.discovered", {
           scanId: scan.id,
           collectionId,
@@ -228,8 +231,8 @@ export async function runCollectionScan(
           severity: f.severity,
           category: f.category,
           cweId: f.cweId,
-        })
-      )
+        }),
+      ),
     );
   }
 

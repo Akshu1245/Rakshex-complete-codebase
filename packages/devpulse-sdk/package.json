@@ -20,9 +20,26 @@
     "@anthropic-ai/sdk": ">=0.20.0"
   },
   "peerDependenciesMeta": {
-    "openai": { "optional": true },
-    "@anthropic-ai/sdk": { "optional": true }
+    "openai": {
+      "optional": true
+    },
+    "@anthropic-ai/sdk": {
+      "optional": true
+    }
   },
-  "keywords": ["devpulse", "ai", "llm", "telemetry", "observability", "openai", "anthropic"],
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^2.0.0"
+  },
+  "keywords": [
+    "devpulse",
+    "ai",
+    "llm",
+    "telemetry",
+    "observability",
+    "openai",
+    "anthropic"
+  ],
   "license": "MIT"
 }
