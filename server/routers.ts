@@ -41,6 +41,9 @@ import { ssoRouter } from "./api/sso";
 import { workspacesRouter } from "./api/workspaces";
 import { researchRouter } from "./api/research";
 import { telemetryRouter } from "./api/telemetry";
+import { costRouter } from "./api/cost";
+import { fixRouter } from "./api/fix";
+import { githubRouter } from "./api/github";
 import { ensurePersonalWorkspace } from "./services/workspaceContext";
 import { logger } from "./_core/logger";
 
@@ -51,7 +54,7 @@ import { logger } from "./_core/logger";
 export const appRouter = router({
   system: systemRouter,
   auth: router({
-    me: publicProcedure.query(opts => opts.ctx.user),
+    me: publicProcedure.query((opts) => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
@@ -71,7 +74,7 @@ export const appRouter = router({
         "logout_all_sessions",
         {},
         ctx.req.ip,
-        ctx.req.headers["user-agent"] as string
+        ctx.req.headers["user-agent"] as string,
       );
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
@@ -84,7 +87,7 @@ export const appRouter = router({
      */
     listSessions: protectedProcedure.query(async ({ ctx }) => {
       const sessions = await db.getUserSessions(ctx.user.id);
-      return sessions.map(s => ({
+      return sessions.map((s) => ({
         id: s.id,
         ipAddress: s.ipAddress,
         userAgent: s.userAgent,
@@ -100,7 +103,7 @@ export const appRouter = router({
       .input(z.object({ sessionId: z.string().min(1) }))
       .mutation(async ({ input, ctx }) => {
         const session = await db.getUserSessions(ctx.user.id);
-        const owned = session.find(s => s.id === input.sessionId);
+        const owned = session.find((s) => s.id === input.sessionId);
         if (!owned) {
           throw new TRPCError({
             code: "NOT_FOUND",
@@ -113,7 +116,7 @@ export const appRouter = router({
           "session_revoked",
           { sessionId: input.sessionId },
           ctx.req.ip,
-          ctx.req.headers["user-agent"] as string
+          ctx.req.headers["user-agent"] as string,
         );
         return { success: true };
       }),
@@ -123,7 +126,7 @@ export const appRouter = router({
           email: z.string().email().max(320),
           password: z.string().min(8).max(128),
           name: z.string().min(1).max(120),
-        })
+        }),
       )
       .mutation(async ({ input, ctx }) => {
         const normalizedEmail = input.email.trim().toLowerCase();
@@ -148,9 +151,7 @@ export const appRouter = router({
         try {
           const driver = await db.getDb();
           if (driver) {
-            const rows = await driver
-              .select({ n: sql<number>`count(*)` })
-              .from(users);
+            const rows = await driver.select({ n: sql<number>`count(*)` }).from(users);
             const total = Number(rows[0]?.n ?? 0);
             if (total === 1) {
               await db.updateUser(created.id, {
@@ -170,7 +171,7 @@ export const appRouter = router({
         } catch (err) {
           logger.warn(
             { err: err, userId: created.id },
-            "[signup] personal workspace creation skipped"
+            "[signup] personal workspace creation skipped",
           );
         }
 
@@ -191,7 +192,7 @@ export const appRouter = router({
           "signup_email",
           { email: normalizedEmail },
           ctx.req.ip,
-          ctx.req.headers["user-agent"] as string
+          ctx.req.headers["user-agent"] as string,
         );
 
         return {
@@ -204,7 +205,7 @@ export const appRouter = router({
         z.object({
           email: z.string().email().max(320),
           password: z.string().min(1).max(128),
-        })
+        }),
       )
       .mutation(async ({ input, ctx }) => {
         const normalizedEmail = input.email.trim().toLowerCase();
@@ -231,14 +232,13 @@ export const appRouter = router({
 
         const ok = verifyPassword(input.password, user.passwordHash);
         if (!ok) {
-          const { attempts, lockedUntil } =
-            await db.incrementFailedLoginAttempts(user.id);
+          const { attempts, lockedUntil } = await db.incrementFailedLoginAttempts(user.id);
           await db.createAuditLogEntry(
             user.id,
             "login_failed",
             { email: normalizedEmail, attempts, lockedUntil },
             ctx.req.ip,
-            ctx.req.headers["user-agent"] as string
+            ctx.req.headers["user-agent"] as string,
           );
           throw invalidCredentials;
         }
@@ -269,7 +269,7 @@ export const appRouter = router({
           "login_email",
           { email: normalizedEmail },
           ctx.req.ip,
-          ctx.req.headers["user-agent"] as string
+          ctx.req.headers["user-agent"] as string,
         );
 
         return { success: true, userId: user.id };
@@ -279,11 +279,22 @@ export const appRouter = router({
      * returns { requires2FA: true, userId }.
      */
     verify2FALogin: publicProcedure
-      .input(z.object({ userId: z.string().length(1).max(100), code: z.string().length(6).regex(/^\d{6}$/) }))
+      .input(
+        z.object({
+          userId: z.string().length(1).max(100),
+          code: z
+            .string()
+            .length(6)
+            .regex(/^\d{6}$/),
+        }),
+      )
       .mutation(async ({ input, ctx }) => {
         const user = await db.getUserById(Number(input.userId));
         if (!user || !(user as any).totpSecret) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: "2FA not required for this account" });
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "2FA not required for this account",
+          });
         }
 
         if (!verifyTotpCode((user as any).totpSecret, input.code)) {
@@ -292,7 +303,7 @@ export const appRouter = router({
             "login_2fa_failed",
             {},
             ctx.req.ip,
-            ctx.req.headers["user-agent"] as string
+            ctx.req.headers["user-agent"] as string,
           );
           throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid 2FA code" });
         }
@@ -315,7 +326,7 @@ export const appRouter = router({
           "login_2fa_verified",
           {},
           ctx.req.ip,
-          ctx.req.headers["user-agent"] as string
+          ctx.req.headers["user-agent"] as string,
         );
 
         return { success: true, userId: user.id };
@@ -350,7 +361,7 @@ export const appRouter = router({
         z.object({
           token: z.string().min(1),
           newPassword: z.string().min(8).max(128),
-        })
+        }),
       )
       .mutation(async ({ input, ctx }) => {
         const resetToken = await db.getPasswordResetToken(input.token);
@@ -381,7 +392,7 @@ export const appRouter = router({
           "password_reset_completed",
           {},
           ctx.req.ip,
-          ctx.req.headers["user-agent"] as string
+          ctx.req.headers["user-agent"] as string,
         );
         return {
           success: true,
@@ -416,6 +427,9 @@ export const appRouter = router({
   shadowAiDetection: shadowAiDetectionRouter,
   research: researchRouter,
   telemetry: telemetryRouter,
+  cost: costRouter,
+  fix: fixRouter,
+  github: githubRouter,
 });
 
 // Register the appRouter with the apiDocs introspector so its `spec`

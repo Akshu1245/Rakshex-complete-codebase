@@ -71,6 +71,12 @@
         "category": "DevPulse"
       },
       {
+        "command": "devpulse.importPostman",
+        "title": "DevPulse: Import Postman Collection & Scan",
+        "icon": "$(file-code)",
+        "category": "DevPulse"
+      },
+      {
         "command": "devpulse.refresh",
         "title": "DevPulse: Refresh",
         "icon": "$(refresh)",

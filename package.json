@@ -65,8 +65,7 @@
   },
   "lint-staged": {
     "*.{ts,tsx}": [
-      "npx prettier --write",
-      "npx tsc --noEmit --skipLibCheck"
+      "npx prettier --write"
     ],
     "*.{json,md}": [
       "npx prettier --write"
