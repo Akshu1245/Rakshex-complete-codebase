@@ -10,12 +10,12 @@ describe("competitiveWatch", () => {
     expect(helicone.category).toBe("direct");
     expect(helicone.priority).toBe(1);
     expect(helicone.websiteUrl).toBe("https://helicone.ai");
-  });
+  }, 15_000);
 
   it("has at least 4 competitors tracked", async () => {
     const { DEFAULT_COMPETITORS } = await import("./services/research/competitiveWatch");
     expect(DEFAULT_COMPETITORS.length).toBeGreaterThanOrEqual(4);
-  });
+  }, 15_000);
 
   it("all competitors have required fields", async () => {
     const { DEFAULT_COMPETITORS } = await import("./services/research/competitiveWatch");

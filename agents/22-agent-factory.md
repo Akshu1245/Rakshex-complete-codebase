@@ -19,6 +19,12 @@ PULSE-COMMAND triggers me when it detects:
 □ Pattern trigger: Same bug type found in 3+ unrelated files
 □ Gap trigger: Research finds a domain with no agent coverage
 □ Speed trigger: Sprint velocity dropping (team overloaded)
+
+SWARM TRIGGERS (New):
+□ Test queue >20 items or pre-commit/pre-deploy → Spawn SWARM-TEST-LEGION
+□ Security scan stale >24h or dependency change → Spawn SWARM-SECURITY-SQUAD
+□ Quarterly maintenance or >10 outdated packages → Spawn SWARM-MIGRATION-CORPS
+□ PR opened with "test-all" label → Auto-launch SWARM-TEST-LEGION
 ```
 
 ## Agent Creation Templates
@@ -267,6 +273,9 @@ Code review (post-impl)      → REVIEWER (17)
 Bug fixing                   → BUG-HUNTER (18)
 Performance tuning           → PERFORMANCE-AUDITOR (28)
 Dependency management        → DEPENDENCY-GUARDIAN (25)
+Parallel test execution      → SWARM-TEST-LEGION (29)
+Parallel security scanning   → SWARM-SECURITY-SQUAD (30)
+Parallel tech migration      → SWARM-MIGRATION-CORPS (31)
 ```
 
 ## PARL Safety Rules

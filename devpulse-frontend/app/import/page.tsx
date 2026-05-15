@@ -154,7 +154,7 @@ export default function ImportPage() {
         </div>
       </div>
 
-      {preview && (
+      {!!preview && (
         <div className="mt-6 bg-gray-800/50 border border-gray-700 rounded-lg p-6">
           <h2 className="text-lg font-semibold text-white mb-4">Preview</h2>
           <pre className="text-gray-300 text-sm overflow-x-auto">

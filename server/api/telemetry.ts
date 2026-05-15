@@ -2,17 +2,19 @@
  * Telemetry Ingest API Router
  *
  * Accepts batched telemetry events from the DevPulse SDK.
- * Validates, de-duplicates, and stores AI call events.
+ * Validates, de-duplicates, and persists AI call events to the database.
  *
  * Endpoints:
  *   telemetry.ingest  — POST /v2/telemetry/events  (SDK → server)
  *   telemetry.events  — GET telemetry events for dashboard
- *   telemetry.stats   — GET aggregated stats (spend, latency, errors)
+ *   telemetry.stats   — GET aggregated stats (spend, latency, errors, by-model)
  */
 
+import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure, publicProcedure } from "../_core/trpc";
 import { logger } from "../_core/logger";
 import { z } from "zod";
+import * as db from "../db";
 
 // ── Validation schema ──────────────────────────────────────────────────────
 
@@ -48,20 +50,23 @@ const ingestSchema = z.object({
   events: z.array(telemetryEventSchema).min(1).max(500),
 });
 
-// ── In-memory buffer (replace with ClickHouse in production) ───────────────
+// ── De-duplication guard (in-process, 5-min TTL) ───────────────────────────
+// Prevents re-ingest of the same eventId within a single process lifetime.
+// Cross-process dedup is handled by the unique constraint on eventId in DB.
 
-const telemetryBuffer: z.infer<typeof telemetryEventSchema>[] = [];
-const MAX_BUFFER_SIZE = 10_000;
+const seenEventIds = new Set<string>();
+const DEDUP_WINDOW_MS = 5 * 60 * 1000;
+let lastDedupClean = Date.now();
 
-function addToBuffer(event: z.infer<typeof telemetryEventSchema>) {
-  // De-duplicate by eventId
-  const exists = telemetryBuffer.find((e) => e.eventId === event.eventId);
-  if (!exists) {
-    telemetryBuffer.push(event);
-    if (telemetryBuffer.length > MAX_BUFFER_SIZE) {
-      telemetryBuffer.shift(); // drop oldest
-    }
+function isDuplicate(eventId: string): boolean {
+  // Periodic cleanup of the in-process set to prevent unbounded growth
+  if (Date.now() - lastDedupClean > DEDUP_WINDOW_MS) {
+    seenEventIds.clear();
+    lastDedupClean = Date.now();
   }
+  if (seenEventIds.has(eventId)) return true;
+  seenEventIds.add(eventId);
+  return false;
 }
 
 export const telemetryRouter = router({
@@ -71,21 +76,82 @@ export const telemetryRouter = router({
     .input(ingestSchema)
     .mutation(async ({ input, ctx }) => {
       const startTime = Date.now();
+
+      // Authenticate via API key extracted from the request header
+      const apiKey = ctx.req.headers["x-api-key"];
+      if (typeof apiKey !== "string" || apiKey.trim().length === 0) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "Missing x-api-key header",
+        });
+      }
+
+      const user = await db.getUserByApiKey(apiKey.trim());
+      if (!user) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "Invalid API key",
+        });
+      }
+
       const accepted: string[] = [];
       const rejected: string[] = [];
+      const rows: db.InsertAiEventRow[] = [];
 
       for (const event of input.events) {
         try {
-          addToBuffer(event);
+          if (isDuplicate(event.eventId)) {
+            accepted.push(event.eventId); // idempotent ack
+            continue;
+          }
+          rows.push({
+            eventId: event.eventId,
+            userId: user.id,
+            workspaceId: event.workspaceId,
+            agentId: event.agentId,
+            userHash: event.userId ?? null,
+            provider: event.provider,
+            model: event.model,
+            requestTimestamp: new Date(event.requestTimestamp),
+            latencyMs: event.latencyMs,
+            inputTokens: event.inputTokens,
+            outputTokens: event.outputTokens,
+            cachedTokens: event.cachedTokens,
+            costUsd: String(event.costUsd),
+            status: event.status,
+            redactionCount: event.redactionCount,
+            promptHash: event.promptHash,
+            responseHash: event.responseHash,
+            toolCalls: event.toolCalls,
+            metadata: event.metadata,
+          });
           accepted.push(event.eventId);
         } catch (err) {
           rejected.push(event.eventId);
+          logger.warn({ err, eventId: event.eventId }, "[Telemetry] Event rejected");
+        }
+      }
+
+      // Bulk insert in a single query
+      if (rows.length > 0) {
+        try {
+          await db.insertAiEvents(rows);
+        } catch (err) {
+          logger.error({ err, count: rows.length }, "[Telemetry] Bulk insert failed");
+          // Mark all as rejected since we can't partial-insert with the current API
+          for (const r of rows) {
+            const idx = accepted.indexOf(r.eventId);
+            if (idx !== -1) {
+              accepted.splice(idx, 1);
+              rejected.push(r.eventId);
+            }
+          }
         }
       }
 
       const duration = Date.now() - startTime;
       logger.info(
-        { accepted: accepted.length, rejected: rejected.length, duration },
+        { accepted: accepted.length, rejected: rejected.length, duration, userId: user.id },
         "[Telemetry] Batch ingested"
       );
 
@@ -101,68 +167,28 @@ export const telemetryRouter = router({
   events: protectedProcedure
     .input(
       z.object({
-        limit: z.number().int().min(1).max(100).default(50),
+        limit: z.number().int().min(1).max(500).default(50),
         offset: z.number().int().min(0).default(0),
         provider: z.string().optional(),
         status: z.string().optional(),
         agentId: z.string().optional(),
       })
     )
-    .query(async ({ input }) => {
-      let events = [...telemetryBuffer].reverse();
-
-      if (input.provider) events = events.filter((e) => e.provider === input.provider);
-      if (input.status) events = events.filter((e) => e.status === input.status);
-      if (input.agentId) events = events.filter((e) => e.agentId === input.agentId);
-
-      const total = events.length;
-      const page = events.slice(input.offset, input.offset + input.limit);
-
-      return { events: page, total };
+    .query(async ({ input, ctx }) => {
+      const result = await db.listAiEvents(ctx.user.id, {
+        limit: input.limit,
+        offset: input.offset,
+        provider: input.provider,
+        status: input.status,
+        agentId: input.agentId,
+      });
+      return result;
     }),
 
   // ── Aggregated stats (for dashboard cards) ─────────────────────────────
 
-  stats: protectedProcedure.query(async () => {
-    const events = [...telemetryBuffer];
-
-    if (events.length === 0) {
-      return {
-        totalCalls: 0,
-        totalCostUsd: 0,
-        avgLatencyMs: 0,
-        errorRate: 0,
-        byProvider: {} as Record<string, number>,
-        byStatus: {} as Record<string, number>,
-        recentLatency: [] as Array<{ ts: string; ms: number }>,
-      };
-    }
-
-    const totalCost = events.reduce((s, e) => s + e.costUsd, 0);
-    const totalLatency = events.reduce((s, e) => s + e.latencyMs, 0);
-    const errors = events.filter((e) => e.status !== "ok");
-
-    const byProvider: Record<string, number> = {};
-    const byStatus: Record<string, number> = {};
-    for (const e of events) {
-      byProvider[e.provider] = (byProvider[e.provider] || 0) + 1;
-      byStatus[e.status] = (byStatus[e.status] || 0) + 1;
-    }
-
-    // Recent latency trend (last 50 events)
-    const recentLatency = events.slice(-50).map((e) => ({
-      ts: e.requestTimestamp,
-      ms: e.latencyMs,
-    }));
-
-    return {
-      totalCalls: events.length,
-      totalCostUsd: Math.round(totalCost * 1_000_000) / 1_000_000,
-      avgLatencyMs: Math.round(totalLatency / events.length),
-      errorRate: Math.round((errors.length / events.length) * 10000) / 100,
-      byProvider,
-      byStatus,
-      recentLatency,
-    };
+  stats: protectedProcedure.query(async ({ ctx }) => {
+    const stats = await db.getAiEventStats(ctx.user.id, 30);
+    return stats;
   }),
 });

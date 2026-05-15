@@ -8,6 +8,7 @@ import crypto from "crypto";
 import * as db from "./db";
 import { enqueueScan } from "./services/jobs";
 import { logger } from "./_core/logger";
+import { fetchWithTimeout } from "./utils/fetchWithTimeout";
 import {
   scanPullRequestFiles,
   type PullRequestFile,
@@ -291,4 +292,162 @@ export async function secretScanPullRequest(
     );
   }
   return out;
+}
+
+/* ─── GitHub App API helpers ───────────────────────────────────────────── */
+
+interface GitHubAppConfig {
+  appId: string;
+  privateKey: string;
+  installationId: string;
+}
+
+function getGitHubAppToken(config: GitHubAppConfig): string {
+  // In production: generate a JWT from appId + privateKey, exchange for
+  // installation access token. Here we accept a pre-generated token stored
+  // as the privateKey field for self-hosted / dev convenience.
+  return config.privateKey;
+}
+
+interface CreatePROptions {
+  repoFullName: string;
+  title: string;
+  body: string;
+  headBranch: string;
+  baseBranch: string;
+}
+
+export async function createPullRequest(
+  config: GitHubAppConfig,
+  options: CreatePROptions
+): Promise<{ prNumber: number; prUrl: string }> {
+  const token = getGitHubAppToken(config);
+  const url = `https://api.github.com/repos/${options.repoFullName}/pulls`;
+
+  const res = await fetchWithTimeout(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/vnd.github+json",
+      "Content-Type": "application/json",
+      "X-GitHub-Api-Version": "2022-11-28",
+    },
+    body: JSON.stringify({
+      title: options.title,
+      body: options.body,
+      head: options.headBranch,
+      base: options.baseBranch,
+    }),
+  });
+
+  if (!res || typeof (res as Response).json !== "function") {
+    throw new Error("Non-HTTP transport for GitHub API");
+  }
+  const response = res as Response;
+  const body = (await response.json()) as Record<string, unknown>;
+
+  if (!response.ok) {
+    throw new Error(
+      `GitHub API ${response.status}: ${body.message ?? "unknown error"}`
+    );
+  }
+
+  const prNumber = body.number as number;
+  const prUrl = body.html_url as string;
+  logger.info({ repo: options.repoFullName, prNumber }, "[GitHub] PR created");
+  return { prNumber, prUrl };
+}
+
+interface PostStatusOptions {
+  repoFullName: string;
+  commitSha: string;
+  state: "pending" | "success" | "failure" | "error";
+  context: string;
+  description: string;
+  targetUrl?: string;
+}
+
+export async function postCommitStatus(
+  config: GitHubAppConfig,
+  options: PostStatusOptions
+): Promise<void> {
+  const token = getGitHubAppToken(config);
+  const url = `https://api.github.com/repos/${options.repoFullName}/statuses/${options.commitSha}`;
+
+  const res = await fetchWithTimeout(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/vnd.github+json",
+      "Content-Type": "application/json",
+      "X-GitHub-Api-Version": "2022-11-28",
+    },
+    body: JSON.stringify({
+      state: options.state,
+      context: options.context,
+      description: options.description.slice(0, 140),
+      target_url: options.targetUrl ?? null,
+    }),
+  });
+
+  if (!res || typeof (res as Response).json !== "function") {
+    throw new Error("Non-HTTP transport for GitHub API");
+  }
+  const response = res as Response;
+  if (!response.ok) {
+    const body = (await response.json()) as Record<string, unknown>;
+    throw new Error(
+      `GitHub status API ${response.status}: ${body.message ?? "unknown error"}`
+    );
+  }
+
+  logger.info(
+    { repo: options.repoFullName, sha: options.commitSha, state: options.state },
+    "[GitHub] Commit status posted"
+  );
+}
+
+interface PostPRReviewOptions {
+  repoFullName: string;
+  prNumber: number;
+  body: string;
+  event?: "COMMENT" | "APPROVE" | "REQUEST_CHANGES";
+}
+
+export async function postPRReview(
+  config: GitHubAppConfig,
+  options: PostPRReviewOptions
+): Promise<void> {
+  const token = getGitHubAppToken(config);
+  const url = `https://api.github.com/repos/${options.repoFullName}/pulls/${options.prNumber}/reviews`;
+
+  const res = await fetchWithTimeout(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/vnd.github+json",
+      "Content-Type": "application/json",
+      "X-GitHub-Api-Version": "2022-11-28",
+    },
+    body: JSON.stringify({
+      body: options.body,
+      event: options.event ?? "COMMENT",
+    }),
+  });
+
+  if (!res || typeof (res as Response).json !== "function") {
+    throw new Error("Non-HTTP transport for GitHub API");
+  }
+  const response = res as Response;
+  if (!response.ok) {
+    const body = (await response.json()) as Record<string, unknown>;
+    throw new Error(
+      `GitHub review API ${response.status}: ${body.message ?? "unknown error"}`
+    );
+  }
+
+  logger.info(
+    { repo: options.repoFullName, prNumber: options.prNumber },
+    "[GitHub] PR review posted"
+  );
 }

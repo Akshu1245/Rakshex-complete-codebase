@@ -40,6 +40,14 @@ export interface AnomalyResult {
   reason: "spike" | "trough";
 }
 
+export interface SoftCapWarning {
+  model: string; // "aggregate" for overall cap
+  thresholdUsd: number;
+  projectedUsd: number;
+  daysUntilBreached: number | null; // null if already breached
+  severity: "info" | "warn" | "critical";
+}
+
 /** Holt-Winters double exponential smoothing on a univariate series. */
 function holtWinters(
   series: ReadonlyArray<number>,
@@ -192,4 +200,43 @@ export async function forecastPerModel(
   }
 
   return { aggregate: aggregateForecast, byModel };
+}
+
+/** Compute soft-cap warnings from forecast results. */
+export function computeSoftCapWarnings(
+  forecast: ForecastResult,
+  caps: Record<string, number>, // model -> capUsd; key "_total" for aggregate
+  currentSpendUsd = 0
+): SoftCapWarning[] {
+  const warnings: SoftCapWarning[] = [];
+  const totalCap = caps._total ?? 0;
+  const totalProjected = currentSpendUsd + forecast.forecast.reduce(
+    (s, p) => s + p.estimatedCostUsd, 0
+  );
+
+  if (totalCap > 0) {
+    const daysUntil = currentSpendUsd >= totalCap
+      ? null
+      : forecast.forecast.findIndex(
+          (_, i) =>
+            currentSpendUsd +
+            forecast.forecast.slice(0, i + 1).reduce((s, p) => s + p.estimatedCostUsd, 0) >=
+            totalCap
+        );
+    const severity: SoftCapWarning["severity"] =
+      currentSpendUsd >= totalCap
+        ? "critical"
+        : (daysUntil !== null && daysUntil !== -1 && daysUntil < 3)
+          ? "warn"
+          : "info";
+    warnings.push({
+      model: "aggregate",
+      thresholdUsd: totalCap,
+      projectedUsd: totalProjected,
+      daysUntilBreached: daysUntil !== null && daysUntil !== -1 ? daysUntil + 1 : null,
+      severity,
+    });
+  }
+
+  return warnings;
 }

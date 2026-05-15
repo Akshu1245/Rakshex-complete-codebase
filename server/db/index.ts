@@ -1,8 +1,9 @@
 import { drizzle } from "drizzle-orm/mysql2";
+import type { MySql2Database } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import { logger } from "../_core/logger";
 
-let _db: ReturnType<typeof drizzle> | null = null;
+let _db: MySql2Database<Record<string, unknown>> | null = null;
 
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {

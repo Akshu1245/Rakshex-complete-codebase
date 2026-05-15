@@ -34,6 +34,25 @@ export async function setupVite(app: Express, server: Server) {
         "index.html"
       );
 
+      // Guard: the project no longer uses a Vite SPA in client/.
+      // The frontend is a separate Next.js app under devpulse-frontend/.
+      if (!fs.existsSync(clientTemplate)) {
+        res
+          .status(200)
+          .set({ "Content-Type": "text/html" })
+          .end(`<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>DevPulse API</title></head>
+<body style="font-family:system-ui,sans-serif;padding:2rem">
+  <h1>DevPulse Backend is running</h1>
+  <p>The frontend is a separate Next.js app. Start it with:</p>
+  <pre style="background:#f4f4f4;padding:1rem">cd devpulse-frontend && npm run dev</pre>
+  <p>API health check: <a href="/api/health">/api/health</a></p>
+</body>
+</html>`);
+        return;
+      }
+
       // always reload the index.html file from disk incase it changes
       let template = await fs.promises.readFile(clientTemplate, "utf-8");
       template = template.replace(

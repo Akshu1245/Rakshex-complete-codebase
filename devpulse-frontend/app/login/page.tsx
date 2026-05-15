@@ -24,7 +24,7 @@ export default function LoginPage() {
     onSuccess: (data) => {
       if (data?.requires2FA) {
         setRequires2FA(true);
-        setTwoFAUserId(data.userId || "");
+        setTwoFAUserId(String(data.userId || ""));
       } else {
         router.push("/dashboard");
       }

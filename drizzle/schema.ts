@@ -1364,3 +1364,49 @@ export const importHistory = mysqlTable(
 );
 export type ImportHistoryRow = typeof importHistory.$inferSelect;
 export type InsertImportHistoryRow = typeof importHistory.$inferInsert;
+
+/**
+ * AI Events — persisted telemetry from the DevPulse SDK.
+ * One row per LLM call (prompt/response/tool-call/cost/latency).
+ * Columnar-friendly indexes for dashboard aggregation queries.
+ */
+export const aiEvents = mysqlTable(
+  "ai_events",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    eventId: varchar("eventId", { length: 36 }).notNull().unique(),
+    userId: int("userId").notNull(),
+    workspaceId: varchar("workspaceId", { length: 64 }).notNull(),
+    agentId: varchar("agentId", { length: 64 }).notNull(),
+    userHash: varchar("userHash", { length: 128 }),
+    provider: varchar("provider", { length: 32 }).notNull(),
+    model: varchar("model", { length: 128 }).notNull(),
+    requestTimestamp: timestamp("requestTimestamp").notNull(),
+    latencyMs: int("latencyMs").notNull(),
+    inputTokens: int("inputTokens").default(0).notNull(),
+    outputTokens: int("outputTokens").default(0).notNull(),
+    cachedTokens: int("cachedTokens").default(0).notNull(),
+    costUsd: decimal("costUsd", { precision: 10, scale: 6 }).default("0").notNull(),
+    status: mysqlEnum("status", ["ok", "error", "timeout", "blocked"])
+      .notNull()
+      .default("ok"),
+    redactionCount: int("redactionCount").default(0).notNull(),
+    promptHash: varchar("promptHash", { length: 64 }).notNull(),
+    responseHash: varchar("responseHash", { length: 64 }).notNull(),
+    toolCalls: json("toolCalls"),
+    metadata: json("metadata"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => ({
+    userIdIdx: index("userId_idx").on(table.userId),
+    workspaceIdIdx: index("workspaceId_idx").on(table.workspaceId),
+    agentIdIdx: index("agentId_idx").on(table.agentId),
+    createdAtIdx: index("createdAt_idx").on(table.createdAt),
+    providerIdx: index("provider_idx").on(table.provider),
+    modelIdx: index("model_idx").on(table.model),
+    statusIdx: index("status_idx").on(table.status),
+    requestTsIdx: index("requestTs_idx").on(table.requestTimestamp),
+  })
+);
+export type AiEventRow = typeof aiEvents.$inferSelect;
+export type InsertAiEventRow = typeof aiEvents.$inferInsert;

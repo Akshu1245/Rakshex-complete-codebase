@@ -370,11 +370,16 @@ PULSE-COMMAND (me) — Autonomous command
 ├── RESILIENCE (1)
 │   └── ERROR-RECOVERY → Tracks all errors, traces root cause, maps blast radius, auto-retries
 │
-├── GUARDIANS (4)  ← NEW
+├── GUARDIANS (4)
 │   ├── DEPENDENCY-GUARDIAN → Supply chain security, version alignment, vulnerability audits
 │   ├── API-STEWARD → tRPC/OpenAPI contract stability, breaking change detection
 │   ├── COMPETITIVE-WATCH → Continuous competitor monitoring, weekly briefs
 │   └── PERFORMANCE-AUDITOR → Gateway latency, N+1 queries, load testing, regression gates
+│
+├── SWARM COMMANDERS (3)  ← NEW — Parallel execution specialists
+│   ├── SWARM-TEST-LEGION → Unit + Integration + E2E + Visual + A11y + Perf in parallel
+│   ├── SWARM-SECURITY-SQUAD → Deps + Code + Secrets + API + Infra scans simultaneously
+│   └── SWARM-MIGRATION-CORPS → Node + Framework + DB + API upgrades in parallel branches
 │
 └── OPERATIONS (2)
     ├── OPS-RELEASE      → Versioning, changelogs, release management

@@ -46,7 +46,7 @@ export default function AuditLogPage() {
   };
 
   /** Derive a human-readable resource label from the log entry */
-  const getResourceLabel = (log: { action: string; details?: Record<string, unknown> | null; ipAddress?: string | null }) => {
+  const getResourceLabel = (log: { action: string; details?: unknown; ipAddress?: string | null }) => {
     if (log.details && typeof log.details === "object") {
       // Try common resource identifier keys
       const d = log.details as Record<string, unknown>;

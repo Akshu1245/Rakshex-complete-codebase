@@ -64,4 +64,16 @@ export const adminRouter = router({
       freeUsers: allUsers.length - proUsers.length,
     };
   }),
+
+  changeUserPlan: adminProcedure
+    .input(
+      z.object({
+        userId: z.number(),
+        plan: z.enum(["free", "pro", "enterprise"]),
+      })
+    )
+    .mutation(async ({ input }) => {
+      await db.updateUserPlan(input.userId, input.plan);
+      return { success: true };
+    }),
 });

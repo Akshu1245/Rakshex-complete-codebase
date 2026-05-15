@@ -57,6 +57,31 @@ describe("redactPII", () => {
     expect(result.text).toBe("");
     expect(result.redactionCount).toBe(0);
   });
+
+  // Indian PII — DPDP 2023
+  it("redacts Aadhaar numbers", () => {
+    const result = redactPII("My Aadhaar is 1234 5678 9012");
+    expect(result.text).toContain("[AADHAAR_REDACTED]");
+    expect(result.redactedTypes).toContain("aadhaar");
+  });
+
+  it("redacts PAN numbers", () => {
+    const result = redactPII("PAN: ABCDE1234F");
+    expect(result.text).toContain("[PAN_REDACTED]");
+    expect(result.redactedTypes).toContain("pan");
+  });
+
+  it("redacts IFSC codes", () => {
+    const result = redactPII("IFSC: SBIN0001234 for transfer");
+    expect(result.text).toContain("[IFSC_REDACTED]");
+    expect(result.redactedTypes).toContain("ifsc");
+  });
+
+  it("redacts Indian passport numbers", () => {
+    const result = redactPII("Passport J1234567");
+    expect(result.text).toContain("[PASSPORT_REDACTED]");
+    expect(result.redactedTypes).toContain("passport_in");
+  });
 });
 
 describe("hashContent", () => {

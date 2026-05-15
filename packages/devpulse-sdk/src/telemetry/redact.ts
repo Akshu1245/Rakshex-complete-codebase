@@ -17,6 +17,27 @@ const PII_PATTERNS: Array<{ name: string; regex: RegExp; replacement: string }> 
   { name: "api_key", regex: /\b(sk-[a-zA-Z0-9]{20,}|xai-[a-zA-Z0-9]{20,}|AIza[0-9A-Za-z_-]{35})\b/g, replacement: "[API_KEY_REDACTED]" },
   { name: "jwt", regex: /\beyJ[a-zA-Z0-9_-]+\.eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\b/g, replacement: "[JWT_REDACTED]" },
   { name: "aws_key", regex: /\b(AKIA|ASIA)[A-Z0-9]{16}\b/g, replacement: "[AWS_KEY_REDACTED]" },
+  // Indian PII — DPDP 2023 compliance
+  {
+    name: "aadhaar",
+    regex: /\b(?:\d{4}[\s-]?){2}\d{4}\b/g,
+    replacement: "[AADHAAR_REDACTED]",
+  },
+  {
+    name: "pan",
+    regex: /\b[A-Z]{5}\d{4}[A-Z]\b/g,
+    replacement: "[PAN_REDACTED]",
+  },
+  {
+    name: "ifsc",
+    regex: /\b[A-Z]{4}0[A-Z0-9]{6}\b/g,
+    replacement: "[IFSC_REDACTED]",
+  },
+  {
+    name: "passport_in",
+    regex: /\b[A-Z][1-9]\d{6}\b/g,
+    replacement: "[PASSPORT_REDACTED]",
+  },
 ];
 
 export interface RedactionResult {

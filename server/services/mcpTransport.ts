@@ -219,6 +219,96 @@ async function discoverViaHttp(url: string): Promise<McpDiscoverResult> {
   };
 }
 
+/* ─── SSE transport ────────────────────────────────────────────────────── */
+
+async function discoverViaSse(url: string): Promise<McpDiscoverResult> {
+  // SSE endpoint returns a session ID; POST endpoint receives commands
+  const sseUrl = `${url.replace(/\/$/, "")}/sse`;
+  const postUrl = `${url.replace(/\/$/, "")}/message`;
+
+  const eventSource = new EventSource(sseUrl);
+  let sessionId: string | null = null;
+
+  return new Promise<McpDiscoverResult>((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      eventSource.close();
+      reject(new Error("MCP SSE discovery timed out after 15s"));
+    }, 15_000);
+
+    eventSource.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+        // First message may contain endpoint info
+        if (msg.event === "endpoint" && msg.data) {
+          sessionId = msg.data;
+          // Send initialize after session established
+          sendSseCommand(postUrl, sessionId, "initialize", {
+            protocolVersion: "2024-11-05",
+            capabilities: {},
+            clientInfo: { name: "devpulse", version: "1.0.0" },
+          }).then(() => {
+            return sendSseCommand(postUrl, sessionId!, "tools/list", {});
+          }).then((result) => {
+            clearTimeout(timeout);
+            eventSource.close();
+            const tools = Array.isArray((result as { tools?: McpToolDef[] }).tools)
+              ? ((result as { tools: McpToolDef[] }).tools)
+              : [];
+            resolve({
+              server: { name: url, version: "unknown" },
+              tools: tools.map((t) => ({
+                name: t.name,
+                description: t.description,
+                inputSchema: t.inputSchema ?? {},
+              })),
+            });
+          }).catch((err) => {
+            clearTimeout(timeout);
+            eventSource.close();
+            reject(err);
+          });
+        }
+      } catch {
+        // non-JSON SSE event — ignore
+      }
+    };
+
+    eventSource.onerror = () => {
+      clearTimeout(timeout);
+      eventSource.close();
+      reject(new Error("SSE connection failed"));
+    };
+  });
+}
+
+async function sendSseCommand(
+  postUrl: string,
+  sessionId: string | null,
+  method: string,
+  params?: Record<string, unknown>
+): Promise<unknown> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  };
+  if (sessionId) {
+    headers["mcp-session-id"] = sessionId;
+  }
+  const res = await fetchWithTimeout(postUrl, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method, params }),
+  });
+  if (!res || typeof (res as Response).json !== "function") {
+    throw new Error(`MCP SSE POST failed for ${method}`);
+  }
+  const response = res as Response;
+  if (!response.ok) throw new Error(`MCP SSE ${response.status} for ${method}`);
+  const body = (await response.json()) as { error?: { message: string }; result?: unknown };
+  if (body.error) throw new Error(body.error.message ?? "MCP error");
+  return body.result;
+}
+
 /* ─── Main entry point ─────────────────────────────────────────────────── */
 
 export async function discoverMcpTools(
@@ -233,11 +323,13 @@ export async function discoverMcpTools(
       }
       return discoverViaStdio(command);
     }
-    case "streamable-http":
-    case "sse": {
-      if (!url) throw new Error(`${transport} transport requires a URL`);
-      // SSE transport falls back to HTTP POST for discovery
+    case "streamable-http": {
+      if (!url) throw new Error("streamable-http transport requires a URL");
       return discoverViaHttp(url);
+    }
+    case "sse": {
+      if (!url) throw new Error("sse transport requires a URL");
+      return discoverViaSse(url);
     }
     default:
       throw new Error(`Unknown MCP transport: ${transport}`);

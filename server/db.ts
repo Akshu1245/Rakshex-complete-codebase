@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { eq, and, desc, gte, lt, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
+import type { MySql2Database } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 
 /** Generate a cryptographically secure ID with a prefix — replaces Math.random() */
@@ -52,6 +53,9 @@ import {
   mcpTools,
   mcpInvocationLog,
   importHistory,
+  aiEvents,
+  type AiEventRow,
+  type InsertAiEventRow,
   type TenantPolicyRow,
   type InsertTenantPolicyRow,
   type AlertRuleRow,
@@ -113,7 +117,7 @@ export type SubscriptionStatus = Subscription["status"];
 export type PaymentStatus = Payment["status"];
 export type RefundStatus = NonNullable<Payment["refundStatus"]>;
 
-let _db: ReturnType<typeof drizzle> | null = null;
+let _db: MySql2Database<Record<string, unknown>> | null = null;
 
 // Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
@@ -2904,6 +2908,25 @@ export async function listAutofix(
     .orderBy(desc(autofixSuggestions.createdAt));
 }
 
+export async function getAutofixById(
+  userId: number,
+  id: number
+): Promise<AutofixSuggestionRow | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db
+    .select()
+    .from(autofixSuggestions)
+    .where(
+      and(
+        eq(autofixSuggestions.id, id),
+        eq(autofixSuggestions.userId, userId)
+      )
+    )
+    .limit(1);
+  return rows[0];
+}
+
 export async function updateAutofixStatus(
   userId: number,
   id: number,
@@ -3729,4 +3752,150 @@ export async function getImportHistory(
     .where(eq(importHistory.userId, userId))
     .orderBy(desc(importHistory.createdAt))
     .limit(Math.min(limit, 200));
+}
+
+// ── AI Events (telemetry) queries ─────────────────────────────────────────
+
+export type { InsertAiEventRow } from "../drizzle/schema";
+
+export async function insertAiEvents(
+  rows: InsertAiEventRow[]
+): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(aiEvents).values(rows);
+}
+
+export async function listAiEvents(
+  userId: number,
+  options: {
+    limit?: number;
+    offset?: number;
+    provider?: string;
+    status?: string;
+    agentId?: string;
+  } = {}
+): Promise<{ events: AiEventRow[]; total: number }> {
+  const db = await getDb();
+  if (!db) return { events: [], total: 0 };
+
+  const {
+    limit = 50,
+    offset = 0,
+    provider,
+    status,
+    agentId,
+  } = options;
+
+  const conditions = [eq(aiEvents.userId, userId)];
+  if (provider) conditions.push(eq(aiEvents.provider, provider));
+  if (status) conditions.push(eq(aiEvents.status, status as AiEventRow["status"]));
+  if (agentId) conditions.push(eq(aiEvents.agentId, agentId));
+
+  const where = conditions.length === 1
+    ? conditions[0]
+    : and(...conditions);
+
+  const rows = await db
+    .select()
+    .from(aiEvents)
+    .where(where)
+    .orderBy(desc(aiEvents.requestTimestamp))
+    .limit(Math.min(limit, 500))
+    .offset(offset);
+
+  const countResult = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(aiEvents)
+    .where(where);
+
+  return { events: rows, total: countResult[0]?.count ?? 0 };
+}
+
+export async function getAiEventStats(
+  userId: number,
+  days = 30
+): Promise<{
+  totalCalls: number;
+  totalCostUsd: number;
+  avgLatencyMs: number;
+  errorRate: number;
+  byProvider: Record<string, number>;
+  byStatus: Record<string, number>;
+  byModel: Record<string, { calls: number; cost: number }>;
+  recentLatency: Array<{ ts: string; ms: number }>;
+}> {
+  const db = await getDb();
+  if (!db) {
+    return {
+      totalCalls: 0,
+      totalCostUsd: 0,
+      avgLatencyMs: 0,
+      errorRate: 0,
+      byProvider: {},
+      byStatus: {},
+      byModel: {},
+      recentLatency: [],
+    };
+  }
+
+  const since = new Date();
+  since.setDate(since.getDate() - days);
+
+  const rows = await db
+    .select()
+    .from(aiEvents)
+    .where(
+      and(
+        eq(aiEvents.userId, userId),
+        gte(aiEvents.requestTimestamp, since)
+      )
+    )
+    .orderBy(desc(aiEvents.requestTimestamp))
+    .limit(5000);
+
+  if (rows.length === 0) {
+    return {
+      totalCalls: 0,
+      totalCostUsd: 0,
+      avgLatencyMs: 0,
+      errorRate: 0,
+      byProvider: {},
+      byStatus: {},
+      byModel: {},
+      recentLatency: [],
+    };
+  }
+
+  const totalCost = rows.reduce((s, e) => s + Number(e.costUsd), 0);
+  const totalLatency = rows.reduce((s, e) => s + e.latencyMs, 0);
+  const errors = rows.filter((e) => e.status !== "ok");
+
+  const byProvider: Record<string, number> = {};
+  const byStatus: Record<string, number> = {};
+  const byModel: Record<string, { calls: number; cost: number }> = {};
+
+  for (const e of rows) {
+    byProvider[e.provider] = (byProvider[e.provider] || 0) + 1;
+    byStatus[e.status] = (byStatus[e.status] || 0) + 1;
+    byModel[e.model] = byModel[e.model] || { calls: 0, cost: 0 };
+    byModel[e.model].calls += 1;
+    byModel[e.model].cost += Number(e.costUsd);
+  }
+
+  const recentLatency = rows.slice(0, 50).map((e) => ({
+    ts: e.requestTimestamp.toISOString(),
+    ms: e.latencyMs,
+  }));
+
+  return {
+    totalCalls: rows.length,
+    totalCostUsd: Math.round(totalCost * 1_000_000) / 1_000_000,
+    avgLatencyMs: Math.round(totalLatency / rows.length),
+    errorRate: Math.round((errors.length / rows.length) * 10000) / 100,
+    byProvider,
+    byStatus,
+    byModel,
+    recentLatency,
+  };
 }

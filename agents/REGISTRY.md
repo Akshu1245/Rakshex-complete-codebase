@@ -15,7 +15,7 @@ The entire team awakens, discovers work, makes decisions, executes, learns, and 
 
 ---
 
-## Team Structure (23 Agents + Dynamic Spawned)
+## Team Structure (28 Agents + Dynamic Spawned)
 
 ```
 PULSE-COMMAND ←═══ ALL REPORTS FLOW HERE ════╗
@@ -50,20 +50,22 @@ PULSE-COMMAND ←═══ ALL REPORTS FLOW HERE ════╗
 │   ├── 19-ops-release     — Releases            ║
 │   └── 20-ops-monitor     — Monitoring          ║
 │                                                ║
-├── AUTONOMY (3)
-│   ├── 22-agent-factory   — Spawns agents
-│   ├── 23-research-orch   — Finds all work
-│   └── 24-error-recovery  — Tracks & retries errors
-│
-├── GUARDIANS (4)  ← NEW
-│   ├── 25-dependency-guardian — Supply chain security
-│   ├── 26-api-steward         — API contract stability
-│   ├── 27-competitive-watch   — Competitor monitoring
-│   └── 28-performance-auditor — Latency & perf
-│
-└── DYNAMIC (variable)                           ║
-    └── agents/ spawned by AGENT-FACTORY         ║
-                                                 ║
+├── AUTONOMY (3)                                 ║
+│   ├── 22-agent-factory   — Spawns agents       ║
+│   ├── 23-research-orch   — Finds all work      ║
+│   └── 24-error-recovery  — Tracks & retries    ║
+│                                                ║
+├── GUARDIANS (4)                                ║
+│   ├── 25-dependency-guardian — Supply chain     ║
+│   ├── 26-api-steward         — API contracts     ║
+│   ├── 27-competitive-watch   — Competitor intel  ║
+│   └── 28-performance-auditor — Latency & perf   ║
+│                                                ║
+└── SWARM COMMANDERS (3)                         ║
+    ├── 29-swarm-test-legion    — Parallel tests  ║
+    ├── 30-swarm-security-squad — Parallel scans  ║
+    └── 31-swarm-migration-corps — Parallel upgrades║
+                                                  ║
 EVERY AGENT REPORTS TO PULSE-COMMAND ═══════════╝
 ```
 
@@ -209,4 +211,7 @@ DISCOVER → DECIDE → EXECUTE → LEARN → DISCOVER → ...
 | 26 | `agents/26-api-steward.md` | API-STEWARD | Guardians |
 | 27 | `agents/27-competitive-watch.md` | COMPETITIVE-WATCH | Guardians |
 | 28 | `agents/28-performance-auditor.md` | PERFORMANCE-AUDITOR | Guardians |
+| 29 | `agents/29-swarm-test-legion.md` | SWARM-TEST-LEGION | Swarm Commander |
+| 30 | `agents/30-swarm-security-squad.md` | SWARM-SECURITY-SQUAD | Swarm Commander |
+| 31 | `agents/31-swarm-migration-corps.md` | SWARM-MIGRATION-CORPS | Swarm Commander |
 | — | `agents/REGISTRY.md` | This file | Reference |

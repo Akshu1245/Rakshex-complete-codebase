@@ -203,14 +203,15 @@ class ProviderRegistry {
 
   /** Find the first provider that supports a given model. */
   findForModel(model: string): LLMProvider | undefined {
-    for (const p of this.providers.values()) {
+    const providers = Array.from(this.providers.values());
+    for (const p of providers) {
       if (p.supportsModel(model)) return p;
     }
     return undefined;
   }
 
   list(): string[] {
-    return [...this.providers.keys()];
+    return Array.from(this.providers.keys());
   }
 }
 
