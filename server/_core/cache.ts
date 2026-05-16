@@ -1,18 +1,55 @@
 import Redis from "ioredis";
 import { logger } from "./logger";
 import crypto from "crypto";
+import { trace, SpanKind } from "@opentelemetry/api";
+
+const tracer = trace.getTracer("devpulse-redis");
+
+/**
+ * Span-wrapped Redis GET. Records hit/miss as span attribute.
+ * Key is recorded; value is never stored in span attributes.
+ */
+async function spanGet(key: string): Promise<string | null> {
+  const span = tracer.startSpan("redis.get", { kind: SpanKind.CLIENT });
+  try {
+    span.setAttribute("db.system", "redis");
+    span.setAttribute("db.operation", "GET");
+    span.setAttribute("cache.key", key);
+    const value = await redis.get(key);
+    span.setAttribute("cache.hit", value !== null);
+    return value;
+  } finally {
+    span.end();
+  }
+}
+
+/**
+ * Span-wrapped Redis SETEX. Key and TTL are recorded; value is never in span attributes.
+ */
+async function spanSetex(key: string, ttl: number, value: string): Promise<void> {
+  const span = tracer.startSpan("redis.setex", { kind: SpanKind.CLIENT });
+  try {
+    span.setAttribute("db.system", "redis");
+    span.setAttribute("db.operation", "SETEX");
+    span.setAttribute("cache.key", key);
+    span.setAttribute("cache.ttl", ttl);
+    await redis.setex(key, ttl, value);
+  } finally {
+    span.end();
+  }
+}
 
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 
 export const redis = new Redis(REDIS_URL, {
-  retryStrategy: times => {
+  retryStrategy: (times) => {
     const delay = Math.min(times * 50, 2000);
     return delay;
   },
   maxRetriesPerRequest: 3,
 });
 
-redis.on("error", err => {
+redis.on("error", (err) => {
   logger.error({ err: err }, "Redis error");
 });
 
@@ -40,11 +77,11 @@ export const cacheKeys = {
 export async function getOrSetCache<T>(
   key: string,
   ttl: number,
-  fetchFn: () => Promise<T>
+  fetchFn: () => Promise<T>,
 ): Promise<T> {
   try {
     // Try to get from cache
-    const cached = await redis.get(key);
+    const cached = await spanGet(key);
     if (cached) {
       return JSON.parse(cached);
     }
@@ -53,7 +90,7 @@ export async function getOrSetCache<T>(
     const data = await fetchFn();
 
     // Store in cache
-    await redis.setex(key, ttl, JSON.stringify(data));
+    await spanSetex(key, ttl, JSON.stringify(data));
 
     return data;
   } catch (error) {
@@ -83,13 +120,9 @@ export async function invalidateUserCache(userId: number): Promise<void> {
 // Cache middleware for tRPC
 export function createCacheMiddleware<T>(
   getCacheKey: (input: T, userId: number) => string,
-  ttl: number
+  ttl: number,
 ) {
-  return async (
-    input: T,
-    userId: number,
-    fetchFn: () => Promise<any>
-  ): Promise<any> => {
+  return async (input: T, userId: number, fetchFn: () => Promise<any>): Promise<any> => {
     const key = getCacheKey(input, userId);
     return getOrSetCache(key, ttl, fetchFn);
   };
@@ -116,7 +149,7 @@ export function createCacheMiddleware<T>(
 export async function rateLimitSlidingWindow(
   key: string,
   limit: number,
-  windowMs: number
+  windowMs: number,
 ): Promise<{ allowed: boolean; current: number; resetAt: number }> {
   const now = Date.now();
   const windowStart = now - windowMs;
@@ -142,7 +175,7 @@ export async function rateLimitSlidingWindow(
     const errorDetail = err instanceof Error ? err.message : err;
     logger.warn(
       { error: errorDetail, key },
-      `[RateLimit] Redis check failed for ${key}, failing open`
+      `[RateLimit] Redis check failed for ${key}, failing open`,
     );
     return { allowed: true, current: 0, resetAt: now + windowMs };
   }

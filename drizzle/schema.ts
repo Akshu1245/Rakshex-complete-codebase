@@ -23,18 +23,12 @@ export const users = mysqlTable(
     name: text("name"),
     email: varchar("email", { length: 320 }),
     loginMethod: varchar("loginMethod", { length: 64 }),
-    role: mysqlEnum("role", ["user", "editor", "admin"])
-      .default("user")
-      .notNull(),
-    plan: mysqlEnum("plan", ["free", "pro", "enterprise"])
-      .default("free")
-      .notNull(),
+    role: mysqlEnum("role", ["user", "editor", "admin"]).default("user").notNull(),
+    plan: mysqlEnum("plan", ["free", "pro", "enterprise"]).default("free").notNull(),
     passwordHash: varchar("passwordHash", { length: 512 }),
     apiKey: varchar("apiKey", { length: 64 }),
     scansRemaining: int("scansRemaining").default(10).notNull(),
-    onboardingCompleted: boolean("onboardingCompleted")
-      .default(false)
-      .notNull(),
+    onboardingCompleted: boolean("onboardingCompleted").default(false).notNull(),
     failedLoginAttempts: int("failedLoginAttempts").default(0).notNull(),
     lockedUntil: timestamp("lockedUntil"),
     totpSecret: varchar("totpSecret", { length: 64 }),
@@ -44,10 +38,10 @@ export const users = mysqlTable(
     updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
     lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
   },
-  table => ({
+  (table) => ({
     emailIdx: index("email_idx").on(table.email),
     apiKeyIdx: index("apiKey_idx").on(table.apiKey),
-  })
+  }),
 );
 
 export type User = typeof users.$inferSelect;
@@ -66,10 +60,10 @@ export const vscodeActivities = mysqlTable(
     timestamp: timestamp("timestamp").notNull(),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
-  table => ({
+  (table) => ({
     userIdIdx: index("userId_idx").on(table.userId),
     timestampIdx: index("timestamp_idx").on(table.timestamp),
-  })
+  }),
 );
 
 export type VscodeActivity = typeof vscodeActivities.$inferSelect;
@@ -93,10 +87,10 @@ export const collections = mysqlTable(
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   },
-  table => ({
+  (table) => ({
     userIdIdx: index("userId_idx").on(table.userId),
     githubRepoIdx: index("githubRepo_idx").on(table.githubRepo),
-  })
+  }),
 );
 
 export type Collection = typeof collections.$inferSelect;
@@ -111,34 +105,19 @@ export const scans = mysqlTable(
     id: varchar("id", { length: 64 }).primaryKey(),
     userId: int("userId").notNull(),
     collectionId: varchar("collectionId", { length: 64 }).notNull(),
-    scanType: mysqlEnum("scanType", [
-      "full",
-      "quick",
-      "shadow_api",
-      "prompt_injection",
-    ]).notNull(),
-    status: mysqlEnum("status", [
-      "pending",
-      "running",
-      "completed",
-      "failed",
-    ]).notNull(),
+    scanType: mysqlEnum("scanType", ["full", "quick", "shadow_api", "prompt_injection"]).notNull(),
+    status: mysqlEnum("status", ["pending", "running", "completed", "failed"]).notNull(),
     riskScore: decimal("riskScore", { precision: 5, scale: 2 }).default("0"),
-    riskLevel: mysqlEnum("riskLevel", [
-      "LOW",
-      "MEDIUM",
-      "HIGH",
-      "CRITICAL",
-    ]).notNull(),
+    riskLevel: mysqlEnum("riskLevel", ["LOW", "MEDIUM", "HIGH", "CRITICAL"]).notNull(),
     totalFindings: int("totalFindings").default(0).notNull(),
     findingsData: json("findingsData"), // Store findings summary
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     completedAt: timestamp("completedAt"),
   },
-  table => ({
+  (table) => ({
     userIdIdx: index("userId_idx").on(table.userId),
     collectionIdIdx: index("collectionId_idx").on(table.collectionId),
-  })
+  }),
 );
 
 export type Scan = typeof scans.$inferSelect;
@@ -156,26 +135,19 @@ export const findings = mysqlTable(
     userId: int("userId").notNull(),
     title: varchar("title", { length: 255 }).notNull(),
     description: text("description"),
-    severity: mysqlEnum("severity", [
-      "Critical",
-      "High",
-      "Medium",
-      "Low",
-    ]).notNull(),
+    severity: mysqlEnum("severity", ["Critical", "High", "Medium", "Low"]).notNull(),
     category: varchar("category", { length: 255 }),
     remediation: text("remediation"),
-    status: mysqlEnum("status", ["open", "in-progress", "resolved"])
-      .default("open")
-      .notNull(),
+    status: mysqlEnum("status", ["open", "in-progress", "resolved"]).default("open").notNull(),
     cweId: varchar("cweId", { length: 64 }),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   },
-  table => ({
+  (table) => ({
     scanIdIdx: index("scanId_idx").on(table.scanId),
     collectionIdIdx: index("collectionId_idx").on(table.collectionId),
     userIdIdx: index("userId_idx").on(table.userId),
-  })
+  }),
 );
 
 export type Finding = typeof findings.$inferSelect;
@@ -195,22 +167,17 @@ export const shadowAPIs = mysqlTable(
     method: varchar("method", { length: 16 }),
     file: varchar("file", { length: 255 }),
     line: int("line"),
-    riskLevel: mysqlEnum("riskLevel", [
-      "LOW",
-      "MEDIUM",
-      "HIGH",
-      "CRITICAL",
-    ]).notNull(),
+    riskLevel: mysqlEnum("riskLevel", ["LOW", "MEDIUM", "HIGH", "CRITICAL"]).notNull(),
     reason: text("reason"),
     recommendation: text("recommendation"),
     isDocumented: boolean("isDocumented").default(false).notNull(),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
-  table => ({
+  (table) => ({
     scanIdIdx: index("scanId_idx").on(table.scanId),
     collectionIdIdx: index("collectionId_idx").on(table.collectionId),
     userIdIdx: index("userId_idx").on(table.userId),
-  })
+  }),
 );
 
 export type ShadowAPI = typeof shadowAPIs.$inferSelect;
@@ -233,11 +200,11 @@ export const tokenUsage = mysqlTable(
     date: timestamp("date").defaultNow().notNull(),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
-  table => ({
+  (table) => ({
     userIdIdx: index("userId_idx").on(table.userId),
     modelIdx: index("model_idx").on(table.model),
     dateIdx: index("date_idx").on(table.date),
-  })
+  }),
 );
 
 export type TokenUsage = typeof tokenUsage.$inferSelect;
@@ -263,9 +230,9 @@ export const killSwitchEvents = mysqlTable(
     details: json("details"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
-  table => ({
+  (table) => ({
     userIdIdx: index("userId_idx").on(table.userId),
-  })
+  }),
 );
 
 export type KillSwitchEvent = typeof killSwitchEvents.$inferSelect;
@@ -292,9 +259,9 @@ export const killSwitchSettings = mysqlTable(
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   },
-  table => ({
+  (table) => ({
     userIdIdx: index("userId_idx").on(table.userId),
-  })
+  }),
 );
 
 export type KillSwitchSettings = typeof killSwitchSettings.$inferSelect;
@@ -309,11 +276,7 @@ export const complianceReports = mysqlTable(
     id: varchar("id", { length: 64 }).primaryKey(),
     userId: int("userId").notNull(),
     collectionId: varchar("collectionId", { length: 64 }).notNull(),
-    reportType: mysqlEnum("reportType", [
-      "pci_dss",
-      "owasp",
-      "custom",
-    ]).notNull(),
+    reportType: mysqlEnum("reportType", ["pci_dss", "owasp", "custom"]).notNull(),
     complianceScore: decimal("complianceScore", {
       precision: 5,
       scale: 2,
@@ -324,10 +287,10 @@ export const complianceReports = mysqlTable(
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     expiresAt: timestamp("expiresAt"),
   },
-  table => ({
+  (table) => ({
     userIdIdx: index("userId_idx").on(table.userId),
     collectionIdIdx: index("collectionId_idx").on(table.collectionId),
-  })
+  }),
 );
 
 export type ComplianceReport = typeof complianceReports.$inferSelect;
@@ -343,19 +306,15 @@ export const teamMembers = mysqlTable(
     userId: int("userId").notNull(), // Owner/inviter
     memberEmail: varchar("memberEmail", { length: 320 }).notNull(),
     memberUserId: int("memberUserId"), // Set when member accepts invitation
-    role: mysqlEnum("role", ["admin", "editor", "viewer"])
-      .default("viewer")
-      .notNull(),
-    status: mysqlEnum("status", ["pending", "accepted", "rejected"])
-      .default("pending")
-      .notNull(),
+    role: mysqlEnum("role", ["admin", "editor", "viewer"]).default("viewer").notNull(),
+    status: mysqlEnum("status", ["pending", "accepted", "rejected"]).default("pending").notNull(),
     invitedAt: timestamp("invitedAt").defaultNow().notNull(),
     acceptedAt: timestamp("acceptedAt"),
   },
-  table => ({
+  (table) => ({
     userIdIdx: index("userId_idx").on(table.userId),
     memberEmailIdx: index("memberEmail_idx").on(table.memberEmail),
-  })
+  }),
 );
 
 export type TeamMember = typeof teamMembers.$inferSelect;
@@ -370,25 +329,17 @@ export const onboardingProgress = mysqlTable(
     id: varchar("id", { length: 64 }).primaryKey(),
     userId: int("userId").notNull().unique(),
     currentStep: int("currentStep").default(1).notNull(), // 1-5
-    importCollectionCompleted: boolean("importCollectionCompleted")
-      .default(false)
-      .notNull(),
+    importCollectionCompleted: boolean("importCollectionCompleted").default(false).notNull(),
     runScanCompleted: boolean("runScanCompleted").default(false).notNull(),
-    reviewFindingsCompleted: boolean("reviewFindingsCompleted")
-      .default(false)
-      .notNull(),
-    inviteTeamCompleted: boolean("inviteTeamCompleted")
-      .default(false)
-      .notNull(),
-    setupComplianceCompleted: boolean("setupComplianceCompleted")
-      .default(false)
-      .notNull(),
+    reviewFindingsCompleted: boolean("reviewFindingsCompleted").default(false).notNull(),
+    inviteTeamCompleted: boolean("inviteTeamCompleted").default(false).notNull(),
+    setupComplianceCompleted: boolean("setupComplianceCompleted").default(false).notNull(),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     completedAt: timestamp("completedAt"),
   },
-  table => ({
+  (table) => ({
     userIdIdx: index("userId_idx").on(table.userId),
-  })
+  }),
 );
 
 export type OnboardingProgress = typeof onboardingProgress.$inferSelect;
@@ -402,21 +353,12 @@ export const subscriptions = mysqlTable(
   {
     id: varchar("id", { length: 64 }).primaryKey(),
     userId: int("userId").notNull().unique(),
-    plan: mysqlEnum("plan", ["free", "pro", "enterprise"])
-      .default("free")
-      .notNull(),
+    plan: mysqlEnum("plan", ["free", "pro", "enterprise"]).default("free").notNull(),
     razorpaySubscriptionId: varchar("razorpaySubscriptionId", {
       length: 255,
     }).unique(),
     razorpayCustomerId: varchar("razorpayCustomerId", { length: 255 }),
-    status: mysqlEnum("status", [
-      "active",
-      "paused",
-      "cancelled",
-      "past_due",
-      "pending",
-      "halted",
-    ])
+    status: mysqlEnum("status", ["active", "paused", "cancelled", "past_due", "pending", "halted"])
       .default("pending")
       .notNull(),
     currentPeriodStart: timestamp("currentPeriodStart"),
@@ -426,16 +368,12 @@ export const subscriptions = mysqlTable(
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   },
-  table => ({
+  (table) => ({
     userIdIdx: index("userId_idx").on(table.userId),
-    razorpaySubscriptionIdIdx: index("razorpaySubscriptionId_idx").on(
-      table.razorpaySubscriptionId
-    ),
+    razorpaySubscriptionIdIdx: index("razorpaySubscriptionId_idx").on(table.razorpaySubscriptionId),
     statusIdx: index("status_idx").on(table.status),
-    currentPeriodEndIdx: index("currentPeriodEnd_idx").on(
-      table.currentPeriodEnd
-    ),
-  })
+    currentPeriodEndIdx: index("currentPeriodEnd_idx").on(table.currentPeriodEnd),
+  }),
 );
 
 export type Subscription = typeof subscriptions.$inferSelect;
@@ -450,9 +388,7 @@ export const payments = mysqlTable(
     id: varchar("id", { length: 64 }).primaryKey(),
     userId: int("userId").notNull(),
     subscriptionId: varchar("subscriptionId", { length: 64 }),
-    razorpayPaymentId: varchar("razorpayPaymentId", { length: 255 })
-      .notNull()
-      .unique(),
+    razorpayPaymentId: varchar("razorpayPaymentId", { length: 255 }).notNull().unique(),
     razorpayOrderId: varchar("razorpayOrderId", { length: 255 }),
     amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
     currency: varchar("currency", { length: 3 }).default("INR").notNull(),
@@ -469,26 +405,18 @@ export const payments = mysqlTable(
     receipt: varchar("receipt", { length: 255 }),
     description: text("description"),
     metadata: json("metadata"),
-    refundAmount: decimal("refundAmount", { precision: 10, scale: 2 }).default(
-      "0"
-    ),
-    refundStatus: mysqlEnum("refundStatus", [
-      "null",
-      "partial",
-      "full",
-    ]).default("null"),
+    refundAmount: decimal("refundAmount", { precision: 10, scale: 2 }).default("0"),
+    refundStatus: mysqlEnum("refundStatus", ["null", "partial", "full"]).default("null"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   },
-  table => ({
+  (table) => ({
     userIdIdx: index("userId_idx").on(table.userId),
     subscriptionIdIdx: index("subscriptionId_idx").on(table.subscriptionId),
-    razorpayPaymentIdIdx: index("razorpayPaymentId_idx").on(
-      table.razorpayPaymentId
-    ),
+    razorpayPaymentIdIdx: index("razorpayPaymentId_idx").on(table.razorpayPaymentId),
     statusIdx: index("status_idx").on(table.status),
     createdAtIdx: index("createdAt_idx").on(table.createdAt),
-  })
+  }),
 );
 
 export type Payment = typeof payments.$inferSelect;
@@ -507,11 +435,11 @@ export const passwordResetTokens = mysqlTable(
     usedAt: timestamp("usedAt"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
-  table => ({
+  (table) => ({
     userIdIdx: index("userId_idx").on(table.userId),
     tokenIdx: index("token_idx").on(table.token),
     expiresAtIdx: index("expiresAt_idx").on(table.expiresAt),
-  })
+  }),
 );
 
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
@@ -526,18 +454,22 @@ export const userSessions = mysqlTable(
     id: varchar("id", { length: 64 }).primaryKey(),
     userId: int("userId").notNull(),
     sessionToken: varchar("sessionToken", { length: 255 }).notNull().unique(),
+    refreshTokenHash: varchar("refreshTokenHash", { length: 64 }),
     ipAddress: varchar("ipAddress", { length: 45 }),
     userAgent: text("userAgent"),
     lastActiveAt: timestamp("lastActiveAt").defaultNow().notNull(),
+    lastUsedAt: timestamp("lastUsedAt"),
     expiresAt: timestamp("expiresAt").notNull(),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     revokedAt: timestamp("revokedAt"),
+    isRevoked: boolean("isRevoked").default(false).notNull(),
   },
-  table => ({
+  (table) => ({
     userIdIdx: index("userId_idx").on(table.userId),
     sessionTokenIdx: index("sessionToken_idx").on(table.sessionToken),
     expiresAtIdx: index("expiresAt_idx").on(table.expiresAt),
-  })
+    refreshTokenHashIdx: index("refreshTokenHash_idx").on(table.refreshTokenHash),
+  }),
 );
 
 export type UserSession = typeof userSessions.$inferSelect;
@@ -560,9 +492,9 @@ export const emailPreferences = mysqlTable(
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   },
-  table => ({
+  (table) => ({
     userIdIdx: index("userId_idx").on(table.userId),
-  })
+  }),
 );
 
 export type EmailPreference = typeof emailPreferences.$inferSelect;
@@ -582,11 +514,11 @@ export const auditLog = mysqlTable(
     userAgent: text("userAgent"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
-  table => ({
+  (table) => ({
     userIdIdx: index("userId_idx").on(table.userId),
     actionIdx: index("action_idx").on(table.action),
     createdAtIdx: index("createdAt_idx").on(table.createdAt),
-  })
+  }),
 );
 
 export type AuditLog = typeof auditLog.$inferSelect;
@@ -621,9 +553,9 @@ export const webhookEndpoints = mysqlTable(
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   },
-  table => ({
+  (table) => ({
     userIdIdx: index("userId_idx").on(table.userId),
-  })
+  }),
 );
 
 export type WebhookEndpoint = typeof webhookEndpoints.$inferSelect;
@@ -647,10 +579,10 @@ export const webhookDeliveries = mysqlTable(
     deliveredAt: timestamp("deliveredAt"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
-  table => ({
+  (table) => ({
     webhookIdIdx: index("webhookId_idx").on(table.webhookId),
     createdAtIdx: index("createdAt_idx").on(table.createdAt),
-  })
+  }),
 );
 
 export type WebhookDelivery = typeof webhookDeliveries.$inferSelect;
@@ -676,18 +608,13 @@ export const processedWebhookEvents = mysqlTable(
     eventType: varchar("eventType", { length: 64 }).notNull(),
     processedAt: timestamp("processedAt").defaultNow().notNull(),
   },
-  table => ({
-    providerEventIdx: index("provider_event_idx").on(
-      table.provider,
-      table.eventId
-    ),
-  })
+  (table) => ({
+    providerEventIdx: index("provider_event_idx").on(table.provider, table.eventId),
+  }),
 );
 
-export type ProcessedWebhookEvent =
-  typeof processedWebhookEvents.$inferSelect;
-export type InsertProcessedWebhookEvent =
-  typeof processedWebhookEvents.$inferInsert;
+export type ProcessedWebhookEvent = typeof processedWebhookEvents.$inferSelect;
+export type InsertProcessedWebhookEvent = typeof processedWebhookEvents.$inferInsert;
 
 /**
  * MCP Server registry — Sprint 2 scaffolding for "MCP Governance".
@@ -706,11 +633,7 @@ export const mcpServers = mysqlTable(
     userId: int("userId").notNull(),
     name: varchar("name", { length: 256 }).notNull(),
     url: varchar("url", { length: 1024 }),
-    transport: mysqlEnum("transport", [
-      "stdio",
-      "streamable-http",
-      "sse",
-    ]).notNull(),
+    transport: mysqlEnum("transport", ["stdio", "streamable-http", "sse"]).notNull(),
     /**
      * Capability fingerprint — JSON snapshot of the tool list the server
      * advertised at last discovery, used to detect drift / capability
@@ -722,9 +645,9 @@ export const mcpServers = mysqlTable(
     discoveredAt: timestamp("discoveredAt").defaultNow().notNull(),
     lastSeenAt: timestamp("lastSeenAt"),
   },
-  table => ({
+  (table) => ({
     userIdIdx: index("userId_idx").on(table.userId),
-  })
+  }),
 );
 
 export type McpServer = typeof mcpServers.$inferSelect;
@@ -749,12 +672,7 @@ export const mcpTools = mysqlTable(
      * filesystem write, payment, mass email). The dashboard surfaces
      * unsafe tools on a separate review screen.
      */
-    riskClass: mysqlEnum("riskClass", [
-      "safe",
-      "elevated",
-      "unsafe",
-      "unknown",
-    ])
+    riskClass: mysqlEnum("riskClass", ["safe", "elevated", "unsafe", "unknown"])
       .default("unknown")
       .notNull(),
     /** Schema for input parameters (JSON Schema). */
@@ -762,9 +680,9 @@ export const mcpTools = mysqlTable(
     isApproved: boolean("isApproved").default(false).notNull(),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
-  table => ({
+  (table) => ({
     serverIdIdx: index("serverId_idx").on(table.serverId),
-  })
+  }),
 );
 
 export type McpTool = typeof mcpTools.$inferSelect;
@@ -796,12 +714,12 @@ export const mcpInvocationLog = mysqlTable(
     durationMs: int("durationMs"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
-  table => ({
+  (table) => ({
     userIdIdx: index("userId_idx").on(table.userId),
     serverIdIdx: index("serverId_idx").on(table.serverId),
     toolIdIdx: index("toolId_idx").on(table.toolId),
     createdAtIdx: index("createdAt_idx").on(table.createdAt),
-  })
+  }),
 );
 
 export type McpInvocation = typeof mcpInvocationLog.$inferSelect;
@@ -825,9 +743,7 @@ export const gatewayAudit = mysqlTable(
     requestId: varchar("requestId", { length: 64 }).notNull(),
     model: varchar("model", { length: 96 }).notNull(),
     provider: varchar("provider", { length: 32 }),
-    decision: mysqlEnum("decision", ["allowed", "blocked", "errored"])
-      .notNull()
-      .default("allowed"),
+    decision: mysqlEnum("decision", ["allowed", "blocked", "errored"]).notNull().default("allowed"),
     blockReason: varchar("blockReason", { length: 96 }),
     promptTokens: int("promptTokens").default(0).notNull(),
     completionTokens: int("completionTokens").default(0).notNull(),
@@ -839,12 +755,12 @@ export const gatewayAudit = mysqlTable(
     latencyMs: int("latencyMs"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
-  table => ({
+  (table) => ({
     userIdIdx: index("userId_idx").on(table.userId),
     createdAtIdx: index("createdAt_idx").on(table.createdAt),
     decisionIdx: index("decision_idx").on(table.decision),
     modelIdx: index("model_idx").on(table.model),
-  })
+  }),
 );
 export type GatewayAuditRow = typeof gatewayAudit.$inferSelect;
 export type InsertGatewayAuditRow = typeof gatewayAudit.$inferInsert;
@@ -853,15 +769,12 @@ export type InsertGatewayAuditRow = typeof gatewayAudit.$inferInsert;
  * Per-tenant daily token caps. The gateway consults these inline to enforce
  * hard / soft budgets without polling the cost meter on every request.
  */
-export const tokenBudgets = mysqlTable(
-  "token_budgets",
-  {
-    userId: int("userId").primaryKey(),
-    dailyTokenLimit: int("dailyTokenLimit"),
-    mode: mysqlEnum("mode", ["soft", "hard"]).default("soft").notNull(),
-    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-  }
-);
+export const tokenBudgets = mysqlTable("token_budgets", {
+  userId: int("userId").primaryKey(),
+  dailyTokenLimit: int("dailyTokenLimit"),
+  mode: mysqlEnum("mode", ["soft", "hard"]).default("soft").notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
 export type TokenBudgetRow = typeof tokenBudgets.$inferSelect;
 export type InsertTokenBudgetRow = typeof tokenBudgets.$inferInsert;
 
@@ -886,11 +799,11 @@ export const shadowAiEvents = mysqlTable(
     occurredAt: timestamp("occurredAt").defaultNow().notNull(),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
-  table => ({
+  (table) => ({
     userIdIdx: index("userId_idx").on(table.userId),
     severityIdx: index("severity_idx").on(table.severity),
     detectedHostIdx: index("detectedHost_idx").on(table.detectedHost),
-  })
+  }),
 );
 export type ShadowAiEventRow = typeof shadowAiEvents.$inferSelect;
 export type InsertShadowAiEventRow = typeof shadowAiEvents.$inferInsert;
@@ -909,9 +822,9 @@ export const aiAllowlist = mysqlTable(
     pattern: varchar("pattern", { length: 192 }).notNull(),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
-  table => ({
+  (table) => ({
     userIdIdx: index("userId_idx").on(table.userId),
-  })
+  }),
 );
 export type AiAllowlistRow = typeof aiAllowlist.$inferSelect;
 export type InsertAiAllowlistRow = typeof aiAllowlist.$inferInsert;
@@ -930,12 +843,7 @@ export const redteamRuns = mysqlTable(
     triggeredBy: mysqlEnum("triggeredBy", ["manual", "schedule", "api"])
       .default("manual")
       .notNull(),
-    status: mysqlEnum("status", [
-      "pending",
-      "running",
-      "completed",
-      "failed",
-    ])
+    status: mysqlEnum("status", ["pending", "running", "completed", "failed"])
       .default("pending")
       .notNull(),
     totalPayloads: int("totalPayloads").default(0).notNull(),
@@ -949,11 +857,11 @@ export const redteamRuns = mysqlTable(
     finishedAt: timestamp("finishedAt"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
-  table => ({
+  (table) => ({
     userIdIdx: index("userId_idx").on(table.userId),
     statusIdx: index("status_idx").on(table.status),
     createdAtIdx: index("createdAt_idx").on(table.createdAt),
-  })
+  }),
 );
 export type RedteamRunRow = typeof redteamRuns.$inferSelect;
 export type InsertRedteamRunRow = typeof redteamRuns.$inferInsert;
@@ -965,17 +873,16 @@ export const redteamFindings = mysqlTable(
     runId: varchar("runId", { length: 64 }).notNull(),
     payloadId: varchar("payloadId", { length: 64 }).notNull(),
     category: varchar("category", { length: 64 }).notNull(),
-    severity: mysqlEnum("severity", ["Low", "Medium", "High", "Critical"])
-      .notNull(),
+    severity: mysqlEnum("severity", ["Low", "Medium", "High", "Critical"]).notNull(),
     outcome: mysqlEnum("outcome", ["blocked", "leaked", "errored"]).notNull(),
     /** First 200 chars of the response, sanitized. */
     sample: text("sample"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
-  table => ({
+  (table) => ({
     runIdIdx: index("runId_idx").on(table.runId),
     outcomeIdx: index("outcome_idx").on(table.outcome),
-  })
+  }),
 );
 export type RedteamFindingRow = typeof redteamFindings.$inferSelect;
 export type InsertRedteamFindingRow = typeof redteamFindings.$inferInsert;
@@ -996,10 +903,10 @@ export const redteamSchedules = mysqlTable(
     nextRunAt: timestamp("nextRunAt"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
-  table => ({
+  (table) => ({
     userIdIdx: index("userId_idx").on(table.userId),
     activeIdx: index("active_idx").on(table.isActive),
-  })
+  }),
 );
 export type RedteamScheduleRow = typeof redteamSchedules.$inferSelect;
 export type InsertRedteamScheduleRow = typeof redteamSchedules.$inferInsert;
@@ -1021,20 +928,17 @@ export const autofixSuggestions = mysqlTable(
     rationale: text("rationale"),
     languageHint: varchar("languageHint", { length: 32 }),
     snippet: text("snippet").notNull(),
-    status: mysqlEnum("status", ["open", "applied", "dismissed"])
-      .default("open")
-      .notNull(),
+    status: mysqlEnum("status", ["open", "applied", "dismissed"]).default("open").notNull(),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
-  table => ({
+  (table) => ({
     userIdIdx: index("userId_idx").on(table.userId),
     statusIdx: index("status_idx").on(table.status),
     findingTypeIdx: index("findingType_idx").on(table.findingType),
-  })
+  }),
 );
 export type AutofixSuggestionRow = typeof autofixSuggestions.$inferSelect;
-export type InsertAutofixSuggestionRow =
-  typeof autofixSuggestions.$inferInsert;
+export type InsertAutofixSuggestionRow = typeof autofixSuggestions.$inferInsert;
 
 /**
  * Security copilot conversations — chat-over-data sessions where the user
@@ -1050,13 +954,12 @@ export const copilotConversations = mysqlTable(
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   },
-  table => ({
+  (table) => ({
     userIdIdx: index("userId_idx").on(table.userId),
-  })
+  }),
 );
 export type CopilotConversationRow = typeof copilotConversations.$inferSelect;
-export type InsertCopilotConversationRow =
-  typeof copilotConversations.$inferInsert;
+export type InsertCopilotConversationRow = typeof copilotConversations.$inferInsert;
 
 export const copilotMessages = mysqlTable(
   "copilot_messages",
@@ -1069,9 +972,9 @@ export const copilotMessages = mysqlTable(
     references: json("references"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
-  table => ({
+  (table) => ({
     conversationIdx: index("conversation_idx").on(table.conversationId),
-  })
+  }),
 );
 export type CopilotMessageRow = typeof copilotMessages.$inferSelect;
 export type InsertCopilotMessageRow = typeof copilotMessages.$inferInsert;
@@ -1093,10 +996,10 @@ export const tenantPolicies = mysqlTable(
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   },
-  table => ({
+  (table) => ({
     userIdIdx: index("userId_idx").on(table.userId),
     appliesToIdx: index("appliesTo_idx").on(table.appliesTo),
-  })
+  }),
 );
 export type TenantPolicyRow = typeof tenantPolicies.$inferSelect;
 export type InsertTenantPolicyRow = typeof tenantPolicies.$inferInsert;
@@ -1127,10 +1030,10 @@ export const alertRules = mysqlTable(
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   },
-  table => ({
+  (table) => ({
     userIdIdx: index("userId_idx").on(table.userId),
     enabledIdx: index("enabled_idx").on(table.enabled),
-  })
+  }),
 );
 export type AlertRuleRow = typeof alertRules.$inferSelect;
 export type InsertAlertRuleRow = typeof alertRules.$inferInsert;
@@ -1146,8 +1049,7 @@ export const alertEvents = mysqlTable(
     id: int("id").autoincrement().primaryKey(),
     userId: int("userId").notNull(),
     ruleId: int("ruleId").notNull(),
-    severity: mysqlEnum("severity", ["low", "medium", "high", "critical"])
-      .notNull(),
+    severity: mysqlEnum("severity", ["low", "medium", "high", "critical"]).notNull(),
     summary: varchar("summary", { length: 512 }).notNull(),
     matched: json("matched").notNull(),
     snapshots: json("snapshots").notNull(),
@@ -1158,11 +1060,11 @@ export const alertEvents = mysqlTable(
     errorMessage: varchar("errorMessage", { length: 512 }),
     firedAt: timestamp("firedAt").defaultNow().notNull(),
   },
-  table => ({
+  (table) => ({
     userIdIdx: index("userId_idx").on(table.userId),
     ruleIdIdx: index("ruleId_idx").on(table.ruleId),
     firedAtIdx: index("firedAt_idx").on(table.firedAt),
-  })
+  }),
 );
 export type AlertEventRow = typeof alertEvents.$inferSelect;
 export type InsertAlertEventRow = typeof alertEvents.$inferInsert;
@@ -1205,11 +1107,11 @@ export const ssoProviders = mysqlTable(
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   },
-  table => ({
+  (table) => ({
     userIdIdx: index("userId_idx").on(table.userId),
     kindIdx: index("kind_idx").on(table.kind),
     enabledIdx: index("enabled_idx").on(table.enabled),
-  })
+  }),
 );
 export type SsoProviderRow = typeof ssoProviders.$inferSelect;
 export type InsertSsoProviderRow = typeof ssoProviders.$inferInsert;
@@ -1232,10 +1134,10 @@ export const ssoLoginRequests = mysqlTable(
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     expiresAt: timestamp("expiresAt").notNull(),
   },
-  table => ({
+  (table) => ({
     stateIdx: index("state_idx").on(table.state),
     expiresAtIdx: index("expiresAt_idx").on(table.expiresAt),
-  })
+  }),
 );
 export type SsoLoginRequestRow = typeof ssoLoginRequests.$inferSelect;
 export type InsertSsoLoginRequestRow = typeof ssoLoginRequests.$inferInsert;
@@ -1266,10 +1168,10 @@ export const workspaces = mysqlTable(
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   },
-  table => ({
+  (table) => ({
     ownerIdx: index("ownerUserId_idx").on(table.ownerUserId),
     slugIdx: index("slug_idx").on(table.slug),
-  })
+  }),
 );
 export type WorkspaceRow = typeof workspaces.$inferSelect;
 export type InsertWorkspaceRow = typeof workspaces.$inferInsert;
@@ -1293,21 +1195,16 @@ export const workspaceMembers = mysqlTable(
     id: int("id").autoincrement().primaryKey(),
     workspaceId: int("workspaceId").notNull(),
     userId: int("userId").notNull(),
-    role: mysqlEnum("role", ["owner", "admin", "editor", "viewer"])
-      .notNull()
-      .default("viewer"),
+    role: mysqlEnum("role", ["owner", "admin", "editor", "viewer"]).notNull().default("viewer"),
     active: boolean("active").notNull().default(true),
     invitedBy: int("invitedBy"),
     invitedAt: timestamp("invitedAt"),
     joinedAt: timestamp("joinedAt").defaultNow().notNull(),
   },
-  table => ({
-    workspaceUserUniq: index("workspaceId_userId_idx").on(
-      table.workspaceId,
-      table.userId
-    ),
+  (table) => ({
+    workspaceUserUniq: index("workspaceId_userId_idx").on(table.workspaceId, table.userId),
     userIdIdx: index("userId_idx").on(table.userId),
-  })
+  }),
 );
 export type WorkspaceMemberRow = typeof workspaceMembers.$inferSelect;
 export type InsertWorkspaceMemberRow = typeof workspaceMembers.$inferInsert;
@@ -1322,19 +1219,17 @@ export const workspaceInvitations = mysqlTable(
     id: int("id").autoincrement().primaryKey(),
     workspaceId: int("workspaceId").notNull(),
     email: varchar("email", { length: 320 }).notNull(),
-    role: mysqlEnum("role", ["admin", "editor", "viewer"])
-      .notNull()
-      .default("viewer"),
+    role: mysqlEnum("role", ["admin", "editor", "viewer"]).notNull().default("viewer"),
     token: varchar("token", { length: 128 }).notNull().unique(),
     invitedBy: int("invitedBy").notNull(),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     expiresAt: timestamp("expiresAt").notNull(),
   },
-  table => ({
+  (table) => ({
     workspaceIdIdx: index("workspaceId_idx").on(table.workspaceId),
     emailIdx: index("email_idx").on(table.email),
     tokenIdx: index("token_idx").on(table.token),
-  })
+  }),
 );
 export type WorkspaceInvitationRow = typeof workspaceInvitations.$inferSelect;
 export type InsertWorkspaceInvitationRow = typeof workspaceInvitations.$inferInsert;
@@ -1356,11 +1251,11 @@ export const importHistory = mysqlTable(
     result: json("result"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
-  table => ({
+  (table) => ({
     userIdIdx: index("userId_idx").on(table.userId),
     sourceIdx: index("source_idx").on(table.source),
     createdAtIdx: index("createdAt_idx").on(table.createdAt),
-  })
+  }),
 );
 export type ImportHistoryRow = typeof importHistory.$inferSelect;
 export type InsertImportHistoryRow = typeof importHistory.$inferInsert;
@@ -1387,9 +1282,7 @@ export const aiEvents = mysqlTable(
     outputTokens: int("outputTokens").default(0).notNull(),
     cachedTokens: int("cachedTokens").default(0).notNull(),
     costUsd: decimal("costUsd", { precision: 10, scale: 6 }).default("0").notNull(),
-    status: mysqlEnum("status", ["ok", "error", "timeout", "blocked"])
-      .notNull()
-      .default("ok"),
+    status: mysqlEnum("status", ["ok", "error", "timeout", "blocked"]).notNull().default("ok"),
     redactionCount: int("redactionCount").default(0).notNull(),
     promptHash: varchar("promptHash", { length: 64 }).notNull(),
     responseHash: varchar("responseHash", { length: 64 }).notNull(),
@@ -1397,7 +1290,7 @@ export const aiEvents = mysqlTable(
     metadata: json("metadata"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
-  table => ({
+  (table) => ({
     userIdIdx: index("userId_idx").on(table.userId),
     workspaceIdIdx: index("workspaceId_idx").on(table.workspaceId),
     agentIdIdx: index("agentId_idx").on(table.agentId),
@@ -1406,7 +1299,7 @@ export const aiEvents = mysqlTable(
     modelIdx: index("model_idx").on(table.model),
     statusIdx: index("status_idx").on(table.status),
     requestTsIdx: index("requestTs_idx").on(table.requestTimestamp),
-  })
+  }),
 );
 export type AiEventRow = typeof aiEvents.$inferSelect;
 export type InsertAiEventRow = typeof aiEvents.$inferInsert;

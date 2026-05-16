@@ -29,7 +29,13 @@
   },
   "dependencies": {
     "@builder.io/vite-plugin-jsx-loc": "^0.1.1",
+    "@opentelemetry/auto-instrumentations-node": "^0.76.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.218.0",
+    "@opentelemetry/resources": "^2.7.1",
+    "@opentelemetry/sdk-node": "^0.218.0",
+    "@opentelemetry/sdk-trace-base": "^2.7.1",
     "@sentry/node": "^7.100.0",
+    "@sentry/opentelemetry": "^10.53.1",
     "@trpc/server": "^11.6.0",
     "@vitejs/plugin-react": "^4.7.0",
     "axios": "^1.7.0",

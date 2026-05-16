@@ -22,9 +22,7 @@ import { z } from "zod";
 const isProduction = process.env.NODE_ENV === "production";
 
 const EnvSchema = z.object({
-  NODE_ENV: z
-    .enum(["development", "production", "test"])
-    .default("development"),
+  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   PORT: z.coerce.number().int().positive().max(65535).default(3000),
 
   // Auth / JWT — JWT_SECRET must be unguessable. 32 chars of random
@@ -55,10 +53,7 @@ const EnvSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string().default(""),
 
   // LLM / Forge — both optional, only validated for shape if set.
-  BUILT_IN_FORGE_API_URL: z
-    .string()
-    .url()
-    .default("https://api.manus.app/forge"),
+  BUILT_IN_FORGE_API_URL: z.string().url().default("https://api.manus.app/forge"),
   BUILT_IN_FORGE_API_KEY: z.string().default(""),
   MINIMAX_API_KEY: z.string().default(""),
   MINIMAX_API_URL: z.string().url().default("https://api.minimax.io/v1"),
@@ -70,10 +65,7 @@ const EnvSchema = z.object({
   SMTP_USER: z.string().default(""),
   SMTP_PASS: z.string().default(""),
   SMTP_FROM: z.string().default("noreply@devpulse.in"),
-  APP_URL: z
-    .string()
-    .url("APP_URL must be a valid URL")
-    .default("http://localhost:3000"),
+  APP_URL: z.string().url("APP_URL must be a valid URL").default("http://localhost:3000"),
 
   // Notifications — empty string allowed, but if set must be a URL.
   SLACK_WEBHOOK_URL: z
@@ -81,9 +73,7 @@ const EnvSchema = z.object({
     .default(""),
 
   // Error monitoring
-  SENTRY_DSN: z
-    .union([z.literal(""), z.string().url("SENTRY_DSN must be a URL")])
-    .default(""),
+  SENTRY_DSN: z.union([z.literal(""), z.string().url("SENTRY_DSN must be a URL")]).default(""),
 
   // Razorpay Payments
   RAZORPAY_KEY_ID: z.string().default(""),
@@ -92,15 +82,11 @@ const EnvSchema = z.object({
 
   // Frontend URL — used for OAuth callbacks AND the WebSocket / CORS
   // origin allowlist, so it MUST be a valid URL.
-  FRONTEND_URL: z
-    .string()
-    .url("FRONTEND_URL must be a valid URL")
-    .default("http://localhost:3000"),
+  FRONTEND_URL: z.string().url("FRONTEND_URL must be a valid URL").default("http://localhost:3000"),
 
   GITHUB_WEBHOOK_SECRET: z.string().default(""),
-  LOG_LEVEL: z
-    .enum(["fatal", "error", "warn", "info", "debug", "trace"])
-    .optional(),
+  INTERNAL_SERVICE_SECRET: z.string().default(""),
+  LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).optional(),
 
   // Inline LLM gateway integration. The gateway calls back to the server's
   // `/api/internal/*` endpoints with `Authorization: Bearer ${TOKEN}`. In
@@ -121,6 +107,10 @@ const EnvSchema = z.object({
   // ── Research & Competitive Intelligence ───────────────────────────────
   TAVILY_API_KEY: z.string().optional(),
   FIRECRAWL_API_KEY: z.string().optional(),
+
+  // ── OpenTelemetry ─────────────────────────────────────────────────────
+  OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional(),
+  OTEL_SAMPLE_RATE: z.coerce.number().min(0).max(1).optional(),
 });
 
 const parsed = (() => {
@@ -128,7 +118,7 @@ const parsed = (() => {
   if (raw.success) return raw.data;
 
   const issues = raw.error.issues
-    .map(i => `  - ${i.path.join(".") || "<root>"}: ${i.message}`)
+    .map((i) => `  - ${i.path.join(".") || "<root>"}: ${i.message}`)
     .join("\n");
 
   if (isProduction) {
@@ -178,18 +168,21 @@ export const ENV = {
 
   frontendUrl: parsed.FRONTEND_URL,
   githubWebhookSecret: parsed.GITHUB_WEBHOOK_SECRET,
+  internalServiceSecret: parsed.INTERNAL_SERVICE_SECRET,
   logLevel: parsed.LOG_LEVEL,
   gatewayServiceToken: parsed.GATEWAY_SERVICE_TOKEN ?? "",
 
   stripeSecretKey: parsed.STRIPE_SECRET_KEY ?? "",
   stripePublishableKey: parsed.STRIPE_PUBLISHABLE_KEY ?? "",
   stripeWebhookSecret: parsed.STRIPE_WEBHOOK_SECRET ?? "",
-  stripeEnabled: Boolean(
-    parsed.STRIPE_SECRET_KEY && parsed.STRIPE_WEBHOOK_SECRET
-  ),
+  stripeEnabled: Boolean(parsed.STRIPE_SECRET_KEY && parsed.STRIPE_WEBHOOK_SECRET),
 
   tavilyApiKey: parsed.TAVILY_API_KEY ?? "",
   firecrawlApiKey: parsed.FIRECRAWL_API_KEY ?? "",
+
+  // OpenTelemetry
+  otelExporterOtlpEndpoint: parsed.OTEL_EXPORTER_OTLP_ENDPOINT ?? "",
+  otelSampleRate: parsed.OTEL_SAMPLE_RATE,
 } as const;
 
 /**
@@ -205,48 +198,30 @@ export function validateEnv(): {
   const warnings: string[] = [];
 
   // CRITICAL — must always be set
-  if (!ENV.cookieSecret)
-    errors.push("JWT_SECRET is not set — authentication will not work");
-  if (!ENV.databaseUrl)
-    errors.push("DATABASE_URL is not set — database connection will fail");
+  if (!ENV.cookieSecret) errors.push("JWT_SECRET is not set — authentication will not work");
+  if (!ENV.databaseUrl) errors.push("DATABASE_URL is not set — database connection will fail");
 
   // Production-only critical checks
   if (ENV.isProduction) {
-    if (!ENV.googleClientId)
-      errors.push("GOOGLE_CLIENT_ID is not set — OAuth login will fail");
+    if (!ENV.googleClientId) errors.push("GOOGLE_CLIENT_ID is not set — OAuth login will fail");
     if (!ENV.googleClientSecret)
       errors.push("GOOGLE_CLIENT_SECRET is not set — OAuth login will fail");
-    if (!ENV.razorpayKeyId)
-      errors.push("RAZORPAY_KEY_ID is not set — payments will not work");
+    if (!ENV.razorpayKeyId) errors.push("RAZORPAY_KEY_ID is not set — payments will not work");
     if (!ENV.razorpayKeySecret)
       errors.push("RAZORPAY_KEY_SECRET is not set — payments will not work");
     if (!ENV.razorpayWebhookSecret)
-      errors.push(
-        "RAZORPAY_WEBHOOK_SECRET is not set — webhook verification will fail"
-      );
-    if (!ENV.smtpHost)
-      warnings.push(
-        "SMTP_HOST is not set — team invite emails will not be sent"
-      );
-    if (!ENV.sentryDsn)
-      warnings.push("SENTRY_DSN is not set — error monitoring disabled");
+      errors.push("RAZORPAY_WEBHOOK_SECRET is not set — webhook verification will fail");
+    if (!ENV.smtpHost) warnings.push("SMTP_HOST is not set — team invite emails will not be sent");
+    if (!ENV.sentryDsn) warnings.push("SENTRY_DSN is not set — error monitoring disabled");
   }
 
   // Non-critical warnings
   if (!ENV.slackWebhookUrl)
-    warnings.push(
-      "SLACK_WEBHOOK_URL is not set — kill switch alerts will not be sent to Slack"
-    );
-  if (!ENV.smtpHost)
-    warnings.push(
-      "SMTP_HOST is not set — email features (team invites) disabled"
-    );
-  if (!ENV.razorpayKeyId)
-    warnings.push("RAZORPAY_KEY_ID is not set — payment features disabled");
+    warnings.push("SLACK_WEBHOOK_URL is not set — kill switch alerts will not be sent to Slack");
+  if (!ENV.smtpHost) warnings.push("SMTP_HOST is not set — email features (team invites) disabled");
+  if (!ENV.razorpayKeyId) warnings.push("RAZORPAY_KEY_ID is not set — payment features disabled");
   if (!ENV.githubWebhookSecret)
-    warnings.push(
-      "GITHUB_WEBHOOK_SECRET is not set — GitHub webhook integration disabled"
-    );
+    warnings.push("GITHUB_WEBHOOK_SECRET is not set — GitHub webhook integration disabled");
 
   // Log warnings
   for (const w of warnings) console.warn(`[ENV] ⚠ ${w}`);
@@ -255,14 +230,13 @@ export function validateEnv(): {
   if (ENV.isProduction && errors.length > 0) {
     for (const e of errors) console.error(`[ENV] ✖ ${e}`);
     throw new Error(
-      `Missing critical environment variables:\n${errors.map(e => `  - ${e}`).join("\n")}`
+      `Missing critical environment variables:\n${errors.map((e) => `  - ${e}`).join("\n")}`,
     );
   }
 
   // In development, just warn
   if (!ENV.isProduction && errors.length > 0) {
-    for (const e of errors)
-      console.warn(`[ENV] ⚠ ${e} (would be fatal in production)`);
+    for (const e of errors) console.warn(`[ENV] ⚠ ${e} (would be fatal in production)`);
   }
 
   return { valid: errors.length === 0, warnings, errors };

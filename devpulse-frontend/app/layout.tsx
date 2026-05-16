@@ -3,7 +3,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { AuthProvider } from "../components/AuthProvider";
 import { CookieConsent } from "../components/CookieConsent";
-import { SentryErrorBoundary } from "../components/ErrorBoundary";
+import { ErrorBoundary } from "../components/ErrorBoundary";
+import { OfflineBanner } from "../components/OfflineBanner";
 import { TRPCProvider } from "@/lib/providers";
 import AppShell from "@/components/AppShell";
 import { ToastProvider } from "@/components/Toast";
@@ -44,9 +45,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <TRPCProvider>
           <AuthProvider>
             <ToastProvider>
-              <SentryErrorBoundary>
+              <ErrorBoundary>
+                <OfflineBanner />
                 <AppShell>{children}</AppShell>
-              </SentryErrorBoundary>
+              </ErrorBoundary>
               <CookieConsent />
             </ToastProvider>
           </AuthProvider>

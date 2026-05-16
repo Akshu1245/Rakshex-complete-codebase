@@ -24,16 +24,18 @@ export default function ScanningPage() {
     }>;
   } | null>(null);
 
+  const [scanStatus, setScanStatus] = useState<string | null>(null);
+  const [queuedScanId, setQueuedScanId] = useState<string | null>(null);
+
   const collectionsQuery = trpc.collections.list.useQuery();
   const collections = collectionsQuery.data?.collections ?? [];
 
   const startScan = trpc.scanning.startScan.useMutation({
-    onSuccess: data => {
-      setScanResult({
-        riskScore: data.riskScore,
-        riskLevel: data.riskLevel,
-        findings: data.findings,
-      });
+    onSuccess: (data) => {
+      setScanStatus(data.status);
+      if (data.status === "queued" && data.scanId) {
+        setQueuedScanId(data.scanId);
+      }
     },
     onError: (err: { message: string }) => setError(err.message),
   });
@@ -42,11 +44,13 @@ export default function ScanningPage() {
     if (!selectedCollection) return;
     setError(null);
     setScanResult(null);
+    setScanStatus(null);
+    setQueuedScanId(null);
     startScan.mutate({ collectionId: selectedCollection, scanType });
   };
 
   const findings = scanResult?.findings ?? [];
-  const scanned = !!scanResult;
+  const scanned = !!scanResult || scanStatus === "queued";
   const loading = startScan.isPending;
 
   const severityColor = (s: string) => {
@@ -69,12 +73,8 @@ export default function ScanningPage() {
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-blue-400">
-              Security Scanner
-            </h1>
-            <p className="text-gray-400 mt-1">
-              Scan code for vulnerabilities and shadow APIs
-            </p>
+            <h1 className="text-3xl font-bold text-blue-400">Security Scanner</h1>
+            <p className="text-gray-400 mt-1">Scan code for vulnerabilities and shadow APIs</p>
           </div>
           <Link href="/dashboard" className="text-blue-400 hover:text-blue-300">
             &larr; Back to Dashboard
@@ -92,28 +92,24 @@ export default function ScanningPage() {
             <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
               <h2 className="text-xl font-semibold mb-4">Run a scan</h2>
 
-              <label className="block text-sm text-gray-400 mb-1">
-                Collection
-              </label>
+              <label className="block text-sm text-gray-400 mb-1">Collection</label>
               <select
                 value={selectedCollection}
-                onChange={e => setSelectedCollection(e.target.value)}
+                onChange={(e) => setSelectedCollection(e.target.value)}
                 className="w-full mb-4 px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none"
               >
                 <option value="">-- Select a collection --</option>
-                {collections.map(col => (
+                {collections.map((col) => (
                   <option key={col.id} value={col.id}>
                     {col.name}
                   </option>
                 ))}
               </select>
 
-              <label className="block text-sm text-gray-400 mb-1">
-                Scan type
-              </label>
+              <label className="block text-sm text-gray-400 mb-1">Scan type</label>
               <select
                 value={scanType}
-                onChange={e => setScanType(e.target.value as ScanType)}
+                onChange={(e) => setScanType(e.target.value as ScanType)}
                 className="w-full mb-4 px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none"
               >
                 <option value="full">Full (all checks)</option>
@@ -130,14 +126,39 @@ export default function ScanningPage() {
                 {loading ? "Scanning..." : "Run Security Scan"}
               </button>
 
+              {scanStatus === "queued" && (
+                <div className="mt-4 p-4 rounded-lg bg-blue-900/30 border border-blue-500/50">
+                  <div className="flex items-center gap-2 text-blue-300">
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        fill="none"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                      />
+                    </svg>
+                    <span className="text-sm font-medium">Scan queued — it will begin shortly</span>
+                  </div>
+                  {queuedScanId && (
+                    <p className="text-xs text-blue-400/60 mt-2">Job ID: {queuedScanId}</p>
+                  )}
+                </div>
+              )}
+
               {scanResult && (
                 <div className="mt-6 p-4 rounded-lg bg-gray-700/50 border border-gray-600">
                   <div className="text-sm text-gray-400">Risk score</div>
                   <div className="text-2xl font-bold">
                     {scanResult.riskScore.toFixed(1)}{" "}
-                    <span className="text-base text-gray-400">
-                      ({scanResult.riskLevel})
-                    </span>
+                    <span className="text-base text-gray-400">({scanResult.riskLevel})</span>
                   </div>
                 </div>
               )}
@@ -146,9 +167,7 @@ export default function ScanningPage() {
 
           <div>
             <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
-              <h2 className="text-xl font-semibold mb-4">
-                Findings ({findings.length})
-              </h2>
+              <h2 className="text-xl font-semibold mb-4">Findings ({findings.length})</h2>
               {!scanned ? (
                 <EmptyState
                   compact
@@ -172,26 +191,18 @@ export default function ScanningPage() {
                 />
               ) : (
                 <div className="space-y-3 max-h-[500px] overflow-y-auto">
-                  {findings.map(f => (
+                  {findings.map((f) => (
                     <div
                       key={f.id}
                       className={`p-4 rounded-lg border ${severityColor(f.severity)}`}
                     >
                       <div className="flex justify-between items-start">
                         <span className="font-bold">{f.title}</span>
-                        <span className="text-xs opacity-75 uppercase">
-                          {f.severity}
-                        </span>
+                        <span className="text-xs opacity-75 uppercase">{f.severity}</span>
                       </div>
-                      {f.description && (
-                        <p className="text-sm mt-2 opacity-80">
-                          {f.description}
-                        </p>
-                      )}
+                      {f.description && <p className="text-sm mt-2 opacity-80">{f.description}</p>}
                       {f.remediation && (
-                        <p className="text-xs mt-2 text-gray-400">
-                          Remediation: {f.remediation}
-                        </p>
+                        <p className="text-xs mt-2 text-gray-400">Remediation: {f.remediation}</p>
                       )}
                       {(f.cweId || f.category) && (
                         <p className="text-xs mt-1 text-gray-500">

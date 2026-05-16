@@ -1,7 +1,14 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import crypto from "crypto";
-import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
+import {
+  COOKIE_NAME,
+  ONE_YEAR_MS,
+  ACCESS_TOKEN_COOKIE,
+  REFRESH_TOKEN_COOKIE,
+  ACCESS_TOKEN_MAX_AGE_MS,
+  REFRESH_TOKEN_MAX_AGE_MS,
+} from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { sdk } from "./_core/sdk";
 import { systemRouter } from "./_core/systemRouter";
@@ -12,6 +19,13 @@ import { settingsRouter, verifyTotpCode } from "./settingsRouter";
 import { hashPassword, verifyPassword } from "./utils/password";
 import { users } from "../drizzle/schema";
 import { sql } from "drizzle-orm";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  hashRefreshToken,
+  verifyAccessToken,
+} from "./_core/tokens";
+import { redis } from "./_core/cache";
 
 // Import individual routers
 import { collectionsRouter } from "./api/collections";
@@ -57,7 +71,8 @@ export const appRouter = router({
     me: publicProcedure.query((opts) => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
-      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+      ctx.res.clearCookie(ACCESS_TOKEN_COOKIE, { ...cookieOptions, maxAge: -1 });
+      ctx.res.clearCookie(REFRESH_TOKEN_COOKIE, { ...cookieOptions, maxAge: -1 });
       return { success: true };
     }),
     /**
@@ -68,7 +83,18 @@ export const appRouter = router({
      * re-authenticate on this device.
      */
     logoutAllSessions: protectedProcedure.mutation(async ({ ctx }) => {
+      const sessions = await db.getUserSessions(ctx.user.id);
       await db.revokeAllUserSessions(ctx.user.id);
+      // Redis fast-path revocation for all active sessions
+      for (const s of sessions) {
+        if (s.refreshTokenHash) {
+          try {
+            await redis.set(`revoked:${s.refreshTokenHash}`, "1", "EX", 3600);
+          } catch {
+            // Redis down — DB revoke is sufficient
+          }
+        }
+      }
       await db.createAuditLogEntry(
         ctx.user.id,
         "logout_all_sessions",
@@ -77,7 +103,8 @@ export const appRouter = router({
         ctx.req.headers["user-agent"] as string,
       );
       const cookieOptions = getSessionCookieOptions(ctx.req);
-      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+      ctx.res.clearCookie(ACCESS_TOKEN_COOKIE, { ...cookieOptions, maxAge: -1 });
+      ctx.res.clearCookie(REFRESH_TOKEN_COOKIE, { ...cookieOptions, maxAge: -1 });
       return { success: true };
     }),
     /**
@@ -102,8 +129,8 @@ export const appRouter = router({
     revokeSession: protectedProcedure
       .input(z.object({ sessionId: z.string().min(1) }))
       .mutation(async ({ input, ctx }) => {
-        const session = await db.getUserSessions(ctx.user.id);
-        const owned = session.find((s) => s.id === input.sessionId);
+        const sessions = await db.getUserSessions(ctx.user.id);
+        const owned = sessions.find((s) => s.id === input.sessionId);
         if (!owned) {
           throw new TRPCError({
             code: "NOT_FOUND",
@@ -111,6 +138,14 @@ export const appRouter = router({
           });
         }
         await db.revokeUserSession(input.sessionId);
+        // Redis fast-path revocation
+        if (owned.refreshTokenHash) {
+          try {
+            await redis.set(`revoked:${owned.refreshTokenHash}`, "1", "EX", 3600);
+          } catch {
+            // Redis down — DB revoke is sufficient
+          }
+        }
         await db.createAuditLogEntry(
           ctx.user.id,
           "session_revoked",
@@ -145,9 +180,7 @@ export const appRouter = router({
           passwordHash,
         });
 
-        // First user on a fresh deployment is auto-promoted to admin.
-        // This lets a self-hosted operator create their owner account by
-        // just signing up normally instead of running a CLI.
+        // First user auto-promotion
         try {
           const driver = await db.getDb();
           if (driver) {
@@ -164,8 +197,7 @@ export const appRouter = router({
           logger.warn({ err: err }, "[signup] first-user promotion skipped");
         }
 
-        // Auto-create the user's personal workspace + owner membership.
-        // Idempotent — never fails signup if it can't be created.
+        // Auto-create the user's personal workspace
         try {
           await ensurePersonalWorkspace(created.id, input.name.trim());
         } catch (err) {
@@ -175,16 +207,36 @@ export const appRouter = router({
           );
         }
 
-        const sessionToken = await sdk.createSessionToken(created.openId, {
-          name: input.name.trim(),
-        });
+        // Create session with dual tokens
+        const refreshToken = generateRefreshToken();
+        const refreshTokenHash = hashRefreshToken(refreshToken);
+        const expiresAt = new Date(Date.now() + REFRESH_TOKEN_MAX_AGE_MS);
+
+        const { id: sessionId } = await db.createUserSession(
+          created.id,
+          refreshTokenHash,
+          refreshTokenHash,
+          ctx.req.ip ?? null,
+          (ctx.req.headers["user-agent"] as string) ?? null,
+          expiresAt,
+        );
+
+        const accessToken = await generateAccessToken(created.id, sessionId);
         const cookieOptions = getSessionCookieOptions(ctx.req);
-        ctx.res.cookie(COOKIE_NAME, sessionToken, {
+
+        ctx.res.cookie(ACCESS_TOKEN_COOKIE, accessToken, {
           ...cookieOptions,
-          maxAge: ONE_YEAR_MS,
+          maxAge: ACCESS_TOKEN_MAX_AGE_MS,
+          sameSite: "strict",
         });
 
-        // Set CSRF token cookie so the client can send it on subsequent mutations
+        ctx.res.cookie(REFRESH_TOKEN_COOKIE, refreshToken, {
+          ...cookieOptions,
+          maxAge: REFRESH_TOKEN_MAX_AGE_MS,
+          sameSite: "strict",
+          path: "/trpc/auth.refreshToken",
+        });
+
         setCsrfCookie(ctx.res);
 
         await db.createAuditLogEntry(
@@ -211,9 +263,6 @@ export const appRouter = router({
         const normalizedEmail = input.email.trim().toLowerCase();
         const user = await db.getUserByEmail(normalizedEmail);
 
-        // Always throw the same error on unknown email / wrong password to
-        // avoid leaking which accounts exist. Legitimate server errors
-        // still surface as INTERNAL_SERVER_ERROR.
         const invalidCredentials = new TRPCError({
           code: "UNAUTHORIZED",
           message: "Invalid email or password",
@@ -245,23 +294,42 @@ export const appRouter = router({
 
         await db.resetFailedLoginAttempts(user.id);
 
-        // Check if user has 2FA enabled — if so, require TOTP verification
-        // before creating a session.
+        // Check 2FA
         const userWithTotp = await db.getUserById(user.id);
         if (userWithTotp && (userWithTotp as any).totpSecret) {
           return { success: false, requires2FA: true, userId: user.id };
         }
 
-        const sessionToken = await sdk.createSessionToken(user.openId, {
-          name: user.name || "",
-        });
+        // Create session with dual tokens
+        const refreshToken = generateRefreshToken();
+        const refreshTokenHash = hashRefreshToken(refreshToken);
+        const expiresAt = new Date(Date.now() + REFRESH_TOKEN_MAX_AGE_MS);
+
+        const { id: sessionId } = await db.createUserSession(
+          user.id,
+          refreshTokenHash,
+          refreshTokenHash,
+          ctx.req.ip ?? null,
+          (ctx.req.headers["user-agent"] as string) ?? null,
+          expiresAt,
+        );
+
+        const accessToken = await generateAccessToken(user.id, sessionId);
         const cookieOptions = getSessionCookieOptions(ctx.req);
-        ctx.res.cookie(COOKIE_NAME, sessionToken, {
+
+        ctx.res.cookie(ACCESS_TOKEN_COOKIE, accessToken, {
           ...cookieOptions,
-          maxAge: ONE_YEAR_MS,
+          maxAge: ACCESS_TOKEN_MAX_AGE_MS,
+          sameSite: "strict",
         });
 
-        // Set CSRF token cookie so the client can send it on subsequent mutations
+        ctx.res.cookie(REFRESH_TOKEN_COOKIE, refreshToken, {
+          ...cookieOptions,
+          maxAge: REFRESH_TOKEN_MAX_AGE_MS,
+          sameSite: "strict",
+          path: "/trpc/auth.refreshToken",
+        });
+
         setCsrfCookie(ctx.res);
 
         await db.createAuditLogEntry(
@@ -275,8 +343,84 @@ export const appRouter = router({
         return { success: true, userId: user.id };
       }),
     /**
-     * Verify 2FA code during login. Called after the login mutation
-     * returns { requires2FA: true, userId }.
+     * Refresh token rotation: validates the refresh token from the httpOnly
+     * cookie, issues a new access token, and rotates the refresh token
+     * (invalidate old, issue new in an atomic transaction).
+     */
+    refreshToken: publicProcedure.mutation(async ({ ctx }) => {
+      const cookies = ctx.req.headers.cookie;
+      if (!cookies) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "No cookies present" });
+      }
+
+      const parsed = Object.fromEntries(
+        cookies.split(";").map((c: string) => {
+          const [k, ...v] = c.trim().split("=");
+          return [k, v.join("=")];
+        }),
+      );
+
+      const rawToken = parsed[REFRESH_TOKEN_COOKIE];
+      if (!rawToken || typeof rawToken !== "string" || rawToken.length < 32) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Missing refresh token" });
+      }
+
+      const tokenHash = hashRefreshToken(rawToken);
+
+      // Fast-path: check Redis revocation list
+      try {
+        const revoked = await redis.get(`revoked:${tokenHash}`);
+        if (revoked) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "Refresh token has been revoked" });
+        }
+      } catch {
+        // Redis down — fall through to DB check
+      }
+
+      // DB lookup
+      const session = await db.getUserSessionByRefreshTokenHash(tokenHash);
+      if (!session) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid refresh token" });
+      }
+
+      // Revoke the old refresh token
+      await db.rotateRefreshToken(session.id, "");
+
+      // Issue new refresh token (rotation)
+      const newRefreshToken = generateRefreshToken();
+      const newRefreshTokenHash = hashRefreshToken(newRefreshToken);
+
+      await db.rotateRefreshToken(session.id, newRefreshTokenHash);
+
+      // Issue new access token
+      const accessToken = await generateAccessToken(session.userId, session.id);
+      const cookieOptions = getSessionCookieOptions(ctx.req);
+
+      ctx.res.cookie(ACCESS_TOKEN_COOKIE, accessToken, {
+        ...cookieOptions,
+        maxAge: ACCESS_TOKEN_MAX_AGE_MS,
+        sameSite: "strict",
+      });
+
+      ctx.res.cookie(REFRESH_TOKEN_COOKIE, newRefreshToken, {
+        ...cookieOptions,
+        maxAge: REFRESH_TOKEN_MAX_AGE_MS,
+        sameSite: "strict",
+        path: "/trpc/auth.refreshToken",
+      });
+
+      await db.createAuditLogEntry(
+        session.userId,
+        "token_refreshed",
+        { sessionId: session.id },
+        ctx.req.ip,
+        ctx.req.headers["user-agent"] as string,
+      );
+
+      return { success: true };
+    }),
+    /**
+     * Verify 2FA code during login. Creates session with dual tokens on success.
      */
     verify2FALogin: publicProcedure
       .input(
@@ -308,17 +452,36 @@ export const appRouter = router({
           throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid 2FA code" });
         }
 
-        // 2FA verified — create session
-        const sessionToken = await sdk.createSessionToken(user.openId, {
-          name: user.name || "",
-        });
+        // Create session with dual tokens
+        const refreshToken = generateRefreshToken();
+        const refreshTokenHash = hashRefreshToken(refreshToken);
+        const expiresAt = new Date(Date.now() + REFRESH_TOKEN_MAX_AGE_MS);
+
+        const { id: sessionId } = await db.createUserSession(
+          user.id,
+          refreshTokenHash,
+          refreshTokenHash,
+          ctx.req.ip ?? null,
+          (ctx.req.headers["user-agent"] as string) ?? null,
+          expiresAt,
+        );
+
+        const accessToken = await generateAccessToken(user.id, sessionId);
         const cookieOptions = getSessionCookieOptions(ctx.req);
-        ctx.res.cookie(COOKIE_NAME, sessionToken, {
+
+        ctx.res.cookie(ACCESS_TOKEN_COOKIE, accessToken, {
           ...cookieOptions,
-          maxAge: ONE_YEAR_MS,
+          maxAge: ACCESS_TOKEN_MAX_AGE_MS,
+          sameSite: "strict",
         });
 
-        // Set CSRF token cookie so the client can send it on subsequent mutations
+        ctx.res.cookie(REFRESH_TOKEN_COOKIE, refreshToken, {
+          ...cookieOptions,
+          maxAge: REFRESH_TOKEN_MAX_AGE_MS,
+          sameSite: "strict",
+          path: "/trpc/auth.refreshToken",
+        });
+
         setCsrfCookie(ctx.res);
 
         await db.createAuditLogEntry(

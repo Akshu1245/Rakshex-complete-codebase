@@ -34,6 +34,36 @@ services:
       timeout: 3s
       retries: 5
 
+  worker:
+    build:
+      context: .
+      target: worker
+    container_name: devpulse-worker
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=mysql://devpulse:devpulse@mysql:3306/devpulse
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET:-dev-secret-do-not-use-in-production}
+      - INTERNAL_SERVICE_SECRET=${INTERNAL_SERVICE_SECRET:-}
+      - NODE_ENV=${NODE_ENV:-production}
+      - WORKER_CONCURRENCY=${WORKER_CONCURRENCY:-3}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # Optional: Jaeger for local trace visualization
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: devpulse-jaeger
+    restart: unless-stopped
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "4318:4318"    # OTLP HTTP receiver
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+
 volumes:
   mysql_data:
   redis_data:

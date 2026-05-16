@@ -133,9 +133,7 @@ export async function getDb() {
   return _db;
 }
 
-export async function upsertUser(
-  user: InsertUser
-): Promise<{ isNew: boolean }> {
+export async function upsertUser(user: InsertUser): Promise<{ isNew: boolean }> {
   if (!user.openId) {
     throw new ValidationError("User openId is required for upsert");
   }
@@ -221,11 +219,7 @@ export async function getUserByOpenId(openId: string) {
     return undefined;
   }
 
-  const result = await db
-    .select()
-    .from(users)
-    .where(eq(users.openId, openId))
-    .limit(1);
+  const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
 
   return result.length > 0 ? result[0] : undefined;
 }
@@ -308,16 +302,14 @@ export async function createCollection(
   name: string,
   format: "postman" | "openapi",
   data: any,
-  description?: string
+  description?: string,
 ) {
   const db = await getDb();
   assertDb(db);
 
   const id = secureId("col");
   const totalRequests =
-    format === "openapi"
-      ? Object.keys(data.paths || {}).length
-      : data.item?.length || 0;
+    format === "openapi" ? Object.keys(data.paths || {}).length : data.item?.length || 0;
 
   await db.insert(collections).values({
     id,
@@ -334,7 +326,7 @@ export async function createCollection(
 
 export async function updateCollection(
   id: string,
-  updates: { name?: string; description?: string }
+  updates: { name?: string; description?: string },
 ) {
   const db = await getDb();
   assertDb(db);
@@ -365,10 +357,7 @@ export async function getCollectionsByUserId(userId: number) {
  * 1. Collections owned by the user
  * 2. Collections owned by workspace owners where user is an accepted team member
  */
-export async function getWorkspaceCollections(
-  userId: number,
-  userEmail?: string
-) {
+export async function getWorkspaceCollections(userId: number, userEmail?: string) {
   const db = await getDb();
   if (!db) return [];
 
@@ -388,19 +377,14 @@ export async function getWorkspaceCollections(
   const memberships = await db
     .select()
     .from(teamMembers)
-    .where(
-      and(
-        eq(teamMembers.memberEmail, userEmail),
-        eq(teamMembers.status, "accepted")
-      )
-    );
+    .where(and(eq(teamMembers.memberEmail, userEmail), eq(teamMembers.status, "accepted")));
 
   if (memberships.length === 0) {
     return ownCollections;
   }
 
   // Get owner user IDs from memberships
-  const ownerIds = memberships.map(m => m.userId);
+  const ownerIds = memberships.map((m) => m.userId);
 
   // Get collections from workspace owners
   const sharedCollections = await db
@@ -416,7 +400,7 @@ export async function getWorkspaceCollections(
     isShared?: boolean;
   };
   const allCollections: CollectionWithShared[] = [...ownCollections];
-  const seenIds = new Set(ownCollections.map(c => c.id));
+  const seenIds = new Set(ownCollections.map((c) => c.id));
 
   for (const collection of sharedCollections) {
     if (!seenIds.has(collection.id)) {
@@ -432,11 +416,7 @@ export async function getCollectionById(id: string) {
   const db = await getDb();
   if (!db) return null;
 
-  const result = await db
-    .select()
-    .from(collections)
-    .where(eq(collections.id, id))
-    .limit(1);
+  const result = await db.select().from(collections).where(eq(collections.id, id)).limit(1);
 
   return result.length > 0 ? result[0] : null;
 }
@@ -465,10 +445,7 @@ export async function updateCollectionLastScannedAt(id: string) {
   const db = await getDb();
   if (!db) return;
 
-  await db
-    .update(collections)
-    .set({ lastScannedAt: new Date() })
-    .where(eq(collections.id, id));
+  await db.update(collections).set({ lastScannedAt: new Date() }).where(eq(collections.id, id));
 }
 
 /**
@@ -477,10 +454,8 @@ export async function updateCollectionLastScannedAt(id: string) {
 export async function hasCollectionAccess(
   collectionId: string,
   userId: number,
-  userEmail?: string
-): Promise<
-  { access: true; role: string; collection: any } | { access: false }
-> {
+  userEmail?: string,
+): Promise<{ access: true; role: string; collection: any } | { access: false }> {
   const db = await getDb();
   if (!db) return { access: false };
 
@@ -501,8 +476,8 @@ export async function hasCollectionAccess(
         and(
           eq(teamMembers.userId, collection.userId),
           eq(teamMembers.memberEmail, userEmail),
-          eq(teamMembers.status, "accepted")
-        )
+          eq(teamMembers.status, "accepted"),
+        ),
       )
       .limit(1);
 
@@ -522,9 +497,7 @@ export async function deleteCollection(id: string) {
   await db.delete(findings).where(eq(findings.collectionId, id));
   await db.delete(shadowAPIs).where(eq(shadowAPIs.collectionId, id));
   await db.delete(scans).where(eq(scans.collectionId, id));
-  await db
-    .delete(complianceReports)
-    .where(eq(complianceReports.collectionId, id));
+  await db.delete(complianceReports).where(eq(complianceReports.collectionId, id));
 
   // Finally, delete the collection itself
   await db.delete(collections).where(eq(collections.id, id));
@@ -542,7 +515,7 @@ export async function createScan(
   riskScore: number,
   riskLevel: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL",
   totalFindings: number,
-  findingsData?: any
+  findingsData?: any,
 ) {
   const db = await getDb();
   assertDb(db);
@@ -597,7 +570,7 @@ export async function createFinding(
   description?: string,
   category?: string,
   remediation?: string,
-  cweId?: string
+  cweId?: string,
 ) {
   const db = await getDb();
   assertDb(db);
@@ -635,18 +608,11 @@ export async function getFindingById(id: string) {
   const db = await getDb();
   if (!db) return null;
 
-  const result = await db
-    .select()
-    .from(findings)
-    .where(eq(findings.id, id))
-    .limit(1);
+  const result = await db.select().from(findings).where(eq(findings.id, id)).limit(1);
   return result.length > 0 ? result[0] : null;
 }
 
-export async function updateFindingStatus(
-  id: string,
-  status: "open" | "in-progress" | "resolved"
-) {
+export async function updateFindingStatus(id: string, status: "open" | "in-progress" | "resolved") {
   const db = await getDb();
   assertDb(db);
 
@@ -667,7 +633,7 @@ export async function createShadowAPI(
   file?: string,
   line?: number,
   reason?: string,
-  recommendation?: string
+  recommendation?: string,
 ) {
   const db = await getDb();
   assertDb(db);
@@ -717,11 +683,7 @@ export async function getShadowAPIById(id: string) {
   const db = await getDb();
   if (!db) return null;
 
-  const result = await db
-    .select()
-    .from(shadowAPIs)
-    .where(eq(shadowAPIs.id, id))
-    .limit(1);
+  const result = await db.select().from(shadowAPIs).where(eq(shadowAPIs.id, id)).limit(1);
   return result.length > 0 ? result[0] : null;
 }
 
@@ -729,10 +691,7 @@ export async function markShadowAPIDocumented(id: string) {
   const db = await getDb();
   assertDb(db);
 
-  await db
-    .update(shadowAPIs)
-    .set({ isDocumented: true })
-    .where(eq(shadowAPIs.id, id));
+  await db.update(shadowAPIs).set({ isDocumented: true }).where(eq(shadowAPIs.id, id));
 }
 
 // ============================================================================
@@ -745,7 +704,7 @@ export async function recordTokenUsage(
   promptTokens: number,
   completionTokens: number,
   thinkingTokens: number,
-  costUSD: number
+  costUSD: number,
 ) {
   const db = await getDb();
   assertDb(db);
@@ -836,7 +795,7 @@ export async function recordTokenUsage(
           "auto_triggered",
           budgetLimit,
           updatedSpend,
-          `Budget limit of $${budgetLimit.toFixed(2)} exceeded (current spend: $${updatedSpend.toFixed(2)})`
+          `Budget limit of $${budgetLimit.toFixed(2)} exceeded (current spend: $${updatedSpend.toFixed(2)})`,
         );
         try {
           const { deliver } = await import("./services/webhookDelivery");
@@ -888,7 +847,7 @@ export async function createKillSwitchEvent(
   budgetLimit?: number,
   currentSpend?: number,
   reason?: string,
-  details?: any
+  details?: any,
 ) {
   const db = await getDb();
   assertDb(db);
@@ -923,7 +882,7 @@ export async function updateKillSwitchSettings(
   userId: number,
   budgetLimitUSD?: number,
   isActive?: boolean,
-  currentSpendUSD?: number
+  currentSpendUSD?: number,
 ) {
   const db = await getDb();
   assertDb(db);
@@ -941,17 +900,12 @@ export async function updateKillSwitchSettings(
     });
   } else {
     const updates: any = {};
-    if (budgetLimitUSD !== undefined)
-      updates.budgetLimitUSD = budgetLimitUSD.toString();
+    if (budgetLimitUSD !== undefined) updates.budgetLimitUSD = budgetLimitUSD.toString();
     if (isActive !== undefined) updates.isActive = isActive;
-    if (currentSpendUSD !== undefined)
-      updates.currentSpendUSD = currentSpendUSD.toString();
+    if (currentSpendUSD !== undefined) updates.currentSpendUSD = currentSpendUSD.toString();
 
     if (Object.keys(updates).length > 0) {
-      await db
-        .update(killSwitchSettings)
-        .set(updates)
-        .where(eq(killSwitchSettings.userId, userId));
+      await db.update(killSwitchSettings).set(updates).where(eq(killSwitchSettings.userId, userId));
     }
   }
 }
@@ -988,7 +942,7 @@ export async function createComplianceReport(
   complianceScore: number,
   totalRequirements: number,
   metRequirements: number,
-  requirementsData?: any
+  requirementsData?: any,
 ) {
   const db = await getDb();
   assertDb(db);
@@ -1040,7 +994,7 @@ export async function getComplianceReportById(id: string) {
 export async function inviteTeamMember(
   userId: number,
   memberEmail: string,
-  role: "admin" | "editor" | "viewer"
+  role: "admin" | "editor" | "viewer",
 ) {
   const db = await getDb();
   assertDb(db);
@@ -1061,30 +1015,18 @@ export async function getTeamMemberById(id: string) {
   const db = await getDb();
   if (!db) return null;
 
-  const result = await db
-    .select()
-    .from(teamMembers)
-    .where(eq(teamMembers.id, id))
-    .limit(1);
+  const result = await db.select().from(teamMembers).where(eq(teamMembers.id, id)).limit(1);
   return result.length > 0 ? result[0] : null;
 }
 
-export async function getTeamMemberByEmail(
-  userId: number,
-  memberEmail: string
-) {
+export async function getTeamMemberByEmail(userId: number, memberEmail: string) {
   const db = await getDb();
   if (!db) return null;
 
   const result = await db
     .select()
     .from(teamMembers)
-    .where(
-      and(
-        eq(teamMembers.userId, userId),
-        eq(teamMembers.memberEmail, memberEmail)
-      )
-    )
+    .where(and(eq(teamMembers.userId, userId), eq(teamMembers.memberEmail, memberEmail)))
     .limit(1);
   return result.length > 0 ? result[0] : null;
 }
@@ -1100,10 +1042,7 @@ export async function getTeamMembersByUserId(userId: number) {
     .orderBy(desc(teamMembers.invitedAt));
 }
 
-export async function updateTeamMemberRole(
-  id: string,
-  role: "admin" | "editor" | "viewer"
-) {
+export async function updateTeamMemberRole(id: string, role: "admin" | "editor" | "viewer") {
   const db = await getDb();
   assertDb(db);
 
@@ -1146,17 +1085,12 @@ export async function getOrCreateOnboardingProgress(userId: number) {
     .from(onboardingProgress)
     .where(eq(onboardingProgress.userId, userId))
     .limit(1)
-    .then(r => r[0]);
+    .then((r) => r[0]);
 }
 
 export async function updateOnboardingStep(
   userId: number,
-  step:
-    | "importCollection"
-    | "runScan"
-    | "reviewFindings"
-    | "inviteTeam"
-    | "setupCompliance"
+  step: "importCollection" | "runScan" | "reviewFindings" | "inviteTeam" | "setupCompliance",
 ) {
   const db = await getDb();
   assertDb(db);
@@ -1196,20 +1130,14 @@ export async function updateOnboardingStep(
     updates.completedAt = new Date();
   }
 
-  await db
-    .update(onboardingProgress)
-    .set(updates)
-    .where(eq(onboardingProgress.userId, userId));
+  await db.update(onboardingProgress).set(updates).where(eq(onboardingProgress.userId, userId));
 }
 
 export async function completeOnboarding(userId: number) {
   const db = await getDb();
   assertDb(db);
 
-  await db
-    .update(users)
-    .set({ onboardingCompleted: true })
-    .where(eq(users.id, userId));
+  await db.update(users).set({ onboardingCompleted: true }).where(eq(users.id, userId));
 
   await db
     .update(onboardingProgress)
@@ -1231,25 +1159,24 @@ export async function getDashboardMetrics(userId: number) {
       teamMembers: 0,
     };
 
-  const [collectionsResult, findingsResult, riskResult, teamResult] =
-    await Promise.all([
-      db
-        .select({ count: sql<number>`count(*)` })
-        .from(collections)
-        .where(eq(collections.userId, userId)),
-      db
-        .select({ count: sql<number>`count(*)` })
-        .from(findings)
-        .where(eq(findings.userId, userId)),
-      db
-        .select({ maxScore: sql<string>`MAX(riskScore)` })
-        .from(scans)
-        .where(eq(scans.userId, userId)),
-      db
-        .select({ count: sql<number>`count(*)` })
-        .from(teamMembers)
-        .where(eq(teamMembers.userId, userId)),
-    ]);
+  const [collectionsResult, findingsResult, riskResult, teamResult] = await Promise.all([
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(collections)
+      .where(eq(collections.userId, userId)),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(findings)
+      .where(eq(findings.userId, userId)),
+    db
+      .select({ maxScore: sql<string>`MAX(riskScore)` })
+      .from(scans)
+      .where(eq(scans.userId, userId)),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(teamMembers)
+      .where(eq(teamMembers.userId, userId)),
+  ]);
 
   return {
     totalCollections: Number(collectionsResult[0]?.count ?? 0),
@@ -1280,7 +1207,7 @@ export async function getRecentScans(userId: number, limit: number = 5) {
     .orderBy(desc(scans.createdAt))
     .limit(limit);
 
-  return recentScans.map(s => ({
+  return recentScans.map((s) => ({
     id: s.id,
     collectionName: s.collectionName ?? "Unknown",
     scanType: s.scanType,
@@ -1313,10 +1240,7 @@ export async function getAllUsers() {
 // USER PLAN / SUBSCRIPTION
 // ============================================================================
 
-export async function updateUserPlan(
-  userId: number,
-  plan: "free" | "pro" | "enterprise"
-) {
+export async function updateUserPlan(userId: number, plan: "free" | "pro" | "enterprise") {
   const db = await getDb();
   assertDb(db);
 
@@ -1340,17 +1264,13 @@ export async function getUserPlan(userId: number): Promise<string> {
 // TEAM INVITATION ACCEPT / REJECT
 // ============================================================================
 
-export async function acceptTeamInvitation(
-  memberId: string,
-  memberUserId: number
-) {
+export async function acceptTeamInvitation(memberId: string, memberUserId: number) {
   const db = await getDb();
   assertDb(db);
 
   const member = await getTeamMemberById(memberId);
   if (!member) throw new NotFoundError("Invitation not found");
-  if (member.status !== "pending")
-    throw new ConflictError("Invitation is no longer pending");
+  if (member.status !== "pending") throw new ConflictError("Invitation is no longer pending");
 
   await db
     .update(teamMembers)
@@ -1364,13 +1284,9 @@ export async function rejectTeamInvitation(memberId: string) {
 
   const member = await getTeamMemberById(memberId);
   if (!member) throw new NotFoundError("Invitation not found");
-  if (member.status !== "pending")
-    throw new ConflictError("Invitation is no longer pending");
+  if (member.status !== "pending") throw new ConflictError("Invitation is no longer pending");
 
-  await db
-    .update(teamMembers)
-    .set({ status: "rejected" })
-    .where(eq(teamMembers.id, memberId));
+  await db.update(teamMembers).set({ status: "rejected" }).where(eq(teamMembers.id, memberId));
 }
 
 export async function getPendingInvitationsForUser(email: string) {
@@ -1380,9 +1296,7 @@ export async function getPendingInvitationsForUser(email: string) {
   return await db
     .select()
     .from(teamMembers)
-    .where(
-      and(eq(teamMembers.memberEmail, email), eq(teamMembers.status, "pending"))
-    )
+    .where(and(eq(teamMembers.memberEmail, email), eq(teamMembers.status, "pending")))
     .orderBy(desc(teamMembers.invitedAt));
 }
 
@@ -1392,7 +1306,7 @@ export async function getPendingInvitationsForUser(email: string) {
 
 export async function detectCostAnomaly(
   userId: number,
-  threshold: number = 2.0
+  threshold: number = 2.0,
 ): Promise<{
   isAnomaly: boolean;
   currentCost: number;
@@ -1410,17 +1324,14 @@ export async function detectCostAnomaly(
     };
   }
 
-  const costs = usage.map(u => toNumber(u.costUSD));
+  const costs = usage.map((u) => toNumber(u.costUSD));
   const currentCost = costs[0] ?? 0;
   const averageCost = costs.reduce((a, b) => a + b, 0) / costs.length;
-  const variance =
-    costs.reduce((sum, c) => sum + Math.pow(c - averageCost, 2), 0) /
-    costs.length;
+  const variance = costs.reduce((sum, c) => sum + Math.pow(c - averageCost, 2), 0) / costs.length;
   const standardDeviation = Math.sqrt(variance);
 
   const isAnomaly =
-    standardDeviation > 0 &&
-    currentCost > averageCost + threshold * standardDeviation;
+    standardDeviation > 0 && currentCost > averageCost + threshold * standardDeviation;
 
   return { isAnomaly, currentCost, averageCost, standardDeviation };
 }
@@ -1429,11 +1340,7 @@ export async function detectCostAnomaly(
 // PASSWORD RESET TOKENS
 // ============================================================================
 
-export async function createPasswordResetToken(
-  userId: number,
-  token: string,
-  expiresAt: Date
-) {
+export async function createPasswordResetToken(userId: number, token: string, expiresAt: Date) {
   const db = await getDb();
   assertDb(db);
 
@@ -1474,9 +1381,7 @@ export async function cleanupExpiredPasswordResetTokens() {
   const db = await getDb();
   if (!db) return;
 
-  await db
-    .delete(passwordResetTokens)
-    .where(sql`${passwordResetTokens.expiresAt} < NOW()`);
+  await db.delete(passwordResetTokens).where(sql`${passwordResetTokens.expiresAt} < NOW()`);
 }
 
 // ============================================================================
@@ -1486,9 +1391,10 @@ export async function cleanupExpiredPasswordResetTokens() {
 export async function createUserSession(
   userId: number,
   sessionToken: string,
+  refreshTokenHash: string | null,
   ipAddress: string | null,
   userAgent: string | null,
-  expiresAt: Date
+  expiresAt: Date,
 ) {
   const db = await getDb();
   assertDb(db);
@@ -1498,6 +1404,7 @@ export async function createUserSession(
     id,
     userId,
     sessionToken,
+    refreshTokenHash,
     ipAddress,
     userAgent,
     expiresAt,
@@ -1505,6 +1412,37 @@ export async function createUserSession(
   return { id };
 }
 
+export async function getUserSessionByRefreshTokenHash(refreshTokenHash: string) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db
+    .select()
+    .from(userSessions)
+    .where(
+      and(
+        eq(userSessions.refreshTokenHash, refreshTokenHash),
+        eq(userSessions.isRevoked, false),
+        sql`${userSessions.expiresAt} > NOW()`,
+      ),
+    )
+    .limit(1);
+
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function rotateRefreshToken(sessionId: string, newRefreshTokenHash: string) {
+  const db = await getDb();
+  assertDb(db);
+
+  await db
+    .update(userSessions)
+    .set({
+      refreshTokenHash: newRefreshTokenHash,
+      lastUsedAt: new Date(),
+    })
+    .where(eq(userSessions.id, sessionId));
+}
 export async function getUserSessions(userId: number) {
   const db = await getDb();
   if (!db) return [];
@@ -1516,8 +1454,8 @@ export async function getUserSessions(userId: number) {
       and(
         eq(userSessions.userId, userId),
         sql`${userSessions.expiresAt} > NOW()`,
-        sql`${userSessions.revokedAt} IS NULL`
-      )
+        eq(userSessions.isRevoked, false),
+      ),
     )
     .orderBy(desc(userSessions.createdAt));
 }
@@ -1533,8 +1471,8 @@ export async function getUserSessionByToken(sessionToken: string) {
       and(
         eq(userSessions.sessionToken, sessionToken),
         sql`${userSessions.expiresAt} > NOW()`,
-        sql`${userSessions.revokedAt} IS NULL`
-      )
+        eq(userSessions.isRevoked, false),
+      ),
     )
     .limit(1);
 
@@ -1547,28 +1485,22 @@ export async function revokeUserSession(sessionId: string) {
 
   await db
     .update(userSessions)
-    .set({ revokedAt: new Date() })
+    .set({ revokedAt: new Date(), isRevoked: true })
     .where(eq(userSessions.id, sessionId));
 }
 
-export async function revokeAllUserSessions(
-  userId: number,
-  exceptSessionId?: string
-) {
+export async function revokeAllUserSessions(userId: number, exceptSessionId?: string) {
   const db = await getDb();
   assertDb(db);
 
-  const conditions = [
-    eq(userSessions.userId, userId),
-    sql`${userSessions.revokedAt} IS NULL`,
-  ];
+  const conditions = [eq(userSessions.userId, userId), eq(userSessions.isRevoked, false)];
   if (exceptSessionId) {
     conditions.push(sql`${userSessions.id} != ${exceptSessionId}`);
   }
 
   await db
     .update(userSessions)
-    .set({ revokedAt: new Date() })
+    .set({ revokedAt: new Date(), isRevoked: true })
     .where(and(...conditions));
 }
 
@@ -1632,7 +1564,7 @@ export async function getOrCreateEmailPreferences(userId: number) {
     .from(emailPreferences)
     .where(eq(emailPreferences.id, id))
     .limit(1)
-    .then(r => r[0]);
+    .then((r) => r[0]);
 }
 
 export async function updateEmailPreferences(
@@ -1643,7 +1575,7 @@ export async function updateEmailPreferences(
     weeklyDigest?: boolean;
     teamActivity?: boolean;
     promotionalEmails?: boolean;
-  }
+  },
 ) {
   const db = await getDb();
   assertDb(db);
@@ -1670,7 +1602,7 @@ export async function createAuditLogEntry(
   action: string,
   details?: Record<string, unknown>,
   ipAddress?: string,
-  userAgent?: string
+  userAgent?: string,
 ) {
   const db = await getDb();
   if (!db) return;
@@ -1707,7 +1639,7 @@ export async function updateUserProfile(
   updates: {
     name?: string;
     email?: string;
-  }
+  },
 ) {
   const db = await getDb();
   assertDb(db);
@@ -1722,10 +1654,7 @@ export async function updateUserProfile(
   invalidateUserRowCache(userId);
 }
 
-export async function updateUserPassword(
-  userId: number,
-  hashedPassword: string
-) {
+export async function updateUserPassword(userId: number, hashedPassword: string) {
   const db = await getDb();
   assertDb(db);
 
@@ -1745,10 +1674,7 @@ export async function updateUserPassword(
  * Update (or clear) the TOTP secret for 2FA.
  * Pass null to disable 2FA.
  */
-export async function updateUserTotpSecret(
-  userId: number,
-  totpSecret: string | null
-) {
+export async function updateUserTotpSecret(userId: number, totpSecret: string | null) {
   const db = await getDb();
   assertDb(db);
 
@@ -1770,7 +1696,7 @@ export async function updateUserTotpSecret(
 export async function updatePendingTotpSecret(
   userId: number,
   pendingTotpSecret: string | null,
-  pendingTotpExpiresAt: Date | null
+  pendingTotpExpiresAt: Date | null,
 ) {
   const db = await getDb();
   assertDb(db);
@@ -1790,7 +1716,7 @@ export async function updatePendingTotpSecret(
  * Get the pending TOTP secret and expiry for a user.
  */
 export async function getPendingTotpSecret(
-  userId: number
+  userId: number,
 ): Promise<{ pendingTotpSecret: string | null; pendingTotpExpiresAt: Date | null } | null> {
   const db = await getDb();
   assertDb(db);
@@ -1850,7 +1776,7 @@ export async function createLocalUser(data: {
 export async function incrementFailedLoginAttempts(
   userId: number,
   lockThreshold = 5,
-  lockDurationMs = 15 * 60 * 1000
+  lockDurationMs = 15 * 60 * 1000,
 ): Promise<{ attempts: number; lockedUntil: Date | null }> {
   const db = await getDb();
   assertDb(db);
@@ -1862,8 +1788,7 @@ export async function incrementFailedLoginAttempts(
     .limit(1);
 
   const attempts = (existing[0]?.attempts ?? 0) + 1;
-  const lockedUntil =
-    attempts >= lockThreshold ? new Date(Date.now() + lockDurationMs) : null;
+  const lockedUntil = attempts >= lockThreshold ? new Date(Date.now() + lockDurationMs) : null;
 
   await db
     .update(users)
@@ -1899,7 +1824,7 @@ export async function resetFailedLoginAttempts(userId: number): Promise<void> {
 // ============================================================================
 
 export async function deleteUserAccount(
-  userId: number
+  userId: number,
 ): Promise<{ deleted: boolean; message: string }> {
   const db = await getDb();
   assertDb(db);
@@ -1910,61 +1835,42 @@ export async function deleteUserAccount(
     await db.delete(auditLog).where(eq(auditLog.userId, userId));
 
     // 2. Delete password reset tokens
-    await db
-      .delete(passwordResetTokens)
-      .where(eq(passwordResetTokens.userId, userId));
+    await db.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, userId));
 
     // 3. Delete user sessions
     await db.delete(userSessions).where(eq(userSessions.userId, userId));
 
     // 4. Delete email preferences
-    await db
-      .delete(emailPreferences)
-      .where(eq(emailPreferences.userId, userId));
+    await db.delete(emailPreferences).where(eq(emailPreferences.userId, userId));
 
     // 5. Delete token usage
     await db.delete(tokenUsage).where(eq(tokenUsage.userId, userId));
 
     // 6. Delete kill switch events and settings
-    await db
-      .delete(killSwitchEvents)
-      .where(eq(killSwitchEvents.userId, userId));
-    await db
-      .delete(killSwitchSettings)
-      .where(eq(killSwitchSettings.userId, userId));
+    await db.delete(killSwitchEvents).where(eq(killSwitchEvents.userId, userId));
+    await db.delete(killSwitchSettings).where(eq(killSwitchSettings.userId, userId));
 
     // 7. Delete team memberships (both as owner and member)
     await db.delete(teamMembers).where(
       and(
         eq(teamMembers.userId, userId),
-        sql`${teamMembers.memberUserId} IS NULL` // Only delete where they are the owner
-      )
+        sql`${teamMembers.memberUserId} IS NULL`, // Only delete where they are the owner
+      ),
     );
     await db.delete(teamMembers).where(eq(teamMembers.memberUserId, userId));
 
     // 8. Delete onboarding progress
-    await db
-      .delete(onboardingProgress)
-      .where(eq(onboardingProgress.userId, userId));
+    await db.delete(onboardingProgress).where(eq(onboardingProgress.userId, userId));
 
     // 9. Delete compliance reports
-    await db
-      .delete(complianceReports)
-      .where(eq(complianceReports.userId, userId));
+    await db.delete(complianceReports).where(eq(complianceReports.userId, userId));
 
     // 10. Delete findings (need to get scan IDs first)
-    const userScans = await db
-      .select({ id: scans.id })
-      .from(scans)
-      .where(eq(scans.userId, userId));
-    const scanIds = userScans.map(s => s.id);
+    const userScans = await db.select({ id: scans.id }).from(scans).where(eq(scans.userId, userId));
+    const scanIds = userScans.map((s) => s.id);
     if (scanIds.length > 0) {
-      await db
-        .delete(findings)
-        .where(sql`${findings.scanId} IN (${scanIds.join(",")})`);
-      await db
-        .delete(shadowAPIs)
-        .where(sql`${shadowAPIs.scanId} IN (${scanIds.join(",")})`);
+      await db.delete(findings).where(sql`${findings.scanId} IN (${scanIds.join(",")})`);
+      await db.delete(shadowAPIs).where(sql`${shadowAPIs.scanId} IN (${scanIds.join(",")})`);
     }
 
     // 11. Delete scans
@@ -1998,11 +1904,7 @@ export async function getUserByEmail(email: string) {
   const db = await getDb();
   if (!db) return undefined;
 
-  const result = await db
-    .select()
-    .from(users)
-    .where(eq(users.email, email))
-    .limit(1);
+  const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
   return result.length > 0 ? result[0] : undefined;
 }
@@ -2028,12 +1930,7 @@ export async function createSubscription(data: {
     plan: data.plan as "free" | "pro" | "enterprise",
     razorpaySubscriptionId: data.razorpaySubscriptionId,
     razorpayCustomerId: data.razorpayCustomerId,
-    status: data.status as
-      | "pending"
-      | "active"
-      | "past_due"
-      | "cancelled"
-      | "halted",
+    status: data.status as "pending" | "active" | "past_due" | "cancelled" | "halted",
   });
 
   return data;
@@ -2068,7 +1965,7 @@ export async function getSubscriptionByRazorpayId(razorpayId: string) {
 export async function updateSubscriptionStatus(
   id: string,
   status: SubscriptionStatus,
-  cancelAtPeriodEnd: boolean = false
+  cancelAtPeriodEnd: boolean = false,
 ) {
   const db = await getDb();
   assertDb(db);
@@ -2083,10 +1980,7 @@ export async function updateSubscriptionStatus(
     .where(eq(subscriptions.id, id));
 }
 
-export async function updateUserSubscriptionId(
-  userId: number,
-  subscriptionId: string | null
-) {
+export async function updateUserSubscriptionId(userId: number, subscriptionId: string | null) {
   // Subscription link is in subscriptions table
 }
 
@@ -2173,7 +2067,7 @@ export async function getPaymentsByUserId(userId: number) {
 export async function updatePaymentRefundStatus(
   razorpayPaymentId: string,
   refundAmount: number,
-  refundStatus: RefundStatus
+  refundStatus: RefundStatus,
 ) {
   const db = await getDb();
   assertDb(db);
@@ -2199,21 +2093,14 @@ export const createPayment = createOrUpdatePayment;
 export async function getUserByApiKey(apiKey: string) {
   const db = await getDb();
   if (!db) return undefined;
-  const result = await db
-    .select()
-    .from(users)
-    .where(eq(users.apiKey, apiKey))
-    .limit(1);
+  const result = await db.select().from(users).where(eq(users.apiKey, apiKey)).limit(1);
   return result.length > 0 ? result[0] : undefined;
 }
 
 export async function updateUserApiKey(userId: number, apiKey: string) {
   const db = await getDb();
   assertDb(db);
-  await db
-    .update(users)
-    .set({ apiKey, updatedAt: new Date() })
-    .where(eq(users.id, userId));
+  await db.update(users).set({ apiKey, updatedAt: new Date() }).where(eq(users.id, userId));
 }
 
 export async function updateUser(
@@ -2225,7 +2112,7 @@ export async function updateUser(
     onboardingCompleted: boolean;
     plan: "free" | "pro" | "enterprise";
     role: "user" | "editor" | "admin";
-  }>
+  }>,
 ) {
   const db = await getDb();
   assertDb(db);
@@ -2239,7 +2126,7 @@ export async function recordVSCodeActivity(
   userId: number,
   type: string,
   data: unknown,
-  timestamp: Date
+  timestamp: Date,
 ) {
   const db = await getDb();
   assertDb(db);
@@ -2277,18 +2164,14 @@ export async function getOpenFindingsCount(userId: number): Promise<number> {
  * outgoing deliveries. It is never returned in full from any query except
  * `getWebhookEndpointById`.
  */
-export async function createWebhookEndpoint(
-  input: InsertWebhookEndpoint
-): Promise<{ id: string }> {
+export async function createWebhookEndpoint(input: InsertWebhookEndpoint): Promise<{ id: string }> {
   const db = await getDb();
   assertDb(db);
   await db.insert(webhookEndpoints).values(input);
   return { id: input.id };
 }
 
-export async function listWebhookEndpointsByUserId(
-  userId: number
-): Promise<WebhookEndpoint[]> {
+export async function listWebhookEndpointsByUserId(userId: number): Promise<WebhookEndpoint[]> {
   const db = await getDb();
   if (!db) return [];
   return await db
@@ -2298,16 +2181,10 @@ export async function listWebhookEndpointsByUserId(
     .orderBy(desc(webhookEndpoints.createdAt));
 }
 
-export async function getWebhookEndpointById(
-  id: string
-): Promise<WebhookEndpoint | null> {
+export async function getWebhookEndpointById(id: string): Promise<WebhookEndpoint | null> {
   const db = await getDb();
   if (!db) return null;
-  const rows = await db
-    .select()
-    .from(webhookEndpoints)
-    .where(eq(webhookEndpoints.id, id))
-    .limit(1);
+  const rows = await db.select().from(webhookEndpoints).where(eq(webhookEndpoints.id, id)).limit(1);
   return rows[0] ?? null;
 }
 
@@ -2318,20 +2195,15 @@ export async function getWebhookEndpointById(
  */
 export async function getActiveWebhookEndpoints(
   userId: number,
-  event: string
+  event: string,
 ): Promise<WebhookEndpoint[]> {
   const db = await getDb();
   if (!db) return [];
   const rows = await db
     .select()
     .from(webhookEndpoints)
-    .where(
-      and(
-        eq(webhookEndpoints.userId, userId),
-        eq(webhookEndpoints.isActive, true)
-      )
-    );
-  return rows.filter(row => {
+    .where(and(eq(webhookEndpoints.userId, userId), eq(webhookEndpoints.isActive, true)));
+  return rows.filter((row) => {
     const events = Array.isArray(row.events) ? row.events : [];
     return events.includes(event);
   });
@@ -2343,10 +2215,7 @@ export async function deleteWebhookEndpoint(id: string): Promise<void> {
   await db.delete(webhookEndpoints).where(eq(webhookEndpoints.id, id));
 }
 
-export async function updateWebhookEndpointActive(
-  id: string,
-  isActive: boolean
-): Promise<void> {
+export async function updateWebhookEndpointActive(id: string, isActive: boolean): Promise<void> {
   const db = await getDb();
   assertDb(db);
   await db
@@ -2355,10 +2224,7 @@ export async function updateWebhookEndpointActive(
     .where(eq(webhookEndpoints.id, id));
 }
 
-export async function recordWebhookSuccess(
-  id: string,
-  status: number
-): Promise<void> {
+export async function recordWebhookSuccess(id: string, status: number): Promise<void> {
   const db = await getDb();
   if (!db) return;
   await db
@@ -2380,7 +2246,7 @@ export async function recordWebhookSuccess(
 export async function recordWebhookFailure(
   id: string,
   status: number | null,
-  autoDisable: boolean
+  autoDisable: boolean,
 ): Promise<void> {
   const db = await getDb();
   if (!db) return;
@@ -2397,19 +2263,14 @@ export async function recordWebhookFailure(
     .where(eq(webhookEndpoints.id, id));
 }
 
-export async function createWebhookDelivery(
-  input: InsertWebhookDelivery
-): Promise<{ id: string }> {
+export async function createWebhookDelivery(input: InsertWebhookDelivery): Promise<{ id: string }> {
   const db = await getDb();
   assertDb(db);
   await db.insert(webhookDeliveries).values(input);
   return { id: input.id };
 }
 
-export async function listWebhookDeliveries(
-  webhookId: string,
-  limit = 50
-) {
+export async function listWebhookDeliveries(webhookId: string, limit = 50) {
   const db = await getDb();
   if (!db) return [];
   return await db
@@ -2438,7 +2299,7 @@ export async function listWebhookDeliveries(
 export async function markWebhookEventProcessed(
   provider: string,
   eventId: string,
-  eventType: string
+  eventType: string,
 ): Promise<boolean> {
   const db = await getDb();
   if (!db) {
@@ -2465,10 +2326,7 @@ export async function markWebhookEventProcessed(
   }
 }
 
-export async function isWebhookEventProcessed(
-  provider: string,
-  eventId: string
-): Promise<boolean> {
+export async function isWebhookEventProcessed(provider: string, eventId: string): Promise<boolean> {
   const db = await getDb();
   if (!db) return false;
   const id = `${provider}:${eventId}`;
@@ -2498,7 +2356,7 @@ export async function getRecentFindingsForUser(userId: number, limit = 5) {
     .where(eq(findings.userId, userId))
     .orderBy(desc(findings.createdAt))
     .limit(limit);
-  return rows.map(r => ({
+  return rows.map((r) => ({
     ...r,
     collectionName: r.collectionName ?? "Unknown",
   }));
@@ -2542,27 +2400,15 @@ const COST_TABLE: Record<string, { prompt: number; completion: number }> = {
   "claude-3-opus-20240229": { prompt: 0.015, completion: 0.075 },
 };
 
-function estimateCostUsd(
-  model: string,
-  promptTokens: number,
-  completionTokens: number
-): number {
-  const lookup =
-    COST_TABLE[model] ??
+function estimateCostUsd(model: string, promptTokens: number, completionTokens: number): number {
+  const lookup = COST_TABLE[model] ??
     COST_TABLE[
-      Object.keys(COST_TABLE).find(k => model.startsWith(k.split("-")[0]!)) ??
-        "gpt-3.5-turbo"
-    ] ??
-    { prompt: 0.0005, completion: 0.0015 };
-  return (
-    (promptTokens / 1000) * lookup.prompt +
-    (completionTokens / 1000) * lookup.completion
-  );
+      Object.keys(COST_TABLE).find((k) => model.startsWith(k.split("-")[0]!)) ?? "gpt-3.5-turbo"
+    ] ?? { prompt: 0.0005, completion: 0.0015 };
+  return (promptTokens / 1000) * lookup.prompt + (completionTokens / 1000) * lookup.completion;
 }
 
-export async function recordGatewayAudit(
-  payload: GatewayAuditPayload
-): Promise<void> {
+export async function recordGatewayAudit(payload: GatewayAuditPayload): Promise<void> {
   const db = await getDb();
   if (!db) return;
   const userId = Number.parseInt(payload.tenantId ?? "0", 10);
@@ -2573,9 +2419,7 @@ export async function recordGatewayAudit(
   const model = payload.model ?? "unknown";
   const cost = estimateCostUsd(model, promptTokens, completionTokens);
   const latencyMs =
-    payload.startedAt && payload.endedAt
-      ? Math.max(0, payload.endedAt - payload.startedAt)
-      : null;
+    payload.startedAt && payload.endedAt ? Math.max(0, payload.endedAt - payload.startedAt) : null;
   const row: InsertGatewayAuditRow = {
     userId,
     requestId: payload.requestId ?? crypto.randomUUID(),
@@ -2587,9 +2431,7 @@ export async function recordGatewayAudit(
     estimatedCostUsd: cost.toFixed(6),
     ...(payload.provider ? { provider: payload.provider } : {}),
     ...(payload.blockReason ? { blockReason: payload.blockReason } : {}),
-    ...(payload.promptFingerprint
-      ? { promptFingerprint: payload.promptFingerprint }
-      : {}),
+    ...(payload.promptFingerprint ? { promptFingerprint: payload.promptFingerprint } : {}),
     ...(latencyMs !== null ? { latencyMs } : {}),
   };
   await db.insert(gatewayAudit).values(row);
@@ -2610,7 +2452,7 @@ export async function recordGatewayAudit(
 
 export async function getGatewayAuditRecent(
   userId: number,
-  limit = 100
+  limit = 100,
 ): Promise<GatewayAuditRow[]> {
   const db = await getDb();
   if (!db) return [];
@@ -2624,7 +2466,7 @@ export async function getGatewayAuditRecent(
 
 export async function getGatewayDailyTotals(
   userId: number,
-  days = 30
+  days = 30,
 ): Promise<
   Array<{
     date: string;
@@ -2647,15 +2489,10 @@ export async function getGatewayDailyTotals(
       estimatedCostUsd: sql<string>`SUM(${gatewayAudit.estimatedCostUsd})`,
     })
     .from(gatewayAudit)
-    .where(
-      and(
-        eq(gatewayAudit.userId, userId),
-        gte(gatewayAudit.createdAt, start)
-      )
-    )
+    .where(and(eq(gatewayAudit.userId, userId), gte(gatewayAudit.createdAt, start)))
     .groupBy(sql`DATE(${gatewayAudit.createdAt})`)
     .orderBy(sql`DATE(${gatewayAudit.createdAt})`);
-  return rows.map(r => ({
+  return rows.map((r) => ({
     date: r.date,
     totalTokens: Number(r.totalTokens ?? 0),
     blockedCount: Number(r.blockedCount ?? 0),
@@ -2664,9 +2501,7 @@ export async function getGatewayDailyTotals(
   }));
 }
 
-export async function getTokenBudgetState(
-  userId: number
-): Promise<{
+export async function getTokenBudgetState(userId: number): Promise<{
   windowStart: string;
   used: number;
   limit: number | null;
@@ -2677,23 +2512,14 @@ export async function getTokenBudgetState(
   if (!db) {
     return { windowStart: today, used: 0, limit: null, mode: "soft" };
   }
-  const cap = await db
-    .select()
-    .from(tokenBudgets)
-    .where(eq(tokenBudgets.userId, userId))
-    .limit(1);
+  const cap = await db.select().from(tokenBudgets).where(eq(tokenBudgets.userId, userId)).limit(1);
   const windowStart = today;
   const used = await db
     .select({
       total: sql<number>`COALESCE(SUM(${gatewayAudit.totalTokens}), 0)`,
     })
     .from(gatewayAudit)
-    .where(
-      and(
-        eq(gatewayAudit.userId, userId),
-        sql`DATE(${gatewayAudit.createdAt}) = ${today}`
-      )
-    );
+    .where(and(eq(gatewayAudit.userId, userId), sql`DATE(${gatewayAudit.createdAt}) = ${today}`));
   const usedTotal = Number(used[0]?.total ?? 0);
   const settings = cap[0];
   return {
@@ -2707,9 +2533,10 @@ export async function getTokenBudgetState(
 export async function setTokenBudget(
   userId: number,
   dailyTokenLimit: number | null,
-  mode: "soft" | "hard"
+  mode: "soft" | "hard",
 ): Promise<void> {
-  const db = await getDb(); assertDb(db);
+  const db = await getDb();
+  assertDb(db);
   await db
     .insert(tokenBudgets)
     .values({
@@ -2724,47 +2551,35 @@ export async function setTokenBudget(
 
 // ── Shadow AI ────────────────────────────────────────────────────────────────
 
-export async function listAiAllowlist(
-  userId: number
-): Promise<AiAllowlistRow[]> {
+export async function listAiAllowlist(userId: number): Promise<AiAllowlistRow[]> {
   const db = await getDb();
   if (!db) return [];
-  return db
-    .select()
-    .from(aiAllowlist)
-    .where(eq(aiAllowlist.userId, userId));
+  return db.select().from(aiAllowlist).where(eq(aiAllowlist.userId, userId));
 }
 
 export async function addAiAllowlistEntry(
   userId: number,
   kind: "host" | "model",
-  pattern: string
+  pattern: string,
 ): Promise<void> {
-  const db = await getDb(); assertDb(db);
+  const db = await getDb();
+  assertDb(db);
   await db.insert(aiAllowlist).values({ userId, kind, pattern });
 }
 
-export async function removeAiAllowlistEntry(
-  userId: number,
-  id: number
-): Promise<void> {
-  const db = await getDb(); assertDb(db);
-  await db
-    .delete(aiAllowlist)
-    .where(and(eq(aiAllowlist.id, id), eq(aiAllowlist.userId, userId)));
+export async function removeAiAllowlistEntry(userId: number, id: number): Promise<void> {
+  const db = await getDb();
+  assertDb(db);
+  await db.delete(aiAllowlist).where(and(eq(aiAllowlist.id, id), eq(aiAllowlist.userId, userId)));
 }
 
-export async function recordShadowAiEvent(
-  row: InsertShadowAiEventRow
-): Promise<void> {
-  const db = await getDb(); assertDb(db);
+export async function recordShadowAiEvent(row: InsertShadowAiEventRow): Promise<void> {
+  const db = await getDb();
+  assertDb(db);
   await db.insert(shadowAiEvents).values(row);
 }
 
-export async function listShadowAiEvents(
-  userId: number,
-  limit = 100
-): Promise<ShadowAiEventRow[]> {
+export async function listShadowAiEvents(userId: number, limit = 100): Promise<ShadowAiEventRow[]> {
   const db = await getDb();
   if (!db) return [];
   return db
@@ -2777,38 +2592,26 @@ export async function listShadowAiEvents(
 
 // ── Red-team ─────────────────────────────────────────────────────────────────
 
-export async function createRedteamRun(
-  row: InsertRedteamRunRow
-): Promise<void> {
-  const db = await getDb(); assertDb(db);
+export async function createRedteamRun(row: InsertRedteamRunRow): Promise<void> {
+  const db = await getDb();
+  assertDb(db);
   await db.insert(redteamRuns).values(row);
 }
 
-export async function updateRedteamRun(
-  id: string,
-  patch: Partial<RedteamRunRow>
-): Promise<void> {
-  const db = await getDb(); assertDb(db);
+export async function updateRedteamRun(id: string, patch: Partial<RedteamRunRow>): Promise<void> {
+  const db = await getDb();
+  assertDb(db);
   await db.update(redteamRuns).set(patch).where(eq(redteamRuns.id, id));
 }
 
-export async function getRedteamRun(
-  id: string
-): Promise<RedteamRunRow | null> {
+export async function getRedteamRun(id: string): Promise<RedteamRunRow | null> {
   const db = await getDb();
   if (!db) return null;
-  const rows = await db
-    .select()
-    .from(redteamRuns)
-    .where(eq(redteamRuns.id, id))
-    .limit(1);
+  const rows = await db.select().from(redteamRuns).where(eq(redteamRuns.id, id)).limit(1);
   return rows[0] ?? null;
 }
 
-export async function listRedteamRuns(
-  userId: number,
-  limit = 50
-): Promise<RedteamRunRow[]> {
+export async function listRedteamRuns(userId: number, limit = 50): Promise<RedteamRunRow[]> {
   const db = await getDb();
   if (!db) return [];
   return db
@@ -2819,17 +2622,14 @@ export async function listRedteamRuns(
     .limit(Math.min(limit, 200));
 }
 
-export async function recordRedteamFindings(
-  rows: InsertRedteamFindingRow[]
-): Promise<void> {
+export async function recordRedteamFindings(rows: InsertRedteamFindingRow[]): Promise<void> {
   if (rows.length === 0) return;
-  const db = await getDb(); assertDb(db);
+  const db = await getDb();
+  assertDb(db);
   await db.insert(redteamFindings).values(rows);
 }
 
-export async function listRedteamFindings(
-  runId: string
-): Promise<RedteamFindingRow[]> {
+export async function listRedteamFindings(runId: string): Promise<RedteamFindingRow[]> {
   const db = await getDb();
   if (!db) return [];
   return db
@@ -2849,8 +2649,8 @@ export async function listDueRedteamSchedules(): Promise<RedteamScheduleRow[]> {
     .where(
       and(
         eq(redteamSchedules.isActive, true),
-        sql`(${redteamSchedules.nextRunAt} IS NULL OR ${redteamSchedules.nextRunAt} <= ${now})`
-      )
+        sql`(${redteamSchedules.nextRunAt} IS NULL OR ${redteamSchedules.nextRunAt} <= ${now})`,
+      ),
     );
 }
 
@@ -2858,9 +2658,10 @@ export async function setRedteamSchedule(
   userId: number,
   target: string,
   cron: string,
-  isActive = true
+  isActive = true,
 ): Promise<void> {
-  const db = await getDb(); assertDb(db);
+  const db = await getDb();
+  assertDb(db);
   await db.insert(redteamSchedules).values({
     userId,
     target,
@@ -2869,11 +2670,9 @@ export async function setRedteamSchedule(
   });
 }
 
-export async function markRedteamScheduleRan(
-  id: number,
-  nextRunAt: Date
-): Promise<void> {
-  const db = await getDb(); assertDb(db);
+export async function markRedteamScheduleRan(id: number, nextRunAt: Date): Promise<void> {
+  const db = await getDb();
+  assertDb(db);
   await db
     .update(redteamSchedules)
     .set({ lastRunAt: new Date(), nextRunAt })
@@ -2882,24 +2681,20 @@ export async function markRedteamScheduleRan(
 
 // ── Auto-fix ────────────────────────────────────────────────────────────────
 
-export async function recordAutofix(
-  row: InsertAutofixSuggestionRow
-): Promise<void> {
-  const db = await getDb(); assertDb(db);
+export async function recordAutofix(row: InsertAutofixSuggestionRow): Promise<void> {
+  const db = await getDb();
+  assertDb(db);
   await db.insert(autofixSuggestions).values(row);
 }
 
 export async function listAutofix(
   userId: number,
-  status: "open" | "applied" | "dismissed" | undefined = undefined
+  status: "open" | "applied" | "dismissed" | undefined = undefined,
 ): Promise<AutofixSuggestionRow[]> {
   const db = await getDb();
   if (!db) return [];
   const where = status
-    ? and(
-        eq(autofixSuggestions.userId, userId),
-        eq(autofixSuggestions.status, status)
-      )
+    ? and(eq(autofixSuggestions.userId, userId), eq(autofixSuggestions.status, status))
     : eq(autofixSuggestions.userId, userId);
   return db
     .select()
@@ -2910,19 +2705,14 @@ export async function listAutofix(
 
 export async function getAutofixById(
   userId: number,
-  id: number
+  id: number,
 ): Promise<AutofixSuggestionRow | undefined> {
   const db = await getDb();
   if (!db) return undefined;
   const rows = await db
     .select()
     .from(autofixSuggestions)
-    .where(
-      and(
-        eq(autofixSuggestions.id, id),
-        eq(autofixSuggestions.userId, userId)
-      )
-    )
+    .where(and(eq(autofixSuggestions.id, id), eq(autofixSuggestions.userId, userId)))
     .limit(1);
   return rows[0];
 }
@@ -2930,18 +2720,14 @@ export async function getAutofixById(
 export async function updateAutofixStatus(
   userId: number,
   id: number,
-  status: "open" | "applied" | "dismissed"
+  status: "open" | "applied" | "dismissed",
 ): Promise<void> {
-  const db = await getDb(); assertDb(db);
+  const db = await getDb();
+  assertDb(db);
   await db
     .update(autofixSuggestions)
     .set({ status })
-    .where(
-      and(
-        eq(autofixSuggestions.id, id),
-        eq(autofixSuggestions.userId, userId)
-      )
-    );
+    .where(and(eq(autofixSuggestions.id, id), eq(autofixSuggestions.userId, userId)));
 }
 
 // ── Security Copilot ────────────────────────────────────────────────────────
@@ -2949,15 +2735,14 @@ export async function updateAutofixStatus(
 export async function createCopilotConversation(
   userId: number,
   id: string,
-  title: string
+  title: string,
 ): Promise<void> {
-  const db = await getDb(); assertDb(db);
+  const db = await getDb();
+  assertDb(db);
   await db.insert(copilotConversations).values({ id, userId, title });
 }
 
-export async function listCopilotConversations(
-  userId: number
-): Promise<CopilotConversationRow[]> {
+export async function listCopilotConversations(userId: number): Promise<CopilotConversationRow[]> {
   const db = await getDb();
   if (!db) return [];
   return db
@@ -2967,16 +2752,13 @@ export async function listCopilotConversations(
     .orderBy(desc(copilotConversations.updatedAt));
 }
 
-export async function appendCopilotMessage(
-  row: InsertCopilotMessageRow
-): Promise<void> {
-  const db = await getDb(); assertDb(db);
+export async function appendCopilotMessage(row: InsertCopilotMessageRow): Promise<void> {
+  const db = await getDb();
+  assertDb(db);
   await db.insert(copilotMessages).values(row);
 }
 
-export async function listCopilotMessages(
-  conversationId: string
-): Promise<CopilotMessageRow[]> {
+export async function listCopilotMessages(conversationId: string): Promise<CopilotMessageRow[]> {
   const db = await getDb();
   if (!db) return [];
   return db
@@ -2988,18 +2770,14 @@ export async function listCopilotMessages(
 
 // ── Tenant policies (YAML DSL) ───────────────────────────────────────────────
 
-export async function createTenantPolicy(
-  row: InsertTenantPolicyRow
-): Promise<number> {
+export async function createTenantPolicy(row: InsertTenantPolicyRow): Promise<number> {
   const db = await getDb();
   assertDb(db);
   const result = await db.insert(tenantPolicies).values(row);
   return Number((result as unknown as { insertId?: number }).insertId ?? 0);
 }
 
-export async function listTenantPolicies(
-  userId: number
-): Promise<TenantPolicyRow[]> {
+export async function listTenantPolicies(userId: number): Promise<TenantPolicyRow[]> {
   const db = await getDb();
   if (!db) return [];
   return db
@@ -3009,10 +2787,7 @@ export async function listTenantPolicies(
     .orderBy(desc(tenantPolicies.updatedAt));
 }
 
-export async function getTenantPolicy(
-  userId: number,
-  id: number
-): Promise<TenantPolicyRow | null> {
+export async function getTenantPolicy(userId: number, id: number): Promise<TenantPolicyRow | null> {
   const db = await getDb();
   if (!db) return null;
   const rows = await db
@@ -3026,7 +2801,7 @@ export async function getTenantPolicy(
 export async function updateTenantPolicy(
   userId: number,
   id: number,
-  patch: Partial<TenantPolicyRow>
+  patch: Partial<TenantPolicyRow>,
 ): Promise<void> {
   const db = await getDb();
   assertDb(db);
@@ -3036,10 +2811,7 @@ export async function updateTenantPolicy(
     .where(and(eq(tenantPolicies.userId, userId), eq(tenantPolicies.id, id)));
 }
 
-export async function deleteTenantPolicy(
-  userId: number,
-  id: number
-): Promise<void> {
+export async function deleteTenantPolicy(userId: number, id: number): Promise<void> {
   const db = await getDb();
   assertDb(db);
   await db
@@ -3049,18 +2821,14 @@ export async function deleteTenantPolicy(
 
 // ── Alert rules + events (Sprint 6) ──────────────────────────────────────────
 
-export async function createAlertRule(
-  row: InsertAlertRuleRow
-): Promise<number> {
+export async function createAlertRule(row: InsertAlertRuleRow): Promise<number> {
   const db = await getDb();
   assertDb(db);
   const result = await db.insert(alertRules).values(row);
   return Number((result as unknown as { insertId?: number }).insertId ?? 0);
 }
 
-export async function listAlertRules(
-  userId: number
-): Promise<AlertRuleRow[]> {
+export async function listAlertRules(userId: number): Promise<AlertRuleRow[]> {
   const db = await getDb();
   if (!db) return [];
   return db
@@ -3070,9 +2838,7 @@ export async function listAlertRules(
     .orderBy(desc(alertRules.updatedAt));
 }
 
-export async function listEnabledAlertRules(
-  userId: number
-): Promise<AlertRuleRow[]> {
+export async function listEnabledAlertRules(userId: number): Promise<AlertRuleRow[]> {
   const db = await getDb();
   if (!db) return [];
   return db
@@ -3081,10 +2847,7 @@ export async function listEnabledAlertRules(
     .where(and(eq(alertRules.userId, userId), eq(alertRules.enabled, true)));
 }
 
-export async function getAlertRule(
-  userId: number,
-  id: number
-): Promise<AlertRuleRow | null> {
+export async function getAlertRule(userId: number, id: number): Promise<AlertRuleRow | null> {
   const db = await getDb();
   if (!db) return null;
   const rows = await db
@@ -3098,7 +2861,7 @@ export async function getAlertRule(
 export async function updateAlertRule(
   userId: number,
   id: number,
-  patch: Partial<AlertRuleRow>
+  patch: Partial<AlertRuleRow>,
 ): Promise<void> {
   const db = await getDb();
   assertDb(db);
@@ -3108,29 +2871,19 @@ export async function updateAlertRule(
     .where(and(eq(alertRules.userId, userId), eq(alertRules.id, id)));
 }
 
-export async function deleteAlertRule(
-  userId: number,
-  id: number
-): Promise<void> {
+export async function deleteAlertRule(userId: number, id: number): Promise<void> {
   const db = await getDb();
   assertDb(db);
-  await db
-    .delete(alertRules)
-    .where(and(eq(alertRules.userId, userId), eq(alertRules.id, id)));
+  await db.delete(alertRules).where(and(eq(alertRules.userId, userId), eq(alertRules.id, id)));
 }
 
-export async function recordAlertEvent(
-  row: InsertAlertEventRow
-): Promise<void> {
+export async function recordAlertEvent(row: InsertAlertEventRow): Promise<void> {
   const db = await getDb();
   assertDb(db);
   await db.insert(alertEvents).values(row);
 }
 
-export async function listAlertEvents(
-  userId: number,
-  limit = 100
-): Promise<AlertEventRow[]> {
+export async function listAlertEvents(userId: number, limit = 100): Promise<AlertEventRow[]> {
   const db = await getDb();
   if (!db) return [];
   return db
@@ -3143,18 +2896,14 @@ export async function listAlertEvents(
 
 // ── SSO providers + pending logins (Sprint 6 / Domain 5) ─────────────────────
 
-export async function createSsoProvider(
-  row: InsertSsoProviderRow
-): Promise<number> {
+export async function createSsoProvider(row: InsertSsoProviderRow): Promise<number> {
   const db = await getDb();
   assertDb(db);
   const result = await db.insert(ssoProviders).values(row);
   return Number((result as unknown as { insertId?: number }).insertId ?? 0);
 }
 
-export async function listSsoProviders(
-  userId: number
-): Promise<SsoProviderRow[]> {
+export async function listSsoProviders(userId: number): Promise<SsoProviderRow[]> {
   const db = await getDb();
   if (!db) return [];
   return db
@@ -3164,22 +2913,16 @@ export async function listSsoProviders(
     .orderBy(desc(ssoProviders.updatedAt));
 }
 
-export async function getSsoProvider(
-  id: number
-): Promise<SsoProviderRow | null> {
+export async function getSsoProvider(id: number): Promise<SsoProviderRow | null> {
   const db = await getDb();
   if (!db) return null;
-  const rows = await db
-    .select()
-    .from(ssoProviders)
-    .where(eq(ssoProviders.id, id))
-    .limit(1);
+  const rows = await db.select().from(ssoProviders).where(eq(ssoProviders.id, id)).limit(1);
   return rows[0] ?? null;
 }
 
 export async function getSsoProviderForUser(
   userId: number,
-  id: number
+  id: number,
 ): Promise<SsoProviderRow | null> {
   const db = await getDb();
   if (!db) return null;
@@ -3194,7 +2937,7 @@ export async function getSsoProviderForUser(
 export async function updateSsoProvider(
   userId: number,
   id: number,
-  patch: Partial<SsoProviderRow>
+  patch: Partial<SsoProviderRow>,
 ): Promise<void> {
   const db = await getDb();
   assertDb(db);
@@ -3204,10 +2947,7 @@ export async function updateSsoProvider(
     .where(and(eq(ssoProviders.userId, userId), eq(ssoProviders.id, id)));
 }
 
-export async function deleteSsoProvider(
-  userId: number,
-  id: number
-): Promise<void> {
+export async function deleteSsoProvider(userId: number, id: number): Promise<void> {
   const db = await getDb();
   assertDb(db);
   await db
@@ -3215,9 +2955,7 @@ export async function deleteSsoProvider(
     .where(and(eq(ssoProviders.userId, userId), eq(ssoProviders.id, id)));
 }
 
-export async function createSsoLoginRequest(
-  row: InsertSsoLoginRequestRow
-): Promise<void> {
+export async function createSsoLoginRequest(row: InsertSsoLoginRequestRow): Promise<void> {
   const db = await getDb();
   assertDb(db);
   await db.insert(ssoLoginRequests).values(row);
@@ -3227,9 +2965,7 @@ export async function createSsoLoginRequest(
  * Look up a pending SSO login request by state and atomically delete it
  * so it can be consumed exactly once. Returns null if not found or expired.
  */
-export async function consumeSsoLoginRequest(
-  state: string
-): Promise<SsoLoginRequestRow | null> {
+export async function consumeSsoLoginRequest(state: string): Promise<SsoLoginRequestRow | null> {
   const db = await getDb();
   if (!db) return null;
   const rows = await db
@@ -3239,9 +2975,7 @@ export async function consumeSsoLoginRequest(
     .limit(1);
   const row = rows[0];
   if (!row) return null;
-  await db
-    .delete(ssoLoginRequests)
-    .where(eq(ssoLoginRequests.state, state));
+  await db.delete(ssoLoginRequests).where(eq(ssoLoginRequests.state, state));
   if (row.expiresAt.getTime() < Date.now()) {
     return null;
   }
@@ -3260,58 +2994,40 @@ export async function reapExpiredSsoLoginRequests(): Promise<number> {
 
 // ── Workspaces + RBAC (Sprint 6 / Domain 6) ──────────────────────────────────
 
-export async function createWorkspace(
-  row: InsertWorkspaceRow
-): Promise<number> {
+export async function createWorkspace(row: InsertWorkspaceRow): Promise<number> {
   const db = await getDb();
   assertDb(db);
   const result = await db.insert(workspaces).values(row);
   return Number((result as unknown as { insertId?: number }).insertId ?? 0);
 }
 
-export async function getWorkspaceById(
-  id: number
-): Promise<WorkspaceRow | null> {
+export async function getWorkspaceById(id: number): Promise<WorkspaceRow | null> {
   const db = await getDb();
   if (!db) return null;
-  const rows = await db
-    .select()
-    .from(workspaces)
-    .where(eq(workspaces.id, id))
-    .limit(1);
+  const rows = await db.select().from(workspaces).where(eq(workspaces.id, id)).limit(1);
   return rows[0] ?? null;
 }
 
-export async function getWorkspaceBySlug(
-  slug: string
-): Promise<WorkspaceRow | null> {
+export async function getWorkspaceBySlug(slug: string): Promise<WorkspaceRow | null> {
   const db = await getDb();
   if (!db) return null;
-  const rows = await db
-    .select()
-    .from(workspaces)
-    .where(eq(workspaces.slug, slug))
-    .limit(1);
+  const rows = await db.select().from(workspaces).where(eq(workspaces.slug, slug)).limit(1);
   return rows[0] ?? null;
 }
 
-export async function getPersonalWorkspaceForUser(
-  userId: number
-): Promise<WorkspaceRow | null> {
+export async function getPersonalWorkspaceForUser(userId: number): Promise<WorkspaceRow | null> {
   const db = await getDb();
   if (!db) return null;
   const rows = await db
     .select()
     .from(workspaces)
-    .where(
-      and(eq(workspaces.ownerUserId, userId), eq(workspaces.isPersonal, true))
-    )
+    .where(and(eq(workspaces.ownerUserId, userId), eq(workspaces.isPersonal, true)))
     .limit(1);
   return rows[0] ?? null;
 }
 
 export async function listWorkspacesForUser(
-  userId: number
+  userId: number,
 ): Promise<Array<WorkspaceRow & { role: WorkspaceMemberRow["role"] }>> {
   const db = await getDb();
   if (!db) return [];
@@ -3328,20 +3044,12 @@ export async function listWorkspacesForUser(
     })
     .from(workspaceMembers)
     .innerJoin(workspaces, eq(workspaces.id, workspaceMembers.workspaceId))
-    .where(
-      and(
-        eq(workspaceMembers.userId, userId),
-        eq(workspaceMembers.active, true)
-      )
-    )
+    .where(and(eq(workspaceMembers.userId, userId), eq(workspaceMembers.active, true)))
     .orderBy(desc(workspaces.createdAt));
   return rows;
 }
 
-export async function updateWorkspace(
-  id: number,
-  patch: Partial<WorkspaceRow>
-): Promise<void> {
+export async function updateWorkspace(id: number, patch: Partial<WorkspaceRow>): Promise<void> {
   const db = await getDb();
   assertDb(db);
   await db.update(workspaces).set(patch).where(eq(workspaces.id, id));
@@ -3353,9 +3061,7 @@ export async function deleteWorkspace(id: number): Promise<void> {
   await db.delete(workspaces).where(eq(workspaces.id, id));
 }
 
-export async function addWorkspaceMember(
-  row: InsertWorkspaceMemberRow
-): Promise<void> {
+export async function addWorkspaceMember(row: InsertWorkspaceMemberRow): Promise<void> {
   const db = await getDb();
   assertDb(db);
   await db.insert(workspaceMembers).values(row);
@@ -3363,26 +3069,19 @@ export async function addWorkspaceMember(
 
 export async function getWorkspaceMembership(
   workspaceId: number,
-  userId: number
+  userId: number,
 ): Promise<WorkspaceMemberRow | null> {
   const db = await getDb();
   if (!db) return null;
   const rows = await db
     .select()
     .from(workspaceMembers)
-    .where(
-      and(
-        eq(workspaceMembers.workspaceId, workspaceId),
-        eq(workspaceMembers.userId, userId)
-      )
-    )
+    .where(and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.userId, userId)))
     .limit(1);
   return rows[0] ?? null;
 }
 
-export async function listWorkspaceMembers(
-  workspaceId: number
-): Promise<WorkspaceMemberRow[]> {
+export async function listWorkspaceMembers(workspaceId: number): Promise<WorkspaceMemberRow[]> {
   const db = await getDb();
   if (!db) return [];
   return db
@@ -3395,35 +3094,22 @@ export async function listWorkspaceMembers(
 export async function updateWorkspaceMember(
   workspaceId: number,
   userId: number,
-  patch: Partial<WorkspaceMemberRow>
+  patch: Partial<WorkspaceMemberRow>,
 ): Promise<void> {
   const db = await getDb();
   assertDb(db);
   await db
     .update(workspaceMembers)
     .set(patch)
-    .where(
-      and(
-        eq(workspaceMembers.workspaceId, workspaceId),
-        eq(workspaceMembers.userId, userId)
-      )
-    );
+    .where(and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.userId, userId)));
 }
 
-export async function removeWorkspaceMember(
-  workspaceId: number,
-  userId: number
-): Promise<void> {
+export async function removeWorkspaceMember(workspaceId: number, userId: number): Promise<void> {
   const db = await getDb();
   assertDb(db);
   await db
     .delete(workspaceMembers)
-    .where(
-      and(
-        eq(workspaceMembers.workspaceId, workspaceId),
-        eq(workspaceMembers.userId, userId)
-      )
-    );
+    .where(and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.userId, userId)));
 }
 
 /**
@@ -3434,9 +3120,7 @@ export async function removeWorkspaceMember(
  * Returns the distinct set of `ownerUserId` values from workspaces
  * where any member's email ends with `@${domain}`.
  */
-export async function getWorkspaceOwnerIdsByEmailDomain(
-  domain: string
-): Promise<number[]> {
+export async function getWorkspaceOwnerIdsByEmailDomain(domain: string): Promise<number[]> {
   const db = await getDb();
   if (!db) return [];
 
@@ -3448,7 +3132,7 @@ export async function getWorkspaceOwnerIdsByEmailDomain(
 
   if (matchingUsers.length === 0) return [];
 
-  const userIds = matchingUsers.map(u => u.id);
+  const userIds = matchingUsers.map((u) => u.id);
 
   // Find workspace memberships for those users (they are members)
   const memberships = await db
@@ -3457,13 +3141,13 @@ export async function getWorkspaceOwnerIdsByEmailDomain(
     .where(
       and(
         sql`${workspaceMembers.userId} IN (${userIds.join(",")})`,
-        eq(workspaceMembers.active, true)
-      )
+        eq(workspaceMembers.active, true),
+      ),
     );
 
   if (memberships.length === 0) return [];
 
-  const workspaceIds = [...new Set(memberships.map(m => m.workspaceId))];
+  const workspaceIds = [...new Set(memberships.map((m) => m.workspaceId))];
 
   // Get the owner user IDs for those workspaces
   const matchingWorkspaces = await db
@@ -3471,11 +3155,11 @@ export async function getWorkspaceOwnerIdsByEmailDomain(
     .from(workspaces)
     .where(sql`${workspaces.id} IN (${workspaceIds.join(",")})`);
 
-  return [...new Set(matchingWorkspaces.map(w => w.ownerUserId))];
+  return [...new Set(matchingWorkspaces.map((w) => w.ownerUserId))];
 }
 
 export async function createWorkspaceInvitation(
-  row: InsertWorkspaceInvitationRow
+  row: InsertWorkspaceInvitationRow,
 ): Promise<number> {
   const db = await getDb();
   assertDb(db);
@@ -3484,7 +3168,7 @@ export async function createWorkspaceInvitation(
 }
 
 export async function getWorkspaceInvitationByToken(
-  token: string
+  token: string,
 ): Promise<WorkspaceInvitationRow | null> {
   const db = await getDb();
   if (!db) return null;
@@ -3497,7 +3181,7 @@ export async function getWorkspaceInvitationByToken(
 }
 
 export async function listWorkspaceInvitations(
-  workspaceId: number
+  workspaceId: number,
 ): Promise<WorkspaceInvitationRow[]> {
   const db = await getDb();
   if (!db) return [];
@@ -3508,14 +3192,10 @@ export async function listWorkspaceInvitations(
     .orderBy(desc(workspaceInvitations.createdAt));
 }
 
-export async function deleteWorkspaceInvitation(
-  id: number
-): Promise<void> {
+export async function deleteWorkspaceInvitation(id: number): Promise<void> {
   const db = await getDb();
   assertDb(db);
-  await db
-    .delete(workspaceInvitations)
-    .where(eq(workspaceInvitations.id, id));
+  await db.delete(workspaceInvitations).where(eq(workspaceInvitations.id, id));
 }
 
 export async function reapExpiredWorkspaceInvitations(): Promise<number> {
@@ -3524,9 +3204,7 @@ export async function reapExpiredWorkspaceInvitations(): Promise<number> {
   const result = await db
     .delete(workspaceInvitations)
     .where(lt(workspaceInvitations.expiresAt, new Date()));
-  return Number(
-    (result as unknown as { affectedRows?: number }).affectedRows ?? 0
-  );
+  return Number((result as unknown as { affectedRows?: number }).affectedRows ?? 0);
 }
 
 // ── Shadow AI event queries ─────────────────────────────────────────────────
@@ -3534,14 +3212,14 @@ export async function reapExpiredWorkspaceInvitations(): Promise<number> {
 export async function getShadowAiEvents(
   userId: number,
   limit = 50,
-  severity?: string
+  severity?: string,
 ): Promise<ShadowAiEventRow[]> {
   const db = await getDb();
   if (!db) return [];
   const where = severity
     ? and(
         eq(shadowAiEvents.userId, userId),
-        eq(shadowAiEvents.severity, severity as ShadowAiEventRow["severity"])
+        eq(shadowAiEvents.severity, severity as ShadowAiEventRow["severity"]),
       )
     : eq(shadowAiEvents.userId, userId);
   return db
@@ -3554,7 +3232,7 @@ export async function getShadowAiEvents(
 
 export async function getShadowAiEventById(
   userId: number,
-  id: number
+  id: number,
 ): Promise<ShadowAiEventRow | null> {
   const db = await getDb();
   if (!db) return null;
@@ -3567,7 +3245,7 @@ export async function getShadowAiEventById(
 }
 
 export async function getShadowAiSummary(
-  userId: number
+  userId: number,
 ): Promise<{ bySeverity: Record<string, number>; total: number }> {
   const db = await getDb();
   if (!db) return { bySeverity: {}, total: 0 };
@@ -3590,9 +3268,7 @@ export async function getShadowAiSummary(
 
 // ── MCP Governance DB helpers ───────────────────────────────────────────────
 
-export async function listMcpServers(
-  userId: number
-): Promise<McpServer[]> {
+export async function listMcpServers(userId: number): Promise<McpServer[]> {
   const db = await getDb();
   if (!db) return [];
   return db
@@ -3604,7 +3280,7 @@ export async function listMcpServers(
 
 export async function getMcpToolByName(
   serverId: number,
-  toolName: string
+  toolName: string,
 ): Promise<McpTool | null> {
   const db = await getDb();
   if (!db) return null;
@@ -3616,17 +3292,15 @@ export async function getMcpToolByName(
   return (rows[0] ?? null) as McpTool | null;
 }
 
-export async function recordMcpInvocation(
-  row: {
-    userId: number;
-    serverId: number;
-    toolId: number;
-    requestId: string;
-    argsFingerprint: string;
-    decision: "allowed" | "blocked" | "errored";
-    durationMs?: number;
-  }
-): Promise<void> {
+export async function recordMcpInvocation(row: {
+  userId: number;
+  serverId: number;
+  toolId: number;
+  requestId: string;
+  argsFingerprint: string;
+  decision: "allowed" | "blocked" | "errored";
+  durationMs?: number;
+}): Promise<void> {
   const db = await getDb();
   assertDb(db);
   await db.insert(mcpInvocationLog as any).values({
@@ -3646,7 +3320,7 @@ export async function recordMcpInvocation(
 
 export async function getGatewayDailyTotalsByModel(
   userId: number,
-  days = 30
+  days = 30,
 ): Promise<{
   aggregate: Array<{ date: string; totalTokens: number; estimatedCostUsd: number }>;
   byModel: Record<string, Array<{ date: string; totalTokens: number; estimatedCostUsd: number }>>;
@@ -3666,21 +3340,16 @@ export async function getGatewayDailyTotalsByModel(
       estimatedCostUsd: sql<number>`SUM(${gatewayAudit.estimatedCostUsd})`,
     })
     .from(gatewayAudit)
-    .where(
-      and(
-        eq(gatewayAudit.userId, userId),
-        gte(gatewayAudit.createdAt, cutoff)
-      )
-    )
-    .groupBy(
-      sql`DATE(${gatewayAudit.createdAt})`,
-      gatewayAudit.model
-    )
+    .where(and(eq(gatewayAudit.userId, userId), gte(gatewayAudit.createdAt, cutoff)))
+    .groupBy(sql`DATE(${gatewayAudit.createdAt})`, gatewayAudit.model)
     .orderBy(sql`DATE(${gatewayAudit.createdAt})`);
 
   // Aggregate totals
   const aggregateMap = new Map<string, { totalTokens: number; estimatedCostUsd: number }>();
-  const byModelMap = new Map<string, Map<string, { totalTokens: number; estimatedCostUsd: number }>>();
+  const byModelMap = new Map<
+    string,
+    Map<string, { totalTokens: number; estimatedCostUsd: number }>
+  >();
 
   for (const r of rows) {
     const d = r.date as string;
@@ -3704,7 +3373,10 @@ export async function getGatewayDailyTotalsByModel(
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([date, v]) => ({ date, ...v }));
 
-  const byModel: Record<string, Array<{ date: string; totalTokens: number; estimatedCostUsd: number }>> = {};
+  const byModel: Record<
+    string,
+    Array<{ date: string; totalTokens: number; estimatedCostUsd: number }>
+  > = {};
   for (const [model, modelMap] of byModelMap.entries()) {
     byModel[model] = [...modelMap.entries()]
       .sort(([a], [b]) => a.localeCompare(b))
@@ -3742,7 +3414,7 @@ export async function recordImportHistory(row: {
 
 export async function getImportHistory(
   userId: number,
-  limit = 50
+  limit = 50,
 ): Promise<Array<typeof importHistory.$inferSelect>> {
   const db = await getDb();
   if (!db) return [];
@@ -3758,9 +3430,7 @@ export async function getImportHistory(
 
 export type { InsertAiEventRow } from "../drizzle/schema";
 
-export async function insertAiEvents(
-  rows: InsertAiEventRow[]
-): Promise<void> {
+export async function insertAiEvents(rows: InsertAiEventRow[]): Promise<void> {
   const db = await getDb();
   if (!db) return;
   await db.insert(aiEvents).values(rows);
@@ -3774,27 +3444,19 @@ export async function listAiEvents(
     provider?: string;
     status?: string;
     agentId?: string;
-  } = {}
+  } = {},
 ): Promise<{ events: AiEventRow[]; total: number }> {
   const db = await getDb();
   if (!db) return { events: [], total: 0 };
 
-  const {
-    limit = 50,
-    offset = 0,
-    provider,
-    status,
-    agentId,
-  } = options;
+  const { limit = 50, offset = 0, provider, status, agentId } = options;
 
   const conditions = [eq(aiEvents.userId, userId)];
   if (provider) conditions.push(eq(aiEvents.provider, provider));
   if (status) conditions.push(eq(aiEvents.status, status as AiEventRow["status"]));
   if (agentId) conditions.push(eq(aiEvents.agentId, agentId));
 
-  const where = conditions.length === 1
-    ? conditions[0]
-    : and(...conditions);
+  const where = conditions.length === 1 ? conditions[0] : and(...conditions);
 
   const rows = await db
     .select()
@@ -3814,7 +3476,7 @@ export async function listAiEvents(
 
 export async function getAiEventStats(
   userId: number,
-  days = 30
+  days = 30,
 ): Promise<{
   totalCalls: number;
   totalCostUsd: number;
@@ -3845,12 +3507,7 @@ export async function getAiEventStats(
   const rows = await db
     .select()
     .from(aiEvents)
-    .where(
-      and(
-        eq(aiEvents.userId, userId),
-        gte(aiEvents.requestTimestamp, since)
-      )
-    )
+    .where(and(eq(aiEvents.userId, userId), gte(aiEvents.requestTimestamp, since)))
     .orderBy(desc(aiEvents.requestTimestamp))
     .limit(5000);
 

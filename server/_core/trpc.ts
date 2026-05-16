@@ -3,16 +3,9 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 import type { TrpcContext } from "./context";
-import {
-  type AppErrorCode,
-  type FormattedTrpcError,
-  isAppError,
-  toTRPCError,
-} from "./errors";
-import {
-  generateCsrfToken,
-  verifyCsrfToken,
-} from "../utils/security";
+import { type AppErrorCode, type FormattedTrpcError, isAppError, toTRPCError } from "./errors";
+import { generateCsrfToken, verifyCsrfToken } from "../utils/security";
+import { trace, SpanStatusCode } from "@opentelemetry/api";
 
 /**
  * tRPC error normalization
@@ -43,14 +36,11 @@ const t = initTRPC.context<TrpcContext>().create({
   transformer: superjson,
   errorFormatter({ shape, error }): FormattedTrpcError {
     const cause = error.cause;
-    const appCode: AppErrorCode | undefined = isAppError(cause)
-      ? cause.code
-      : undefined;
+    const appCode: AppErrorCode | undefined = isAppError(cause) ? cause.code : undefined;
 
     // Surface zod issues only for validation failures so the client
     // can render per-field errors. Everything else goes to logs.
-    const zodIssues =
-      cause instanceof ZodError ? cause.flatten() : undefined;
+    const zodIssues = cause instanceof ZodError ? cause.flatten() : undefined;
 
     return {
       ...shape,
@@ -107,7 +97,7 @@ const CSRF_EXEMPT_PATHS = new Set([
  *   - Exempt public routes (login, signup, password reset, webhooks)
  *   - Requests using API key authentication (VS Code extension, CLI)
  */
-const csrfMiddleware = t.middleware(async opts => {
+const csrfMiddleware = t.middleware(async (opts) => {
   const { ctx, next, type, path } = opts;
 
   // Only verify CSRF on mutations (not queries)
@@ -148,8 +138,8 @@ function parseCookieValue(cookieHeader: string, name: string): string | undefine
   const prefix = `${name}=`;
   const cookie = cookieHeader
     .split(";")
-    .map(c => c.trim())
-    .find(c => c.startsWith(prefix));
+    .map((c) => c.trim())
+    .find((c) => c.startsWith(prefix));
   return cookie?.slice(prefix.length);
 }
 
@@ -173,13 +163,44 @@ export function setCsrfCookie(res: {
 export const router = t.router;
 
 /**
+ * OpenTelemetry tracing middleware — creates a span per tRPC procedure call.
+ * Span name: "trpc.{type}.{path}" (e.g. "trpc.mutation.auth.login").
+ *
+ * Attributes recorded (never PII):
+ *   - procedure type + path
+ *   - userId (when authenticated)
+ *   - error status on failure
+ */
+const otelMiddleware = t.middleware(async ({ ctx, path, type, next }) => {
+  const span = trace.getTracer("devpulse-trpc").startSpan(`trpc.${type}.${path}`);
+  try {
+    span.setAttribute("trpc.type", type);
+    span.setAttribute("trpc.path", path);
+    if (ctx.user?.id) {
+      span.setAttribute("user.id", ctx.user.id);
+    }
+    const result = await next();
+    span.end();
+    return result;
+  } catch (err) {
+    span.setStatus({ code: SpanStatusCode.ERROR, message: String(err) });
+    span.recordException(err instanceof Error ? err : new Error(String(err)));
+    span.end();
+    throw err;
+  }
+});
+
+/**
  * Public procedure. Anyone (logged in or not) may call it. The error
  * boundary still runs so unexpected throws don't leak internals.
  * CSRF protection is applied to mutations.
  */
-export const publicProcedure = t.procedure.use(errorBoundary).use(csrfMiddleware);
+export const publicProcedure = t.procedure
+  .use(otelMiddleware)
+  .use(errorBoundary)
+  .use(csrfMiddleware);
 
-const requireUser = t.middleware(async opts => {
+const requireUser = t.middleware(async (opts) => {
   const { ctx, next } = opts;
 
   if (!ctx.user) {
@@ -199,43 +220,49 @@ export const protectedProcedure = t.procedure
   .use(csrfMiddleware)
   .use(requireUser);
 
-export const editorProcedure = t.procedure.use(errorBoundary).use(csrfMiddleware).use(
-  t.middleware(async opts => {
-    const { ctx, next } = opts;
+export const editorProcedure = t.procedure
+  .use(errorBoundary)
+  .use(csrfMiddleware)
+  .use(
+    t.middleware(async (opts) => {
+      const { ctx, next } = opts;
 
-    if (!ctx.user) {
-      throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
-    }
+      if (!ctx.user) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
+      }
 
-    if (ctx.user.role !== "admin" && ctx.user.role !== "editor") {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "Collection not found or access denied",
+      if (ctx.user.role !== "admin" && ctx.user.role !== "editor") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Collection not found or access denied",
+        });
+      }
+
+      return next({
+        ctx: {
+          ...ctx,
+          user: ctx.user,
+        },
       });
-    }
+    }),
+  );
 
-    return next({
-      ctx: {
-        ...ctx,
-        user: ctx.user,
-      },
-    });
-  })
-);
+export const adminProcedure = t.procedure
+  .use(errorBoundary)
+  .use(csrfMiddleware)
+  .use(
+    t.middleware(async (opts) => {
+      const { ctx, next } = opts;
 
-export const adminProcedure = t.procedure.use(errorBoundary).use(csrfMiddleware).use(
-  t.middleware(async opts => {
-    const { ctx, next } = opts;
+      if (!ctx.user || ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: NOT_ADMIN_ERR_MSG });
+      }
 
-    if (!ctx.user || ctx.user.role !== "admin") {
-      throw new TRPCError({ code: "FORBIDDEN", message: NOT_ADMIN_ERR_MSG });
-    }
-
-    return next({
-      ctx: {
-        ...ctx,
-        user: ctx.user,
-      },
-    });
-  })
-);
+      return next({
+        ctx: {
+          ...ctx,
+          user: ctx.user,
+        },
+      });
+    }),
+  );

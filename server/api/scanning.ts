@@ -4,19 +4,14 @@ import { router, protectedProcedure, editorProcedure } from "../_core/trpc";
 import { InternalError } from "../_core/errors";
 import { logger } from "../_core/logger";
 import * as db from "../db";
-import { runCollectionScan } from "../services/scanService";
+import { scanQueue } from "../queues";
+import type { ScanJobData } from "../queues/workers/scanWorker";
 import { wsManager } from "../websocket";
 import { invalidateUserCache, redis } from "../_core/cache";
 import { getPlanLimits } from "../payments";
-import {
-  scansPerDayLimitError,
-  shadowAPIGatedError,
-} from "../utils/planLimits";
+import { scansPerDayLimitError, shadowAPIGatedError } from "../utils/planLimits";
 import { summarizeFindings } from "../utils/findingSummarizer";
-import {
-  INJECTION_PAYLOADS,
-  groupPayloadsByCategory,
-} from "../utils/promptInjectionPayloads";
+import { INJECTION_PAYLOADS, groupPayloadsByCategory } from "../utils/promptInjectionPayloads";
 import { toNumber } from "../utils/decimal";
 
 export const scanningRouter = router({
@@ -25,7 +20,7 @@ export const scanningRouter = router({
       z.object({
         collectionId: z.string(),
         scanType: z.enum(["full", "quick", "shadow_api", "prompt_injection"]),
-      })
+      }),
     )
     .mutation(async ({ input, ctx }) => {
       const collection = await db.getCollectionById(input.collectionId);
@@ -79,7 +74,7 @@ export const scanningRouter = router({
           // an audit trail. If you'd rather fail-closed, throw here instead.
           logger.warn(
             { err: redisErr },
-            "[scan-limit] Redis unavailable, allowing scan without rate-limit check"
+            "[scan-limit] Redis unavailable, allowing scan without rate-limit check",
           );
           used = 0;
         }
@@ -88,7 +83,7 @@ export const scanningRouter = router({
             plan,
             used - 1, // current usage prior to this attempt
             limits.maxScansPerDay,
-            resetsAt
+            resetsAt,
           );
         }
       }
@@ -99,42 +94,48 @@ export const scanningRouter = router({
         collectionId: input.collectionId,
       });
 
-      // Run the scan using the reusable service
-      const result = await runCollectionScan(ctx.user.id, input.collectionId, {
-        scanType: input.scanType,
-        triggeredBy: "user",
-      });
-
-      // Get findings for WebSocket broadcast
-      const findings = await db.getFindingsByScanId(result.scanId);
-      const criticalCount = findings.filter(
-        f => f.severity === "Critical"
-      ).length;
-      const highCount = findings.filter(f => f.severity === "High").length;
-
-      // Broadcast scan complete event
-      wsManager.broadcastScanComplete(ctx.user.id, {
-        scanId: result.scanId,
+      // Enqueue the scan instead of running synchronously
+      const scanJobData: ScanJobData = {
+        userId: ctx.user.id,
         collectionId: input.collectionId,
-        findingsCount: result.totalFindings,
-        criticalCount,
-        highCount,
-      });
+        scanType: input.scanType,
+        engineType: input.scanType === "prompt_injection" ? "agentguard" : "full",
+      };
+      const job = await scanQueue.add("scan", scanJobData);
+
+      logger.info({ jobId: job.id, collectionId: input.collectionId }, "[Scanning] Scan enqueued");
 
       return {
-        scanId: result.scanId,
-        riskScore: result.riskScore,
-        riskLevel: result.riskLevel,
-        totalFindings: result.totalFindings,
-        findings: findings.map(f => ({
-          id: f.id,
-          title: f.title,
-          description: f.description,
-          severity: f.severity,
-          category: f.category,
-          remediation: f.remediation,
-          cweId: f.cweId,
-        })),
+        scanId: job.id ?? "queued",
+        status: "queued",
+        message: "Scan has been queued and will begin shortly.",
+      };
+    }),
+
+  /**
+   * Poll for the status of a queued scan.
+   */
+  getScanStatus: protectedProcedure
+    .input(
+      z.object({
+        scanId: z.string(),
+      }),
+    )
+    .query(async ({ input, ctx }) => {
+      const job = await scanQueue.getJob(input.scanId);
+      if (!job) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Scan job not found",
+        });
+      }
+      const state = await job.getState();
+      return {
+        jobId: job.id,
+        state,
+        progress: job.progress,
+        attemptsMade: job.attemptsMade,
+        data: job.data,
       };
     }),
 
@@ -144,10 +145,8 @@ export const scanningRouter = router({
         collectionId: z.string(),
         page: z.number().int().min(1).default(1),
         pageSize: z.number().int().min(1).max(100).default(20),
-        scanType: z
-          .enum(["full", "quick", "shadow_api", "prompt_injection", "all"])
-          .default("all"),
-      })
+        scanType: z.enum(["full", "quick", "shadow_api", "prompt_injection", "all"]).default("all"),
+      }),
     )
     .query(async ({ input, ctx }) => {
       const collection = await db.getCollectionById(input.collectionId);
@@ -161,17 +160,14 @@ export const scanningRouter = router({
       let scans = await db.getScansByCollectionId(input.collectionId);
 
       if (input.scanType !== "all") {
-        scans = scans.filter(s => s.scanType === input.scanType);
+        scans = scans.filter((s) => s.scanType === input.scanType);
       }
 
       const total = scans.length;
-      const paginated = scans.slice(
-        (input.page - 1) * input.pageSize,
-        input.page * input.pageSize
-      );
+      const paginated = scans.slice((input.page - 1) * input.pageSize, input.page * input.pageSize);
 
       return {
-        scans: paginated.map(s => ({
+        scans: paginated.map((s) => ({
           id: s.id,
           scanType: s.scanType,
           status: s.status,
@@ -206,7 +202,7 @@ export const scanningRouter = router({
         riskScore: toNumber(scan.riskScore),
         riskLevel: scan.riskLevel,
         totalFindings: scan.totalFindings,
-        findings: findings.map(f => ({
+        findings: findings.map((f) => ({
           id: f.id,
           title: f.title,
           description: f.description,
@@ -245,7 +241,7 @@ export const scanningRouter = router({
         scanType: scan.scanType,
         riskScore: toNumber(scan.riskScore),
         riskLevel: scan.riskLevel,
-        findings: findings.map(f => ({
+        findings: findings.map((f) => ({
           title: f.title,
           severity: f.severity,
           description: f.description,
@@ -268,7 +264,7 @@ export const scanningRouter = router({
     return {
       total: INJECTION_PAYLOADS.length,
       byCategory: groupPayloadsByCategory(),
-      payloads: INJECTION_PAYLOADS.map(p => ({
+      payloads: INJECTION_PAYLOADS.map((p) => ({
         id: p.id,
         category: p.category,
         severity: p.severity,
@@ -285,7 +281,7 @@ export const scanningRouter = router({
       z.object({
         findingId: z.string(),
         status: z.enum(["open", "in-progress", "resolved"]),
-      })
+      }),
     )
     .mutation(async ({ input, ctx }) => {
       const finding = await db.getFindingById(input.findingId);
