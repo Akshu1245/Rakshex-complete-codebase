@@ -85,6 +85,10 @@ const EnvSchema = z.object({
   FRONTEND_URL: z.string().url("FRONTEND_URL must be a valid URL").default("http://localhost:3000"),
 
   GITHUB_WEBHOOK_SECRET: z.string().default(""),
+  GITHUB_APP_ID: z.string().default(""),
+  GITHUB_APP_PRIVATE_KEY: z.string().default(""),
+  GITHUB_APP_CLIENT_ID: z.string().default(""),
+  GITHUB_APP_CLIENT_SECRET: z.string().default(""),
   INTERNAL_SERVICE_SECRET: z.string().default(""),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).optional(),
 
@@ -168,6 +172,10 @@ export const ENV = {
 
   frontendUrl: parsed.FRONTEND_URL,
   githubWebhookSecret: parsed.GITHUB_WEBHOOK_SECRET,
+  githubAppId: parsed.GITHUB_APP_ID,
+  githubAppPrivateKey: parsed.GITHUB_APP_PRIVATE_KEY,
+  githubAppClientId: parsed.GITHUB_APP_CLIENT_ID,
+  githubAppClientSecret: parsed.GITHUB_APP_CLIENT_SECRET,
   internalServiceSecret: parsed.INTERNAL_SERVICE_SECRET,
   logLevel: parsed.LOG_LEVEL,
   gatewayServiceToken: parsed.GATEWAY_SERVICE_TOKEN ?? "",

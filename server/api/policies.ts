@@ -182,3 +182,190 @@ export const policiesRouter = router({
       return { ok: true };
     }),
 });
+
+import { z } from "zod";
+import { router, protectedProcedure } from "../_core/trpc";
+import { invalidatePolicyCache } from "../services/policyCache";
+import { evaluatePolicy, type AIEventContext } from "../engines/policyEngine";
+import crypto from "crypto";
+
+export const policyRulesRouter = router({
+  /** List rules for the workspace */
+  listRules: protectedProcedure.query(async ({ ctx }) => {
+    const dbClient = await db.getDb();
+    if (!dbClient) return { rules: [] };
+    const rows = await dbClient.execute(
+      `SELECT rule_id, name, priority, enabled, conditions, action, description
+       FROM policy_rules WHERE workspace_id = ? AND deleted_at IS NULL ORDER BY priority`,
+      [`ws_${ctx.user.id}`],
+    );
+    return {
+      rules: (rows as unknown as any[]).map((r: any) => ({
+        ruleId: r.rule_id,
+        name: r.name,
+        priority: r.priority,
+        enabled: r.enabled,
+        conditions: typeof r.conditions === "string" ? JSON.parse(r.conditions) : r.conditions,
+        action: r.action,
+        description: r.description,
+      })),
+    };
+  }),
+
+  /** Create a new rule */
+  createRule: protectedProcedure
+    .input(
+      z.object({
+        name: z.string().min(1).max(255),
+        description: z.string().optional(),
+        priority: z.number().int().min(0),
+        conditions: z.object({
+          operator: z.enum(["AND", "OR"]),
+          rules: z.array(z.object({
+            field: z.string(),
+            op: z.enum(["eq","in","not_in","gt","lt","gte","lte","regex","keyword","between"]),
+            value: z.union([z.string(), z.array(z.string()), z.number(), z.tuple([z.number(), z.number()])]),
+          })),
+        }),
+        action: z.enum(["allow","block","redact","alert_only","require_approval"]),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const dbClient = await db.getDb();
+      if (!dbClient) throw new Error("DB unavailable");
+
+      const ruleId = `rule_${crypto.randomBytes(8).toString("hex")}`;
+      await dbClient.execute(
+        `INSERT INTO policy_rules (rule_id, workspace_id, name, description, priority, conditions, action)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [ruleId, `ws_${ctx.user.id}`, input.name, input.description ?? null, input.priority,
+         JSON.stringify(input.conditions), input.action],
+      );
+      await invalidatePolicyCache(`ws_${ctx.user.id}`);
+      return { ruleId };
+    }),
+
+  /** Update a rule */
+  updateRule: protectedProcedure
+    .input(
+      z.object({
+        ruleId: z.string(),
+        name: z.string().min(1).max(255).optional(),
+        description: z.string().optional(),
+        priority: z.number().int().min(0).optional(),
+        conditions: z.object({
+          operator: z.enum(["AND", "OR"]),
+          rules: z.array(z.object({
+            field: z.string(),
+            op: z.enum(["eq","in","not_in","gt","lt","gte","lte","regex","keyword","between"]),
+            value: z.union([z.string(), z.array(z.string()), z.number(), z.tuple([z.number(), z.number()])]),
+          })),
+        }).optional(),
+        action: z.enum(["allow","block","redact","alert_only","require_approval"]).optional(),
+        enabled: z.boolean().optional(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const dbClient = await db.getDb();
+      if (!dbClient) throw new ValidationError("DB unavailable");
+
+      await dbClient.execute(
+        `UPDATE policy_rules SET ${[
+          input.name ? "name = ?" : null,
+          input.description !== undefined ? "description = ?" : null,
+          input.priority !== undefined ? "priority = ?" : null,
+          input.conditions ? "conditions = ?" : null,
+          input.action ? "action = ?" : null,
+          input.enabled !== undefined ? "enabled = ?" : null,
+        ].filter(Boolean).join(", ")} WHERE rule_id = ?`,
+        [input.name, input.description, input.priority,
+         input.conditions ? JSON.stringify(input.conditions) : null,
+         input.action, input.enabled, input.ruleId].filter(v => v !== undefined),
+      );
+      await invalidatePolicyCache(`ws_${ctx.user.id}`);
+      return { success: true };
+    }),
+
+  /** Delete a rule (soft delete) */
+  deleteRule: protectedProcedure
+    .input(z.object({ ruleId: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      const dbClient = await db.getDb();
+      if (!dbClient) throw new ValidationError("DB unavailable");
+      await dbClient.execute(
+        `UPDATE policy_rules SET deleted_at = NOW(), enabled = FALSE WHERE rule_id = ?`,
+        [input.ruleId],
+      );
+      await invalidatePolicyCache(`ws_${ctx.user.id}`);
+      return { success: true };
+    }),
+
+  /** Test a rule against a sample event (dry-run) */
+  testRule: protectedProcedure
+    .input(
+      z.object({
+        ruleId: z.string(),
+        sampleEvent: z.object({
+          model: z.string(),
+          provider: z.string(),
+          costUsd: z.number(),
+          inputTokens: z.number(),
+          prompt: z.string(),
+          threatLevel: z.enum(["none","low","medium","high","critical"]),
+          agentId: z.string(),
+        }),
+      }),
+    )
+    .query(async ({ input }) => {
+      const dbClient = await db.getDb();
+      if (!dbClient) return null;
+
+      const rows = await dbClient.execute(
+        `SELECT * FROM policy_rules WHERE rule_id = ? AND deleted_at IS NULL`,
+        [input.ruleId],
+      );
+      const row = (rows as unknown as any[])[0];
+      if (!row) return null;
+
+      const event: AIEventContext = {
+        ...input.sampleEvent,
+        timestamp: new Date(),
+      };
+
+      const rule = {
+        ruleId: row.rule_id,
+        name: row.name,
+        priority: row.priority,
+        enabled: row.enabled,
+        conditions: typeof row.conditions === "string" ? JSON.parse(row.conditions) : row.conditions,
+        action: row.action,
+      };
+
+      return evaluatePolicy(event, [rule]);
+    }),
+
+  /** Reorder rules by providing new priority values */
+  reorder: protectedProcedure
+    .input(
+      z.object({
+        ruleIds: z.array(z.string()),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const dbClient = await db.getDb();
+      if (!dbClient) throw new ValidationError("DB unavailable");
+      for (let i = 0; i < input.ruleIds.length; i++) {
+        await dbClient.execute(
+          `UPDATE policy_rules SET priority = ? WHERE rule_id = ?`,
+          [i, input.ruleIds[i]],
+        );
+      }
+      await invalidatePolicyCache(`ws_${ctx.user.id}`);
+      return { success: true };
+    }),
+});
+
+// Helper
+class ValidationError extends Error {
+  constructor(msg: string) { super(msg); this.name = "ValidationError"; }
+}

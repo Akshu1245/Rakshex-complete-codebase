@@ -22,6 +22,7 @@ import { WelcomeViewProvider } from "./welcomeView";
 import { registerGatewayCommand } from "./gatewayTester";
 import { registerShadowApiCommand } from "./shadowApi";
 import { PostmanImportCommand } from "./postmanImport";
+import { ScanCurrentFileCommand } from "./scanCurrentFile";
 
 const SECRET_API_KEY = "devpulse.apiKey";
 
@@ -554,6 +555,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const postmanImport = new PostmanImportCommand(context, api);
   context.subscriptions.push(
     vscode.commands.registerCommand("devpulse.importPostman", () => postmanImport.execute()),
+  );
+
+  // Scan current file command
+  const scanCurrentFile = new ScanCurrentFileCommand(api);
+  context.subscriptions.push(
+    vscode.commands.registerCommand("devpulse.scanCurrentFile", () => scanCurrentFile.execute()),
   );
 
   heartbeat.start();

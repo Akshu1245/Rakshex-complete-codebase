@@ -9,14 +9,13 @@
  *   const openai = dp.wrap(new OpenAI());
  *   const response = await openai.chat.completions.create({ ... });
  */
-import type OpenAI from "openai";
 import type { TelemetryCollector } from "../telemetry/collector.js";
 import type { ToolCallRecord } from "../types.js";
 
 export function wrapOpenAI(
-  client: OpenAI & { _devpulseWrapped?: true },
+  client: any,
   collector: TelemetryCollector,
-): OpenAI {
+): any {
   if ((client as any)._devpulseWrapped) return client;
 
   const original = client.chat.completions.create.bind(client.chat.completions);

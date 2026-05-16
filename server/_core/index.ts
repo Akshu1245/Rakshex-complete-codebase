@@ -37,6 +37,7 @@ import { scheduleWeeklyDigest } from "../jobs/weeklyDigest";
 import { startRedTeamScheduler } from "../services/redTeamScheduler";
 import { registerJobWorkers } from "../services/jobs";
 import { verifyWebhookSignature } from "../utils/security";
+import { handleGitHubWebhook } from "../api/github";
 
 // ============================================================================
 // CORS ORIGIN ALLOWLIST
@@ -404,6 +405,16 @@ async function startServer() {
     const register = (await import("./metrics")).register;
     res.set("Content-Type", register.contentType);
     res.end(await register.metrics());
+  });
+
+  // ── GitHub App webhook endpoint ───────────────────────────────────────────
+  app.post("/webhooks/github", express.json(), async (req, res) => {
+    const signature = (req.headers["x-hub-signature-256"] as string) || "";
+    const result = await handleGitHubWebhook(
+      JSON.stringify(req.body),
+      signature,
+    );
+    res.status(result.status).json(result.body);
   });
 
   // ── Inline LLM Gateway service endpoints ──────────────────────────────────

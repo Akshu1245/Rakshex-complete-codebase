@@ -1,15 +1,12 @@
-.vscode/**
-.vscode-test/**
-node_modules/**
-src/**
-.gitignore
-.vscodeignore
+# DevPulse VS Code Extension — publish ignore list
+node_modules
+src
+.vscode
+tests
+*.ts
+!src/types/*.d.ts
 tsconfig.json
-vsc-extension-quickstart.md
-**/*.map
-**/*.ts
-!out/**/*.d.ts
-PUBLISHING.md
-CHANGELOG.md.bak
-resources/icon-128.svg
-resources/screenshot-*.svg
+vitest.config.ts
+.gitignore
+.eslintrc*
+.prettierrc*

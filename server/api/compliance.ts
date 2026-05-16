@@ -3,6 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure, editorProcedure } from "../_core/trpc";
 import * as db from "../db";
 import { generateOWASPRequirements, generatePCIDSSRequirements, type CollectionData } from "../utils/scanning";
+import { generateComplianceReport } from "../engines/complianceEngine";
 import { toNumber } from "../utils/decimal";
 import PDFDocument from "pdfkit";
 
@@ -32,7 +33,7 @@ export const complianceRouter = router({
     .input(
       z.object({
         collectionId: z.string(),
-        reportType: z.enum(["pci_dss", "owasp"]).default("pci_dss"),
+        reportType: z.enum(["pci_dss", "owasp", "owasp_llm", "dpdp"]).default("pci_dss"),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -44,38 +45,86 @@ export const complianceRouter = router({
         });
       }
 
-      const requirements =
-        input.reportType === "owasp"
-          ? generateOWASPRequirements(collection.data as CollectionData)
-          : generatePCIDSSRequirements(collection.data as CollectionData);
+      // Get findings for this collection to power the compliance engine
+      const scans = await db.getScansByCollectionId(input.collectionId);
+      const allFindings: Array<{
+        title?: string;
+        description?: string;
+        severity?: string;
+        category?: string;
+        cweId?: string;
+      }> = [];
 
-      const metRequirements = requirements.filter(
-        (r: any) => r.status === "met"
-      ).length;
-      const manualRequirements = requirements.filter(
-        (r: any) => r.status === "manual_review"
-      ).length;
-      const complianceScore = (metRequirements / requirements.length) * 100;
+      for (const scan of scans) {
+        const findings = await db.getFindingsByScanId(scan.id);
+        for (const f of findings) {
+          allFindings.push({
+            title: f.title ?? undefined,
+            description: f.description ?? undefined,
+            severity: f.severity ?? undefined,
+            category: f.category ?? undefined,
+            cweId: f.cweId ?? undefined,
+          });
+        }
+      }
+
+      let reportResult: {
+        requirements: Array<{
+          id: string;
+          title: string;
+          description: string;
+          status: "met" | "not_met" | "manual_review";
+        }>;
+        metCount: number;
+        notMetCount: number;
+        manualCount: number;
+        score: number;
+      };
+
+      if (input.reportType === "owasp") {
+        const requirements = generateOWASPRequirements(collection.data as CollectionData);
+        const met = requirements.filter((r: any) => r.status === "met").length;
+        reportResult = {
+          requirements: requirements as any,
+          metCount: met,
+          notMetCount: requirements.length - met - requirements.filter((r: any) => r.status === "manual_review").length,
+          manualCount: requirements.filter((r: any) => r.status === "manual_review").length,
+          score: requirements.length > 0 ? (met / requirements.length) * 100 : 0,
+        };
+      } else if (input.reportType === "pci_dss") {
+        const requirements = generatePCIDSSRequirements(collection.data as CollectionData);
+        const met = requirements.filter((r: any) => r.status === "met").length;
+        reportResult = {
+          requirements: requirements as any,
+          metCount: met,
+          notMetCount: requirements.length - met - requirements.filter((r: any) => r.status === "manual_review").length,
+          manualCount: requirements.filter((r: any) => r.status === "manual_review").length,
+          score: requirements.length > 0 ? (met / requirements.length) * 100 : 0,
+        };
+      } else {
+        // owasp_llm or dpdp — use the compliance engine
+        const result = generateComplianceReport(input.reportType, allFindings);
+        reportResult = result;
+      }
 
       const report = await db.createComplianceReport(
         ctx.user.id,
         input.collectionId,
-        input.reportType,
-        complianceScore,
-        requirements.length,
-        metRequirements,
-        requirements
+        input.reportType as any,
+        reportResult.score,
+        reportResult.requirements.length,
+        reportResult.metCount,
+        reportResult.requirements,
       );
 
       return {
         reportId: report.id,
-        complianceScore: Math.round(complianceScore),
-        totalRequirements: requirements.length,
-        metRequirements,
-        manualRequirements,
-        notMetRequirements:
-          requirements.length - metRequirements - manualRequirements,
-        requirements,
+        complianceScore: Math.round(reportResult.score),
+        totalRequirements: reportResult.requirements.length,
+        metRequirements: reportResult.metCount,
+        manualRequirements: reportResult.manualCount,
+        notMetRequirements: reportResult.notMetCount,
+        requirements: reportResult.requirements,
       };
     }),
 

@@ -29,6 +29,9 @@
   },
   "dependencies": {
     "@builder.io/vite-plugin-jsx-loc": "^0.1.1",
+    "@octokit/app": "^16.1.2",
+    "@octokit/rest": "^22.0.1",
+    "@octokit/webhooks": "^14.2.0",
     "@opentelemetry/auto-instrumentations-node": "^0.76.0",
     "@opentelemetry/exporter-trace-otlp-http": "^0.218.0",
     "@opentelemetry/resources": "^2.7.1",

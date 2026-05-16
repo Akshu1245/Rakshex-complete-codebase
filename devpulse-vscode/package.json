@@ -77,6 +77,12 @@
         "category": "DevPulse"
       },
       {
+        "command": "devpulse.scanCurrentFile",
+        "title": "DevPulse: Scan Current File for API Security",
+        "icon": "$(shield)",
+        "category": "DevPulse"
+      },
+      {
         "command": "devpulse.refresh",
         "title": "DevPulse: Refresh",
         "icon": "$(refresh)",

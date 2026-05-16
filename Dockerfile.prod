@@ -1,0 +1,42 @@
+# Production-hardened multi-stage Dockerfile for DevPulse
+# Stage 1: deps (production-only install)
+FROM node:20-alpine@sha256:sha256:ae2l3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a7b8c9d0e1f AS deps
+RUN corepack enable pnpm
+WORKDIR /app
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile --prod
+
+# Stage 2: build
+FROM node:20-alpine@sha256:sha256:ae2l3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a7b8c9d0e1f AS build
+RUN corepack enable pnpm
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN pnpm run build
+
+# Stage 3: runtime (minimal attack surface)
+FROM node:20-alpine@sha256:sha256:ae2l3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a7b8c9d0e1f AS runtime
+WORKDIR /app
+ENV NODE_ENV=production
+
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nodejs
+
+COPY --from=build --chown=nodejs:nodejs /app/dist ./dist
+COPY --from=build --chown=nodejs:nodejs /app/package.json ./
+COPY --from=deps --chown=nodejs:nodejs /app/node_modules ./node_modules
+COPY --from=build --chown=nodejs:nodejs /app/drizzle ./drizzle
+COPY --from=build --chown=nodejs:nodejs /app/drizzle.config.ts ./
+
+USER nodejs
+EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD node -e "fetch('http://localhost:3000/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"
+
+CMD ["node", "dist/server/_core/index.js"]
+
+# Worker entry point
+FROM runtime AS worker
+ENV WORKER_CONCURRENCY=3
+CMD ["node", "dist/server/queues/workers/index.js"]

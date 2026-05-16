@@ -3556,3 +3556,217 @@ export async function getAiEventStats(
     recentLatency,
   };
 }
+
+// ── Security Events (Prompt 9 — Agent Guard) ───────────────────────────────
+
+import {
+  securityEvents,
+  type InsertSecurityEventRow,
+  type SecurityEventRow,
+} from "../drizzle/schema";
+
+export async function insertSecurityEvent(
+  row: Omit<InsertSecurityEventRow, "eventId">,
+): Promise<string> {
+  const db = await getDb();
+  assertDb(db);
+  const eventId = crypto.randomUUID();
+  await db.insert(securityEvents).values({
+    eventId,
+    ...row,
+  });
+  return eventId;
+}
+
+export async function listSecurityEvents(
+  workspaceId: string,
+  opts: {
+    limit?: number;
+    offset?: number;
+    eventType?: string;
+    severity?: string;
+  } = {},
+): Promise<SecurityEventRow[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const { limit = 20, offset = 0, eventType, severity } = opts;
+
+  const conditions = [eq(securityEvents.workspaceId, workspaceId)];
+  if (eventType) {
+    conditions.push(eq(securityEvents.eventType, eventType as SecurityEventRow["eventType"]));
+  }
+  if (severity) {
+    conditions.push(eq(securityEvents.severity, severity as SecurityEventRow["severity"]));
+  }
+
+  const where = conditions.length === 1 ? conditions[0] : and(...conditions);
+
+  return db
+    .select()
+    .from(securityEvents)
+    .where(where)
+    .orderBy(desc(securityEvents.createdAt))
+    .limit(Math.min(limit, 100))
+    .offset(offset);
+}
+
+export async function getSecurityEventById(eventId: string): Promise<SecurityEventRow | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db
+    .select()
+    .from(securityEvents)
+    .where(eq(securityEvents.eventId, eventId))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+export async function resolveSecurityEvent(
+  eventId: string,
+  note?: string,
+): Promise<void> {
+  const db = await getDb();
+  assertDb(db);
+  await db
+    .update(securityEvents)
+    .set({
+      resolvedAt: new Date(),
+      ...(note ? { resolutionNote: note } : {}),
+    })
+    .where(eq(securityEvents.eventId, eventId));
+}
+
+// ── Policy Rules & Pending Approvals (Prompt 10) ──────────────────────────
+
+export interface PolicyRuleRow {
+  ruleId: string;
+  workspaceId: string;
+  name: string;
+  description: string | null;
+  enabled: boolean;
+  priority: number;
+  conditions: unknown;
+  action: "allow" | "block" | "redact" | "alert_only" | "require_approval";
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export async function listPolicyRules(workspaceId: string): Promise<PolicyRuleRow[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db.execute(
+    sql`SELECT rule_id, workspace_id, name, description, enabled, priority, conditions, action, created_at, updated_at FROM policy_rules WHERE workspace_id = ${workspaceId} AND enabled = true ORDER BY priority ASC, created_at ASC`,
+  );
+  return (rows as unknown as Array<Record<string, unknown>>).map((r) => ({
+    ruleId: r.rule_id as string,
+    workspaceId: r.workspace_id as string,
+    name: r.name as string,
+    description: r.description as string | null,
+    enabled: !!(r.enabled),
+    priority: Number(r.priority),
+    conditions: r.conditions,
+    action: r.action as PolicyRuleRow["action"],
+    createdAt: r.created_at as Date,
+    updatedAt: r.updated_at as Date,
+  }));
+}
+
+export async function getPolicyRule(ruleId: string): Promise<PolicyRuleRow | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.execute(
+    sql`SELECT rule_id, workspace_id, name, description, enabled, priority, conditions, action, created_at, updated_at FROM policy_rules WHERE rule_id = ${ruleId} LIMIT 1`,
+  );
+  if ((rows as unknown as Array<unknown>).length === 0) return null;
+  const r = (rows as unknown as Array<Record<string, unknown>>)[0];
+  return {
+    ruleId: r.rule_id as string,
+    workspaceId: r.workspace_id as string,
+    name: r.name as string,
+    description: r.description as string | null,
+    enabled: !!(r.enabled),
+    priority: Number(r.priority),
+    conditions: r.conditions,
+    action: r.action as PolicyRuleRow["action"],
+    createdAt: r.created_at as Date,
+    updatedAt: r.updated_at as Date,
+  };
+}
+
+export async function insertPolicyRule(params: {
+  ruleId: string;
+  workspaceId: string;
+  name: string;
+  description?: string;
+  enabled?: boolean;
+  priority: number;
+  conditions: unknown;
+  action: string;
+}): Promise<void> {
+  const db = await getDb();
+  assertDb(db);
+  await db.execute(
+    sql`INSERT INTO policy_rules (rule_id, workspace_id, name, description, enabled, priority, conditions, action) VALUES (${params.ruleId}, ${params.workspaceId}, ${params.name}, ${params.description ?? null}, ${params.enabled ?? true}, ${params.priority}, ${JSON.stringify(params.conditions)}, ${params.action})`,
+  );
+}
+
+export async function updatePolicyRule(ruleId: string, patch: Record<string, unknown>): Promise<void> {
+  const db = await getDb();
+  assertDb(db);
+  const sets: string[] = [];
+  const values: unknown[] = [];
+  for (const [key, value] of Object.entries(patch)) {
+    const col = snakeCase(key);
+    if (col === "rule_id" || col === "workspace_id") continue;
+    sets.push(`${col} = ?`);
+    values.push(key === "conditions" ? JSON.stringify(value) : value);
+  }
+  if (sets.length === 0) return;
+  values.push(ruleId);
+  await db.execute(sql.raw(`UPDATE policy_rules SET ${sets.join(", ")} WHERE rule_id = ?`), values);
+}
+
+export async function deletePolicyRule(ruleId: string): Promise<void> {
+  const db = await getDb();
+  assertDb(db);
+  await db.execute(sql`DELETE FROM policy_rules WHERE rule_id = ${ruleId}`);
+}
+
+export async function insertPendingApproval(params: {
+  approvalId: string;
+  workspaceId: string;
+  ruleId: string;
+  eventSnapshot: unknown;
+}): Promise<void> {
+  const db = await getDb();
+  assertDb(db);
+  await db.execute(
+    sql`INSERT INTO pending_approvals (approval_id, workspace_id, rule_id, event_snapshot) VALUES (${params.approvalId}, ${params.workspaceId}, ${params.ruleId}, ${JSON.stringify(params.eventSnapshot)})`,
+  );
+}
+
+export async function listPendingApprovals(workspaceId: string): Promise<Array<Record<string, unknown>>> {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db.execute(
+    sql`SELECT approval_id, workspace_id, rule_id, event_snapshot, status, requested_at, resolved_at, resolved_by, resolution_note FROM pending_approvals WHERE workspace_id = ${workspaceId} AND status = 'pending' ORDER BY requested_at DESC LIMIT 100`,
+  );
+  return rows as unknown as Array<Record<string, unknown>>;
+}
+
+export async function resolvePendingApproval(
+  approvalId: string,
+  status: string,
+  resolvedBy: string,
+  note?: string,
+): Promise<void> {
+  const db = await getDb();
+  assertDb(db);
+  await db.execute(
+    sql`UPDATE pending_approvals SET status = ${status}, resolved_at = NOW(), resolved_by = ${resolvedBy}, resolution_note = ${note ?? null} WHERE approval_id = ${approvalId}`,
+  );
+}
+
+function snakeCase(s: string): string {
+  return s.replace(/[A-Z]/g, (m) => `_${m.toLowerCase()}`).replace(/^_/, "");
+}

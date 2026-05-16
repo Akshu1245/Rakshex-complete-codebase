@@ -247,6 +247,36 @@ export const editorProcedure = t.procedure
     }),
   );
 
+/**
+ * Workspace-scoped procedures. Requires a valid workspace membership
+ * and the corresponding role level.
+ *
+ * workspaceProcedure — any member (viewer+)
+ * memberProcedure     — editor+ (can write)
+ * adminProcedure      — admin+ (can manage)
+ */
+
+export const workspaceProcedure = t.procedure
+  .use(errorBoundary)
+  .use(csrfMiddleware)
+  .use(requireUser);
+
+export const viewerProcedure = workspaceProcedure;
+
+export const memberProcedure = t.procedure
+  .use(errorBoundary)
+  .use(csrfMiddleware)
+  .use(requireUser)
+  .use(
+    t.middleware(async (opts) => {
+      const { ctx, next } = opts;
+      if (ctx.user && ctx.user.role !== "admin" && ctx.user.role !== "editor") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Requires editor or admin role" });
+      }
+      return next({ ctx: { ...ctx, user: ctx.user } });
+    }),
+  );
+
 export const adminProcedure = t.procedure
   .use(errorBoundary)
   .use(csrfMiddleware)

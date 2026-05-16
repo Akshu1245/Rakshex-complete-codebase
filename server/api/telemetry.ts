@@ -2,19 +2,16 @@
  * Telemetry Ingest API Router
  *
  * Accepts batched telemetry events from the DevPulse SDK.
- * Validates, de-duplicates, and persists AI call events to the database.
- *
- * Endpoints:
- *   telemetry.ingest  — POST /v2/telemetry/events  (SDK → server)
- *   telemetry.events  — GET telemetry events for dashboard
- *   telemetry.stats   — GET aggregated stats (spend, latency, errors, by-model)
+ * Validates, de-duplicates, enqueues to BullMQ for async processing,
+ * and provides query endpoints for the dashboard.
  */
-
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure, publicProcedure } from "../_core/trpc";
 import { logger } from "../_core/logger";
 import { z } from "zod";
 import * as db from "../db";
+import { telemetryQueue } from "../queues";
+import { redis } from "../_core/cache";
 
 // ── Validation schema ──────────────────────────────────────────────────────
 
@@ -47,19 +44,49 @@ const telemetryEventSchema = z.object({
 });
 
 const ingestSchema = z.object({
-  events: z.array(telemetryEventSchema).min(1).max(500),
+  events: z.array(telemetryEventSchema).min(1).max(100),
+  sdkVersion: z.string().optional(),
 });
 
+// ── Redis API key cache (5-min TTL) ────────────────────────────────────────
+
+async function resolveWorkspaceByApiKey(apiKey: string): Promise<number | null> {
+  const cacheKey = `apikey:user:${apiKey.slice(0, 12)}`;
+  try {
+    const cached = await redis.get(cacheKey);
+    if (cached) return parseInt(cached, 10);
+  } catch { /* Redis down, fall through */ }
+
+  const user = await db.getUserByApiKey(apiKey);
+  if (!user) return null;
+
+  try {
+    await redis.setex(cacheKey, 300, String(user.id));
+  } catch { /* Best effort */ }
+
+  return user.id;
+}
+
+// ── Rate limit check ───────────────────────────────────────────────────────
+
+async function checkTelemetryRateLimit(workspaceId: string): Promise<boolean> {
+  const key = `telemetry:rate:${workspaceId}:${Math.floor(Date.now() / 60000)}`;
+  try {
+    const count = await redis.incr(key);
+    if (count === 1) await redis.expire(key, 120);
+    return count <= 1000; // 1000 events/min per workspace
+  } catch {
+    return true; // Fail open
+  }
+}
+
 // ── De-duplication guard (in-process, 5-min TTL) ───────────────────────────
-// Prevents re-ingest of the same eventId within a single process lifetime.
-// Cross-process dedup is handled by the unique constraint on eventId in DB.
 
 const seenEventIds = new Set<string>();
 const DEDUP_WINDOW_MS = 5 * 60 * 1000;
 let lastDedupClean = Date.now();
 
 function isDuplicate(eventId: string): boolean {
-  // Periodic cleanup of the in-process set to prevent unbounded growth
   if (Date.now() - lastDedupClean > DEDUP_WINDOW_MS) {
     seenEventIds.clear();
     lastDedupClean = Date.now();
@@ -77,20 +104,31 @@ export const telemetryRouter = router({
     .mutation(async ({ input, ctx }) => {
       const startTime = Date.now();
 
-      // Authenticate via API key extracted from the request header
-      const apiKey = ctx.req.headers["x-api-key"];
-      if (typeof apiKey !== "string" || apiKey.trim().length === 0) {
+      const apiKey =
+        (ctx.req.headers["x-api-key"] as string) ||
+        (ctx.req.headers.authorization as string)?.replace("Bearer ", "");
+
+      if (!apiKey || apiKey.trim().length < 8) {
         throw new TRPCError({
           code: "UNAUTHORIZED",
-          message: "Missing x-api-key header",
+          message: "Missing or invalid API key",
         });
       }
 
-      const user = await db.getUserByApiKey(apiKey.trim());
-      if (!user) {
+      const userId = await resolveWorkspaceByApiKey(apiKey.trim());
+      if (!userId) {
         throw new TRPCError({
           code: "UNAUTHORIZED",
           message: "Invalid API key",
+        });
+      }
+
+      // Rate limit check
+      const allowed = await checkTelemetryRateLimit(input.events[0]?.workspaceId);
+      if (!allowed) {
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: "Telemetry rate limit exceeded (1000/min per workspace)",
         });
       }
 
@@ -101,12 +139,12 @@ export const telemetryRouter = router({
       for (const event of input.events) {
         try {
           if (isDuplicate(event.eventId)) {
-            accepted.push(event.eventId); // idempotent ack
+            accepted.push(event.eventId);
             continue;
           }
           rows.push({
             eventId: event.eventId,
-            userId: user.id,
+            userId,
             workspaceId: event.workspaceId,
             agentId: event.agentId,
             userHash: event.userId ?? null,
@@ -132,13 +170,15 @@ export const telemetryRouter = router({
         }
       }
 
-      // Bulk insert in a single query
+      // Enqueue to BullMQ for async processing instead of direct DB insert
       if (rows.length > 0) {
         try {
-          await db.insertAiEvents(rows);
+          await telemetryQueue.add("telemetry", {
+            events: rows,
+            workspaceId: input.events[0]?.workspaceId ?? "unknown",
+          });
         } catch (err) {
-          logger.error({ err, count: rows.length }, "[Telemetry] Bulk insert failed");
-          // Mark all as rejected since we can't partial-insert with the current API
+          logger.error({ err, count: rows.length }, "[Telemetry] Queue enqueue failed");
           for (const r of rows) {
             const idx = accepted.indexOf(r.eventId);
             if (idx !== -1) {
@@ -151,15 +191,11 @@ export const telemetryRouter = router({
 
       const duration = Date.now() - startTime;
       logger.info(
-        { accepted: accepted.length, rejected: rejected.length, duration, userId: user.id },
-        "[Telemetry] Batch ingested"
+        { accepted: accepted.length, rejected: rejected.length, duration },
+        "[Telemetry] Batch enqueued",
       );
 
-      return {
-        accepted: accepted.length,
-        rejected: rejected.length,
-        duration,
-      };
+      return { accepted: accepted.length, rejected: rejected.length };
     }),
 
   // ── Events list (for dashboard) ────────────────────────────────────────
@@ -172,7 +208,7 @@ export const telemetryRouter = router({
         provider: z.string().optional(),
         status: z.string().optional(),
         agentId: z.string().optional(),
-      })
+      }),
     )
     .query(async ({ input, ctx }) => {
       const result = await db.listAiEvents(ctx.user.id, {

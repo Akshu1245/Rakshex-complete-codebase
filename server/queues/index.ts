@@ -34,12 +34,22 @@ export const emailQueue = new Queue("email", {
   },
 });
 
+export const telemetryQueue = new Queue("telemetry", {
+  connection,
+  defaultJobOptions: {
+    attempts: 3,
+    backoff: { type: "exponential", delay: 500 },
+    removeOnComplete: { count: 5000 },
+    removeOnFail: { count: 500 },
+  },
+});
+
 logger.info("[Queues] BullMQ queues initialized");
 
 /**
  * Gracefully close all queues. Call this on process shutdown.
  */
 export async function closeQueues(): Promise<void> {
-  await Promise.all([scanQueue.close(), webhookQueue.close(), emailQueue.close()]);
+  await Promise.all([scanQueue.close(), webhookQueue.close(), emailQueue.close(), telemetryQueue.close()]);
   logger.info("[Queues] All queues closed");
 }

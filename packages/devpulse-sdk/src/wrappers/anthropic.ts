@@ -4,14 +4,13 @@
  * Wraps an Anthropic client instance. Intercepts messages.create,
  * captures telemetry, and forwards to DevPulse.
  */
-import type Anthropic from "@anthropic-ai/sdk";
 import type { TelemetryCollector } from "../telemetry/collector.js";
 import type { ChatMessage, ToolCallRecord } from "../types.js";
 
 export function wrapAnthropic(
-  client: Anthropic & { _devpulseWrapped?: true },
+  client: any,
   collector: TelemetryCollector,
-): Anthropic {
+): any {
   if ((client as any)._devpulseWrapped) return client;
 
   const original = client.messages.create.bind(client.messages);
@@ -59,12 +58,13 @@ export function wrapAnthropic(
     }
 
     // Convert Anthropic messages to our format
-    const messages: ChatMessage[] = [{ role: "system", content: params.system || "" }].filter(m => m.content);
+    const messages: ChatMessage[] = ([{ role: "system", content: params.system || "" }] as ChatMessage[])
+      .filter(m => m.content);
     for (const msg of params.messages || []) {
       messages.push({
-        role: msg.role as ChatMessage["role"],
+        role: (msg.role || "user") as ChatMessage["role"],
         content: typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content),
-      });
+      } as ChatMessage);
     }
 
     const responseMessages: ChatMessage[] = [{

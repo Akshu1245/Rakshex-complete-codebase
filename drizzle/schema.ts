@@ -1303,3 +1303,36 @@ export const aiEvents = mysqlTable(
 );
 export type AiEventRow = typeof aiEvents.$inferSelect;
 export type InsertAiEventRow = typeof aiEvents.$inferInsert;
+
+/**
+ * Security Events — append-only log of prompt injection / PII leak / policy
+ * violation / anomaly events. Never stores raw prompts — only SHA-256 hash.
+ */
+export const securityEvents = mysqlTable(
+  "security_events",
+  {
+    eventId: varchar("event_id", { length: 64 }).primaryKey(),
+    workspaceId: varchar("workspace_id", { length: 64 }).notNull(),
+    eventType: mysqlEnum("event_type", [
+      "prompt_injection",
+      "pii_leak",
+      "policy_violation",
+      "anomaly",
+    ]).notNull(),
+    severity: mysqlEnum("severity", ["low", "medium", "high", "critical"]).notNull(),
+    threatLevel: varchar("threat_level", { length: 20 }).notNull(),
+    detectedPatterns: json("detected_patterns").notNull(),
+    promptHash: varchar("prompt_hash", { length: 64 }).notNull(),
+    agentId: varchar("agent_id", { length: 64 }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    resolvedAt: timestamp("resolved_at"),
+    resolutionNote: text("resolution_note"),
+  },
+  (table) => ({
+    workspaceIdIdx: index("se_workspace_id_idx").on(table.workspaceId),
+    createdAtIdx: index("se_created_at_idx").on(table.createdAt),
+    eventTypeIdx: index("se_event_type_idx").on(table.eventType),
+  }),
+);
+export type SecurityEventRow = typeof securityEvents.$inferSelect;
+export type InsertSecurityEventRow = typeof securityEvents.$inferInsert;

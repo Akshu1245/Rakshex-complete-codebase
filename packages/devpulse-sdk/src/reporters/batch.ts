@@ -78,7 +78,7 @@ export class BatchReporter {
           "X-Workspace-Id": this.config.workspaceId,
           "X-SDK-Version": "0.1.0",
         },
-        body: compressed.data,
+        body: compressed.data as BodyInit,
         signal: controller.signal,
       });
 

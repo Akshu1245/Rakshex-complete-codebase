@@ -47,17 +47,24 @@ import { runtimeGovernanceRouter } from "./api/runtimeGovernance";
 import { riskScoreRouter } from "./api/riskScore";
 import { shadowAiDetectionRouter } from "./api/shadowAiDetection";
 import { socTwoRouter } from "./api/socTwo";
-import { policiesRouter } from "./api/policies";
+import { policiesRouter, policyRulesRouter } from "./api/policies";
 import { alertsRouter } from "./api/alerts";
+import { approvalsRouter } from "./api/approvals";
 import { dataExportRouter } from "./api/dataExport";
 import { apiDocsRouter, setAppRouterForDocs } from "./api/apiDocs";
 import { ssoRouter } from "./api/sso";
 import { workspacesRouter } from "./api/workspaces";
+import { apiKeysRouter } from "./api/apiKeys";
 import { researchRouter } from "./api/research";
 import { telemetryRouter } from "./api/telemetry";
+import { analyticsRouter } from "./api/analytics";
+import { auditRouter } from "./api/audit";
 import { costRouter } from "./api/cost";
 import { fixRouter } from "./api/fix";
 import { githubRouter } from "./api/github";
+import { agentGuardRouter } from "./api/agentGuard";
+import { approvalsRouter } from "./api/approvals";
+import { policyRulesRouter } from "./api/policyRules";
 import { ensurePersonalWorkspace } from "./services/workspaceContext";
 import { logger } from "./_core/logger";
 
@@ -582,17 +589,25 @@ export const appRouter = router({
   runtimeGovernance: runtimeGovernanceRouter,
   socTwo: socTwoRouter,
   policies: policiesRouter,
+  policyRules: policyRulesRouter,
   alerts: alertsRouter,
+  approvals: approvalsRouter,
   dataExport: dataExportRouter,
   apiDocs: apiDocsRouter,
   sso: ssoRouter,
   workspaces: workspacesRouter,
+  apiKeys: apiKeysRouter,
   shadowAiDetection: shadowAiDetectionRouter,
   research: researchRouter,
   telemetry: telemetryRouter,
+  analytics: analyticsRouter,
+  audit: auditRouter,
   cost: costRouter,
   fix: fixRouter,
   github: githubRouter,
+  agentGuard: agentGuardRouter,
+  approvals: approvalsRouter,
+  policyRules: policyRulesRouter,
 });
 
 // Register the appRouter with the apiDocs introspector so its `spec`
