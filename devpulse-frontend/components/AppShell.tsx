@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
+import { PublicHeader } from "@/components/PublicHeader";
 
 const PUBLIC_PATHS = [
   "/",
@@ -49,7 +50,12 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   if (isPublicPath(pathname)) {
-    return <>{children}</>;
+    return (
+      <>
+        <PublicHeader />
+        {children}
+      </>
+    );
   }
 
   return (

@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
@@ -68,90 +68,9 @@ function JsonLdInjector() {
 }
 
 export default function LandingPage() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
   return (
     <div className="min-h-screen bg-gray-900 text-white font-sans">
       <JsonLdInjector />
-      {/* Nav */}
-      <nav className="flex justify-between items-center p-6 max-w-7xl mx-auto">
-        <div className="text-2xl font-bold text-blue-500">DevPulse</div>
-        <div className="hidden md:flex items-center space-x-6">
-          <Link
-            href="/demo"
-            className="text-green-400 font-semibold hover:text-green-300 transition-colors"
-          >
-            Live Demo
-          </Link>
-          <Link href="/pricing" className="hover:text-blue-400 transition-colors">
-            Pricing
-          </Link>
-          <Link href="/dashboard" className="hover:text-blue-400 transition-colors">
-            Dashboard
-          </Link>
-          <Link
-            href={`${APP_URL}/api/oauth/login`}
-            className="bg-blue-600 px-4 py-2 rounded hover:bg-blue-700 transition-colors"
-          >
-            Get Started
-          </Link>
-        </div>
-        <button
-          className="md:hidden text-gray-400 hover:text-white"
-          onClick={() => setMobileMenuOpen((v) => !v)}
-          aria-label="Toggle menu"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            {mobileMenuOpen ? (
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            ) : (
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 6h16M4 12h16M4 18h16"
-              />
-            )}
-          </svg>
-        </button>
-      </nav>
-      {mobileMenuOpen && (
-        <div className="md:hidden px-6 pb-4 space-y-3 border-b border-gray-800">
-          <Link
-            href="/demo"
-            className="block text-green-400 font-semibold"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            Live Demo
-          </Link>
-          <Link
-            href="/pricing"
-            className="block text-gray-300 hover:text-white"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            Pricing
-          </Link>
-          <Link
-            href="/dashboard"
-            className="block text-gray-300 hover:text-white"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            Dashboard
-          </Link>
-          <Link
-            href={`${APP_URL}/api/oauth/login`}
-            className="block bg-blue-600 px-4 py-2 rounded text-center"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            Get Started
-          </Link>
-        </div>
-      )}
 
       {/* Hero */}
       <div className="text-center py-24 px-4">
