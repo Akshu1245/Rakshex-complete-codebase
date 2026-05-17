@@ -3,18 +3,15 @@ services:
     name: devpulse-backend
     env: docker
     dockerfilePath: ./Dockerfile
-    buildCommand: pnpm install && pnpm run build
-    startCommand: node dist/server/_core/index.js
     envVars:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
-        fromDatabase:
-          name: devpulse-db
-          property: connectionString
+        value: ""
       - key: REDIS_URL
         fromService:
           name: devpulse-redis
+          type: redis
           property: connectionString
       - key: JWT_SECRET
         generateValue: true
@@ -41,8 +38,3 @@ services:
     type: redis
     plan: starter
     ipAllowList: []
-
-databases:
-  - name: devpulse-db
-    type: mysql
-    plan: starter
