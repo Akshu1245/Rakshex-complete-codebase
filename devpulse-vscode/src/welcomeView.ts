@@ -371,6 +371,58 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
       box-shadow: none;
     }
 
+    .btn-primary {
+      background: linear-gradient(135deg, #2563EB, #7C3AED);
+      font-size: 14px;
+      padding: 12px 20px;
+      animation: pulse-glow 3s ease-in-out infinite;
+    }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(37,99,235,0.4);
+    }
+
+    .cta-section {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .cta-sub {
+      font-size: 11px;
+      color: var(--vscode-descriptionForeground, #8b949e);
+      margin-top: 6px;
+      margin-bottom: 8px;
+    }
+    .btn-link {
+      background: none;
+      border: none;
+      color: var(--vscode-textLink-foreground, #58a6ff);
+      font-size: 12px;
+      cursor: pointer;
+      text-decoration: underline;
+      padding: 4px;
+    }
+    .btn-link:hover { color: var(--vscode-textLink-activeForeground, #79c0ff); }
+
+    .social-proof {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 12px;
+      background: linear-gradient(90deg, rgba(245,158,11,0.08), rgba(245,158,11,0.02));
+      border: 1px solid rgba(245,158,11,0.15);
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 12px;
+      color: #f59e0b;
+      font-weight: 500;
+    }
+    .sparkle { animation: sparkle 2s ease-in-out infinite; }
+    @keyframes sparkle {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(1.2); }
+    }
+
     .divider {
       display: flex; align-items: center; gap: 8px;
       margin: 12px 0; color: var(--vscode-descriptionForeground, #6e7681);
@@ -476,84 +528,81 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
     <div class="tagline">Security &amp; cost intelligence for AI agents</div>
   </div>
 
-  <div class="trust-badges">
-    <div class="trust-badge"><div class="trust-dot"></div>AES-256 Encrypted</div>
-    <div class="trust-badge">🔒 SOC2 In Progress</div>
-    <div class="trust-badge">⚡ Real-time</div>
+  <!-- Social proof banner -->
+  <div class="social-proof">
+    <span class="sparkle">✨</span>
+    <span>First scan in under 60 seconds — no credit card required</span>
   </div>
 
-  <div class="stats-strip">
-    <div class="stat-card">
-      <div class="stat-value">$0</div>
-      <div class="stat-label">Saved this month</div>
-    </div>
-    <div class="stat-card cost">
-      <div class="stat-value">0</div>
-      <div class="stat-label">Tokens tracked</div>
-    </div>
-    <div class="stat-card risk">
-      <div class="stat-value">0</div>
-      <div class="stat-label">Risks blocked</div>
-    </div>
+  <!-- Primary CTA -->
+  <div class="cta-section">
+    <button class="btn btn-primary" id="create-account-btn">Get Started Free →</button>
+    <div class="cta-sub">Takes 30 seconds. Free forever for individuals.</div>
+    <button class="btn-link" id="has-key-toggle">Already have an API key?</button>
   </div>
 
-  <div class="features">
-    <div class="feature">
-      <div class="feature-icon">🔍</div>
-      <div>
-        <div class="feature-title">Instant Security Scan</div>
-        <div class="feature-desc">Detect secrets, injection &amp; auth issues in API collections</div>
-      </div>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">💰</div>
-      <div>
-        <div class="feature-title">Hidden Cost Detection</div>
-        <div class="feature-desc">Surface reasoning tokens that providers hide from you</div>
-      </div>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">⚡</div>
-      <div>
-        <div class="feature-title">AgentGuard Kill Switch</div>
-        <div class="feature-desc">Auto-stop infinite loops, rogue agents &amp; cost spikes</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="onboarding-progress">
-    <div class="onboarding-title">Get Started in 60 Seconds</div>
-    <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
-    <div class="step active" id="step-1">
-      <div class="step-num">1</div>
-      <div>Connect your DevPulse account</div>
-    </div>
-    <div class="step" id="step-2">
-      <div class="step-num">2</div>
-      <div>Import your first collection</div>
-    </div>
-    <div class="step" id="step-3">
-      <div class="step-num">3</div>
-      <div>Run your first security scan</div>
-    </div>
-    <div class="step" id="step-4">
-      <div class="step-num">4</div>
-      <div>Fix vulnerabilities inline</div>
-    </div>
-  </div>
-
-  <div class="connect-section">
-    <div class="connect-label">Connect Account</div>
+  <!-- API key input (hidden by default) -->
+  <div class="connect-section" id="key-section" style="display:none;">
     <div class="error-feedback" id="error-feedback">
       <span>\u26A0</span>
       <span id="error-feedback-msg"></span>
     </div>
     <input type="password" id="api-key-input" placeholder="Paste your API key (dp_...)" />
     <button class="btn" id="connect-btn">Connect to DevPulse</button>
-    <div class="divider">or</div>
-    <button class="btn btn-secondary" id="create-account-btn">Create Free Account</button>
-    <button class="btn btn-secondary" id="auth-btn">Sign in with API Key</button>
-    <div class="hint">Get your API key from Settings → API Keys on <a href="#" id="dashboard-link" style="color:var(--vscode-textLink-foreground,#58a6ff)">devpulse.in</a></div>
+  </div>
+
+  <!-- Trust badges -->
+  <div class="trust-badges">
+    <div class="trust-badge"><div class="trust-dot"></div>AES-256 Encrypted</div>
+    <div class="trust-badge">🔒 Code never uploaded</div>
+    <div class="trust-badge">⚡ Real-time scans</div>
+  </div>
+
+  <!-- Features -->
+  <div class="features">
+    <div class="feature">
+      <div class="feature-icon">🔍</div>
+      <div>
+        <div class="feature-title">Find leaked API keys</div>
+        <div class="feature-desc">Scan collections & env files for exposed secrets in seconds</div>
+      </div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">💰</div>
+      <div>
+        <div class="feature-title">Stop runaway AI costs</div>
+        <div class="feature-desc">Detect infinite loops & hidden token burns before your bill shocks you</div>
+      </div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">⚡</div>
+      <div>
+        <div class="feature-title">AgentGuard kill switch</div>
+        <div class="feature-desc">Auto-stop rogue agents, unauthorized API calls & compliance risks</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Steps -->
+  <div class="onboarding-progress">
+    <div class="onboarding-title">How it works</div>
+    <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+    <div class="step active" id="step-1">
+      <div class="step-num">1</div>
+      <div>Create free account</div>
+    </div>
+    <div class="step" id="step-2">
+      <div class="step-num">2</div>
+      <div>Import an API collection</div>
+    </div>
+    <div class="step" id="step-3">
+      <div class="step-num">3</div>
+      <div>Run instant security scan</div>
+    </div>
+    <div class="step" id="step-4">
+      <div class="step-num">4</div>
+      <div>Fix issues with one click</div>
+    </div>
   </div>
 
   <div class="quick-actions">
@@ -578,13 +627,13 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
     (function () {
       var vscode = acquireVsCodeApi();
       var connectBtn = document.getElementById("connect-btn");
-      var authBtn = document.getElementById("auth-btn");
       var createAccountBtn = document.getElementById("create-account-btn");
+      var hasKeyToggle = document.getElementById("has-key-toggle");
+      var keySection = document.getElementById("key-section");
       var apiKeyInput = document.getElementById("api-key-input");
       var errorFeedback = document.getElementById("error-feedback");
       var errorFeedbackMsg = document.getElementById("error-feedback-msg");
       var progressFill = document.getElementById("progress-fill");
-      var dashboardLink = document.getElementById("dashboard-link");
 
       // Animate progress bar
       setTimeout(function() {
@@ -610,6 +659,26 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
         }
       }
 
+      // Primary CTA: Create free account (lowest friction)
+      if (createAccountBtn) {
+        createAccountBtn.addEventListener("click", function () {
+          createAccountBtn.textContent = "Opening browser...";
+          vscode.postMessage({ type: "createAccount" });
+          setTimeout(function() { createAccountBtn.textContent = "Get Started Free \u2192"; }, 3000);
+        });
+      }
+
+      // Toggle API key input for returning users
+      if (hasKeyToggle && keySection) {
+        hasKeyToggle.addEventListener("click", function () {
+          var isHidden = keySection.style.display === "none";
+          keySection.style.display = isHidden ? "block" : "none";
+          hasKeyToggle.textContent = isHidden ? "Hide API key input" : "Already have an API key?";
+          if (isHidden && apiKeyInput) apiKeyInput.focus();
+        });
+      }
+
+      // Connect with API key
       if (connectBtn) {
         connectBtn.addEventListener("click", function () {
           var key = apiKeyInput ? apiKeyInput.value.trim() : "";
@@ -623,29 +692,10 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
         });
       }
 
-      if (authBtn) {
-        authBtn.addEventListener("click", function () {
-          vscode.postMessage({ type: "authenticate" });
-        });
-      }
-
-      if (createAccountBtn) {
-        createAccountBtn.addEventListener("click", function () {
-          vscode.postMessage({ type: "createAccount" });
-        });
-      }
-
       if (apiKeyInput) {
         apiKeyInput.addEventListener("input", hideError);
         apiKeyInput.addEventListener("keydown", function (e) {
           if (e.key === "Enter") connectBtn.click();
-        });
-      }
-
-      if (dashboardLink) {
-        dashboardLink.addEventListener("click", function (e) {
-          e.preventDefault();
-          vscode.postMessage({ type: "openDocs" });
         });
       }
 

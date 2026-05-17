@@ -105,7 +105,13 @@ export class DevPulseApi {
   }
 
   async recordActivity(
-    type: "heartbeat" | "file_change" | "session_start" | "session_end" | "feedback",
+    type:
+      | "heartbeat"
+      | "file_change"
+      | "session_start"
+      | "session_end"
+      | "feedback"
+      | "uninstall_feedback",
     data: Record<string, unknown> = {},
   ): Promise<void> {
     await this.mutate("vscodeExtension.recordActivity", {

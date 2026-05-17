@@ -1,0 +1,108 @@
+name: Publish VS Code Extension
+
+on:
+  workflow_dispatch:
+    inputs:
+      versionBump:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      dryRun:
+        description: 'Dry run (no actual publish)'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: devpulse-vscode
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: devpulse-vscode/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint --if-present
+
+      - name: Compile TypeScript
+        run: npm run compile
+
+      - name: Run tests
+        run: npm test --if-present
+
+      - name: Validate package.json
+        run: |
+          node -e "
+            const pkg = require('./package.json');
+            const required = ['name','version','publisher','engines','categories','activationEvents','contributes','repository'];
+            for (const key of required) {
+              if (!pkg[key]) { console.error('Missing required field: ' + key); process.exit(1); }
+            }
+            if (!pkg.engines.vscode) { console.error('Missing engines.vscode'); process.exit(1); }
+            if (!pkg.categories.includes('Other')) { console.warn('Categories should include "Other"'); }
+            console.log('package.json validation passed');
+          "
+
+      - name: Bump version
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          npm version ${{ inputs.versionBump }} --no-git-tag-version
+          VERSION=$(node -p "require('./package.json').version")
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Bumped to $VERSION"
+
+      - name: Generate changelog entry
+        run: |
+          echo "## [${{ env.VERSION }}] - $(date +%Y-%m-%d)" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "- Release published by GitHub Actions" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+
+      - name: Package extension (dry-run)
+        if: ${{ inputs.dryRun }}
+        run: |
+          npm install -g @vscode/vsce
+          vsce package --out devpulse-${{ env.VERSION }}.vsix
+          echo "Dry-run package created: devpulse-${{ env.VERSION }}.vsix"
+          ls -la *.vsix
+
+      - name: Publish to marketplace
+        if: ${{ !inputs.dryRun }}
+        run: |
+          npm install -g @vscode/vsce
+          vsce publish -p ${{ secrets.VSCE_PAT }}
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+
+      - name: Commit version bump
+        if: ${{ !inputs.dryRun }}
+        run: |
+          git add package.json package-lock.json CHANGELOG.md
+          git commit -m "chore(release): ${{ env.VERSION }}"
+          git tag "v${{ env.VERSION }}"
+          git push origin HEAD --tags
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: devpulse-vscode-${{ env.VERSION }}
+          path: devpulse-vscode/*.vsix
