@@ -1,12 +1,46 @@
 # Change Log
 
-## 0.1.0
+All notable changes to the DevPulse VS Code extension.
 
-Initial release.
+## 0.2.0 — Beta Ready
 
-- Sign in with a DevPulse API key (stored in VS Code SecretStorage).
-- Status bar item showing open findings and weekly LLM spend.
-- Findings tree view grouped by severity with inline "Mark resolved" / "Mark in-progress" actions.
-- `DevPulse: Run scan` command that queues a scan for a chosen collection.
-- Periodic activity heartbeat (opt-out via settings).
-- Configurable backend URL for self-hosted deployments.
+### Added
+
+- **Premium welcome view** with animated logo, trust badges, and onboarding progress tracker
+- **Dopamine counters** showing money saved, tokens tracked, and risks blocked
+- **Quick actions** for instant scan, import collection, and open docs
+- **Demo mode** with 3 scripted scenarios (security scan, cost revelation, kill switch)
+- **AgentGuard kill switch** — auto-stops infinite loops and cost anomalies
+- **Hidden cost detection** — reveals reasoning tokens providers hide
+- **Confidence scoring** on all findings (0-100) with explainable evidence
+- **Finding deduplication** — merges duplicate findings automatically
+- **False positive learning** — adjusts confidence based on user feedback
+- **Weekly protection summary** webview showing money saved and threats blocked
+- **Performance optimizations** — lazy loading, debounced refresh, memory monitoring
+- **Telemetry batching** — privacy-safe analytics with opt-out
+- **Value moment tracking** — "saved me" notifications for retention
+
+### Improved
+
+- **Onboarding flow** — reduced from 5 steps to 3, 60-second time-to-value
+- **Extension startup** — < 2s activation, < 150MB memory target
+- **Scan performance** — non-blocking background scans with progress notifications
+- **Error handling** — graceful degradation with clear next-step messages
+- **Marketplace discoverability** — 15 optimized keywords, conversion-focused README
+
+### Security
+
+- AES-256-GCM encryption for all stored data
+- Local-first scanning — collections parsed client-side before upload
+- Permission transparency — only accesses files you explicitly import
+- Circuit breaker for API resilience
+- Request deduplication prevents duplicate scans
+
+## 0.1.0 — Initial Release
+
+- Sign in with a DevPulse API key (stored in VS Code SecretStorage)
+- Status bar item showing open findings and weekly LLM spend
+- Findings tree view grouped by severity with inline "Mark resolved" / "Mark in-progress" actions
+- `DevPulse: Run scan` command that queues a scan for a chosen collection
+- Periodic activity heartbeat (opt-out via settings)
+- Configurable backend URL for self-hosted deployments
