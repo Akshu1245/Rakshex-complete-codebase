@@ -8,6 +8,7 @@ import { collectionLimitError } from "../utils/planLimits";
 import { toNumber } from "../utils/decimal";
 import { scanCollectionForCredentials } from "../services/collectionCredentialScan";
 import { scanCollectionForGateway } from "../services/gatewayCollectionScan";
+import { parseBrunoCollection } from "../services/brunoImport";
 import { logger } from "../_core/logger";
 import { logSecurityEvent } from "../services/securityEvents";
 
@@ -37,7 +38,7 @@ export const collectionsRouter = router({
       z.object({
         name: z.string().min(1).max(255),
         description: z.string().max(1000).optional(),
-        format: z.enum(["postman", "openapi"]),
+        format: z.enum(["postman", "openapi", "bruno"]),
         data: z.record(z.unknown()),
       }),
     )
@@ -85,10 +86,45 @@ export const collectionsRouter = router({
         }
       }
 
+      // Normalize Bruno collections to internal format before scanning
+      let collectionData = input.data;
+      if (input.format === "bruno") {
+        try {
+          const brunoResult = parseBrunoCollection(JSON.stringify(input.data));
+          collectionData = {
+            info: {
+              name: brunoResult.name,
+              schema: "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+            },
+            item: brunoResult.requests.map((r) => ({
+              name: r.name,
+              request: {
+                method: r.method,
+                url: { raw: r.url },
+                header: Object.entries(r.headers).map(([key, value]) => ({ key, value })),
+                body: r.body ? { mode: "raw", raw: r.body } : undefined,
+              },
+            })),
+            _brunoImport: { warnings: brunoResult.warnings },
+          };
+          if (brunoResult.warnings.length > 0) {
+            logger.warn(
+              { userId: ctx.user.id, warnings: brunoResult.warnings },
+              "[Collections] Bruno import warnings",
+            );
+          }
+        } catch (err) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Invalid Bruno collection: ${(err as Error).message}`,
+          });
+        }
+      }
+
       // Patent surface NHCE/DEV/2026/001 component: every imported collection
       // is run through the credential scanner before persistence so leaked
       // keys are surfaced at import time rather than 30,000 collections later.
-      const credentialFindings = scanCollectionForCredentials(input.data);
+      const credentialFindings = scanCollectionForCredentials(collectionData);
 
       // Gateway scan: check endpoints for prompt-injection patterns, PII
       // exposure, and missing auth headers — surfaces LLM-specific risks
@@ -103,7 +139,7 @@ export const collectionsRouter = router({
         sample: string;
       }> = [];
       try {
-        const gwResult = scanCollectionForGateway(input.data);
+        const gwResult = scanCollectionForGateway(collectionData);
         gatewayFindings = gwResult.findings.map((f) => ({
           endpoint: f.endpoint,
           method: f.method,
@@ -127,7 +163,7 @@ export const collectionsRouter = router({
         ctx.user.id,
         input.name,
         input.format,
-        input.data,
+        collectionData,
         input.description,
       );
       if (credentialFindings.length > 0) {

@@ -123,7 +123,13 @@ let _db: MySql2Database<Record<string, unknown>> | null = null;
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      const pool = mysql.createPool(process.env.DATABASE_URL);
+      const pool = mysql.createPool({
+        uri: process.env.DATABASE_URL,
+        connectionLimit: 20,
+        queueLimit: 0,
+        acquireTimeout: 30000,
+        timeout: 60000,
+      });
       _db = drizzle(pool);
     } catch (error) {
       logger.warn({ err: error }, "[Database] Failed to connect");
@@ -300,7 +306,7 @@ export async function getUserById(id: number) {
 export async function createCollection(
   userId: number,
   name: string,
-  format: "postman" | "openapi",
+  format: "postman" | "openapi" | "bruno",
   data: any,
   description?: string,
 ) {
@@ -308,8 +314,14 @@ export async function createCollection(
   assertDb(db);
 
   const id = secureId("col");
-  const totalRequests =
-    format === "openapi" ? Object.keys(data.paths || {}).length : data.item?.length || 0;
+  let totalRequests = 0;
+  if (format === "openapi") {
+    totalRequests = Object.keys(data.paths || {}).length;
+  } else if (format === "bruno") {
+    totalRequests = data.item?.length || 0;
+  } else {
+    totalRequests = data.item?.length || 0;
+  }
 
   await db.insert(collections).values({
     id,

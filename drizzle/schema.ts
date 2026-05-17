@@ -79,7 +79,7 @@ export const collections = mysqlTable(
     userId: int("userId").notNull(),
     name: varchar("name", { length: 255 }).notNull(),
     description: text("description"),
-    format: mysqlEnum("format", ["postman", "openapi"]).notNull(),
+    format: mysqlEnum("format", ["postman", "openapi", "bruno"]).notNull(),
     data: json("data").notNull(), // Store full collection JSON
     totalRequests: int("totalRequests").default(0).notNull(),
     githubRepo: varchar("githubRepo", { length: 255 }), // Link to GitHub repo (owner/repo format)
