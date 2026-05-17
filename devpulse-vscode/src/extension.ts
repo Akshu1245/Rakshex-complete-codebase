@@ -23,6 +23,7 @@ import { ValueMomentTracker } from "./valueMoments";
 import { EngagementTracker } from "./engagementTracker";
 import { WeeklyDigestCommand } from "./weeklyDigest";
 import { FeedbackCommand } from "./feedback";
+import { OnboardingTour } from "./onboardingTour";
 import { registerGatewayCommand } from "./gatewayTester";
 import { registerShadowApiCommand } from "./shadowApi";
 import { PostmanImportCommand } from "./postmanImport";
@@ -640,6 +641,27 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   context.subscriptions.push(
     vscode.commands.registerCommand("devpulse.sendFeedback", () => feedbackCmd.execute()),
   );
+
+  // Onboarding tour
+  const onboardingTour = new OnboardingTour(context, api, engagementTracker, () => {
+    void vscode.window
+      .showInformationMessage(
+        "🎉 You're all set! DevPulse is now protecting your APIs.",
+        "Open Dashboard",
+      )
+      .then((choice) => {
+        if (choice === "Open Dashboard") {
+          void vscode.commands.executeCommand("devpulse.openSecurityPanel");
+        }
+      });
+  });
+  context.subscriptions.push(
+    vscode.commands.registerCommand("devpulse.startOnboardingTour", () => onboardingTour.start()),
+  );
+  // Auto-start tour for new users (no API key yet)
+  if (!cachedApiKey) {
+    void onboardingTour.start();
+  }
 
   // Onboarding nudges: check after 30 seconds if onboarding incomplete
   const onboardingTimer = setTimeout(() => {

@@ -194,6 +194,12 @@
         "title": "DevPulse: Send Feedback",
         "icon": "$(comment)",
         "category": "DevPulse"
+      },
+      {
+        "command": "devpulse.startOnboardingTour",
+        "title": "DevPulse: Start Onboarding Tour",
+        "icon": "$(play)",
+        "category": "DevPulse"
       }
     ],
     "viewsContainers": {
