@@ -78,78 +78,94 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   // --- Welcome View (activity bar) -----------------------------------------
 
-  const welcomeProvider = new WelcomeViewProvider(context.extensionUri, async (apiKey: string) => {
-    let valid = false;
-    try {
-      const result = await api.validateApiKey(apiKey);
-      valid = result.valid;
-      if (valid && result.user) {
-        void vscode.window.showInformationMessage(
-          `Signed in to DevPulse as ${result.user.email ?? result.user.name ?? "user"} (${result.user.plan}).`,
-        );
-        // Cost revelation: fetch and show cost breakdown
-        try {
-          const dashboard = await api.getDashboardData();
-          if (dashboard && dashboard.weeklyCost > 0) {
-            setTimeout(() => {
-              void vscode.window
-                .showInformationMessage(
-                  `💰 Cost Insight: Your weekly LLM spend is $${dashboard.weeklyCost.toFixed(2)}. View dashboard for per-endpoint breakdown.`,
-                  "Open Dashboard",
-                )
-                .then((selection) => {
-                  if (selection === "Open Dashboard") {
-                    vscode.commands.executeCommand("devpulse.openDashboard");
-                  }
-                });
-            }, 2000);
+  // Quick action handler for welcome view buttons
+  const handleQuickAction = (action: string) => {
+    switch (action) {
+      case "scan":
+        void vscode.commands.executeCommand("devpulse.scanCurrentFile");
+        break;
+      case "import":
+        void vscode.commands.executeCommand("devpulse.importCollections");
+        break;
+    }
+  };
+
+  const welcomeProvider = new WelcomeViewProvider(
+    context.extensionUri,
+    async (apiKey: string) => {
+      let valid = false;
+      try {
+        const result = await api.validateApiKey(apiKey);
+        valid = result.valid;
+        if (valid && result.user) {
+          void vscode.window.showInformationMessage(
+            `Signed in to DevPulse as ${result.user.email ?? result.user.name ?? "user"} (${result.user.plan}).`,
+          );
+          // Cost revelation: fetch and show cost breakdown
+          try {
+            const dashboard = await api.getDashboardData();
+            if (dashboard && dashboard.weeklyCost > 0) {
+              setTimeout(() => {
+                void vscode.window
+                  .showInformationMessage(
+                    `💰 Cost Insight: Your weekly LLM spend is $${dashboard.weeklyCost.toFixed(2)}. View dashboard for per-endpoint breakdown.`,
+                    "Open Dashboard",
+                  )
+                  .then((selection) => {
+                    if (selection === "Open Dashboard") {
+                      vscode.commands.executeCommand("devpulse.openDashboard");
+                    }
+                  });
+              }, 2000);
+            }
+          } catch {
+            // Silently skip cost revelation on auth error
           }
-        } catch {
-          // Silently skip cost revelation on auth error
         }
-      }
-    } catch (err) {
-      const msg =
-        err instanceof DevPulseApiError
-          ? err.message
-          : err instanceof Error
+      } catch (err) {
+        const msg =
+          err instanceof DevPulseApiError
             ? err.message
-            : String(err);
-      void vscode.window.showErrorMessage(`DevPulse: could not validate API key — ${msg}`);
-      return;
-    }
-
-    if (!valid) {
-      void vscode.window.showErrorMessage(
-        "DevPulse: API key rejected. Generate a new one from the dashboard.",
-      );
-      return;
-    }
-
-    await context.secrets.store(SECRET_API_KEY, apiKey);
-    cachedApiKey = apiKey;
-    await applySignedInState(true);
-    // Cost revelation after welcome-view connect
-    try {
-      const dashboard = await api.getDashboardData();
-      if (dashboard && dashboard.weeklyCost > 0) {
-        setTimeout(() => {
-          void vscode.window
-            .showInformationMessage(
-              `💰 Cost Insight: Your weekly LLM spend is $${dashboard.weeklyCost.toFixed(2)}. View dashboard for per-endpoint breakdown.`,
-              "Open Dashboard",
-            )
-            .then((selection) => {
-              if (selection === "Open Dashboard") {
-                vscode.commands.executeCommand("devpulse.openDashboard");
-              }
-            });
-        }, 3000);
+            : err instanceof Error
+              ? err.message
+              : String(err);
+        void vscode.window.showErrorMessage(`DevPulse: could not validate API key — ${msg}`);
+        return;
       }
-    } catch {
-      // Silently skip
-    }
-  });
+
+      if (!valid) {
+        void vscode.window.showErrorMessage(
+          "DevPulse: API key rejected. Generate a new one from the dashboard.",
+        );
+        return;
+      }
+
+      await context.secrets.store(SECRET_API_KEY, apiKey);
+      cachedApiKey = apiKey;
+      await applySignedInState(true);
+      // Cost revelation after welcome-view connect
+      try {
+        const dashboard = await api.getDashboardData();
+        if (dashboard && dashboard.weeklyCost > 0) {
+          setTimeout(() => {
+            void vscode.window
+              .showInformationMessage(
+                `💰 Cost Insight: Your weekly LLM spend is $${dashboard.weeklyCost.toFixed(2)}. View dashboard for per-endpoint breakdown.`,
+                "Open Dashboard",
+              )
+              .then((selection) => {
+                if (selection === "Open Dashboard") {
+                  vscode.commands.executeCommand("devpulse.openDashboard");
+                }
+              });
+          }, 3000);
+        }
+      } catch {
+        // Silently skip
+      }
+    },
+    handleQuickAction,
+  );
 
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(WelcomeViewProvider.viewType, welcomeProvider),
@@ -561,6 +577,14 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const scanCurrentFile = new ScanCurrentFileCommand(api);
   context.subscriptions.push(
     vscode.commands.registerCommand("devpulse.scanCurrentFile", () => scanCurrentFile.execute()),
+  );
+
+  // Demo mode command
+  context.subscriptions.push(
+    vscode.commands.registerCommand("devpulse.runDemo", async () => {
+      const { runDemoScenarios } = await import("./demoMode");
+      await runDemoScenarios();
+    }),
   );
 
   heartbeat.start();

@@ -1,0 +1,263 @@
+"use client";
+
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { Shield, Zap, Eye, Lock, TrendingDown, Globe, ChevronRight, Check } from "lucide-react";
+
+export default function LandingPage() {
+  const [email, setEmail] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email.includes("@")) {
+      setSubmitted(true);
+      // TODO: wire to waitlist API
+    }
+  };
+
+  const features = [
+    {
+      icon: <Eye className="w-5 h-5" />,
+      title: "Hidden Token Revelation",
+      desc: "See reasoning tokens providers hide. Cut AI costs by 20-40%.",
+      color: "from-amber-500/20 to-orange-500/10",
+      border: "border-amber-500/20",
+    },
+    {
+      icon: <Shield className="w-5 h-5" />,
+      title: "AgentGuard Kill Switch",
+      desc: "Auto-stop infinite loops, rogue agents & cost spikes in real-time.",
+      color: "from-emerald-500/20 to-green-500/10",
+      border: "border-emerald-500/20",
+    },
+    {
+      icon: <Zap className="w-5 h-5" />,
+      title: "Instant Security Scan",
+      desc: "Detect secrets, injection & auth issues in API collections in seconds.",
+      color: "from-indigo-500/20 to-violet-500/10",
+      border: "border-indigo-500/20",
+    },
+    {
+      icon: <Lock className="w-5 h-5" />,
+      title: "Shadow API Discovery",
+      desc: "Find undocumented endpoints before attackers do.",
+      color: "from-rose-500/20 to-pink-500/10",
+      border: "border-rose-500/20",
+    },
+    {
+      icon: <TrendingDown className="w-5 h-5" />,
+      title: "Cost Anomaly Detection",
+      desc: "ML-powered alerts when your AI spend spikes unexpectedly.",
+      color: "from-cyan-500/20 to-blue-500/10",
+      border: "border-cyan-500/20",
+    },
+    {
+      icon: <Globe className="w-5 h-5" />,
+      title: "Compliance Automation",
+      desc: "Generate PCI DSS, GDPR & SOC2 reports from your API security posture.",
+      color: "from-purple-500/20 to-fuchsia-500/10",
+      border: "border-purple-500/20",
+    },
+  ];
+
+  const stats = [
+    { value: "$1.2M+", label: "AI costs saved" },
+    { value: "847", label: "Rogue agents stopped" },
+    { value: "12K+", label: "Vulnerabilities found" },
+    { value: "99.9%", label: "Uptime SLA" },
+  ];
+
+  return (
+    <div className="min-h-screen bg-[#0a0a0f] text-white overflow-hidden">
+      {/* Hero */}
+      <section className="relative pt-20 pb-32 px-4">
+        <div className="absolute inset-0 bg-gradient-to-b from-indigo-500/5 via-transparent to-transparent" />
+        <div className="max-w-5xl mx-auto relative">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center"
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-sm mb-6">
+              <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
+              Public Beta — Join 500+ developers
+            </div>
+            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6">
+              <span className="bg-gradient-to-r from-indigo-400 via-violet-400 to-fuchsia-400 bg-clip-text text-transparent">
+                Security intelligence
+              </span>
+              <br />
+              for AI agents
+            </h1>
+            <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+              The first developer-native platform that sits between your code and LLM providers,
+              detecting infinite loops, hidden reasoning costs, and API vulnerabilities before they
+              hit production.
+            </p>
+
+            {/* Email capture */}
+            <form onSubmit={handleSubmit} className="max-w-md mx-auto mb-8">
+              {!submitted ? (
+                <div className="flex gap-2">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter your email"
+                    className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                    required
+                  />
+                  <button
+                    type="submit"
+                    className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 font-semibold hover:opacity-90 transition-opacity flex items-center gap-2"
+                  >
+                    Get Access <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300"
+                >
+                  <Check className="w-5 h-5" />
+                  <span>You are on the waitlist! We will email you soon.</span>
+                </motion.div>
+              )}
+            </form>
+
+            {/* Trust badges */}
+            <div className="flex flex-wrap justify-center gap-3 text-xs text-slate-500">
+              <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10">
+                <Lock className="w-3 h-3" /> AES-256 Encrypted
+              </span>
+              <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10">
+                <Shield className="w-3 h-3" /> SOC2 In Progress
+              </span>
+              <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10">
+                <Zap className="w-3 h-3" /> Real-time
+              </span>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Stats strip */}
+      <section className="py-12 border-y border-white/5">
+        <div className="max-w-5xl mx-auto px-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {stats.map((stat, i) => (
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                viewport={{ once: true }}
+                className="text-center"
+              >
+                <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
+                  {stat.value}
+                </div>
+                <div className="text-sm text-slate-500 mt-1">{stat.label}</div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="py-24 px-4">
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Everything you need to secure AI
+            </h2>
+            <p className="text-slate-400 max-w-xl mx-auto">
+              From VS Code to production, DevPulse protects your AI infrastructure end-to-end.
+            </p>
+          </motion.div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {features.map((feature, i) => (
+              <motion.div
+                key={feature.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.08 }}
+                viewport={{ once: true }}
+                className={`p-6 rounded-2xl bg-gradient-to-br ${feature.color} border ${feature.border} backdrop-blur-sm hover:scale-[1.02] transition-transform`}
+              >
+                <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center mb-4 text-indigo-300">
+                  {feature.icon}
+                </div>
+                <h3 className="font-semibold text-lg mb-2">{feature.title}</h3>
+                <p className="text-sm text-slate-400 leading-relaxed">{feature.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="py-24 px-4">
+        <div className="max-w-3xl mx-auto text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="p-10 rounded-3xl bg-gradient-to-br from-indigo-500/10 to-violet-500/10 border border-indigo-500/20"
+          >
+            <h2 className="text-3xl font-bold mb-4">Ready to secure your AI?</h2>
+            <p className="text-slate-400 mb-8">
+              Join 500+ developers using DevPulse to protect their AI infrastructure.
+            </p>
+            <button
+              onClick={() =>
+                document
+                  .querySelector('input[type="email"]')
+                  ?.scrollIntoView({ behavior: "smooth" })
+              }
+              className="px-8 py-4 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 font-semibold hover:opacity-90 transition-opacity inline-flex items-center gap-2"
+            >
+              Join the Beta <ChevronRight className="w-4 h-4" />
+            </button>
+            <p className="text-xs text-slate-600 mt-4">
+              Free during beta. No credit card required.
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-8 px-4 border-t border-white/5">
+        <div className="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-500">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">🛡</span>
+            <span className="font-semibold text-slate-300">DevPulse</span>
+          </div>
+          <div className="flex gap-6">
+            <a href="#" className="hover:text-slate-300 transition-colors">
+              Security
+            </a>
+            <a href="#" className="hover:text-slate-300 transition-colors">
+              Privacy
+            </a>
+            <a href="#" className="hover:text-slate-300 transition-colors">
+              Docs
+            </a>
+            <a href="#" className="hover:text-slate-300 transition-colors">
+              GitHub
+            </a>
+          </div>
+          <div>© 2026 DevPulse Technologies</div>
+        </div>
+      </footer>
+    </div>
+  );
+}
