@@ -62,9 +62,9 @@ export class DevPulseStatusBar {
     if (severityCounts.Low > 0) parts.push(`${severityCounts.Low}L`);
 
     const findingsText = parts.length > 0 ? parts.join(" ") : "✓ clear";
-    const cost = data.weeklyCost;
+    const resolvedCount = findings.filter((f) => f.status === "resolved").length;
 
-    this.item.text = `$(shield) DevPulse: ${findingsText} · $${cost.toFixed(2)}/wk`;
+    this.item.text = `$(shield) ${findingsText}`;
 
     // Color based on risk level
     if (hasCritical) {
@@ -81,20 +81,19 @@ export class DevPulseStatusBar {
     const streak = this.getStreak?.() ?? 0;
     const streakLine = streak > 1 ? `🔥 Scan streak: ${streak} days` : null;
 
-    // Detailed tooltip
+    // Detailed tooltip focused on value, not cost
     this.item.tooltip = [
       `DevPulse Security Status`,
       ``,
       streakLine,
       streakLine ? `` : null,
       `Collections: ${data.collections}`,
-      `Open findings: ${data.openFindings} of ${data.totalFindings} total`,
+      `Findings: ${data.openFindings} open · ${resolvedCount} resolved · ${data.totalFindings} total`,
       `  Critical: ${severityCounts.Critical}`,
       `  High: ${severityCounts.High}`,
       `  Medium: ${severityCounts.Medium}`,
       `  Low: ${severityCounts.Low}`,
       `Recent scans: ${data.recentScans}`,
-      `Weekly LLM spend: $${cost.toFixed(2)}`,
       data.lastScanAt ? `Last scan: ${data.lastScanAt}` : null,
       ``,
       `Click to open security dashboard`,
