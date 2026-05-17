@@ -1,0 +1,151 @@
+{
+  "info": {
+    "_postman_id": "vuln-lab-001",
+    "name": "Vulnerable API Test Lab",
+    "description": "Intentionally vulnerable API for DevPulse scanner testing",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get User (HTTP - cleartext)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "http://api.vuln-lab.test/users/123" }
+      }
+    },
+    {
+      "name": "Create User (no auth)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "https://api.vuln-lab.test/users" },
+        "body": { "mode": "raw", "raw": "{\"name\":\"test\"}" }
+      }
+    },
+    {
+      "name": "Delete User (hardcoded key)",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "X-API-Key", "value": "sk_test_REPLACE_ME_12345" },
+          { "key": "Authorization", "value": "Bearer eyJhbGciOiJIUzI1NiJ9..." }
+        ],
+        "url": { "raw": "https://api.vuln-lab.test/users/456" }
+      }
+    },
+    {
+      "name": "Search Users (SQL injection)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "https://api.vuln-lab.test/users?q=' OR '1'='1" }
+      }
+    },
+    {
+      "name": "CORS Test (wildcard)",
+      "request": {
+        "method": "OPTIONS",
+        "header": [{ "key": "Origin", "value": "https://evil.com" }],
+        "url": { "raw": "https://api.vuln-lab.test/data" }
+      }
+    },
+    {
+      "name": "Debug Endpoint",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "X-Debug-Mode", "value": "true" },
+          { "key": "X-Debug-Verbose", "value": "1" }
+        ],
+        "url": { "raw": "https://api.vuln-lab.test/debug/info" }
+      }
+    },
+    {
+      "name": "No Rate Limit",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "https://api.vuln-lab.test/public/status" }
+      }
+    },
+    {
+      "name": "Get Order (integer ID)",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer token123" }],
+        "url": { "raw": "https://api.vuln-lab.test/orders/789" }
+      }
+    },
+    {
+      "name": "Login (JWT without exp)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "https://api.vuln-lab.test/auth/login" },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"email\":\"test@test.com\",\"password\":\"password123\"}"
+        }
+      }
+    },
+    {
+      "name": "Redirect (open)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "https://api.vuln-lab.test/redirect?url=https://evil.com" }
+      }
+    },
+    {
+      "name": "Update Settings (mass assignment)",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Authorization", "value": "Bearer token123" }],
+        "url": { "raw": "https://api.vuln-lab.test/users/123/settings" },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"role\":\"admin\",\"isAdmin\":true,\"password\":\"newpass\"}"
+        }
+      }
+    },
+    {
+      "name": "Create Item (no validation)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Authorization", "value": "Bearer token123" }],
+        "url": { "raw": "https://api.vuln-lab.test/items" },
+        "body": { "mode": "raw", "raw": "{}" }
+      }
+    },
+    {
+      "name": "Get Token (sensitive in query)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://api.vuln-lab.test/auth/token?api_key=sk_test_REPLACE_ME_67890&password=admin123"
+        }
+      }
+    },
+    {
+      "name": "Admin Panel (broken auth)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "https://api.vuln-lab.test/admin/users" }
+      }
+    },
+    {
+      "name": "Get Profile (legitimate - should NOT flag)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{auth_token}}" },
+          { "key": "X-Request-ID", "value": "{{$guid}}" }
+        ],
+        "url": { "raw": "https://api.vuln-lab.test/users/me" }
+      }
+    }
+  ]
+}
