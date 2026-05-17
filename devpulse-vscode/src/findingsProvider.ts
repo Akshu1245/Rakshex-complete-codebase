@@ -43,6 +43,8 @@ export class FindingsTreeProvider implements vscode.TreeDataProvider<FindingsNod
   private findings: Finding[] = [];
   private lastError: string | null = null;
   private signedIn = false;
+  private lastFetchTime = 0;
+  private readonly CACHE_MS = 8000; // 8-second cache to avoid redundant API calls
 
   constructor(private readonly api: DevPulseApi) {}
 
@@ -51,18 +53,25 @@ export class FindingsTreeProvider implements vscode.TreeDataProvider<FindingsNod
     if (!signedIn) {
       this.findings = [];
       this.lastError = null;
+      this.lastFetchTime = 0;
     }
     this._onDidChange.fire();
   }
 
-  async refresh(): Promise<void> {
+  async refresh(force = false): Promise<void> {
     if (!this.signedIn) {
+      this._onDidChange.fire();
+      return;
+    }
+    // Skip redundant fetches within cache window unless forced
+    if (!force && Date.now() - this.lastFetchTime < this.CACHE_MS) {
       this._onDidChange.fire();
       return;
     }
     try {
       this.findings = await this.api.getRecentFindings(20);
       this.lastError = null;
+      this.lastFetchTime = Date.now();
     } catch (err) {
       this.findings = [];
       this.lastError = err instanceof Error ? err.message : String(err);
@@ -124,17 +133,15 @@ export class FindingsTreeProvider implements vscode.TreeDataProvider<FindingsNod
         if (isOffline) {
           return [
             new MessageNode(
-              "⚠ DevPulse is unreachable. Check your connection or run 'DevPulse: Check Health'.",
+              "DevPulse is temporarily unreachable. Check your connection or run 'DevPulse: Check Health'.",
             ),
           ];
         }
-        return [new MessageNode(`⚠ ${this.lastError}`)];
+        return [new MessageNode(`Something went wrong: ${this.lastError}`)];
       }
       if (this.findings.length === 0) {
         return [
-          new MessageNode(
-            "🛡️ No findings yet. Run your first scan: open the command palette → 'DevPulse: Run scan' or import a collection.",
-          ),
+          new MessageNode("No findings yet. Import a collection or run a scan to get started."),
         ];
       }
       const groups: SeverityGroupNode[] = [];

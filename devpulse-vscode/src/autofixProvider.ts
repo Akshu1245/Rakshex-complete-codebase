@@ -29,7 +29,7 @@ class FindingGroupNode {
     readonly findingId: string,
     readonly findingTitle: string,
     readonly severity: Severity,
-    readonly suggestions: AutoFixSuggestion[]
+    readonly suggestions: AutoFixSuggestion[],
   ) {}
 }
 
@@ -80,7 +80,7 @@ export class AutoFixTreeProvider implements vscode.TreeDataProvider<AutoFixNode>
     this._onDidChange.fire();
   }
 
-  async refresh(): Promise<void> {
+  async refresh(_force = false): Promise<void> {
     if (!this.signedIn) {
       this._onDidChange.fire();
       return;
@@ -102,10 +102,7 @@ export class AutoFixTreeProvider implements vscode.TreeDataProvider<AutoFixNode>
       return item;
     }
     if (node.kind === "findingGroup") {
-      const item = new vscode.TreeItem(
-        node.findingTitle,
-        vscode.TreeItemCollapsibleState.Expanded
-      );
+      const item = new vscode.TreeItem(node.findingTitle, vscode.TreeItemCollapsibleState.Expanded);
       item.iconPath = SEVERITY_ICON[node.severity];
       item.description = `${node.suggestions.length} fix${node.suggestions.length !== 1 ? "es" : ""}`;
       item.contextValue = "findingGroup";
@@ -132,7 +129,7 @@ export class AutoFixTreeProvider implements vscode.TreeDataProvider<AutoFixNode>
       if (!this.signedIn) {
         return [];
       }
-      const active = this.suggestions.filter(s => !this.dismissed.has(s.id));
+      const active = this.suggestions.filter((s) => !this.dismissed.has(s.id));
       if (active.length === 0) {
         return [new MessageNode("No auto-fix suggestions available.")];
       }
@@ -146,12 +143,14 @@ export class AutoFixTreeProvider implements vscode.TreeDataProvider<AutoFixNode>
       const nodes: AutoFixNode[] = [];
       for (const [findingId, suggestions] of groups) {
         const first = suggestions[0];
-        nodes.push(new FindingGroupNode(findingId, first.findingTitle, first.severity, suggestions));
+        nodes.push(
+          new FindingGroupNode(findingId, first.findingTitle, first.severity, suggestions),
+        );
       }
       return nodes;
     }
     if (node.kind === "findingGroup") {
-      return node.suggestions.map(s => new SuggestionNode(s));
+      return node.suggestions.map((s) => new SuggestionNode(s));
     }
     return [];
   }
@@ -173,7 +172,8 @@ function generateAutoFixSuggestions(findings: Finding[]): AutoFixSuggestion[] {
         findingId: f.id,
         findingTitle: f.title,
         title: "Use parameterized queries",
-        description: "Replace string concatenation with parameterized queries to prevent SQL injection.",
+        description:
+          "Replace string concatenation with parameterized queries to prevent SQL injection.",
         confidence: "high" as ConfidenceLevel,
         code: `// Before (vulnerable)\nconst query = "SELECT * FROM users WHERE id = " + userId;\n\n// After (parameterized)\nconst query = "SELECT * FROM users WHERE id = $1";\ndb.query(query, [userId]);`,
         severity: f.severity,
@@ -181,13 +181,17 @@ function generateAutoFixSuggestions(findings: Finding[]): AutoFixSuggestion[] {
     }
 
     // XSS fixes
-    if (titleLower.includes("xss") || (titleLower.includes("cross-site") && titleLower.includes("script"))) {
+    if (
+      titleLower.includes("xss") ||
+      (titleLower.includes("cross-site") && titleLower.includes("script"))
+    ) {
       suggestions.push({
         id: `${f.id}-xss-encode`,
         findingId: f.id,
         findingTitle: f.title,
         title: "Encode output / sanitize input",
-        description: "Use context-aware output encoding and input sanitization to prevent XSS attacks.",
+        description:
+          "Use context-aware output encoding and input sanitization to prevent XSS attacks.",
         confidence: "high" as ConfidenceLevel,
         code: `// Use DOMPurify or similar library\nimport DOMPurify from 'dompurify';\nconst clean = DOMPurify.sanitize(userInput);\nelement.innerHTML = clean;`,
         severity: f.severity,
@@ -223,7 +227,11 @@ function generateAutoFixSuggestions(findings: Finding[]): AutoFixSuggestion[] {
     }
 
     // Rate limiting
-    if (titleLower.includes("rate") || titleLower.includes("limit") || titleLower.includes("throttl")) {
+    if (
+      titleLower.includes("rate") ||
+      titleLower.includes("limit") ||
+      titleLower.includes("throttl")
+    ) {
       suggestions.push({
         id: `${f.id}-rate-limit`,
         findingId: f.id,
@@ -237,7 +245,11 @@ function generateAutoFixSuggestions(findings: Finding[]): AutoFixSuggestion[] {
     }
 
     // PII / Data exposure
-    if (titleLower.includes("pii") || titleLower.includes("data exposure") || titleLower.includes("sensitive")) {
+    if (
+      titleLower.includes("pii") ||
+      titleLower.includes("data exposure") ||
+      titleLower.includes("sensitive")
+    ) {
       suggestions.push({
         id: `${f.id}-pii-mask`,
         findingId: f.id,
@@ -251,14 +263,17 @@ function generateAutoFixSuggestions(findings: Finding[]): AutoFixSuggestion[] {
     }
 
     // Generic suggestion for any finding without specific patterns
-    if (suggestions.filter(s => s.findingId === f.id).length === 0) {
+    if (suggestions.filter((s) => s.findingId === f.id).length === 0) {
       suggestions.push({
         id: `${f.id}-review`,
         findingId: f.id,
         findingTitle: f.title,
         title: "Review and remediate finding",
         description: `Review this ${f.severity.toLowerCase()} severity finding and apply appropriate security controls.`,
-        confidence: f.severity === "Critical" || f.severity === "High" ? "medium" as ConfidenceLevel : "low" as ConfidenceLevel,
+        confidence:
+          f.severity === "Critical" || f.severity === "High"
+            ? ("medium" as ConfidenceLevel)
+            : ("low" as ConfidenceLevel),
         code: `// TODO: Remediate finding: ${f.title}\n// Review the affected endpoint and apply security best practices.\n// Consider input validation, authentication checks, and least-privilege access.`,
         severity: f.severity,
       });

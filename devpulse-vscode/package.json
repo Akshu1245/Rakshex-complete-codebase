@@ -358,6 +358,26 @@
         }
       ]
     },
+    "keybindings": [
+      {
+        "command": "devpulse.refresh",
+        "key": "ctrl+shift+d",
+        "mac": "cmd+shift+d",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "devpulse.runScan",
+        "key": "ctrl+shift+s",
+        "mac": "cmd+shift+s",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "devpulse.openSecurityPanel",
+        "key": "ctrl+shift+f",
+        "mac": "cmd+shift+f",
+        "when": "editorTextFocus"
+      }
+    ],
     "configuration": {
       "title": "DevPulse",
       "properties": {

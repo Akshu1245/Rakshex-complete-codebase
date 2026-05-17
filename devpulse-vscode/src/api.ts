@@ -182,7 +182,11 @@ export class DevPulseApi {
     }
 
     this.isOnline = false;
-    throw new DevPulseApiError(lastErr?.message ?? "Network error — DevPulse is unreachable", 0);
+    throw new DevPulseApiError(
+      lastErr?.message ??
+        "DevPulse is temporarily unreachable. Check your connection and try again.",
+      0,
+    );
   }
 
   private async query<T>(path: string, input?: unknown): Promise<T> {

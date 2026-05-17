@@ -64,13 +64,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   });
 
   let refreshInFlight = false;
-  const refresh = async () => {
+  const refresh = async (force = false) => {
     if (refreshInFlight) return;
     refreshInFlight = true;
     try {
       await Promise.all([
-        findingsProvider.refresh(),
-        autoFixProvider.refresh(),
+        findingsProvider.refresh(force),
+        autoFixProvider.refresh(force),
         statusBar.refresh(Boolean(cachedApiKey)),
       ]);
       // Track potential value moments after scan
@@ -118,7 +118,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     }
   };
 
-  await applySignedInState(Boolean(cachedApiKey));
+  // Don't block activation on refresh — fire-and-forget
+  void applySignedInState(Boolean(cachedApiKey));
 
   // --- Welcome View (activity bar) -----------------------------------------
 
@@ -143,28 +144,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         valid = result.valid;
         if (valid && result.user) {
           void vscode.window.showInformationMessage(
-            `Signed in to DevPulse as ${result.user.email ?? result.user.name ?? "user"} (${result.user.plan}).`,
+            `Connected as ${result.user.email ?? result.user.name ?? "user"} (${result.user.plan}).`,
           );
-          // Cost revelation: fetch and show cost breakdown
-          try {
-            const dashboard = await api.getDashboardData();
-            if (dashboard && dashboard.weeklyCost > 0) {
-              setTimeout(() => {
-                void vscode.window
-                  .showInformationMessage(
-                    `💰 Cost Insight: Your weekly LLM spend is $${dashboard.weeklyCost.toFixed(2)}. View dashboard for per-endpoint breakdown.`,
-                    "Open Dashboard",
-                  )
-                  .then((selection) => {
-                    if (selection === "Open Dashboard") {
-                      vscode.commands.executeCommand("devpulse.openDashboard");
-                    }
-                  });
-              }, 2000);
-            }
-          } catch {
-            // Silently skip cost revelation on auth error
-          }
         }
       } catch (err) {
         const msg =
@@ -173,13 +154,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
             : err instanceof Error
               ? err.message
               : String(err);
-        void vscode.window.showErrorMessage(`DevPulse: could not validate API key — ${msg}`);
+        void vscode.window.showErrorMessage(`Couldn't verify that API key — ${msg}`);
         return;
       }
 
       if (!valid) {
         void vscode.window.showErrorMessage(
-          "DevPulse: API key rejected. Generate a new one from the dashboard.",
+          "That API key didn't work. Generate a fresh one from your DevPulse dashboard.",
         );
         return;
       }
@@ -187,26 +168,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       await context.secrets.store(SECRET_API_KEY, apiKey);
       cachedApiKey = apiKey;
       await applySignedInState(true);
-      // Cost revelation after welcome-view connect
-      try {
-        const dashboard = await api.getDashboardData();
-        if (dashboard && dashboard.weeklyCost > 0) {
-          setTimeout(() => {
-            void vscode.window
-              .showInformationMessage(
-                `💰 Cost Insight: Your weekly LLM spend is $${dashboard.weeklyCost.toFixed(2)}. View dashboard for per-endpoint breakdown.`,
-                "Open Dashboard",
-              )
-              .then((selection) => {
-                if (selection === "Open Dashboard") {
-                  vscode.commands.executeCommand("devpulse.openDashboard");
-                }
-              });
-          }, 3000);
-        }
-      } catch {
-        // Silently skip
-      }
     },
     handleQuickAction,
   );
@@ -249,13 +210,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
             : err instanceof Error
               ? err.message
               : String(err);
-        void vscode.window.showErrorMessage(`DevPulse: could not validate API key — ${msg}`);
+        void vscode.window.showErrorMessage(`Couldn't verify that API key — ${msg}`);
         return;
       }
 
       if (!valid) {
         void vscode.window.showErrorMessage(
-          "DevPulse: API key rejected. Generate a new one from the dashboard.",
+          "That API key didn't work. Generate a fresh one from your DevPulse dashboard.",
         );
         return;
       }
@@ -269,11 +230,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       await context.secrets.delete(SECRET_API_KEY);
       cachedApiKey = undefined;
       await applySignedInState(false);
-      void vscode.window.showInformationMessage("DevPulse: signed out.");
+      void vscode.window.showInformationMessage("Signed out of DevPulse.");
     }),
 
     vscode.commands.registerCommand("devpulse.refresh", async () => {
-      await refresh();
+      await refresh(true);
     }),
 
     vscode.commands.registerCommand("devpulse.openDashboard", async () => {
@@ -283,21 +244,19 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
     vscode.commands.registerCommand("devpulse.runScan", async () => {
       if (!cachedApiKey) {
-        void vscode.window.showWarningMessage("DevPulse: sign in with an API key first.");
+        void vscode.window.showWarningMessage("Connect your API key to use this feature.");
         return;
       }
       let collections: { id: string; name: string }[] = [];
       try {
         collections = await api.listCollections();
       } catch (err) {
-        void vscode.window.showErrorMessage(
-          `DevPulse: could not load collections — ${errMessage(err)}`,
-        );
+        void vscode.window.showErrorMessage(`Couldn't load collections — ${errMessage(err)}`);
         return;
       }
       if (collections.length === 0) {
         void vscode.window.showInformationMessage(
-          "DevPulse: you don't have any collections yet. Create one from the dashboard first.",
+          "No collections found. Create one from your DevPulse dashboard and try again.",
         );
         return;
       }
@@ -312,12 +271,14 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       if (!picked) return;
       try {
         const scan = await api.triggerScan(picked.collectionId);
-        void vscode.window.showInformationMessage(`DevPulse: scan queued (id ${scan.scanId}).`);
+        void vscode.window.showInformationMessage(
+          `Scan queued. Results will appear in the Findings panel.`,
+        );
         engagementTracker.record("scan_run");
         engagementTracker.recordOnboardingStep("scanned");
-        await refresh();
+        await refresh(true);
       } catch (err) {
-        void vscode.window.showErrorMessage(`DevPulse: scan failed — ${errMessage(err)}`);
+        void vscode.window.showErrorMessage(`Scan didn't complete — ${errMessage(err)}`);
       }
     }),
 
@@ -329,7 +290,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     ),
     vscode.commands.registerCommand("devpulse.openSecurityPanel", () => {
       if (!cachedApiKey) {
-        void vscode.window.showWarningMessage("DevPulse: sign in with an API key first.");
+        void vscode.window.showWarningMessage("Connect your API key to use this feature.");
         return;
       }
       engagementTracker.record("dashboard_opened");
@@ -342,7 +303,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
     vscode.commands.registerCommand("devpulse.askSecurityCopilot", () => {
       if (!cachedApiKey) {
-        void vscode.window.showWarningMessage("DevPulse: sign in with an API key first.");
+        void vscode.window.showWarningMessage("Connect your API key to use this feature.");
         return;
       }
       CopilotViewPanel.createOrShow(context.extensionUri, api);
@@ -350,7 +311,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
     vscode.commands.registerCommand("devpulse.generateApiKey", async () => {
       if (!cachedApiKey) {
-        void vscode.window.showWarningMessage("Sign in first.");
+        void vscode.window.showWarningMessage("Connect your API key first.");
         return;
       }
       try {
@@ -362,13 +323,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         engagementTracker.recordOnboardingStep("signed_in");
         await applySignedInState(true);
         // Never show full API key in notifications — security risk
-        void vscode.window.showInformationMessage(
-          "Your new API key has been generated and copied to clipboard. Keep it secure.",
-        );
+        void vscode.window.showInformationMessage("New API key generated and copied to clipboard.");
       } catch (err) {
-        void vscode.window.showErrorMessage(
-          `DevPulse: could not generate API key — ${errMessage(err)}`,
-        );
+        void vscode.window.showErrorMessage(`Couldn't generate API key — ${errMessage(err)}`);
       }
     }),
 
@@ -376,9 +333,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     vscode.commands.registerCommand("devpulse.applyAutoFix", async (node: unknown) => {
       const suggestion = extractSuggestionFromNode(node);
       if (!suggestion) {
-        void vscode.window.showWarningMessage(
-          "DevPulse: could not extract auto-fix suggestion from selection.",
-        );
+        void vscode.window.showWarningMessage("No auto-fix suggestion found for this item.");
         return;
       }
 
@@ -390,13 +345,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
           editBuilder.insert(position, suggestion.code);
         });
         void vscode.window.showInformationMessage(
-          `DevPulse: fix for "${suggestion.title}" inserted at cursor.`,
+          `Fix for "${suggestion.title}" inserted at cursor.`,
         );
       } else {
         // Fallback: copy to clipboard if no editor is open
         await vscode.env.clipboard.writeText(suggestion.code);
         void vscode.window.showInformationMessage(
-          `DevPulse: fix code for "${suggestion.title}" copied to clipboard (no active editor to insert into).`,
+          `Fix code for "${suggestion.title}" copied to clipboard.`,
         );
       }
     }),
@@ -405,15 +360,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     vscode.commands.registerCommand("devpulse.dismissAutoFix", async (node: unknown) => {
       const suggestion = extractSuggestionFromNode(node);
       if (!suggestion) {
-        void vscode.window.showWarningMessage(
-          "DevPulse: could not extract auto-fix suggestion from selection.",
-        );
+        void vscode.window.showWarningMessage("No auto-fix suggestion found for this item.");
         return;
       }
       autoFixProvider.dismiss(suggestion.id);
-      void vscode.window.showInformationMessage(
-        `DevPulse: dismissed suggestion "${suggestion.title}".`,
-      );
+      void vscode.window.showInformationMessage(`Dismissed suggestion "${suggestion.title}".`);
     }),
 
     // Copy Finding ID
@@ -421,14 +372,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       const findingId = extractFindingId(node);
       if (!findingId) {
         void vscode.window.showWarningMessage(
-          "DevPulse: could not determine finding from selection.",
+          "Couldn't identify that finding. Try selecting it from the Findings panel.",
         );
         return;
       }
       await vscode.env.clipboard.writeText(findingId);
-      void vscode.window.showInformationMessage(
-        `DevPulse: finding ID ${findingId} copied to clipboard.`,
-      );
+      void vscode.window.showInformationMessage(`Finding ID copied to clipboard.`);
     }),
 
     // Open in Dashboard
@@ -436,7 +385,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       const findingId = extractFindingId(node);
       if (!findingId) {
         void vscode.window.showWarningMessage(
-          "DevPulse: could not determine finding from selection.",
+          "Couldn't identify that finding. Try selecting it from the Findings panel.",
         );
         return;
       }
@@ -554,7 +503,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
               }
             } catch (err) {
               void vscode.window.showErrorMessage(
-                `DevPulse: failed to import ${vscode.workspace.asRelativePath(f)} — ${err instanceof Error ? err.message : String(err)}`,
+                `Failed to import ${vscode.workspace.asRelativePath(f)} — ${err instanceof Error ? err.message : String(err)}`,
               );
             }
           }
@@ -564,14 +513,14 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       if (imported > 0) {
         engagementTracker.record("collection_imported");
         engagementTracker.recordOnboardingStep("imported");
-        let msg = `DevPulse: imported ${imported} collection${imported !== 1 ? "s" : ""}.`;
+        let msg = `Imported ${imported} collection${imported !== 1 ? "s" : ""}.`;
         if (findings > 0) {
-          msg += ` ⚠ ${findings} potential credential${findings !== 1 ? "s" : ""} found — review and rotate immediately.`;
+          msg += ` ${findings} potential credential${findings !== 1 ? "s" : ""} found. Review them in the Findings panel.`;
         }
         void vscode.window.showInformationMessage(msg);
-        await refresh();
+        await refresh(true);
       } else {
-        void vscode.window.showWarningMessage("DevPulse: no collections were imported.");
+        void vscode.window.showWarningMessage("No collections were imported.");
       }
     }),
 
@@ -586,7 +535,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       const findingId = extractFindingId(node);
       if (!findingId) {
         void vscode.window.showWarningMessage(
-          "DevPulse: could not determine finding from selection.",
+          "Couldn't identify that finding. Try selecting it from the Findings panel.",
         );
         return;
       }
@@ -601,12 +550,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       try {
         await api.updateFindingStatus(findingId, "resolved");
         engagementTracker.record("finding_status_changed");
-        await refresh();
-        void vscode.window.showInformationMessage(`DevPulse: finding dismissed (${reason}).`);
+        await refresh(true);
+        void vscode.window.showInformationMessage(`Finding dismissed (${reason}).`);
       } catch (err) {
-        void vscode.window.showErrorMessage(
-          `DevPulse: could not dismiss finding — ${errMessage(err)}`,
-        );
+        void vscode.window.showErrorMessage(`Couldn't dismiss finding — ${errMessage(err)}`);
       }
     }),
   );
@@ -616,17 +563,15 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     const findingId = extractFindingId(node);
     if (!findingId) {
       void vscode.window.showWarningMessage(
-        "DevPulse: could not determine finding from selection.",
+        "Couldn't identify that finding. Try selecting it from the Findings panel.",
       );
       return;
     }
     try {
       await api.updateFindingStatus(findingId, status);
-      await refresh();
+      await refresh(true);
     } catch (err) {
-      void vscode.window.showErrorMessage(
-        `DevPulse: could not update finding — ${errMessage(err)}`,
-      );
+      void vscode.window.showErrorMessage(`Couldn't update finding — ${errMessage(err)}`);
     }
   }
 
@@ -714,31 +659,34 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   context.subscriptions.push(
     vscode.commands.registerCommand("devpulse.checkHealth", () => healthCheck.execute()),
   );
-  // Auto-start tour for new users (no API key yet, and not previously dismissed)
+  // Auto-start tour for new users after a brief delay so the UI feels settled
   const tourDismissed = context.globalState.get<boolean>("devpulse.tourDismissed") ?? false;
   if (!cachedApiKey && !tourDismissed) {
-    void onboardingTour.start();
+    const tourDelay = setTimeout(() => {
+      void onboardingTour.start();
+    }, 1500);
+    context.subscriptions.push({ dispose: () => clearTimeout(tourDelay) });
   }
   // Track tour dismissal when panel closes
   onboardingTour.onDismiss(() => {
     void context.globalState.update("devpulse.tourDismissed", true);
   });
 
-  // Onboarding nudges: check after 30 seconds if onboarding incomplete
+  // Onboarding nudges: gentle reminder after 90 seconds if onboarding incomplete
   const onboardingTimer = setTimeout(() => {
     const progress = engagementTracker.getOnboardingProgress();
     const incomplete = progress.filter((p) => !p.complete);
     if (incomplete.length > 0) {
       const nextStep = incomplete[0];
       const messages: Record<string, string> = {
-        signed_in: "Connect your DevPulse API key to start scanning.",
-        imported: "Import a collection to scan your APIs.",
-        scanned: "Run your first scan to find security issues.",
-        found_issue: "Review your findings in the DevPulse panel.",
+        signed_in: "Connect your API key when you're ready.",
+        imported: "Import a collection to start scanning.",
+        scanned: "Run a scan to discover security issues.",
+        found_issue: "Review your findings in the Findings panel.",
       };
       if (messages[nextStep.step]) {
         void vscode.window
-          .showInformationMessage(`DevPulse: ${messages[nextStep.step]}`, "Get Started")
+          .showInformationMessage(messages[nextStep.step], "Get Started")
           .then((choice) => {
             if (choice === "Get Started") {
               void vscode.commands.executeCommand("devpulse.openSecurityPanel");
@@ -746,32 +694,35 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
           });
       }
     }
-  }, 30000);
+  }, 90000);
   context.subscriptions.push({ dispose: () => clearTimeout(onboardingTimer) });
 
-  // Review prompt: after 7 days of active usage
-  const installDate = context.globalState.get<number>("devpulse.installDate") ?? Date.now();
-  void context.globalState.update("devpulse.installDate", installDate);
-  const daysSinceInstall = Math.floor((Date.now() - installDate) / (24 * 60 * 60 * 1000));
-  const reviewPrompted = context.globalState.get<boolean>("devpulse.reviewPrompted") ?? false;
-  if (daysSinceInstall >= 7 && !reviewPrompted && engagementTracker.getScore() > 50) {
-    void context.globalState.update("devpulse.reviewPrompted", true);
-    void vscode.window
-      .showInformationMessage(
-        "Are you finding DevPulse useful? A quick review on the marketplace helps us grow.",
-        "Leave Review",
-        "Not Now",
-      )
-      .then((choice) => {
-        if (choice === "Leave Review") {
-          void vscode.env.openExternal(
-            vscode.Uri.parse(
-              "https://marketplace.visualstudio.com/items?itemName=devpulse.devpulse&ssr=false#review-details",
-            ),
-          );
-        }
-      });
-  }
+  // Review prompt: after 7 days of active usage (defer so it doesn't slow startup)
+  const reviewTimer = setTimeout(() => {
+    const installDate = context.globalState.get<number>("devpulse.installDate") ?? Date.now();
+    void context.globalState.update("devpulse.installDate", installDate);
+    const daysSinceInstall = Math.floor((Date.now() - installDate) / (24 * 60 * 60 * 1000));
+    const reviewPrompted = context.globalState.get<boolean>("devpulse.reviewPrompted") ?? false;
+    if (daysSinceInstall >= 7 && !reviewPrompted && engagementTracker.getScore() > 50) {
+      void context.globalState.update("devpulse.reviewPrompted", true);
+      void vscode.window
+        .showInformationMessage(
+          "Enjoying DevPulse? A quick review helps other developers discover it.",
+          "Leave Review",
+          "Not Now",
+        )
+        .then((choice) => {
+          if (choice === "Leave Review") {
+            void vscode.env.openExternal(
+              vscode.Uri.parse(
+                "https://marketplace.visualstudio.com/items?itemName=devpulse.devpulse&ssr=false#review-details",
+              ),
+            );
+          }
+        });
+    }
+  }, 5000);
+  context.subscriptions.push({ dispose: () => clearTimeout(reviewTimer) });
 
   // Periodic telemetry flush every 5 minutes
   const flushInterval = setInterval(
