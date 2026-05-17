@@ -241,12 +241,12 @@ export class SecurityWebviewPanel {
         ? "Authentication Failed"
         : errorCategory === "network"
           ? "Connection Error"
-          : "Could not load dashboard";
+          : "Couldn't load dashboard data";
     const errorHint =
       errorCategory === "auth"
         ? "Your API key may be invalid or expired. Try signing in again."
         : errorCategory === "network"
-          ? "Could not reach the DevPulse server. Check your network connection and API URL."
+          ? "Check your network connection and API URL settings."
           : "";
 
     const body = error
@@ -341,9 +341,9 @@ export class SecurityWebviewPanel {
           findings.length === 0
             ? `<div class="empty-state">
                 <div class="empty-icon">🛡️</div>
-                <p style="font-weight:600;margin-bottom:4px">No security issues found</p>
+                <p style="font-weight:600;margin-bottom:4px">All clear — no issues detected</p>
                 <p style="font-size:12px;color:var(--vscode-descriptionForeground)">Run a scan to check your collections for leaked keys, hidden costs, and misconfigurations.</p>
-                <button class="btn btn-primary" style="margin-top:12px" onclick="runScan()">Run First Scan</button>
+                <button class="btn btn-primary" style="margin-top:12px" onclick="runScan()">Run Scan</button>
               </div>`
             : `<div class="table-wrapper">
                 <table id="findings-table">
