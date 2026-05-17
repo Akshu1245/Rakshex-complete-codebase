@@ -241,6 +241,12 @@
         "category": "DevPulse"
       },
       {
+        "command": "devpulse.markSelectedResolved",
+        "title": "DevPulse: Resolve Selected Findings",
+        "icon": "$(check)",
+        "category": "DevPulse"
+      },
+      {
         "command": "devpulse.openOnboardingAnalytics",
         "title": "DevPulse: Open Onboarding Analytics",
         "icon": "$(graph)",
@@ -341,6 +347,11 @@
           "command": "devpulse.dismissFinding",
           "when": "view == devpulse.findings && viewItem == finding",
           "group": "inline@3"
+        },
+        {
+          "command": "devpulse.markSelectedResolved",
+          "when": "view == devpulse.findings && viewItem == finding",
+          "group": "2_bulk@1"
         },
         {
           "command": "devpulse.copyFindingId",

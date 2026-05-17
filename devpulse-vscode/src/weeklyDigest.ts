@@ -207,6 +207,16 @@ export class WeeklyDigestCommand {
   </div>
 
   ${
+    resolvedThisWeek > 0
+      ? `
+  <div class="card" style="border-left:4px solid #10B981;padding-left:16px">
+    <h3>✅ Resolved This Week</h3>
+    <p style="font-size:14px;margin:8px 0">You resolved <strong>${resolvedThisWeek}</strong> security issue${resolvedThisWeek !== 1 ? "s" : ""} this week. Keeping your APIs safer.</p>
+  </div>`
+      : ""
+  }
+
+  ${
     trust
       ? `
   <div class="card">

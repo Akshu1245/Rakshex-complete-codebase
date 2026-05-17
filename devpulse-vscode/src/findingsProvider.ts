@@ -54,6 +54,8 @@ export class FindingsTreeProvider implements vscode.TreeDataProvider<FindingsNod
   ) {
     if (context) {
       this.compactMode = context.globalState.get<boolean>("devpulse.compactMode") ?? false;
+      this.severityFilter =
+        context.globalState.get<Severity | null>("devpulse.severityFilter") ?? null;
     }
   }
 
@@ -69,6 +71,7 @@ export class FindingsTreeProvider implements vscode.TreeDataProvider<FindingsNod
 
   setSeverityFilter(severity: Severity | null): void {
     this.severityFilter = severity;
+    void this.context?.globalState.update("devpulse.severityFilter", severity);
     this._onDidChange.fire();
   }
 
@@ -144,6 +147,13 @@ export class FindingsTreeProvider implements vscode.TreeDataProvider<FindingsNod
     item.contextValue = "finding";
     item.iconPath = SEVERITY_ICON[f.severity];
     item.id = f.id;
+    if (f.status !== "resolved") {
+      item.command = {
+        command: "devpulse.markFindingResolved",
+        title: "Resolve",
+        arguments: [node],
+      };
+    }
     item.accessibilityInformation = {
       label: `${f.severity} finding: ${f.title}, ${f.status}`,
     };

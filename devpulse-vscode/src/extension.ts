@@ -327,6 +327,36 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     vscode.commands.registerCommand("devpulse.markFindingResolved", async (node: unknown) =>
       updateFindingStatusCmd(node, "resolved"),
     ),
+    vscode.commands.registerCommand(
+      "devpulse.markSelectedResolved",
+      async (node: unknown, selected: unknown[]) => {
+        const items = Array.isArray(selected) ? selected : [node];
+        const targets = items.filter(
+          (n) => n && typeof n === "object" && (n as any).kind === "finding",
+        );
+        if (targets.length === 0) {
+          void vscode.window.showWarningMessage("Select findings to resolve.");
+          return;
+        }
+        let resolved = 0;
+        for (const target of targets) {
+          try {
+            const id = extractFindingId(target);
+            if (id) {
+              await api.updateFindingStatus(id, "resolved");
+              resolved++;
+            }
+          } catch {
+            // Continue with others
+          }
+        }
+        engagementTracker.record("finding_status_changed");
+        await refresh(true);
+        void vscode.window.showInformationMessage(
+          `Resolved ${resolved} finding${resolved !== 1 ? "s" : ""}.`,
+        );
+      },
+    ),
     vscode.commands.registerCommand("devpulse.markFindingInProgress", async (node: unknown) =>
       updateFindingStatusCmd(node, "in-progress"),
     ),
@@ -796,6 +826,17 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
 export function deactivate(): void {
   /* lifecycle cleanup is handled via context.subscriptions */
+}
+
+const recentMessages = new Map<string, number>();
+function dedupedShowMessage(message: string, type: "info" | "warn" | "error" = "info"): void {
+  const last = recentMessages.get(message);
+  const now = Date.now();
+  if (last && now - last < 3000) return; // skip duplicates within 3s
+  recentMessages.set(message, now);
+  if (type === "info") void vscode.window.showInformationMessage(message);
+  else if (type === "warn") void vscode.window.showWarningMessage(message);
+  else void vscode.window.showErrorMessage(message);
 }
 
 function errMessage(err: unknown): string {
