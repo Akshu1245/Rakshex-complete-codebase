@@ -1,5 +1,4 @@
 {
-  "name": "devpulse-frontend",
   "framework": "nextjs",
   "buildCommand": "pnpm install && pnpm run build",
   "outputDirectory": ".next",
