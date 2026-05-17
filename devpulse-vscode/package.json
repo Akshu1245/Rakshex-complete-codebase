@@ -188,6 +188,12 @@
         "title": "DevPulse: Show Weekly Digest",
         "icon": "$(report)",
         "category": "DevPulse"
+      },
+      {
+        "command": "devpulse.sendFeedback",
+        "title": "DevPulse: Send Feedback",
+        "icon": "$(comment)",
+        "category": "DevPulse"
       }
     ],
     "viewsContainers": {

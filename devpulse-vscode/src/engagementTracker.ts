@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import type { DevPulseApi } from "./api";
 
 export type EngagementEvent =
   | "scan_run"
@@ -40,8 +41,12 @@ const LAST_ACTIVE_KEY = "devpulse.lastActive";
 
 export class EngagementTracker {
   private records: EngagementRecord[] = [];
+  private pendingServerEvents: EngagementRecord[] = [];
 
-  constructor(private readonly context: vscode.ExtensionContext) {
+  constructor(
+    private readonly context: vscode.ExtensionContext,
+    private readonly api?: DevPulseApi,
+  ) {
     this.records = context.globalState.get<EngagementRecord[]>(STORAGE_KEY) ?? [];
   }
 
@@ -73,6 +78,32 @@ export class EngagementTracker {
 
     const score = this.calculateScore();
     void this.context.globalState.update(SCORE_KEY, score);
+
+    // Queue for server telemetry (flush batched)
+    this.pendingServerEvents.push(record);
+    if (this.pendingServerEvents.length >= 10) {
+      void this.flushToServer();
+    }
+  }
+
+  async flushToServer(): Promise<void> {
+    if (!this.api || this.pendingServerEvents.length === 0) return;
+    const batch = this.pendingServerEvents.splice(0, this.pendingServerEvents.length);
+    try {
+      await this.api.recordActivity("session_end", {
+        engagementEvents: batch.map((e) => ({
+          event: e.event,
+          timestamp: new Date(e.timestamp).toISOString(),
+          points: e.points,
+        })),
+      });
+    } catch {
+      // Silently fail telemetry — don't block user experience
+      this.pendingServerEvents.unshift(...batch);
+      if (this.pendingServerEvents.length > 100) {
+        this.pendingServerEvents = this.pendingServerEvents.slice(-100);
+      }
+    }
   }
 
   calculateScore(): number {

@@ -22,6 +22,7 @@ import { WelcomeViewProvider } from "./welcomeView";
 import { ValueMomentTracker } from "./valueMoments";
 import { EngagementTracker } from "./engagementTracker";
 import { WeeklyDigestCommand } from "./weeklyDigest";
+import { FeedbackCommand } from "./feedback";
 import { registerGatewayCommand } from "./gatewayTester";
 import { registerShadowApiCommand } from "./shadowApi";
 import { PostmanImportCommand } from "./postmanImport";
@@ -37,7 +38,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const findingsProvider = new FindingsTreeProvider(api);
   const autoFixProvider = new AutoFixTreeProvider(api);
   const valueTracker = new ValueMomentTracker(context);
-  const engagementTracker = new EngagementTracker(context);
+  const engagementTracker = new EngagementTracker(context, api);
   const statusBar = new DevPulseStatusBar(api, () => engagementTracker.getScanStreak());
   const heartbeat = new HeartbeatService(api, () => Boolean(cachedApiKey));
 
@@ -633,6 +634,70 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   context.subscriptions.push(
     vscode.commands.registerCommand("devpulse.showWeeklyDigest", () => weeklyDigest.execute()),
   );
+
+  // Feedback command
+  const feedbackCmd = new FeedbackCommand(api);
+  context.subscriptions.push(
+    vscode.commands.registerCommand("devpulse.sendFeedback", () => feedbackCmd.execute()),
+  );
+
+  // Onboarding nudges: check after 30 seconds if onboarding incomplete
+  const onboardingTimer = setTimeout(() => {
+    const progress = engagementTracker.getOnboardingProgress();
+    const incomplete = progress.filter((p) => !p.complete);
+    if (incomplete.length > 0) {
+      const nextStep = incomplete[0];
+      const messages: Record<string, string> = {
+        signed_in: "Connect your DevPulse API key to start scanning.",
+        imported: "Import a collection to scan your APIs.",
+        scanned: "Run your first scan to find security issues.",
+        found_issue: "Review your findings in the DevPulse panel.",
+      };
+      if (messages[nextStep.step]) {
+        void vscode.window
+          .showInformationMessage(`DevPulse: ${messages[nextStep.step]}`, "Get Started")
+          .then((choice) => {
+            if (choice === "Get Started") {
+              void vscode.commands.executeCommand("devpulse.openSecurityPanel");
+            }
+          });
+      }
+    }
+  }, 30000);
+  context.subscriptions.push({ dispose: () => clearTimeout(onboardingTimer) });
+
+  // Review prompt: after 7 days of active usage
+  const installDate = context.globalState.get<number>("devpulse.installDate") ?? Date.now();
+  void context.globalState.update("devpulse.installDate", installDate);
+  const daysSinceInstall = Math.floor((Date.now() - installDate) / (24 * 60 * 60 * 1000));
+  const reviewPrompted = context.globalState.get<boolean>("devpulse.reviewPrompted") ?? false;
+  if (daysSinceInstall >= 7 && !reviewPrompted && engagementTracker.getScore() > 50) {
+    void context.globalState.update("devpulse.reviewPrompted", true);
+    void vscode.window
+      .showInformationMessage(
+        "Are you finding DevPulse useful? A quick review on the marketplace helps us grow.",
+        "Leave Review",
+        "Not Now",
+      )
+      .then((choice) => {
+        if (choice === "Leave Review") {
+          void vscode.env.openExternal(
+            vscode.Uri.parse(
+              "https://marketplace.visualstudio.com/items?itemName=devpulse.devpulse&ssr=false#review-details",
+            ),
+          );
+        }
+      });
+  }
+
+  // Periodic telemetry flush every 5 minutes
+  const flushInterval = setInterval(
+    () => {
+      void engagementTracker.flushToServer();
+    },
+    5 * 60 * 1000,
+  );
+  context.subscriptions.push({ dispose: () => clearInterval(flushInterval) });
 
   heartbeat.start();
 }
