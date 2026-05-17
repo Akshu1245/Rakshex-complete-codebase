@@ -5,12 +5,12 @@ import { logger } from "../_core/logger";
 import * as db from "../db";
 import {
   getInstallationClient,
-  verifyGitHubWebhook,
+  verifyWebhookSignature,
   linkInstallation,
-  listInstallationRepos,
+  listReposForInstallation,
 } from "../services/githubApp";
 import { scanQueue } from "../queues";
-import type { PRScanJobData } from "../queues/workers/prScanWorker";
+import type { PrScanJobData } from "../queues/workers/prScanWorker";
 import { enqueueScan } from "../services/jobs";
 import crypto from "crypto";
 
@@ -50,7 +50,7 @@ export const githubRouter = router({
       }),
     )
     .query(async ({ input }) => {
-      const repos = await listInstallationRepos(input.installationId);
+      const repos = await listReposForInstallation(input.installationId);
       return { repos };
     }),
 
@@ -65,22 +65,17 @@ export const githubRouter = router({
       allScans.push(...scans);
     }
     return allScans
-      .sort(
-        (a: any, b: any) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      )
+      .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 50);
   }),
 
-  getScan: protectedProcedure
-    .input(z.object({ scanId: z.string() }))
-    .query(async ({ input }) => {
-      const scan = await db.getScanById(input.scanId);
-      if (!scan) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Scan not found" });
-      }
-      return scan;
-    }),
+  getScan: protectedProcedure.input(z.object({ scanId: z.string() })).query(async ({ input }) => {
+    const scan = await db.getScanById(input.scanId);
+    if (!scan) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "Scan not found" });
+    }
+    return scan;
+  }),
 
   /**
    * Request a PR scan for a specific pull request.
@@ -95,7 +90,7 @@ export const githubRouter = router({
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      const jobData: PRScanJobData = {
+      const jobData: PrScanJobData = {
         installationId: input.installationId,
         repoFullName: input.repoFullName,
         prNumber: input.prNumber,
@@ -122,7 +117,7 @@ export async function handleGitHubWebhook(
   payload: string,
   signature: string,
 ): Promise<{ status: number; body: Record<string, unknown> }> {
-  if (!verifyGitHubWebhook(payload, signature)) {
+  if (!verifyWebhookSignature(payload, signature)) {
     return { status: 401, body: { error: "Invalid signature" } };
   }
 
@@ -164,7 +159,7 @@ export async function handleGitHubWebhook(
     prNumber: pr.number,
     headSha: pr.head.sha,
     workspaceId: "unknown", // Will be resolved from installation mapping
-  } as PRScanJobData);
+  } as PrScanJobData);
 
   logger.info(
     { installationId, repoFullName, prNumber: pr.number },

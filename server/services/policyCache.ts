@@ -7,6 +7,7 @@
 import { redis } from "../_core/cache";
 import { logger } from "../_core/logger";
 import * as db from "../db";
+import { sql } from "drizzle-orm";
 import type { PolicyRule } from "../engines/policyEngine";
 
 const CACHE_TTL = 60;
@@ -15,9 +16,7 @@ const KEY_PREFIX = "policy:rules:";
 /**
  * Get cached policy rules for a workspace. Falls back to DB on cache miss.
  */
-export async function getWorkspaceRules(
-  workspaceId: string,
-): Promise<PolicyRule[]> {
+export async function getWorkspaceRules(workspaceId: string): Promise<PolicyRule[]> {
   const cacheKey = `${KEY_PREFIX}${workspaceId}`;
   try {
     const cached = await redis.get(cacheKey);
@@ -34,11 +33,7 @@ export async function getWorkspaceRules(
     if (!dbClient) return [];
 
     const rows = await dbClient.execute(
-      `SELECT rule_id, name, priority, enabled, conditions, action
-       FROM policy_rules
-       WHERE workspace_id = ? AND enabled = TRUE AND deleted_at IS NULL
-       ORDER BY priority ASC`,
-      [workspaceId],
+      sql`SELECT rule_id, name, priority, enabled, conditions, action FROM policy_rules WHERE workspace_id = ${workspaceId} AND enabled = TRUE AND deleted_at IS NULL ORDER BY priority ASC`,
     );
 
     const rules: PolicyRule[] = (
@@ -84,9 +79,7 @@ export async function getWorkspaceRules(
 /**
  * Invalidate the policy cache for a workspace.
  */
-export async function invalidatePolicyCache(
-  workspaceId: string,
-): Promise<void> {
+export async function invalidatePolicyCache(workspaceId: string): Promise<void> {
   try {
     await redis.del(`${KEY_PREFIX}${workspaceId}`);
   } catch {

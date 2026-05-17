@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { EmptyState } from "@/components/EmptyState";
 
@@ -29,6 +30,7 @@ const SOURCES: { value: ImportSource; label: string; description: string }[] = [
 ];
 
 export default function ImportPage() {
+  const searchParams = useSearchParams();
   const [source, setSource] = useState<ImportSource | "">("");
   const [data, setData] = useState("");
   const [preview, setPreview] = useState<unknown | null>(null);
@@ -36,6 +38,13 @@ export default function ImportPage() {
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const s = searchParams.get("source") as ImportSource | null;
+    if (s && SOURCES.some((x) => x.value === s)) {
+      setSource(s);
+    }
+  }, [searchParams]);
 
   const handlePreview = async () => {
     if (!source || !data) return;
@@ -109,10 +118,14 @@ export default function ImportPage() {
         <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
           <h2 className="text-lg font-semibold text-white mb-4">1. Select Source</h2>
           <div className="space-y-2">
-            {SOURCES.map(s => (
+            {SOURCES.map((s) => (
               <button
                 key={s.value}
-                onClick={() => { setSource(s.value); setPreview(null); setError(null); }}
+                onClick={() => {
+                  setSource(s.value);
+                  setPreview(null);
+                  setError(null);
+                }}
                 className={`w-full text-left p-3 rounded-lg transition-colors ${
                   source === s.value
                     ? "bg-blue-600/20 border border-blue-500/40 text-blue-200"
@@ -130,7 +143,7 @@ export default function ImportPage() {
           <h2 className="text-lg font-semibold text-white mb-4">2. Paste Data</h2>
           <textarea
             value={data}
-            onChange={e => setData(e.target.value)}
+            onChange={(e) => setData(e.target.value)}
             placeholder='{"collections": [...]}'
             className="w-full h-40 bg-gray-900 border border-gray-700 rounded-lg p-3 text-gray-200 text-sm font-mono resize-none focus:outline-none focus:border-blue-500"
             disabled={!source}

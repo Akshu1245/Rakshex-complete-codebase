@@ -25,7 +25,6 @@ function getOctokitApp(): unknown {
   }
 
   try {
-    // @ts-expect-error — dynamic import for optional dependency
     const { App } = require("@octokit/app");
     octokitApp = new App({
       appId,
@@ -40,43 +39,53 @@ function getOctokitApp(): unknown {
 }
 
 export async function getInstallationClient(installationId: number): Promise<unknown> {
-  const app = getOctokitApp() as { getInstallationOctokit: (id: number) => Promise<unknown> } | null;
+  const app = getOctokitApp() as {
+    getInstallationOctokit: (id: number) => Promise<unknown>;
+  } | null;
   if (!app) throw new Error("GitHub App not configured");
   return app.getInstallationOctokit(installationId);
 }
 
-export function verifyWebhookSignature(
-  payload: string,
-  signature: string,
-): boolean {
+export function verifyWebhookSignature(payload: string, signature: string): boolean {
   const secret = process.env.GITHUB_WEBHOOK_SECRET;
   if (!secret || !signature) return false;
 
   try {
     const crypto = require("crypto") as typeof import("crypto");
-    const expected = `sha256=${crypto
-      .createHmac("sha256", secret)
-      .update(payload)
-      .digest("hex")}`;
-    return crypto.timingSafeEqual(
-      Buffer.from(expected),
-      Buffer.from(signature),
-    );
+    const expected = `sha256=${crypto.createHmac("sha256", secret).update(payload).digest("hex")}`;
+    return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
   } catch {
     return false;
   }
 }
 
+/**
+ * Link a GitHub App installation to a workspace.
+ * Logs the installation for audit; full persistence is deferred until
+ * the github_installations table is formally added to the Drizzle schema.
+ */
+export async function linkInstallation(
+  installationId: number,
+  workspaceId: string,
+  accountLogin: string,
+  accountType: "Organization" | "User",
+  permissions: Record<string, unknown>,
+): Promise<void> {
+  logger.info(
+    { installationId, workspaceId, accountLogin, accountType, permissions },
+    "[githubApp] installation linked",
+  );
+}
+
 export async function listReposForInstallation(installationId: number): Promise<string[]> {
   try {
-    const octokit = await getInstallationClient(installationId) as {
+    const octokit = (await getInstallationClient(installationId)) as {
       paginate: (method: unknown, params: unknown) => Promise<Array<{ full_name: string }>>;
       rest: { apps: { listReposAccessibleToInstallation: unknown } };
     };
-    const repos = await octokit.paginate(
-      octokit.rest.apps.listReposAccessibleToInstallation,
-      { per_page: 100 },
-    );
+    const repos = await octokit.paginate(octokit.rest.apps.listReposAccessibleToInstallation, {
+      per_page: 100,
+    });
     return repos.map((r) => r.full_name);
   } catch (err) {
     logger.error({ err, installationId }, "[githubApp] failed to list repos");

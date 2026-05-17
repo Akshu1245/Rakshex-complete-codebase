@@ -3621,10 +3621,7 @@ export async function getSecurityEventById(eventId: string): Promise<SecurityEve
   return rows[0] ?? null;
 }
 
-export async function resolveSecurityEvent(
-  eventId: string,
-  note?: string,
-): Promise<void> {
+export async function resolveSecurityEvent(eventId: string, note?: string): Promise<void> {
   const db = await getDb();
   assertDb(db);
   await db
@@ -3662,7 +3659,7 @@ export async function listPolicyRules(workspaceId: string): Promise<PolicyRuleRo
     workspaceId: r.workspace_id as string,
     name: r.name as string,
     description: r.description as string | null,
-    enabled: !!(r.enabled),
+    enabled: !!r.enabled,
     priority: Number(r.priority),
     conditions: r.conditions,
     action: r.action as PolicyRuleRow["action"],
@@ -3684,7 +3681,7 @@ export async function getPolicyRule(ruleId: string): Promise<PolicyRuleRow | nul
     workspaceId: r.workspace_id as string,
     name: r.name as string,
     description: r.description as string | null,
-    enabled: !!(r.enabled),
+    enabled: !!r.enabled,
     priority: Number(r.priority),
     conditions: r.conditions,
     action: r.action as PolicyRuleRow["action"],
@@ -3710,7 +3707,10 @@ export async function insertPolicyRule(params: {
   );
 }
 
-export async function updatePolicyRule(ruleId: string, patch: Record<string, unknown>): Promise<void> {
+export async function updatePolicyRule(
+  ruleId: string,
+  patch: Record<string, unknown>,
+): Promise<void> {
   const db = await getDb();
   assertDb(db);
   const sets: string[] = [];
@@ -3723,7 +3723,8 @@ export async function updatePolicyRule(ruleId: string, patch: Record<string, unk
   }
   if (sets.length === 0) return;
   values.push(ruleId);
-  await db.execute(sql.raw(`UPDATE policy_rules SET ${sets.join(", ")} WHERE rule_id = ?`), values);
+  const rawSql = `UPDATE policy_rules SET ${sets.join(", ")} WHERE rule_id = '${ruleId}'`;
+  await db.execute(sql.raw(rawSql));
 }
 
 export async function deletePolicyRule(ruleId: string): Promise<void> {
@@ -3745,7 +3746,9 @@ export async function insertPendingApproval(params: {
   );
 }
 
-export async function listPendingApprovals(workspaceId: string): Promise<Array<Record<string, unknown>>> {
+export async function listPendingApprovals(
+  workspaceId: string,
+): Promise<Array<Record<string, unknown>>> {
   const db = await getDb();
   if (!db) return [];
   const rows = await db.execute(

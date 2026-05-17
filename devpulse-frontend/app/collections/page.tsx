@@ -84,10 +84,12 @@ export default function CollectionsPage() {
     setUploadName("");
   };
 
-  const parseFile = (file: File): Promise<{ format: CollectionFormat; data: unknown; name: string }> => {
+  const parseFile = (
+    file: File,
+  ): Promise<{ format: CollectionFormat; data: unknown; name: string }> => {
     return new Promise((resolve, reject) => {
       const ext = file.name.split(".").pop()?.toLowerCase();
-      const format: CollectionFormat = (ext === "yaml" || ext === "yml") ? "openapi" : "postman";
+      const format: CollectionFormat = ext === "yaml" || ext === "yml" ? "openapi" : "postman";
       const baseName = file.name.replace(/\.[^.]+$/g, "");
 
       const reader = new FileReader();
@@ -105,7 +107,11 @@ export default function CollectionsPage() {
             resolve({ format: detectedFormat, data: parsed, name: baseName });
           }
         } catch {
-          reject(new Error(`Failed to parse ${file.name} — invalid ${format === 'openapi' ? 'YAML/JSON' : 'JSON'}`));
+          reject(
+            new Error(
+              `Failed to parse ${file.name} — invalid ${format === "openapi" ? "YAML/JSON" : "JSON"}`,
+            ),
+          );
         }
       };
       reader.onerror = () => reject(new Error(`Failed to read ${file.name}`));
@@ -149,8 +155,15 @@ export default function CollectionsPage() {
             data: p.data,
           });
 
-          const credFindings = (result as { credentialFindings?: CredentialFinding[]; gatewayFindings?: GatewayFinding[] }).credentialFindings ?? [];
-          const gwFindings = (result as { gatewayFindings?: GatewayFinding[] }).gatewayFindings ?? [];
+          const credFindings =
+            (
+              result as {
+                credentialFindings?: CredentialFinding[];
+                gatewayFindings?: GatewayFinding[];
+              }
+            ).credentialFindings ?? [];
+          const gwFindings =
+            (result as { gatewayFindings?: GatewayFinding[] }).gatewayFindings ?? [];
           results.push({
             id: (result as { id: string }).id,
             name: p.name || batchFiles[i].name,
@@ -158,7 +171,10 @@ export default function CollectionsPage() {
             credentialFindings: credFindings,
             gatewayFindings: gwFindings,
           });
-          allFindings = [...allFindings, ...credFindings.map(f => ({ ...f, path: `${p.name}/${f.path}` }))];
+          allFindings = [
+            ...allFindings,
+            ...credFindings.map((f) => ({ ...f, path: `${p.name}/${f.path}` })),
+          ];
         } catch (err) {
           results.push({
             id: "error",
@@ -197,8 +213,16 @@ export default function CollectionsPage() {
       { name: uploadName, format: uploadFormat, data: parsed },
       {
         onSuccess: (result) => {
-          const credFindings = (result as { credentialFindings?: CredentialFinding[] }).credentialFindings ?? [];
-          setImportResults([{ id: (result as { id: string }).id, name: uploadName, format: uploadFormat, credentialFindings: credFindings }]);
+          const credFindings =
+            (result as { credentialFindings?: CredentialFinding[] }).credentialFindings ?? [];
+          setImportResults([
+            {
+              id: (result as { id: string }).id,
+              name: uploadName,
+              format: uploadFormat,
+              credentialFindings: credFindings,
+            },
+          ]);
           setCredentialFindings(credFindings);
           setImportStage("done");
           utils.collections.list.invalidate();
@@ -207,13 +231,13 @@ export default function CollectionsPage() {
           setError(err.message);
           setImportStage("idle");
         },
-      }
+      },
     );
   };
 
   const handleFiles = (files: FileList | File[]) => {
     const fileArr = Array.from(files).filter(
-      f => /\.(json|yaml|yml)$/i.test(f.name) || f.name.includes("postman")
+      (f) => /\.(json|yaml|yml)$/i.test(f.name) || f.name.includes("postman"),
     );
     if (fileArr.length === 0) {
       setError("Please select .json, .yaml, or .yml files.");
@@ -280,7 +304,12 @@ export default function CollectionsPage() {
           <div className="mb-6 p-3 rounded bg-red-900/40 border border-red-500/50 text-red-300 text-sm flex items-start gap-2">
             <span className="shrink-0 mt-0.5">⚠</span>
             <span>{error}</span>
-            <button onClick={() => setError(null)} className="ml-auto text-red-400 hover:text-red-300">✕</button>
+            <button
+              onClick={() => setError(null)}
+              className="ml-auto text-red-400 hover:text-red-300"
+            >
+              ✕
+            </button>
           </div>
         )}
 
@@ -301,7 +330,15 @@ export default function CollectionsPage() {
               <div className="mt-3 space-y-1">
                 {batchFiles.map((f, i) => (
                   <div key={i} className="flex items-center gap-2 text-xs text-gray-500">
-                    <span className={i < currentImportIndex ? "text-green-400" : i === currentImportIndex ? "text-blue-400" : ""}>
+                    <span
+                      className={
+                        i < currentImportIndex
+                          ? "text-green-400"
+                          : i === currentImportIndex
+                            ? "text-blue-400"
+                            : ""
+                      }
+                    >
                       {i < currentImportIndex ? "✓" : i === currentImportIndex ? "⟳" : "○"}
                     </span>
                     <span>{f.name}</span>
@@ -318,7 +355,8 @@ export default function CollectionsPage() {
           <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4 mb-6">
             <h3 className="text-red-400 font-semibold mb-2 flex items-center gap-2">
               <span>🔑</span>
-              {credentialFindings.length} potential credential{credentialFindings.length !== 1 ? "s" : ""} detected
+              {credentialFindings.length} potential credential
+              {credentialFindings.length !== 1 ? "s" : ""} detected
             </h3>
             <p className="text-red-300/70 text-xs mb-3">
               Credentials found in your imported collection. Review and rotate these immediately.
@@ -336,7 +374,9 @@ export default function CollectionsPage() {
                   <p className="mt-1 opacity-90">{f.description}</p>
                   <div className="mt-1 flex gap-2 text-xs opacity-60">
                     <span className="font-mono truncate max-w-xs">{f.path}</span>
-                    {f.matchPreview && <span className="font-mono text-red-400/80">→ {f.matchPreview}</span>}
+                    {f.matchPreview && (
+                      <span className="font-mono text-red-400/80">→ {f.matchPreview}</span>
+                    )}
                   </div>
                 </div>
               ))}
@@ -345,50 +385,60 @@ export default function CollectionsPage() {
         )}
 
         {/* Gateway scan findings (prompt injection, PII, insecure auth) */}
-        {importResults.some(r => (r.gatewayFindings?.length ?? 0) > 0) && importStage === "done" && (
-          <div className="bg-orange-900/20 border border-orange-500/30 rounded-lg p-4 mb-6">
-            <h3 className="text-orange-400 font-semibold mb-2 flex items-center gap-2">
-              <span>🛡</span>
-              LLM Gateway issues detected
-            </h3>
-            <p className="text-orange-300/70 text-xs mb-3">
-              Your API endpoints have issues that could be exploited through LLM-based attacks. Review and add protections.
-            </p>
-            <div className="space-y-2 max-h-80 overflow-y-auto">
-              {importResults.flatMap(r => (r.gatewayFindings ?? []).map((f, i) => (
-                <div
-                  key={`${r.id}-${i}`}
-                  className={`p-3 rounded border text-xs ${
-                    f.severity === "Critical" ? "bg-red-900/40 border-red-500/40 text-red-300" :
-                    f.severity === "High" ? "bg-orange-900/40 border-orange-500/40 text-orange-300" :
-                    f.severity === "Medium" ? "bg-yellow-900/40 border-yellow-500/40 text-yellow-300" :
-                    "bg-blue-900/40 border-blue-500/40 text-blue-300"
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs uppercase bg-gray-800 px-1.5 py-0.5 rounded">{f.method}</span>
-                      <span className="font-mono text-xs truncate max-w-xs">{f.endpoint}</span>
+        {importResults.some((r) => (r.gatewayFindings?.length ?? 0) > 0) &&
+          importStage === "done" && (
+            <div className="bg-orange-900/20 border border-orange-500/30 rounded-lg p-4 mb-6">
+              <h3 className="text-orange-400 font-semibold mb-2 flex items-center gap-2">
+                <span>🛡</span>
+                LLM Gateway issues detected
+              </h3>
+              <p className="text-orange-300/70 text-xs mb-3">
+                Your API endpoints have issues that could be exploited through LLM-based attacks.
+                Review and add protections.
+              </p>
+              <div className="space-y-2 max-h-80 overflow-y-auto">
+                {importResults.flatMap((r) =>
+                  (r.gatewayFindings ?? []).map((f, i) => (
+                    <div
+                      key={`${r.id}-${i}`}
+                      className={`p-3 rounded border text-xs ${
+                        f.severity === "Critical"
+                          ? "bg-red-900/40 border-red-500/40 text-red-300"
+                          : f.severity === "High"
+                            ? "bg-orange-900/40 border-orange-500/40 text-orange-300"
+                            : f.severity === "Medium"
+                              ? "bg-yellow-900/40 border-yellow-500/40 text-yellow-300"
+                              : "bg-blue-900/40 border-blue-500/40 text-blue-300"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs uppercase bg-gray-800 px-1.5 py-0.5 rounded">
+                            {f.method}
+                          </span>
+                          <span className="font-mono text-xs truncate max-w-xs">{f.endpoint}</span>
+                        </div>
+                        <span className="uppercase font-semibold text-xs">{f.severity}</span>
+                      </div>
+                      <p className="mt-1">{f.description}</p>
+                      <div className="mt-2 flex items-start gap-2">
+                        <span className="shrink-0 text-green-400 text-xs">Fix:</span>
+                        <span className="text-gray-400 text-xs">{f.remediation}</span>
+                      </div>
                     </div>
-                    <span className="uppercase font-semibold text-xs">{f.severity}</span>
-                  </div>
-                  <p className="mt-1">{f.description}</p>
-                  <div className="mt-2 flex items-start gap-2">
-                    <span className="shrink-0 text-green-400 text-xs">Fix:</span>
-                    <span className="text-gray-400 text-xs">{f.remediation}</span>
-                  </div>
-                </div>
-              )))}
+                  )),
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
         {/* Import results summary */}
         {importResults.length > 0 && importStage === "done" && (
           <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4 mb-6">
             <h3 className="text-green-400 font-semibold flex items-center gap-2">
               <span>✓</span>
-              {importResults.filter(r => r.id !== "error").length} collection{importResults.length !== 1 ? "s" : ""} imported
+              {importResults.filter((r) => r.id !== "error").length} collection
+              {importResults.length !== 1 ? "s" : ""} imported
             </h3>
             <div className="mt-2 space-y-1">
               {importResults.map((r, i) => (
@@ -416,7 +466,10 @@ export default function CollectionsPage() {
         <div className="flex justify-end mb-6">
           <div className="flex gap-4 items-center">
             <button
-              onClick={() => { setShowUpload(true); resetImport(); }}
+              onClick={() => {
+                setShowUpload(true);
+                resetImport();
+              }}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors"
             >
               Import Collection
@@ -431,7 +484,10 @@ export default function CollectionsPage() {
             {/* Drag-and-drop zone */}
             <div
               ref={dropZoneRef}
-              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragOver(true);
+              }}
               onDragLeave={() => setDragOver(false)}
               onDrop={handleDrop}
               className={`border-2 border-dashed rounded-lg p-8 text-center transition-all cursor-pointer ${
@@ -453,21 +509,34 @@ export default function CollectionsPage() {
               />
               {batchFiles.length > 0 ? (
                 <div>
-                  <svg className="w-10 h-10 mx-auto mb-3 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  <svg
+                    className="w-10 h-10 mx-auto mb-3 text-green-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
                   </svg>
                   <p className="text-green-400 font-medium">
                     {batchFiles.length} file{batchFiles.length !== 1 ? "s" : ""} selected
                   </p>
                   <div className="mt-3 space-y-1 max-h-32 overflow-y-auto">
                     {batchFiles.map((f, i) => (
-                      <div key={i} className="text-sm text-gray-400 flex items-center justify-center gap-2">
+                      <div
+                        key={i}
+                        className="text-sm text-gray-400 flex items-center justify-center gap-2"
+                      >
                         <span>{f.name}</span>
                         <span className="text-gray-600">({formatBytes(f.size)})</span>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setBatchFiles(prev => prev.filter((_, j) => j !== i));
+                            setBatchFiles((prev) => prev.filter((_, j) => j !== i));
                           }}
                           className="text-red-400 hover:text-red-300 ml-2"
                         >
@@ -480,8 +549,18 @@ export default function CollectionsPage() {
                 </div>
               ) : (
                 <div>
-                  <svg className="w-12 h-12 mx-auto mb-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  <svg
+                    className="w-12 h-12 mx-auto mb-3 text-gray-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                    />
                   </svg>
                   <p className="text-gray-300 font-medium">
                     Drop Postman collections or OpenAPI specs here
@@ -524,7 +603,7 @@ export default function CollectionsPage() {
                 <input
                   type="text"
                   value={uploadName}
-                  onChange={e => setUploadName(e.target.value)}
+                  onChange={(e) => setUploadName(e.target.value)}
                   placeholder="My API Collection"
                   className="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none"
                 />
@@ -533,7 +612,7 @@ export default function CollectionsPage() {
                 <label className="block text-sm text-gray-400 mb-1">Format</label>
                 <select
                   value={uploadFormat}
-                  onChange={e => setUploadFormat(e.target.value as CollectionFormat)}
+                  onChange={(e) => setUploadFormat(e.target.value as CollectionFormat)}
                   className="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none"
                 >
                   <option value="postman">Postman (auto-detect)</option>
@@ -544,7 +623,7 @@ export default function CollectionsPage() {
                 <label className="block text-sm text-gray-400 mb-1">Collection Data (JSON)</label>
                 <textarea
                   value={uploadData}
-                  onChange={e => setUploadData(e.target.value)}
+                  onChange={(e) => setUploadData(e.target.value)}
                   placeholder='{"info": {"name": "My API", "_postman_id": "..."}}'
                   className="w-full h-40 px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none font-mono text-sm"
                 />
@@ -558,7 +637,10 @@ export default function CollectionsPage() {
                   {createCollection.isPending ? "Importing…" : "Import"}
                 </button>
                 <button
-                  onClick={() => { setShowUpload(false); resetImport(); }}
+                  onClick={() => {
+                    setShowUpload(false);
+                    resetImport();
+                  }}
                   className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg font-medium transition-colors"
                 >
                   Cancel
@@ -578,14 +660,30 @@ export default function CollectionsPage() {
             <EmptyState
               icon={<span>📚</span>}
               title="No collections yet"
-              description="Import a Postman or OpenAPI collection to start scanning your APIs for security issues and shadow endpoints."
+              description="Import a Postman or OpenAPI collection to start scanning your APIs for security issues and shadow endpoints. Or migrate from a competitor."
               actions={[
-                { label: "Import Collection", onClick: () => { setShowUpload(true); resetImport(); } },
+                {
+                  label: "Import Collection",
+                  onClick: () => {
+                    setShowUpload(true);
+                    resetImport();
+                  },
+                },
+                {
+                  label: "Import from Helicone",
+                  href: "/import?source=helicone",
+                  variant: "secondary" as const,
+                },
+                {
+                  label: "Import from Portkey",
+                  href: "/import?source=portkey",
+                  variant: "secondary" as const,
+                },
                 { label: "View documentation", href: "/onboarding", variant: "secondary" as const },
               ]}
             />
           ) : (
-            collections.map(col => (
+            collections.map((col) => (
               <div
                 key={col.id}
                 className="bg-gray-800 p-6 rounded-lg border border-gray-700 flex justify-between items-center"

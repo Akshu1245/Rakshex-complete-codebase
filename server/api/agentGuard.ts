@@ -12,7 +12,12 @@ import crypto from "crypto";
 import { router, protectedProcedure, publicProcedure } from "../_core/trpc";
 import { logger } from "../_core/logger";
 import * as db from "../db";
-import { detect as detectPromptInjection, detectSync, setClassifierUrl, type ThreatAssessment } from "../engines/promptInjectionEngine";
+import {
+  detect as detectPromptInjection,
+  detectSync,
+  setClassifierUrl,
+  type ThreatAssessment,
+} from "../engines/promptInjectionEngine";
 import { detectPII, type PiiAssessment } from "../engines/piiDetector";
 
 setClassifierUrl(process.env.PROMPT_INJECTION_API_URL ?? undefined);
@@ -35,10 +40,7 @@ const responseInput = z.object({
 });
 
 const batchInput = z.object({
-  prompts: z
-    .array(promptInput.shape.prompt)
-    .min(1)
-    .max(20),
+  prompts: z.array(promptInput.shape.prompt).min(1).max(20),
 });
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -69,7 +71,10 @@ async function writeSecurityEvent(params: {
       agentId: params.agentId ?? null,
     });
   } catch (err) {
-    logger.error({ err, eventType: params.eventType }, "[agentGuard] failed to write security event");
+    logger.error(
+      { err, eventType: params.eventType },
+      "[agentGuard] failed to write security event",
+    );
   }
 }
 
@@ -93,107 +98,101 @@ export const agentGuardRouter = router({
    * Scan a single prompt for injection threats.
    * Writes to security_events if threatLevel >= 'high'.
    */
-  scanPrompt: protectedProcedure
-    .input(promptInput)
-    .mutation(async ({ input, ctx }): Promise<ThreatAssessment & { written: boolean }> {
-      const assessment = await detectPromptInjection(input.prompt);
+  scanPrompt: protectedProcedure.input(promptInput).mutation(async ({ input, ctx }) => {
+    const assessment = await detectPromptInjection(input.prompt);
 
-      const writeThreshold = process.env.SECURITY_EVENT_THRESHOLD ?? "high";
-      const shouldWrite = threatSeverityRank(assessment.threatLevel) >= threatSeverityRank(writeThreshold);
+    const writeThreshold = process.env.SECURITY_EVENT_THRESHOLD ?? "high";
+    const shouldWrite =
+      threatSeverityRank(assessment.threatLevel) >= threatSeverityRank(writeThreshold);
 
-      if (shouldWrite) {
-        await writeSecurityEvent({
-          workspaceId: ctx.workspace?.workspaceId ?? String(ctx.user.id),
-          eventType: "prompt_injection",
-          severity: severityFromThreatLevel(assessment.threatLevel),
-          threatLevel: assessment.threatLevel,
-          detectedPatterns: assessment.detectedPatterns,
-          prompt: input.prompt,
-          agentId: input.context?.agentId,
-        });
-      }
+    if (shouldWrite) {
+      await writeSecurityEvent({
+        workspaceId: String(ctx.user.id),
+        eventType: "prompt_injection",
+        severity: severityFromThreatLevel(assessment.threatLevel),
+        threatLevel: assessment.threatLevel,
+        detectedPatterns: assessment.detectedPatterns,
+        prompt: input.prompt,
+        agentId: input.context?.agentId,
+      });
+    }
 
-      logger.info(
-        {
-          threatLevel: assessment.threatLevel,
-          confidence: assessment.confidence,
-          patternCount: assessment.detectedPatterns.length,
-          written: shouldWrite,
-        },
-        "[agentGuard] prompt scanned"
-      );
+    logger.info(
+      {
+        threatLevel: assessment.threatLevel,
+        confidence: assessment.confidence,
+        patternCount: assessment.detectedPatterns.length,
+        written: shouldWrite,
+      },
+      "[agentGuard] prompt scanned",
+    );
 
-      return { ...assessment, written: shouldWrite };
-    }),
+    return { ...assessment, written: shouldWrite };
+  }),
 
   /**
    * Synchronous scan (no external classifier). For gateway inline use.
    */
-  scanPromptSync: protectedProcedure
-    .input(promptInput)
-    .query(({ input }) => {
-      return detectSync(input.prompt);
-    }),
+  scanPromptSync: protectedProcedure.input(promptInput).query(({ input }) => {
+    return detectSync(input.prompt);
+  }),
 
   /**
    * Scan an AI response for PII leakage.
    * Writes to security_events if PII detected.
    */
-  scanResponse: protectedProcedure
-    .input(responseInput)
-    .mutation(async ({ input, ctx }): Promise<PiiAssessment & { written: boolean }> {
-      const assessment = detectPII(input.response);
+  scanResponse: protectedProcedure.input(responseInput).mutation(async ({ input, ctx }) => {
+    const assessment = detectPII(input.response);
 
-      if (assessment.hasPII) {
-        await writeSecurityEvent({
-          workspaceId: ctx.workspace?.workspaceId ?? String(ctx.user.id),
-          eventType: "pii_leak",
-          severity: assessment.count > 5 ? "critical" : assessment.count > 2 ? "high" : "medium",
-          threatLevel: assessment.count > 5 ? "critical" : "high",
-          detectedPatterns: assessment.types,
-          prompt: input.response,
-          agentId: undefined,
-        });
-      }
+    if (assessment.hasPII) {
+      await writeSecurityEvent({
+        workspaceId: String(ctx.user.id),
+        eventType: "pii_leak",
+        severity: assessment.count > 5 ? "critical" : assessment.count > 2 ? "high" : "medium",
+        threatLevel: assessment.count > 5 ? "critical" : "high",
+        detectedPatterns: assessment.types,
+        prompt: input.response,
+        agentId: undefined,
+      });
+    }
 
-      logger.info(
-        { piiCount: assessment.count, piiTypes: assessment.types, written: assessment.hasPII },
-        "[agentGuard] response scanned"
-      );
+    logger.info(
+      { piiCount: assessment.count, piiTypes: assessment.types, written: assessment.hasPII },
+      "[agentGuard] response scanned",
+    );
 
-      return { ...assessment, written: assessment.hasPII };
-    }),
+    return { ...assessment, written: assessment.hasPII };
+  }),
 
   /**
    * Batch scan up to 20 prompts (for import flows).
    */
-  batchScan: protectedProcedure
-    .input(batchInput)
-    .mutation(async ({ input, ctx }): Promise<{ results: Array<ThreatAssessment & { written: boolean }> }> {
-      const results = await Promise.all(
-        input.prompts.map(async (prompt) => {
-          const assessment = await detectPromptInjection(prompt);
-          const shouldWrite = assessment.threatLevel === "high" || assessment.threatLevel === "critical";
+  batchScan: protectedProcedure.input(batchInput).mutation(async ({ input, ctx }) => {
+    const results = await Promise.all(
+      input.prompts.map(async (prompt) => {
+        const assessment = await detectPromptInjection(prompt);
+        const shouldWrite =
+          assessment.threatLevel === "high" || assessment.threatLevel === "critical";
 
-          if (shouldWrite) {
-            await writeSecurityEvent({
-              workspaceId: ctx.workspace?.workspaceId ?? String(ctx.user.id),
-              eventType: "prompt_injection",
-              severity: severityFromThreatLevel(assessment.threatLevel),
-              threatLevel: assessment.threatLevel,
-              detectedPatterns: assessment.detectedPatterns,
-              prompt,
-              agentId: undefined,
-            });
-          }
+        if (shouldWrite) {
+          await writeSecurityEvent({
+            workspaceId: String(ctx.user.id),
+            eventType: "prompt_injection",
+            severity: severityFromThreatLevel(assessment.threatLevel),
+            threatLevel: assessment.threatLevel,
+            detectedPatterns: assessment.detectedPatterns,
+            prompt,
+            agentId: undefined,
+          });
+        }
 
-          return { ...assessment, written: shouldWrite };
-        })
-      );
+        return { ...assessment, written: shouldWrite };
+      }),
+    );
 
-      logger.info({ scanned: results.length }, "[agentGuard] batch scan complete");
-      return { results };
-    }),
+    logger.info({ scanned: results.length }, "[agentGuard] batch scan complete");
+    return { results };
+  }),
 
   /**
    * List security events for the workspace.
@@ -207,10 +206,10 @@ export const agentGuardRouter = router({
           .enum(["prompt_injection", "pii_leak", "policy_violation", "anomaly"])
           .optional(),
         severity: z.enum(["low", "medium", "high", "critical"]).optional(),
-      })
+      }),
     )
     .query(async ({ input, ctx }) => {
-      const workspaceId = ctx.workspace?.workspaceId ?? String(ctx.user.id);
+      const workspaceId = String(ctx.user.id);
       const rows = await db.listSecurityEvents(workspaceId, input);
       return { events: rows };
     }),

@@ -2,9 +2,9 @@
  * BullMQ PR Scan Worker — scans API changes in PRs and posts findings as comments.
  */
 
-import { logger } from "../_core/logger";
-import { getInstallationClient } from "../services/githubApp";
-import * as db from "../db";
+import { logger } from "../../_core/logger";
+import { getInstallationClient } from "../../services/githubApp";
+import * as db from "../../db";
 import type { Job } from "bullmq";
 
 export interface PrScanJobData {
@@ -18,16 +18,21 @@ export interface PrScanJobData {
 export async function processPrScanJob(job: Job<PrScanJobData>): Promise<void> {
   const { installationId, repoFullName, prNumber, headSha, workspaceId } = job.data;
 
-  logger.info(
-    { installationId, repoFullName, prNumber },
-    "[prScanWorker] starting PR scan",
-  );
+  logger.info({ installationId, repoFullName, prNumber }, "[prScanWorker] starting PR scan");
 
   try {
-    const octokit = await getInstallationClient(installationId) as {
+    const octokit = (await getInstallationClient(installationId)) as {
       rest: {
-        pulls: { listFiles: (params: unknown) => Promise<{ data: Array<{ filename: string; status: string }> }> };
-        repos: { getContent: (params: unknown) => Promise<{ data: { content?: string; encoding?: string } }> };
+        pulls: {
+          listFiles: (
+            params: unknown,
+          ) => Promise<{ data: Array<{ filename: string; status: string }> }>;
+        };
+        repos: {
+          getContent: (
+            params: unknown,
+          ) => Promise<{ data: { content?: string; encoding?: string } }>;
+        };
         issues: { createComment: (params: unknown) => Promise<void> };
       };
     };
@@ -39,9 +44,8 @@ export async function processPrScanJob(job: Job<PrScanJobData>): Promise<void> {
       pull_number: prNumber,
     });
 
-    const apiFiles = files.data.filter((f) =>
-      /\.(yaml|yml|json|ts|py)$/.test(f.filename) &&
-      f.status !== "removed",
+    const apiFiles = files.data.filter(
+      (f) => /\.(yaml|yml|json|ts|py)$/.test(f.filename) && f.status !== "removed",
     );
 
     if (apiFiles.length === 0) {
@@ -68,7 +72,7 @@ export async function processPrScanJob(job: Job<PrScanJobData>): Promise<void> {
           ref: headSha,
         });
 
-        const data = (content.data as { content?: string; encoding?: string });
+        const data = content.data as { content?: string; encoding?: string };
         if (data.content && data.encoding === "base64") {
           const text = Buffer.from(data.content, "base64").toString("utf-8");
           // Basic scan: check for credential patterns
@@ -92,10 +96,7 @@ export async function processPrScanJob(job: Job<PrScanJobData>): Promise<void> {
       body: summary,
     });
 
-    logger.info(
-      { prNumber, passed, warnings, critical },
-      "[prScanWorker] PR scan complete",
-    );
+    logger.info({ prNumber, passed, warnings, critical }, "[prScanWorker] PR scan complete");
   } catch (err) {
     logger.error({ err, prNumber }, "[prScanWorker] PR scan failed");
     throw err;
@@ -105,8 +106,14 @@ export async function processPrScanJob(job: Job<PrScanJobData>): Promise<void> {
 function scanContent(
   filename: string,
   content: string,
-): { findings: Array<{ severity: string; finding: string; endpoint: string; owasp: string }>; passed: number; warnings: number; critical: number } {
-  const findings: Array<{ severity: string; finding: string; endpoint: string; owasp: string }> = [];
+): {
+  findings: Array<{ severity: string; finding: string; endpoint: string; owasp: string }>;
+  passed: number;
+  warnings: number;
+  critical: number;
+} {
+  const findings: Array<{ severity: string; finding: string; endpoint: string; owasp: string }> =
+    [];
   let passed = 0;
   let warnings = 0;
   let critical = 0;

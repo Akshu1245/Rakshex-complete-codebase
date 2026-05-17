@@ -11,25 +11,22 @@
 import { z } from "zod";
 
 import * as db from "../db";
+import { sql } from "drizzle-orm";
 import { ValidationError } from "../_core/errors";
 import { protectedProcedure, router } from "../_core/trpc";
-import {
-  PolicyValidationException,
-  compilePolicy,
-  parsePolicy,
-} from "../services/policyDsl";
-import {
-  POLICY_TEMPLATES,
-  getPolicyTemplate,
-} from "../services/policyTemplates";
+import { PolicyValidationException, compilePolicy, parsePolicy } from "../services/policyDsl";
+import { POLICY_TEMPLATES, getPolicyTemplate } from "../services/policyTemplates";
 
-const yamlInput = z.string().min(1).max(64 * 1024);
+const yamlInput = z
+  .string()
+  .min(1)
+  .max(64 * 1024);
 
 export const policiesRouter = router({
   /** List the bundled templates (id / name / description / yaml). */
   listTemplates: protectedProcedure.query(() => {
     return {
-      templates: POLICY_TEMPLATES.map(t => ({
+      templates: POLICY_TEMPLATES.map((t) => ({
         id: t.id,
         name: t.name,
         description: t.description,
@@ -50,26 +47,24 @@ export const policiesRouter = router({
    * shape on success; returns a structured error array on failure so
    * the dashboard can highlight individual fields.
    */
-  validate: protectedProcedure
-    .input(z.object({ yaml: yamlInput }))
-    .mutation(({ input }) => {
-      try {
-        const policy = parsePolicy(input.yaml);
-        const compiled = compilePolicy(policy);
-        return { ok: true as const, compiled };
-      } catch (err) {
-        if (err instanceof PolicyValidationException) {
-          return { ok: false as const, errors: err.errors };
-        }
-        throw err;
+  validate: protectedProcedure.input(z.object({ yaml: yamlInput })).mutation(({ input }) => {
+    try {
+      const policy = parsePolicy(input.yaml);
+      const compiled = compilePolicy(policy);
+      return { ok: true as const, compiled };
+    } catch (err) {
+      if (err instanceof PolicyValidationException) {
+        return { ok: false as const, errors: err.errors };
       }
-    }),
+      throw err;
+    }
+  }),
 
   /** List the tenant's persisted policies. */
   list: protectedProcedure.query(async ({ ctx }) => {
     const rows = await db.listTenantPolicies(ctx.user.id);
     return {
-      policies: rows.map(r => ({
+      policies: rows.map((r) => ({
         id: r.id,
         name: r.name,
         enabled: r.enabled,
@@ -109,7 +104,7 @@ export const policiesRouter = router({
       } catch (err) {
         if (err instanceof PolicyValidationException) {
           throw new ValidationError(
-            `policy invalid: ${err.errors.map(e => `${e.path}: ${e.message}`).join("; ")}`
+            `policy invalid: ${err.errors.map((e) => `${e.path}: ${e.message}`).join("; ")}`,
           );
         }
         throw err;
@@ -132,7 +127,7 @@ export const policiesRouter = router({
       z.object({
         id: z.number().int().positive(),
         yaml: yamlInput,
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const existing = await db.getTenantPolicy(ctx.user.id, input.id);
@@ -143,7 +138,7 @@ export const policiesRouter = router({
       } catch (err) {
         if (err instanceof PolicyValidationException) {
           throw new ValidationError(
-            `policy invalid: ${err.errors.map(e => `${e.path}: ${e.message}`).join("; ")}`
+            `policy invalid: ${err.errors.map((e) => `${e.path}: ${e.message}`).join("; ")}`,
           );
         }
         throw err;
@@ -164,7 +159,7 @@ export const policiesRouter = router({
       z.object({
         id: z.number().int().positive(),
         enabled: z.boolean(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const existing = await db.getTenantPolicy(ctx.user.id, input.id);
@@ -183,8 +178,6 @@ export const policiesRouter = router({
     }),
 });
 
-import { z } from "zod";
-import { router, protectedProcedure } from "../_core/trpc";
 import { invalidatePolicyCache } from "../services/policyCache";
 import { evaluatePolicy, type AIEventContext } from "../engines/policyEngine";
 import crypto from "crypto";
@@ -195,9 +188,7 @@ export const policyRulesRouter = router({
     const dbClient = await db.getDb();
     if (!dbClient) return { rules: [] };
     const rows = await dbClient.execute(
-      `SELECT rule_id, name, priority, enabled, conditions, action, description
-       FROM policy_rules WHERE workspace_id = ? AND deleted_at IS NULL ORDER BY priority`,
-      [`ws_${ctx.user.id}`],
+      sql`SELECT rule_id, name, priority, enabled, conditions, action, description FROM policy_rules WHERE workspace_id = ${`ws_${ctx.user.id}`} AND deleted_at IS NULL ORDER BY priority`,
     );
     return {
       rules: (rows as unknown as any[]).map((r: any) => ({
@@ -221,13 +212,31 @@ export const policyRulesRouter = router({
         priority: z.number().int().min(0),
         conditions: z.object({
           operator: z.enum(["AND", "OR"]),
-          rules: z.array(z.object({
-            field: z.string(),
-            op: z.enum(["eq","in","not_in","gt","lt","gte","lte","regex","keyword","between"]),
-            value: z.union([z.string(), z.array(z.string()), z.number(), z.tuple([z.number(), z.number()])]),
-          })),
+          rules: z.array(
+            z.object({
+              field: z.string(),
+              op: z.enum([
+                "eq",
+                "in",
+                "not_in",
+                "gt",
+                "lt",
+                "gte",
+                "lte",
+                "regex",
+                "keyword",
+                "between",
+              ]),
+              value: z.union([
+                z.string(),
+                z.array(z.string()),
+                z.number(),
+                z.tuple([z.number(), z.number()]),
+              ]),
+            }),
+          ),
         }),
-        action: z.enum(["allow","block","redact","alert_only","require_approval"]),
+        action: z.enum(["allow", "block", "redact", "alert_only", "require_approval"]),
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -236,10 +245,7 @@ export const policyRulesRouter = router({
 
       const ruleId = `rule_${crypto.randomBytes(8).toString("hex")}`;
       await dbClient.execute(
-        `INSERT INTO policy_rules (rule_id, workspace_id, name, description, priority, conditions, action)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [ruleId, `ws_${ctx.user.id}`, input.name, input.description ?? null, input.priority,
-         JSON.stringify(input.conditions), input.action],
+        sql`INSERT INTO policy_rules (rule_id, workspace_id, name, description, priority, conditions, action) VALUES (${ruleId}, ${`ws_${ctx.user.id}`}, ${input.name}, ${input.description ?? null}, ${input.priority}, ${JSON.stringify(input.conditions)}, ${input.action})`,
       );
       await invalidatePolicyCache(`ws_${ctx.user.id}`);
       return { ruleId };
@@ -253,15 +259,35 @@ export const policyRulesRouter = router({
         name: z.string().min(1).max(255).optional(),
         description: z.string().optional(),
         priority: z.number().int().min(0).optional(),
-        conditions: z.object({
-          operator: z.enum(["AND", "OR"]),
-          rules: z.array(z.object({
-            field: z.string(),
-            op: z.enum(["eq","in","not_in","gt","lt","gte","lte","regex","keyword","between"]),
-            value: z.union([z.string(), z.array(z.string()), z.number(), z.tuple([z.number(), z.number()])]),
-          })),
-        }).optional(),
-        action: z.enum(["allow","block","redact","alert_only","require_approval"]).optional(),
+        conditions: z
+          .object({
+            operator: z.enum(["AND", "OR"]),
+            rules: z.array(
+              z.object({
+                field: z.string(),
+                op: z.enum([
+                  "eq",
+                  "in",
+                  "not_in",
+                  "gt",
+                  "lt",
+                  "gte",
+                  "lte",
+                  "regex",
+                  "keyword",
+                  "between",
+                ]),
+                value: z.union([
+                  z.string(),
+                  z.array(z.string()),
+                  z.number(),
+                  z.tuple([z.number(), z.number()]),
+                ]),
+              }),
+            ),
+          })
+          .optional(),
+        action: z.enum(["allow", "block", "redact", "alert_only", "require_approval"]).optional(),
         enabled: z.boolean().optional(),
       }),
     )
@@ -269,19 +295,19 @@ export const policyRulesRouter = router({
       const dbClient = await db.getDb();
       if (!dbClient) throw new ValidationError("DB unavailable");
 
-      await dbClient.execute(
-        `UPDATE policy_rules SET ${[
-          input.name ? "name = ?" : null,
-          input.description !== undefined ? "description = ?" : null,
-          input.priority !== undefined ? "priority = ?" : null,
-          input.conditions ? "conditions = ?" : null,
-          input.action ? "action = ?" : null,
-          input.enabled !== undefined ? "enabled = ?" : null,
-        ].filter(Boolean).join(", ")} WHERE rule_id = ?`,
-        [input.name, input.description, input.priority,
-         input.conditions ? JSON.stringify(input.conditions) : null,
-         input.action, input.enabled, input.ruleId].filter(v => v !== undefined),
-      );
+      const sets: string[] = [];
+      if (input.name !== undefined) sets.push(`name = '${input.name}'`);
+      if (input.description !== undefined) sets.push(`description = '${input.description}'`);
+      if (input.priority !== undefined) sets.push(`priority = ${input.priority}`);
+      if (input.conditions !== undefined)
+        sets.push(`conditions = '${JSON.stringify(input.conditions)}'`);
+      if (input.action !== undefined) sets.push(`action = '${input.action}'`);
+      if (input.enabled !== undefined) sets.push(`enabled = ${input.enabled}`);
+      if (sets.length > 0) {
+        await dbClient.execute(
+          sql.raw(`UPDATE policy_rules SET ${sets.join(", ")} WHERE rule_id = '${input.ruleId}'`),
+        );
+      }
       await invalidatePolicyCache(`ws_${ctx.user.id}`);
       return { success: true };
     }),
@@ -293,8 +319,7 @@ export const policyRulesRouter = router({
       const dbClient = await db.getDb();
       if (!dbClient) throw new ValidationError("DB unavailable");
       await dbClient.execute(
-        `UPDATE policy_rules SET deleted_at = NOW(), enabled = FALSE WHERE rule_id = ?`,
-        [input.ruleId],
+        sql`UPDATE policy_rules SET deleted_at = NOW(), enabled = FALSE WHERE rule_id = ${input.ruleId}`,
       );
       await invalidatePolicyCache(`ws_${ctx.user.id}`);
       return { success: true };
@@ -311,7 +336,7 @@ export const policyRulesRouter = router({
           costUsd: z.number(),
           inputTokens: z.number(),
           prompt: z.string(),
-          threatLevel: z.enum(["none","low","medium","high","critical"]),
+          threatLevel: z.enum(["none", "low", "medium", "high", "critical"]),
           agentId: z.string(),
         }),
       }),
@@ -321,8 +346,7 @@ export const policyRulesRouter = router({
       if (!dbClient) return null;
 
       const rows = await dbClient.execute(
-        `SELECT * FROM policy_rules WHERE rule_id = ? AND deleted_at IS NULL`,
-        [input.ruleId],
+        sql`SELECT * FROM policy_rules WHERE rule_id = ${input.ruleId} AND deleted_at IS NULL`,
       );
       const row = (rows as unknown as any[])[0];
       if (!row) return null;
@@ -337,7 +361,8 @@ export const policyRulesRouter = router({
         name: row.name,
         priority: row.priority,
         enabled: row.enabled,
-        conditions: typeof row.conditions === "string" ? JSON.parse(row.conditions) : row.conditions,
+        conditions:
+          typeof row.conditions === "string" ? JSON.parse(row.conditions) : row.conditions,
         action: row.action,
       };
 
@@ -356,16 +381,10 @@ export const policyRulesRouter = router({
       if (!dbClient) throw new ValidationError("DB unavailable");
       for (let i = 0; i < input.ruleIds.length; i++) {
         await dbClient.execute(
-          `UPDATE policy_rules SET priority = ? WHERE rule_id = ?`,
-          [i, input.ruleIds[i]],
+          sql`UPDATE policy_rules SET priority = ${i} WHERE rule_id = ${input.ruleIds[i]}`,
         );
       }
       await invalidatePolicyCache(`ws_${ctx.user.id}`);
       return { success: true };
     }),
 });
-
-// Helper
-class ValidationError extends Error {
-  constructor(msg: string) { super(msg); this.name = "ValidationError"; }
-}
