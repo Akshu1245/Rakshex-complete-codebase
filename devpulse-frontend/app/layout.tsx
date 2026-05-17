@@ -62,9 +62,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className={inter.className}>
-        <TrialBanner />
         <TRPCProvider>
           <AuthProvider>
+            <TrialBanner />
             <ToastProvider>
               <ErrorBoundary>
                 <OfflineBanner />
