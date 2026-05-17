@@ -76,7 +76,7 @@ describe("services/jobs typed queue wrappers", () => {
     expect(QUEUE_WEEKLY_DIGEST).toBe("weekly-digest");
   });
 
-  it.skip("enqueueScan dispatches to runCollectionScan with the right payload", async () => {
+  it("enqueueScan dispatches to runCollectionScan with the right payload", async () => {
     const id = await enqueueScan({
       userId: 7,
       collectionId: "col-1",
@@ -98,7 +98,7 @@ describe("services/jobs typed queue wrappers", () => {
     });
   });
 
-  it.skip("enqueueWebhookDelivery dispatches to webhookDelivery.deliver", async () => {
+  it("enqueueWebhookDelivery dispatches to webhookDelivery.deliver", async () => {
     await enqueueWebhookDelivery({
       userId: 11,
       event: "scan.complete",
@@ -112,7 +112,7 @@ describe("services/jobs typed queue wrappers", () => {
     });
   });
 
-  it.skip("enqueueWeeklyDigest computes per-user counts and sends one email", async () => {
+  it("enqueueWeeklyDigest computes per-user counts and sends one email", async () => {
     await enqueueWeeklyDigest({ userId: 42 });
     await flushQueue();
     expect(sendWeeklyDigestEmail).toHaveBeenCalledTimes(1);
@@ -134,7 +134,7 @@ describe("services/jobs typed queue wrappers", () => {
     expect(() => registerJobWorkers()).not.toThrow();
   });
 
-  it.skip("dispatches multiple queued jobs concurrently up to the worker concurrency cap", async () => {
+  it("dispatches multiple queued jobs concurrently up to the worker concurrency cap", async () => {
     const ids = await Promise.all(
       Array.from({ length: 10 }, (_, i) =>
         enqueueWebhookDelivery({
