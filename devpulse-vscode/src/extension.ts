@@ -20,6 +20,7 @@ import { AutoFixTreeProvider, extractSuggestionFromNode } from "./autofixProvide
 import { CopilotViewPanel } from "./copilotView";
 import { WelcomeViewProvider } from "./welcomeView";
 import { ValueMomentTracker } from "./valueMoments";
+import { EngagementTracker } from "./engagementTracker";
 import { registerGatewayCommand } from "./gatewayTester";
 import { registerShadowApiCommand } from "./shadowApi";
 import { PostmanImportCommand } from "./postmanImport";
@@ -37,6 +38,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const statusBar = new DevPulseStatusBar(api);
   const heartbeat = new HeartbeatService(api, () => Boolean(cachedApiKey));
   const valueTracker = new ValueMomentTracker(context);
+  const engagementTracker = new EngagementTracker(context);
 
   cachedApiKey = await context.secrets.get(SECRET_API_KEY);
 
@@ -289,6 +291,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       try {
         const scan = await api.triggerScan(picked.collectionId);
         void vscode.window.showInformationMessage(`DevPulse: scan queued (id ${scan.scanId}).`);
+        engagementTracker.record("scan_run");
         await refresh();
       } catch (err) {
         void vscode.window.showErrorMessage(`DevPulse: scan failed — ${errMessage(err)}`);
@@ -306,6 +309,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         void vscode.window.showWarningMessage("DevPulse: sign in with an API key first.");
         return;
       }
+      engagementTracker.record("dashboard_opened");
       SecurityWebviewPanel.createOrShow(context.extensionUri, api);
     }),
 
@@ -533,6 +537,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       );
 
       if (imported > 0) {
+        engagementTracker.record("collection_imported");
         let msg = `DevPulse: imported ${imported} collection${imported !== 1 ? "s" : ""}.`;
         if (findings > 0) {
           msg += ` ⚠ ${findings} potential credential${findings !== 1 ? "s" : ""} found — review and rotate immediately.`;
@@ -546,6 +551,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   );
 
   async function updateFindingStatusCmd(node: unknown, status: FindingStatus): Promise<void> {
+    engagementTracker.record("finding_status_changed");
     const findingId = extractFindingId(node);
     if (!findingId) {
       void vscode.window.showWarningMessage(
@@ -598,7 +604,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   // Scan current file command
   const scanCurrentFile = new ScanCurrentFileCommand(api);
   context.subscriptions.push(
-    vscode.commands.registerCommand("devpulse.scanCurrentFile", () => scanCurrentFile.execute()),
+    vscode.commands.registerCommand("devpulse.scanCurrentFile", () => {
+      engagementTracker.record("scan_run");
+      return scanCurrentFile.execute();
+    }),
   );
 
   // Demo mode command
@@ -606,6 +615,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     vscode.commands.registerCommand("devpulse.runDemo", async () => {
       const { runDemoScenarios } = await import("./demoMode");
       await runDemoScenarios();
+      engagementTracker.record("demo_completed");
     }),
   );
 
