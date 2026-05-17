@@ -1,0 +1,12 @@
+{
+  "name": "devpulse-frontend",
+  "framework": "nextjs",
+  "buildCommand": "pnpm install --frozen-lockfile && pnpm run build",
+  "outputDirectory": ".next",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "env": {
+    "NEXT_PUBLIC_APP_URL": "https://app.devpulse.in",
+    "NEXT_PUBLIC_API_URL": "https://devpulse-backend.onrender.com"
+  },
+  "routes": [{ "handle": "filesystem" }, { "source": "/(.*)", "destination": "/index.html" }]
+}
