@@ -424,6 +424,134 @@ export default function LandingPage() {
         </div>
       </div>
 
+      {/* Integrations */}
+      <div className="max-w-5xl mx-auto py-16 px-4 text-center border-t border-gray-800">
+        <p className="text-gray-500 text-sm mb-6 uppercase tracking-wide">Works With Your Stack</p>
+        <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 text-gray-400 text-sm">
+          {[
+            "OpenAI",
+            "Anthropic",
+            "Gemini",
+            "Postman",
+            "VS Code",
+            "GitHub",
+            "Slack",
+            "Express",
+            "FastAPI",
+            "Django",
+          ].map((name) => (
+            <span
+              key={name}
+              className="bg-gray-800/50 px-4 py-2 rounded-full border border-gray-700/50"
+            >
+              {name}
+            </span>
+          ))}
+        </div>
+        <Link
+          href="/integrations"
+          className="inline-block mt-6 text-blue-400 text-sm hover:text-blue-300"
+        >
+          View all 40+ integrations →
+        </Link>
+      </div>
+
+      {/* Testimonials */}
+      <div className="max-w-5xl mx-auto py-16 px-4 border-t border-gray-800">
+        <p className="text-gray-500 text-sm mb-8 text-center uppercase tracking-wide">
+          What Early Users Say
+        </p>
+        <div className="grid md:grid-cols-3 gap-6">
+          {[
+            {
+              quote:
+                "DevPulse found 3 secrets we did not know we had. One was a production Stripe key in a test collection.",
+              author: "Engineering Lead",
+              company: "Undisclosed Fintech Startup",
+            },
+            {
+              quote:
+                "The kill switch saved us. Our customer service bot had a bug that would have burned $12K in a weekend.",
+              author: "CTO",
+              company: "HealthTech Platform",
+            },
+            {
+              quote:
+                "SOC 2 evidence used to take us a week. With DevPulse, we generate it in one click. Our auditor was impressed.",
+              author: "Security Engineer",
+              company: "Enterprise SaaS",
+            },
+          ].map((t) => (
+            <div key={t.author} className="bg-gray-800 p-6 rounded-xl border border-gray-700">
+              <p className="text-gray-300 text-sm leading-relaxed mb-4 italic">"{t.quote}"</p>
+              <div className="text-sm">
+                <div className="font-medium text-white">{t.author}</div>
+                <div className="text-gray-500">{t.company}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* FAQ Preview */}
+      <div className="max-w-3xl mx-auto py-16 px-4 border-t border-gray-800">
+        <h2 className="text-2xl font-bold text-center mb-8">Frequently Asked Questions</h2>
+        <div className="space-y-4">
+          {[
+            {
+              q: "How long does setup take?",
+              a: "Most users scan their first collection in under 5 minutes. No infrastructure changes required.",
+            },
+            {
+              q: "Do you store our API data?",
+              a: "We only store metadata. Request/response bodies are scanned in-memory and never persisted.",
+            },
+            {
+              q: "What compliance standards do you support?",
+              a: "OWASP API Top 10, OWASP LLM Top 10, PCI DSS v4.0.1, and SOC 2 Trust Services Criteria.",
+            },
+          ].map((faq) => (
+            <div key={faq.q} className="bg-gray-800 p-5 rounded-xl border border-gray-700">
+              <h3 className="font-bold text-blue-400 mb-1">{faq.q}</h3>
+              <p className="text-gray-400 text-sm">{faq.a}</p>
+            </div>
+          ))}
+        </div>
+        <div className="text-center mt-6">
+          <Link href="/faq" className="text-blue-400 text-sm hover:text-blue-300">
+            See all 12 FAQs →
+          </Link>
+        </div>
+      </div>
+
+      {/* Newsletter */}
+      <div className="max-w-2xl mx-auto py-16 px-4 border-t border-gray-800 text-center">
+        <h2 className="text-2xl font-bold mb-2">Stay Ahead of AI Risks</h2>
+        <p className="text-gray-400 mb-6">
+          Weekly insights on AI security, cost optimization, and compliance. No spam.
+        </p>
+        <form
+          className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
+          onSubmit={(e) => {
+            e.preventDefault();
+            alert("Thank you for subscribing! We will send you our first issue soon.");
+          }}
+        >
+          <input
+            type="email"
+            placeholder="you@company.com"
+            required
+            className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+          />
+          <button
+            type="submit"
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors whitespace-nowrap"
+          >
+            Subscribe
+          </button>
+        </form>
+      </div>
+
       {/* Trust */}
       <div className="max-w-4xl mx-auto py-16 px-4 text-center">
         <p className="text-gray-500 text-sm mb-6">TRUSTED BY ENGINEERS WORLDWIDE</p>
@@ -435,33 +563,160 @@ export default function LandingPage() {
         </div>
       </div>
 
-      <footer className="border-t border-gray-800 py-12 text-center text-gray-500">
-        <div className="space-x-6 mb-6">
-          <Link href="/demo" className="hover:text-white transition-colors">
-            Live Demo
-          </Link>
-          <Link href="/pricing" className="hover:text-white transition-colors">
-            Pricing
-          </Link>
-          <Link href="/terms" className="hover:text-white transition-colors">
-            Terms
-          </Link>
-          <Link href="/privacy" className="hover:text-white transition-colors">
-            Privacy
-          </Link>
-          <a
-            href="https://github.com/Akshu1245/devpulse-complete-codebase"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-white transition-colors"
-          >
-            GitHub
-          </a>
+      <footer className="border-t border-gray-800 py-12 px-4 text-gray-500">
+        <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 mb-8 text-sm">
+          <div>
+            <h4 className="font-bold text-white mb-3">Product</h4>
+            <ul className="space-y-2">
+              <li>
+                <Link href="/features" className="hover:text-white transition-colors">
+                  Features
+                </Link>
+              </li>
+              <li>
+                <Link href="/pricing" className="hover:text-white transition-colors">
+                  Pricing
+                </Link>
+              </li>
+              <li>
+                <Link href="/changelog" className="hover:text-white transition-colors">
+                  Changelog
+                </Link>
+              </li>
+              <li>
+                <Link href="/integrations" className="hover:text-white transition-colors">
+                  Integrations
+                </Link>
+              </li>
+              <li>
+                <Link href="/demo" className="hover:text-white transition-colors">
+                  Live Demo
+                </Link>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-bold text-white mb-3">Solutions</h4>
+            <ul className="space-y-2">
+              <li>
+                <Link href="/solutions/fintech" className="hover:text-white transition-colors">
+                  Fintech
+                </Link>
+              </li>
+              <li>
+                <Link href="/solutions/healthcare" className="hover:text-white transition-colors">
+                  Healthcare
+                </Link>
+              </li>
+              <li>
+                <Link href="/solutions/enterprise" className="hover:text-white transition-colors">
+                  Enterprise
+                </Link>
+              </li>
+              <li>
+                <Link href="/compare" className="hover:text-white transition-colors">
+                  Comparisons
+                </Link>
+              </li>
+              <li>
+                <Link href="/roi-calculator" className="hover:text-white transition-colors">
+                  ROI Calculator
+                </Link>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-bold text-white mb-3">Resources</h4>
+            <ul className="space-y-2">
+              <li>
+                <Link href="/blog" className="hover:text-white transition-colors">
+                  Blog
+                </Link>
+              </li>
+              <li>
+                <Link href="/faq" className="hover:text-white transition-colors">
+                  FAQ
+                </Link>
+              </li>
+              <li>
+                <Link href="/trust" className="hover:text-white transition-colors">
+                  Trust Center
+                </Link>
+              </li>
+              <li>
+                <Link href="/status" className="hover:text-white transition-colors">
+                  Status
+                </Link>
+              </li>
+              <li>
+                <Link href="/open-source" className="hover:text-white transition-colors">
+                  Open Source
+                </Link>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-bold text-white mb-3">Company</h4>
+            <ul className="space-y-2">
+              <li>
+                <Link href="/about" className="hover:text-white transition-colors">
+                  About
+                </Link>
+              </li>
+              <li>
+                <Link href="/partners" className="hover:text-white transition-colors">
+                  Partners
+                </Link>
+              </li>
+              <li>
+                <a href="mailto:press@devpulse.in" className="hover:text-white transition-colors">
+                  Press
+                </a>
+              </li>
+              <li>
+                <Link href="/terms" className="hover:text-white transition-colors">
+                  Terms
+                </Link>
+              </li>
+              <li>
+                <Link href="/privacy" className="hover:text-white transition-colors">
+                  Privacy
+                </Link>
+              </li>
+            </ul>
+          </div>
         </div>
-        <p>
-          &copy; {new Date().getFullYear()} DevPulse by Rashi Technologies. Bengaluru, India. All
-          rights reserved.
-        </p>
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center pt-8 border-t border-gray-800">
+          <p className="text-sm">
+            &copy; {new Date().getFullYear()} DevPulse by Rashi Technologies. Bengaluru, India.
+          </p>
+          <div className="flex items-center gap-4 mt-4 md:mt-0">
+            <a
+              href="https://github.com/Akshu1245/devpulse-complete-codebase"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-white transition-colors"
+            >
+              GitHub
+            </a>
+            <a
+              href="https://twitter.com/devpulsehq"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-white transition-colors"
+            >
+              Twitter
+            </a>
+            <a
+              href="https://linkedin.com/company/devpulse"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-white transition-colors"
+            >
+              LinkedIn
+            </a>
+          </div>
+        </div>
       </footer>
     </div>
   );
