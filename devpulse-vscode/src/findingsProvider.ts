@@ -118,10 +118,24 @@ export class FindingsTreeProvider implements vscode.TreeDataProvider<FindingsNod
         return [];
       }
       if (this.lastError) {
-        return [new MessageNode(`⚠ Error: ${this.lastError}`)];
+        // Show user-friendly error with action instead of raw error text
+        const isOffline =
+          this.lastError.includes("unreachable") || this.lastError.includes("timeout");
+        if (isOffline) {
+          return [
+            new MessageNode(
+              "⚠ DevPulse is unreachable. Check your connection or run 'DevPulse: Check Health'.",
+            ),
+          ];
+        }
+        return [new MessageNode(`⚠ ${this.lastError}`)];
       }
       if (this.findings.length === 0) {
-        return [new MessageNode("No recent findings.")];
+        return [
+          new MessageNode(
+            "🛡️ No findings yet. Run your first scan: open the command palette → 'DevPulse: Run scan' or import a collection.",
+          ),
+        ];
       }
       const groups: SeverityGroupNode[] = [];
       for (const sev of SEVERITY_ORDER) {

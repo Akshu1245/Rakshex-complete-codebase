@@ -140,12 +140,57 @@ export class DevPulseApi {
 
   // --- internals ---------------------------------------------------------
 
+  private isOnline = true;
+
+  getOnlineState(): boolean {
+    return this.isOnline;
+  }
+
+  /**
+   * Resilient fetch with timeout, retry, and offline detection.
+   * Never blocks the UI — returns clear errors for callers to handle.
+   */
+  private async resilientFetch(
+    url: string,
+    init: RequestInit,
+    opts: { timeoutMs?: number; retries?: number } = {},
+  ): Promise<Response> {
+    const timeoutMs = opts.timeoutMs ?? 10_000;
+    const retries = opts.retries ?? 2;
+    let lastErr: Error | undefined;
+
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      if (attempt > 0) {
+        const delay = Math.min(500 * Math.pow(2, attempt - 1), 5000);
+        await new Promise((r) => setTimeout(r, delay));
+      }
+
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const res = await fetch(url, { ...init, signal: controller.signal });
+        clearTimeout(timer);
+        this.isOnline = true;
+        return res;
+      } catch (err) {
+        clearTimeout(timer);
+        lastErr = err instanceof Error ? err : new Error(String(err));
+        if (lastErr.name === "AbortError") {
+          lastErr = new Error(`Request timed out after ${timeoutMs}ms`);
+        }
+      }
+    }
+
+    this.isOnline = false;
+    throw new DevPulseApiError(lastErr?.message ?? "Network error — DevPulse is unreachable", 0);
+  }
+
   private async query<T>(path: string, input?: unknown): Promise<T> {
     const url = new URL(`${this.trpcBase()}/${path}`);
     if (input !== undefined) {
       url.searchParams.set("input", JSON.stringify(input));
     }
-    const res = await fetch(url.toString(), {
+    const res = await this.resilientFetch(url.toString(), {
       method: "GET",
       headers: this.buildHeaders(),
     });
@@ -194,11 +239,15 @@ export class DevPulseApi {
   ): Promise<T> {
     const url = `${this.trpcBase()}/${path}`;
     const body = input === undefined ? {} : { input };
-    const res = await fetch(url, {
-      method: "POST",
-      headers: this.buildHeaders(opts.apiKeyOverride),
-      body: JSON.stringify(body),
-    });
+    const res = await this.resilientFetch(
+      url,
+      {
+        method: "POST",
+        headers: this.buildHeaders(opts.apiKeyOverride),
+        body: JSON.stringify(body),
+      },
+      { timeoutMs: 15_000 }, // mutations can take longer
+    );
     return this.handleResponse<T>(res);
   }
 

@@ -33,12 +33,12 @@ export class SecurityWebviewPanel {
 
   private constructor(
     panel: vscode.WebviewPanel,
-    private readonly api: DevPulseApi
+    private readonly api: DevPulseApi,
   ) {
     this.panel = panel;
     this.panel.onDidDispose(() => this.dispose(), null, this.disposables);
     this.panel.webview.onDidReceiveMessage(
-      msg => {
+      (msg) => {
         if (!msg || typeof msg !== "object") return;
         if (msg.type === "refresh") {
           void this.refresh();
@@ -53,17 +53,13 @@ export class SecurityWebviewPanel {
         }
       },
       null,
-      this.disposables
+      this.disposables,
     );
     this.startAutoRefresh();
   }
 
-  public static createOrShow(
-    extensionUri: vscode.Uri,
-    api: DevPulseApi
-  ): void {
-    const column =
-      vscode.window.activeTextEditor?.viewColumn ?? vscode.ViewColumn.One;
+  public static createOrShow(extensionUri: vscode.Uri, api: DevPulseApi): void {
+    const column = vscode.window.activeTextEditor?.viewColumn ?? vscode.ViewColumn.One;
 
     if (SecurityWebviewPanel.current) {
       SecurityWebviewPanel.current.panel.reveal(column);
@@ -79,7 +75,7 @@ export class SecurityWebviewPanel {
         enableScripts: true,
         retainContextWhenHidden: true,
         localResourceRoots: [extensionUri],
-      }
+      },
     );
 
     SecurityWebviewPanel.current = new SecurityWebviewPanel(panel, api);
@@ -108,7 +104,10 @@ export class SecurityWebviewPanel {
     }
   }
 
-  private classifyError(err: unknown): { message: string; category: "network" | "auth" | "unknown" } {
+  private classifyError(err: unknown): {
+    message: string;
+    category: "network" | "auth" | "unknown";
+  } {
     const msg = err instanceof Error ? err.message : String(err);
     if (/401|403|unauthorized|forbidden/i.test(msg)) {
       return { message: msg, category: "auth" };
@@ -147,7 +146,9 @@ export class SecurityWebviewPanel {
         errorCategory: null,
         lastUpdated: new Date().toLocaleTimeString(),
       };
-      if (!this.panel.visible) { return; }
+      if (!this.panel.visible) {
+        return;
+      }
       this.panel.webview.postMessage({ type: "dataUpdate", state });
     } catch (err) {
       const { message, category } = this.classifyError(err);
@@ -158,7 +159,9 @@ export class SecurityWebviewPanel {
         errorCategory: category,
         lastUpdated: null,
       };
-      if (!this.panel.visible) { return; }
+      if (!this.panel.visible) {
+        return;
+      }
       this.panel.webview.postMessage({ type: "dataUpdate", state });
     }
   }
@@ -173,10 +176,7 @@ export class SecurityWebviewPanel {
     }
   }
 
-  private _getHtmlForWebview(
-    webview: vscode.Webview,
-    state: PanelState
-  ): string {
+  private _getHtmlForWebview(webview: vscode.Webview, state: PanelState): string {
     const nonce = getNonce();
     const csp = [
       `default-src 'none'`,
@@ -188,33 +188,66 @@ export class SecurityWebviewPanel {
     const { dashboard, findings, error, errorCategory, lastUpdated } = state;
 
     const severityCounts = {
-      Critical: findings.filter(f => f.severity === "Critical").length,
-      High: findings.filter(f => f.severity === "High").length,
-      Medium: findings.filter(f => f.severity === "Medium").length,
-      Low: findings.filter(f => f.severity === "Low").length,
+      Critical: findings.filter((f) => f.severity === "Critical").length,
+      High: findings.filter((f) => f.severity === "High").length,
+      Medium: findings.filter((f) => f.severity === "Medium").length,
+      Low: findings.filter((f) => f.severity === "Low").length,
     };
     const totalFindings = findings.length;
-    const openCount = findings.filter(f => f.status === "open").length;
-    const progressCount = findings.filter(f => f.status === "in-progress").length;
-    const resolvedCount = findings.filter(f => f.status === "resolved").length;
+    const openCount = findings.filter((f) => f.status === "open").length;
+    const progressCount = findings.filter((f) => f.status === "in-progress").length;
+    const resolvedCount = findings.filter((f) => f.status === "resolved").length;
 
     // Risk score: weighted sum where Critical=10, High=7, Medium=4, Low=1, normalized to 0-100
-    const rawRisk = severityCounts.Critical * 10 + severityCounts.High * 7 + severityCounts.Medium * 4 + severityCounts.Low * 1;
+    const rawRisk =
+      severityCounts.Critical * 10 +
+      severityCounts.High * 7 +
+      severityCounts.Medium * 4 +
+      severityCounts.Low * 1;
     const maxRisk = totalFindings > 0 ? totalFindings * 10 : 1;
     const riskScore = Math.min(100, Math.round((rawRisk / maxRisk) * 100));
     const riskColor = riskScore >= 70 ? "#ef4444" : riskScore >= 40 ? "#f97316" : "#22c55e";
 
     // Mock compliance data based on findings
-    const owaspScore = totalFindings > 0 ? Math.max(0, Math.round(100 - (severityCounts.Critical * 15 + severityCounts.High * 8 + severityCounts.Medium * 3 + severityCounts.Low * 1))) : 100;
-    const pciScore = totalFindings > 0 ? Math.max(0, Math.round(100 - (severityCounts.Critical * 20 + severityCounts.High * 10 + severityCounts.Medium * 4))) : 100;
+    const owaspScore =
+      totalFindings > 0
+        ? Math.max(
+            0,
+            Math.round(
+              100 -
+                (severityCounts.Critical * 15 +
+                  severityCounts.High * 8 +
+                  severityCounts.Medium * 3 +
+                  severityCounts.Low * 1),
+            ),
+          )
+        : 100;
+    const pciScore =
+      totalFindings > 0
+        ? Math.max(
+            0,
+            Math.round(
+              100 -
+                (severityCounts.Critical * 20 +
+                  severityCounts.High * 10 +
+                  severityCounts.Medium * 4),
+            ),
+          )
+        : 100;
 
     const errorIcon = errorCategory === "auth" ? "🔑" : errorCategory === "network" ? "🌐" : "⚠";
-    const errorTitle = errorCategory === "auth" ? "Authentication Failed" : errorCategory === "network" ? "Connection Error" : "Could not load dashboard";
-    const errorHint = errorCategory === "auth"
-      ? "Your API key may be invalid or expired. Try signing in again."
-      : errorCategory === "network"
-        ? "Could not reach the DevPulse server. Check your network connection and API URL."
-        : "";
+    const errorTitle =
+      errorCategory === "auth"
+        ? "Authentication Failed"
+        : errorCategory === "network"
+          ? "Connection Error"
+          : "Could not load dashboard";
+    const errorHint =
+      errorCategory === "auth"
+        ? "Your API key may be invalid or expired. Try signing in again."
+        : errorCategory === "network"
+          ? "Could not reach the DevPulse server. Check your network connection and API URL."
+          : "";
 
     const body = error
       ? `<div class="error-container">
@@ -307,8 +340,10 @@ export class SecurityWebviewPanel {
         ${
           findings.length === 0
             ? `<div class="empty-state">
-                <div class="empty-icon">✅</div>
-                <p>No findings yet. Run a scan from the command palette: <code>DevPulse: Run scan</code></p>
+                <div class="empty-icon">🛡️</div>
+                <p style="font-weight:600;margin-bottom:4px">No security issues found</p>
+                <p style="font-size:12px;color:var(--vscode-descriptionForeground)">Run a scan to check your collections for leaked keys, hidden costs, and misconfigurations.</p>
+                <button class="btn btn-primary" style="margin-top:12px" onclick="runScan()">Run First Scan</button>
               </div>`
             : `<div class="table-wrapper">
                 <table id="findings-table">
@@ -322,7 +357,9 @@ export class SecurityWebviewPanel {
                     </tr>
                   </thead>
                   <tbody>
-                    ${findings.map(f => `
+                    ${findings
+                      .map(
+                        (f) => `
                       <tr class="finding-row" data-severity="${escapeHtml(f.severity)}" data-id="${escapeHtml(f.id)}">
                         <td><span class="badge badge-${f.severity.toLowerCase()}">${escapeHtml(f.severity)}</span></td>
                         <td class="col-title">${escapeHtml(f.title)}</td>
@@ -333,7 +370,9 @@ export class SecurityWebviewPanel {
                           ${f.status !== "in-progress" ? `<button class="btn btn-xs btn-progress" data-id="${escapeHtml(f.id)}" data-status="in-progress">⏳ Progress</button>` : ""}
                         </td>
                       </tr>
-                    `).join("")}
+                    `,
+                      )
+                      .join("")}
                   </tbody>
                 </table>
               </div>`
@@ -892,8 +931,7 @@ function statusLabel(s: string): string {
 }
 
 function getNonce(): string {
-  const chars =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   const randomBytes = crypto.randomBytes(32);
   let text = "";
   for (let i = 0; i < 32; i++) {

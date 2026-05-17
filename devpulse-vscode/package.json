@@ -202,6 +202,12 @@
         "title": "DevPulse: Start Onboarding Tour",
         "icon": "$(play)",
         "category": "DevPulse"
+      },
+      {
+        "command": "devpulse.checkHealth",
+        "title": "DevPulse: Check Health",
+        "icon": "$(pulse)",
+        "category": "DevPulse"
       }
     ],
     "viewsContainers": {

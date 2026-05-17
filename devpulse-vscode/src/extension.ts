@@ -24,6 +24,7 @@ import { EngagementTracker } from "./engagementTracker";
 import { WeeklyDigestCommand } from "./weeklyDigest";
 import { FeedbackCommand } from "./feedback";
 import { OnboardingTour } from "./onboardingTour";
+import { HealthCheckCommand } from "./healthCheck";
 import { registerGatewayCommand } from "./gatewayTester";
 import { registerShadowApiCommand } from "./shadowApi";
 import { PostmanImportCommand } from "./postmanImport";
@@ -667,6 +668,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   });
   context.subscriptions.push(
     vscode.commands.registerCommand("devpulse.startOnboardingTour", () => onboardingTour.start()),
+  );
+
+  // Health check command
+  const healthCheck = new HealthCheckCommand(api);
+  context.subscriptions.push(
+    vscode.commands.registerCommand("devpulse.checkHealth", () => healthCheck.execute()),
   );
   // Auto-start tour for new users (no API key yet, and not previously dismissed)
   const tourDismissed = context.globalState.get<boolean>("devpulse.tourDismissed") ?? false;
