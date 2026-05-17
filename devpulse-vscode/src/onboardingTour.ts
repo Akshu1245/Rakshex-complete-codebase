@@ -4,6 +4,7 @@ import type { EngagementTracker } from "./engagementTracker";
 
 export class OnboardingTour {
   private panel?: vscode.WebviewPanel;
+  private dismissCallbacks: Array<() => void> = [];
 
   constructor(
     private readonly context: vscode.ExtensionContext,
@@ -11,6 +12,10 @@ export class OnboardingTour {
     private readonly engagementTracker: EngagementTracker,
     private readonly onComplete: () => void,
   ) {}
+
+  onDismiss(callback: () => void): void {
+    this.dismissCallbacks.push(callback);
+  }
 
   async start(): Promise<void> {
     const progress = this.engagementTracker.getOnboardingProgress();
@@ -23,6 +28,10 @@ export class OnboardingTour {
       vscode.ViewColumn.One,
       { enableScripts: true },
     );
+
+    this.panel.onDidDispose(() => {
+      this.dismissCallbacks.forEach((cb) => cb());
+    });
 
     this.panel.webview.html = this.getHtml(completed);
 

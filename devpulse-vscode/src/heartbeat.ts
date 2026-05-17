@@ -6,15 +6,19 @@ import type { DevPulseApi } from "./api";
  * Respects `devpulse.heartbeatIntervalSec` (0 disables) and
  * `devpulse.trackFileChanges`.
  */
-export class HeartbeatService {
-  private timer: NodeJS.Timeout | undefined;
+export class HeartbeatService implements vscode.Disposable {
+  private timer: ReturnType<typeof setInterval> | undefined;
   private fileWatcherDisposable: vscode.Disposable | undefined;
   private readonly pendingFileChanges = new Set<string>();
 
   constructor(
     private readonly api: DevPulseApi,
-    private readonly isSignedIn: () => boolean
+    private readonly isSignedIn: () => boolean,
   ) {}
+
+  dispose(): void {
+    this.stop();
+  }
 
   start(): void {
     const cfg = vscode.workspace.getConfiguration("devpulse");
@@ -22,20 +26,15 @@ export class HeartbeatService {
     const trackFiles = cfg.get<boolean>("trackFileChanges", true);
 
     if (intervalSec > 0) {
-      this.timer = setInterval(
-        () => void this.tick(),
-        Math.max(intervalSec, 30) * 1000
-      );
+      this.timer = setInterval(() => void this.tick(), Math.max(intervalSec, 30) * 1000);
       void this.sendSessionEvent("session_start");
     }
 
     if (trackFiles) {
-      this.fileWatcherDisposable = vscode.workspace.onDidSaveTextDocument(
-        doc => {
-          const relPath = vscode.workspace.asRelativePath(doc.uri, false);
-          this.pendingFileChanges.add(relPath);
-        }
-      );
+      this.fileWatcherDisposable = vscode.workspace.onDidSaveTextDocument((doc) => {
+        const relPath = vscode.workspace.asRelativePath(doc.uri, false);
+        this.pendingFileChanges.add(relPath);
+      });
     }
   }
 
@@ -66,9 +65,7 @@ export class HeartbeatService {
     }
   }
 
-  private async sendSessionEvent(
-    type: "session_start" | "session_end"
-  ): Promise<void> {
+  private async sendSessionEvent(type: "session_start" | "session_end"): Promise<void> {
     if (!this.isSignedIn()) return;
     try {
       await this.api.recordActivity(type, {

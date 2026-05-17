@@ -47,6 +47,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   cachedApiKey = await context.secrets.get(SECRET_API_KEY);
 
+  // Add heartbeat to subscriptions so it gets cleaned up on deactivation
+  context.subscriptions.push(heartbeat);
+
   const treeView = vscode.window.createTreeView("devpulse.findings", {
     treeDataProvider: findingsProvider,
     showCollapseAll: true,
@@ -90,6 +93,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
           description: `Found ${high} high-severity issue(s)`,
         });
       }
+    } catch (err) {
+      // Silently handle refresh failures so they don't break activation or UX
+      statusBar.showError("Could not refresh data");
     } finally {
       refreshInFlight = false;
     }
@@ -100,7 +106,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     autoFixProvider.setSignedIn(signedIn);
     await vscode.commands.executeCommand("setContext", "devpulse.signedIn", signedIn);
     if (signedIn) {
-      await refresh();
+      // Don't block activation on refresh — fire-and-forget with error handling
+      void refresh().catch(() => {
+        statusBar.showError("Could not connect to DevPulse");
+      });
     } else {
       statusBar.showSignedOut();
     }
@@ -347,8 +356,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         cachedApiKey = result.apiKey;
         engagementTracker.recordOnboardingStep("signed_in");
         await applySignedInState(true);
+        // Never show full API key in notifications — security risk
         void vscode.window.showInformationMessage(
-          `Your API key: ${result.apiKey} — it has been copied to clipboard.`,
+          "Your new API key has been generated and copied to clipboard. Keep it secure.",
         );
       } catch (err) {
         void vscode.window.showErrorMessage(
@@ -658,10 +668,15 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   context.subscriptions.push(
     vscode.commands.registerCommand("devpulse.startOnboardingTour", () => onboardingTour.start()),
   );
-  // Auto-start tour for new users (no API key yet)
-  if (!cachedApiKey) {
+  // Auto-start tour for new users (no API key yet, and not previously dismissed)
+  const tourDismissed = context.globalState.get<boolean>("devpulse.tourDismissed") ?? false;
+  if (!cachedApiKey && !tourDismissed) {
     void onboardingTour.start();
   }
+  // Track tour dismissal when panel closes
+  onboardingTour.onDismiss(() => {
+    void context.globalState.update("devpulse.tourDismissed", true);
+  });
 
   // Onboarding nudges: check after 30 seconds if onboarding incomplete
   const onboardingTimer = setTimeout(() => {

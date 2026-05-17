@@ -1,7 +1,7 @@
 {
   "name": "devpulse-vscode",
   "displayName": "DevPulse",
-  "description": "Security and cost monitoring for production AI agents, in your editor.",
+  "description": "Stop AI agents from burning your API budget. Find leaked keys, hidden costs, and security risks in VS Code — first scan in 60 seconds.",
   "version": "0.1.0",
   "publisher": "devpulse",
   "license": "MIT",
@@ -62,12 +62,14 @@
       {
         "command": "devpulse.authenticate",
         "title": "DevPulse: Sign in with API Key",
-        "icon": "$(key)"
+        "icon": "$(key)",
+        "category": "DevPulse"
       },
       {
         "command": "devpulse.signOut",
         "title": "DevPulse: Sign out",
-        "icon": "$(sign-out)"
+        "icon": "$(sign-out)",
+        "category": "DevPulse"
       },
       {
         "command": "devpulse.importCollections",
