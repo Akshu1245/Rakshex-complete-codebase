@@ -280,6 +280,8 @@ export class WeeklyDigestCommand {
       ? `
   <div class="card">
     <h3>🛡️ Trust Quality</h3>
+    ${trust.trend === "improving" ? '<p style="font-size:13px;color:#16A34A;margin:4px 0 8px">📈 Trust improved this week — great signal quality.</p>' : ""}
+    ${trust.trend === "declining" ? '<p style="font-size:13px;color:#DC2626;margin:4px 0 8px">📉 Trust declined — consider reviewing dismissals.</p>' : ""}
     <div class="metric-row"><span>Trust score</span><span class="metric-value" style="color:${trust.trustScore >= 80 ? "#16A34A" : trust.trustScore >= 50 ? "#CA8A04" : "#DC2626"}">${trust.trustScore}/100</span></div>
     <div class="metric-row"><span>Trend</span><span class="metric-value">${trust.trend}</span></div>
     <div class="metric-row"><span>False positives</span><span class="metric-value">${trust.falsePositives}</span></div>

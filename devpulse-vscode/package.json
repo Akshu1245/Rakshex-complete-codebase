@@ -91,19 +91,19 @@
       },
       {
         "command": "devpulse.refresh",
-        "title": "DevPulse: Refresh",
+        "title": "DevPulse: Refresh Findings (Pull Latest)",
         "icon": "$(refresh)",
         "category": "DevPulse"
       },
       {
         "command": "devpulse.runScan",
-        "title": "DevPulse: Run Scan",
+        "title": "DevPulse: Run Security Scan",
         "icon": "$(play)",
         "category": "DevPulse"
       },
       {
         "command": "devpulse.rerunLastScan",
-        "title": "DevPulse: Rerun Last Scan",
+        "title": "DevPulse: Rerun Last Security Scan",
         "icon": "$(debug-restart)",
         "category": "DevPulse"
       },
@@ -127,7 +127,7 @@
       },
       {
         "command": "devpulse.openSecurityPanel",
-        "title": "DevPulse: Open security dashboard",
+        "title": "DevPulse: Open Security Dashboard (Findings View)",
         "icon": "$(shield)",
         "category": "DevPulse"
       },

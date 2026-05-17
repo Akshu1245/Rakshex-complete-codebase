@@ -134,8 +134,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         });
       }
     } catch (err) {
-      // Silently handle refresh failures so they don't break activation or UX
-      statusBar.showError("Could not refresh data");
+      // Calm recovery: show once, guide user gently
+      statusBar.showError("Could not refresh data — will retry automatically");
+      dedupedShowMessage("DevPulse: Refresh delayed. Retrying in a moment.", "warn");
     } finally {
       refreshInFlight = false;
     }
