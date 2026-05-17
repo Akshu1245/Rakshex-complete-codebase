@@ -464,6 +464,12 @@ vi.mock("./db", async () => {
       productUpdateEmails: true,
     })),
     updateEmailPreferences: vi.fn(async () => {}),
+    createAuditLogEntry: vi.fn(async () => {}),
+    getEffectivePlan: vi.fn(async (userId: number) => {
+      const sub = mockSubscriptions.find((s) => s.userId === userId);
+      return sub?.plan ?? "free";
+    }),
+    getTrialStatus: vi.fn(async (userId: number) => ({ active: false, remainingDays: 0 })),
   };
 });
 

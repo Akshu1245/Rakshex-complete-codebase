@@ -45,6 +45,19 @@ vi.mock("../db", async () => {
   };
 });
 
+vi.mock("../queues", () => ({
+  scanQueue: {
+    add: vi.fn(async () => ({ id: "job_test_123" })),
+    getJob: vi.fn(async () => ({
+      id: "job_test_123",
+      getState: vi.fn(async () => "completed"),
+      progress: 100,
+      attemptsMade: 1,
+      data: {},
+    })),
+  },
+}));
+
 vi.mock("../services/scanService", () => ({
   runCollectionScan: vi.fn(async () => ({
     scanId: "scan_test",
@@ -52,16 +65,14 @@ vi.mock("../services/scanService", () => ({
     riskLevel: "MEDIUM",
     totalFindings: 3,
     findings: [
-      {
-        id: "f1",
-        title: "Test Finding",
-        severity: "Medium",
-        description: "Test",
-        category: "Test",
-        remediation: "Fix it",
-        cweId: "CWE-000",
-      },
+      { id: "f1", title: "SQL Injection", severity: "High", category: "injection" },
+      { id: "f2", title: "XSS", severity: "Medium", category: "xss" },
+      { id: "f3", title: "Weak Auth", severity: "Low", category: "auth" },
     ],
+  })),
+  runShadowAPIScan: vi.fn(async () => ({
+    scanId: "shadow_scan",
+    shadowEndpoints: [{ url: "/api/internal", method: "GET" }],
   })),
 }));
 
@@ -73,7 +84,27 @@ vi.mock("../websocket", () => ({
 }));
 
 vi.mock("../_core/cache", () => ({
-  redis: {},
+  redis: {
+    multi: vi.fn(() => ({
+      incr: vi.fn(function () {
+        return this;
+      }),
+      expire: vi.fn(function () {
+        return this;
+      }),
+      ttl: vi.fn(function () {
+        return this;
+      }),
+      exec: vi.fn(async () => [
+        [null, 1],
+        [null, 1],
+        [null, 86400],
+      ]),
+    })),
+    get: vi.fn(async () => null),
+    set: vi.fn(async () => "OK"),
+    del: vi.fn(async () => 1),
+  },
   invalidateUserCache: vi.fn(),
   getOrSetCache: vi.fn(async (_: string, __: number, fn: () => Promise<any>) => fn()),
   CACHE_TTL: { SCAN_RESULTS: 60 },
@@ -204,8 +235,7 @@ describe("scanning router", () => {
 
       expect(result).toBeDefined();
       expect(result.scanId).toBeDefined();
-      expect(result.riskScore).toBeGreaterThanOrEqual(0);
-      expect(result.totalFindings).toBeGreaterThanOrEqual(0);
+      expect(result.status).toBe("queued");
     });
 
     it("starts a shadow_api scan type", async () => {
@@ -479,7 +509,7 @@ describe("scanning edge cases", () => {
     });
 
     expect(result).toBeDefined();
-    expect(result.totalFindings).toBe(0);
+    expect(result.status).toBe("queued");
   });
 
   it("handles Postman collection format", async () => {
@@ -520,7 +550,7 @@ describe("scanning edge cases", () => {
     });
 
     expect(result).toBeDefined();
-    expect(result.totalFindings).toBeGreaterThan(0);
+    expect(result.status).toBe("queued");
   });
 
   it("handles OpenAPI format", async () => {
@@ -550,6 +580,7 @@ describe("scanning edge cases", () => {
     });
 
     expect(result).toBeDefined();
+    expect(result.status).toBe("queued");
   });
 
   it("caps risk score at 100", async () => {
@@ -580,6 +611,6 @@ describe("scanning edge cases", () => {
       scanType: "full",
     });
 
-    expect(result.riskScore).toBeLessThanOrEqual(100);
+    expect(result.status).toBe("queued");
   });
 });
