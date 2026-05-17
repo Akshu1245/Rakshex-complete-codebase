@@ -161,7 +161,7 @@ export async function invokeMCPTool(req: InvocationRequest): Promise<InvocationR
  * Blocks: localhost, loopback (IPv4 + IPv6), private ranges,
  * link-local, decimal/octal/hex encoded IPs, and empty/zero hosts.
  */
-function validateMcpUrl(url: string): void {
+export function validateMcpUrl(url: string): void {
   const parsed = new URL(url);
   if (parsed.protocol !== "https:") {
     throw new Error(`MCP servers must use HTTPS: got ${parsed.protocol}`);

@@ -20,6 +20,16 @@ function hasPollutionKeys(value: unknown): boolean {
   return Object.values(value).some((v) => hasPollutionKeys(v));
 }
 
+const MAX_COLLECTION_DATA_BYTES = 1_024 * 1_024; // 1 MB
+
+function checkDataSize(value: unknown): number {
+  try {
+    return new Blob([JSON.stringify(value)]).size;
+  } catch {
+    return 0;
+  }
+}
+
 export const collectionsRouter = router({
   create: editorProcedure
     .input(
@@ -41,6 +51,14 @@ export const collectionsRouter = router({
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Collection data contains prohibited keys",
+        });
+      }
+
+      const dataSize = checkDataSize(input.data);
+      if (dataSize > MAX_COLLECTION_DATA_BYTES) {
+        throw new TRPCError({
+          code: "PAYLOAD_TOO_LARGE",
+          message: `Collection data exceeds ${MAX_COLLECTION_DATA_BYTES / (1024 * 1024)}MB limit`,
         });
       }
 

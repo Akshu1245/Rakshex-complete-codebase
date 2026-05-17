@@ -14,6 +14,21 @@ import { summarizeFindings } from "../utils/findingSummarizer";
 import { INJECTION_PAYLOADS, groupPayloadsByCategory } from "../utils/promptInjectionPayloads";
 import { toNumber } from "../utils/decimal";
 
+// In-memory fallback for scan rate limiting when Redis is down
+const scanFallbackCounters = new Map<string, { count: number; expiresAt: number }>();
+
+function getFallbackScanCount(userId: number, dayKey: string): number {
+  const key = `${userId}:${dayKey}`;
+  const entry = scanFallbackCounters.get(key);
+  const now = Date.now();
+  if (!entry || now > entry.expiresAt) {
+    scanFallbackCounters.set(key, { count: 1, expiresAt: now + 24 * 60 * 60 * 1000 });
+    return 1;
+  }
+  entry.count += 1;
+  return entry.count;
+}
+
 export const scanningRouter = router({
   startScan: editorProcedure
     .input(
@@ -68,15 +83,14 @@ export const scanningRouter = router({
             resetsAt = Date.now() + ttlResult * 1000;
           }
         } catch (redisErr) {
-          // Redis is down — rather than fail-closed (which would block all
-          // scans), we fail-open with a warning so the platform stays usable.
-          // The DB-level scan record + Sentry alert on Redis errors give us
-          // an audit trail. If you'd rather fail-closed, throw here instead.
+          // Redis is down — use in-memory fallback instead of fail-open.
+          // This maintains rate-limiting (without cross-replica consistency)
+          // rather than completely disabling the limit.
           logger.warn(
             { err: redisErr },
-            "[scan-limit] Redis unavailable, allowing scan without rate-limit check",
+            "[scan-limit] Redis unavailable, falling back to in-memory rate limit",
           );
-          used = 0;
+          used = getFallbackScanCount(ctx.user.id, dayKey);
         }
         if (used > limits.maxScansPerDay) {
           throw scansPerDayLimitError(

@@ -12,6 +12,7 @@ import { getDb } from "../db";
 import { eq, desc, and } from "drizzle-orm";
 import { mcpServers, mcpTools, mcpInvocationLog } from "../../drizzle/schema";
 import { discoverMcpTools, classifyToolRisk, type McpTransport } from "../services/mcpTransport";
+import { validateMcpUrl } from "../services/mcpInvocationGateway";
 import { logger } from "../_core/logger";
 import { TRPCError } from "@trpc/server";
 
@@ -156,6 +157,26 @@ export const mcpGovernanceRouter = router({
           code: "TOO_MANY_REQUESTS",
           message: "MCP server registration limit reached (10 per hour). Please try again later.",
         });
+      }
+
+      // Command length limit for stdio transport
+      if (input.command && input.command.length > 50) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Command array exceeds maximum length of 50 arguments",
+        });
+      }
+
+      // Validate URL at registration time for http/sse transports (SSRF prevention)
+      if (input.transport !== "stdio" && input.url) {
+        try {
+          validateMcpUrl(input.url);
+        } catch (err) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: (err as Error).message,
+          });
+        }
       }
 
       const db = await getDb();
