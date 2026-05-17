@@ -80,6 +80,18 @@ export class WeeklyDigestCommand {
           ? "You're building a solid security habit — keep it up."
           : "Even one scan this week protects your APIs.";
 
+    const milestoneText =
+      streak === 7
+        ? "🎯 Milestone: 7-day scan streak achieved! DevPulse is now part of your workflow."
+        : streak === 3
+          ? "🔥 Milestone: 3-day scan streak! You're building a security habit."
+          : null;
+
+    const unresolvedReminder =
+      data.openFindings > 0
+        ? `You have ${data.openFindings} unresolved finding${data.openFindings !== 1 ? "s" : ""}. Reviewing them regularly keeps your APIs secure.`
+        : null;
+
     const riskColor =
       severityCounts.Critical > 0
         ? "#DC2626"
@@ -141,10 +153,14 @@ export class WeeklyDigestCommand {
   <h1>�️ What DevPulse did for you this week</h1>
   <div class="subtitle">Value-focused security summary</div>
 
+  ${milestoneText ? `<div class="value-box" style="background:#EFF6FF;border-left-color:#3B82F6"><strong style="color:#1E40AF">${milestoneText}</strong></div>` : ""}
+
   <div class="value-box">
     <strong>${consistencyText}</strong><br/>
     ${stats.scans > 0 ? `You ran <strong>${stats.scans}</strong> scan${stats.scans !== 1 ? "s" : ""} and resolved <strong>${resolvedThisWeek}</strong> issue${resolvedThisWeek !== 1 ? "s" : ""}.` : "Run your first scan to see real value metrics here."}
   </div>
+
+  ${unresolvedReminder ? `<div class="card" style="border-left:4px solid #F59E0B;padding-left:16px"><h3>⚠️ Unresolved Findings</h3><p style="font-size:13px;margin:8px 0">${unresolvedReminder}</p></div>` : ""}
 
   <div class="card">
     <h3>⚡ Issues Caught vs Fixed</h3>

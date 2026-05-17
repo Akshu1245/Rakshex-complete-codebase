@@ -329,8 +329,8 @@ export class SecurityWebviewPanel {
       <section class="findings-section">
         <div class="findings-header">
           <h2>Recent Findings</h2>
-          <div class="filter-bar">
-            <button class="filter-btn active" data-filter="all">All (${totalFindings})</button>
+          <div class="filter-bar" id="filter-bar">
+            <button class="filter-btn" data-filter="all">All (${totalFindings})</button>
             <button class="filter-btn" data-filter="Critical">Critical (${severityCounts.Critical})</button>
             <button class="filter-btn" data-filter="High">High (${severityCounts.High})</button>
             <button class="filter-btn" data-filter="Medium">Medium (${severityCounts.Medium})</button>
@@ -349,8 +349,8 @@ export class SecurityWebviewPanel {
                 <table id="findings-table">
                   <thead>
                     <tr>
-                      <th class="sortable" data-sort="severity">Severity ↕</th>
-                      <th class="sortable" data-sort="title">Title ↕</th>
+                      <th class="sortable" data-sort="severity">Sev ↕</th>
+                      <th class="sortable" data-sort="title">Finding ↕</th>
                       <th class="sortable" data-sort="collection">Collection ↕</th>
                       <th class="sortable" data-sort="status">Status ↕</th>
                       <th>Actions</th>
@@ -358,20 +358,35 @@ export class SecurityWebviewPanel {
                   </thead>
                   <tbody>
                     ${findings
-                      .map(
-                        (f) => `
+                      .map((f) => {
+                        const confidence =
+                          f.severity === "Critical"
+                            ? "High confidence"
+                            : f.severity === "High"
+                              ? "Likely issue"
+                              : "Review suggested";
+                        const confClass =
+                          f.severity === "Critical"
+                            ? "conf-high"
+                            : f.severity === "High"
+                              ? "conf-med"
+                              : "conf-low";
+                        return `
                       <tr class="finding-row" data-severity="${escapeHtml(f.severity)}" data-id="${escapeHtml(f.id)}">
-                        <td><span class="badge badge-${f.severity.toLowerCase()}">${escapeHtml(f.severity)}</span></td>
-                        <td class="col-title">${escapeHtml(f.title)}</td>
+                        <td><span class="badge badge-${f.severity.toLowerCase()}">${escapeHtml(f.severity.slice(0, 1))}</span></td>
+                        <td class="col-title">
+                          ${escapeHtml(f.title)}
+                          <div class="confidence ${confClass}">${confidence}</div>
+                        </td>
                         <td>${escapeHtml(f.collectionName)}</td>
                         <td><span class="status-badge status-${f.status}">${statusLabel(f.status)}</span></td>
                         <td class="actions-cell">
-                          ${f.status !== "resolved" ? `<button class="btn btn-xs btn-resolve" data-id="${escapeHtml(f.id)}" data-status="resolved">✓ Resolve</button>` : ""}
-                          ${f.status !== "in-progress" ? `<button class="btn btn-xs btn-progress" data-id="${escapeHtml(f.id)}" data-status="in-progress">⏳ Progress</button>` : ""}
+                          ${f.status !== "resolved" ? `<button class="btn btn-xs btn-resolve" data-id="${escapeHtml(f.id)}" data-status="resolved">Resolve</button>` : ""}
+                          ${f.status !== "in-progress" ? `<button class="btn btn-xs btn-progress" data-id="${escapeHtml(f.id)}" data-status="in-progress">Progress</button>` : ""}
                         </td>
                       </tr>
-                    `,
-                      )
+                    `;
+                      })
                       .join("")}
                   </tbody>
                 </table>
@@ -572,6 +587,10 @@ export class SecurityWebviewPanel {
     tbody tr:hover { background: var(--vscode-list-hoverBackground, #2a2d2e); }
     tbody tr:last-child td { border-bottom: 0; }
     .col-title { font-weight: 500; color: var(--vscode-editor-foreground); }
+    .col-title .confidence { font-size: 10px; font-weight: 500; margin-top: 2px; }
+    .confidence.conf-high { color: #ef4444; }
+    .confidence.conf-med { color: #f97316; }
+    .confidence.conf-low { color: #94a3b8; }
     .actions-cell { white-space: nowrap; }
 
     /* Empty & Error states */
@@ -774,17 +793,24 @@ export class SecurityWebviewPanel {
         var tbody = document.querySelector("#findings-table tbody");
         if (tbody) {
           tbody.innerHTML = findings.map(function (f) {
+            var confidence = f.severity === "Critical" ? "High confidence" : f.severity === "High" ? "Likely issue" : "Review suggested";
+            var confClass = f.severity === "Critical" ? "conf-high" : f.severity === "High" ? "conf-med" : "conf-low";
             return '<tr class="finding-row" data-severity="' + escapeHtml(f.severity) + '" data-id="' + escapeHtml(f.id) + '">' +
-              '<td><span class="badge badge-' + f.severity.toLowerCase() + '">' + escapeHtml(f.severity) + '</span></td>' +
-              '<td class="col-title">' + escapeHtml(f.title) + '</td>' +
+              '<td><span class="badge badge-' + f.severity.toLowerCase() + '">' + escapeHtml(f.severity.charAt(0)) + '</span></td>' +
+              '<td class="col-title">' + escapeHtml(f.title) + '<div class="confidence ' + confClass + '">' + confidence + '</div></td>' +
               '<td>' + escapeHtml(f.collectionName) + '</td>' +
               '<td><span class="status-badge status-' + f.status + '">' + statusLabel(f.status) + '</span></td>' +
               '<td class="actions-cell">' +
-              (f.status !== "resolved" ? '<button class="btn btn-xs btn-resolve" data-id="' + escapeHtml(f.id) + '" data-status="resolved">✓ Resolve</button>' : '') +
-              (f.status !== "in-progress" ? '<button class="btn btn-xs btn-progress" data-id="' + escapeHtml(f.id) + '" data-status="in-progress">⏳ Progress</button>' : '') +
+              (f.status !== "resolved" ? '<button class="btn btn-xs btn-resolve" data-id="' + escapeHtml(f.id) + '" data-status="resolved">Resolve</button>' : '') +
+              (f.status !== "in-progress" ? '<button class="btn btn-xs btn-progress" data-id="' + escapeHtml(f.id) + '" data-status="in-progress">Progress</button>' : '') +
               '</td></tr>';
           }).join("");
           bindActionBtns();
+          // Re-apply saved filter after DOM update
+          var savedFilter = localStorage.getItem("devpulse.filter") || "all";
+          document.querySelectorAll(".finding-row").forEach(function (row) {
+            row.style.display = (savedFilter === "all" || row.getAttribute("data-severity") === savedFilter) ? "" : "none";
+          });
         }
 
         // Update filter counts
@@ -848,21 +874,28 @@ export class SecurityWebviewPanel {
         });
       }
 
-      // Filter buttons
-      document.querySelectorAll(".filter-btn").forEach(function (btn) {
-        btn.addEventListener("click", function () {
-          document.querySelectorAll(".filter-btn").forEach(function (b) { b.classList.remove("active"); });
-          btn.classList.add("active");
+      // Filter buttons with localStorage persistence
+      (function initFilter() {
+        var savedFilter = localStorage.getItem("devpulse.filter") || "all";
+        document.querySelectorAll(".filter-btn").forEach(function (btn) {
           var filter = btn.getAttribute("data-filter");
-          document.querySelectorAll(".finding-row").forEach(function (row) {
-            if (filter === "all" || row.getAttribute("data-severity") === filter) {
-              row.style.display = "";
-            } else {
-              row.style.display = "none";
-            }
+          if (filter === savedFilter) btn.classList.add("active");
+          else btn.classList.remove("active");
+          btn.addEventListener("click", function () {
+            document.querySelectorAll(".filter-btn").forEach(function (b) { b.classList.remove("active"); });
+            btn.classList.add("active");
+            var f = btn.getAttribute("data-filter");
+            localStorage.setItem("devpulse.filter", f);
+            document.querySelectorAll(".finding-row").forEach(function (row) {
+              row.style.display = (f === "all" || row.getAttribute("data-severity") === f) ? "" : "none";
+            });
           });
         });
-      });
+        // Apply saved filter on load
+        document.querySelectorAll(".finding-row").forEach(function (row) {
+          row.style.display = (savedFilter === "all" || row.getAttribute("data-severity") === savedFilter) ? "" : "none";
+        });
+      })();
 
       // Sortable columns
       var sortState = { column: null, asc: true };

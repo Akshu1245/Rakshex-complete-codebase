@@ -371,6 +371,12 @@
     },
     "keybindings": [
       {
+        "command": "devpulse.openSecurityPanel",
+        "key": "enter",
+        "when": "focusedView == devpulse.findings && viewItem == finding",
+        "mac": "enter"
+      },
+      {
         "command": "devpulse.refresh",
         "key": "ctrl+shift+d",
         "mac": "cmd+shift+d",
