@@ -37,16 +37,21 @@
     "Testing"
   ],
   "keywords": [
-    "devpulse",
-    "security",
-    "llm",
-    "ai",
-    "cost",
-    "api",
+    "ai security",
+    "llm cost",
+    "api security",
+    "developer tools",
+    "openai",
+    "anthropic",
+    "agent guard",
+    "cost optimization",
     "postman",
     "openapi",
-    "scanning",
-    "monitoring"
+    "bruno",
+    "api scanning",
+    "secret detection",
+    "prompt injection",
+    "devpulse"
   ],
   "main": "./out/extension.js",
   "activationEvents": [
@@ -161,6 +166,12 @@
         "category": "DevPulse"
       },
       {
+        "command": "devpulse.runDemo",
+        "title": "DevPulse: Run Demo Scenarios",
+        "icon": "$(play-circle)",
+        "category": "DevPulse"
+      },
+      {
         "command": "devpulse.copyFindingId",
         "title": "DevPulse: Copy finding ID",
         "icon": "$(copy)",
@@ -187,6 +198,7 @@
         {
           "id": "devpulse.welcome",
           "name": "Welcome",
+          "icon": "$(shield)",
           "when": "!devpulse.signedIn",
           "contextualTitle": "DevPulse Welcome"
         },
