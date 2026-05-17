@@ -3,6 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { nanoid } from "nanoid";
 import { router, protectedProcedure, publicProcedure } from "../_core/trpc";
 import * as db from "../db";
+import { logger } from "../_core/logger";
 import {
   createSubscription,
   cancelSubscription,
@@ -22,7 +23,7 @@ export const paymentsRouter = router({
     .input(
       z.object({
         plan: z.enum(["pro", "enterprise"]),
-      })
+      }),
     )
     .mutation(async ({ input, ctx }) => {
       const planConfig = PLAN_CONFIG[input.plan];
@@ -30,11 +31,7 @@ export const paymentsRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid plan" });
       }
 
-      const result = await createSubscription(
-        ctx.user.id,
-        ctx.user.email || "",
-        input.plan
-      );
+      const result = await createSubscription(ctx.user.id, ctx.user.email || "", input.plan);
 
       await db.createSubscription({
         id: nanoid(),
@@ -57,7 +54,7 @@ export const paymentsRouter = router({
     .input(
       z.object({
         immediately: z.boolean().default(false),
-      })
+      }),
     )
     .mutation(async ({ input, ctx }) => {
       const subscription = await db.getSubscriptionByUserId(ctx.user.id);
@@ -70,13 +67,13 @@ export const paymentsRouter = router({
 
       const result = await cancelSubscription(
         subscription.razorpaySubscriptionId,
-        !input.immediately
+        !input.immediately,
       );
 
       await db.updateSubscriptionStatus(
         subscription.id,
         input.immediately ? "cancelled" : "active",
-        !input.immediately
+        !input.immediately,
       );
 
       if (input.immediately) {
@@ -93,9 +90,7 @@ export const paymentsRouter = router({
       return { invoices: [] };
     }
 
-    const invoices = await getSubscriptionInvoices(
-      subscription.razorpaySubscriptionId
-    );
+    const invoices = await getSubscriptionInvoices(subscription.razorpaySubscriptionId);
 
     for (const invoice of invoices) {
       if (invoice.payment_id && invoice.amount) {
@@ -118,7 +113,7 @@ export const paymentsRouter = router({
     const payments = await db.getPaymentsByUserId(ctx.user.id);
 
     return {
-      invoices: payments.map(p => ({
+      invoices: payments.map((p) => ({
         id: p.id,
         razorpayPaymentId: p.razorpayPaymentId,
         amount: p.amount,
@@ -131,95 +126,110 @@ export const paymentsRouter = router({
     };
   }),
 
-  handleWebhook: publicProcedure
-    .input(z.any())
-    .mutation(async ({ input, ctx }) => {
-      const signature = ctx.req.headers["x-razorpay-signature"] as string;
-      const payload = JSON.stringify(input);
+  handleWebhook: publicProcedure.input(z.any()).mutation(async ({ input, ctx }) => {
+    const signature = ctx.req.headers["x-razorpay-signature"] as string;
+    const payload = JSON.stringify(input);
 
-      if (!verifyWebhookSignature(payload, signature)) {
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "Invalid webhook signature",
-        });
-      }
+    if (!verifyWebhookSignature(payload, signature)) {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "Invalid webhook signature",
+      });
+    }
 
-      const event = handleWebhookEvent(input as RazorpayWebhookPayload);
+    const event = handleWebhookEvent(input as RazorpayWebhookPayload);
 
-      switch (event.event) {
-        case "subscription.activated":
-          if (event.subscriptionId) {
-            const sub = await db.getSubscriptionByRazorpayId(
-              event.subscriptionId
-            );
-            if (sub) {
-              await db.updateSubscriptionStatus(sub.id, "active");
-              await db.updateUserPlan(sub.userId, sub.plan);
-            }
+    switch (event.event) {
+      case "subscription.activated":
+        if (event.subscriptionId) {
+          const sub = await db.getSubscriptionByRazorpayId(event.subscriptionId);
+          if (sub) {
+            await db.updateSubscriptionStatus(sub.id, "active");
+            await db.updateUserPlan(sub.userId, sub.plan);
           }
-          break;
+        }
+        break;
 
-        case "subscription.charged":
-          if (event.data.payload.payment?.entity) {
-            const payment = event.data.payload.payment.entity;
-            const sub = await db.getSubscriptionByRazorpayId(
-              payment.subscription_id
-            );
-            if (sub) {
-              await db.createPayment({
-                id: nanoid(),
-                userId: sub.userId,
-                subscriptionId: sub.id,
-                razorpayPaymentId: payment.id,
-                razorpayOrderId: payment.order_id,
+      case "subscription.charged":
+        if (event.data.payload.payment?.entity) {
+          const payment = event.data.payload.payment.entity;
+          const sub = await db.getSubscriptionByRazorpayId(payment.subscription_id);
+          if (sub) {
+            await db.createPayment({
+              id: nanoid(),
+              userId: sub.userId,
+              subscriptionId: sub.id,
+              razorpayPaymentId: payment.id,
+              razorpayOrderId: payment.order_id,
+              amount: payment.amount / 100,
+              currency: payment.currency,
+              status: "captured",
+              createdAt: new Date(payment.created_at * 1000),
+            });
+          }
+        }
+        break;
+
+      case "subscription.cancelled":
+        if (event.subscriptionId) {
+          const sub = await db.getSubscriptionByRazorpayId(event.subscriptionId);
+          if (sub) {
+            await db.updateSubscriptionStatus(sub.id, "cancelled");
+            await db.updateUserPlan(sub.userId, "free");
+            await db.updateUserSubscriptionId(sub.userId, null);
+          }
+        }
+        break;
+
+      case "payment.failed":
+        if (event.data.payload.payment?.entity) {
+          const payment = event.data.payload.payment.entity;
+          const sub = await db.getSubscriptionByRazorpayId(payment.subscription_id);
+          if (sub) {
+            await db.updateSubscriptionStatus(sub.id, "past_due");
+
+            // Dunning: send retry email on first failure, downgrade after 3 failures
+            const user = await db.getUserById(sub.userId);
+            const failureCount = (await db.getPaymentsByUserId(sub.userId)).filter(
+              (p) =>
+                p.status === "failed" &&
+                p.createdAt > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+            ).length;
+
+            if (user?.email) {
+              const { sendPaymentFailedEmail } = await import("../email");
+              await sendPaymentFailedEmail({
+                toEmail: user.email,
+                userName: user.name ?? "",
                 amount: payment.amount / 100,
                 currency: payment.currency,
-                status: "captured",
-                createdAt: new Date(payment.created_at * 1000),
-              });
+                retryUrl: `${process.env.APP_URL || "https://devpulse.in"}/billing?retry=1`,
+                downgradeWarning: failureCount >= 2,
+              }).catch((err: unknown) => logger.warn({ err }, "[Payments] Dunning email failed"));
             }
-          }
-          break;
 
-        case "subscription.cancelled":
-          if (event.subscriptionId) {
-            const sub = await db.getSubscriptionByRazorpayId(
-              event.subscriptionId
-            );
-            if (sub) {
-              await db.updateSubscriptionStatus(sub.id, "cancelled");
+            if (failureCount >= 3) {
               await db.updateUserPlan(sub.userId, "free");
-              await db.updateUserSubscriptionId(sub.userId, null);
+              await db.updateSubscriptionStatus(sub.id, "cancelled");
+              logger.info(
+                { userId: sub.userId, subId: sub.id },
+                "[Payments] Downgraded to free after 3 failed payments",
+              );
             }
           }
-          break;
+        }
+        break;
 
-        case "payment.failed":
-          if (event.data.payload.payment?.entity) {
-            const payment = event.data.payload.payment.entity;
-            const sub = await db.getSubscriptionByRazorpayId(
-              payment.subscription_id
-            );
-            if (sub) {
-              await db.updateSubscriptionStatus(sub.id, "past_due");
-            }
-          }
-          break;
+      case "refund.processed":
+        if (event.data.payload.refund?.entity) {
+          const refund = event.data.payload.refund.entity;
+          await db.updatePaymentRefundStatus(refund.payment_id, refund.amount / 100, "full");
+        }
+        break;
+    }
 
-        case "refund.processed":
-          if (event.data.payload.refund?.entity) {
-            const refund = event.data.payload.refund.entity;
-            await db.updatePaymentRefundStatus(
-              refund.payment_id,
-              refund.amount / 100,
-              "full"
-            );
-          }
-          break;
-      }
-
-      return { received: true };
-    }),
+    return { received: true };
+  }),
 
   getPlans: publicProcedure.query(() => {
     return Object.entries(PLAN_CONFIG).map(([key, config]) => ({
@@ -235,8 +245,9 @@ export const paymentsRouter = router({
 
   getCurrentPlan: protectedProcedure.query(async ({ ctx }) => {
     const subscription = await db.getSubscriptionByUserId(ctx.user.id);
-    const plan = (subscription?.plan || "free") as "free" | "pro" | "enterprise";
-    const limits = getPlanLimits(plan);
+    const effectivePlan = await db.getEffectivePlan(ctx.user.id);
+    const trial = await db.getTrialStatus(ctx.user.id);
+    const limits = getPlanLimits(effectivePlan);
 
     // Utilization — inspired by Claude Code's `getRawUtilization()`. The
     // dashboard banner and VS Code status bar read this to show proactive
@@ -246,18 +257,16 @@ export const paymentsRouter = router({
       (async () => {
         const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
         const recent = await db.getRecentScans(ctx.user.id, 100);
-        return recent.filter(s => s.createdAt >= since).length;
+        return recent.filter((s) => s.createdAt >= since).length;
       })(),
     ]);
-    const utilization = computePlanUtilization(
-      plan,
-      collections.length,
-      dailyScans
-    );
+    const utilization = computePlanUtilization(effectivePlan, collections.length, dailyScans);
 
     return {
-      plan,
+      plan: subscription?.plan || "free",
+      effectivePlan,
       status: subscription?.status || "none",
+      trial,
       limits,
       utilization,
     };

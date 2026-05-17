@@ -8,6 +8,7 @@ import { OfflineBanner } from "../components/OfflineBanner";
 import { TRPCProvider } from "@/lib/providers";
 import AppShell from "@/components/AppShell";
 import { ToastProvider } from "@/components/Toast";
+import { TrialBanner } from "@/app/components/TrialBanner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -58,6 +59,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className={inter.className}>
+        <TrialBanner />
         <TRPCProvider>
           <AuthProvider>
             <ToastProvider>

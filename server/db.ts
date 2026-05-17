@@ -1260,6 +1260,40 @@ export async function getUserPlan(userId: number): Promise<string> {
   return result.length > 0 ? result[0].plan : "free";
 }
 
+const TRIAL_DAYS = 14;
+
+export async function getTrialStatus(userId: number): Promise<{
+  isTrial: boolean;
+  daysLeft: number;
+  totalDays: number;
+}> {
+  const user = await getUserById(userId);
+  if (!user) return { isTrial: false, daysLeft: 0, totalDays: TRIAL_DAYS };
+
+  // Users on paid plans are not in trial
+  const plan = user.plan ?? "free";
+  if (plan !== "free") {
+    return { isTrial: false, daysLeft: 0, totalDays: TRIAL_DAYS };
+  }
+
+  const createdAt = user.createdAt ? new Date(user.createdAt) : new Date();
+  const trialEnd = new Date(createdAt.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
+  const now = new Date();
+  const msLeft = trialEnd.getTime() - now.getTime();
+  const daysLeft = Math.max(0, Math.ceil(msLeft / (24 * 60 * 60 * 1000)));
+  const isTrial = msLeft > 0;
+
+  return { isTrial, daysLeft, totalDays: TRIAL_DAYS };
+}
+
+export async function getEffectivePlan(userId: number): Promise<"free" | "pro" | "enterprise"> {
+  const plan = await getUserPlan(userId);
+  if (plan !== "free") return plan as "free" | "pro" | "enterprise";
+
+  const trial = await getTrialStatus(userId);
+  return trial.isTrial ? "pro" : "free";
+}
+
 // ============================================================================
 // TEAM INVITATION ACCEPT / REJECT
 // ============================================================================

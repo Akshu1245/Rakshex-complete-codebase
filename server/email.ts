@@ -53,6 +53,15 @@ interface KillSwitchRecoveryEmailOptions {
   dashboardUrl: string;
 }
 
+interface PaymentFailedEmailOptions {
+  toEmail: string;
+  userName: string;
+  amount: number;
+  currency: string;
+  retryUrl: string;
+  downgradeWarning: boolean;
+}
+
 function createTransport() {
   const smtpHost = ENV.smtpHost;
   const smtpPort = ENV.smtpPort;
@@ -76,7 +85,7 @@ function createTransport() {
 }
 
 export async function sendTeamInviteEmail(
-  opts: TeamInviteEmailOptions & { token?: string }
+  opts: TeamInviteEmailOptions & { token?: string },
 ): Promise<void> {
   const appUrl = process.env.APP_URL || "https://devpulse.in";
   const inviteUrl = opts.token ? `${appUrl}/invite/${opts.token}` : appUrl;
@@ -130,9 +139,7 @@ export async function sendTeamInviteEmail(
 
   if (!config) {
     // Log to console when SMTP not configured (dev mode)
-    logger.info(
-      `[Email] SMTP not configured. Would have sent invite to: ${opts.toEmail}`
-    );
+    logger.info(`[Email] SMTP not configured. Would have sent invite to: ${opts.toEmail}`);
     logger.info(`[Email] Subject: ${subject}`);
     return;
   }
@@ -147,9 +154,7 @@ export async function sendTeamInviteEmail(
   logger.info(`[Email] Invite sent to ${opts.toEmail}`);
 }
 
-export async function sendPasswordResetEmail(
-  opts: PasswordResetEmailOptions
-): Promise<void> {
+export async function sendPasswordResetEmail(opts: PasswordResetEmailOptions): Promise<void> {
   const subject = "Reset your DevPulse password";
 
   const html = `
@@ -190,9 +195,7 @@ export async function sendPasswordResetEmail(
   const config = createTransport();
 
   if (!config) {
-    logger.info(
-      `[Email] SMTP not configured. Would have sent password reset to: ${opts.toEmail}`
-    );
+    logger.info(`[Email] SMTP not configured. Would have sent password reset to: ${opts.toEmail}`);
     logger.info(`[Email] Reset URL: ${opts.resetUrl}`);
     return;
   }
@@ -207,9 +210,7 @@ export async function sendPasswordResetEmail(
   logger.info(`[Email] Password reset sent to ${opts.toEmail}`);
 }
 
-export async function sendWelcomeEmail(
-  opts: WelcomeEmailOptions
-): Promise<void> {
+export async function sendWelcomeEmail(opts: WelcomeEmailOptions): Promise<void> {
   const appUrl = process.env.APP_URL || "https://devpulse.in";
   const subject = "Welcome to DevPulse!";
 
@@ -256,9 +257,7 @@ export async function sendWelcomeEmail(
   const config = createTransport();
 
   if (!config) {
-    logger.info(
-      `[Email] SMTP not configured. Would have sent welcome email to: ${opts.toEmail}`
-    );
+    logger.info(`[Email] SMTP not configured. Would have sent welcome email to: ${opts.toEmail}`);
     return;
   }
 
@@ -272,21 +271,13 @@ export async function sendWelcomeEmail(
   logger.info(`[Email] Welcome email sent to ${opts.toEmail}`);
 }
 
-export async function sendScanCompleteEmail(
-  opts: ScanCompleteEmailOptions
-): Promise<void> {
-  const totalFindings =
-    opts.criticalCount + opts.highCount + opts.mediumCount + opts.lowCount;
+export async function sendScanCompleteEmail(opts: ScanCompleteEmailOptions): Promise<void> {
+  const totalFindings = opts.criticalCount + opts.highCount + opts.mediumCount + opts.lowCount;
   const subject = `Scan Complete: ${opts.criticalCount > 0 ? `${opts.criticalCount} Critical ` : ""}${totalFindings} Findings in ${opts.collectionName}`;
 
   const severityColor =
-    opts.criticalCount > 0
-      ? "#DC2626"
-      : opts.highCount > 0
-        ? "#EA580C"
-        : "#16A34A";
-  const severityEmoji =
-    opts.criticalCount > 0 ? "🚨" : opts.highCount > 0 ? "⚠️" : "✅";
+    opts.criticalCount > 0 ? "#DC2626" : opts.highCount > 0 ? "#EA580C" : "#16A34A";
+  const severityEmoji = opts.criticalCount > 0 ? "🚨" : opts.highCount > 0 ? "⚠️" : "✅";
 
   const html = `
 <!DOCTYPE html>
@@ -357,7 +348,7 @@ export async function sendScanCompleteEmail(
 
   if (!config) {
     logger.info(
-      `[Email] SMTP not configured. Would have sent scan complete email to: ${opts.toEmail}`
+      `[Email] SMTP not configured. Would have sent scan complete email to: ${opts.toEmail}`,
     );
     return;
   }
@@ -372,9 +363,7 @@ export async function sendScanCompleteEmail(
   logger.info(`[Email] Scan complete email sent to ${opts.toEmail}`);
 }
 
-export async function sendBudgetWarningEmail(
-  opts: BudgetWarningEmailOptions
-): Promise<void> {
+export async function sendBudgetWarningEmail(opts: BudgetWarningEmailOptions): Promise<void> {
   const subject = `⚠️ DevPulse: 80% of your AI budget used`;
 
   const html = `
@@ -439,9 +428,7 @@ export async function sendBudgetWarningEmail(
   const config = createTransport();
 
   if (!config) {
-    logger.info(
-      `[Email] SMTP not configured. Would have sent budget warning to: ${opts.toEmail}`
-    );
+    logger.info(`[Email] SMTP not configured. Would have sent budget warning to: ${opts.toEmail}`);
     return;
   }
 
@@ -470,9 +457,7 @@ interface WeeklyDigestEmailOptions {
   dashboardUrl: string;
 }
 
-export async function sendWeeklyDigestEmail(
-  opts: WeeklyDigestEmailOptions
-): Promise<void> {
+export async function sendWeeklyDigestEmail(opts: WeeklyDigestEmailOptions): Promise<void> {
   const subject = `📊 Your DevPulse Weekly Security Digest`;
 
   const html = `
@@ -529,9 +514,7 @@ export async function sendWeeklyDigestEmail(
   const config = createTransport();
 
   if (!config) {
-    logger.info(
-      `[Email] SMTP not configured. Would have sent weekly digest to: ${opts.toEmail}`
-    );
+    logger.info(`[Email] SMTP not configured. Would have sent weekly digest to: ${opts.toEmail}`);
     return;
   }
 
@@ -558,7 +541,7 @@ interface KillSwitchRecoveryEmailOptions {
 }
 
 export async function sendKillSwitchRecoveryEmail(
-  opts: KillSwitchRecoveryEmailOptions
+  opts: KillSwitchRecoveryEmailOptions,
 ): Promise<void> {
   const subject = `✅ DevPulse Kill Switch Reset — AI calls resumed`;
 
@@ -607,7 +590,7 @@ export async function sendKillSwitchRecoveryEmail(
 
   if (!config) {
     logger.info(
-      `[Email] SMTP not configured. Would have sent kill switch recovery email to: ${opts.toEmail}`
+      `[Email] SMTP not configured. Would have sent kill switch recovery email to: ${opts.toEmail}`,
     );
     return;
   }
@@ -620,4 +603,70 @@ export async function sendKillSwitchRecoveryEmail(
   });
 
   logger.info(`[Email] Kill switch recovery email sent to ${opts.toEmail}`);
+}
+
+export async function sendPaymentFailedEmail(opts: PaymentFailedEmailOptions): Promise<void> {
+  const subject = opts.downgradeWarning
+    ? `⚠️ DevPulse: Payment failed — account will be downgraded`
+    : `⚠️ DevPulse: Payment failed — please update your billing`;
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Payment Failed</title></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background:#f9fafb; margin:0; padding:40px 0;">
+  <div style="max-width:520px; margin:0 auto; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+    <div style="background:linear-gradient(135deg,#ef4444,#dc2626); padding:32px; text-align:center;">
+      <h1 style="color:#fff; margin:0; font-size:24px;">Payment Failed</h1>
+      <p style="color:#fecaca; margin:8px 0 0; font-size:14px;">We could not process your subscription payment</p>
+    </div>
+    <div style="padding:40px 32px;">
+      <h2 style="color:#111827; font-size:20px; margin:0 0 16px;">Hi ${opts.userName || "there"},</h2>
+      <p style="color:#374151; line-height:1.6; margin:0 0 24px;">
+        We were unable to process your DevPulse subscription payment of <strong>${opts.currency} ${opts.amount.toFixed(2)}</strong>.
+      </p>
+      ${
+        opts.downgradeWarning
+          ? `
+      <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:16px; margin:0 0 28px;">
+        <p style="color:#991b1b; font-size:14px; margin:0;">
+          <strong>Warning:</strong> One more failed payment will downgrade your account to the Free plan. You will lose access to Pro features.
+        </p>
+      </div>
+      `
+          : ""
+      }
+      <a href="${opts.retryUrl}" style="display:block; background:#2563eb; color:#fff; text-decoration:none; padding:14px 24px; border-radius:8px; text-align:center; font-weight:600; font-size:16px; margin:0 0 16px;">
+        Update Payment Method →
+      </a>
+      <p style="color:#9ca3af; font-size:12px; text-align:center; margin:0;">
+        Questions? Reply to this email or contact support@devpulse.in
+      </p>
+    </div>
+    <div style="background:#f9fafb; border-top:1px solid #e5e7eb; padding:20px 32px; text-align:center;">
+      <p style="color:#9ca3af; font-size:12px; margin:0;">
+        © ${new Date().getFullYear()} DevPulse. API Security Made Simple.
+      </p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  const config = createTransport();
+
+  if (!config) {
+    logger.info(
+      `[Email] SMTP not configured. Would have sent payment failed email to: ${opts.toEmail}`,
+    );
+    return;
+  }
+
+  await config.transport.sendMail({
+    from: `"DevPulse" <${config.from}>`,
+    to: opts.toEmail,
+    subject,
+    html,
+  });
+
+  logger.info(`[Email] Payment failed email sent to ${opts.toEmail}`);
 }
