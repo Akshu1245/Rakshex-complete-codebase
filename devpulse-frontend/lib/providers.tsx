@@ -33,15 +33,9 @@ export function TRPCProvider({ children }: { children: ReactNode }) {
             refetchOnWindowFocus: false,
             retry: (failureCount, error) => {
               // Never retry 4xx errors (client mistakes)
-              if (
-                error &&
-                typeof error === "object" &&
-                "data" in error &&
-                typeof (error as any).data === "object" &&
-                "httpStatus" in (error as any).data &&
-                (error as any).data.httpStatus >= 400 &&
-                (error as any).data.httpStatus < 500
-              ) {
+              const trpcError = error as { data?: { httpStatus?: number } } | undefined;
+              const status = trpcError?.data?.httpStatus;
+              if (typeof status === "number" && status >= 400 && status < 500) {
                 return false;
               }
               // Retry up to 3 times for network/server errors with exponential backoff

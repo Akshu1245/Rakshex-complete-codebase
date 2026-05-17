@@ -3,7 +3,16 @@
 import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { SkeletonCard, SkeletonRow } from "@/components/Skeleton";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
 
 interface TrendPoint {
   date: string;
@@ -12,6 +21,12 @@ interface TrendPoint {
   leakage: number;
   jailbreak: number;
   toxicity: number;
+}
+
+interface RedTeamRun {
+  id: string;
+  findings: Finding[];
+  createdAt: string;
 }
 
 interface Finding {
@@ -35,8 +50,10 @@ export default function RedTeamPage() {
     async function load() {
       try {
         const runs = await utils.client.runtimeGovernance.redteamRuns.query({ limit: 50 });
-        const mappedFindings = runs.runs.flatMap((r: any) => r.findings || []).slice(0, 50);
-        setFindings(mappedFindings as Finding[]);
+        const mappedFindings = (runs.runs as RedTeamRun[])
+          .flatMap((r) => r.findings || [])
+          .slice(0, 50);
+        setFindings(mappedFindings);
       } catch (err) {
         console.error("Failed to load red-team data", err);
       } finally {
@@ -61,10 +78,14 @@ export default function RedTeamPage() {
 
   const severityColor = (s: string) => {
     switch (s) {
-      case "Critical": return "text-red-400 bg-red-900/30 border-red-700/40";
-      case "High": return "text-orange-400 bg-orange-900/30 border-orange-700/40";
-      case "Medium": return "text-yellow-400 bg-yellow-900/30 border-yellow-700/40";
-      default: return "text-gray-400 bg-gray-800/50 border-gray-600/30";
+      case "Critical":
+        return "text-red-400 bg-red-900/30 border-red-700/40";
+      case "High":
+        return "text-orange-400 bg-orange-900/30 border-orange-700/40";
+      case "Medium":
+        return "text-yellow-400 bg-yellow-900/30 border-yellow-700/40";
+      default:
+        return "text-gray-400 bg-gray-800/50 border-gray-600/30";
     }
   };
 
@@ -92,9 +113,7 @@ export default function RedTeamPage() {
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              activeTab === tab
-                ? "bg-gray-700 text-white"
-                : "text-gray-400 hover:text-gray-200"
+              activeTab === tab ? "bg-gray-700 text-white" : "text-gray-400 hover:text-gray-200"
             }`}
           >
             {tab === "trends" ? "Score Trends" : tab === "findings" ? "Findings" : "Schedule"}
@@ -165,11 +184,46 @@ export default function RedTeamPage() {
                       labelStyle={{ color: "#E5E7EB" }}
                     />
                     <Legend />
-                    <Line type="monotone" dataKey="overall" name="Overall" stroke="#60A5FA" strokeWidth={2} dot={false} />
-                    <Line type="monotone" dataKey="injection" name="Injection" stroke="#F87171" strokeWidth={2} dot={false} />
-                    <Line type="monotone" dataKey="leakage" name="Leakage" stroke="#FBBF24" strokeWidth={2} dot={false} />
-                    <Line type="monotone" dataKey="jailbreak" name="Jailbreak" stroke="#A78BFA" strokeWidth={2} dot={false} />
-                    <Line type="monotone" dataKey="toxicity" name="Toxicity" stroke="#34D399" strokeWidth={2} dot={false} />
+                    <Line
+                      type="monotone"
+                      dataKey="overall"
+                      name="Overall"
+                      stroke="#60A5FA"
+                      strokeWidth={2}
+                      dot={false}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="injection"
+                      name="Injection"
+                      stroke="#F87171"
+                      strokeWidth={2}
+                      dot={false}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="leakage"
+                      name="Leakage"
+                      stroke="#FBBF24"
+                      strokeWidth={2}
+                      dot={false}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="jailbreak"
+                      name="Jailbreak"
+                      stroke="#A78BFA"
+                      strokeWidth={2}
+                      dot={false}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="toxicity"
+                      name="Toxicity"
+                      stroke="#34D399"
+                      strokeWidth={2}
+                      dot={false}
+                    />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -206,7 +260,9 @@ export default function RedTeamPage() {
                 {findings.map((f) => (
                   <tr key={f.id} className="hover:bg-gray-700/20">
                     <td className="px-4 py-3">
-                      <span className={`inline-block px-2 py-1 rounded text-xs font-medium border ${severityColor(f.severity)}`}>
+                      <span
+                        className={`inline-block px-2 py-1 rounded text-xs font-medium border ${severityColor(f.severity)}`}
+                      >
                         {f.severity}
                       </span>
                     </td>
@@ -276,7 +332,9 @@ function SchedulePanel() {
           onClick={() => setEnabled(!enabled)}
           className={`w-12 h-6 rounded-full transition-colors ${enabled ? "bg-blue-600" : "bg-gray-600"}`}
         >
-          <div className={`w-5 h-5 bg-white rounded-full transition-transform ${enabled ? "translate-x-6" : "translate-x-0.5"}`} />
+          <div
+            className={`w-5 h-5 bg-white rounded-full transition-transform ${enabled ? "translate-x-6" : "translate-x-0.5"}`}
+          />
         </button>
       </div>
 

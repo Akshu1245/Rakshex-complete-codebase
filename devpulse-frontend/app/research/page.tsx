@@ -7,7 +7,13 @@ export default function ResearchPage() {
   const [generating, setGenerating] = useState(false);
   const scansQuery = trpc.research.listMemory.useQuery({ limit: 20 });
 
-  const scans = (scansQuery.data as any) || [];
+  interface ResearchMemoryItem {
+    id: string;
+    topic: string;
+    createdAt: string;
+    status: string;
+  }
+  const scans: ResearchMemoryItem[] = scansQuery.data?.items ?? [];
   const loading = scansQuery.isLoading;
 
   const runResearchMutation = trpc.research.runResearch.useMutation();

@@ -31,6 +31,17 @@ interface CredentialLeak {
   severity: string;
 }
 
+interface CollectionItem {
+  name?: string;
+  item?: CollectionItem[];
+  request?: {
+    url?: { raw?: string } | string;
+    method?: string;
+    header?: Array<{ key?: string }>;
+    body?: { raw?: string };
+  };
+}
+
 interface ScanResult {
   findings: Finding[];
   credentials: CredentialLeak[];
@@ -123,7 +134,7 @@ export default function DemoPage() {
     }
   };
 
-  const performClientScan = (collection: any): ScanResult => {
+  const performClientScan = (collection: { item?: CollectionItem[] }): ScanResult => {
     const findings: Finding[] = [];
     const credentials: CredentialLeak[] = [];
     const endpoints: string[] = [];
@@ -132,45 +143,59 @@ export default function DemoPage() {
     const startTime = performance.now();
 
     // Walk the collection tree
-    const walkItems = (items: any[], path: string = "") => {
+    const walkItems = (items: CollectionItem[], path: string = "") => {
       items?.forEach((item, idx) => {
         const currentPath = path
           ? `${path} > ${item.name || `Item ${idx}`}`
           : item.name || `Item ${idx}`;
 
-        if (item.request) {
-          const req = item.request;
-          const url =
-            typeof req.url === "string"
-              ? req.url
-              : req.url?.raw || req.url?.host?.join(".") || "unknown";
-          const method = req.method || "GET";
-          const endpointId = `${method} ${url}`;
-          endpoints.push(endpointId);
+        if (item.item) {
+          walkItems(item.item, currentPath);
+          return;
+        }
 
-          // Check for HTTPS
-          if (url.startsWith("http://")) {
+        // Process request
+        const req = item.request || {};
+        const urlRaw = typeof req.url === "string" ? req.url : req.url?.raw || "";
+        const method = (req.method || "GET").toUpperCase();
+
+        if (urlRaw) {
+          endpoints.push(urlRaw);
+
+          // Check for auth issues
+          if (method === "GET" && !urlRaw.includes("/public") && !urlRaw.includes("/health")) {
             findings.push({
-              id: `find-${findings.length}`,
+              id: `finding-${findings.length + 1}`,
+              severity: "Medium",
+              title: `GET endpoint may lack authorization`,
+              endpoint: urlRaw,
+              category: "Authentication",
+              remediation: "Add authentication checks or mark as public explicitly.",
+            });
+          }
+
+          // Check for insecure methods
+          if (["DELETE", "PUT", "PATCH"].includes(method) && !urlRaw.includes("/admin")) {
+            findings.push({
+              id: `finding-${findings.length + 1}`,
               severity: "High",
-              title: "Insecure HTTP endpoint detected",
-              endpoint: endpointId,
-              category: "OWASP API2:2023 — Broken Authentication",
-              remediation: "Change URL to use HTTPS protocol",
-              lineNumber: idx,
+              title: `Destructive method without admin path`,
+              endpoint: urlRaw,
+              category: "Access Control",
+              remediation: "Ensure destructive methods require elevated privileges.",
             });
           }
 
           // Check headers for security headers
           const headers = req.header || [];
-          const headerNames = headers.map((h: any) => (h.key || "").toLowerCase());
+          const headerNames = headers.map((h) => (h.key || "").toLowerCase());
 
           if (!headerNames.includes("authorization") && !headerNames.includes("x-api-key")) {
             findings.push({
               id: `find-${findings.length}`,
               severity: "Medium",
               title: "Missing authentication header",
-              endpoint: endpointId,
+              endpoint: urlRaw,
               category: "OWASP API2:2023 — Broken Authentication",
               remediation: "Add Authorization or X-API-Key header",
               lineNumber: idx,
@@ -178,7 +203,7 @@ export default function DemoPage() {
           }
 
           // Scan for exposed credentials in headers, body, URL
-          const allText = JSON.stringify({ url, headers, body: req.body });
+          const allText = JSON.stringify({ url: urlRaw, headers, body: req.body });
           const secretPatterns = [
             { regex: /sk-[a-zA-Z0-9]{48}/g, type: "OpenAI API Key" },
             { regex: /sk-ant-[a-zA-Z0-9]{32,}/g, type: "Anthropic API Key" },
@@ -205,7 +230,7 @@ export default function DemoPage() {
                   id: `find-${findings.length}`,
                   severity: "Critical",
                   title: `Exposed ${type} in collection`,
-                  endpoint: endpointId,
+                  endpoint: urlRaw,
                   category: "OWASP API3:2023 — Broken Object Property Level Authorization",
                   remediation: `Move ${type} to environment variables or secret manager`,
                   lineNumber: idx,
@@ -216,14 +241,14 @@ export default function DemoPage() {
 
           // BOLA check — URL with user ID pattern
           if (
-            /\{\{userId\}\}|\{userId\}|\/:userId|\/\d+/.test(url) &&
+            /\{\{userId\}\}|\{userId\}|\/:userId|\/\d+/.test(urlRaw) &&
             !headerNames.includes("authorization")
           ) {
             findings.push({
               id: `find-${findings.length}`,
               severity: "Critical",
               title: "Potential BOLA vulnerability — user ID in URL without auth",
-              endpoint: endpointId,
+              endpoint: urlRaw,
               category: "OWASP API1:2023 — Broken Object Level Authorization",
               remediation: "Add authorization checks for user-specific resources",
               lineNumber: idx,
