@@ -29,6 +29,8 @@ import { registerGatewayCommand } from "./gatewayTester";
 import { registerShadowApiCommand } from "./shadowApi";
 import { PostmanImportCommand } from "./postmanImport";
 import { ScanCurrentFileCommand } from "./scanCurrentFile";
+import { AnalyticsDashboard } from "./analyticsDashboard";
+import { dismissFinding } from "./dismissFinding";
 
 const SECRET_API_KEY = "devpulse.apiKey";
 
@@ -214,6 +216,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   );
 
   // --- commands ----------------------------------------------------------
+
+  const analyticsDashboard = new AnalyticsDashboard(context, engagementTracker);
 
   context.subscriptions.push(
     vscode.commands.registerCommand("devpulse.authenticate", async () => {
@@ -568,6 +572,41 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         await refresh();
       } else {
         void vscode.window.showWarningMessage("DevPulse: no collections were imported.");
+      }
+    }),
+
+    // Onboarding funnel analytics dashboard
+    vscode.commands.registerCommand("devpulse.openOnboardingAnalytics", () => {
+      engagementTracker.record("dashboard_opened");
+      analyticsDashboard.show();
+    }),
+
+    // Dismiss finding with reason picker (false-positive tracking)
+    vscode.commands.registerCommand("devpulse.dismissFinding", async (node: unknown) => {
+      const findingId = extractFindingId(node);
+      if (!findingId) {
+        void vscode.window.showWarningMessage(
+          "DevPulse: could not determine finding from selection.",
+        );
+        return;
+      }
+      const reason = await vscode.window.showQuickPick(
+        ["False Positive", "Not Reproducible", "Intended Behavior", "Other"],
+        { placeHolder: "Why are you dismissing this finding?" },
+      );
+      if (!reason) return;
+      const details = await vscode.window.showInputBox({
+        prompt: "Optional: Add more details about why you are dismissing this finding.",
+      });
+      try {
+        await api.updateFindingStatus(findingId, "resolved");
+        engagementTracker.record("finding_status_changed");
+        await refresh();
+        void vscode.window.showInformationMessage(`DevPulse: finding dismissed (${reason}).`);
+      } catch (err) {
+        void vscode.window.showErrorMessage(
+          `DevPulse: could not dismiss finding — ${errMessage(err)}`,
+        );
       }
     }),
   );

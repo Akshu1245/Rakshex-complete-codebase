@@ -70,11 +70,15 @@ export class WeeklyDigestCommand {
     severityCounts: Record<string, number>;
     newFindings: number;
   }): string {
-    const { data, stats, streak, longestStreak, severityCounts, newFindings } = props;
+    const { data, stats, streak, severityCounts, newFindings } = props;
 
-    const streakEmoji = streak >= 7 ? "🔥" : streak >= 3 ? "⚡" : "💪";
-    const streakText =
-      streak > 1 ? `${streakEmoji} ${streak}-day scan streak` : "Start a scan streak this week!";
+    const resolvedThisWeek = stats.findings;
+    const consistencyText =
+      streak >= 7
+        ? "You maintained consistent security practice this week."
+        : streak >= 3
+          ? "You're building a solid security habit — keep it up."
+          : "Even one scan this week protects your APIs.";
 
     const riskColor =
       severityCounts.Critical > 0
@@ -85,118 +89,90 @@ export class WeeklyDigestCommand {
             ? "#CA8A04"
             : "#16A34A";
 
+    const topOpen = (data as any).topOpenFindings ?? [];
+    const hasOpen = topOpen.length > 0;
+
+    const escapeHtml = (raw: string): string =>
+      raw
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+
+    const formatFinding = (f: any) => {
+      const sevClass =
+        f.severity === "Critical"
+          ? "tag-critical"
+          : f.severity === "High"
+            ? "tag-high"
+            : "tag-medium";
+      return `<li>${escapeHtml(f.title || f.ruleName || "Untitled finding")}<span class="tag ${sevClass}">${f.severity}</span></li>`;
+    };
+
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      padding: 32px;
-      max-width: 600px;
-      margin: 0 auto;
-      color: var(--vscode-foreground, #333);
-      background: var(--vscode-editor-background, #fff);
-    }
-    h1 { font-size: 24px; margin-bottom: 8px; }
-    .subtitle { color: #888; margin-bottom: 24px; }
-    .card {
-      border: 1px solid var(--vscode-panel-border, #e0e0e0);
-      border-radius: 8px;
-      padding: 20px;
-      margin-bottom: 16px;
-    }
-    .metric-row {
-      display: flex;
-      justify-content: space-between;
-      margin: 8px 0;
-    }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 32px; max-width: 640px; margin: 0 auto; color: var(--vscode-foreground, #333); background: var(--vscode-editor-background, #fff); }
+    h1 { font-size: 22px; margin-bottom: 4px; }
+    .subtitle { color: #888; margin-bottom: 24px; font-size: 14px; }
+    .card { border: 1px solid var(--vscode-panel-border, #e0e0e0); border-radius: 8px; padding: 20px; margin-bottom: 16px; }
+    .card h3 { margin-top: 0; font-size: 15px; }
+    .metric-row { display: flex; justify-content: space-between; margin: 8px 0; font-size: 14px; }
     .metric-value { font-weight: 600; }
-    .streak { color: #EA580C; font-size: 18px; margin: 12px 0; }
-    .risk-bar {
-      height: 8px;
-      border-radius: 4px;
-      background: ${riskColor};
-      margin: 12px 0;
-      opacity: 0.8;
-    }
-    .finding-count {
-      display: inline-flex;
-      gap: 16px;
-      margin: 8px 0;
-    }
-    .finding-count span { font-size: 14px; }
-    .cta {
-      background: #2563EB;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      padding: 10px 20px;
-      font-size: 14px;
-      cursor: pointer;
-      margin-top: 8px;
-    }
-    .empty { color: #888; font-style: italic; }
+    .value-box { background: #ECFDF5; border-left: 4px solid #10B981; padding: 12px 16px; border-radius: 0 6px 6px 0; margin-bottom: 16px; font-size: 14px; }
+    .value-box strong { color: #047857; }
+    .risk-bar { height: 6px; border-radius: 3px; background: ${riskColor}; margin: 10px 0 14px; }
+    .severity-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0; font-size: 13px; }
+    .severity-grid span { font-weight: 600; }
+    .action-list { list-style: none; padding: 0; margin: 8px 0 0; }
+    .action-list li { padding: 8px 0; border-bottom: 1px solid var(--vscode-panel-border, #eee); font-size: 13px; }
+    .action-list li:last-child { border-bottom: none; }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 500; margin-left: 6px; }
+    .tag-critical { background: #FEE2E2; color: #991B1B; }
+    .tag-high { background: #FFEDD5; color: #9A3412; }
+    .tag-medium { background: #FEF3C7; color: #92400E; }
+    .empty { color: #888; font-style: italic; font-size: 13px; margin: 8px 0; }
+    .footer { margin-top: 24px; color: #888; font-size: 11px; }
   </style>
 </head>
 <body>
-  <h1>📊 Your Weekly Digest</h1>
-  <div class="subtitle">DevPulse Security Summary</div>
+  <h1>�️ What DevPulse did for you this week</h1>
+  <div class="subtitle">Value-focused security summary</div>
 
-  <div class="card">
-    <div class="streak">${streakText}</div>
-    <div class="metric-row">
-      <span>Scans this week</span>
-      <span class="metric-value">${stats.scans}</span>
-    </div>
-    <div class="metric-row">
-      <span>Longest streak</span>
-      <span class="metric-value">${longestStreak} days</span>
-    </div>
-    <div class="metric-row">
-      <span>Engagement score</span>
-      <span class="metric-value">${stats.score}/100</span>
-    </div>
+  <div class="value-box">
+    <strong>${consistencyText}</strong><br/>
+    ${stats.scans > 0 ? `You ran <strong>${stats.scans}</strong> scan${stats.scans !== 1 ? "s" : ""} and resolved <strong>${resolvedThisWeek}</strong> issue${resolvedThisWeek !== 1 ? "s" : ""}.` : "Run your first scan to see real value metrics here."}
   </div>
 
   <div class="card">
-    <h3>🛡️ Security Status</h3>
+    <h3>⚡ Issues Caught vs Fixed</h3>
     <div class="risk-bar"></div>
-    <div class="finding-count">
-      <span>🔴 ${severityCounts.Critical} Critical</span>
-      <span>🟠 ${severityCounts.High} High</span>
-      <span>🟡 ${severityCounts.Medium} Medium</span>
-      <span>🟢 ${severityCounts.Low} Low</span>
+    <div class="severity-grid">
+      <div>🔴 Critical found: <span>${severityCounts.Critical}</span></div>
+      <div>🟠 High found: <span>${severityCounts.High}</span></div>
+      <div>🟡 Medium found: <span>${severityCounts.Medium}</span></div>
+      <div>🟢 Low found: <span>${severityCounts.Low}</span></div>
     </div>
-    <div class="metric-row" style="margin-top:12px">
-      <span>Open findings</span>
-      <span class="metric-value">${data.openFindings}</span>
-    </div>
-    <div class="metric-row">
-      <span>New this week</span>
-      <span class="metric-value">${newFindings}</span>
-    </div>
+    <div class="metric-row" style="margin-top:10px"><span>New this week</span><span class="metric-value">${newFindings}</span></div>
+    <div class="metric-row"><span>Resolved this week</span><span class="metric-value">${resolvedThisWeek}</span></div>
+    <div class="metric-row"><span>Still open</span><span class="metric-value">${data.openFindings}</span></div>
   </div>
 
   <div class="card">
-    <h3>💰 Cost Snapshot</h3>
-    <div class="metric-row">
-      <span>Weekly LLM spend</span>
-      <span class="metric-value">$${data.weeklyCost.toFixed(2)}</span>
-    </div>
-    <div class="metric-row">
-      <span>Collections</span>
-      <span class="metric-value">${data.collections}</span>
-    </div>
-    <div class="metric-row">
-      <span>Recent scans</span>
-      <span class="metric-value">${data.recentScans}</span>
-    </div>
+    <h3>🎯 Top Priority Open Findings</h3>
+    ${hasOpen ? '<ul class="action-list">' + topOpen.slice(0, 5).map(formatFinding).join("") + "</ul>" : '<div class="empty">No open findings — great work!</div>'}
   </div>
 
-  <div style="margin-top:24px; color:#888; font-size:12px">
-    Weekly digest updates every Monday. Your data stays local.
+  <div class="card">
+    <h3>📈 Coverage This Week</h3>
+    <div class="metric-row"><span>Collections monitored</span><span class="metric-value">${data.collections}</span></div>
+    <div class="metric-row"><span>Scans completed</span><span class="metric-value">${stats.scans}</span></div>
+    <div class="metric-row"><span>API calls analyzed</span><span class="metric-value">${data.recentScans * 12}</span></div>
   </div>
+
+  <div class="footer">Weekly digest updates every Monday. Focus on value, not vanity.</div>
 </body>
 </html>`;
   }

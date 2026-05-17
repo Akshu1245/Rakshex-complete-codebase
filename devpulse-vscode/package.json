@@ -208,6 +208,18 @@
         "title": "DevPulse: Check Health",
         "icon": "$(pulse)",
         "category": "DevPulse"
+      },
+      {
+        "command": "devpulse.openOnboardingAnalytics",
+        "title": "DevPulse: Open Onboarding Analytics",
+        "icon": "$(graph)",
+        "category": "DevPulse"
+      },
+      {
+        "command": "devpulse.dismissFinding",
+        "title": "DevPulse: Dismiss Finding",
+        "icon": "$(close)",
+        "category": "DevPulse"
       }
     ],
     "viewsContainers": {
@@ -290,6 +302,11 @@
           "group": "inline@2"
         },
         {
+          "command": "devpulse.dismissFinding",
+          "when": "view == devpulse.findings && viewItem == finding",
+          "group": "inline@3"
+        },
+        {
           "command": "devpulse.copyFindingId",
           "when": "view == devpulse.findings && viewItem == finding",
           "group": "1_actions@1"
@@ -333,6 +350,10 @@
         },
         {
           "command": "devpulse.openFindingInDashboard",
+          "when": "false"
+        },
+        {
+          "command": "devpulse.dismissFinding",
           "when": "false"
         }
       ]
