@@ -263,6 +263,22 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       void vscode.window.showInformationMessage(`Findings view: ${mode} mode.`);
     }),
 
+    vscode.commands.registerCommand("devpulse.showCritical", () => {
+      findingsProvider.setSeverityFilter("Critical");
+    }),
+    vscode.commands.registerCommand("devpulse.showHigh", () => {
+      findingsProvider.setSeverityFilter("High");
+    }),
+    vscode.commands.registerCommand("devpulse.showMedium", () => {
+      findingsProvider.setSeverityFilter("Medium");
+    }),
+    vscode.commands.registerCommand("devpulse.showLow", () => {
+      findingsProvider.setSeverityFilter("Low");
+    }),
+    vscode.commands.registerCommand("devpulse.clearSeverityFilter", () => {
+      findingsProvider.setSeverityFilter(null);
+    }),
+
     vscode.commands.registerCommand("devpulse.openDashboard", async () => {
       const base = getConfiguredBaseUrl().replace(/\/+$/, "");
       void vscode.env.openExternal(vscode.Uri.parse(base));
@@ -653,7 +669,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   );
 
   // Weekly digest command
-  const weeklyDigest = new WeeklyDigestCommand(api, engagementTracker);
+  const weeklyDigest = new WeeklyDigestCommand(api, engagementTracker, context);
   context.subscriptions.push(
     vscode.commands.registerCommand("devpulse.showWeeklyDigest", () => weeklyDigest.execute()),
   );

@@ -216,6 +216,31 @@
         "category": "DevPulse"
       },
       {
+        "command": "devpulse.showCritical",
+        "title": "DevPulse: Show Critical Findings",
+        "category": "DevPulse"
+      },
+      {
+        "command": "devpulse.showHigh",
+        "title": "DevPulse: Show High Findings",
+        "category": "DevPulse"
+      },
+      {
+        "command": "devpulse.showMedium",
+        "title": "DevPulse: Show Medium Findings",
+        "category": "DevPulse"
+      },
+      {
+        "command": "devpulse.showLow",
+        "title": "DevPulse: Show Low Findings",
+        "category": "DevPulse"
+      },
+      {
+        "command": "devpulse.clearSeverityFilter",
+        "title": "DevPulse: Clear Severity Filter",
+        "category": "DevPulse"
+      },
+      {
         "command": "devpulse.openOnboardingAnalytics",
         "title": "DevPulse: Open Onboarding Analytics",
         "icon": "$(graph)",
@@ -375,6 +400,36 @@
         "key": "enter",
         "when": "focusedView == devpulse.findings && viewItem == finding",
         "mac": "enter"
+      },
+      {
+        "command": "devpulse.showCritical",
+        "key": "ctrl+shift+1",
+        "mac": "cmd+shift+1",
+        "when": "focusedView == devpulse.findings"
+      },
+      {
+        "command": "devpulse.showHigh",
+        "key": "ctrl+shift+2",
+        "mac": "cmd+shift+2",
+        "when": "focusedView == devpulse.findings"
+      },
+      {
+        "command": "devpulse.showMedium",
+        "key": "ctrl+shift+3",
+        "mac": "cmd+shift+3",
+        "when": "focusedView == devpulse.findings"
+      },
+      {
+        "command": "devpulse.showLow",
+        "key": "ctrl+shift+4",
+        "mac": "cmd+shift+4",
+        "when": "focusedView == devpulse.findings"
+      },
+      {
+        "command": "devpulse.clearSeverityFilter",
+        "key": "ctrl+shift+0",
+        "mac": "cmd+shift+0",
+        "when": "focusedView == devpulse.findings"
       },
       {
         "command": "devpulse.refresh",

@@ -1,11 +1,13 @@
 import * as vscode from "vscode";
 import type { DevPulseApi, DashboardData, Finding } from "./api";
 import type { EngagementTracker } from "./engagementTracker";
+import { RetentionEngine } from "./retentionEngine";
 
 export class WeeklyDigestCommand {
   constructor(
     private readonly api: DevPulseApi,
     private readonly engagementTracker: EngagementTracker,
+    private readonly context?: vscode.ExtensionContext,
   ) {}
 
   async execute(): Promise<void> {
@@ -23,6 +25,13 @@ export class WeeklyDigestCommand {
       const severityCounts = this.getSeverityCounts(findings);
       const newFindings = findings.filter((f) => f.status === "open" && this.isRecent(f));
 
+      const trust = this.context
+        ? new RetentionEngine(this.context, this.engagementTracker).getTrustSignals()
+        : null;
+      const retention = this.context
+        ? new RetentionEngine(this.context, this.engagementTracker).getRetentionCohort()
+        : null;
+
       const panel = vscode.window.createWebviewPanel(
         "devpulse.weeklyDigest",
         "DevPulse Weekly Digest",
@@ -38,6 +47,8 @@ export class WeeklyDigestCommand {
         segment,
         severityCounts,
         newFindings: newFindings.length,
+        trust,
+        retention,
       });
     } catch (err) {
       void vscode.window.showErrorMessage(
@@ -69,8 +80,15 @@ export class WeeklyDigestCommand {
     segment: string;
     severityCounts: Record<string, number>;
     newFindings: number;
+    trust: {
+      totalDismissals: number;
+      falsePositives: number;
+      trustScore: number;
+      trend: string;
+    } | null;
+    retention: { d1: boolean; d7: boolean; d30: boolean; installedAt: number } | null;
   }): string {
-    const { data, stats, streak, severityCounts, newFindings } = props;
+    const { data, stats, streak, severityCounts, newFindings, trust, retention } = props;
 
     const resolvedThisWeek = stats.findings;
     const consistencyText =
@@ -187,6 +205,31 @@ export class WeeklyDigestCommand {
     <div class="metric-row"><span>Scans completed</span><span class="metric-value">${stats.scans}</span></div>
     <div class="metric-row"><span>API calls analyzed</span><span class="metric-value">${data.recentScans * 12}</span></div>
   </div>
+
+  ${
+    trust
+      ? `
+  <div class="card">
+    <h3>🛡️ Trust Quality</h3>
+    <div class="metric-row"><span>Trust score</span><span class="metric-value" style="color:${trust.trustScore >= 80 ? "#16A34A" : trust.trustScore >= 50 ? "#CA8A04" : "#DC2626"}">${trust.trustScore}/100</span></div>
+    <div class="metric-row"><span>Trend</span><span class="metric-value">${trust.trend}</span></div>
+    <div class="metric-row"><span>False positives</span><span class="metric-value">${trust.falsePositives}</span></div>
+    <p style="font-size:12px;color:#888;margin-top:8px">Trust score measures actions taken on findings vs dismissals. Higher is better.</p>
+  </div>`
+      : ""
+  }
+
+  ${
+    retention
+      ? `
+  <div class="card">
+    <h3>🔁 Scan Consistency</h3>
+    <div class="metric-row"><span>D1 retention</span><span class="metric-value">${retention.d1 ? "✓ Yes" : "—"}</span></div>
+    <div class="metric-row"><span>D7 retention</span><span class="metric-value">${retention.d7 ? "✓ Yes" : "—"}</span></div>
+    <div class="metric-row"><span>Days since install</span><span class="metric-value">${Math.floor((Date.now() - retention.installedAt) / (24 * 60 * 60 * 1000))}</span></div>
+  </div>`
+      : ""
+  }
 
   <div class="footer">Weekly digest updates every Monday. Focus on value, not vanity.</div>
 </body>

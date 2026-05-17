@@ -46,6 +46,7 @@ export class FindingsTreeProvider implements vscode.TreeDataProvider<FindingsNod
   private lastFetchTime = 0;
   private readonly CACHE_MS = 8000; // 8-second cache to avoid redundant API calls
   private compactMode = false;
+  private severityFilter: Severity | null = null;
 
   constructor(
     private readonly api: DevPulseApi,
@@ -64,6 +65,15 @@ export class FindingsTreeProvider implements vscode.TreeDataProvider<FindingsNod
 
   isCompact(): boolean {
     return this.compactMode;
+  }
+
+  setSeverityFilter(severity: Severity | null): void {
+    this.severityFilter = severity;
+    this._onDidChange.fire();
+  }
+
+  getSeverityFilter(): Severity | null {
+    return this.severityFilter;
   }
 
   setSignedIn(signedIn: boolean): void {
@@ -169,6 +179,7 @@ export class FindingsTreeProvider implements vscode.TreeDataProvider<FindingsNod
       }
       const groups: SeverityGroupNode[] = [];
       for (const sev of SEVERITY_ORDER) {
+        if (this.severityFilter && sev !== this.severityFilter) continue;
         const matches = this.findings.filter((f) => f.severity === sev);
         if (matches.length > 0) {
           groups.push(new SeverityGroupNode(sev, matches));
