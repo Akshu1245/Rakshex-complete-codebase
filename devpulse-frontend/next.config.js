@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const TS_BACKEND_URL =
-  process.env.NEXT_PUBLIC_TS_API_URL || "http://localhost:3000";
+  process.env.NEXT_PUBLIC_TS_API_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  "http://localhost:3000";
 
 const nextConfig = {
   // Don't advertise Next.js in response headers. Attackers can still

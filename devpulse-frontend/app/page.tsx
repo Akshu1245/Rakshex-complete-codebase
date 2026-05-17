@@ -1,69 +1,78 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+function JsonLdInjector() {
+  useEffect(() => {
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://devpulse.in/#organization",
+          name: "DevPulse",
+          url: "https://devpulse.in",
+          logo: "https://devpulse.in/logo.png",
+          description:
+            "AI Runtime Governance Platform — security scanning, cost monitoring, and compliance for production AI agents.",
+          sameAs: [
+            "https://twitter.com/devpulsehq",
+            "https://github.com/Akshu1245/devpulse-complete-codebase",
+          ],
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://devpulse.in/#website",
+          url: "https://devpulse.in",
+          name: "DevPulse",
+          publisher: { "@id": "https://devpulse.in/#organization" },
+        },
+        {
+          "@type": "SoftwareApplication",
+          "@id": "https://devpulse.in/#product",
+          name: "DevPulse",
+          applicationCategory: "DeveloperApplication",
+          operatingSystem: "Any",
+          offers: {
+            "@type": "Offer",
+            price: "0",
+            priceCurrency: "USD",
+          },
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: "4.8",
+            ratingCount: "42",
+          },
+          featureList: [
+            "AI Agent Security Scanning",
+            "LLM Cost Monitoring",
+            "Shadow API Detection",
+            "Prompt Injection Prevention",
+            "PII Redaction",
+            "Kill Switch",
+          ],
+        },
+      ],
+    };
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.textContent = JSON.stringify(jsonLd);
+    document.head.appendChild(script);
+    return () => {
+      document.head.removeChild(script);
+    };
+  }, []);
+  return null;
+}
 
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "Organization",
-        "@id": "https://devpulse.in/#organization",
-        name: "DevPulse",
-        url: "https://devpulse.in",
-        logo: "https://devpulse.in/logo.png",
-        description:
-          "AI Runtime Governance Platform — security scanning, cost monitoring, and compliance for production AI agents.",
-        sameAs: [
-          "https://twitter.com/devpulsehq",
-          "https://github.com/Akshu1245/devpulse-complete-codebase",
-        ],
-      },
-      {
-        "@type": "WebSite",
-        "@id": "https://devpulse.in/#website",
-        url: "https://devpulse.in",
-        name: "DevPulse",
-        publisher: { "@id": "https://devpulse.in/#organization" },
-      },
-      {
-        "@type": "SoftwareApplication",
-        "@id": "https://devpulse.in/#product",
-        name: "DevPulse",
-        applicationCategory: "DeveloperApplication",
-        operatingSystem: "Any",
-        offers: {
-          "@type": "Offer",
-          price: "0",
-          priceCurrency: "USD",
-        },
-        aggregateRating: {
-          "@type": "AggregateRating",
-          ratingValue: "4.8",
-          ratingCount: "42",
-        },
-        featureList: [
-          "AI Agent Security Scanning",
-          "LLM Cost Monitoring",
-          "Shadow API Detection",
-          "Prompt Injection Prevention",
-          "PII Redaction",
-          "Kill Switch",
-        ],
-      },
-    ],
-  };
-
   return (
     <div className="min-h-screen bg-gray-900 text-white font-sans">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <JsonLdInjector />
       {/* Nav */}
       <nav className="flex justify-between items-center p-6 max-w-7xl mx-auto">
         <div className="text-2xl font-bold text-blue-500">DevPulse</div>

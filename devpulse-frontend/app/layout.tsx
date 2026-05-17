@@ -10,9 +10,6 @@ import AppShell from "@/components/AppShell";
 import { ToastProvider } from "@/components/Toast";
 import { TrialBanner } from "@/app/components/TrialBanner";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-
 const inter = Inter({ subsets: ["latin"] });
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://devpulse.in";

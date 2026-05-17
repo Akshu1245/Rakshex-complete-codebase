@@ -12,12 +12,24 @@ const PUBLIC_PATHS = [
   "/privacy",
   "/terms",
   "/pricing",
+  "/blog",
+  "/blog/helicone-alternative",
+  "/blog/portkey-alternative",
+  "/blog/lakera-alternative",
+  "/compare",
+  "/compare/helicone",
+  "/compare/portkey",
+  "/compare/lakera",
+  "/compare/langsmith",
+  "/compare/datadog",
+  "/compare/snyk",
+  "/roi-calculator",
+  "/cookies",
+  "/demo",
 ];
 
 function isPublicPath(pathname: string): boolean {
-  return PUBLIC_PATHS.some(
-    (p) => p === pathname || (p !== "/" && pathname.startsWith(p))
-  );
+  return PUBLIC_PATHS.some((p) => p === pathname || (p !== "/" && pathname.startsWith(p)));
 }
 
 export default function AppShell({ children }: { children: ReactNode }) {
@@ -40,12 +52,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
             className="text-gray-400 hover:text-white"
             aria-label="Open sidebar"
           >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
