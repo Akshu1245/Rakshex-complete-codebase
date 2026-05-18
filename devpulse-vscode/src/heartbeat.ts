@@ -25,6 +25,14 @@ export class HeartbeatService implements vscode.Disposable {
     const intervalSec = cfg.get<number>("heartbeatIntervalSec", 120);
     const trackFiles = cfg.get<boolean>("trackFileChanges", true);
 
+    // Clean up any existing timer/watcher before starting new ones
+    if (this.timer) {
+      clearInterval(this.timer);
+      this.timer = undefined;
+    }
+    this.fileWatcherDisposable?.dispose();
+    this.fileWatcherDisposable = undefined;
+
     if (intervalSec > 0) {
       this.timer = setInterval(() => void this.tick(), Math.max(intervalSec, 30) * 1000);
       void this.sendSessionEvent("session_start");

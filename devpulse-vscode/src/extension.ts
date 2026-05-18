@@ -113,9 +113,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       // Track potential value moments after scan
       const findings = findingsProvider.getFindingsSnapshot?.() ?? [];
       const secrets = findings.filter(
-        (f: { severity: string }) => f.severity === "critical",
+        (f: { severity: string }) => f.severity === "Critical",
       ).length;
-      const high = findings.filter((f: { severity: string }) => f.severity === "high").length;
+      const high = findings.filter((f: { severity: string }) => f.severity === "High").length;
       if (secrets > 0 || high > 0) {
         engagementTracker.recordOnboardingStep("found_issue");
       }
@@ -723,14 +723,20 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     { dispose: () => heartbeat.stop() },
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration("devpulse.apiUrl")) {
-        void refresh();
+        void refresh().catch(() => {
+          statusBar.showError("Could not refresh data — will retry automatically");
+        });
       }
       if (
         e.affectsConfiguration("devpulse.heartbeatIntervalSec") ||
         e.affectsConfiguration("devpulse.trackFileChanges")
       ) {
-        heartbeat.stop();
-        heartbeat.start();
+        try {
+          heartbeat.stop();
+          heartbeat.start();
+        } catch {
+          statusBar.showError("Heartbeat restart failed — will retry automatically");
+        }
       }
     }),
   );

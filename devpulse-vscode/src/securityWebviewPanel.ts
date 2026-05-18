@@ -30,6 +30,7 @@ export class SecurityWebviewPanel {
   private disposables: vscode.Disposable[] = [];
   private autoRefreshTimer: NodeJS.Timeout | undefined;
   private isFirstRender = true;
+  private refreshInFlight = false;
 
   private constructor(
     panel: vscode.WebviewPanel,
@@ -126,50 +127,56 @@ export class SecurityWebviewPanel {
   }
 
   private async refresh(): Promise<void> {
-    // On first render, set full HTML with loading state
-    if (this.isFirstRender) {
-      this.panel.webview.html = this._getHtmlForWebview(this.panel.webview, {
-        dashboard: null,
-        findings: [],
-        error: null,
-        errorCategory: null,
-        lastUpdated: null,
-      });
-      this.isFirstRender = false;
-    } else {
-      // Subsequent refreshes: show a subtle loading overlay, not full re-render
-      this.panel.webview.postMessage({ type: "refreshStart" });
-    }
-
+    if (this.refreshInFlight) return;
+    this.refreshInFlight = true;
     try {
-      const [dashboard, findings] = await Promise.all([
-        this.api.getDashboardData(),
-        this.api.getRecentFindings(50),
-      ]);
-      const state: PanelState = {
-        dashboard,
-        findings,
-        error: null,
-        errorCategory: null,
-        lastUpdated: new Date().toLocaleTimeString(),
-      };
-      if (!this.panel.visible) {
-        return;
+      // On first render, set full HTML with loading state
+      if (this.isFirstRender) {
+        this.panel.webview.html = this._getHtmlForWebview(this.panel.webview, {
+          dashboard: null,
+          findings: [],
+          error: null,
+          errorCategory: null,
+          lastUpdated: null,
+        });
+        this.isFirstRender = false;
+      } else {
+        // Subsequent refreshes: show a subtle loading overlay, not full re-render
+        this.panel.webview.postMessage({ type: "refreshStart" });
       }
-      this.panel.webview.postMessage({ type: "dataUpdate", state });
-    } catch (err) {
-      const { message, category } = this.classifyError(err);
-      const state: PanelState = {
-        dashboard: null,
-        findings: [],
-        error: message,
-        errorCategory: category,
-        lastUpdated: null,
-      };
-      if (!this.panel.visible) {
-        return;
+
+      try {
+        const [dashboard, findings] = await Promise.all([
+          this.api.getDashboardData(),
+          this.api.getRecentFindings(50),
+        ]);
+        const state: PanelState = {
+          dashboard,
+          findings,
+          error: null,
+          errorCategory: null,
+          lastUpdated: new Date().toLocaleTimeString(),
+        };
+        if (!this.panel.visible) {
+          return;
+        }
+        this.panel.webview.postMessage({ type: "dataUpdate", state });
+      } catch (err) {
+        const { message, category } = this.classifyError(err);
+        const state: PanelState = {
+          dashboard: null,
+          findings: [],
+          error: message,
+          errorCategory: category,
+          lastUpdated: null,
+        };
+        if (!this.panel.visible) {
+          return;
+        }
+        this.panel.webview.postMessage({ type: "dataUpdate", state });
       }
-      this.panel.webview.postMessage({ type: "dataUpdate", state });
+    } finally {
+      this.refreshInFlight = false;
     }
   }
 
