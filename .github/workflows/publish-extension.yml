@@ -81,7 +81,7 @@ jobs:
         if: ${{ inputs.dryRun }}
         run: |
           npm install -g @vscode/vsce
-          vsce package --out devpulse-${{ env.VERSION }}.vsix
+          vsce package --no-dependencies --baseContentUrl https://github.com/Akshu1245/devpulse-complete-codebase/blob/HEAD/devpulse-vscode/ --baseImagesUrl https://github.com/Akshu1245/devpulse-complete-codebase/raw/HEAD/devpulse-vscode/ --out devpulse-${{ env.VERSION }}.vsix
           echo "Dry-run package created: devpulse-${{ env.VERSION }}.vsix"
           ls -la *.vsix
 
@@ -89,7 +89,7 @@ jobs:
         if: ${{ !inputs.dryRun }}
         run: |
           npm install -g @vscode/vsce
-          vsce publish -p ${{ secrets.VSCE_PAT }}
+          vsce publish --no-dependencies --baseContentUrl https://github.com/Akshu1245/devpulse-complete-codebase/blob/HEAD/devpulse-vscode/ --baseImagesUrl https://github.com/Akshu1245/devpulse-complete-codebase/raw/HEAD/devpulse-vscode/ -p ${{ secrets.VSCE_PAT }}
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
 
