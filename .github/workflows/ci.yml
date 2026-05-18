@@ -2,9 +2,19 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches:
+      - main
+      - master
+      - 'feature/**'
+      - 'release/**'
+      - 'hotfix/**'
   pull_request:
-    branches: [main, master]
+    branches:
+      - main
+      - master
+      - 'feature/**'
+      - 'release/**'
+      - 'hotfix/**'
 
 env:
   REGISTRY: ghcr.io
