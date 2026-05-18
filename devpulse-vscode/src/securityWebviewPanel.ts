@@ -645,19 +645,27 @@ export class SecurityWebviewPanel {
       background: transparent;
       overflow: hidden;
       pointer-events: none;
+      will-change: opacity;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .refresh-overlay.active {
+      opacity: 1;
     }
     .refresh-overlay.active .refresh-bar {
-      animation: refreshSlide 1.5s ease-in-out infinite;
+      animation: refreshSlide 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+      will-change: transform;
     }
     .refresh-bar {
-      width: 40%; height: 100%;
+      width: 35%; height: 100%;
       background: var(--vscode-button-background, #0e639c);
       border-radius: 0 2px 2px 0;
+      opacity: 0.8;
     }
     @keyframes refreshSlide {
-      0% { transform: translateX(-100%); }
-      50% { transform: translateX(150%); }
-      100% { transform: translateX(-100%); }
+      0% { transform: translateX(-120%); }
+      50% { transform: translateX(180%); }
+      100% { transform: translateX(-120%); }
     }
     .refresh-badge {
       position: fixed; top: 8px; right: 16px; z-index: 101;
@@ -665,8 +673,9 @@ export class SecurityWebviewPanel {
       font-size: 10px; font-weight: 600;
       background: var(--vscode-button-background, #0e639c);
       color: var(--vscode-button-foreground, #fff);
-      opacity: 0; transition: opacity 0.2s;
+      opacity: 0; transition: opacity 0.4s ease 0.2s;
       pointer-events: none;
+      will-change: opacity;
     }
     .refresh-badge.visible { opacity: 1; }
 
@@ -718,11 +727,16 @@ export class SecurityWebviewPanel {
       const refreshOverlay = document.getElementById("refresh-overlay");
       const refreshBadge = document.getElementById("refresh-badge");
 
+      var refreshBadgeTimer = null;
       function showRefreshIndicator() {
         if (refreshOverlay) refreshOverlay.classList.add("active");
-        if (refreshBadge) refreshBadge.classList.add("visible");
+        // Delay badge to avoid flicker on fast refreshes
+        refreshBadgeTimer = setTimeout(function () {
+          if (refreshBadge) refreshBadge.classList.add("visible");
+        }, 300);
       }
       function hideRefreshIndicator() {
+        if (refreshBadgeTimer) { clearTimeout(refreshBadgeTimer); refreshBadgeTimer = null; }
         if (refreshOverlay) refreshOverlay.classList.remove("active");
         if (refreshBadge) refreshBadge.classList.remove("visible");
       }
