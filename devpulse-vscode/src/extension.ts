@@ -33,6 +33,7 @@ import { AnalyticsDashboard } from "./analyticsDashboard";
 import { RetentionEngine } from "./retentionEngine";
 import { dismissFinding } from "./dismissFinding";
 import { maybeInstallMock } from "./mockServerActivation";
+import { UninstallSurvey } from "./uninstallSurvey";
 
 const SECRET_API_KEY = "devpulse.apiKey";
 
@@ -811,6 +812,27 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const healthCheck = new HealthCheckCommand(api);
   context.subscriptions.push(
     vscode.commands.registerCommand("devpulse.checkHealth", () => healthCheck.execute()),
+  );
+
+  // Uninstall feedback: VS Code does not expose a real onUninstall hook, so the
+  // rollout playbook (docs/rollout/uninstall-survey.md) triggers this command
+  // manually from the offboarding interview. One-time guard prevents the same
+  // user being surveyed twice if they re-run the command after submitting.
+  const uninstallSurvey = new UninstallSurvey(api);
+  context.subscriptions.push(
+    vscode.commands.registerCommand("devpulse.showUninstallSurvey", async () => {
+      const alreadySubmitted = context.globalState.get<number>(
+        "devpulse.uninstallSurveySubmittedAt",
+      );
+      if (alreadySubmitted) {
+        void vscode.window.showInformationMessage(
+          "Thanks — your uninstall feedback was already recorded.",
+        );
+        return;
+      }
+      await uninstallSurvey.show();
+      void context.globalState.update("devpulse.uninstallSurveySubmittedAt", Date.now());
+    }),
   );
   // Auto-start tour for new users after a brief delay so the UI feels settled
   const tourDismissed = context.globalState.get<boolean>("devpulse.tourDismissed") ?? false;

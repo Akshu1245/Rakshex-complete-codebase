@@ -10,3 +10,4 @@ vitest.config.ts
 .gitignore
 .eslintrc*
 .prettierrc*
+MARKETPLACE_README.md

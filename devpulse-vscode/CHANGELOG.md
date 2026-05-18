@@ -2,6 +2,31 @@
 
 All notable changes to the DevPulse VS Code extension.
 
+## 0.2.0-rc.2 — Release Candidate 2
+
+### Fixed
+
+- **Uninstall feedback collection now operational** — `UninstallSurvey` was
+  built but never wired into the extension lifecycle in rc.1. It is now
+  instantiated in `activate()` and exposed as the `DevPulse: Share Feedback
+Before Uninstalling` command, matching the controlled-rollout playbook in
+  `docs/rollout/uninstall-survey.md`. A one-time guard prevents repeat
+  submissions from the same install.
+- **Release artifact / tag consistency** — the rc.1 tag pointed at the
+  pre-fix commit while the uploaded VSIX bundled post-fix code. rc.2 tag,
+  release notes, bundled code, and uploaded VSIX all correspond to the same
+  commit.
+
+### Polished
+
+- **Marketplace screenshot URLs pinned to the release tag** — `vsce package`
+  now rewrites relative image paths to
+  `raw/v0.2.0-rc.2/devpulse-vscode/...` instead of `raw/HEAD/...`, so the
+  marketplace listing remains stable even if the default branch is renamed.
+- **Removed `MARKETPLACE_README.md` from the published VSIX** — the
+  marketplace renders `readme.md` only; the duplicate file inside the VSIX
+  was wasted bytes.
+
 ## 0.2.0 — Beta Ready
 
 ### Added
