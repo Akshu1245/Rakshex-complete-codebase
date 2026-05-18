@@ -21,6 +21,7 @@
     "check:all": "npm run check && cd devpulse-vscode && npx tsc --noEmit && cd ../devpulse-frontend && npx tsc --noEmit || true",
     "db:up": "docker compose up -d mysql redis",
     "db:down": "docker compose down",
+    "db:migrate": "sh scripts/migrate.sh",
     "prepare": "husky",
     "lint": "npx eslint . --ext .ts,.tsx --max-warnings=0",
     "lint:frontend": "cd devpulse-frontend && npx eslint . --ext .ts,.tsx --max-warnings=0",
