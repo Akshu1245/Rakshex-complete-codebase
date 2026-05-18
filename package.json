@@ -23,7 +23,7 @@
     "db:down": "docker compose down",
     "db:migrate": "bash scripts/migrate.sh",
     "prepare": "husky",
-    "lint": "npx eslint . --ext .ts,.tsx --max-warnings=0",
+    "lint": "npx eslint . --ext .ts,.tsx --max-warnings=0 --ignore-pattern 'devpulse-frontend/**'",
     "lint:frontend": "cd devpulse-frontend && npx eslint . --ext .ts,.tsx --max-warnings=0",
     "format": "npx prettier --write \"**/*.{ts,tsx,json,md}\"",
     "format:check": "npx prettier --check \"**/*.{ts,tsx,json,md}\""
