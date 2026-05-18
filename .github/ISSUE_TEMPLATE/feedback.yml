@@ -1,0 +1,46 @@
+name: Feedback & Feature Request
+description: Share what's working, what's not, or what you wish existed
+title: "[Feedback]: "
+labels: ["feedback"]
+body:
+  - type: markdown
+    attributes:
+      value: All feedback is read by the founder and directly shapes what gets built.
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: What kind of feedback?
+      options:
+        - Something works really well
+        - Something is confusing or frustrating
+        - I wish DevPulse could do X
+        - The findings feel inaccurate
+        - Privacy or data concern
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: details
+    attributes:
+      label: Tell us more
+      placeholder: "The part that surprised me most was..."
+    validations:
+      required: true
+
+  - type: input
+    id: stack
+    attributes:
+      label: What are you building? (optional)
+      placeholder: "LangChain + OpenAI + Postman collections"
+
+  - type: dropdown
+    id: recommend
+    attributes:
+      label: Would you recommend DevPulse to a colleague?
+      options:
+        - "Yes, definitely"
+        - "Maybe, with some improvements"
+        - "Not yet"
+        - "No"

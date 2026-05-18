@@ -1,0 +1,55 @@
+name: Bug Report
+description: Something isn't working as expected
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for reporting — this is read by the founder and helps fix real issues fast.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you do, and what went wrong?
+      placeholder: "I clicked Run Scan and..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+      placeholder: "I expected findings to appear..."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: step
+    attributes:
+      label: Which step?
+      options:
+        - Install / activation
+        - Connecting API key
+        - Importing a collection
+        - Running a scan
+        - Viewing findings
+        - Weekly digest
+        - Rerun scan
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: DevPulse version
+      placeholder: "0.2.0"
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: OS + VS Code version
+      placeholder: "macOS 14 / VS Code 1.89"
