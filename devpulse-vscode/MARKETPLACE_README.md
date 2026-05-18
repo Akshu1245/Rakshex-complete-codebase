@@ -148,10 +148,10 @@ One-click fixes for common issues:
 
 ## Contributing
 
-We welcome contributions! See our [Contributing Guide](https://github.com/akshaynhcm-droid/Devpulse-/blob/main/CONTRIBUTING.md).
+We welcome contributions! See our [Contributing Guide](https://github.com/Akshu1245/devpulse-complete-codebase/blob/main/CONTRIBUTING.md).
 
-- Report issues: [GitHub Issues](https://github.com/akshaynhcm-droid/Devpulse-/issues)
-- Feature requests: [GitHub Discussions](https://github.com/akshaynhcm-droid/Devpulse-/discussions)
+- Report issues: [GitHub Issues](https://github.com/Akshu1245/devpulse-complete-codebase/issues)
+- Feature requests: [GitHub Discussions](https://github.com/Akshu1245/devpulse-complete-codebase/discussions)
 - Join our community: [Discord](https://discord.gg/devpulse)
 
 ---
