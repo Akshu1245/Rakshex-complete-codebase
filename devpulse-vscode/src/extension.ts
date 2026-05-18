@@ -840,17 +840,22 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   }, 10000);
   context.subscriptions.push({ dispose: () => clearTimeout(retentionTimer) });
 
-  // Onboarding nudges: gentle reminder after 90 seconds if onboarding incomplete
+  // Onboarding nudges: gentle reminder after 90 seconds if onboarding incomplete.
+  // Guard with isOnboardingComplete() first — clean-repo users who have completed
+  // all 4 core steps (installed, signed_in, imported, scanned) are fully onboarded
+  // even if `found_issue` has not fired (value-moment signal, not a required step).
   const onboardingTimer = setTimeout(() => {
+    if (engagementTracker.isOnboardingComplete()) return; // already done — no nudge
     const progress = engagementTracker.getOnboardingProgress();
-    const incomplete = progress.filter((p) => !p.complete);
+    // Only nudge for the 4 core steps — exclude found_issue (value-moment, not gating)
+    const coreSteps = ["installed", "signed_in", "imported", "scanned"];
+    const incomplete = progress.filter((p) => coreSteps.includes(p.step) && !p.complete);
     if (incomplete.length > 0) {
       const nextStep = incomplete[0];
       const messages: Record<string, string> = {
         signed_in: "Connect your API key when you're ready.",
         imported: "Import a collection to start scanning.",
         scanned: "Run a scan to discover security issues.",
-        found_issue: "Review your findings in the Findings panel.",
       };
       if (messages[nextStep.step]) {
         void vscode.window
