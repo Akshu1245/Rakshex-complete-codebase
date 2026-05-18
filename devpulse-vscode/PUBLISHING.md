@@ -134,8 +134,10 @@ Recommended shots (1280 × 720 or 1440 × 900):
 4. **Settings** page (`@ext:devpulse.devpulse-vscode`) for backend URL
    and heartbeat controls.
 
-Drop the PNGs under `devpulse-vscode/docs/screenshots/` and update
-`README.md` with links such as:
+Drop the PNGs under `devpulse-vscode/resources/` (alongside the other
+extension assets — they are excluded from the packaged `.vsix` only if
+they are not referenced from `README.md`) and update `README.md` with
+links such as:
 
 ```markdown
 ![Findings tree](https://raw.githubusercontent.com/Akshu1245/devpulse-complete-codebase/main/devpulse-vscode/resources/screenshot-findings-tree.png)
