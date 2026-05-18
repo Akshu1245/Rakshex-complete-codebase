@@ -2,9 +2,19 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches:
+      - main
+      - master
+      - 'feature/**'
+      - 'release/**'
+      - 'hotfix/**'
   pull_request:
-    branches: [main, master]
+    branches:
+      - main
+      - master
+      - 'feature/**'
+      - 'release/**'
+      - 'hotfix/**'
 
 env:
   REGISTRY: ghcr.io
@@ -16,6 +26,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -51,6 +64,9 @@ jobs:
           --health-retries=5
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -97,34 +113,26 @@ jobs:
           --health-timeout=3s
           --health-retries=5
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
         with:
-          node-version: '20'
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v3
+          version: 9
+      - uses: actions/setup-node@v4
         with:
-          version: 8
-      - name: Install dependencies
-        run: pnpm install
-      - name: Check for Playwright config
-        id: check_playwright
-        run: |
-          if (Test-Path "playwright.config.ts") { echo "exists=true" >> $env:GITHUB_OUTPUT } else { echo "exists=false" >> $env:GITHUB_OUTPUT }
-        shell: pwsh
-      - name: Install Playwright
-        if: steps.check_playwright.outputs.exists == 'true'
-        run: pnpm exec playwright install
-      - name: Run E2E tests
-        if: steps.check_playwright.outputs.exists == 'true'
-        run: pnpm run test:e2e
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run db:migrate
+        env:
+          DATABASE_URL: mysql://root:devpulse@127.0.0.1:3306/devpulse_test
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm run test:e2e
         env:
           DATABASE_URL: mysql://root:devpulse@127.0.0.1:3306/devpulse_test
           REDIS_URL: redis://127.0.0.1:6379
           JWT_SECRET: test-secret-ci
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: playwright-report
           path: playwright-report/
@@ -135,6 +143,9 @@ jobs:
     needs: [lint-typecheck, test]
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -145,11 +156,13 @@ jobs:
         run: pnpm audit --audit-level moderate
         continue-on-error: true
 
-      - name: Run TruffleHog secret scan
+      - name: Secret detection (truffleHog)
         uses: trufflesecurity/trufflehog@main
         with:
-          path: .
-          extra_args: --only-verified
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --debug --only-verified
 
   sast:
     name: Static Analysis
@@ -157,12 +170,16 @@ jobs:
     needs: [lint-typecheck, test]
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
-      - name: ESLint security rules
-        run: pnpm run lint
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm dlx @github/semantic-code-search
+      - run: pnpm dlx eslint-security-plugin
 
   build:
     name: Build & Push Docker
@@ -207,18 +224,22 @@ jobs:
     needs: [lint-typecheck]
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Build extension
+      - name: Build VS Code extension
         working-directory: devpulse-vscode
         run: |
-          npx esbuild src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node
-      - name: Package extension
+          pnpm exec esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node --minify
+          pnpm exec tsc --noEmit -p ./
+      - name: Package VS Code extension
         working-directory: devpulse-vscode
-        run: npx @vscode/vsce package --no-dependencies
+        run: pnpm exec @vscode/vsce package --no-dependencies --baseContentUrl https://github.com/Akshu1245/devpulse-complete-codebase/blob/HEAD/devpulse-vscode/ --baseImagesUrl https://github.com/Akshu1245/devpulse-complete-codebase/raw/HEAD/devpulse-vscode/
       - uses: actions/upload-artifact@v4
         with:
           name: devpulse-vscode
@@ -253,6 +274,13 @@ jobs:
     environment: production
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
       - name: Run migrations
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

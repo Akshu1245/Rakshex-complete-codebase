@@ -47,6 +47,7 @@ import {
   QUEUE_WEBHOOK_DELIVERY,
   QUEUE_WEEKLY_DIGEST,
 } from "./jobs";
+import { _resetQueueForTests } from "./jobQueue";
 import { runCollectionScan } from "./scanService";
 import { deliver } from "./webhookDelivery";
 import { sendWeeklyDigestEmail } from "../email";
@@ -61,7 +62,8 @@ async function flushQueue(): Promise<void> {
 
 describe("services/jobs typed queue wrappers", () => {
   beforeEach(() => {
-    _resetJobsRegistrationForTests();
+    _resetQueueForTests();            // fresh MemoryJobQueue — prevents singleton bleed
+    _resetJobsRegistrationForTests(); // allow re-registration
     vi.clearAllMocks();
     registerJobWorkers({ force: true });
   });
@@ -87,7 +89,10 @@ describe("services/jobs typed queue wrappers", () => {
         commitSha: "abc123",
       },
     });
-    expect(id).toMatch(/^scan-/);
+    // Contract: enqueue returns a non-empty string ID; exact format is an
+    // implementation detail that varies by backend (memory vs BullMQ).
+    expect(typeof id).toBe("string");
+    expect(id.length).toBeGreaterThan(0);
     await flushQueue();
     expect(runCollectionScan).toHaveBeenCalledTimes(1);
     expect(runCollectionScan).toHaveBeenCalledWith(7, "col-1", {

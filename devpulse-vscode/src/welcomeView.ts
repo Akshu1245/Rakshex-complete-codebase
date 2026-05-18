@@ -47,7 +47,9 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
         vscode.commands.executeCommand("devpulse.authenticate");
       } else if (msg.type === "openDocs") {
         vscode.env.openExternal(
-          vscode.Uri.parse("https://github.com/akshaynhcm-droid/Devpulse-#readme"),
+          vscode.Uri.parse(
+            "https://github.com/Akshu1245/devpulse-complete-codebase/tree/HEAD/devpulse-vscode#readme",
+          ),
         );
       } else if (msg.type === "createAccount") {
         vscode.env.openExternal(vscode.Uri.parse("https://devpulse.in/signup"));

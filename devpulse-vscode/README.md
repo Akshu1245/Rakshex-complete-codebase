@@ -3,7 +3,7 @@
 > The first VS Code extension that reveals hidden LLM costs, auto-stops
 > infinite loops, and scans your API collections for vulnerabilities.
 
-![DevPulse hero](resources/screenshot-hero.png)
+![DevPulse findings tree in the activity bar](resources/screenshot-findings-tree.png)
 
 ---
 
@@ -25,8 +25,6 @@ Reveals reasoning tokens that OpenAI, Anthropic, and Gemini hide from you.
 - Weekly spend tracking
 - Alerts when costs spike unexpectedly
 
-![Cost dashboard](resources/screenshot-cost.png)
-
 ### 2. AgentGuard Kill Switch 🛑
 
 Auto-stops infinite loops and runaway agents in real-time.
@@ -34,8 +32,6 @@ Auto-stops infinite loops and runaway agents in real-time.
 - Detects recursive API call patterns
 - Blocks cost anomalies
 - Configurable thresholds per project
-
-![AgentGuard alert](resources/screenshot-agentguard.png)
 
 ### 3. Instant Security Scan 🔍
 
@@ -46,7 +42,8 @@ Import any Postman, OpenAPI, or Bruno collection. Get a full security report in 
 - Injection vulnerability scanning
 - OWASP API Top 10 coverage
 
-![Findings](resources/screenshot-findings.png)
+![DevPulse status bar showing active scan](resources/screenshot-status-bar.png)
+![DevPulse commands in the command palette](resources/screenshot-command-palette.png)
 
 ## Setup (30 Seconds)
 
@@ -110,7 +107,7 @@ Read our full [Privacy Policy](https://devpulse.in/privacy).
 ## Support
 
 - 💬 [Discord community](https://discord.gg/devpulse)
-- 🐛 [GitHub Issues](https://github.com/akshaynhcm-droid/Devpulse-/issues)
+- 🐛 [GitHub Issues](https://github.com/Akshu1245/devpulse-complete-codebase/issues)
 - 📧 [support@devpulse.in](mailto:support@devpulse.in)
 
 ## License

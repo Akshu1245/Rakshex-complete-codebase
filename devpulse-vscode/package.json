@@ -8,13 +8,13 @@
   "icon": "resources/icon.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/akshaynhcm-droid/Devpulse-.git",
+    "url": "https://github.com/Akshu1245/devpulse-complete-codebase.git",
     "directory": "devpulse-vscode"
   },
   "bugs": {
-    "url": "https://github.com/akshaynhcm-droid/Devpulse-/issues"
+    "url": "https://github.com/Akshu1245/devpulse-complete-codebase/issues"
   },
-  "homepage": "https://github.com/akshaynhcm-droid/Devpulse-#readme",
+  "homepage": "https://github.com/Akshu1245/devpulse-complete-codebase#readme",
   "galleryBanner": {
     "color": "#0F172A",
     "theme": "dark"
@@ -508,7 +508,7 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "check": "tsc --noEmit -p ./",
-    "package": "npx @vscode/vsce package --no-dependencies"
+    "package": "npx @vscode/vsce package --no-dependencies --baseContentUrl https://github.com/Akshu1245/devpulse-complete-codebase/blob/HEAD/devpulse-vscode/ --baseImagesUrl https://github.com/Akshu1245/devpulse-complete-codebase/raw/HEAD/devpulse-vscode/"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
