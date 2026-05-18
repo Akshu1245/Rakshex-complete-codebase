@@ -80,6 +80,12 @@ export class DevPulseStatusBar {
 
     const streak = this.getStreak?.() ?? 0;
     const streakLine = streak > 1 ? `🔥 Scan streak: ${streak} days` : null;
+    const openCritical = severityCounts.Critical;
+    const openHigh = severityCounts.High;
+    const nudgeLine =
+      openCritical > 0 || openHigh > 0
+        ? `💡 ${openCritical + openHigh} unresolved critical/high — a quick review keeps your APIs safer`
+        : null;
 
     // Detailed tooltip focused on value, not cost
     this.item.tooltip = [
@@ -87,6 +93,8 @@ export class DevPulseStatusBar {
       ``,
       streakLine,
       streakLine ? `` : null,
+      nudgeLine,
+      nudgeLine ? `` : null,
       `Collections: ${data.collections}`,
       `Findings: ${data.openFindings} open · ${resolvedCount} resolved · ${data.totalFindings} total`,
       `  Critical: ${severityCounts.Critical}`,

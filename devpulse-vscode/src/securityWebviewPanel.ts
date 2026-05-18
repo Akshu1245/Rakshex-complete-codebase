@@ -355,8 +355,8 @@ export class SecurityWebviewPanel {
           findings.length === 0
             ? `<div class="empty-state">
                 <div class="empty-icon">🛡️</div>
-                <p style="font-weight:600;margin-bottom:4px">All clear — no issues detected</p>
-                <p style="font-size:12px;color:var(--vscode-descriptionForeground)">Run a scan to check your collections for leaked keys, hidden costs, and misconfigurations.</p>
+                <p style="font-weight:600;margin-bottom:4px">All clear — your APIs look safe</p>
+                <p style="font-size:12px;color:var(--vscode-descriptionForeground);max-width:320px;margin:0 auto 4px">No security issues found. Run a scan anytime to recheck, or your collections are in good shape.</p>
                 <button class="btn btn-primary" style="margin-top:12px" onclick="runScan()">Run Scan</button>
               </div>`
             : `<div class="table-wrapper">
@@ -390,7 +390,7 @@ export class SecurityWebviewPanel {
                         <td><span class="badge badge-${f.severity.toLowerCase()}">${escapeHtml(f.severity.slice(0, 1))}</span></td>
                         <td class="col-title">
                           ${escapeHtml(f.title)}
-                          <div class="confidence ${confClass}">${confidence}</div>
+                          <div class="confidence ${confClass}">${confidence}${f.category ? " · " + escapeHtml(f.category) : ""}</div>
                         </td>
                         <td>${escapeHtml(f.collectionName)}</td>
                         <td><span class="status-badge status-${f.status}">${statusLabel(f.status)}</span></td>
