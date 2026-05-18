@@ -34,6 +34,7 @@ export class SecurityWebviewPanel {
   private constructor(
     panel: vscode.WebviewPanel,
     private readonly api: DevPulseApi,
+    private readonly context?: vscode.ExtensionContext,
   ) {
     this.panel = panel;
     this.panel.onDidDispose(() => this.dispose(), null, this.disposables);
@@ -47,9 +48,11 @@ export class SecurityWebviewPanel {
         } else if (msg.type === "runScan") {
           vscode.commands.executeCommand("devpulse.runScan");
         } else if (msg.type === "testPrompt") {
-          vscode.commands.executeCommand("devpulse.testPromptThroughGateway");
+          vscode.commands.executeCommand("devpulse.testPrompt");
         } else if (msg.type === "openDashboard") {
           vscode.commands.executeCommand("devpulse.openDashboard");
+        } else if (msg.type === "setCompactMode") {
+          void this.context?.globalState.update("devpulse.securityCompactMode", Boolean(msg.value));
         }
       },
       null,
@@ -58,7 +61,11 @@ export class SecurityWebviewPanel {
     this.startAutoRefresh();
   }
 
-  public static createOrShow(extensionUri: vscode.Uri, api: DevPulseApi): void {
+  public static createOrShow(
+    extensionUri: vscode.Uri,
+    api: DevPulseApi,
+    context?: vscode.ExtensionContext,
+  ): void {
     const column = vscode.window.activeTextEditor?.viewColumn ?? vscode.ViewColumn.One;
 
     if (SecurityWebviewPanel.current) {
@@ -78,7 +85,7 @@ export class SecurityWebviewPanel {
       },
     );
 
-    SecurityWebviewPanel.current = new SecurityWebviewPanel(panel, api);
+    SecurityWebviewPanel.current = new SecurityWebviewPanel(panel, api, context);
     void SecurityWebviewPanel.current.refresh();
   }
 
@@ -693,7 +700,7 @@ export class SecurityWebviewPanel {
     }
   </style>
 </head>
-<body>
+<body class="${this.context?.globalState.get<boolean>("devpulse.securityCompactMode") ? "compact-mode" : ""}">
   <div class="refresh-overlay" id="refresh-overlay"><div class="refresh-bar"></div></div>
   <div class="refresh-badge" id="refresh-badge">Refreshing…</div>
   ${body}
@@ -886,18 +893,18 @@ export class SecurityWebviewPanel {
         });
       }
 
-      // Compact mode toggle with localStorage persistence
+      // Compact mode toggle with localStorage + globalState persistence
       const compactToggleBtn = document.getElementById("compact-toggle-btn");
       if (compactToggleBtn) {
-        var isCompact = localStorage.getItem("devpulse.compactMode") === "true";
+        var isCompact = document.body.classList.contains("compact-mode");
         if (isCompact) {
-          document.body.classList.add("compact-mode");
           compactToggleBtn.textContent = "◫ Full";
         }
         compactToggleBtn.addEventListener("click", function () {
           isCompact = !isCompact;
           document.body.classList.toggle("compact-mode", isCompact);
           localStorage.setItem("devpulse.compactMode", String(isCompact));
+          vscode.postMessage({ type: "setCompactMode", value: isCompact });
           compactToggleBtn.textContent = isCompact ? "◫ Full" : "◫ Compact";
         });
       }

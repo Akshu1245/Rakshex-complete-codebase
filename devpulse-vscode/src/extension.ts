@@ -432,7 +432,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         return;
       }
       engagementTracker.record("dashboard_opened");
-      SecurityWebviewPanel.createOrShow(context.extensionUri, api);
+      SecurityWebviewPanel.createOrShow(context.extensionUri, api, context);
     }),
 
     vscode.commands.registerCommand("devpulse.openSettings", () => {

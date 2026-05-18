@@ -302,7 +302,7 @@
     "viewsWelcome": [
       {
         "view": "devpulse.findings",
-        "contents": "Sign in with your DevPulse API key to see findings.\n[Sign in](command:devpulse.authenticate)\n\nGenerate an API key from Settings on the DevPulse dashboard."
+        "contents": "Sign in with your DevPulse API key to see findings.\n[Sign in](command:devpulse.authenticate)\n\nGenerate an API key from Settings on the DevPulse dashboard.\n\n---\n\n**Keyboard shortcuts:**\nCtrl+Shift+D — Refresh\nCtrl+Shift+S — Run Scan\nCtrl+Shift+R — Rerun Last Scan\nCtrl+Shift+1-4 — Filter by severity\nEnter — Resolve finding"
       }
     ],
     "menus": {
