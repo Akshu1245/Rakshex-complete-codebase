@@ -41,6 +41,17 @@ export class WeeklyDigestCommand {
 
       const scanHealth = this.computeScanHealth(stats, findings);
 
+      const heatmap = this.engagementTracker.getWeeklyActivityHeatmap();
+      const onboardingProgress = this.engagementTracker.getOnboardingProgress();
+      const onboardingComplete = this.engagementTracker.isOnboardingComplete();
+
+      const openNow = findings.filter((f) => f.status === "open").length;
+      const lastWeekOpen =
+        this.context?.globalState.get<number>("devpulse.lastWeekOpenCount") ?? openNow;
+      const postureTrend =
+        openNow < lastWeekOpen ? "improving" : openNow > lastWeekOpen ? "declining" : "stable";
+      void this.context?.globalState.update("devpulse.lastWeekOpenCount", openNow);
+
       const panel = vscode.window.createWebviewPanel(
         "devpulse.weeklyDigest",
         "DevPulse Weekly Digest",
@@ -58,6 +69,11 @@ export class WeeklyDigestCommand {
         newFindings: newFindings.length,
         topOpenFinding,
         scanHealth,
+        heatmap,
+        onboardingProgress,
+        onboardingComplete,
+        postureTrend,
+        openNow,
         trust,
         retention,
       });
@@ -113,6 +129,11 @@ export class WeeklyDigestCommand {
     newFindings: number;
     topOpenFinding?: Finding;
     scanHealth: { status: "good" | "moderate" | "needs_attention"; message: string };
+    heatmap: boolean[];
+    onboardingProgress: { step: string; complete: boolean; timestamp?: number }[];
+    onboardingComplete: boolean;
+    postureTrend: "improving" | "declining" | "stable";
+    openNow: number;
     trust: {
       totalDismissals: number;
       falsePositives: number;
@@ -129,6 +150,11 @@ export class WeeklyDigestCommand {
       newFindings,
       topOpenFinding,
       scanHealth,
+      heatmap,
+      onboardingProgress,
+      onboardingComplete,
+      postureTrend,
+      openNow,
       trust,
       retention,
     } = props;
@@ -268,6 +294,37 @@ export class WeeklyDigestCommand {
     <div class="metric-row"><span>Scans completed</span><span class="metric-value">${stats.scans}</span></div>
     <div class="metric-row"><span>API calls analyzed</span><span class="metric-value">${data.recentScans * 12}</span></div>
   </div>
+
+  <div class="card">
+    <h3>🔥 Weekly Activity</h3>
+    <div style="display:flex;gap:4px;margin-top:8px;align-items:center">
+      ${heatmap.map((active, i) => `<div style="width:24px;height:24px;border-radius:4px;background:${active ? "#10B981" : "var(--vscode-panel-border, #3c3c3c)"};opacity:${active ? 1 : 0.3};transition:opacity 0.2s" title="${["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][i]}"></div>`).join("")}
+    </div>
+    <p style="font-size:11px;color:#888;margin-top:6px">${heatmap.filter(Boolean).length} active day${heatmap.filter(Boolean).length !== 1 ? "s" : ""} this week</p>
+  </div>
+
+  ${
+    !onboardingComplete
+      ? `
+  <div class="card" style="border-left:4px solid #8B5CF6;padding-left:16px">
+    <h3>🚀 Getting Started</h3>
+    <p style="font-size:13px;margin:8px 0">Complete these steps to get the most from DevPulse:</p>
+    <ul style="font-size:12px;color:#aaa;margin:6px 0;padding-left:16px;list-style:none">
+      ${onboardingProgress.map((s) => `<li style="margin:3px 0">${s.complete ? "✅" : "◯"} ${s.step.replace("_", " ")}</li>`).join("")}
+    </ul>
+  </div>`
+      : ""
+  }
+
+  ${
+    postureTrend !== "stable"
+      ? `
+  <div class="card" style="border-left:4px solid ${postureTrend === "improving" ? "#10B981" : "#EF4444"};padding-left:16px">
+    <h3>🛡️ Security Posture</h3>
+    <p style="font-size:14px;margin:8px 0">${postureTrend === "improving" ? "📉 Open issues decreased — your posture is improving." : "📈 Open issues increased — consider a review pass."} (${openNow} open now)</p>
+  </div>`
+      : ""
+  }
 
   <div class="card" style="border-left:4px solid ${scanHealth.status === "good" ? "#10B981" : scanHealth.status === "moderate" ? "#F59E0B" : "#EF4444"};padding-left:16px">
     <h3>💓 Scan Health</h3>

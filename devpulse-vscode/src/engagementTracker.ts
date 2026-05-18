@@ -233,4 +233,20 @@ export class EngagementTracker {
   isOnboardingComplete(): boolean {
     return this.getOnboardingProgress().every((s) => s.complete);
   }
+
+  getWeeklyActivityHeatmap(): boolean[] {
+    const dayMs = 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const today = Math.floor(now / dayMs);
+    const activeDays = new Set<number>();
+    for (const r of this.records) {
+      activeDays.add(Math.floor(r.timestamp / dayMs));
+    }
+    // Return last 7 days (oldest first), true if any activity that day
+    const heatmap: boolean[] = [];
+    for (let i = 6; i >= 0; i--) {
+      heatmap.push(activeDays.has(today - i));
+    }
+    return heatmap;
+  }
 }
