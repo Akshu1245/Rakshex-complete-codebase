@@ -39,6 +39,10 @@ const STORAGE_KEY = "devpulse.engagement";
 const SCORE_KEY = "devpulse.engagementScore";
 const LAST_ACTIVE_KEY = "devpulse.lastActive";
 
+// Core workflow steps that gate `isOnboardingComplete()`. `found_issue` is a
+// separate value-moment signal and intentionally NOT in this list.
+const ONBOARDING_CORE_STEPS = ["installed", "signed_in", "imported", "scanned"] as const;
+
 export class EngagementTracker {
   private records: EngagementRecord[] = [];
   private pendingServerEvents: EngagementRecord[] = [];
@@ -230,8 +234,14 @@ export class EngagementTracker {
     });
   }
 
+  // Onboarding completion = the user successfully experienced the core workflow.
+  // `found_issue` is a value-moment signal (only fires when Critical/High findings
+  // exist) and intentionally NOT part of this predicate -- a user who scans a
+  // clean repo has fully onboarded and should not be stuck "incomplete" forever.
   isOnboardingComplete(): boolean {
-    return this.getOnboardingProgress().every((s) => s.complete);
+    return ONBOARDING_CORE_STEPS.every((step) =>
+      this.getOnboardingProgress().find((p) => p.step === step && p.complete),
+    );
   }
 
   getWeeklyActivityHeatmap(): boolean[] {
