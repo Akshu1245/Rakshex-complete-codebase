@@ -152,6 +152,16 @@ class MemoryJobQueue implements JobQueue {
 
 let queue: JobQueue | null = null;
 
+/**
+ * Reset the queue singleton between test suites.
+ * Call this in beforeEach alongside _resetJobsRegistrationForTests()
+ * so each test starts with a fresh MemoryJobQueue instance.
+ * Production code must never call this.
+ */
+export function _resetQueueForTests(): void {
+  queue = null;
+}
+
 export function getJobQueue(): JobQueue {
   if (queue) return queue;
   const redisUrl = process.env.REDIS_URL ?? process.env.DEVPULSE_REDIS_URL;
