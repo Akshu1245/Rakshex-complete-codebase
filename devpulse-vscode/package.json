@@ -2,7 +2,7 @@
   "name": "devpulse-vscode",
   "displayName": "DevPulse",
   "description": "Stop AI agents from burning your API budget. Find leaked keys, hidden costs, and security risks in VS Code — first scan in 60 seconds.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "devpulse",
   "license": "MIT",
   "icon": "resources/icon.png",

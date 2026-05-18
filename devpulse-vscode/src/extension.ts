@@ -223,6 +223,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
       await context.secrets.store(SECRET_API_KEY, apiKey);
       cachedApiKey = apiKey;
+      engagementTracker.recordOnboardingStep("signed_in");
       await applySignedInState(true);
     },
     handleQuickAction,
@@ -279,6 +280,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
       await context.secrets.store(SECRET_API_KEY, key);
       cachedApiKey = key;
+      engagementTracker.recordOnboardingStep("signed_in");
       await applySignedInState(true);
     }),
 
