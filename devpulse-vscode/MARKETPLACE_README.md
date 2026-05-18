@@ -1,6 +1,6 @@
 # DevPulse — AI Runtime Protection
 
-> Find security issues, hidden costs, and compliance risks in your AI agents and APIs before they hit production.
+> Stop AI agents from burning your API budget. Find leaked keys, hidden token costs, and security risks in VS Code — first scan in 60 seconds.
 
 [![Version](https://img.shields.io/visual-studio-marketplace/v/devpulse.devpulse)](https://marketplace.visualstudio.com/items?itemName=devpulse.devpulse)
 [![Installs](https://img.shields.io/visual-studio-marketplace/i/devpulse.devpulse)](https://marketplace.visualstudio.com/items?itemName=devpulse.devpulse)
@@ -8,160 +8,109 @@
 
 ---
 
-## What DevPulse Does
+## What DevPulse Finds
 
-DevPulse scans your AI agent configurations, API collections, and LLM integrations directly inside VS Code to find:
+DevPulse scans your AI agent configurations, API collections, and LLM integrations directly inside VS Code:
 
-- **Leaked API keys** in environment files and collections
-- **Hidden token costs** from unoptimized LLM calls
-- **Security misconfigurations** in agent frameworks (LangChain, CrewAI, AutoGen)
-- **Compliance gaps** in AI-generated code
-- **Shadow APIs** — endpoints your agents call that you forgot about
+- 🔑 **Leaked API keys** in Postman collections, environment files, and agent configs
+- 💰 **Hidden token costs** from unoptimized LLM calls, retry loops, and reasoning tokens
+- 🛡️ **Security misconfigurations** in agent frameworks (LangChain, CrewAI, AutoGen)
+- 🔍 **Missing auth, rate limits, and injection vectors** across your API surface
+- 👻 **Shadow APIs** — endpoints your agents call that you've forgotten about
 
-**Your source code never leaves your machine.** We scan metadata and configurations, not your proprietary code.
+**Your source code never leaves your machine.** We scan API metadata and configurations only.
 
 ---
 
-## Install
+## Quick Start
 
-```bash
-# From VS Code Marketplace
-ext install devpulse
-
-# Or search "DevPulse" in the Extensions sidebar
+```
+1. Install DevPulse (this extension)
+2. Sign in with your API key → devpulse.in (free, 30 seconds)
+3. Import a Postman collection or OpenAPI spec
+4. Run scan — first findings in under 60 seconds
 ```
 
 ---
 
-## Quick Start (30 seconds)
+## Screenshots
 
-1. **Install** the DevPulse extension
-2. **Sign in** with your API key (generate one free at [devpulse.in](https://devpulse.in))
-3. **Import** a Postman collection or OpenAPI spec
-4. **Run scan** — DevPulse finds issues in seconds
-5. **Review findings** in the Security Dashboard
+![DevPulse findings tree — severity-grouped security issues](resources/screenshot-findings-tree.png)
+
+*Findings grouped by severity (Critical → High → Medium → Low). One click to mark resolved.*
+
+![DevPulse command palette — scan, rerun, digest](resources/screenshot-command-palette.png)
+
+*Full workflow via Command Palette or keyboard shortcuts.*
+
+![DevPulse status bar — live scan status and finding count](resources/screenshot-status-bar.png)
+
+*Live finding count and scan status always visible in the status bar.*
 
 ---
 
 ## Features
 
-### 🔍 Real-Time Security Scanning
+### 🔍 One-Click Security Scanning
 
-Scan any API collection or AI agent configuration file with one click. Find leaked secrets, misconfigurations, and compliance issues instantly.
+Import any Postman collection, OpenAPI spec, or Bruno collection. Get a full security report in seconds.
 
-### 🛡️ AgentGuard
+### 📊 Severity-Ranked Findings Tree
 
-Detects when AI agents are about to:
-
-- Expose sensitive data to LLM providers
-- Enter infinite cost loops
-- Call unauthorized APIs
-- Generate non-compliant code
+Critical and High findings surface immediately. Mark findings as resolved, in-progress, or dismissed. Filter by severity. Toggle compact mode for large collections.
 
 ### 💰 Cost Intelligence
 
-- Track LLM spend per project
-- Identify expensive agent loops
-- Flag unoptimized prompt patterns
-- Forecast monthly API costs
+Track LLM spend per project. Identify expensive agent retry loops. Get alerts when costs spike unexpectedly.
 
-### 🧠 AI Security Copilot
+### 📅 Weekly Digest
 
-Ask natural language questions about your security posture:
+Your security posture week over week — findings trend, scan streak, resolved issues, top open items.
 
-- "What are my highest-risk findings?"
-- "How do I fix this leaked API key?"
-- "Which agents cost the most?"
+### ⚡ Rerun Scan
 
-### 📊 Security Dashboard
+`Ctrl+Shift+R` reruns your last scan instantly. Tight feedback loop between code change and security check.
 
-- Severity-ranked findings (Critical / High / Medium / Low)
-- Weekly cost summaries
-- Scan history and trends
-- Team sharing (Pro plan)
+### 🔒 Privacy First
 
-### ⚡ Auto-Fix Suggestions
-
-One-click fixes for common issues:
-
-- Rotate exposed credentials
-- Add rate limiting headers
-- Sanitize PII in prompts
-- Encrypt sensitive parameters
+| We do | We never do |
+|---|---|
+| Scan API metadata and configs | Upload your source code |
+| Track scan counts for billing | Store API responses |
+| Store finding summaries | Share data with third parties |
 
 ---
 
-## Privacy First
+## Keyboard Shortcuts
 
-| What We Do                    | What We Never Do              |
-| ----------------------------- | ----------------------------- |
-| Scan API metadata and configs | Upload your source code       |
-| Track scan counts for billing | Store API responses           |
-| Store finding summaries       | Share data with third parties |
-| Anonymous usage analytics     | Require cloud processing      |
-
-**Local-first scanning available** — run entirely offline with the self-hosted option.
-
----
-
-## Supported Platforms
-
-- **VS Code** (primary) — this extension
-- **JetBrains** — coming Q3 2026
-- **CLI** — `npm install -g @devpulse/cli`
-- **CI/CD** — GitHub Actions, GitLab CI
+| Action | Shortcut |
+|---|---|
+| Refresh findings | `Ctrl+Shift+D` |
+| Run new scan | `Ctrl+Shift+S` |
+| Rerun last scan | `Ctrl+Shift+R` |
+| Filter Critical | `Ctrl+Shift+1` |
+| Filter High | `Ctrl+Shift+2` |
 
 ---
 
 ## Pricing
 
-| Plan           | Price  | Best For                                         |
-| -------------- | ------ | ------------------------------------------------ |
-| **Free**       | $0     | Individual developers, 1 collection, 10 scans/mo |
-| **Pro**        | $29/mo | Power users, unlimited scans, team of 3          |
-| **Team**       | $99/mo | Engineering orgs, 10 users, SSO, audit logs      |
-| **Enterprise** | Custom | Large orgs, dedicated support, SLA               |
+| Plan | Price | Includes |
+|---|---|---|
+| **Free** | $0 | 1 collection, 10 scans/month |
+| **Pro** | $29/mo | Unlimited scans, 3 team seats |
+| **Team** | $99/mo | 10 users, SSO, audit logs |
 
 [Start free →](https://devpulse.in/signup)
 
 ---
 
-## What Developers Say
+## Support & Feedback
 
-> "Found a leaked OpenAI key in a collection I'd shared with the team. DevPulse caught it in 10 seconds."
-> — _Senior Engineer, Series B startup_
-
-> "The cost tracking alone saved us $400 in the first month. We had an agent in an infinite loop burning tokens."
-> — _Tech Lead, AI-native company_
+- [GitHub Issues](https://github.com/Akshu1245/devpulse-complete-codebase/issues)
+- [GitHub Discussions](https://github.com/Akshu1245/devpulse-complete-codebase/discussions)
+- Email: feedback@devpulse.in
 
 ---
-
-## Documentation
-
-- [Getting Started](https://docs.devpulse.in/getting-started)
-- [Security Rules](https://docs.devpulse.in/rules)
-- [AgentGuard Configuration](https://docs.devpulse.in/agentguard)
-- [API Reference](https://docs.devpulse.in/api)
-- [Self-Hosting](https://docs.devpulse.in/self-host)
-
----
-
-## Contributing
-
-We welcome contributions! See our [Contributing Guide](https://github.com/Akshu1245/devpulse-complete-codebase/blob/main/CONTRIBUTING.md).
-
-- Report issues: [GitHub Issues](https://github.com/Akshu1245/devpulse-complete-codebase/issues)
-- Feature requests: [GitHub Discussions](https://github.com/Akshu1245/devpulse-complete-codebase/discussions)
-- Join our community: [Discord](https://discord.gg/devpulse)
-
----
-
-## Security
-
-Found a vulnerability? Please see our [Responsible Disclosure Policy](https://devpulse.in/security).
-
----
-
-## License
 
 MIT © DevPulse
