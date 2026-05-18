@@ -32,12 +32,18 @@ import { ScanCurrentFileCommand } from "./scanCurrentFile";
 import { AnalyticsDashboard } from "./analyticsDashboard";
 import { RetentionEngine } from "./retentionEngine";
 import { dismissFinding } from "./dismissFinding";
+import { maybeInstallMock } from "./mockServerActivation";
 
 const SECRET_API_KEY = "devpulse.apiKey";
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   let cachedApiKey: string | undefined;
   const readApiKey = () => cachedApiKey;
+
+  // Mock mode: intercept all HTTP calls at the fetch boundary (no real backend needed).
+  // Activated by devpulse.mockMode: true in settings or DEVPULSE_MOCK=true env var.
+  const uninstallMock = maybeInstallMock(context);
+  if (uninstallMock) context.subscriptions.push({ dispose: uninstallMock });
 
   const api = new DevPulseApi(getConfiguredBaseUrl, readApiKey);
   const findingsProvider = new FindingsTreeProvider(api, context);
