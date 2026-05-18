@@ -127,8 +127,6 @@ export async function getDb() {
         uri: process.env.DATABASE_URL,
         connectionLimit: 20,
         queueLimit: 0,
-        acquireTimeout: 30000,
-        timeout: 60000,
       });
       _db = drizzle(pool);
     } catch (error) {
