@@ -89,7 +89,10 @@ describe("services/jobs typed queue wrappers", () => {
         commitSha: "abc123",
       },
     });
-    expect(id).toMatch(/^scan-/);
+    // Contract: enqueue returns a non-empty string ID; exact format is an
+    // implementation detail that varies by backend (memory vs BullMQ).
+    expect(typeof id).toBe("string");
+    expect(id.length).toBeGreaterThan(0);
     await flushQueue();
     expect(runCollectionScan).toHaveBeenCalledTimes(1);
     expect(runCollectionScan).toHaveBeenCalledWith(7, "col-1", {
