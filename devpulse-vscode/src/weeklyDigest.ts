@@ -134,6 +134,15 @@ export class WeeklyDigestCommand {
     } = props;
 
     const resolvedThisWeek = stats.findings;
+    const recentImprovements = [];
+    if (resolvedThisWeek > 0)
+      recentImprovements.push(
+        `${resolvedThisWeek} issue${resolvedThisWeek !== 1 ? "s" : ""} resolved`,
+      );
+    if (trust?.trend === "improving") recentImprovements.push("trust score improving");
+    if (scanHealth.status === "good") recentImprovements.push("scan health strong");
+    const hasImprovements = recentImprovements.length > 0;
+
     const consistencyText =
       streak >= 7
         ? "You maintained consistent security practice this week."
@@ -264,6 +273,16 @@ export class WeeklyDigestCommand {
     <h3>💓 Scan Health</h3>
     <p style="font-size:14px;margin:8px 0">${scanHealth.message}</p>
   </div>
+
+  ${
+    hasImprovements
+      ? `
+  <div class="card" style="border-left:4px solid #3B82F6;padding-left:16px">
+    <h3>📈 Recent Improvements</h3>
+    <p style="font-size:14px;margin:8px 0">${recentImprovements.join(" · ")}</p>
+  </div>`
+      : ""
+  }
 
   ${
     resolvedThisWeek > 0

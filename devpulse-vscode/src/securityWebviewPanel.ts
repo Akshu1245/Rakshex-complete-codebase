@@ -321,6 +321,7 @@ export class SecurityWebviewPanel {
             <button class="btn btn-primary btn-sm" id="run-scan-btn">▶ Run Scan</button>
             <button class="btn btn-secondary btn-sm" id="test-prompt-btn">🧪 Test Prompt</button>
             <button class="btn btn-secondary btn-sm" id="open-dashboard-btn">📊 Dashboard</button>
+            <button class="btn btn-ghost btn-sm" id="compact-toggle-btn" title="Toggle compact view">◫ Compact</button>
           </div>
         </div>
       </section>
@@ -444,6 +445,17 @@ export class SecurityWebviewPanel {
     h2 { font-size: 15px; font-weight: 600; color: var(--vscode-editor-foreground); margin-bottom: 10px; }
     h3 { font-size: 13px; font-weight: 600; color: var(--vscode-editor-foreground); margin-bottom: 8px; }
     .sub { color: var(--vscode-descriptionForeground, #8b8b8b); font-size: 12px; }
+
+    /* Compact mode */
+    body.compact-mode { padding: 12px; }
+    body.compact-mode .hdr { margin-bottom: 12px; padding-bottom: 10px; }
+    body.compact-mode .quick-actions { gap: 4px; }
+    body.compact-mode .gauge { width: 80px; height: 80px; }
+    body.compact-mode .gauge-value { font-size: 20px; }
+    body.compact-mode .gauge-label { font-size: 9px; }
+    body.compact-mode .card { padding: 10px; margin-bottom: 8px; }
+    body.compact-mode .finding-row td { padding: 6px 8px; }
+    body.compact-mode .finding-detail { display: none; }
 
     /* Header */
     .hdr {
@@ -871,6 +883,22 @@ export class SecurityWebviewPanel {
       if (openDashboardBtn) {
         openDashboardBtn.addEventListener("click", function () {
           vscode.postMessage({ type: "openDashboard" });
+        });
+      }
+
+      // Compact mode toggle with localStorage persistence
+      const compactToggleBtn = document.getElementById("compact-toggle-btn");
+      if (compactToggleBtn) {
+        var isCompact = localStorage.getItem("devpulse.compactMode") === "true";
+        if (isCompact) {
+          document.body.classList.add("compact-mode");
+          compactToggleBtn.textContent = "◫ Full";
+        }
+        compactToggleBtn.addEventListener("click", function () {
+          isCompact = !isCompact;
+          document.body.classList.toggle("compact-mode", isCompact);
+          localStorage.setItem("devpulse.compactMode", String(isCompact));
+          compactToggleBtn.textContent = isCompact ? "◫ Full" : "◫ Compact";
         });
       }
 
