@@ -4,7 +4,6 @@
 FROM node:20-alpine AS deps
 RUN corepack enable && corepack prepare pnpm@9 --activate
 WORKDIR /app
-ENV HUSKY=0
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
@@ -12,18 +11,18 @@ RUN pnpm install --frozen-lockfile
 FROM node:20-alpine AS build
 RUN corepack enable && corepack prepare pnpm@9 --activate
 WORKDIR /app
-ENV HUSKY=0
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN pnpm run build
 
 # Stage 3: production deps only (for slim runtime image)
+# Use --ignore-scripts to skip the "prepare: husky" lifecycle hook
+# (husky is a devDependency and is not present in a --prod install)
 FROM node:20-alpine AS prod-deps
 RUN corepack enable && corepack prepare pnpm@9 --activate
 WORKDIR /app
-ENV HUSKY=0
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile --prod
+RUN pnpm install --frozen-lockfile --prod --ignore-scripts
 
 # Stage 4: runtime (minimal attack surface)
 FROM node:20-alpine AS runtime
