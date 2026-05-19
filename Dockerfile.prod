@@ -1,13 +1,13 @@
 # Production-hardened multi-stage Dockerfile for DevPulse
 # Stage 1: deps (production-only install)
-FROM node:20-alpine@sha256:ae2d83045e1c64f16f4618716e3daa4a06dbdb5267dc0154273fb52b7d58c6e9 AS deps
+FROM node:22-alpine AS deps
 RUN corepack enable pnpm
 WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
 # Stage 2: build
-FROM node:20-alpine@sha256:ae2d83045e1c64f16f4618716e3daa4a06dbdb5267dc0154273fb52b7d58c6e9 AS build
+FROM node:22-alpine AS build
 RUN corepack enable pnpm
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
@@ -15,7 +15,7 @@ COPY . .
 RUN pnpm run build
 
 # Stage 3: runtime (minimal attack surface)
-FROM node:20-alpine@sha256:ae2d83045e1c64f16f4618716e3daa4a06dbdb5267dc0154273fb52b7d58c6e9 AS runtime
+FROM node:22-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 
@@ -32,7 +32,7 @@ USER nodejs
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD node -e "fetch('http://localhost:3000/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"
+  CMD node -e "fetch('http://localhost:3000/api/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"
 
 CMD ["node", "dist/server/_core/index.js"]
 
