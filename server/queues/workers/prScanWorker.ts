@@ -115,7 +115,7 @@ function scanContent(
   const findings: Array<{ severity: string; finding: string; endpoint: string; owasp: string }> =
     [];
   let passed = 0;
-  let warnings = 0;
+  const warnings = 0;
   let critical = 0;
 
   const credentialRegexes = [

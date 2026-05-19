@@ -152,14 +152,7 @@ interface RazorpaySubscriptionResponse {
   entity: string;
   plan_id: string;
   customer_id: string;
-  status:
-    | "created"
-    | "authenticated"
-    | "active"
-    | "pending"
-    | "halted"
-    | "cancelled"
-    | "paused";
+  status: "created" | "authenticated" | "active" | "pending" | "halted" | "cancelled" | "paused";
   current_start?: number;
   current_end?: number;
   ended_at?: number;
@@ -229,9 +222,8 @@ const authHeader = () => {
     throw new InternalError(
       "Razorpay credentials not configured. Set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET.",
       {
-        safeMessage:
-          "Billing is temporarily unavailable. Please try again shortly.",
-      }
+        safeMessage: "Billing is temporarily unavailable. Please try again shortly.",
+      },
     );
   }
   return `Basic ${Buffer.from(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`).toString("base64")}`;
@@ -245,25 +237,19 @@ async function getOrCreatePlan(plan: PlanType): Promise<string> {
   const planName = `devpulse_${plan}_monthly`;
 
   // Try to find existing plan
-  const listResponse = await fetchWithTimeout(
-    `https://api.razorpay.com/v1/plans?count=100`,
-    {
-      headers: { Authorization: authHeader() },
-    }
-  );
+  const listResponse = await fetchWithTimeout(`https://api.razorpay.com/v1/plans?count=100`, {
+    headers: { Authorization: authHeader() },
+  });
 
   if (!listResponse.ok) {
-    throw new BillingProviderError(
-      `Razorpay list-plans failed (${listResponse.status})`,
-      {
-        safeMessage: "Could not load billing plans. Please try again.",
-        context: {
-          provider: "razorpay",
-          status: listResponse.status,
-          body: await listResponse.text(),
-        },
-      }
-    );
+    throw new BillingProviderError(`Razorpay list-plans failed (${listResponse.status})`, {
+      safeMessage: "Could not load billing plans. Please try again.",
+      context: {
+        provider: "razorpay",
+        status: listResponse.status,
+        body: await listResponse.text(),
+      },
+    });
   }
 
   const { items: plans } = await listResponse.json();
@@ -293,17 +279,14 @@ async function getOrCreatePlan(plan: PlanType): Promise<string> {
   });
 
   if (!createResponse.ok) {
-    throw new BillingProviderError(
-      `Razorpay create-plan failed (${createResponse.status})`,
-      {
-        safeMessage: "Could not create the billing plan. Please try again.",
-        context: {
-          provider: "razorpay",
-          status: createResponse.status,
-          body: await createResponse.text(),
-        },
-      }
-    );
+    throw new BillingProviderError(`Razorpay create-plan failed (${createResponse.status})`, {
+      safeMessage: "Could not create the billing plan. Please try again.",
+      context: {
+        provider: "razorpay",
+        status: createResponse.status,
+        body: await createResponse.text(),
+      },
+    });
   }
 
   const newPlan: RazorpayPlanResponse = await createResponse.json();
@@ -313,31 +296,21 @@ async function getOrCreatePlan(plan: PlanType): Promise<string> {
 /**
  * Create or get Razorpay customer
  */
-async function getOrCreateCustomer(
-  userId: number,
-  email: string,
-  name?: string
-): Promise<string> {
+async function getOrCreateCustomer(userId: number, email: string, name?: string): Promise<string> {
   // Try to find existing customer by email
-  const listResponse = await fetchWithTimeout(
-    `https://api.razorpay.com/v1/customers?count=100`,
-    {
-      headers: { Authorization: authHeader() },
-    }
-  );
+  const listResponse = await fetchWithTimeout(`https://api.razorpay.com/v1/customers?count=100`, {
+    headers: { Authorization: authHeader() },
+  });
 
   if (!listResponse.ok) {
-    throw new BillingProviderError(
-      `Razorpay list-customers failed (${listResponse.status})`,
-      {
-        safeMessage: "Could not look up your billing profile. Please try again.",
-        context: {
-          provider: "razorpay",
-          status: listResponse.status,
-          body: await listResponse.text(),
-        },
-      }
-    );
+    throw new BillingProviderError(`Razorpay list-customers failed (${listResponse.status})`, {
+      safeMessage: "Could not look up your billing profile. Please try again.",
+      context: {
+        provider: "razorpay",
+        status: listResponse.status,
+        body: await listResponse.text(),
+      },
+    });
   }
 
   const { items: customers } = await listResponse.json();
@@ -364,17 +337,14 @@ async function getOrCreateCustomer(
   });
 
   if (!createResponse.ok) {
-    throw new BillingProviderError(
-      `Razorpay create-customer failed (${createResponse.status})`,
-      {
-        safeMessage: "Could not create your billing profile. Please try again.",
-        context: {
-          provider: "razorpay",
-          status: createResponse.status,
-          body: await createResponse.text(),
-        },
-      }
-    );
+    throw new BillingProviderError(`Razorpay create-customer failed (${createResponse.status})`, {
+      safeMessage: "Could not create your billing profile. Please try again.",
+      context: {
+        provider: "razorpay",
+        status: createResponse.status,
+        body: await createResponse.text(),
+      },
+    });
   }
 
   const newCustomer: RazorpayCustomerResponse = await createResponse.json();
@@ -388,7 +358,7 @@ export async function createSubscription(
   userId: number,
   userEmail: string,
   plan: Exclude<PlanType, "free">,
-  name?: string
+  name?: string,
 ): Promise<{
   subscriptionId: string;
   customerId: string;
@@ -426,18 +396,14 @@ export async function createSubscription(
   });
 
   if (!response.ok) {
-    throw new BillingProviderError(
-      `Razorpay subscription-create failed (${response.status})`,
-      {
-        safeMessage:
-          "Could not start your subscription. Please try again or contact support.",
-        context: {
-          provider: "razorpay",
-          status: response.status,
-          body: await response.text(),
-        },
-      }
-    );
+    throw new BillingProviderError(`Razorpay subscription-create failed (${response.status})`, {
+      safeMessage: "Could not start your subscription. Please try again or contact support.",
+      context: {
+        provider: "razorpay",
+        status: response.status,
+        body: await response.text(),
+      },
+    });
   }
 
   const subscription: RazorpaySubscriptionResponse = await response.json();
@@ -464,9 +430,7 @@ export function verifyPaymentSignature(params: {
   signature: string;
 }): boolean {
   if (!RAZORPAY_KEY_SECRET) {
-    logger.error(
-      "[Razorpay] Key secret not configured — cannot verify signature"
-    );
+    logger.error("[Razorpay] Key secret not configured — cannot verify signature");
     return false;
   }
 
@@ -477,7 +441,7 @@ export function verifyPaymentSignature(params: {
 
   return crypto.timingSafeEqual(
     Buffer.from(expectedSignature, "hex"),
-    Buffer.from(params.signature, "hex")
+    Buffer.from(params.signature, "hex"),
   );
 }
 
@@ -491,23 +455,17 @@ export async function getPaymentDetails(paymentId: string): Promise<any> {
     });
   }
 
-  const response = await fetchWithTimeout(
-    `https://api.razorpay.com/v1/payments/${paymentId}`,
-    {
-      headers: {
-        Authorization: `Basic ${Buffer.from(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`).toString("base64")}`,
-      },
-    }
-  );
+  const response = await fetchWithTimeout(`https://api.razorpay.com/v1/payments/${paymentId}`, {
+    headers: {
+      Authorization: `Basic ${Buffer.from(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`).toString("base64")}`,
+    },
+  });
 
   if (!response.ok) {
-    throw new BillingProviderError(
-      `Razorpay get-payment failed (${response.status})`,
-      {
-        safeMessage: "Could not load payment details. Please try again.",
-        context: { provider: "razorpay", paymentId, status: response.status },
-      }
-    );
+    throw new BillingProviderError(`Razorpay get-payment failed (${response.status})`, {
+      safeMessage: "Could not load payment details. Please try again.",
+      context: { provider: "razorpay", paymentId, status: response.status },
+    });
   }
 
   return response.json();
@@ -519,12 +477,11 @@ export async function getPaymentDetails(paymentId: string): Promise<any> {
 export async function processRefund(
   paymentId: string,
   amount: number,
-  reason: string = "User requested refund"
+  reason: string = "User requested refund",
 ): Promise<any> {
   if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
     throw new InternalError("Razorpay credentials not configured", {
-      safeMessage:
-        "Refunds are temporarily unavailable. Please try again shortly.",
+      safeMessage: "Refunds are temporarily unavailable. Please try again shortly.",
     });
   }
 
@@ -540,17 +497,14 @@ export async function processRefund(
         amount,
         notes: { reason },
       }),
-    }
+    },
   );
 
   if (!response.ok) {
-    throw new BillingProviderError(
-      `Razorpay refund failed (${response.status})`,
-      {
-        safeMessage: "Refund could not be processed. Please contact support.",
-        context: { provider: "razorpay", paymentId, amount, status: response.status },
-      }
-    );
+    throw new BillingProviderError(`Razorpay refund failed (${response.status})`, {
+      safeMessage: "Refund could not be processed. Please contact support.",
+      context: { provider: "razorpay", paymentId, amount, status: response.status },
+    });
   }
 
   return response.json();
@@ -561,7 +515,7 @@ export async function processRefund(
  */
 export async function cancelSubscription(
   subscriptionId: string,
-  cancelAtCycleEnd: boolean = true
+  cancelAtCycleEnd: boolean = true,
 ): Promise<any> {
   const endpoint = cancelAtCycleEnd
     ? `https://api.razorpay.com/v1/subscriptions/${subscriptionId}/cancel`
@@ -576,18 +530,15 @@ export async function cancelSubscription(
   });
 
   if (!response.ok) {
-    throw new BillingProviderError(
-      `Razorpay cancel-subscription failed (${response.status})`,
-      {
-        safeMessage: "Could not cancel your subscription. Please try again.",
-        context: {
-          provider: "razorpay",
-          subscriptionId,
-          status: response.status,
-          body: await response.text(),
-        },
-      }
-    );
+    throw new BillingProviderError(`Razorpay cancel-subscription failed (${response.status})`, {
+      safeMessage: "Could not cancel your subscription. Please try again.",
+      context: {
+        provider: "razorpay",
+        subscriptionId,
+        status: response.status,
+        body: await response.text(),
+      },
+    });
   }
 
   return response.json();
@@ -596,24 +547,19 @@ export async function cancelSubscription(
 /**
  * Fetch subscription details from Razorpay.
  */
-export async function getSubscriptionDetails(
-  subscriptionId: string
-): Promise<any> {
+export async function getSubscriptionDetails(subscriptionId: string): Promise<any> {
   const response = await fetchWithTimeout(
     `https://api.razorpay.com/v1/subscriptions/${subscriptionId}`,
     {
       headers: { Authorization: authHeader() },
-    }
+    },
   );
 
   if (!response.ok) {
-    throw new BillingProviderError(
-      `Razorpay get-subscription failed (${response.status})`,
-      {
-        safeMessage: "Could not load subscription details. Please try again.",
-        context: { provider: "razorpay", subscriptionId, status: response.status },
-      }
-    );
+    throw new BillingProviderError(`Razorpay get-subscription failed (${response.status})`, {
+      safeMessage: "Could not load subscription details. Please try again.",
+      context: { provider: "razorpay", subscriptionId, status: response.status },
+    });
   }
 
   return response.json();
@@ -622,22 +568,17 @@ export async function getSubscriptionDetails(
 /**
  * Fetch subscription invoices from Razorpay.
  */
-export async function getSubscriptionInvoices(
-  subscriptionId: string
-): Promise<any[]> {
+export async function getSubscriptionInvoices(subscriptionId: string): Promise<any[]> {
   const response = await fetchWithTimeout(
     `https://api.razorpay.com/v1/invoices?subscription_id=${subscriptionId}`,
-    { headers: { Authorization: authHeader() } }
+    { headers: { Authorization: authHeader() } },
   );
 
   if (!response.ok) {
-    throw new BillingProviderError(
-      `Razorpay get-invoices failed (${response.status})`,
-      {
-        safeMessage: "Could not load invoices. Please try again.",
-        context: { provider: "razorpay", subscriptionId, status: response.status },
-      }
-    );
+    throw new BillingProviderError(`Razorpay get-invoices failed (${response.status})`, {
+      safeMessage: "Could not load invoices. Please try again.",
+      context: { provider: "razorpay", subscriptionId, status: response.status },
+    });
   }
 
   const data = await response.json();
@@ -650,21 +591,18 @@ export async function getSubscriptionInvoices(
 export function verifyWebhookSignature(
   payload: string,
   signature: string,
-  secret: string = RAZORPAY_KEY_SECRET || ""
+  secret: string = RAZORPAY_KEY_SECRET || "",
 ): boolean {
   if (!secret) {
     logger.error("[Razorpay] Webhook secret not configured");
     return false;
   }
 
-  const expectedSignature = crypto
-    .createHmac("sha256", secret)
-    .update(payload)
-    .digest("hex");
+  const expectedSignature = crypto.createHmac("sha256", secret).update(payload).digest("hex");
 
   return crypto.timingSafeEqual(
     Buffer.from(expectedSignature, "hex"),
-    Buffer.from(signature, "hex")
+    Buffer.from(signature, "hex"),
   );
 }
 
@@ -680,7 +618,7 @@ export function handleWebhookEvent(payload: RazorpayWebhookPayload): {
   data: any;
 } {
   const event = payload.event;
-  let result: any = { event, data: payload };
+  const result: any = { event, data: payload };
 
   switch (event) {
     case "subscription.activated":
@@ -719,12 +657,10 @@ export function getPlanLimits(plan: PlanType) {
  */
 export function isFeatureAvailable(
   plan: PlanType,
-  feature: keyof (typeof PLAN_CONFIG)["free"]["limits"]
+  feature: keyof (typeof PLAN_CONFIG)["free"]["limits"],
 ): boolean {
   const limits = PLAN_CONFIG[plan].limits;
-  return feature in limits
-    ? Boolean(limits[feature as keyof typeof limits])
-    : true;
+  return feature in limits ? Boolean(limits[feature as keyof typeof limits]) : true;
 }
 
 export { PLAN_CONFIG, type PlanType, type RazorpayWebhookPayload };
