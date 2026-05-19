@@ -71,12 +71,25 @@ railway variables set JWT_SECRET="$(openssl rand -base64 64)"
 railway variables set REFRESH_TOKEN_SECRET="$(openssl rand -base64 64)"
 railway variables set CSRF_SECRET="$(openssl rand -base64 64)"
 
-# Email (Resend example — get key at https://resend.com/api-keys)
+# Email — pick one of:
+#
+# Option A: Resend (https://resend.com/api-keys)
 railway variables set SMTP_HOST=smtp.resend.com
 railway variables set SMTP_PORT=587
 railway variables set SMTP_USER=resend
 railway variables set SMTP_PASS="<RESEND_API_KEY>"
 railway variables set EMAIL_FROM="DevPulse <noreply@devpulse.in>"
+#
+# Option B: Brevo (https://app.brevo.com/settings/keys/smtp)
+# 300 emails/day free forever — strongest free tier
+# railway variables set SMTP_HOST=smtp-relay.brevo.com
+# railway variables set SMTP_PORT=587
+# railway variables set SMTP_USER="<your-brevo-login-email>"
+# railway variables set SMTP_PASS="<BREVO_SMTP_KEY>"
+# railway variables set EMAIL_FROM="DevPulse <noreply@devpulse.in>"
+#
+# Option C: Postmark, SendGrid, Mailgun, AWS SES all work the same way —
+# anything that gives you SMTP host/port/user/pass.
 
 # At least one LLM provider — Anthropic recommended
 railway variables set ANTHROPIC_API_KEY="<sk-ant-...>"
