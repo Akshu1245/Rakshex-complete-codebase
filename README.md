@@ -219,3 +219,9 @@ Your co-founder has done the work. Now you execute.
 ---
 
 *DevPulse by Rashi Technologies · 2026*
+
+## Branch Structure
+
+- `main` — canonical, production-ready branch (all 57 pages, full backend, VS Code extension)
+- `feature/push-current-work` — legacy branch (identical to main, kept for history)
+
