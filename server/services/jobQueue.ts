@@ -27,7 +27,7 @@ export interface JobQueue {
   registerWorker<T>(
     queueName: string,
     handler: JobHandler<T>,
-    options?: { concurrency?: number; maxAttempts?: number }
+    options?: { concurrency?: number; maxAttempts?: number },
   ): void;
   enqueue<T>(queueName: string, data: T, opts?: { delayMs?: number }): Promise<string>;
   shutdown(): Promise<void>;
@@ -48,7 +48,7 @@ class MemoryJobQueue implements JobQueue {
   registerWorker<T>(
     queueName: string,
     handler: JobHandler<T>,
-    options?: { concurrency?: number; maxAttempts?: number }
+    options?: { concurrency?: number; maxAttempts?: number },
   ): void {
     if (this.workers.has(queueName)) {
       logger.warn({ queueName }, "[JobQueue] worker already registered, replacing");
@@ -62,28 +62,20 @@ class MemoryJobQueue implements JobQueue {
     });
   }
 
-  async enqueue<T>(
-    queueName: string,
-    data: T,
-    opts?: { delayMs?: number }
-  ): Promise<string> {
+  async enqueue<T>(queueName: string, data: T, opts?: { delayMs?: number }): Promise<string> {
     const id = `${queueName}-${Date.now()}-${crypto.randomBytes(6).toString("hex")}`;
     const env: JobEnvelope<T> = {
       id,
       queueName,
       data,
       attempts: 0,
-      maxAttempts:
-        this.workers.get(queueName)?.maxAttempts ?? 3,
+      maxAttempts: this.workers.get(queueName)?.maxAttempts ?? 3,
     };
     const delay = Math.max(0, opts?.delayMs ?? 0);
     const dispatch = () => {
       const worker = this.workers.get(queueName);
       if (!worker) {
-        logger.warn(
-          { queueName, jobId: id },
-          "[JobQueue] no worker registered, dropping"
-        );
+        logger.warn({ queueName, jobId: id }, "[JobQueue] no worker registered, dropping");
         return;
       }
       worker.backlog.push(env as JobEnvelope);
@@ -114,17 +106,14 @@ class MemoryJobQueue implements JobQueue {
     }
   }
 
-  private async runJob(
-    env: JobEnvelope,
-    handler: JobHandler<unknown>
-  ): Promise<void> {
+  private async runJob(env: JobEnvelope, handler: JobHandler<unknown>): Promise<void> {
     env.attempts += 1;
     try {
       await handler(env.data);
     } catch (err) {
       logger.error(
         { err, queueName: env.queueName, jobId: env.id, attempt: env.attempts },
-        "[JobQueue] job failed"
+        "[JobQueue] job failed",
       );
       if (env.attempts < env.maxAttempts) {
         // Re-queue with exponential backoff (capped at 60s).
@@ -139,7 +128,7 @@ class MemoryJobQueue implements JobQueue {
       } else {
         logger.error(
           { queueName: env.queueName, jobId: env.id },
-          "[JobQueue] job exhausted retries, dropping"
+          "[JobQueue] job exhausted retries, dropping",
         );
       }
     }
@@ -160,7 +149,7 @@ export function getJobQueue(): JobQueue {
       queue = createBullMQQueue(redisUrl);
       logger.info(
         { backend: "bullmq", redisUrl: redisUrl.replace(/:[^@/]*@/, ":***@") },
-        "[JobQueue] using BullMQ backend"
+        "[JobQueue] using BullMQ backend",
       );
       return queue;
     } catch {
@@ -179,9 +168,7 @@ function createBullMQQueue(redisUrl: string): JobQueue {
   const queues = new Map<string, import("bullmq").Queue>();
   const workers = new Map<string, import("bullmq").Worker>();
 
-  const connection = redisUrl.startsWith("redis://")
-    ? { url: redisUrl }
-    : { host: redisUrl };
+  const connection = redisUrl.startsWith("redis://") ? { url: redisUrl } : { host: redisUrl };
 
   function getOrCreateQueue(name: string): import("bullmq").Queue {
     let q = queues.get(name);
@@ -199,29 +186,31 @@ function createBullMQQueue(redisUrl: string): JobQueue {
       getOrCreateQueue(queueName);
       const worker = new Worker(
         queueName,
-        async job => {
+        async (job) => {
           await handler(job.data);
         },
-        { connection, concurrency }
+        { connection, concurrency },
       );
       worker.on("failed", (job, err) => {
         logger.error(
           { err, queueName, jobId: job?.id, attempt: job?.attemptsMade },
-          "[JobQueue] BullMQ job failed"
+          "[JobQueue] BullMQ job failed",
         );
       });
       workers.set(queueName, worker);
     },
     async enqueue(queueName, data, opts) {
       const q = getOrCreateQueue(queueName);
+      const jobId = `${queueName}-${Date.now()}-${crypto.randomBytes(6).toString("hex")}`;
       const job = await q.add(queueName, data, {
+        jobId,
         attempts: 3,
         backoff: { type: "exponential", delay: 1_000 },
         ...(opts?.delayMs ? { delay: opts.delayMs } : {}),
         removeOnComplete: { count: 1000 },
         removeOnFail: { count: 1000 },
       });
-      return String(job.id);
+      return job.id ?? jobId;
     },
     async shutdown() {
       for (const w of Array.from(workers.values())) await w.close();

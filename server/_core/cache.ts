@@ -42,14 +42,14 @@ async function spanSetex(key: string, ttl: number, value: string): Promise<void>
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 
 export const redis = new Redis(REDIS_URL, {
-  retryStrategy: (times) => {
+  retryStrategy: (times: number) => {
     const delay = Math.min(times * 50, 2000);
     return delay;
   },
   maxRetriesPerRequest: 3,
 });
 
-redis.on("error", (err) => {
+redis.on("error", (err: Error) => {
   logger.error({ err: err }, "Redis error");
 });
 
