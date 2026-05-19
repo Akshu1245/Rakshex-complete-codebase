@@ -68,10 +68,11 @@ export default function RegisterPage() {
             data-testid="signup-form"
           >
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">
+              <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-1">
                 Full name
               </label>
               <input
+                id="name"
                 type="text"
                 name="name"
                 autoComplete="name"
@@ -84,10 +85,11 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
                 Email
               </label>
               <input
+                id="email"
                 type="email"
                 name="email"
                 autoComplete="email"
@@ -100,10 +102,11 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
                 Password
               </label>
               <PasswordField
+                id="password"
                 name="password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}

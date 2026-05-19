@@ -276,10 +276,11 @@ export default function LoginPage() {
             data-testid="login-form"
           >
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
                 Email
               </label>
               <input
+                id="email"
                 type="email"
                 name="email"
                 autoComplete="email"
@@ -292,10 +293,11 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
                 Password
               </label>
               <PasswordField
+                id="password"
                 name="password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
@@ -305,8 +307,9 @@ export default function LoginPage() {
             </div>
 
             <div className="flex items-center justify-between">
-              <label className="flex items-center cursor-pointer">
+              <label htmlFor="remember-me" className="flex items-center cursor-pointer">
                 <input
+                  id="remember-me"
                   type="checkbox"
                   checked={rememberMe}
                   onChange={e => setRememberMe(e.target.checked)}
