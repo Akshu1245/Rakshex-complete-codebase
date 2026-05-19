@@ -80,6 +80,9 @@ importers:
       helmet:
         specifier: ^7.1.0
         version: 7.2.0
+      ioredis:
+        specifier: ^5.4.0
+        version: 5.10.1
       jose:
         specifier: ^5.2.0
         version: 5.10.0

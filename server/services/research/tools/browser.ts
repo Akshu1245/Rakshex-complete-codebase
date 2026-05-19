@@ -50,10 +50,12 @@ registerTool({
 
     if (!(await ensurePlaywright())) {
       return {
-        content: [{
-          type: "text",
-          text: "Browser navigation unavailable. Install Playwright: npm install playwright && npx playwright install chromium"
-        }],
+        content: [
+          {
+            type: "text",
+            text: "Browser navigation unavailable. Install Playwright: npm install playwright && npx playwright install chromium",
+          },
+        ],
         isError: true,
       };
     }
@@ -76,7 +78,10 @@ registerTool({
       if (blockImages || blockMedia) {
         await page.route("**/*", (route) => {
           const type = route.request().resourceType();
-          if ((blockImages && type === "image") || (blockMedia && (type === "media" || type === "font"))) {
+          if (
+            (blockImages && type === "image") ||
+            (blockMedia && (type === "media" || type === "font"))
+          ) {
             route.abort();
           } else {
             route.continue();
@@ -85,7 +90,7 @@ registerTool({
       }
 
       const consoleErrors: string[] = [];
-      page.on("pageerror", (err) => consoleErrors.push(err.message));
+      page.on("pageerror", (err: Error) => consoleErrors.push(err.message));
 
       await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
 
@@ -141,7 +146,7 @@ function formatBrowserResult(result: BrowserResult): string {
 
   if (result.consoleErrors.length > 0) {
     lines.push(`**Console Errors (${result.consoleErrors.length}):**`);
-    result.consoleErrors.slice(0, 5).forEach(e => lines.push(`  - ${e}`));
+    result.consoleErrors.slice(0, 5).forEach((e) => lines.push(`  - ${e}`));
     lines.push("");
   }
 
@@ -158,7 +163,9 @@ function formatBrowserResult(result: BrowserResult): string {
   if (result.screenshot) {
     lines.push("");
     lines.push(`## Screenshot`);
-    lines.push(`![Screenshot](data:image/jpeg;base64,${result.screenshot.slice(0, 100)}...) [${(result.screenshot.length / 1024).toFixed(1)} KB]`);
+    lines.push(
+      `![Screenshot](data:image/jpeg;base64,${result.screenshot.slice(0, 100)}...) [${(result.screenshot.length / 1024).toFixed(1)} KB]`,
+    );
   }
 
   return lines.join("\n");
