@@ -76,17 +76,24 @@ registerTool({
 
       // Block heavy resources for speed
       if (blockImages || blockMedia) {
-        await page.route("**/*", (route) => {
-          const type = route.request().resourceType();
-          if (
-            (blockImages && type === "image") ||
-            (blockMedia && (type === "media" || type === "font"))
-          ) {
-            route.abort();
-          } else {
-            route.continue();
-          }
-        });
+        await page.route(
+          "**/*",
+          (route: {
+            request: () => { resourceType: () => string };
+            abort: () => void;
+            continue: () => void;
+          }) => {
+            const type = route.request().resourceType();
+            if (
+              (blockImages && type === "image") ||
+              (blockMedia && (type === "media" || type === "font"))
+            ) {
+              route.abort();
+            } else {
+              route.continue();
+            }
+          },
+        );
       }
 
       const consoleErrors: string[] = [];
