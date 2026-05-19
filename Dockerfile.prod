@@ -1,13 +1,13 @@
 # Production-hardened multi-stage Dockerfile for DevPulse
 # Stage 1: deps (production-only install)
-FROM node:20-alpine@sha256:sha256:ae2l3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a7b8c9d0e1f AS deps
+FROM node:20-alpine AS deps
 RUN corepack enable pnpm
 WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile --prod
 
 # Stage 2: build
-FROM node:20-alpine@sha256:sha256:ae2l3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a7b8c9d0e1f AS build
+FROM node:20-alpine AS build
 RUN corepack enable pnpm
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
@@ -15,7 +15,7 @@ COPY . .
 RUN pnpm run build
 
 # Stage 3: runtime (minimal attack surface)
-FROM node:20-alpine@sha256:sha256:ae2l3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a7b8c9d0e1f AS runtime
+FROM node:20-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 

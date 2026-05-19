@@ -1,7 +1,7 @@
 {
   "name": "devpulse-vscode",
   "displayName": "DevPulse",
-  "description": "Stop AI agents from burning your API budget. Find leaked keys, hidden costs, and security risks in VS Code — first scan in 60 seconds.",
+  "description": "Stop AI agents from burning your API budget. Find leaked keys, hidden costs, and security risks in VS Code \u2014 first scan in 60 seconds.",
   "version": "0.2.0",
   "publisher": "devpulse",
   "license": "MIT",
@@ -302,7 +302,7 @@
     "viewsWelcome": [
       {
         "view": "devpulse.findings",
-        "contents": "Sign in with your DevPulse API key to see findings.\n[Sign in](command:devpulse.authenticate)\n\nGenerate an API key from Settings on the DevPulse dashboard.\n\n---\n\n**Keyboard shortcuts:**\nCtrl+Shift+D — Refresh\nCtrl+Shift+S — Run Scan\nCtrl+Shift+R — Rerun Last Scan\nCtrl+Shift+1-4 — Filter by severity\nEnter — Resolve finding"
+        "contents": "Sign in with your DevPulse API key to see findings.\n[Sign in](command:devpulse.authenticate)\n\nGenerate an API key from Settings on the DevPulse dashboard.\n\n---\n\n**Keyboard shortcuts:**\nCtrl+Shift+D \u2014 Refresh\nCtrl+Shift+S \u2014 Run Scan\nCtrl+Shift+R \u2014 Rerun Last Scan\nCtrl+Shift+1-4 \u2014 Filter by severity\nEnter \u2014 Resolve finding"
       }
     ],
     "menus": {
@@ -479,7 +479,7 @@
         "devpulse.apiUrl": {
           "type": "string",
           "default": "https://api.devpulse.in",
-          "description": "Base URL of the DevPulse backend (default: https://api.devpulse.in — self-hosted users can override to e.g. https://api.your-company.com or http://localhost:3000)."
+          "description": "Base URL of the DevPulse backend (default: https://api.devpulse.in \u2014 self-hosted users can override to e.g. https://api.your-company.com or http://localhost:3000)."
         },
         "devpulse.heartbeatIntervalSec": {
           "type": "number",
@@ -501,7 +501,7 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run esbuild-base -- --minify",
+    "vscode:prepublish": "npx esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node --minify",
     "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
     "esbuild": "npm run esbuild-base -- --sourcemap",
     "esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
