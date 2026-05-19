@@ -54,11 +54,11 @@ if (!fs.existsSync(changelogPath)) { warn("CHANGELOG.md not found — create one
 if (!fs.existsSync(iconPath)) { warn("Extension icon not found at resources/icon.svg"); }
 
 // --- Build artifacts ---
-const outDir = path.join(__dirname, "..", "out");
-if (!fs.existsSync(outDir)) { fail("out/ directory not found — run npm run compile first"); }
+const distDir = path.join(__dirname, "..", "dist");
+if (!fs.existsSync(distDir)) { fail("dist/ directory not found — run npm run compile first"); }
 else {
-  const extensionJs = path.join(outDir, "extension.js");
-  if (!fs.existsSync(extensionJs)) fail("out/extension.js not found — compilation failed?");
+  const extensionJs = path.join(distDir, "extension.js");
+  if (!fs.existsSync(extensionJs)) fail("dist/extension.js not found — compilation failed?");
 }
 
 // --- Output ---

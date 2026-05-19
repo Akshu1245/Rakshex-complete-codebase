@@ -1336,3 +1336,23 @@ export const securityEvents = mysqlTable(
 );
 export type SecurityEventRow = typeof securityEvents.$inferSelect;
 export type InsertSecurityEventRow = typeof securityEvents.$inferInsert;
+
+/**
+ * Waitlist — landing page email captures for beta access.
+ */
+export const waitlist = mysqlTable(
+  "waitlist",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    email: varchar("email", { length: 320 }).notNull().unique(),
+    source: varchar("source", { length: 64 }).default("landing_page").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    notifiedAt: timestamp("notified_at"),
+  },
+  (table) => ({
+    emailIdx: index("wl_email_idx").on(table.email),
+    createdAtIdx: index("wl_created_at_idx").on(table.createdAt),
+  }),
+);
+export type WaitlistRow = typeof waitlist.$inferSelect;
+export type InsertWaitlistRow = typeof waitlist.$inferInsert;

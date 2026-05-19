@@ -81,6 +81,13 @@ export const teamRouter = router({
         });
       }
       await db.updateTeamMemberRole(input.memberId, input.role);
+
+      // If the member has accepted the invitation and has a user account,
+      // invalidate all their sessions so they must re-authenticate with the new role.
+      if (member.memberUserId) {
+        await db.revokeAllUserSessions(member.memberUserId);
+      }
+
       await db.createAuditLogEntry(ctx.user.id, "team_role_updated", {
         memberId: input.memberId,
         role: input.role,

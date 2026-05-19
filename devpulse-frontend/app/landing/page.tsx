@@ -3,16 +3,22 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Shield, Zap, Eye, Lock, TrendingDown, Globe, ChevronRight, Check } from "lucide-react";
+import { trpc } from "@/lib/trpc";
 
 export default function LandingPage() {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
+  const joinWaitlist = trpc.waitlist.join.useMutation({
+    onSuccess: () => setSubmitted(true),
+    onError: (err) => setError(err.message),
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
     if (email.includes("@")) {
-      setSubmitted(true);
-      // TODO: wire to waitlist API
+      joinWaitlist.mutate({ email });
     }
   };
 
@@ -100,21 +106,27 @@ export default function LandingPage() {
             {/* Email capture */}
             <form onSubmit={handleSubmit} className="max-w-md mx-auto mb-8">
               {!submitted ? (
-                <div className="flex gap-2">
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email"
-                    className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 transition-all"
-                    required
-                  />
-                  <button
-                    type="submit"
-                    className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 font-semibold hover:opacity-90 transition-opacity flex items-center gap-2"
-                  >
-                    Get Access <ChevronRight className="w-4 h-4" />
-                  </button>
+                <div className="flex flex-col gap-2">
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Enter your email"
+                      className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                      required
+                      disabled={joinWaitlist.isPending}
+                    />
+                    <button
+                      type="submit"
+                      disabled={joinWaitlist.isPending}
+                      className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 font-semibold hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-60"
+                    >
+                      {joinWaitlist.isPending ? "Joining..." : "Get Access"}{" "}
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                  {error && <p className="text-sm text-rose-400">{error}</p>}
                 </div>
               ) : (
                 <motion.div
