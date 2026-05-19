@@ -123,6 +123,9 @@ jobs:
           else
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: devpulse-frontend
       - name: Install Playwright browsers
         if: steps.check_playwright.outputs.exists == 'true'
         run: pnpm exec playwright install --with-deps

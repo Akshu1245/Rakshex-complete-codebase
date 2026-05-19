@@ -1,20 +1,28 @@
 # Production-hardened multi-stage Dockerfile for DevPulse
-# Stage 1: deps (production-only install)
+
+# Stage 1: install ALL deps (needed for build, including devDependencies)
 FROM node:20-alpine AS deps
-RUN corepack enable pnpm
+RUN corepack enable && corepack prepare pnpm@9 --activate
 WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile --prod
+RUN pnpm install --frozen-lockfile
 
-# Stage 2: build
+# Stage 2: build (TypeScript compile)
 FROM node:20-alpine AS build
-RUN corepack enable pnpm
+RUN corepack enable && corepack prepare pnpm@9 --activate
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN pnpm run build
 
-# Stage 3: runtime (minimal attack surface)
+# Stage 3: production deps only (for slim runtime image)
+FROM node:20-alpine AS prod-deps
+RUN corepack enable && corepack prepare pnpm@9 --activate
+WORKDIR /app
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile --prod
+
+# Stage 4: runtime (minimal attack surface)
 FROM node:20-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
@@ -24,7 +32,7 @@ RUN addgroup --system --gid 1001 nodejs && \
 
 COPY --from=build --chown=nodejs:nodejs /app/dist ./dist
 COPY --from=build --chown=nodejs:nodejs /app/package.json ./
-COPY --from=deps --chown=nodejs:nodejs /app/node_modules ./node_modules
+COPY --from=prod-deps --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY --from=build --chown=nodejs:nodejs /app/drizzle ./drizzle
 COPY --from=build --chown=nodejs:nodejs /app/drizzle.config.ts ./
 

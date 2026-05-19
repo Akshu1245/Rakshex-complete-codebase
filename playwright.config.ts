@@ -44,7 +44,7 @@ export default defineConfig({
 
   // Automatically start the Next.js dev server before running tests
   webServer: {
-    command: "pnpm dev",
+    command: "pnpm exec next dev",
     cwd: "./devpulse-frontend",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
