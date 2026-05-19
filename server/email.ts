@@ -670,3 +670,60 @@ export async function sendPaymentFailedEmail(opts: PaymentFailedEmailOptions): P
 
   logger.info(`[Email] Payment failed email sent to ${opts.toEmail}`);
 }
+
+interface WaitlistSignupNotificationOptions {
+  email: string;
+  source?: string | null;
+  referrer?: string | null;
+  ipAddress?: string | null;
+  totalSignups?: number;
+}
+
+/**
+ * Notify the operator (EMAIL_FROM address) when someone joins the
+ * public marketing waitlist. Silently no-ops when SMTP isn't
+ * configured so dev environments don't error.
+ */
+export async function sendWaitlistAdminNotification(
+  opts: WaitlistSignupNotificationOptions,
+): Promise<void> {
+  const config = createTransport();
+  if (!config) {
+    logger.info(`[Email] SMTP not configured. New waitlist signup: ${opts.email}`);
+    return;
+  }
+
+  const adminEmail = process.env.EMAIL_ADMIN || config.from;
+  const subject = `New DevPulse waitlist signup: ${opts.email}`;
+  const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>New waitlist signup</title></head>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#f9fafb;margin:0;padding:32px 0;">
+  <div style="max-width:520px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;box-shadow:0 4px 24px rgba(0,0,0,0.06);">
+    <h2 style="color:#111827;margin:0 0 16px;font-size:20px;">New waitlist signup</h2>
+    <p style="color:#374151;line-height:1.6;margin:0 0 16px;">
+      <strong style="color:#2563eb;">${opts.email}</strong> just joined the DevPulse waitlist.
+    </p>
+    <table style="width:100%;border-collapse:collapse;font-size:14px;color:#374151;">
+      ${opts.source ? `<tr><td style="padding:6px 0;color:#6b7280;width:120px;">Source</td><td>${opts.source}</td></tr>` : ""}
+      ${opts.referrer ? `<tr><td style="padding:6px 0;color:#6b7280;">Referrer</td><td>${opts.referrer}</td></tr>` : ""}
+      ${opts.ipAddress ? `<tr><td style="padding:6px 0;color:#6b7280;">IP</td><td>${opts.ipAddress}</td></tr>` : ""}
+      ${typeof opts.totalSignups === "number" ? `<tr><td style="padding:6px 0;color:#6b7280;">Total signups</td><td><strong>${opts.totalSignups}</strong></td></tr>` : ""}
+    </table>
+    <p style="color:#9ca3af;font-size:12px;margin:24px 0 0;">
+      Sent automatically by the DevPulse waitlist endpoint.
+    </p>
+  </div>
+</body>
+</html>`;
+
+  await config.transport.sendMail({
+    from: `"DevPulse Waitlist" <${config.from}>`,
+    to: adminEmail,
+    subject,
+    html,
+  });
+
+  logger.info({ signup: opts.email }, `[Email] Waitlist signup notification sent to ${adminEmail}`);
+}

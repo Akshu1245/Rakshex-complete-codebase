@@ -1336,3 +1336,29 @@ export const securityEvents = mysqlTable(
 );
 export type SecurityEventRow = typeof securityEvents.$inferSelect;
 export type InsertSecurityEventRow = typeof securityEvents.$inferInsert;
+
+/**
+ * Public marketing waitlist signups. Captured from the landing page
+ * email-capture form. Operators get a notification email per signup
+ * (when SMTP is configured) and can also query this table directly
+ * to export to a CRM. Email is the primary key — same address can't
+ * register twice (DB-level uniqueness, no duplicate notifications).
+ */
+export const waitlistSignups = mysqlTable(
+  "waitlist_signups",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    email: varchar("email", { length: 320 }).notNull().unique(),
+    source: varchar("source", { length: 64 }),
+    referrer: varchar("referrer", { length: 1024 }),
+    userAgent: varchar("user_agent", { length: 512 }),
+    ipAddress: varchar("ip_address", { length: 64 }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    emailIdx: index("waitlist_email_idx").on(table.email),
+    createdAtIdx: index("waitlist_created_at_idx").on(table.createdAt),
+  }),
+);
+export type WaitlistSignupRow = typeof waitlistSignups.$inferSelect;
+export type InsertWaitlistSignupRow = typeof waitlistSignups.$inferInsert;

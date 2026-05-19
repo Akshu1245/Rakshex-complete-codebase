@@ -3,17 +3,33 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Shield, Zap, Eye, Lock, TrendingDown, Globe, ChevronRight, Check } from "lucide-react";
+import { trpc } from "@/lib/trpc";
 
 export default function LandingPage() {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const signupMutation = trpc.waitlist.signup.useMutation();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (email.includes("@")) {
-      setSubmitted(true);
-      // TODO: wire to waitlist API
+    setError(null);
+    const trimmed = email.trim();
+    if (!trimmed.includes("@") || trimmed.length < 3) {
+      setError("Please enter a valid email address.");
+      return;
     }
+    signupMutation.mutate(
+      {
+        email: trimmed,
+        source: "landing",
+        referrer: typeof document !== "undefined" ? document.referrer || undefined : undefined,
+      },
+      {
+        onSuccess: () => setSubmitted(true),
+        onError: (err) => setError(err.message || "Something went wrong. Please try again."),
+      },
+    );
   };
 
   const features = [
@@ -100,22 +116,33 @@ export default function LandingPage() {
             {/* Email capture */}
             <form onSubmit={handleSubmit} className="max-w-md mx-auto mb-8">
               {!submitted ? (
-                <div className="flex gap-2">
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email"
-                    className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 transition-all"
-                    required
-                  />
-                  <button
-                    type="submit"
-                    className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 font-semibold hover:opacity-90 transition-opacity flex items-center gap-2"
-                  >
-                    Get Access <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
+                <>
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Enter your email"
+                      className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                      required
+                      disabled={signupMutation.isPending}
+                      aria-label="Email address"
+                    />
+                    <button
+                      type="submit"
+                      disabled={signupMutation.isPending}
+                      className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 font-semibold hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-60"
+                    >
+                      {signupMutation.isPending ? "Saving…" : "Get Access"}{" "}
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                  {error && (
+                    <p className="text-red-400 text-sm mt-2" role="alert">
+                      {error}
+                    </p>
+                  )}
+                </>
               ) : (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}

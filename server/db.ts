@@ -52,6 +52,9 @@ import {
   mcpServers,
   mcpTools,
   mcpInvocationLog,
+  waitlistSignups,
+  type WaitlistSignupRow,
+  type InsertWaitlistSignupRow,
   importHistory,
   aiEvents,
   type AiEventRow,
@@ -3816,4 +3819,41 @@ export async function resolvePendingApproval(
 
 function snakeCase(s: string): string {
   return s.replace(/[A-Z]/g, (m) => `_${m.toLowerCase()}`).replace(/^_/, "");
+}
+
+// ============================================================================
+// Waitlist signups (public marketing landing form)
+// ============================================================================
+
+export async function insertWaitlistSignup(
+  row: InsertWaitlistSignupRow,
+): Promise<{ id: number; created: boolean }> {
+  const db = await getDb();
+  assertDb(db);
+  // Idempotent: if email already exists, return existing row's id without
+  // bumping the timestamp. Lets the FE always show a friendly success
+  // message even on duplicate submits.
+  const [existing] = await db
+    .select({ id: waitlistSignups.id })
+    .from(waitlistSignups)
+    .where(eq(waitlistSignups.email, row.email))
+    .limit(1);
+  if (existing) {
+    return { id: existing.id, created: false };
+  }
+  const result = await db.insert(waitlistSignups).values(row);
+  const insertId = Number((result as unknown as { insertId?: number }).insertId ?? 0);
+  return { id: insertId, created: true };
+}
+
+export async function listWaitlistSignups(limit = 100, offset = 0): Promise<WaitlistSignupRow[]> {
+  const db = await getDb();
+  assertDb(db);
+  const rows = await db
+    .select()
+    .from(waitlistSignups)
+    .orderBy(desc(waitlistSignups.createdAt))
+    .limit(limit)
+    .offset(offset);
+  return rows;
 }
