@@ -16,6 +16,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -51,6 +54,9 @@ jobs:
           --health-retries=5
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -99,24 +105,27 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 8
+          node-version: 22
+          cache: pnpm
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
       - name: Check for Playwright config
         id: check_playwright
         run: |
-          if (Test-Path "playwright.config.ts") { echo "exists=true" >> $env:GITHUB_OUTPUT } else { echo "exists=false" >> $env:GITHUB_OUTPUT }
-        shell: pwsh
-      - name: Install Playwright
+          if [ -f "playwright.config.ts" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Install Playwright browsers
         if: steps.check_playwright.outputs.exists == 'true'
-        run: pnpm exec playwright install
+        run: pnpm exec playwright install --with-deps
       - name: Run E2E tests
         if: steps.check_playwright.outputs.exists == 'true'
         run: pnpm run test:e2e
@@ -125,6 +134,7 @@ jobs:
           REDIS_URL: redis://127.0.0.1:6379
           JWT_SECRET: test-secret-ci
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: playwright-report
           path: playwright-report/
@@ -135,16 +145,17 @@ jobs:
     needs: [lint-typecheck, test]
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-
       - name: Dependency vulnerability scan
         run: pnpm audit --audit-level moderate
         continue-on-error: true
-
       - name: Run TruffleHog secret scan
         uses: trufflesecurity/trufflehog@main
         with:
@@ -157,10 +168,14 @@ jobs:
     needs: [lint-typecheck, test]
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - name: ESLint security rules
         run: pnpm run lint
 
@@ -207,6 +222,9 @@ jobs:
     needs: [lint-typecheck]
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -253,6 +271,13 @@ jobs:
     environment: production
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
       - name: Run migrations
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
