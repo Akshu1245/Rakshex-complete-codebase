@@ -4,7 +4,7 @@
   "outputDirectory": ".next",
   "installCommand": "npm install",
   "env": {
-    "NEXT_PUBLIC_APP_URL": "https://app.devpulse.in",
-    "NEXT_PUBLIC_TS_API_URL": "https://devpulse-backend.onrender.com"
+    "NEXT_PUBLIC_APP_URL": "https://devpulse-frontend-one.vercel.app",
+    "NEXT_PUBLIC_TS_API_URL": "https://devpulse-backend-r0o3.onrender.com"
   }
 }
