@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { PublicHeader } from "@/components/PublicHeader";
+import { DashboardHeader } from "@/components/DashboardHeader";
 
 const PUBLIC_PATHS = [
   "/",
@@ -59,30 +60,10 @@ export default function AppShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 flex">
+    <div className="min-h-screen bg-background flex">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Mobile top bar */}
-        <div className="lg:hidden flex items-center gap-3 px-4 py-3 bg-gray-900 border-b border-gray-800 sticky top-0 z-30">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="text-gray-400 hover:text-white"
-            aria-label="Open sidebar"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 6h16M4 12h16M4 18h16"
-              />
-            </svg>
-          </button>
-          <span className="text-lg font-bold text-blue-400">DevPulse</span>
-        </div>
-
-        {/* Main content */}
+      <DashboardHeader onMenuOpen={() => setSidebarOpen(true)} />
+      <div className="flex-1 flex flex-col min-w-0 lg:ml-64 mt-16">
         <main className="flex-1">{children}</main>
       </div>
     </div>

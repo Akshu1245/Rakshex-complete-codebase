@@ -1,15 +1,12 @@
 "use client";
 import { useState } from "react";
-import Link from "next/link";
-import { EmptyState } from "@/components/EmptyState";
 import { trpc } from "@/lib/trpc";
 
 type Framework = "pci_dss" | "owasp";
 
 export default function CompliancePage() {
   const utils = trpc.useUtils();
-  const [selectedFramework, setSelectedFramework] =
-    useState<Framework>("pci_dss");
+  const [selectedFramework, setSelectedFramework] = useState<Framework>("pci_dss");
   const [selectedCollection, setSelectedCollection] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -18,7 +15,7 @@ export default function CompliancePage() {
 
   const reportsQuery = trpc.compliance.listReports.useQuery(
     { collectionId: selectedCollection },
-    { enabled: !!selectedCollection }
+    { enabled: !!selectedCollection },
   );
   const reports = reportsQuery.data?.reports ?? [];
   const loading = !!selectedCollection && reportsQuery.isLoading;
@@ -47,7 +44,15 @@ export default function CompliancePage() {
   };
 
   /** Export a compliance report as a downloadable JSON file */
-  const handleExport = (report: { id: string; reportType: string; complianceScore: number; totalRequirements: number; metRequirements: number; createdAt: string | Date; details?: unknown }) => {
+  const handleExport = (report: {
+    id: string;
+    reportType: string;
+    complianceScore: number;
+    totalRequirements: number;
+    metRequirements: number;
+    createdAt: string | Date;
+    details?: unknown;
+  }) => {
     const exportData = {
       reportId: report.id,
       reportType: report.reportType,
@@ -70,56 +75,98 @@ export default function CompliancePage() {
     URL.revokeObjectURL(url);
   };
 
+  const score = reports.length > 0 ? Math.round(reports[0].complianceScore) : 0;
+  const totalReqs = reports.length > 0 ? reports[0].totalRequirements : 0;
+  const metReqs = reports.length > 0 ? reports[0].metRequirements : 0;
+  const circumference = 440;
+  const offset = circumference - (score / 100) * circumference;
+
   return (
-    <div className="text-white p-8">
+    <div className="p-8 min-h-screen bg-background text-on-background">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
+        {/* Header */}
+        <div className="flex items-end justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-blue-400">
-              Compliance Reports
-            </h1>
-            <p className="text-gray-400 mt-1">
-              PCI DSS and OWASP compliance assessment
-            </p>
+            <span
+              className="font-label-caps text-primary tracking-widest"
+              style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "11px" }}
+            >
+              AUDIT &amp; COMPLIANCE COMMAND
+            </span>
+            <h2
+              className="font-display-lg text-on-surface mt-1"
+              style={{
+                fontFamily: "'Space Grotesk', sans-serif",
+                fontSize: "32px",
+                fontWeight: 600,
+                letterSpacing: "-0.01em",
+              }}
+            >
+              Compliance Control Panel
+            </h2>
           </div>
-          <Link href="/dashboard" className="text-blue-400 hover:text-blue-300">
-            ← Dashboard
-          </Link>
+          <div className="flex gap-3">
+            <button
+              onClick={generateReport}
+              disabled={!selectedCollection || generate.isPending}
+              className="px-6 py-2 bg-primary text-on-primary font-bold hover:shadow-[0_0_15px_rgba(207,188,255,0.4)] transition-all flex items-center gap-2 disabled:opacity-50"
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: "11px",
+                letterSpacing: "0.1em",
+              }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>
+                refresh
+              </span>
+              {generate.isPending ? "GENERATING…" : "RUN NEW AUDIT"}
+            </button>
+          </div>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 rounded bg-red-900/40 border border-red-500/50 text-red-300 text-sm">
+          <div
+            className="mb-6 p-4 border-l-4 border-error bg-error/10 text-error"
+            style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "13px" }}
+          >
             {error}
           </div>
         )}
 
-        <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Controls */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <div>
-            <label className="block text-sm text-gray-400 mb-1">
-              Compliance Framework
+            <label
+              className="font-label-caps text-on-surface-variant block mb-2"
+              style={{ fontSize: "11px", letterSpacing: "0.1em" }}
+            >
+              COMPLIANCE FRAMEWORK
             </label>
             <select
               value={selectedFramework}
-              onChange={e =>
-                setSelectedFramework(e.target.value as Framework)
-              }
-              className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-blue-500 outline-none"
+              onChange={(e) => setSelectedFramework(e.target.value as Framework)}
+              className="w-full px-4 py-2.5 bg-surface-container-highest/50 border border-outline-variant/30 text-on-surface focus:ring-1 focus:ring-primary focus:border-primary focus:outline-none transition-all"
+              style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "13px" }}
             >
-              <option value="pci_dss">PCI DSS</option>
-              <option value="owasp">OWASP Top 10</option>
+              <option value="pci_dss">PCI DSS V4.0</option>
+              <option value="owasp">OWASP ASVS</option>
             </select>
           </div>
           <div>
-            <label className="block text-sm text-gray-400 mb-1">
-              Collection
+            <label
+              className="font-label-caps text-on-surface-variant block mb-2"
+              style={{ fontSize: "11px", letterSpacing: "0.1em" }}
+            >
+              COLLECTION
             </label>
             <select
               value={selectedCollection}
-              onChange={e => setSelectedCollection(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-blue-500 outline-none"
+              onChange={(e) => setSelectedCollection(e.target.value)}
+              className="w-full px-4 py-2.5 bg-surface-container-highest/50 border border-outline-variant/30 text-on-surface focus:ring-1 focus:ring-primary focus:border-primary focus:outline-none transition-all"
+              style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "13px" }}
             >
-              <option value="">-- Select a collection --</option>
-              {collections.map(col => (
+              <option value="">-- SELECT COLLECTION --</option>
+              {collections.map((col) => (
                 <option key={col.id} value={col.id}>
                   {col.name}
                 </option>
@@ -128,87 +175,289 @@ export default function CompliancePage() {
           </div>
         </div>
 
-        <button
-          onClick={generateReport}
-          disabled={!selectedCollection || generate.isPending}
-          className="mb-8 px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors disabled:opacity-50"
-        >
-          {generate.isPending ? "Generating…" : "Generate New Report"}
-        </button>
-
-        {!selectedCollection ? (
-          <EmptyState
-            icon={<span>📋</span>}
-            title="Pick a collection"
-            description="Compliance reports are scoped to a collection. Select one above to view existing reports or generate a new one."
-            actions={[
-              {
-                label: "Import a collection",
-                href: "/collections",
-                variant: "secondary",
-              },
-            ]}
-          />
-        ) : loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
-          </div>
-        ) : reports.length === 0 ? (
-          <EmptyState
-            icon={<span>📋</span>}
-            title="No compliance reports yet"
-            description="Generate a PCI DSS or OWASP Top 10 report to see how each framework scores this collection."
-            actions={[
-              {
-                label: "Generate report",
-                onClick: generateReport,
-              },
-            ]}
-          />
-        ) : (
-          <div className="space-y-3">
-            {reports.map(report => (
-              <div
-                key={report.id}
-                className="bg-gray-800 p-6 rounded-lg border border-gray-700"
+        {/* Bento Grid */}
+        <div className="grid grid-cols-12 gap-gutter mb-8">
+          {/* Score Ring */}
+          <div className="col-span-12 md:col-span-4 glass-panel p-6 relative overflow-hidden">
+            <div className="scan-animation"></div>
+            <div className="flex items-center justify-between mb-8">
+              <span
+                className="font-label-caps text-on-surface-variant"
+                style={{ fontSize: "10px", letterSpacing: "0.1em" }}
               >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-lg font-semibold uppercase">
-                      {report.reportType.replace("_", " ")}
-                    </h3>
-                    <p className="text-sm text-gray-400">
-                      {new Date(report.createdAt).toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <p className="text-4xl font-bold">
-                        {Math.round(report.complianceScore)}%
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => handleExport(report as never)}
-                      className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-                      title="Export report as JSON"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                      Export
-                    </button>
-                  </div>
-                </div>
-                <div className="mt-2">
-                  <p className="text-sm text-gray-400">
-                    {report.totalRequirements} requirements ·{" "}
-                    {report.metRequirements} met
-                  </p>
-                </div>
+                FRAMEWORK: {selectedFramework === "pci_dss" ? "PCI DSS V4.0" : "OWASP ASVS"}
+              </span>
+              <span className="flex items-center gap-1.5 text-primary">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary status-pulse"></span>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "10px" }}>
+                  LIVE SYNC
+                </span>
+              </span>
+            </div>
+            <div className="flex items-center justify-center py-4 relative">
+              <svg className="w-40 h-40" style={{ transform: "rotate(-90deg)" }}>
+                <circle
+                  className="text-surface-variant"
+                  cx="80"
+                  cy="80"
+                  fill="transparent"
+                  r="70"
+                  stroke="currentColor"
+                  strokeWidth="8"
+                />
+                <circle
+                  cx="80"
+                  cy="80"
+                  fill="transparent"
+                  r="70"
+                  stroke={score < 80 ? "#ffb4ab" : "#cfbcff"}
+                  strokeDasharray={circumference}
+                  strokeDashoffset={reports.length > 0 ? offset : circumference}
+                  strokeLinecap="round"
+                  strokeWidth="8"
+                  style={{ transition: "stroke-dashoffset 1s ease-out" }}
+                />
+              </svg>
+              <div className="absolute flex flex-col items-center">
+                <span
+                  style={{
+                    fontFamily: "'Space Grotesk', sans-serif",
+                    fontSize: "48px",
+                    fontWeight: 700,
+                    lineHeight: 1.1,
+                    color: score < 80 ? "#ffb4ab" : "#cfbcff",
+                  }}
+                >
+                  {reports.length > 0 ? `${score}%` : "—"}
+                </span>
+                <span
+                  className="text-on-surface-variant"
+                  style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: "10px",
+                    letterSpacing: "0.1em",
+                  }}
+                >
+                  COMPLIANT
+                </span>
               </div>
-            ))}
+            </div>
+            <div className="mt-6 flex justify-between border-t border-outline-variant/10 pt-4">
+              <div className="text-center">
+                <p
+                  className="text-on-surface-variant"
+                  style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: "9px",
+                    letterSpacing: "0.1em",
+                  }}
+                >
+                  TOTAL CONTROLS
+                </p>
+                <p
+                  className="text-on-surface"
+                  style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "16px" }}
+                >
+                  {totalReqs || "—"}
+                </p>
+              </div>
+              <div className="text-center">
+                <p
+                  className="text-on-surface-variant"
+                  style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: "9px",
+                    letterSpacing: "0.1em",
+                  }}
+                >
+                  PASSED
+                </p>
+                <p
+                  className="text-primary"
+                  style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "16px" }}
+                >
+                  {metReqs || "—"}
+                </p>
+              </div>
+              <div className="text-center">
+                <p
+                  className="text-on-surface-variant"
+                  style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: "9px",
+                    letterSpacing: "0.1em",
+                  }}
+                >
+                  REMAINING
+                </p>
+                <p
+                  className="text-error"
+                  style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "16px" }}
+                >
+                  {totalReqs > 0 ? totalReqs - metReqs : "—"}
+                </p>
+              </div>
+            </div>
           </div>
-        )}
+
+          {/* Reports table */}
+          <div className="col-span-12 md:col-span-8 glass-panel overflow-hidden">
+            <div className="px-6 py-4 border-b border-outline-variant/20 flex items-center justify-between bg-surface-container-low/50">
+              <h3
+                className="text-on-surface"
+                style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: "11px",
+                  letterSpacing: "0.1em",
+                }}
+              >
+                AUDIT REPORT STREAM
+              </h3>
+              <div className="flex items-center gap-2">
+                <span
+                  className="material-symbols-outlined text-primary"
+                  style={{ fontSize: "14px" }}
+                >
+                  circle
+                </span>
+                <span
+                  className="text-primary"
+                  style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "10px" }}
+                >
+                  MONITORING ACTIVE
+                </span>
+              </div>
+            </div>
+
+            {!selectedCollection ? (
+              <div className="p-12 text-center">
+                <span
+                  className="material-symbols-outlined text-on-surface-variant/30"
+                  style={{ fontSize: "48px" }}
+                >
+                  gavel
+                </span>
+                <p
+                  className="text-on-surface-variant mt-4"
+                  style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "13px" }}
+                >
+                  Select a collection to view compliance reports
+                </p>
+              </div>
+            ) : loading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
+              </div>
+            ) : reports.length === 0 ? (
+              <div className="p-12 text-center">
+                <span
+                  className="material-symbols-outlined text-on-surface-variant/30"
+                  style={{ fontSize: "48px" }}
+                >
+                  assignment
+                </span>
+                <p
+                  className="text-on-surface-variant mt-4"
+                  style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "13px" }}
+                >
+                  No reports yet. Run a new audit above.
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table
+                  className="w-full text-left"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                >
+                  <thead>
+                    <tr
+                      className="text-on-surface-variant border-b border-outline-variant/10"
+                      style={{ fontSize: "11px", letterSpacing: "0.1em" }}
+                    >
+                      <th className="px-6 py-4">FRAMEWORK</th>
+                      <th className="px-6 py-4">SCORE</th>
+                      <th className="px-6 py-4">MET / TOTAL</th>
+                      <th className="px-6 py-4">GENERATED</th>
+                      <th className="px-6 py-4 text-right">ACTION</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-outline-variant/5">
+                    {reports.map((report) => {
+                      const s = Math.round(report.complianceScore);
+                      return (
+                        <tr
+                          key={report.id}
+                          className="hover:bg-surface-variant/20 transition-colors"
+                        >
+                          <td className="px-6 py-4 text-primary">
+                            {report.reportType.replace("_", " ").toUpperCase()}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span
+                              className={`px-2 py-0.5 border-l-2 font-bold text-xs ${s >= 80 ? "border-primary bg-primary/10 text-primary" : "border-error bg-error/10 text-error"}`}
+                            >
+                              {s}%
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-on-surface-variant">
+                            {report.metRequirements} / {report.totalRequirements}
+                          </td>
+                          <td className="px-6 py-4 text-on-surface-variant">
+                            {new Date(report.createdAt).toLocaleString()}
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <button
+                              onClick={() => handleExport(report as never)}
+                              className="px-3 py-1.5 bg-surface-container-high border border-outline-variant/30 text-on-surface hover:bg-surface-variant transition-colors flex items-center gap-1.5 ml-auto"
+                              style={{ fontSize: "10px", letterSpacing: "0.1em" }}
+                            >
+                              <span
+                                className="material-symbols-outlined"
+                                style={{ fontSize: "14px" }}
+                              >
+                                file_download
+                              </span>
+                              EXPORT
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Status bar */}
+        <div className="fixed bottom-0 left-64 right-0 h-10 bg-surface-container-lowest/80 backdrop-blur-lg border-t border-outline-variant/10 z-30 px-6 flex items-center justify-between">
+          <div className="flex gap-6 items-center">
+            <div className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              <span
+                className="text-on-surface-variant"
+                style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: "10px",
+                  letterSpacing: "0.1em",
+                }}
+              >
+                COMPLIANCE ENGINE: OPERATIONAL
+              </span>
+            </div>
+          </div>
+          <span
+            className="text-on-surface-variant"
+            style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: "10px",
+              letterSpacing: "0.1em",
+            }}
+          >
+            DEVPULSE AI — SYSTEM ALPHA-9
+          </span>
+        </div>
       </div>
     </div>
   );

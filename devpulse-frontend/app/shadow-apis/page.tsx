@@ -1,7 +1,5 @@
 "use client";
 import { useState } from "react";
-import Link from "next/link";
-import { EmptyState } from "@/components/EmptyState";
 import { trpc } from "@/lib/trpc";
 
 export default function ShadowAPIsPage() {
@@ -14,7 +12,7 @@ export default function ShadowAPIsPage() {
 
   const shadowQuery = trpc.shadowAPI.listShadowAPIs.useQuery(
     { collectionId: selectedCollection },
-    { enabled: !!selectedCollection }
+    { enabled: !!selectedCollection },
   );
   const shadowAPIs = shadowQuery.data?.shadowAPIs ?? [];
 
@@ -58,134 +56,381 @@ export default function ShadowAPIsPage() {
 
   const loading = !!selectedCollection && shadowQuery.isLoading;
 
+  const criticalCount = shadowAPIs.filter((a) => a.riskLevel === "HIGH" && !a.isDocumented).length;
+
   return (
-    <div className="text-white p-8">
+    <div className="p-8 min-h-screen bg-background text-on-background">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
+        {/* Header */}
+        <div className="flex items-end justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-blue-400">Shadow APIs</h1>
-            <p className="text-gray-400 mt-1">
-              Detect undocumented endpoints in your collections
-            </p>
-          </div>
-          <Link href="/dashboard" className="text-blue-400 hover:text-blue-300">
-            &larr; Dashboard
-          </Link>
-        </div>
-
-        {error && (
-          <div className="mb-4 p-3 rounded bg-red-900/40 border border-red-500/50 text-red-300 text-sm">
-            {error}
-          </div>
-        )}
-
-        <div className="mb-8 flex flex-col sm:flex-row gap-3 sm:items-end">
-          <div className="flex-1">
-            <label className="block text-sm text-gray-400 mb-1">
-              Select Collection
-            </label>
-            <select
-              value={selectedCollection}
-              onChange={handleCollectionChange}
-              className="w-full max-w-md px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-blue-500 outline-none"
+            <span
+              className="text-primary"
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: "11px",
+                letterSpacing: "0.1em",
+              }}
             >
-              <option value="">-- Select a collection --</option>
-              {collections.map(col => (
-                <option key={col.id} value={col.id}>
-                  {col.name}
-                </option>
-              ))}
-            </select>
+              SHADOW API DISCOVERY
+            </span>
+            <h2
+              className="text-on-surface mt-1"
+              style={{
+                fontFamily: "'Space Grotesk', sans-serif",
+                fontSize: "32px",
+                fontWeight: 600,
+                letterSpacing: "-0.01em",
+              }}
+            >
+              Shadow API Detection
+            </h2>
           </div>
           <button
             onClick={handleScan}
             disabled={!selectedCollection || scanMutation.isPending}
-            className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 font-medium transition-colors disabled:opacity-50"
+            className="px-6 py-2 bg-primary text-on-primary font-bold hover:shadow-[0_0_15px_rgba(207,188,255,0.4)] transition-all flex items-center gap-2 disabled:opacity-50"
+            style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: "11px",
+              letterSpacing: "0.1em",
+            }}
           >
-            {scanMutation.isPending ? "Scanning…" : "Scan now"}
+            <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>
+              radar
+            </span>
+            {scanMutation.isPending ? "SCANNING…" : "SCAN NOW"}
           </button>
         </div>
 
-        <div className="space-y-3">
-          {loading ? (
-            <p className="text-gray-400">Loading...</p>
-          ) : !selectedCollection ? (
-            <EmptyState
-              icon={<span>🔎</span>}
-              title="Pick a collection"
-              description="Shadow-API detection compares your production traffic against the endpoints defined in each collection. Select one above to get started."
-              actions={[
-                {
-                  label: "Import a collection",
-                  href: "/collections",
-                },
-              ]}
-            />
-          ) : shadowAPIs.length === 0 ? (
-            <EmptyState
-              icon={<span>✅</span>}
-              title="No shadow APIs found"
-              description="Every endpoint seen in traffic is documented in this collection. Nice work."
-              actions={[
-                {
-                  label: "Run another scan",
-                  href: "/scanning",
-                  variant: "secondary",
-                },
-              ]}
-            />
-          ) : (
-            shadowAPIs.map(api => (
-              <div
-                key={api.id}
-                className={`p-4 rounded-lg border ${
-                  api.isDocumented
-                    ? "bg-gray-800 border-gray-700"
-                    : api.riskLevel === "HIGH"
-                      ? "bg-red-900/30 border-red-500"
-                      : "bg-yellow-900/30 border-yellow-500"
-                }`}
+        {/* Critical Alert */}
+        {criticalCount > 0 && (
+          <div className="mb-6 p-4 bg-error/10 border-l-4 border-error glass-card flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-error/20 flex items-center justify-center">
+                <span
+                  className="material-symbols-outlined text-error pulse-active"
+                  style={{ fontVariationSettings: "'FILL' 1" }}
+                >
+                  warning
+                </span>
+              </div>
+              <div>
+                <h4
+                  className="text-error font-bold"
+                  style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: "11px",
+                    letterSpacing: "0.1em",
+                  }}
+                >
+                  CRITICAL ALERT: {criticalCount} HIGH-RISK SHADOW ENDPOINT
+                  {criticalCount > 1 ? "S" : ""} DETECTED
+                </h4>
+                <p
+                  className="text-on-error-container"
+                  style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "13px" }}
+                >
+                  Undocumented endpoints may be transmitting sensitive data. Review below.
+                </p>
+              </div>
+            </div>
+            <button
+              className="px-6 py-2 bg-error text-on-error font-bold uppercase"
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: "10px",
+                letterSpacing: "0.1em",
+              }}
+            >
+              SECURE ENDPOINTS
+            </button>
+          </div>
+        )}
+
+        {error && (
+          <div
+            className="mb-6 p-4 border-l-4 border-error bg-error/10 text-error"
+            style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "13px" }}
+          >
+            {error}
+          </div>
+        )}
+
+        {/* Collection selector */}
+        <div className="mb-8 glass-card p-6 rounded-xl">
+          <div className="flex flex-col sm:flex-row gap-4 items-end">
+            <div className="flex-1">
+              <label
+                className="text-on-surface-variant block mb-2"
+                style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: "11px",
+                  letterSpacing: "0.1em",
+                }}
               >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`font-bold text-sm ${
-                          api.riskLevel === "HIGH"
-                            ? "text-red-400"
-                            : "text-yellow-400"
-                        }`}
-                      >
-                        {api.riskLevel}
-                      </span>
-                      <span className="text-gray-400 text-xs">
-                        {api.method}
-                      </span>
-                    </div>
-                    <p className="text-sm mt-1 text-gray-300">{api.endpoint}</p>
-                    {api.reason && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        {api.reason}
-                      </p>
-                    )}
-                  </div>
-                  {!api.isDocumented ? (
-                    <button
-                      onClick={() => markAsDocumented(api.id)}
-                      disabled={markMutation.isPending}
-                      className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm font-medium transition-colors disabled:opacity-50"
-                    >
-                      Mark Documented
-                    </button>
-                  ) : (
-                    <span className="px-3 py-1 bg-gray-700 rounded text-sm text-gray-400">
-                      Documented
-                    </span>
-                  )}
+                SELECT COLLECTION
+              </label>
+              <select
+                value={selectedCollection}
+                onChange={handleCollectionChange}
+                className="w-full px-4 py-2.5 bg-surface-container-highest/50 border border-outline-variant/30 text-on-surface focus:ring-1 focus:ring-primary focus:border-primary focus:outline-none transition-all"
+                style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "13px" }}
+              >
+                <option value="">-- SELECT COLLECTION --</option>
+                {collections.map((col) => (
+                  <option key={col.id} value={col.id}>
+                    {col.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {selectedCollection && (
+              <div className="flex gap-3 text-center">
+                <div className="px-4 py-2 bg-surface-container rounded border border-outline-variant/20">
+                  <p
+                    className="text-on-surface-variant"
+                    style={{
+                      fontFamily: "'JetBrains Mono', monospace",
+                      fontSize: "9px",
+                      letterSpacing: "0.1em",
+                    }}
+                  >
+                    TOTAL
+                  </p>
+                  <p className="text-on-surface font-bold" style={{ fontSize: "20px" }}>
+                    {shadowAPIs.length}
+                  </p>
+                </div>
+                <div className="px-4 py-2 bg-error/10 rounded border border-error/20">
+                  <p
+                    className="text-error"
+                    style={{
+                      fontFamily: "'JetBrains Mono', monospace",
+                      fontSize: "9px",
+                      letterSpacing: "0.1em",
+                    }}
+                  >
+                    CRITICAL
+                  </p>
+                  <p className="text-error font-bold" style={{ fontSize: "20px" }}>
+                    {criticalCount}
+                  </p>
+                </div>
+                <div className="px-4 py-2 bg-primary/10 rounded border border-primary/20">
+                  <p
+                    className="text-primary"
+                    style={{
+                      fontFamily: "'JetBrains Mono', monospace",
+                      fontSize: "9px",
+                      letterSpacing: "0.1em",
+                    }}
+                  >
+                    DOCUMENTED
+                  </p>
+                  <p className="text-primary font-bold" style={{ fontSize: "20px" }}>
+                    {shadowAPIs.filter((a) => a.isDocumented).length}
+                  </p>
                 </div>
               </div>
-            ))
+            )}
+          </div>
+        </div>
+
+        {/* Endpoints Table */}
+        <div className="glass-card rounded-xl overflow-hidden mb-20">
+          <div className="px-6 py-4 border-b border-outline-variant/20 flex items-center justify-between bg-surface-container-low/50">
+            <h3
+              className="text-on-surface flex items-center gap-2"
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: "11px",
+                letterSpacing: "0.1em",
+              }}
+            >
+              <span className="material-symbols-outlined text-primary" style={{ fontSize: "16px" }}>
+                hub
+              </span>
+              DETECTED API ENDPOINTS
+            </h3>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-primary pulse-active"></span>
+              <span
+                className="text-primary"
+                style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "10px" }}
+              >
+                LIVE NODE SCAN
+              </span>
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
+            </div>
+          ) : !selectedCollection ? (
+            <div className="p-12 text-center">
+              <span
+                className="material-symbols-outlined text-on-surface-variant/30"
+                style={{ fontSize: "56px" }}
+              >
+                visibility_off
+              </span>
+              <p
+                className="text-on-surface-variant mt-4"
+                style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "13px" }}
+              >
+                Select a collection to begin shadow API detection
+              </p>
+            </div>
+          ) : shadowAPIs.length === 0 ? (
+            <div className="p-12 text-center">
+              <span
+                className="material-symbols-outlined text-primary/30"
+                style={{ fontSize: "56px" }}
+              >
+                check_circle
+              </span>
+              <p
+                className="text-on-surface-variant mt-4"
+                style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "13px" }}
+              >
+                No shadow APIs found — all endpoints are documented
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table
+                className="w-full text-left border-collapse"
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+              >
+                <thead>
+                  <tr
+                    className="bg-surface-container/50 border-b border-outline-variant/10"
+                    style={{ fontSize: "10px", letterSpacing: "0.1em" }}
+                  >
+                    <th className="px-6 py-4 text-on-surface-variant font-bold">ENDPOINT PATH</th>
+                    <th className="px-6 py-4 text-on-surface-variant font-bold">METHOD</th>
+                    <th className="px-6 py-4 text-on-surface-variant font-bold">RISK LEVEL</th>
+                    <th className="px-6 py-4 text-on-surface-variant font-bold">REASON</th>
+                    <th className="px-6 py-4 text-on-surface-variant font-bold">ACTION</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-outline-variant/10">
+                  {shadowAPIs.map((api) => (
+                    <tr key={api.id} className="hover:bg-surface-variant/20 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <span
+                            className="material-symbols-outlined text-on-surface-variant/50"
+                            style={{ fontSize: "16px" }}
+                          >
+                            api
+                          </span>
+                          <code className="text-primary" style={{ fontSize: "13px" }}>
+                            {api.endpoint}
+                          </code>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-on-surface-variant">{api.method || "—"}</td>
+                      <td className="px-6 py-4">
+                        {api.isDocumented ? (
+                          <span
+                            className="px-2 py-0.5 border-l-2 border-primary bg-primary/10 text-primary font-bold"
+                            style={{ fontSize: "10px" }}
+                          >
+                            DOCUMENTED
+                          </span>
+                        ) : api.riskLevel === "HIGH" ? (
+                          <span
+                            className="px-2 py-0.5 border-l-2 border-error bg-error/10 text-error font-bold"
+                            style={{ fontSize: "10px" }}
+                          >
+                            CRITICAL
+                          </span>
+                        ) : (
+                          <span
+                            className="px-2 py-0.5 border-l-2 border-tertiary bg-tertiary/10 text-tertiary font-bold"
+                            style={{ fontSize: "10px" }}
+                          >
+                            ELEVATED
+                          </span>
+                        )}
+                      </td>
+                      <td
+                        className="px-6 py-4 text-on-surface-variant"
+                        style={{ fontSize: "12px" }}
+                      >
+                        {api.reason || "—"}
+                      </td>
+                      <td className="px-6 py-4">
+                        {!api.isDocumented ? (
+                          <button
+                            onClick={() => markAsDocumented(api.id)}
+                            disabled={markMutation.isPending}
+                            className="px-3 py-1.5 bg-primary-container/20 text-primary border border-primary/30 hover:bg-primary-container/40 transition-colors disabled:opacity-50 font-bold"
+                            style={{
+                              fontFamily: "'JetBrains Mono', monospace",
+                              fontSize: "10px",
+                              letterSpacing: "0.05em",
+                            }}
+                          >
+                            MARK DOCUMENTED
+                          </button>
+                        ) : (
+                          <span className="text-on-surface-variant" style={{ fontSize: "11px" }}>
+                            ✓ Documented
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className="p-4 bg-surface-container-lowest/50 flex justify-between items-center px-6">
+                <span
+                  className="text-on-surface-variant"
+                  style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: "10px",
+                    letterSpacing: "0.05em",
+                  }}
+                >
+                  Displaying {shadowAPIs.length} detected endpoint
+                  {shadowAPIs.length !== 1 ? "s" : ""}
+                </span>
+              </div>
+            </div>
           )}
+        </div>
+
+        {/* Status bar */}
+        <div className="fixed bottom-0 left-64 right-0 h-10 bg-surface-container-lowest/80 backdrop-blur-lg border-t border-outline-variant/10 z-30 px-6 flex items-center justify-between">
+          <div className="flex gap-6 items-center">
+            <div className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              <span
+                className="text-on-surface-variant"
+                style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: "10px",
+                  letterSpacing: "0.1em",
+                }}
+              >
+                SHADOW API SCANNER: OPERATIONAL
+              </span>
+            </div>
+          </div>
+          <span
+            className="text-on-surface-variant"
+            style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: "10px",
+              letterSpacing: "0.1em",
+            }}
+          >
+            DEVPULSE AI — SYSTEM ALPHA-9
+          </span>
         </div>
       </div>
     </div>

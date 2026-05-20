@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useState, useCallback, useRef } from "react";
 import RiskChart from "../../components/RiskChart";
-import { EmptyState } from "../../components/EmptyState";
 import PlanUtilizationBanner from "../../components/PlanUtilizationBanner";
 
 function getWsUrl(): string {
@@ -46,7 +45,7 @@ export default function Dashboard() {
       setSocket(ws);
     };
 
-    ws.onmessage = event => {
+    ws.onmessage = (event) => {
       try {
         const msg: Message = JSON.parse(event.data);
 
@@ -59,7 +58,7 @@ export default function Dashboard() {
             anomaly: msg.anomaly || false,
             model: msg.model,
           };
-          setLogs(prev => [newLog, ...prev].slice(0, 50));
+          setLogs((prev) => [newLog, ...prev].slice(0, 50));
           if (msg.anomaly) setAnomalyActive(true);
         } else if (msg.type === "init") {
           setTotalCost(msg.total_cost || 0);
@@ -103,137 +102,366 @@ export default function Dashboard() {
     };
   }, [connect]);
 
+  const activeAgents = new Set(logs.map((l) => l.agent)).size;
+  const anomalyCount = logs.filter((l) => l.anomaly).length;
+
   return (
-    <div className="text-white p-8">
+    <div className="p-8 min-h-screen bg-background text-on-background">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
+        {/* Header */}
+        <div className="flex items-end justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-blue-400">
-              DevPulse Command Center
+            <h1
+              className="font-display-lg text-on-surface"
+              style={{
+                fontFamily: "'Space Grotesk', sans-serif",
+                fontSize: "32px",
+                fontWeight: 600,
+                letterSpacing: "-0.01em",
+              }}
+            >
+              System Overview
             </h1>
-            <p className="text-gray-400 mt-1">
-              Real-time AI Agent Cost Monitoring & Security
-            </p>
+            <div className="flex items-center gap-3 mt-2">
+              <span className="flex items-center gap-1.5 px-2 py-0.5 bg-primary/10 border-l border-primary">
+                <span
+                  className={`w-2 h-2 rounded-full ${connected ? "bg-primary status-pulse" : "bg-error"}`}
+                ></span>
+                <span
+                  className="text-primary"
+                  style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: "10px",
+                    letterSpacing: "0.1em",
+                  }}
+                >
+                  {connected ? "Live Monitoring Active" : "Disconnected"}
+                </span>
+              </span>
+              <span
+                className="text-on-surface-variant"
+                style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12px" }}
+              >
+                Real-time AI cost &amp; security feed
+              </span>
+            </div>
           </div>
-          <div className="flex items-center gap-4">
-            <div
-              className={`w-3 h-3 rounded-full ${
-                connected ? "bg-green-500" : "bg-red-500"
-              }`}
-            ></div>
-            <span className="text-sm text-gray-400">
-              {connected ? "Connected" : "Disconnected"}
-            </span>
+          <div className="flex gap-2">
+            <button
+              className="px-4 py-2 bg-primary text-on-primary font-bold transition-colors"
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: "11px",
+                letterSpacing: "0.1em",
+              }}
+            >
+              Generate Report
+            </button>
+            <button
+              className="px-4 py-2 border border-outline-variant text-on-surface font-bold hover:bg-surface-variant transition-colors"
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: "11px",
+                letterSpacing: "0.1em",
+              }}
+            >
+              Export Data
+            </button>
           </div>
         </div>
 
         <PlanUtilizationBanner />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
-            <h3 className="text-gray-400 text-sm uppercase tracking-wide">
-              Total LLM Spend
-            </h3>
-            <p className="text-4xl font-bold mt-2 text-green-400">
-              ${totalCost < 0.01 && totalCost > 0 ? totalCost.toFixed(4) : totalCost.toFixed(2)}
+        {/* Anomaly Alert Banner */}
+        {anomalyActive && (
+          <div className="mb-6 p-4 bg-error/10 border-l-4 border-error glass-card flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-error/20 flex items-center justify-center">
+                <span
+                  className="material-symbols-outlined text-error pulse-active"
+                  style={{ fontVariationSettings: "'FILL' 1" }}
+                >
+                  warning
+                </span>
+              </div>
+              <div>
+                <h4
+                  className="text-error font-bold"
+                  style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: "11px",
+                    letterSpacing: "0.1em",
+                  }}
+                >
+                  ANOMALY DETECTED — COST SPIKE
+                </h4>
+                <p
+                  className="text-on-error-container"
+                  style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "13px" }}
+                >
+                  Abnormal cost spike observed in recent agent activity. Review logs below.
+                </p>
+              </div>
+            </div>
+            <button
+              className="px-6 py-2 bg-error text-on-error font-bold uppercase"
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: "10px",
+                letterSpacing: "0.1em",
+              }}
+            >
+              INVESTIGATE
+            </button>
+          </div>
+        )}
+
+        {/* Stats Row */}
+        <div className="grid grid-cols-12 gap-gutter mb-6">
+          {/* Total Spend */}
+          <div className="col-span-12 md:col-span-4 glass-card p-6 rounded-xl relative overflow-hidden">
+            <div className="scan-line"></div>
+            <p
+              className="font-label-caps text-on-surface-variant mb-4 flex items-center gap-2"
+              style={{ fontSize: "11px" }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>
+                monetization_on
+              </span>
+              Total Real-time Spend
             </p>
-            <p className="text-xs text-gray-500 mt-2">
+            <h2
+              className="text-primary"
+              style={{
+                fontFamily: "'Space Grotesk', sans-serif",
+                fontSize: "40px",
+                fontWeight: 700,
+                lineHeight: 1.1,
+              }}
+            >
+              ${totalCost < 0.01 && totalCost > 0 ? totalCost.toFixed(4) : totalCost.toFixed(2)}
+            </h2>
+            <div className="mt-4 h-10 w-full">
+              <RiskChart data={logs.map((l) => l.cost)} />
+            </div>
+            <p
+              className="mt-2 text-on-surface-variant"
+              style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12px" }}
+            >
               Lifetime accumulated cost
             </p>
           </div>
 
-          <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
-            <h3 className="text-gray-400 text-sm uppercase tracking-wide">
-              Active Agents
-            </h3>
-            <p className="text-4xl font-bold mt-2 text-blue-400">
-              {new Set(logs.map(l => l.agent)).size}
+          {/* Active Agents */}
+          <div className="col-span-12 md:col-span-4 glass-card p-6 rounded-xl">
+            <p
+              className="font-label-caps text-on-surface-variant mb-4 flex items-center gap-2"
+              style={{ fontSize: "11px" }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>
+                hub
+              </span>
+              Active AI Nodes
             </p>
-            <p className="text-xs text-gray-500 mt-2">
+            <h2
+              className="text-on-surface"
+              style={{
+                fontFamily: "'Space Grotesk', sans-serif",
+                fontSize: "40px",
+                fontWeight: 700,
+                lineHeight: 1.1,
+              }}
+            >
+              {activeAgents}
+            </h2>
+            <p
+              className="text-tertiary mt-2"
+              style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12px" }}
+            >
               Unique agents this session
             </p>
           </div>
 
-          <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
-            <h3 className="text-gray-400 text-sm uppercase tracking-wide">
-              API Calls
-            </h3>
-            <p className="text-4xl font-bold mt-2 text-purple-400">
-              {logs.length}
+          {/* Anomalies */}
+          <div className="col-span-12 md:col-span-4 glass-card p-6 rounded-xl">
+            <p
+              className="font-label-caps text-on-surface-variant mb-4 flex items-center gap-2"
+              style={{ fontSize: "11px" }}
+            >
+              <span className="material-symbols-outlined text-error" style={{ fontSize: "16px" }}>
+                warning
+              </span>
+              Anomalies Detected
             </p>
-            <p className="text-xs text-gray-500 mt-2">Total API interactions</p>
+            <h2
+              style={{
+                fontFamily: "'Space Grotesk', sans-serif",
+                fontSize: "40px",
+                fontWeight: 700,
+                lineHeight: 1.1,
+                color: anomalyCount > 0 ? "#ffb4ab" : "#e6e0e9",
+              }}
+            >
+              {anomalyCount}
+            </h2>
+            <p
+              className="text-on-surface-variant mt-2"
+              style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12px" }}
+            >
+              API calls: {logs.length} total
+            </p>
           </div>
-
-          <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
-            <h3 className="text-gray-400 text-sm uppercase tracking-wide">
-              Anomalies
-            </h3>
-            <p className="text-4xl font-bold mt-2 text-orange-400">
-              {logs.filter(l => l.anomaly).length}
-            </p>
-            <p className="text-xs text-gray-500 mt-2">
-              Cost spikes this session
-            </p>
-          </div>
-
-          {anomalyActive && (
-            <div className="sm:col-span-2 lg:col-span-4 bg-red-900/30 p-6 rounded-lg border border-red-500">
-              <h3 className="text-red-400 font-bold text-lg">
-                Anomaly Detected
-              </h3>
-              <p className="text-red-200 text-sm">
-                Cost spike observed in recent agent activity. Review logs below.
-              </p>
-            </div>
-          )}
         </div>
 
-        <RiskChart data={logs.map(l => l.cost)} />
-
-        <div className="mt-8 bg-gray-800 rounded-lg p-6 border border-gray-700">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">Live Agent Activity</h2>
+        {/* Live Activity Table */}
+        <div className="glass-card rounded-xl overflow-hidden mb-20">
+          <div className="p-6 border-b border-outline-variant/10 flex justify-between items-center">
+            <p
+              className="text-on-surface flex items-center gap-2"
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: "11px",
+                letterSpacing: "0.1em",
+              }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>
+                view_list
+              </span>
+              LIVE AGENT ACTIVITY STREAM
+            </p>
+            <div
+              className="flex items-center gap-4"
+              style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12px" }}
+            >
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-primary"></span>
+                {activeAgents} Active
+              </span>
+              {anomalyCount > 0 && (
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-error"></span>
+                  {anomalyCount} Anomalies
+                </span>
+              )}
+            </div>
           </div>
-          <div className="space-y-2 max-h-96 overflow-y-auto">
-            {logs.length === 0 ? (
-              <EmptyState
-                compact
-                icon={<span>📡</span>}
-                title="No activity yet"
-                description="Wire up the DevPulse SDK in your app to stream live agent traffic here."
-              />
-            ) : (
-              logs.map((log, i) => (
-                <div
-                  key={i}
-                  className="flex justify-between items-center bg-gray-700/50 p-3 rounded hover:bg-gray-700 transition-colors"
+          <div className="overflow-x-auto">
+            <table
+              className="w-full text-left"
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            >
+              <thead>
+                <tr
+                  className="text-on-surface-variant border-b border-outline-variant/10"
+                  style={{ fontSize: "10px", letterSpacing: "0.1em" }}
                 >
-                  <div className="flex items-center gap-4">
-                    <span className="text-blue-300 font-mono text-sm">
-                      {log.agent}
-                    </span>
-                    {log.model && (
-                      <span className="text-xs text-gray-500 px-2 py-0.5 bg-gray-600 rounded">
-                        {log.model}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <span className="text-gray-400 text-sm">{log.time}</span>
-                    <span
-                      className={
-                        log.anomaly
-                          ? "text-red-400 font-bold"
-                          : "text-green-400"
-                      }
+                  <th className="px-6 py-4 font-bold">AGENT ID</th>
+                  <th className="px-6 py-4 font-bold">MODEL</th>
+                  <th className="px-6 py-4 font-bold">STATUS</th>
+                  <th className="px-6 py-4 font-bold">COST</th>
+                  <th className="px-6 py-4 font-bold text-right">TIMESTAMP</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-outline-variant/5">
+                {logs.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="px-6 py-12 text-center text-on-surface-variant"
+                      style={{ fontSize: "13px" }}
                     >
-                      ${log.cost < 0.01 && log.cost > 0 ? log.cost.toFixed(4) : log.cost.toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-              ))
-            )}
+                      <span
+                        className="material-symbols-outlined block mx-auto mb-3 text-on-surface-variant/30"
+                        style={{ fontSize: "48px" }}
+                      >
+                        sensors
+                      </span>
+                      No activity yet — wire up the DevPulse SDK to stream live agent traffic
+                    </td>
+                  </tr>
+                ) : (
+                  logs.map((log, i) => (
+                    <tr key={i} className="hover:bg-surface-variant/20 transition-colors">
+                      <td className="px-6 py-4 font-bold text-on-surface">
+                        {log.agent.toUpperCase()}
+                      </td>
+                      <td className="px-6 py-4 text-on-surface-variant">{log.model || "—"}</td>
+                      <td className="px-6 py-4">
+                        {log.anomaly ? (
+                          <span
+                            className="px-2 py-0.5 border-l-2 border-error bg-error/10 text-error font-bold"
+                            style={{ fontSize: "10px" }}
+                          >
+                            ANOMALY
+                          </span>
+                        ) : (
+                          <span
+                            className="px-2 py-0.5 border-l-2 border-primary bg-primary/10 text-primary font-bold"
+                            style={{ fontSize: "10px" }}
+                          >
+                            ACTIVE
+                          </span>
+                        )}
+                      </td>
+                      <td
+                        className="px-6 py-4"
+                        style={{ color: log.anomaly ? "#ffb4ab" : "#cfbcff" }}
+                      >
+                        $
+                        {log.cost < 0.01 && log.cost > 0
+                          ? log.cost.toFixed(4)
+                          : log.cost.toFixed(2)}
+                      </td>
+                      <td className="px-6 py-4 text-right text-on-surface-variant">{log.time}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
+          <div className="p-4 bg-surface-variant/10 text-center border-t border-outline-variant/10">
+            <button
+              className="text-primary hover:underline"
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: "10px",
+                letterSpacing: "0.1em",
+              }}
+            >
+              VIEW ALL INFRASTRUCTURE LOGS
+            </button>
+          </div>
+        </div>
+
+        {/* Status bar */}
+        <div className="fixed bottom-0 left-64 right-0 h-10 bg-surface-container-lowest/80 backdrop-blur-lg border-t border-outline-variant/10 z-30 px-6 flex items-center justify-between">
+          <div className="flex gap-6 items-center">
+            <div className="flex items-center gap-2">
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${connected ? "bg-emerald-400" : "bg-error"}`}
+              ></span>
+              <span
+                className="text-on-surface-variant"
+                style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: "10px",
+                  letterSpacing: "0.1em",
+                }}
+              >
+                {connected ? "API: OPERATIONAL" : "API: DISCONNECTED"}
+              </span>
+            </div>
+          </div>
+          <span
+            className="text-on-surface-variant"
+            style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: "10px",
+              letterSpacing: "0.1em",
+            }}
+          >
+            DEVPULSE AI — SYSTEM ALPHA-9
+          </span>
         </div>
       </div>
     </div>
