@@ -17,6 +17,7 @@
     "@trpc/client": "^11.6.0",
     "@trpc/react-query": "^11.6.0",
     "@trpc/server": "^11.6.0",
+    "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.38.0",
     "lucide-react": "^0.453.0",
