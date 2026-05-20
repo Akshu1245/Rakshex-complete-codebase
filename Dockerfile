@@ -32,9 +32,9 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD node -e "fetch('http://localhost:3000/api/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"
 
-CMD ["node", "--experimental-specifier-resolution=node", "dist/server/_core/index.js"]
+CMD ["npx", "tsx", "dist/server/_core/index.js"]
 
 # ── Worker entry point (built from same image, different CMD) ──────────
 FROM runner AS worker
 ENV WORKER_CONCURRENCY=3
-CMD ["node", "--experimental-specifier-resolution=node", "dist/server/queues/workers/index.js"]
+CMD ["npx", "tsx", "dist/server/queues/workers/index.js"]

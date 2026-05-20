@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc",
-    "start": "node --experimental-specifier-resolution=node dist/server/_core/index.js",
+    "start": "npx tsx dist/server/_core/index.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
@@ -69,6 +69,7 @@
     "sqlstring": "^2.3.3",
     "stripe": "^16.0.0",
     "superjson": "^1.13.3",
+    "tsx": "^4.22.3",
     "ws": "^8.16.0",
     "xml-crypto": "^6.0.0",
     "xml2js": "^0.6.2",
