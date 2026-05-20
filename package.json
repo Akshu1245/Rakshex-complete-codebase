@@ -44,7 +44,7 @@
     "@trpc/server": "^11.6.0",
     "@vitejs/plugin-react": "^4.7.0",
     "axios": "^1.7.0",
-    "bullmq": "^5.0.0",
+    "bullmq": "^5.76.10",
     "compression": "^1.7.4",
     "cookie": "^0.6.0",
     "cors": "^2.8.5",
