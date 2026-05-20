@@ -108,40 +108,16 @@ export async function runCollectionScan(
   const riskScore = calculateRiskScore(findings);
   const riskLevel = getRiskLevel(riskScore);
 
-  // Create scan record
-  const scan = await db.createScan(
+  // Create scan record and findings atomically in a transaction
+  const scan = await db.createScanWithFindings(
     userId,
     collectionId,
     options.scanType,
     "completed",
     riskScore,
     riskLevel,
-    findings.length,
     findings,
   );
-
-  // Save individual findings — each is independent; partial failure is logged
-  // but does not roll back the scan record (scan remains queryable with 0 findings).
-  try {
-    for (const finding of findings) {
-      await db.createFinding(
-        scan.id,
-        collectionId,
-        userId,
-        finding.title,
-        finding.severity,
-        finding.description,
-        finding.category,
-        finding.remediation,
-        finding.cweId,
-      );
-    }
-  } catch (err) {
-    logger.error(
-      { err, scanId: scan.id, totalFindings: findings.length },
-      "[ScanService] findings insert failed partially — scan record preserved",
-    );
-  }
 
   // Update last scanned timestamp
   await db.updateCollectionLastScannedAt(collectionId);

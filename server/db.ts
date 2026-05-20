@@ -3817,3 +3817,138 @@ export async function resolvePendingApproval(
 function snakeCase(s: string): string {
   return s.replace(/[A-Z]/g, (m) => `_${m.toLowerCase()}`).replace(/^_/, "");
 }
+
+export async function createScanWithFindings(
+  userId: number,
+  collectionId: string,
+  scanType: "full" | "quick" | "shadow_api" | "prompt_injection",
+  status: "pending" | "running" | "completed" | "failed",
+  riskScore: number,
+  riskLevel: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL",
+  findingsData: any[],
+) {
+  const db = await getDb();
+  assertDb(db);
+
+  return await db.transaction(async (tx) => {
+    const scanId = secureId("scan");
+
+    await tx.insert(scans).values({
+      id: scanId,
+      userId,
+      collectionId,
+      scanType,
+      status,
+      riskScore: riskScore.toString(),
+      riskLevel,
+      totalFindings: findingsData.length,
+      findingsData,
+      completedAt: status === "completed" ? new Date() : null,
+    });
+
+    for (const finding of findingsData) {
+      const findingId = secureId("finding");
+      await tx.insert(findings).values({
+        id: findingId,
+        scanId,
+        collectionId,
+        userId,
+        title: finding.title,
+        severity: finding.severity,
+        description: finding.description,
+        category: finding.category,
+        remediation: finding.remediation,
+        cweId: finding.cweId,
+      });
+    }
+
+    return { id: scanId };
+  });
+}
+
+export async function createScanWithShadowAPIs(
+  userId: number,
+  collectionId: string,
+  scanType: "shadow_api",
+  status: "completed",
+  riskScore: number,
+  riskLevel: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL",
+  shadowAPIsData: any[],
+) {
+  const db = await getDb();
+  assertDb(db);
+
+  return await db.transaction(async (tx) => {
+    const scanId = secureId("scan");
+
+    await tx.insert(scans).values({
+      id: scanId,
+      userId,
+      collectionId,
+      scanType,
+      status,
+      riskScore: riskScore.toString(),
+      riskLevel,
+      totalFindings: shadowAPIsData.length,
+      findingsData: null,
+      completedAt: new Date(),
+    });
+
+    for (const api of shadowAPIsData) {
+      const shadowId = secureId("shadow");
+      await tx.insert(shadowAPIs).values({
+        id: shadowId,
+        scanId,
+        collectionId,
+        userId,
+        endpoint: api.endpoint,
+        method: api.method,
+        file: api.file,
+        line: api.line,
+        riskLevel: api.riskLevel,
+        reason: api.reason,
+        recommendation: api.recommendation,
+      });
+    }
+
+    return { id: scanId };
+  });
+}
+
+export async function triggerVSCodeScanTransaction(
+  userId: number,
+  collectionId: string,
+  isFreePlan: boolean,
+  scansRemaining: number,
+) {
+  const db = await getDb();
+  assertDb(db);
+
+  return await db.transaction(async (tx) => {
+    const scanId = secureId("scan");
+
+    await tx.insert(scans).values({
+      id: scanId,
+      userId,
+      collectionId,
+      scanType: "quick",
+      status: "pending",
+      riskScore: "0",
+      riskLevel: "LOW",
+      totalFindings: 0,
+      findingsData: null,
+      completedAt: null,
+    });
+
+    if (isFreePlan) {
+      await tx
+        .update(users)
+        .set({
+          scansRemaining: Math.max(0, scansRemaining - 1),
+        })
+        .where(eq(users.id, userId));
+    }
+
+    return { id: scanId };
+  });
+}

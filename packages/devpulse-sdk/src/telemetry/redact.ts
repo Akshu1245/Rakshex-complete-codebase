@@ -9,13 +9,33 @@ import { createHash } from "crypto";
 
 // Regex patterns for common PII
 const PII_PATTERNS: Array<{ name: string; regex: RegExp; replacement: string }> = [
-  { name: "email", regex: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, replacement: "[EMAIL_REDACTED]" },
-  { name: "phone", regex: /(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g, replacement: "[PHONE_REDACTED]" },
+  {
+    name: "email",
+    regex: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,
+    replacement: "[EMAIL_REDACTED]",
+  },
+  {
+    name: "phone",
+    regex: /(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g,
+    replacement: "[PHONE_REDACTED]",
+  },
   { name: "ssn", regex: /\b\d{3}-\d{2}-\d{4}\b/g, replacement: "[SSN_REDACTED]" },
-  { name: "credit_card", regex: /\b(?:\d{4}[-\s]?){3}\d{4}\b/g, replacement: "[CREDIT_CARD_REDACTED]" },
+  {
+    name: "credit_card",
+    regex: /\b(?:\d{4}[-\s]?){3}\d{4}\b/g,
+    replacement: "[CREDIT_CARD_REDACTED]",
+  },
   { name: "ip_address", regex: /\b(?:\d{1,3}\.){3}\d{1,3}\b/g, replacement: "[IP_REDACTED]" },
-  { name: "api_key", regex: /\b(sk-[a-zA-Z0-9]{20,}|xai-[a-zA-Z0-9]{20,}|AIza[0-9A-Za-z_-]{35})\b/g, replacement: "[API_KEY_REDACTED]" },
-  { name: "jwt", regex: /\beyJ[a-zA-Z0-9_-]+\.eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\b/g, replacement: "[JWT_REDACTED]" },
+  {
+    name: "api_key",
+    regex: /\b(sk-[a-zA-Z0-9]{20,}|xai-[a-zA-Z0-9]{20,}|AIza[0-9A-Za-z_-]{35})\b/g,
+    replacement: "[API_KEY_REDACTED]",
+  },
+  {
+    name: "jwt",
+    regex: /\beyJ[a-zA-Z0-9_-]+\.eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\b/g,
+    replacement: "[JWT_REDACTED]",
+  },
   { name: "aws_key", regex: /\b(AKIA|ASIA)[A-Z0-9]{16}\b/g, replacement: "[AWS_KEY_REDACTED]" },
   // Indian PII — DPDP 2023 compliance
   {
@@ -34,9 +54,24 @@ const PII_PATTERNS: Array<{ name: string; regex: RegExp; replacement: string }> 
     replacement: "[IFSC_REDACTED]",
   },
   {
+    name: "gstin",
+    regex: /\b[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}\b/g,
+    replacement: "[GSTIN_REDACTED]",
+  },
+  {
     name: "passport_in",
     regex: /\b[A-Z][1-9]\d{6}\b/g,
     replacement: "[PASSPORT_REDACTED]",
+  },
+  {
+    name: "upi_id",
+    regex: /\b[a-zA-Z0-9._\-]{2,}@[a-zA-Z]{2,}(?!\.[a-zA-Z])\b/g,
+    replacement: "[UPI_REDACTED]",
+  },
+  {
+    name: "indian_phone",
+    regex: /\b(?:\+91[\s-]?)?[6-9]\d{9}\b/g,
+    replacement: "[PHONE_REDACTED]",
   },
 ];
 

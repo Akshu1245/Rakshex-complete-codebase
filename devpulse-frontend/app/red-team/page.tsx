@@ -50,8 +50,18 @@ export default function RedTeamPage() {
     async function load() {
       try {
         const runs = await utils.client.runtimeGovernance.redteamRuns.query({ limit: 50 });
-        const mappedFindings = (runs.runs as RedTeamRun[])
-          .flatMap((r) => r.findings || [])
+        const mappedFindings: Finding[] = runs.runs
+          .flatMap((r) =>
+            (r.findings || []).map((f) => ({
+              id: String(f.id),
+              category: f.category,
+              severity: f.severity,
+              description: f.sample || `Outcome: ${f.outcome}`,
+              model: r.target,
+              createdAt:
+                f.createdAt instanceof Date ? f.createdAt.toISOString() : String(f.createdAt),
+            })),
+          )
           .slice(0, 50);
         setFindings(mappedFindings);
       } catch (err) {
@@ -69,8 +79,20 @@ export default function RedTeamPage() {
         target: window.location.origin,
       });
       const runs = await utils.client.runtimeGovernance.redteamRuns.query({ limit: 50 });
-      const mappedFindings = runs.runs.flatMap((r: any) => r.findings || []).slice(0, 50);
-      setFindings(mappedFindings as Finding[]);
+      const mappedFindings: Finding[] = runs.runs
+        .flatMap((r) =>
+          (r.findings || []).map((f) => ({
+            id: String(f.id),
+            category: f.category,
+            severity: f.severity,
+            description: f.sample || `Outcome: ${f.outcome}`,
+            model: r.target,
+            createdAt:
+              f.createdAt instanceof Date ? f.createdAt.toISOString() : String(f.createdAt),
+          })),
+        )
+        .slice(0, 50);
+      setFindings(mappedFindings);
     } catch (err) {
       alert("Run failed: " + (err as Error).message);
     }

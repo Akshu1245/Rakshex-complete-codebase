@@ -7,13 +7,7 @@ export default function ResearchPage() {
   const [generating, setGenerating] = useState(false);
   const scansQuery = trpc.research.listMemory.useQuery({ limit: 20 });
 
-  interface ResearchMemoryItem {
-    id: string;
-    topic: string;
-    createdAt: string;
-    status: string;
-  }
-  const scans: ResearchMemoryItem[] = scansQuery.data?.items ?? [];
+  const scans = scansQuery.data ?? [];
   const loading = scansQuery.isLoading;
 
   const runResearchMutation = trpc.research.runResearch.useMutation();
@@ -77,22 +71,20 @@ export default function ResearchPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {scans.slice(0, 10).map((scan: any, i: number) => (
+            {scans.slice(0, 10).map((scan, i) => (
               <div
                 key={i}
                 className="bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-blue-500 transition-colors"
               >
                 <div className="flex justify-between items-start mb-3">
-                  <h3 className="text-lg font-bold">{scan.competitor || scan.name || "Unknown"}</h3>
+                  <h3 className="text-lg font-bold">{scan.topic || "Unknown Topic"}</h3>
                   <span className="text-xs bg-blue-600/20 text-blue-400 px-3 py-1 rounded-full">
-                    {scan.source || "web"}
+                    {scan.sources && scan.sources.length > 0 ? scan.sources[0] : "web"}
                   </span>
                 </div>
-                <p className="text-gray-400 text-sm">
-                  {scan.summary || scan.description || "No summary available"}
-                </p>
+                <p className="text-gray-400 text-sm">{scan.summary || "No summary available"}</p>
                 <p className="text-gray-500 text-xs mt-2">
-                  {scan.scannedAt ? new Date(scan.scannedAt).toLocaleDateString("en-IN") : ""}
+                  {scan.createdAt ? new Date(scan.createdAt).toLocaleDateString("en-IN") : ""}
                 </p>
               </div>
             ))}

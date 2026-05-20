@@ -26,6 +26,8 @@ export type PiiType =
   | "ssn"
   | "aadhaar"
   | "pan_card"
+  | "gstin"
+  | "ifsc"
   | "upi_id"
   | "api_key"
   | "jwt_token"
@@ -68,6 +70,10 @@ const PII_PATTERNS: Record<PiiType, RegExp> = {
 
   pan_card: /\b[A-Z]{5}[0-9]{4}[A-Z]{1}\b/g,
 
+  gstin: /\b\d{2}[A-Z]{5}\d{4}[A-Z][A-Z0-9]Z[A-Z0-9]\b/gi,
+
+  ifsc: /\b[A-Z]{4}0[A-Z0-9]{6}\b/gi,
+
   upi_id: /\b[a-z0-9._\-]{2,}@[a-z]{2,}(?!\.[a-z])\b/gi,
 
   api_key:
@@ -92,6 +98,8 @@ const REDACTION_MARKERS: Record<PiiType, string> = {
   ssn: "[SSN]",
   aadhaar: "[AADHAAR]",
   pan_card: "[PAN]",
+  gstin: "[GSTIN]",
+  ifsc: "[IFSC]",
   upi_id: "[UPI_ID]",
   api_key: "[API_KEY]",
   jwt_token: "[JWT]",
@@ -214,6 +222,14 @@ function isValidPii(type: PiiType, value: string): boolean {
     case "pan_card":
       // PAN: 5 uppercase letters + 4 digits + 1 uppercase letter
       return /^[A-Z]{5}[0-9]{4}[A-Z]$/.test(value);
+
+    case "gstin":
+      // GSTIN length is exactly 15 characters
+      return value.length === 15;
+
+    case "ifsc":
+      // IFSC length is exactly 11 characters
+      return value.length === 11;
 
     case "upi_id":
       return value.includes("@");

@@ -18,30 +18,15 @@ export const shadowAPIRouter = router({
 
       const shadowAPIs = detectShadowAPIs(collection.data as CollectionData);
 
-      const scan = await db.createScan(
+      const scan = await db.createScanWithShadowAPIs(
         ctx.user.id,
         input.collectionId,
         "shadow_api",
         "completed",
         shadowAPIs.length * 10,
         shadowAPIs.length > 0 ? "HIGH" : "LOW",
-        shadowAPIs.length
+        shadowAPIs,
       );
-
-      for (const api of shadowAPIs) {
-        await db.createShadowAPI(
-          scan.id,
-          input.collectionId,
-          ctx.user.id,
-          api.endpoint,
-          api.riskLevel,
-          api.method,
-          undefined,
-          undefined,
-          api.reason,
-          api.recommendation
-        );
-      }
 
       return {
         scanId: scan.id,
@@ -56,7 +41,7 @@ export const shadowAPIRouter = router({
         collectionId: z.string(),
         page: z.number().int().min(1).default(1),
         pageSize: z.number().int().min(1).max(100).default(50),
-      })
+      }),
     )
     .query(async ({ input, ctx }) => {
       const collection = await db.getCollectionById(input.collectionId);
@@ -67,18 +52,16 @@ export const shadowAPIRouter = router({
         });
       }
 
-      const allShadowAPIs = await db.getShadowAPIsByCollectionId(
-        input.collectionId
-      );
+      const allShadowAPIs = await db.getShadowAPIsByCollectionId(input.collectionId);
 
       const total = allShadowAPIs.length;
       const paginated = allShadowAPIs.slice(
         (input.page - 1) * input.pageSize,
-        input.page * input.pageSize
+        input.page * input.pageSize,
       );
 
       return {
-        shadowAPIs: paginated.map(api => ({
+        shadowAPIs: paginated.map((api) => ({
           id: api.id,
           endpoint: api.endpoint,
           method: api.method,

@@ -48,22 +48,17 @@ export const vscodeExtensionRouter = router({
   recordActivity: protectedProcedure
     .input(
       z.object({
-        type: z.enum([
-          "heartbeat",
-          "file_change",
-          "session_start",
-          "session_end",
-        ]),
+        type: z.enum(["heartbeat", "file_change", "session_start", "session_end"]),
         data: z.record(z.string(), z.any()),
         timestamp: z.string().datetime(),
-      })
+      }),
     )
     .mutation(async ({ input, ctx }) => {
       // Per-user 60-events-per-minute rate limit, distributed via Redis.
       const { allowed } = await rateLimitSlidingWindow(
         `ratelimit:vscode-activity:${ctx.user.id}`,
         ACTIVITY_LIMIT,
-        ACTIVITY_WINDOW_MS
+        ACTIVITY_WINDOW_MS,
       );
       if (!allowed) {
         throw new TRPCError({
@@ -73,12 +68,7 @@ export const vscodeExtensionRouter = router({
       }
 
       // Store activity in database
-      await db.recordVSCodeActivity(
-        ctx.user.id,
-        input.type,
-        input.data,
-        new Date(input.timestamp)
-      );
+      await db.recordVSCodeActivity(ctx.user.id, input.type, input.data, new Date(input.timestamp));
       return { success: true };
     }),
 
@@ -92,15 +82,9 @@ export const vscodeExtensionRouter = router({
       db.getTokenUsageByUserId(ctx.user.id, 7),
     ]);
 
-    const totalFindings = recentScans.reduce(
-      (sum, scan) => sum + (scan.totalFindings || 0),
-      0
-    );
+    const totalFindings = recentScans.reduce((sum, scan) => sum + (scan.totalFindings || 0), 0);
     const openFindings = await db.getOpenFindingsCount(ctx.user.id);
-    const weeklyCost = tokenUsage.reduce(
-      (sum, u) => sum + toNumber(u.costUSD),
-      0
-    );
+    const weeklyCost = tokenUsage.reduce((sum, u) => sum + toNumber(u.costUSD), 0);
 
     return {
       collections: collections.length,
@@ -140,7 +124,7 @@ export const vscodeExtensionRouter = router({
 
       const findings = await db.getFindingsByScanId(lastScan.id);
       const criticalFindings = findings.filter(
-        f => f.severity === "Critical" || f.severity === "High"
+        (f) => f.severity === "Critical" || f.severity === "High",
       );
 
       return {
@@ -180,28 +164,17 @@ export const vscodeExtensionRouter = router({
       if (user.plan === "free" && (user.scansRemaining ?? 0) <= 0) {
         throw new TRPCError({
           code: "FORBIDDEN",
-          message:
-            "Scan limit reached. Upgrade to Pro for unlimited scans.",
+          message: "Scan limit reached. Upgrade to Pro for unlimited scans.",
         });
       }
 
-      // Queue a pending scan — the scanning worker will pick it up asynchronously.
-      const scan = await db.createScan(
+      // Queue a pending scan and decrement remaining scans atomically in a transaction
+      const scan = await db.triggerVSCodeScanTransaction(
         ctx.user.id,
         input.collectionId,
-        "quick",
-        "pending",
-        0,
-        "LOW",
-        0
+        user.plan === "free",
+        user.scansRemaining ?? 0,
       );
-
-      // Decrement free user scans
-      if (user.plan === "free") {
-        await db.updateUser(ctx.user.id, {
-          scansRemaining: Math.max(0, (user.scansRemaining ?? 0) - 1),
-        });
-      }
 
       return { scanId: scan.id, status: "queued" };
     }),
@@ -212,11 +185,8 @@ export const vscodeExtensionRouter = router({
   getRecentFindings: protectedProcedure
     .input(z.object({ limit: z.number().int().min(1).max(50).default(5) }))
     .query(async ({ input, ctx }) => {
-      const findings = await db.getRecentFindingsForUser(
-        ctx.user.id,
-        input.limit
-      );
-      return findings.map(f => ({
+      const findings = await db.getRecentFindingsForUser(ctx.user.id, input.limit);
+      return findings.map((f) => ({
         id: f.id,
         title: f.title,
         severity: f.severity,
@@ -234,7 +204,7 @@ export const vscodeExtensionRouter = router({
       z.object({
         findingId: z.string(),
         status: z.enum(["open", "in-progress", "resolved"]),
-      })
+      }),
     )
     .mutation(async ({ input, ctx }) => {
       const finding = await db.getFindingById(input.findingId);
@@ -253,7 +223,9 @@ export const vscodeExtensionRouter = router({
    * Copilot ask endpoint for VS Code extension
    */
   copilotAsk: protectedProcedure
-    .input(z.object({ question: z.string().min(1).max(2000), context: z.string().max(500).optional() }))
+    .input(
+      z.object({ question: z.string().min(1).max(2000), context: z.string().max(500).optional() }),
+    )
     .mutation(async ({ input, ctx }) => {
       // Try to use the copilot service if available
       try {

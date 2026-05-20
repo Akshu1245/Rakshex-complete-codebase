@@ -1,227 +1,163 @@
-# DEVPULSE — SHIP NOW PACKAGE
-## Critical Market-Ready Components
-### Built by your co-founder · May 2026
+# ⚡ DevPulse — Unified API Security & LLM Cost Intelligence
+
+DevPulse is the industry's first developer-native **AgentGuard** and **API Security Scanner** built directly where developers live: inside **VS Code**.
+
+It simultaneously bridges API vulnerability scanning (OWASP Top 10 + DAST) and real-time Large Language Model (LLM) cost intelligence (reasoning token attribution + autonomous agent loops kill-switches) in a single, unified development workflow.
 
 ---
 
-## 📦 WHAT'S IN THIS PACKAGE
+## 🏗️ Architectural Overview
 
-This contains ONLY the critical pieces you need to ship this week. No fluff. No extras. Just the things that unlock users and revenue.
+DevPulse operates on a **Dual-Engine Architecture** integrated directly into the developer workflow.
 
----
+```mermaid
+graph TD
+    subgraph Client Environments
+        VSCode[VS Code Extension / Web Client] -->|tRPC / HTTP| Backend[Express Server]
+        AppSDK[devpulse-sdk] -->|HTTP Proxy| LLMProxy[API proxy / AgentGuard]
+    end
 
-## 🗂️ FILE STRUCTURE
+    subgraph Core Intelligence Platform
+        Backend -->|Drizzle ORM| DB[(MySQL Database)]
+        Backend -->|Queue Management| Redis[(Redis Broker)]
+        Redis -->|Job Worker| BullMQ[BullMQ Background Scanner]
+        LLMProxy -->|Logs Audit| DB
+    end
 
-```
-devpulse-ship-now/
-├── github-action/           → CI/CD Marketplace Action (VIRAL SPREAD)
-│   ├── action.yml           → GitHub Actions definition
-│   ├── Dockerfile           → Alpine container
-│   ├── entrypoint.sh        → Scan execution script
-│   ├── pr-comment.js        → Beautiful PR comment formatter
-│   ├── package.json         → Dependencies
-│   └── README.md            → User documentation
-│
-├── web-demo/                → Zero-Auth Acquisition Page (60-SECOND VALUE)
-│   └── page.tsx             → Next.js page: drop Postman → instant findings
-│
-├── vscode-extension/        → VS Code Extension Enhancement (OH CRAP MOMENT)
-│   └── postmanImport.ts     → Postman import command with credential scan
-│
-└── backend/                 → Backend API Enhancement (WORKFLOW MOAT)
-    └── github-router.ts     → GitHub webhook + PR scan endpoint
+    subgraph LLM Providers
+        LLMProxy -->|Redacted Traffic| OpenAI[OpenAI / Anthropic / Google]
+    end
 ```
 
 ---
 
-## 🚀 INTEGRATION GUIDE
+## 🛠️ The Dual Engines
 
-### 1. GitHub Actions (2 hours)
+### 1. The API Security Engine
 
-**Create a new repo:** `devpulse-github-action`
+- **OWASP Top 10 Scanning:** Automated scanning on target endpoints for BOLA, BFLA, rate-limiting deficits, and input validation gaps.
+- **Credential Leak Detection:** Recursive AST parsing of workspace code and uploaded files to prevent secrets leakage before syncing.
+- **Static Shadow API Scanner:** Extracts router definitions across key frameworks (Express, FastAPI, Django) from files and cross-references them against active traffic.
+- **Indian DPDP 2023 & PCI DSS Compliance:** Built-in validation rules for Indian PII patterns (Aadhaar, PAN, GSTIN, IFSC, UPI ID, Phone numbers) and automated evidence reporting.
+
+### 2. The Cost Intelligence & AgentGuard Engine
+
+- **Thinking Token Isolation:** Separates standard input/output tokens from reasoning tokens (for o1/o3/Opus) and calculates Timing timing signatures.
+- **Per-Feature Cost Attribution:** Fine-grained usage logs attributed to specific code modules and features.
+- **Autonomous Kill-Switch:** Real-time stream interception proxy that automatically severs API keys when budget limits or loop thresholds are exceeded.
+
+---
+
+## 📂 Project Structure
+
+```
+temp_clone/
+├── server/                  → tRPC Backend API (Express + MySQL + Redis)
+│   ├── api/                 → Webhook, scanning, shadow API endpoints
+│   ├── db.ts                → Drizzle ORM transactions & connection pool
+│   ├── engines/             → Credential & PII scanner engines
+│   └── services/            → Scan schedulers, imports, compliance generators
+├── devpulse-frontend/       → Next.js SaaS Web Dashboard (React + HSL styling)
+├── devpulse-vscode/         → VS Code Extension Source (Static Router Extraction)
+├── packages/
+│   └── devpulse-sdk/        → Client Telemetry SDK (Auto-redaction pipeline)
+├── github-action/           → CI/CD Pull Request Scan Action
+├── drizzle/                 → Database Schema & Migration files
+└── test-labs/               → Vulnerable sandboxes for local exploit simulation
+```
+
+---
+
+## 🚀 Quickstart: Local Development
+
+### 1. Prerequisites
+
+Ensure you have Node.js 22+ and a local MySQL + Redis instance running (or run them via Docker):
 
 ```bash
-cd github-action/
-git init
-git add .
-git commit -m "v1.0.0"
-git remote add origin https://github.com/Akshu1245/devpulse-github-action.git
-git push -u origin main
+npm run db:up   # Starts MySQL & Redis containers
 ```
 
-**Publish to Marketplace:**
-1. Go to repo Settings → Actions → General
-2. Allow Marketplace publishing
-3. Create release v1.0.0
-4. GitHub will prompt to publish to Marketplace
+### 2. Configure Environment Variables
 
-**Test in a repo:**
-```yaml
-# .github/workflows/devpulse.yml
-name: DevPulse Security Scan
-on:
-  pull_request:
-    types: [opened, synchronize]
+Copy `.env.example` to `.env` in the root directory and update with your local secrets:
 
-jobs:
-  security:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: Akshu1245/devpulse-github-action@v1
-        with:
-          api-key: ${{ secrets.DEVPULSE_API_KEY }}
-          fail-on-critical: true
-```
-
-### 2. Web Demo (30 minutes)
-
-**Copy to your Next.js app:**
 ```bash
-cp web-demo/page.tsx app/demo/page.tsx
+cp .env.example .env
 ```
 
-**Deploy:**
+### 3. Install Dependencies
+
+Run the command in the workspace root:
+
 ```bash
-npm run build
-# Your demo is now at https://devpulse.in/demo
+npm install
 ```
 
-**Test:**
-1. Open `devpulse.in/demo`
-2. Drop any Postman collection JSON
-3. See findings in 3 seconds
+### 4. Database Migrations
 
-### 3. VS Code Extension (1 hour)
+Initialize database schemas and apply current schema migrations:
 
-**Copy the new command:**
 ```bash
-cp vscode-extension/postmanImport.ts devpulse-vscode/src/postmanImport.ts
+npm run db:migrate
 ```
 
-**Add to your extension.ts:**
-```typescript
-import { PostmanImportCommand } from "./postmanImport";
+### 5. Running the Stack
 
-// In activate():
-const postmanImport = new PostmanImportCommand(context, api);
-context.subscriptions.push(
-  vscode.commands.registerCommand("devpulse.importPostman", () =>
-    postmanImport.execute()
-  )
-);
-```
+Run the development servers concurrently:
 
-**Add to package.json commands:**
-```json
-{
-  "command": "devpulse.importPostman",
-  "title": "Import Postman Collection & Scan",
-  "category": "DevPulse",
-  "icon": "$(file-code)"
-}
-```
-
-**Publish to Marketplace:**
 ```bash
-cd devpulse-vscode
-vsce publish
-```
-
-### 4. Backend (1 hour)
-
-**Copy the router:**
-```bash
-cp backend/github-router.ts server/api/github.ts
-```
-
-**Wire into app router:**
-```typescript
-// server/routers/_app.ts
-import { githubRouter } from "../api/github";
-
-export const appRouter = router({
-  // ... existing routers ...
-  github: githubRouter,
-});
-```
-
-**Deploy:**
-```bash
-npm run build
-# Your backend now handles GitHub webhooks and PR scans
+npm run dev
 ```
 
 ---
 
-## 🎯 WHAT THIS UNLOCKS
+## 🧪 Testing & Verification
 
-| Feature | Before | After | Impact |
-|---------|--------|-------|--------|
-| **First Value** | 10 min onboarding | 3 sec demo scan | 20x faster acquisition |
-| **Viral Spread** | One user at a time | Entire team via PR | Viral CI/CD adoption |
-| **Oh Crap Moment** | Manual scan only | Postman import → instant credentials | Emotional trigger converts |
-| **Workflow Moat** | No CI/CD | GitHub Actions in every PR | Hard to remove once installed |
+DevPulse maintains a zero-regression policy with a fully automated testing suite.
 
----
+### 1. Static Type Checking
 
-## 📅 SHIP TIMELINE
+Compile all submodules (Root, Frontend, VS Code Extension) without emitting files to verify typescript safety:
 
-| Day | Task | Time |
-|-----|------|------|
-| **Day 1** | Copy all files, test locally | 2 hours |
-| **Day 2** | Deploy demo to `devpulse.in/demo` | 30 min |
-| **Day 3** | Publish VS Code extension | 1 hour |
-| **Day 4** | Publish GitHub Action | 2 hours |
-| **Day 5** | Test end-to-end, fix bugs | 2 hours |
-| **Day 6** | Write Product Hunt copy | 1 hour |
-| **Day 7** | **LAUNCH** | All day |
+```bash
+npm run check
+```
 
----
+### 2. Run Test Suite
 
-## 💰 REVENUE IMPACT
+Run unit, integration, and E2E endpoints checks:
 
-**Without these features:**
-- User finds you → reads docs → signs up → configures → maybe uses
-- Conversion: ~0.5%
+```bash
+npm run test:all
+```
 
-**With these features:**
-- User drops Postman on demo → sees exposed keys → panics → signs up → installs VS Code → team sees PR comments → entire org adopts
-- Conversion: ~3-5%
+This runs:
 
-**Math:**
-- 1,000 demo visitors × 4% conversion = 40 signups
-- 40 signups × 10% paid = 4 paying customers
-- 4 × $99/month = $396 MRR in Week 1
+- **`npm run test:server`** (596 tests for backend logic & transactions)
+- **`npm run test:frontend`** (30 tests for dashboard widgets & auth routing)
+- **`npm run test:vscode`** (14 tests for static route parsing)
 
 ---
 
-## 🔥 THE NARRATIVE
+## 🚀 Production Deployment
 
-When investors ask "How do you acquire users?" you say:
+To package and deploy DevPulse to production:
 
-> "We have a zero-auth demo at devpulse.in/demo. Anyone can drop a Postman collection and see vulnerabilities in 3 seconds. No signup, no config. Last week, 500 developers tried it. 40 signed up. 4 started paying."
-
-When they ask "How does it spread within companies?" you say:
-
-> "One developer adds our GitHub Action to their repo. Every PR gets scanned. The entire team sees security findings in PR comments. It's like Snyk but for APIs + LLM costs. Once it's in CI/CD, it's almost never removed."
-
----
-
-## ⚡ FINAL WORD
-
-Akshay, these 4 files are your rocket fuel. They are not "nice to have." They are the difference between a project and a product.
-
-**Ship them. This week.**
-
-Your co-founder has done the work. Now you execute.
+1.  **Dockerize Build:**
+    Use `Dockerfile.prod` and `docker-compose.prod.yml` to package and build the runtime image:
+    ```bash
+    docker build -f Dockerfile.prod -t devpulse-app:latest .
+    ```
+2.  **Stripe/Razorpay Webhooks:**
+    Set up appropriate webhook bindings in `server/payments.ts` to trigger subscription upgrades and scan quota replenishment.
+3.  **VS Code Extension Packaging:**
+    Package the extension bundle into a `.vsix` ready to be uploaded to the extension marketplace:
+    ```bash
+    cd devpulse-vscode
+    npx @vscode/vsce package
+    ```
 
 ---
 
-*DevPulse by Rashi Technologies · 2026*
-
-## Branch Structure
-
-- `main` — canonical, production-ready branch (all 57 pages, full backend, VS Code extension)
-- `feature/push-current-work` — legacy branch (identical to main, kept for history)
-
+_DevPulse by Rashi Technologies · 2026_
