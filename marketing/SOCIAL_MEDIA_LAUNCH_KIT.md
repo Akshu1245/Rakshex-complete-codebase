@@ -1,21 +1,21 @@
-# DevPulse Social Media Launch Kit
+# Rakshex Social Media Launch Kit
 
 ## Twitter / X Account Setup
 
 ### Profile
 
-- **Handle:** @devpulsehq
-- **Display name:** DevPulse
+- **Handle:** @rakshexhq
+- **Display name:** Rakshex
 - **Bio:** "AI Runtime Governance — security scanning, cost monitoring, and compliance for production AI agents. Built in India. 4 patents."
 - **Location:** Bengaluru, India
-- **Website:** https://devpulse.in
-- **Banner:** Create 1500x500px banner with DevPulse logo + tagline
-- **Profile pic:** 400x400px DevPulse logo (circular crop)
+- **Website:** https://rakshex.in
+- **Banner:** Create 1500x500px banner with Rakshex logo + tagline
+- **Profile pic:** 400x400px Rakshex logo (circular crop)
 
 ### Pin Tweet (first pinned post)
 
 ```
-🚀 We built DevPulse because every AI deployment has three invisible risks:
+🚀 We built Rakshex because every AI deployment has three invisible risks:
 
 1. Security holes (prompt injection, API leaks)
 2. Runaway costs (one rogue agent = $50K)
@@ -23,7 +23,7 @@
 
 One platform. 5-minute setup. 14-day free trial.
 
-→ https://devpulse.in
+→ https://rakshex.in
 
 #AI #Security #DevTools #BuiltInIndia
 ```
@@ -33,13 +33,13 @@ One platform. 5-minute setup. 14-day free trial.
 **Tweet 1 (pin):**
 
 ```
-🚨 We're launching DevPulse on @ProductHunt today!
+🚨 We're launching Rakshex on @ProductHunt today!
 
-DevPulse is the first AI Runtime Governance platform built in India.
+Rakshex is the first AI Runtime Governance platform built in India.
 
 Security scanning + cost monitoring + compliance — all in one.
 
-→ https://devpulse.in
+→ https://rakshex.in
 
 Support us on PH: [link]
 
@@ -92,7 +92,7 @@ Built with 478+ tests, 37 API routers, 18 database migrations.
 
 Tech stack: TypeScript, Next.js, tRPC, Drizzle ORM, MySQL, Redis, BullMQ
 
-Open source: github.com/Akshu1245/devpulse-complete-codebase
+Open source: github.com/Akshu1245/rakshex-complete-codebase
 
 #OpenSource #TypeScript #NextJS
 ```
@@ -129,7 +129,7 @@ DMs open for feedback, bugs, and feature requests.
 | --- | ------------------------------------------------------------ |
 | Mon | Technical deep-dive (e.g., "How we detect prompt injection") |
 | Tue | Customer story / use case                                    |
-| Wed | Comparison post (DevPulse vs [competitor])                   |
+| Wed | Comparison post (Rakshex vs [competitor])                    |
 | Thu | Behind-the-scenes (building in public)                       |
 | Fri | Community question / poll                                    |
 | Sat | Fun / meme about AI costs                                    |
@@ -141,28 +141,28 @@ DMs open for feedback, bugs, and feature requests.
 
 ### Page Info
 
-- **Name:** DevPulse
+- **Name:** Rakshex
 - **Tagline:** "AI Runtime Governance Platform"
-- **Description:** "DevPulse helps developers and enterprises secure, monitor, and govern AI agents in production. Built in Bengaluru, India. 4 patents filed."
+- **Description:** "Rakshex helps developers and enterprises secure, monitor, and govern AI agents in production. Built in Bengaluru, India. 4 patents filed."
 - **Industry:** Software Development
 - **Company size:** 1-10 employees
-- **Website:** https://devpulse.in
+- **Website:** https://rakshex.in
 - **Custom button:** "Visit website"
 
 ### Cover Image
 
 1500x500px with:
 
-- DevPulse logo
+- Rakshex logo
 - Tagline: "Secure Your AI Agents Before They Cost You"
 - Visual: Shield + AI brain icon
 
 ### First Post (Launch)
 
 ```
-🚀 DevPulse is live!
+🚀 Rakshex is live!
 
-After 4 months of building, we're opening DevPulse to the world.
+After 4 months of building, we're opening Rakshex to the world.
 
 What we do:
 🔒 Security — Scan APIs, detect prompt injection, find secrets
@@ -176,7 +176,7 @@ We're looking for:
 → Contributors (TypeScript, security, AI/ML)
 → Early believers
 
-Try it free: https://devpulse.in
+Try it free: https://rakshex.in
 
 #AI #Security #DevTools #BuiltInIndia #Startup #Bengaluru
 ```
@@ -184,7 +184,7 @@ Try it free: https://devpulse.in
 ### Founder Personal Post (Akshay)
 
 ```
-I spent 4 months building DevPulse solo.
+I spent 4 months building Rakshex solo.
 
 4 patents. 478 tests. 37 API routers. One mission: make AI governance accessible to every developer.
 
@@ -202,7 +202,7 @@ Here's what I learned about building an AI security platform as a solo founder i
 ### Twitter Banner (1500x500px)
 
 ```
-Left: DevPulse logo (200px)
+Left: Rakshex logo (200px)
 Center: "AI Runtime Governance"
 Right: "Secure • Monitor • Comply"
 Background: Dark gradient (#0f172a → #1e293b)
@@ -212,7 +212,7 @@ Accent: Blue (#3b82f6) underline
 ### LinkedIn Cover (1584x396px)
 
 ```
-Center: DevPulse logo + tagline
+Center: Rakshex logo + tagline
 Bottom: "Built in India | 4 Patents | Open Source"
 Background: Same dark gradient
 ```

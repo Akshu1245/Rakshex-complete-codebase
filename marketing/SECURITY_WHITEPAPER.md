@@ -1,4 +1,4 @@
-# DevPulse Security Whitepaper
+# Rakshex Security Whitepaper
 
 **Version:** 1.0
 **Date:** May 2026
@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-DevPulse is an open-source AI runtime governance platform that secures, monitors, and governs production AI agents. This whitepaper describes the security architecture, threat model, and controls that protect customer data and platform integrity.
+Rakshex is an open-source AI runtime governance platform that secures, monitors, and governs production AI agents. This whitepaper describes the security architecture, threat model, and controls that protect customer data and platform integrity.
 
 **Key Claims:**
 
@@ -204,10 +204,10 @@ Every database query for tenant-scoped resources includes a `userId = ?` or `wor
 
 We operate a coordinated vulnerability disclosure program:
 
-- Email: security@devpulse.in
+- Email: security@rakshex.in
 - Response time: 48 hours acknowledgment
 - Bounty: $500–$5,000 for valid findings (scope-dependent)
-- Hall of Fame: Published on security.devpulse.in
+- Hall of Fame: Published on security.rakshex.in
 
 ---
 
@@ -223,9 +223,9 @@ We operate a coordinated vulnerability disclosure program:
 
 ## Contact
 
-- Security team: security@devpulse.in
-- Compliance: compliance@devpulse.in
-- General: hello@devpulse.in
+- Security team: security@rakshex.in
+- Compliance: compliance@rakshex.in
+- General: hello@rakshex.in
 
 ---
 

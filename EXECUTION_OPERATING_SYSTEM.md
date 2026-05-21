@@ -1,4 +1,4 @@
-# DevPulse Execution Operating System
+# Rakshex Execution Operating System
 
 > How we operate as a world-class startup.
 > Date: 2026-05-17
@@ -53,8 +53,8 @@ SYSTEMS
   Support tickets:     ___ (target: <5/day)
 ```
 
-**What worked:** **_
-**What didn't:** _**
+**What worked:** **\_
+**What didn't:** \_**
 **This week's top 3 priorities:**
 
 1. ***
@@ -278,7 +278,7 @@ Kill a feature if:
 
 Ask these every week:
 
-1. Would users keep DevPulse installed?
+1. Would users keep Rakshex installed?
 2. Does this reduce anxiety?
 3. Does this save real money?
 4. Would users recommend this?

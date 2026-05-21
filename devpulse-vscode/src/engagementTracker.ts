@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import type { DevPulseApi } from "./api";
+import type { RakshexApi } from "./api";
 
 export type EngagementEvent =
   | "scan_run"
@@ -35,9 +35,9 @@ interface EngagementRecord {
   points: number;
 }
 
-const STORAGE_KEY = "devpulse.engagement";
-const SCORE_KEY = "devpulse.engagementScore";
-const LAST_ACTIVE_KEY = "devpulse.lastActive";
+const STORAGE_KEY = "rakshex.engagement";
+const SCORE_KEY = "rakshex.engagementScore";
+const LAST_ACTIVE_KEY = "rakshex.lastActive";
 
 export class EngagementTracker {
   private records: EngagementRecord[] = [];
@@ -45,7 +45,7 @@ export class EngagementTracker {
 
   constructor(
     private readonly context: vscode.ExtensionContext,
-    private readonly api?: DevPulseApi,
+    private readonly api?: RakshexApi,
   ) {
     this.records = context.globalState.get<EngagementRecord[]>(STORAGE_KEY) ?? [];
   }
@@ -212,17 +212,17 @@ export class EngagementTracker {
   recordOnboardingStep(
     step: "installed" | "signed_in" | "imported" | "scanned" | "found_issue",
   ): void {
-    const key = `devpulse.onboarding.${step}`;
+    const key = `rakshex.onboarding.${step}`;
     void this.context.globalState.update(key, Date.now());
   }
 
   getOnboardingProgress(): { step: string; complete: boolean; timestamp?: number }[] {
     const steps: Array<{ step: string; key: string }> = [
-      { step: "installed", key: "devpulse.onboarding.installed" },
-      { step: "signed_in", key: "devpulse.onboarding.signed_in" },
-      { step: "imported", key: "devpulse.onboarding.imported" },
-      { step: "scanned", key: "devpulse.onboarding.scanned" },
-      { step: "found_issue", key: "devpulse.onboarding.found_issue" },
+      { step: "installed", key: "rakshex.onboarding.installed" },
+      { step: "signed_in", key: "rakshex.onboarding.signed_in" },
+      { step: "imported", key: "rakshex.onboarding.imported" },
+      { step: "scanned", key: "rakshex.onboarding.scanned" },
+      { step: "found_issue", key: "rakshex.onboarding.found_issue" },
     ];
     return steps.map((s) => {
       const ts = this.context.globalState.get<number>(s.key);

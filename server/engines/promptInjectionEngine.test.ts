@@ -242,7 +242,7 @@ describe("piiDetector.detectPII", () => {
     expect(r.types).toContain("api_key");
   });
 
-  it("detects DevPulse API keys", () => {
+  it("detects Rakshex API keys", () => {
     const r = detectPII("dp_abc123def456ghi789jkl012mno345");
     expect(r.types).toContain("api_key");
   });

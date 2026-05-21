@@ -1,20 +1,20 @@
 # Migration Guides
 
-Move your data from Helicone, Portkey, or Lakera to DevPulse without losing history.
+Move your data from Helicone, Portkey, or Lakera to Rakshex without losing history.
 
 ---
 
-## Helicone → DevPulse
+## Helicone → Rakshex
 
 ### What Migrates
 
 | Data              | Status      | Notes                                       |
 | ----------------- | ----------- | ------------------------------------------- |
 | Request logs      | ✅ Full     | All LLM calls with latency, tokens, cost    |
-| Custom properties | ✅ Full     | Mapped to DevPulse metadata fields          |
+| Custom properties | ✅ Full     | Mapped to Rakshex metadata fields           |
 | Cache metrics     | ⚠️ Partial  | Cache hit rates recomputed on first 30 days |
-| User sessions     | ❌ No       | Re-authenticate users in DevPulse           |
-| Alerts / webhooks | ⚠️ Recreate | Alert rules must be rebuilt in DevPulse UI  |
+| User sessions     | ❌ No       | Re-authenticate users in Rakshex            |
+| Alerts / webhooks | ⚠️ Recreate | Alert rules must be rebuilt in Rakshex UI   |
 
 ### Step-by-Step
 
@@ -27,10 +27,10 @@ curl -H "Authorization: Bearer $HELICONE_API_KEY" \
   > helicone_export.json
 ```
 
-**2. Preview in DevPulse**
+**2. Preview in Rakshex**
 
 ```bash
-curl -X POST https://api.devpulse.in/api/import/preview \
+curl -X POST https://api.rakshex.in/api/import/preview \
   -H "Content-Type: application/json" \
   -d '{
     "source": "helicone",
@@ -40,12 +40,12 @@ curl -X POST https://api.devpulse.in/api/import/preview \
 
 **3. Execute Import**
 
-Use the DevPulse dashboard Import page or:
+Use the Rakshex dashboard Import page or:
 
 ```bash
-curl -X POST https://api.devpulse.in/api/import/execute \
+curl -X POST https://api.rakshex.in/api/import/execute \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $DEVPULSE_TOKEN" \
+  -H "Authorization: Bearer $RAKSHEX_TOKEN" \
   -d '{
     "source": "helicone",
     "data": '$(cat helicone_export.json)'
@@ -60,7 +60,7 @@ curl -X POST https://api.devpulse.in/api/import/execute \
 
 **5. Redirect Traffic**
 
-Replace your Helicone base URL (`https://oai.hconeai.com/v1`) with your DevPulse gateway URL or direct provider calls with DevPulse SDK middleware.
+Replace your Helicone base URL (`https://oai.hconeai.com/v1`) with your Rakshex gateway URL or direct provider calls with Rakshex SDK middleware.
 
 ```typescript
 // Before (Helicone)
@@ -69,9 +69,9 @@ const client = new OpenAI({
   defaultHeaders: { "Helicone-Auth": "Bearer ..." }
 });
 
-// After (DevPulse)
-import { DevPulse } from "@devpulse/sdk";
-const dp = new DevPulse({ apiKey: "dp_..." });
+// After (Rakshex)
+import { Rakshex } from "@rakshex/sdk";
+const dp = new Rakshex({ apiKey: "dp_..." });
 const result = await dp.llm.invoke({
   model: "gpt-4o",
   messages: [...]
@@ -80,17 +80,17 @@ const result = await dp.llm.invoke({
 
 ---
 
-## Portkey → DevPulse
+## Portkey → Rakshex
 
 ### What Migrates
 
-| Data                | Status     | Notes                                          |
-| ------------------- | ---------- | ---------------------------------------------- |
-| Gateway logs        | ✅ Full    | All routed requests                            |
-| Prompts (versioned) | ⚠️ Partial | Export as JSON, import as DevPulse collections |
-| Configs / fallbacks | ❌ No      | Rebuild in DevPulse policy engine              |
-| Virtual keys        | ❌ No      | Use DevPulse API key system                    |
-| Feedback logs       | ⚠️ Partial | Mapped to DevPulse audit log                   |
+| Data                | Status     | Notes                                         |
+| ------------------- | ---------- | --------------------------------------------- |
+| Gateway logs        | ✅ Full    | All routed requests                           |
+| Prompts (versioned) | ⚠️ Partial | Export as JSON, import as Rakshex collections |
+| Configs / fallbacks | ❌ No      | Rebuild in Rakshex policy engine              |
+| Virtual keys        | ❌ No      | Use Rakshex API key system                    |
+| Feedback logs       | ⚠️ Partial | Mapped to Rakshex audit log                   |
 
 ### Step-by-Step
 
@@ -108,32 +108,32 @@ curl -H "x-portkey-api-key: $PORTKEY_API_KEY" \
   > portkey_prompts.json
 ```
 
-**2. Import to DevPulse**
+**2. Import to Rakshex**
 
 Logs and prompts use different import paths:
 
 ```bash
 # Import logs
-curl -X POST https://api.devpulse.in/api/import/execute \
-  -H "Authorization: Bearer $DEVPULSE_TOKEN" \
+curl -X POST https://api.rakshex.in/api/import/execute \
+  -H "Authorization: Bearer $RAKSHEX_TOKEN" \
   -d '{ "source": "portkey", "data": '$(cat portkey_logs.json)' }'
 
 # Import prompts as collections
-curl -X POST https://api.devpulse.in/api/collections/create \
-  -H "Authorization: Bearer $DEVPULSE_TOKEN" \
+curl -X POST https://api.rakshex.in/api/collections/create \
+  -H "Authorization: Bearer $RAKSHEX_TOKEN" \
   -d '{ "name": "Portkey Prompts", "format": "json", "data": '$(cat portkey_prompts.json)' }'
 ```
 
 **3. Recreate Gateway Configs**
 
-Portkey's fallback chains map to DevPulse policy rules:
+Portkey's fallback chains map to Rakshex policy rules:
 
-| Portkey Config | DevPulse Equivalent                                 |
+| Portkey Config | Rakshex Equivalent                                  |
 | -------------- | --------------------------------------------------- |
 | Retry strategy | Policy rule: `retry_count` condition                |
 | Timeout        | Policy rule: `max_latency_ms` action: `alert_only`  |
 | Fallback model | Policy rule: `model` condition + `require_approval` |
-| Load balancing | Use DevPulse `routeLLM()` with weighted providers   |
+| Load balancing | Use Rakshex `routeLLM()` with weighted providers    |
 
 **4. Update SDK**
 
@@ -142,24 +142,24 @@ Portkey's fallback chains map to DevPulse policy rules:
 import Portkey from "portkey-ai";
 const portkey = new Portkey({ apiKey: "..." });
 
-// After (DevPulse)
-import { DevPulse } from "@devpulse/sdk";
-const dp = new DevPulse({ apiKey: "dp_..." });
-// DevPulse handles routing, security scanning, and cost tracking automatically
+// After (Rakshex)
+import { Rakshex } from "@rakshex/sdk";
+const dp = new Rakshex({ apiKey: "dp_..." });
+// Rakshex handles routing, security scanning, and cost tracking automatically
 ```
 
 ---
 
-## Lakera Guard → DevPulse
+## Lakera Guard → Rakshex
 
 ### What Migrates
 
-| Data                    | Status     | Notes                                 |
-| ----------------------- | ---------- | ------------------------------------- |
-| Prompt injection logs   | ✅ Full    | All detected attempts                 |
-| PII detection logs      | ✅ Full    | Mapped to DevPulse findings           |
-| Custom classifier rules | ⚠️ Partial | Rewrite as DevPulse policy conditions |
-| API keys                | ❌ No      | Generate new DevPulse API keys        |
+| Data                    | Status     | Notes                                |
+| ----------------------- | ---------- | ------------------------------------ |
+| Prompt injection logs   | ✅ Full    | All detected attempts                |
+| PII detection logs      | ✅ Full    | Mapped to Rakshex findings           |
+| Custom classifier rules | ⚠️ Partial | Rewrite as Rakshex policy conditions |
+| API keys                | ❌ No      | Generate new Rakshex API keys        |
 
 ### Step-by-Step
 
@@ -178,14 +178,14 @@ Lakera provides CSV export via the dashboard:
 csvjson lakera_export.csv > lakera_export.json
 
 # Import
-curl -X POST https://api.devpulse.in/api/import/execute \
-  -H "Authorization: Bearer $DEVPULSE_TOKEN" \
+curl -X POST https://api.rakshex.in/api/import/execute \
+  -H "Authorization: Bearer $RAKSHEX_TOKEN" \
   -d '{ "source": "lakera", "data": '$(cat lakera_export.json)' }'
 ```
 
-**3. Map Lakera Classifiers to DevPulse Policies**
+**3. Map Lakera Classifiers to Rakshex Policies**
 
-| Lakera Classifier  | DevPulse Policy Rule                               |
+| Lakera Classifier  | Rakshex Policy Rule                                |
 | ------------------ | -------------------------------------------------- |
 | `prompt_injection` | Built-in — no config needed                        |
 | `pii`              | Built-in PII redaction + `alert_only` or `block`   |
@@ -195,8 +195,8 @@ curl -X POST https://api.devpulse.in/api/import/execute \
 Create the custom topic rules:
 
 ```bash
-curl -X POST https://api.devpulse.in/api/trpc/policies.createRule \
-  -H "Authorization: Bearer $DEVPULSE_TOKEN" \
+curl -X POST https://api.rakshex.in/api/trpc/policies.createRule \
+  -H "Authorization: Bearer $RAKSHEX_TOKEN" \
   -d '{
     "name": "Block competitor mentions",
     "priority": 2,
@@ -224,13 +224,13 @@ if (results[0].flagged) {
   /* block */
 }
 
-// After (DevPulse)
-// Just send through DevPulse gateway — scanning happens automatically
+// After (Rakshex)
+// Just send through Rakshex gateway — scanning happens automatically
 const result = await dp.llm.invoke({
   model: "gpt-4o",
   messages: [{ role: "user", content: userPrompt }],
 });
-// If prompt injection is detected, DevPulse returns a blocked response
+// If prompt injection is detected, Rakshex returns a blocked response
 // with the matched rule in the metadata
 ```
 
@@ -242,7 +242,7 @@ After any migration:
 
 - [ ] Imported data count matches source export
 - [ ] Token usage totals are within 5% of source
-- [ ] All active users can log in to DevPulse
+- [ ] All active users can log in to Rakshex
 - [ ] API keys are rotated and tested
 - [ ] Alert rules are recreated and firing correctly
 - [ ] Webhook endpoints are re-registered
@@ -252,4 +252,4 @@ After any migration:
 
 ## Support
 
-Migration questions? Email migrate@devpulse.in or open a GitHub issue with `[Migration]` in the title.
+Migration questions? Email migrate@rakshex.in or open a GitHub issue with `[Migration]` in the title.

@@ -1,4 +1,4 @@
-# DevPulse Launch Copy Assets
+# Rakshex Launch Copy Assets
 
 > Ready-to-paste copy for every launch channel. Just copy and publish.
 
@@ -15,7 +15,7 @@ Stop AI agents from burning your API budget
 ### Description (260 characters max)
 
 ```
-DevPulse scans your AI agents and API collections in VS Code to find leaked keys, hidden token costs, and security risks before they hit production. First scan in 60 seconds. Free forever for individuals.
+Rakshex scans your AI agents and API collections in VS Code to find leaked keys, hidden token costs, and security risks before they hit production. First scan in 60 seconds. Free forever for individuals.
 ```
 
 ### First Comment ( pinned )
@@ -23,9 +23,9 @@ DevPulse scans your AI agents and API collections in VS Code to find leaked keys
 ```
 Hey Product Hunt! 👋
 
-We built DevPulse because we kept seeing AI agents accidentally burn through API budgets — leaked OpenAI keys in collections, infinite loops burning tokens, agents calling endpoints they shouldn't.
+We built Rakshex because we kept seeing AI agents accidentally burn through API budgets — leaked OpenAI keys in collections, infinite loops burning tokens, agents calling endpoints they shouldn't.
 
-DevPulse runs inside VS Code and scans your AI agent configs, API collections, and env files to catch these issues before they cost you money.
+Rakshex runs inside VS Code and scans your AI agent configs, API collections, and env files to catch these issues before they cost you money.
 
 🔍 Finds leaked API keys, secrets, and misconfigurations
 💰 Detects hidden token costs and runaway agent loops
@@ -44,7 +44,7 @@ Try it and let us know what you find — happy to answer any questions!
 ### Title (Option A — Pain-Focused)
 
 ```
-Show HN: DevPulse – Stop AI agents from burning your API budget
+Show HN: Rakshex – Stop AI agents from burning your API budget
 ```
 
 ### Title (Option B — Outcome-Focused)
@@ -62,7 +62,7 @@ Show HN: My AI agent spent $847 in one weekend. So I built this.
 ### Body
 
 ```
-After my team's AI agent leaked an OpenAI API key in a shared Postman collection and burned through $400 before we noticed, I built DevPulse.
+After my team's AI agent leaked an OpenAI API key in a shared Postman collection and burned through $400 before we noticed, I built Rakshex.
 
 It's a VS Code extension that scans your AI agent configs, API collections, and environment files for:
 
@@ -88,7 +88,7 @@ What do you think? What other AI security blind spots have you hit?
 ```
 I built a VS Code extension that scans AI agents for security issues and hidden costs
 
-After our AI agent accidentally exposed an API key in a shared collection and burned $400 in tokens overnight, I built DevPulse — a VS Code extension that finds these issues before they cost you money.
+After our AI agent accidentally exposed an API key in a shared collection and burned $400 in tokens overnight, I built Rakshex — a VS Code extension that finds these issues before they cost you money.
 
 What it does:
 • Scans AI agent configs (LangChain, CrewAI, AutoGen) for misconfigurations
@@ -107,7 +107,7 @@ Has anyone else dealt with runaway AI costs? What tools do you use?
 ```
 I built a free VS Code tool that stops AI agents from burning your API budget
 
-Launched DevPulse this week — it scans your AI agent configs and API collections inside VS Code to find:
+Launched Rakshex this week — it scans your AI agent configs and API collections inside VS Code to find:
 
 ✅ Leaked API keys and secrets
 ✅ Hidden token costs (reasoning tokens, repeated calls)
@@ -152,7 +152,7 @@ The worst part? The key was in a Postman collection we shared with the whole tea
 ### Tweet 3 (Solution)
 
 ```
-DevPulse is a VS Code extension that scans your AI agents and API collections for:
+Rakshex is a VS Code extension that scans your AI agents and API collections for:
 
 🔍 Leaked API keys
 💰 Hidden token costs
@@ -165,9 +165,9 @@ First scan in 60 seconds. Your code never leaves your machine.
 ### Tweet 4 (Demo/Screenshot)
 
 ```
-Here's what DevPulse found in our own codebase:
+Here's what Rakshex found in our own codebase:
 
-[Screenshot: DevPulse panel showing critical findings]
+[Screenshot: Rakshex panel showing critical findings]
 
 3 leaked keys. 1 infinite loop risk. $200+ in hidden monthly costs.
 
@@ -177,11 +177,11 @@ All found in under 60 seconds.
 ### Tweet 5 (CTA)
 
 ```
-DevPulse is free for individual developers.
+Rakshex is free for individual developers.
 
 Install it from the VS Code Marketplace and run your first scan:
 
-→ https://marketplace.visualstudio.com/items?itemName=devpulse.devpulse
+→ https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex
 
 Let me know what it finds in your codebase 👇
 ```
@@ -191,7 +191,7 @@ Let me know what it finds in your codebase 👇
 ## LinkedIn (Engineering Post)
 
 ```
-I just shipped DevPulse — a VS Code extension that stops AI agents from burning your API budget.
+I just shipped Rakshex — a VS Code extension that stops AI agents from burning your API budget.
 
 Here's why I built it:
 
@@ -203,7 +203,7 @@ This isn't unique to us. As more teams build with LangChain, CrewAI, and AutoGen
 ❌ But they don't know when to stop
 ❌ And they reuse credentials from wherever they can find them
 
-DevPulse scans your AI agent configs, API collections, and environment files directly in VS Code to find:
+Rakshex scans your AI agent configs, API collections, and environment files directly in VS Code to find:
 
 • Leaked API keys and secrets
 • Hidden token costs (reasoning tokens, repeated calls)
@@ -239,7 +239,7 @@ Not because it solved a hard problem. Because it was stuck in an infinite retry 
 
 This is the hidden cost of building with AI agents: they don't know when to stop, and they'll use whatever credentials they can find.
 
-So I built DevPulse — a VS Code extension that finds these issues before they cost you money.
+So I built Rakshex — a VS Code extension that finds these issues before they cost you money.
 ```
 
 ---
@@ -255,7 +255,7 @@ Stop AI agents from burning your API budget. Scan AI configs and API collections
 ## GitHub Repo Description
 
 ```
-DevPulse — AI runtime protection for developers. Find leaked API keys, hidden token costs, and security risks in your AI agents and API collections. VS Code extension + CLI.
+Rakshex — AI runtime protection for developers. Find leaked API keys, hidden token costs, and security risks in your AI agents and API collections. VS Code extension + CLI.
 ```
 
 ---
@@ -263,7 +263,7 @@ DevPulse — AI runtime protection for developers. Find leaked API keys, hidden 
 ## Email Signature / One-Liner
 
 ```
-DevPulse — Stop AI agents from burning your API budget. Free VS Code extension. First scan in 60 seconds.
+Rakshex — Stop AI agents from burning your API budget. Free VS Code extension. First scan in 60 seconds.
 ```
 
 ---
@@ -271,12 +271,12 @@ DevPulse — Stop AI agents from burning your API budget. Free VS Code extension
 ## Discord / Slack Pitch
 
 ```
-Hey! I just launched DevPulse — a free VS Code extension that scans AI agent configs and API collections for leaked keys, hidden costs, and security issues.
+Hey! I just launched Rakshex — a free VS Code extension that scans AI agent configs and API collections for leaked keys, hidden costs, and security issues.
 
 Found out the hard way when my agent burned $847 in one weekend 😅
 
 Takes 60 seconds to set up. Would love your feedback!
-https://marketplace.visualstudio.com/items?itemName=devpulse.devpulse
+https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex
 ```
 
 ---

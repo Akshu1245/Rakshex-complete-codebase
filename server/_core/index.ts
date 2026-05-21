@@ -57,9 +57,9 @@ import { getDb } from "../db";
 function buildCorsAllowlist(): string[] {
   if (ENV.isProduction) {
     return [
-      "https://devpulse.in",
-      "https://www.devpulse.in",
-      "https://app.devpulse.in",
+      "https://rakshex.in",
+      "https://www.rakshex.in",
+      "https://app.rakshex.in",
       ENV.frontendUrl,
     ].filter((v, i, arr) => v && arr.indexOf(v) === i);
   }
@@ -139,7 +139,7 @@ const SENSITIVE_KEYS = new Set([
   "access_token",
   "sessiontoken",
   "x-razorpay-signature",
-  "x-devpulse-signature-256",
+  "x-rakshex-signature-256",
   "stripe-signature",
 ]);
 
@@ -226,7 +226,7 @@ async function startServer() {
   app.use(requestIdMiddleware());
 
   // ── CORS allowlist (must run before helmet) ──────────────────────────────
-  // The Next.js dashboard (devpulse-frontend) is deployed on a different
+  // The Next.js dashboard (rakshex-frontend) is deployed on a different
   // origin from the API in most production setups, so we explicitly opt
   // in to credentialled cross-origin requests from the allowlist. Any
   // request from an origin not on the list is rejected before tRPC ever
@@ -648,8 +648,8 @@ async function startServer() {
         <body style="font-family: -apple-system, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #f9fafb;">
           <div style="text-align: center; padding: 40px; background: white; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
             <h1 style="color: #16a34a; margin: 0 0 16px;">✓ Unsubscribed</h1>
-            <p style="color: #374151; margin: 0;">You've been unsubscribed from all DevPulse emails.</p>
-            <a href="${process.env.APP_URL || "https://devpulse.in"}" style="display: inline-block; margin-top: 24px; color: #2563eb; text-decoration: none;">Return to DevPulse</a>
+            <p style="color: #374151; margin: 0;">You've been unsubscribed from all Rakshex emails.</p>
+            <a href="${process.env.APP_URL || "https://rakshex.in"}" style="display: inline-block; margin-top: 24px; color: #2563eb; text-decoration: none;">Return to Rakshex</a>
           </div>
         </body>
         </html>
@@ -1022,7 +1022,7 @@ async function startServer() {
 
     registerJobWorkers();
     scheduleWeeklyDigest();
-    if (process.env.DEVPULSE_REDTEAM_SCHEDULER !== "disabled") {
+    if (process.env.RAKSHEX_REDTEAM_SCHEDULER !== "disabled") {
       startRedTeamScheduler(60_000);
       logger.info("[Server] Continuous red-team scheduler started");
     }

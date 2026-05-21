@@ -1,18 +1,18 @@
 /**
- * DevPulse VS Code extension entrypoint.
+ * Rakshex VS Code extension entrypoint.
  *
  * Architecture:
  *   - API key is stored in vscode.SecretStorage (never in settings).
- *   - DevPulseApi is the single fetch wrapper over /trpc/vscodeExtension.*.
- *   - FindingsTreeProvider + AutoFixTreeProvider + DevPulseStatusBar + HeartbeatService consume it.
+ *   - RakshexApi is the single fetch wrapper over /trpc/vscodeExtension.*.
+ *   - FindingsTreeProvider + AutoFixTreeProvider + RakshexStatusBar + HeartbeatService consume it.
  *   - `refresh` is debounced via a simple in-flight guard so rapid command
  *     invocations don't stack.
  *   - Workspace trust is checked before running shadow API scans.
  */
 import * as vscode from "vscode";
-import { DevPulseApi, DevPulseApiError, getConfiguredBaseUrl, type FindingStatus } from "./api";
+import { RakshexApi, RakshexApiError, getConfiguredBaseUrl, type FindingStatus } from "./api";
 import { FindingsTreeProvider } from "./findingsProvider";
-import { DevPulseStatusBar } from "./statusBar";
+import { RakshexStatusBar } from "./statusBar";
 import { HeartbeatService } from "./heartbeat";
 import { SecurityWebviewPanel } from "./securityWebviewPanel";
 import { SettingsWebviewPanel } from "./settingsWebview";
@@ -33,19 +33,19 @@ import { AnalyticsDashboard } from "./analyticsDashboard";
 import { RetentionEngine } from "./retentionEngine";
 import { dismissFinding } from "./dismissFinding";
 
-const SECRET_API_KEY = "devpulse.apiKey";
+const SECRET_API_KEY = "rakshex.apiKey";
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   let cachedApiKey: string | undefined;
   const readApiKey = () => cachedApiKey;
 
-  const api = new DevPulseApi(getConfiguredBaseUrl, readApiKey);
+  const api = new RakshexApi(getConfiguredBaseUrl, readApiKey);
   const findingsProvider = new FindingsTreeProvider(api, context);
   const autoFixProvider = new AutoFixTreeProvider(api);
   const valueTracker = new ValueMomentTracker(context);
   const engagementTracker = new EngagementTracker(context, api);
   const retentionEngine = new RetentionEngine(context, engagementTracker);
-  const statusBar = new DevPulseStatusBar(api, () => engagementTracker.getScanStreak());
+  const statusBar = new RakshexStatusBar(api, () => engagementTracker.getScanStreak());
   const heartbeat = new HeartbeatService(api, () => Boolean(cachedApiKey));
 
   engagementTracker.recordOnboardingStep("installed");
@@ -58,7 +58,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   // Stale state recovery: refresh when window regains focus (network may have recovered)
   const windowStateDisposable = vscode.window.onDidChangeWindowState(async (e) => {
     if (e.focused && cachedApiKey) {
-      const lastActive = context.globalState.get<number>("devpulse.lastActive") ?? Date.now();
+      const lastActive = context.globalState.get<number>("rakshex.lastActive") ?? Date.now();
       const minutesAway = (Date.now() - lastActive) / (60 * 1000);
       // If user was away > 10 minutes, silently refresh to pick up any new findings
       if (minutesAway > 10) {
@@ -68,34 +68,34 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
           // Silently fail — stale state recovery is best-effort
         }
       }
-      void context.globalState.update("devpulse.lastActive", Date.now());
+      void context.globalState.update("rakshex.lastActive", Date.now());
     }
   });
   context.subscriptions.push(windowStateDisposable);
 
-  const treeView = vscode.window.createTreeView("devpulse.findings", {
+  const treeView = vscode.window.createTreeView("rakshex.findings", {
     treeDataProvider: findingsProvider,
     showCollapseAll: true,
   });
 
   // Persist tree expand/collapse state for severity groups
   const expandedKeys = new Set<string>(
-    context.globalState.get<string[]>("devpulse.expandedSeverityGroups") ?? [],
+    context.globalState.get<string[]>("rakshex.expandedSeverityGroups") ?? [],
   );
   treeView.onDidExpandElement((e) => {
     if ((e.element as any).kind === "severity") {
       expandedKeys.add((e.element as any).severity);
-      void context.globalState.update("devpulse.expandedSeverityGroups", Array.from(expandedKeys));
+      void context.globalState.update("rakshex.expandedSeverityGroups", Array.from(expandedKeys));
     }
   });
   treeView.onDidCollapseElement((e) => {
     if ((e.element as any).kind === "severity") {
       expandedKeys.delete((e.element as any).severity);
-      void context.globalState.update("devpulse.expandedSeverityGroups", Array.from(expandedKeys));
+      void context.globalState.update("rakshex.expandedSeverityGroups", Array.from(expandedKeys));
     }
   });
 
-  const autoFixTreeView = vscode.window.createTreeView("devpulse.autofix", {
+  const autoFixTreeView = vscode.window.createTreeView("rakshex.autofix", {
     treeDataProvider: autoFixProvider,
     showCollapseAll: true,
   });
@@ -140,21 +140,20 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       const openHigh = findings.filter((f) => f.severity === "High" && f.status === "open").length;
       if (openCritical > 0 || openHigh > 0) {
         const total = openCritical + openHigh;
-        const lastReminded =
-          context.globalState.get<number>("devpulse.lastContinuityReminder") ?? 0;
+        const lastReminded = context.globalState.get<number>("rakshex.lastContinuityReminder") ?? 0;
         const hoursSince = (Date.now() - lastReminded) / (1000 * 60 * 60);
         if (hoursSince >= 24) {
           dedupedShowMessage(
             `You have ${total} unresolved ${openCritical > 0 ? "critical" : "high"}-severity finding${total !== 1 ? "s" : ""}. A quick review keeps your APIs safer.`,
             "info",
           );
-          void context.globalState.update("devpulse.lastContinuityReminder", Date.now());
+          void context.globalState.update("rakshex.lastContinuityReminder", Date.now());
         }
       }
     } catch (err) {
       // Calm recovery: show once, guide user gently
       statusBar.showError("Could not refresh data — will retry automatically");
-      dedupedShowMessage("DevPulse: Refresh delayed. Retrying in a moment.", "warn");
+      dedupedShowMessage("Rakshex: Refresh delayed. Retrying in a moment.", "warn");
     } finally {
       refreshInFlight = false;
     }
@@ -163,11 +162,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const applySignedInState = async (signedIn: boolean) => {
     findingsProvider.setSignedIn(signedIn);
     autoFixProvider.setSignedIn(signedIn);
-    await vscode.commands.executeCommand("setContext", "devpulse.signedIn", signedIn);
+    await vscode.commands.executeCommand("setContext", "rakshex.signedIn", signedIn);
     if (signedIn) {
       // Don't block activation on refresh — fire-and-forget with error handling
       void refresh().catch(() => {
-        statusBar.showError("Could not connect to DevPulse");
+        statusBar.showError("Could not connect to Rakshex");
       });
     } else {
       statusBar.showSignedOut();
@@ -183,10 +182,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const handleQuickAction = (action: string) => {
     switch (action) {
       case "scan":
-        void vscode.commands.executeCommand("devpulse.scanCurrentFile");
+        void vscode.commands.executeCommand("rakshex.scanCurrentFile");
         break;
       case "import":
-        void vscode.commands.executeCommand("devpulse.importCollections");
+        void vscode.commands.executeCommand("rakshex.importCollections");
         break;
     }
   };
@@ -205,7 +204,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         }
       } catch (err) {
         const msg =
-          err instanceof DevPulseApiError
+          err instanceof RakshexApiError
             ? err.message
             : err instanceof Error
               ? err.message
@@ -216,7 +215,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
       if (!valid) {
         void vscode.window.showErrorMessage(
-          "That API key didn't work. Generate a fresh one from your DevPulse dashboard.",
+          "That API key didn't work. Generate a fresh one from your Rakshex dashboard.",
         );
         return;
       }
@@ -238,11 +237,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const analyticsDashboard = new AnalyticsDashboard(context, engagementTracker);
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("devpulse.authenticate", async () => {
+    vscode.commands.registerCommand("rakshex.authenticate", async () => {
       const entered = await vscode.window.showInputBox({
-        title: "DevPulse API Key",
+        title: "Rakshex API Key",
         prompt:
-          "Paste your DevPulse API key (generate one from Settings → API Keys on your dashboard).",
+          "Paste your Rakshex API key (generate one from Settings → API Keys on your dashboard).",
         password: true,
         ignoreFocusOut: true,
         placeHolder: "dp_...",
@@ -257,12 +256,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         valid = result.valid;
         if (valid && result.user) {
           void vscode.window.showInformationMessage(
-            `Signed in to DevPulse as ${result.user.email ?? result.user.name ?? "user"} (${result.user.plan}).`,
+            `Signed in to Rakshex as ${result.user.email ?? result.user.name ?? "user"} (${result.user.plan}).`,
           );
         }
       } catch (err) {
         const msg =
-          err instanceof DevPulseApiError
+          err instanceof RakshexApiError
             ? err.message
             : err instanceof Error
               ? err.message
@@ -273,7 +272,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
       if (!valid) {
         void vscode.window.showErrorMessage(
-          "That API key didn't work. Generate a fresh one from your DevPulse dashboard.",
+          "That API key didn't work. Generate a fresh one from your Rakshex dashboard.",
         );
         return;
       }
@@ -284,45 +283,45 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       await applySignedInState(true);
     }),
 
-    vscode.commands.registerCommand("devpulse.signOut", async () => {
+    vscode.commands.registerCommand("rakshex.signOut", async () => {
       await context.secrets.delete(SECRET_API_KEY);
       cachedApiKey = undefined;
       await applySignedInState(false);
-      void vscode.window.showInformationMessage("Signed out of DevPulse.");
+      void vscode.window.showInformationMessage("Signed out of Rakshex.");
     }),
 
-    vscode.commands.registerCommand("devpulse.refresh", async () => {
+    vscode.commands.registerCommand("rakshex.refresh", async () => {
       await refresh(true);
     }),
 
-    vscode.commands.registerCommand("devpulse.toggleCompactMode", () => {
+    vscode.commands.registerCommand("rakshex.toggleCompactMode", () => {
       findingsProvider.toggleCompactMode();
       const mode = findingsProvider.isCompact() ? "compact" : "expanded";
       void vscode.window.showInformationMessage(`Findings view: ${mode} mode.`);
     }),
 
-    vscode.commands.registerCommand("devpulse.showCritical", () => {
+    vscode.commands.registerCommand("rakshex.showCritical", () => {
       findingsProvider.setSeverityFilter("Critical");
     }),
-    vscode.commands.registerCommand("devpulse.showHigh", () => {
+    vscode.commands.registerCommand("rakshex.showHigh", () => {
       findingsProvider.setSeverityFilter("High");
     }),
-    vscode.commands.registerCommand("devpulse.showMedium", () => {
+    vscode.commands.registerCommand("rakshex.showMedium", () => {
       findingsProvider.setSeverityFilter("Medium");
     }),
-    vscode.commands.registerCommand("devpulse.showLow", () => {
+    vscode.commands.registerCommand("rakshex.showLow", () => {
       findingsProvider.setSeverityFilter("Low");
     }),
-    vscode.commands.registerCommand("devpulse.clearSeverityFilter", () => {
+    vscode.commands.registerCommand("rakshex.clearSeverityFilter", () => {
       findingsProvider.setSeverityFilter(null);
     }),
 
-    vscode.commands.registerCommand("devpulse.openDashboard", async () => {
+    vscode.commands.registerCommand("rakshex.openDashboard", async () => {
       const base = getConfiguredBaseUrl().replace(/\/+$/, "");
       void vscode.env.openExternal(vscode.Uri.parse(base));
     }),
 
-    vscode.commands.registerCommand("devpulse.runScan", async () => {
+    vscode.commands.registerCommand("rakshex.runScan", async () => {
       if (!cachedApiKey) {
         void vscode.window.showWarningMessage("Connect your API key to use this feature.");
         return;
@@ -336,7 +335,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       }
       if (collections.length === 0) {
         void vscode.window.showInformationMessage(
-          "No collections found. Create one from your DevPulse dashboard and try again.",
+          "No collections found. Create one from your Rakshex dashboard and try again.",
         );
         return;
       }
@@ -346,12 +345,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
           description: c.id,
           collectionId: c.id,
         })),
-        { title: "DevPulse: pick a collection to scan" },
+        { title: "Rakshex: pick a collection to scan" },
       );
       if (!picked) return;
       try {
         const scan = await api.triggerScan(picked.collectionId);
-        void context.globalState.update("devpulse.lastScannedCollection", picked.collectionId);
+        void context.globalState.update("rakshex.lastScannedCollection", picked.collectionId);
         void vscode.window.showInformationMessage(
           `Scanning "${picked.label}" — results will appear in the Findings panel.`,
         );
@@ -363,12 +362,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       }
     }),
 
-    vscode.commands.registerCommand("devpulse.rerunLastScan", async () => {
+    vscode.commands.registerCommand("rakshex.rerunLastScan", async () => {
       if (!cachedApiKey) {
         void vscode.window.showWarningMessage("Connect your API key to use this feature.");
         return;
       }
-      const lastId = context.globalState.get<string>("devpulse.lastScannedCollection");
+      const lastId = context.globalState.get<string>("rakshex.lastScannedCollection");
       if (!lastId) {
         void vscode.window.showWarningMessage("Run a scan first, then you can rerun it quickly.");
         return;
@@ -385,11 +384,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       }
     }),
 
-    vscode.commands.registerCommand("devpulse.markFindingResolved", async (node: unknown) =>
+    vscode.commands.registerCommand("rakshex.markFindingResolved", async (node: unknown) =>
       updateFindingStatusCmd(node, "resolved"),
     ),
     vscode.commands.registerCommand(
-      "devpulse.markSelectedResolved",
+      "rakshex.markSelectedResolved",
       async (node: unknown, selected: unknown[]) => {
         const items = Array.isArray(selected) ? selected : [node];
         const targets = items.filter(
@@ -425,10 +424,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         dedupedShowMessage(msg, "info");
       },
     ),
-    vscode.commands.registerCommand("devpulse.markFindingInProgress", async (node: unknown) =>
+    vscode.commands.registerCommand("rakshex.markFindingInProgress", async (node: unknown) =>
       updateFindingStatusCmd(node, "in-progress"),
     ),
-    vscode.commands.registerCommand("devpulse.openSecurityPanel", () => {
+    vscode.commands.registerCommand("rakshex.openSecurityPanel", () => {
       if (!cachedApiKey) {
         void vscode.window.showWarningMessage("Connect your API key to use this feature.");
         return;
@@ -437,11 +436,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       SecurityWebviewPanel.createOrShow(context.extensionUri, api, context);
     }),
 
-    vscode.commands.registerCommand("devpulse.openSettings", () => {
+    vscode.commands.registerCommand("rakshex.openSettings", () => {
       SettingsWebviewPanel.createOrShow(context.extensionUri, api, readApiKey, context);
     }),
 
-    vscode.commands.registerCommand("devpulse.askSecurityCopilot", () => {
+    vscode.commands.registerCommand("rakshex.askSecurityCopilot", () => {
       if (!cachedApiKey) {
         void vscode.window.showWarningMessage("Connect your API key to use this feature.");
         return;
@@ -449,7 +448,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       CopilotViewPanel.createOrShow(context.extensionUri, api);
     }),
 
-    vscode.commands.registerCommand("devpulse.generateApiKey", async () => {
+    vscode.commands.registerCommand("rakshex.generateApiKey", async () => {
       if (!cachedApiKey) {
         void vscode.window.showWarningMessage("Connect your API key first.");
         return;
@@ -470,7 +469,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     }),
 
     // Auto-fix: Apply Fix — insert suggested code into active editor or copy to clipboard
-    vscode.commands.registerCommand("devpulse.applyAutoFix", async (node: unknown) => {
+    vscode.commands.registerCommand("rakshex.applyAutoFix", async (node: unknown) => {
       const suggestion = extractSuggestionFromNode(node);
       if (!suggestion) {
         void vscode.window.showWarningMessage("No auto-fix suggestion found for this item.");
@@ -497,7 +496,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     }),
 
     // Auto-fix: Dismiss
-    vscode.commands.registerCommand("devpulse.dismissAutoFix", async (node: unknown) => {
+    vscode.commands.registerCommand("rakshex.dismissAutoFix", async (node: unknown) => {
       const suggestion = extractSuggestionFromNode(node);
       if (!suggestion) {
         void vscode.window.showWarningMessage("No auto-fix suggestion found for this item.");
@@ -508,7 +507,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     }),
 
     // Copy Finding ID
-    vscode.commands.registerCommand("devpulse.copyFindingId", async (node: unknown) => {
+    vscode.commands.registerCommand("rakshex.copyFindingId", async (node: unknown) => {
       const findingId = extractFindingId(node);
       if (!findingId) {
         void vscode.window.showWarningMessage(
@@ -521,7 +520,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     }),
 
     // Open in Dashboard
-    vscode.commands.registerCommand("devpulse.openFindingInDashboard", async (node: unknown) => {
+    vscode.commands.registerCommand("rakshex.openFindingInDashboard", async (node: unknown) => {
       const findingId = extractFindingId(node);
       if (!findingId) {
         void vscode.window.showWarningMessage(
@@ -534,9 +533,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     }),
 
     // Postman Collection Import
-    vscode.commands.registerCommand("devpulse.importCollections", async () => {
+    vscode.commands.registerCommand("rakshex.importCollections", async () => {
       if (!cachedApiKey) {
-        void vscode.window.showWarningMessage("DevPulse: sign in first.");
+        void vscode.window.showWarningMessage("Rakshex: sign in first.");
         return;
       }
 
@@ -605,7 +604,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       await vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
-          title: "DevPulse: importing collections",
+          title: "Rakshex: importing collections",
           cancellable: false,
         },
         async (progress) => {
@@ -631,7 +630,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
                 else if ((data as any).info?._postman_id || (data as any).item) format = "postman";
               } catch {
                 void vscode.window.showWarningMessage(
-                  `DevPulse: ${vscode.workspace.asRelativePath(f)} is not valid JSON — skipping.`,
+                  `Rakshex: ${vscode.workspace.asRelativePath(f)} is not valid JSON — skipping.`,
                 );
                 continue;
               }
@@ -665,13 +664,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     }),
 
     // Onboarding funnel analytics dashboard
-    vscode.commands.registerCommand("devpulse.openOnboardingAnalytics", () => {
+    vscode.commands.registerCommand("rakshex.openOnboardingAnalytics", () => {
       engagementTracker.record("dashboard_opened");
       analyticsDashboard.show();
     }),
 
     // Dismiss finding with reason picker (false-positive tracking)
-    vscode.commands.registerCommand("devpulse.dismissFinding", async (node: unknown) => {
+    vscode.commands.registerCommand("rakshex.dismissFinding", async (node: unknown) => {
       const findingId = extractFindingId(node);
       if (!findingId) {
         void vscode.window.showWarningMessage(
@@ -724,14 +723,14 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     statusBar,
     { dispose: () => heartbeat.stop() },
     vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration("devpulse.apiUrl")) {
+      if (e.affectsConfiguration("rakshex.apiUrl")) {
         void refresh().catch(() => {
           statusBar.showError("Could not refresh data — will retry automatically");
         });
       }
       if (
-        e.affectsConfiguration("devpulse.heartbeatIntervalSec") ||
-        e.affectsConfiguration("devpulse.trackFileChanges")
+        e.affectsConfiguration("rakshex.heartbeatIntervalSec") ||
+        e.affectsConfiguration("rakshex.trackFileChanges")
       ) {
         try {
           heartbeat.stop();
@@ -751,13 +750,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   // Postman credential scanner command
   const postmanImport = new PostmanImportCommand(context, api);
   context.subscriptions.push(
-    vscode.commands.registerCommand("devpulse.importPostman", () => postmanImport.execute()),
+    vscode.commands.registerCommand("rakshex.importPostman", () => postmanImport.execute()),
   );
 
   // Scan current file command
   const scanCurrentFile = new ScanCurrentFileCommand(api);
   context.subscriptions.push(
-    vscode.commands.registerCommand("devpulse.scanCurrentFile", () => {
+    vscode.commands.registerCommand("rakshex.scanCurrentFile", () => {
       engagementTracker.record("scan_run");
       return scanCurrentFile.execute();
     }),
@@ -765,7 +764,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   // Demo mode command
   context.subscriptions.push(
-    vscode.commands.registerCommand("devpulse.runDemo", async () => {
+    vscode.commands.registerCommand("rakshex.runDemo", async () => {
       const { runDemoScenarios } = await import("./demoMode");
       await runDemoScenarios();
       engagementTracker.record("demo_completed");
@@ -775,39 +774,39 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   // Weekly digest command
   const weeklyDigest = new WeeklyDigestCommand(api, engagementTracker, context);
   context.subscriptions.push(
-    vscode.commands.registerCommand("devpulse.showWeeklyDigest", () => weeklyDigest.execute()),
+    vscode.commands.registerCommand("rakshex.showWeeklyDigest", () => weeklyDigest.execute()),
   );
 
   // Feedback command
   const feedbackCmd = new FeedbackCommand(api);
   context.subscriptions.push(
-    vscode.commands.registerCommand("devpulse.sendFeedback", () => feedbackCmd.execute()),
+    vscode.commands.registerCommand("rakshex.sendFeedback", () => feedbackCmd.execute()),
   );
 
   // Onboarding tour
   const onboardingTour = new OnboardingTour(context, api, engagementTracker, () => {
     void vscode.window
       .showInformationMessage(
-        "🎉 You're all set! DevPulse is now protecting your APIs.",
+        "🎉 You're all set! Rakshex is now protecting your APIs.",
         "Open Dashboard",
       )
       .then((choice) => {
         if (choice === "Open Dashboard") {
-          void vscode.commands.executeCommand("devpulse.openSecurityPanel");
+          void vscode.commands.executeCommand("rakshex.openSecurityPanel");
         }
       });
   });
   context.subscriptions.push(
-    vscode.commands.registerCommand("devpulse.startOnboardingTour", () => onboardingTour.start()),
+    vscode.commands.registerCommand("rakshex.startOnboardingTour", () => onboardingTour.start()),
   );
 
   // Health check command
   const healthCheck = new HealthCheckCommand(api);
   context.subscriptions.push(
-    vscode.commands.registerCommand("devpulse.checkHealth", () => healthCheck.execute()),
+    vscode.commands.registerCommand("rakshex.checkHealth", () => healthCheck.execute()),
   );
   // Auto-start tour for new users after a brief delay so the UI feels settled
-  const tourDismissed = context.globalState.get<boolean>("devpulse.tourDismissed") ?? false;
+  const tourDismissed = context.globalState.get<boolean>("rakshex.tourDismissed") ?? false;
   if (!cachedApiKey && !tourDismissed) {
     const tourDelay = setTimeout(() => {
       void onboardingTour.start();
@@ -816,7 +815,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   }
   // Track tour dismissal when panel closes
   onboardingTour.onDismiss(() => {
-    void context.globalState.update("devpulse.tourDismissed", true);
+    void context.globalState.update("rakshex.tourDismissed", true);
   });
 
   // Retention nudges: celebrate habit milestones
@@ -828,7 +827,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       );
     } else if (streak === 7) {
       void vscode.window.showInformationMessage(
-        "🎯 7-day scan streak — DevPulse is now part of your workflow.",
+        "🎯 7-day scan streak — Rakshex is now part of your workflow.",
       );
     }
   }, 10000);
@@ -851,7 +850,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
           .showInformationMessage(messages[nextStep.step], "Get Started")
           .then((choice) => {
             if (choice === "Get Started") {
-              void vscode.commands.executeCommand("devpulse.openSecurityPanel");
+              void vscode.commands.executeCommand("rakshex.openSecurityPanel");
             }
           });
       }
@@ -861,15 +860,15 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   // Review prompt: after 7 days of active usage (defer so it doesn't slow startup)
   const reviewTimer = setTimeout(() => {
-    const installDate = context.globalState.get<number>("devpulse.installDate") ?? Date.now();
-    void context.globalState.update("devpulse.installDate", installDate);
+    const installDate = context.globalState.get<number>("rakshex.installDate") ?? Date.now();
+    void context.globalState.update("rakshex.installDate", installDate);
     const daysSinceInstall = Math.floor((Date.now() - installDate) / (24 * 60 * 60 * 1000));
-    const reviewPrompted = context.globalState.get<boolean>("devpulse.reviewPrompted") ?? false;
+    const reviewPrompted = context.globalState.get<boolean>("rakshex.reviewPrompted") ?? false;
     if (daysSinceInstall >= 7 && !reviewPrompted && engagementTracker.getScore() > 50) {
-      void context.globalState.update("devpulse.reviewPrompted", true);
+      void context.globalState.update("rakshex.reviewPrompted", true);
       void vscode.window
         .showInformationMessage(
-          "Enjoying DevPulse? A quick review helps other developers discover it.",
+          "Enjoying Rakshex? A quick review helps other developers discover it.",
           "Leave Review",
           "Not Now",
         )
@@ -877,7 +876,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
           if (choice === "Leave Review") {
             void vscode.env.openExternal(
               vscode.Uri.parse(
-                "https://marketplace.visualstudio.com/items?itemName=devpulse.devpulse&ssr=false#review-details",
+                "https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex&ssr=false#review-details",
               ),
             );
           }
@@ -914,7 +913,7 @@ function dedupedShowMessage(message: string, type: "info" | "warn" | "error" = "
 }
 
 function errMessage(err: unknown): string {
-  if (err instanceof DevPulseApiError) return err.message;
+  if (err instanceof RakshexApiError) return err.message;
   if (err instanceof Error) return err.message;
   return String(err);
 }

@@ -1,4 +1,4 @@
-# DevPulse Final Hardening Checklist
+# Rakshex Final Hardening Checklist
 
 > Zero-tolerance pre-launch verification.
 > Date: 2026-05-17
@@ -140,18 +140,18 @@ npx eslint . --ext .ts,.tsx
 
 # 4. Tests
 cd server && npm test
-cd devpulse-vscode && npm test
-cd devpulse-frontend && npm test
+cd rakshex-vscode && npm test
+cd rakshex-frontend && npm test
 
 # 5. Build
 cd server && npm run build
-cd devpulse-frontend && npm run build
+cd rakshex-frontend && npm run build
 
 # 6. Extension package
-cd devpulse-vscode && vsce package
+cd rakshex-vscode && vsce package
 
 # 7. Health check
-curl https://api.devpulse.in/api/health
+curl https://api.rakshex.in/api/health
 ```
 
 ---

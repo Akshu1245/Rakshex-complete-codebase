@@ -1,6 +1,6 @@
-# Publishing the DevPulse VS Code extension
+# Publishing the Rakshex VS Code extension
 
-This guide walks through publishing `devpulse-vscode` to the VS Code
+This guide walks through publishing `rakshex-vscode` to the VS Code
 Marketplace (marketplace.visualstudio.com) and the Open VSX registry
 (open-vsx.org). Keep this file out of the packaged `.vsix` (it is listed
 in `.vscodeignore`).
@@ -20,8 +20,8 @@ in `.vscodeignore`).
 ## 2. One-time publisher setup
 
 > **Prerequisite:** `vsce publish` will fail unless the publisher ID in
-> `package.json` (`"publisher": "devpulse"`) resolves to an account you
-> own on marketplace.visualstudio.com. If `devpulse` is already taken by
+> `package.json` (`"publisher": "rakshex"`) resolves to an account you
+> own on marketplace.visualstudio.com. If `rakshex` is already taken by
 > someone else, or you do not yet have an Azure DevOps account, the
 > steps below are mandatory before any publish command will work. This
 > is a one-time manual setup — it cannot be automated.
@@ -33,18 +33,18 @@ in `.vscodeignore`).
    - Expiration: pick the longest you are comfortable with.
 3. Create a publisher at <https://marketplace.visualstudio.com/manage>.
    The publisher ID **must match exactly** the `publisher` field in
-   `package.json` (currently `"devpulse"`). If the `devpulse` slug is
+   `package.json` (currently `"rakshex"`). If the `rakshex` slug is
    taken, either:
    - Request transfer of the namespace from the current owner, or
-   - Pick a different publisher ID (e.g. `devpulse-app`, `devpulse-io`)
+   - Pick a different publisher ID (e.g. `rakshex-app`, `rakshex-io`)
      and update `package.json → publisher` accordingly before
      publishing. Keep the change in sync across
-     `devpulse-vscode/package.json`,
-     `devpulse-vscode/README.md` badge URLs, and the recommended
+     `rakshex-vscode/package.json`,
+     `rakshex-vscode/README.md` badge URLs, and the recommended
      screenshot links.
 4. Authenticate `vsce` once per machine:
    ```bash
-   vsce login devpulse
+   vsce login rakshex
    # paste the personal access token when prompted
    ```
 
@@ -60,7 +60,7 @@ For Open VSX:
 ## 3. Local dev loop
 
 ```bash
-cd devpulse-vscode
+cd rakshex-vscode
 npm install
 npm run compile        # builds to ./out
 # Press F5 in VS Code, or use the "Run Extension" launch profile,
@@ -73,17 +73,17 @@ extension without writing anything to disk.
 ## 4. Package a `.vsix` for manual install / review
 
 ```bash
-cd devpulse-vscode
+cd rakshex-vscode
 npm install
 npm run compile
 vsce package
 ```
 
-This produces `devpulse-vscode-<version>.vsix` in the current
+This produces `rakshex-vscode-<version>.vsix` in the current
 directory. Install it locally with:
 
 ```bash
-code --install-extension devpulse-vscode-<version>.vsix
+code --install-extension rakshex-vscode-<version>.vsix
 ```
 
 Share this file with reviewers/beta users before publishing.
@@ -99,7 +99,7 @@ Share this file with reviewers/beta users before publishing.
    vsce publish --pre-release
    ```
    Listing will appear at
-   <https://marketplace.visualstudio.com/items?itemName=devpulse.devpulse-vscode>
+   <https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex-vscode>
    within ~1 minute.
 
 `vsce publish minor` / `vsce publish patch` will also auto-bump the
@@ -111,12 +111,12 @@ Open VSX is the registry used by VSCodium, Gitpod, Theia, and other
 non-Microsoft VS Code distributions.
 
 ```bash
-cd devpulse-vscode
+cd rakshex-vscode
 ovsx publish --pat "$OVSX_PAT"
 ```
 
-If the namespace `devpulse` does not exist yet, create it first:
-`ovsx create-namespace devpulse --pat "$OVSX_PAT"`.
+If the namespace `rakshex` does not exist yet, create it first:
+`ovsx create-namespace rakshex --pat "$OVSX_PAT"`.
 
 ## 7. Screenshots & marketplace listing
 
@@ -129,34 +129,34 @@ and `package.json → icon` (128×128 PNG — already set to
 Recommended shots (1280 × 720 or 1440 × 900):
 
 1. **Findings tree view** grouped by severity with inline actions.
-2. **Status bar** showing `DevPulse · N open · $X.XX/wk`.
+2. **Status bar** showing `Rakshex · N open · $X.XX/wk`.
 3. **Run scan** command palette entry + progress notification.
-4. **Settings** page (`@ext:devpulse.devpulse-vscode`) for backend URL
+4. **Settings** page (`@ext:rakshex.rakshex-vscode`) for backend URL
    and heartbeat controls.
 
-Drop the PNGs under `devpulse-vscode/docs/screenshots/` and update
+Drop the PNGs under `rakshex-vscode/docs/screenshots/` and update
 `README.md` with links such as:
 
 ```markdown
-![Findings tree](https://raw.githubusercontent.com/akshaynhcm-droid/Devpulse-/main/devpulse-vscode/docs/screenshots/findings.png)
+![Findings tree](https://raw.githubusercontent.com/rakshex/rakshex/main/rakshex-vscode/docs/screenshots/findings.png)
 ```
 
 ## 8. Verify after publish
 
 ```bash
-vsce show devpulse.devpulse-vscode
-code --install-extension devpulse.devpulse-vscode --force
+vsce show rakshex.rakshex-vscode
+code --install-extension rakshex.rakshex-vscode --force
 ```
 
-Then open the Command Palette, run **DevPulse: Sign in with API Key**,
+Then open the Command Palette, run **Rakshex: Sign in with API Key**,
 and confirm the findings tree / status bar populate against your
 running backend.
 
 ## 9. Unpublishing
 
 ```bash
-vsce unpublish devpulse.devpulse-vscode@<version>   # remove a single version
-vsce unpublish devpulse.devpulse-vscode              # remove the extension entirely
+vsce unpublish rakshex.rakshex-vscode@<version>   # remove a single version
+vsce unpublish rakshex.rakshex-vscode              # remove the extension entirely
 ```
 
 Use with care — published versions cannot be restored under the same

@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "About — DevPulse by Rashi Technologies",
+  title: "About — Rakshex by Rashi Technologies",
   description:
-    "Meet the team behind DevPulse. Built in Bengaluru, India with 4 patents. Our mission: make AI governance accessible to every developer.",
+    "Meet the team behind Rakshex. Built in Bengaluru, India with 4 patents. Our mission: make AI governance accessible to every developer.",
   alternates: { canonical: "/about" },
 };
 
@@ -14,7 +14,7 @@ export default function AboutPage() {
       <div className="max-w-4xl mx-auto py-20 px-4 text-center">
         <h1 className="text-4xl md:text-5xl font-bold mb-6">Built by Developers, for Developers</h1>
         <p className="text-gray-400 text-lg max-w-2xl mx-auto leading-relaxed">
-          DevPulse was born from a simple observation: every company shipping AI to production has
+          Rakshex was born from a simple observation: every company shipping AI to production has
           three invisible risks — security holes, runaway costs, and compliance gaps. We built the
           platform we wished existed.
         </p>
@@ -61,7 +61,7 @@ export default function AboutPage() {
               <h3 className="text-xl font-bold">Akshay Kammar</h3>
               <p className="text-blue-400 text-sm mb-2">Founder & CEO</p>
               <p className="text-gray-400 text-sm leading-relaxed">
-                Built DevPulse solo over 4 months. 4 patents filed. Previously built internal
+                Built Rakshex solo over 4 months. 4 patents filed. Previously built internal
                 security tools. Computer Science from NHCE, Bengaluru. Believes AI security should
                 be default, not an afterthought.
               </p>
@@ -87,7 +87,7 @@ export default function AboutPage() {
             Currently raising $500K Seed on a $3M cap to hire our first engineers and designers.
           </p>
           <Link
-            href="mailto:akshay@devpulse.in"
+            href="mailto:akshay@rakshex.in"
             className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
           >
             Contact for Investor Deck →

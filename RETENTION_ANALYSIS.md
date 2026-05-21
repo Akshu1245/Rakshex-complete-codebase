@@ -1,4 +1,4 @@
-# DevPulse Retention Analysis
+# Rakshex Retention Analysis
 
 > Why users come back (or don't).
 > Date: 2026-05-17
@@ -89,7 +89,7 @@ Subject: Your API collections need a checkup
 
 Hi {{name}},
 
-It's been a week since your last DevPulse scan.
+It's been a week since your last Rakshex scan.
 
 A lot can change in a week — new endpoints, updated dependencies,
 new team members pushing code.
@@ -97,7 +97,7 @@ new team members pushing code.
 Take 30 seconds to rescan:
 [Run Scan Now]
 
-This week, 12 vulnerabilities were found across all DevPulse users.
+This week, 12 vulnerabilities were found across all Rakshex users.
 Make sure yours aren't among them.
 
 Akshay
@@ -112,7 +112,7 @@ Subject: We're building something you asked for
 
 Hi {{name}},
 
-You mentioned {{feature_request}} when you tried DevPulse.
+You mentioned {{feature_request}} when you tried Rakshex.
 
 Good news: we shipped it last week.
 

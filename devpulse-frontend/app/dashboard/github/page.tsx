@@ -16,7 +16,7 @@ export default function GitHubIntegrationPage() {
   const handleConnect = async () => {
     // In production, this would redirect to GitHub App install flow
     const clientId = "YOUR_GITHUB_APP_CLIENT_ID";
-    window.location.href = `https://github.com/apps/devpulse-security/installations/new`;
+    window.location.href = `https://github.com/apps/rakshex-security/installations/new`;
   };
 
   return (
@@ -24,9 +24,7 @@ export default function GitHubIntegrationPage() {
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-blue-400">
-              GitHub Integration
-            </h1>
+            <h1 className="text-3xl font-bold text-blue-400">GitHub Integration</h1>
             <p className="text-gray-400 mt-1">
               Connect repositories for automated PR security scans
             </p>
@@ -39,12 +37,10 @@ export default function GitHubIntegrationPage() {
         <div className="grid grid-cols-1 gap-6">
           {/* Connect card */}
           <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
-            <h2 className="text-xl font-semibold mb-4">
-              GitHub App Connection
-            </h2>
+            <h2 className="text-xl font-semibold mb-4">GitHub App Connection</h2>
             <p className="text-gray-400 mb-4">
-              Install the DevPulse GitHub App to enable automatic PR security
-              scans. Findings are posted as comments on each pull request.
+              Install the Rakshex GitHub App to enable automatic PR security scans. Findings are
+              posted as comments on each pull request.
             </p>
             <button
               onClick={handleConnect}
@@ -79,7 +75,9 @@ export default function GitHubIntegrationPage() {
                     className="flex items-center justify-between p-3 bg-gray-750 rounded border border-gray-700"
                   >
                     <span className="text-gray-200">{repo.fullName}</span>
-                    <span className={`text-xs px-2 py-1 rounded ${repo.private ? "bg-yellow-900/50 text-yellow-400" : "bg-green-900/50 text-green-400"}`}>
+                    <span
+                      className={`text-xs px-2 py-1 rounded ${repo.private ? "bg-yellow-900/50 text-yellow-400" : "bg-green-900/50 text-green-400"}`}
+                    >
                       {repo.private ? "Private" : "Public"}
                     </span>
                   </div>

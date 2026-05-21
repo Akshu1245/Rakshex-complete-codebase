@@ -3,7 +3,7 @@
 **Effective Date:** May 17, 2026
 **Version:** 1.0
 
-This Service Level Agreement ("SLA") governs the availability and support of the DevPulse Enterprise platform ("Service") provided by DevPulse Technologies Pvt. Ltd. ("Provider") to the customer ("Customer").
+This Service Level Agreement ("SLA") governs the availability and support of the Rakshex Enterprise platform ("Service") provided by Rakshex Technologies Pvt. Ltd. ("Provider") to the customer ("Customer").
 
 ## 1. Definitions
 
@@ -84,11 +84,11 @@ Either party may terminate the Enterprise agreement with 30 days written notice.
 
 ## 10. Contact
 
-- **Support:** support@devpulse.in
-- **Escalation:** enterprise@devpulse.in
+- **Support:** support@rakshex.in
+- **Escalation:** enterprise@rakshex.in
 - **Emergency Hotline:** Enterprise+ customers receive a dedicated phone line
 
 ---
 
-**DevPulse Technologies Pvt. Ltd.**
+**Rakshex Technologies Pvt. Ltd.**
 Bangalore, India

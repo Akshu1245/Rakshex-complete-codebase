@@ -1,5 +1,5 @@
 /**
- * Thin fetch wrapper around the DevPulse tRPC `vscodeExtension.*` router.
+ * Thin fetch wrapper around the Rakshex tRPC `vscodeExtension.*` router.
  *
  * tRPC v11 wire format:
  *   Query:    GET  /trpc/<path>?input=<urlencoded-json>
@@ -45,17 +45,17 @@ export interface ValidatedUser {
   plan: string;
 }
 
-export class DevPulseApiError extends Error {
+export class RakshexApiError extends Error {
   constructor(
     message: string,
     public readonly status: number,
   ) {
     super(message);
-    this.name = "DevPulseApiError";
+    this.name = "RakshexApiError";
   }
 }
 
-export class DevPulseApi {
+export class RakshexApi {
   constructor(
     private readonly getBaseUrl: () => string,
     private readonly getApiKey: () => string | undefined,
@@ -122,7 +122,7 @@ export class DevPulseApi {
   }
 
   /**
-   * Rotate (or mint) the current user's DevPulse API key. Returns the new
+   * Rotate (or mint) the current user's Rakshex API key. Returns the new
    * key in cleartext — callers should copy it to the clipboard immediately
    * and avoid logging it.
    */
@@ -131,7 +131,7 @@ export class DevPulseApi {
   }
 
   /**
-   * Ask the DevPulse Security Copilot a question. Returns the assistant's
+   * Ask the Rakshex Security Copilot a question. Returns the assistant's
    * response text. Falls back gracefully if the endpoint is unavailable.
    */
   async copilotAsk(question: string, context: string = "general"): Promise<{ response: string }> {
@@ -182,9 +182,9 @@ export class DevPulseApi {
     }
 
     this.isOnline = false;
-    throw new DevPulseApiError(
+    throw new RakshexApiError(
       lastErr?.message ??
-        "DevPulse is temporarily unreachable. Check your connection and try again.",
+        "Rakshex is temporarily unreachable. Check your connection and try again.",
       0,
     );
   }
@@ -202,7 +202,7 @@ export class DevPulseApi {
   }
 
   /**
-   * Import a Postman or OpenAPI collection into DevPulse.
+   * Import a Postman or OpenAPI collection into Rakshex.
    * Reads file from the workspace, sends it to the server for
    * credential scanning + persistence.
    */
@@ -290,7 +290,7 @@ export class DevPulseApi {
         (parsed as { message?: string } | undefined)?.message ??
         rawText ??
         res.statusText;
-      throw new DevPulseApiError(`DevPulse API ${res.status}: ${errMsg}`, res.status);
+      throw new RakshexApiError(`Rakshex API ${res.status}: ${errMsg}`, res.status);
     }
 
     const payload = parsed as
@@ -310,6 +310,6 @@ export class DevPulseApi {
 
 export function getConfiguredBaseUrl(): string {
   return vscode.workspace
-    .getConfiguration("devpulse")
-    .get<string>("apiUrl", "https://api.devpulse.in");
+    .getConfiguration("rakshex")
+    .get<string>("apiUrl", "https://api.rakshex.in");
 }

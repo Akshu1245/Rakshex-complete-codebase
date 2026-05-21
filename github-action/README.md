@@ -1,4 +1,4 @@
-# DevPulse GitHub Action
+# Rakshex GitHub Action
 
 🔒 Scan API endpoints for OWASP vulnerabilities and LLM cost anomalies on every pull request.
 
@@ -15,7 +15,7 @@
 ## Quick Start
 
 ```yaml
-name: DevPulse Security Scan
+name: Rakshex Security Scan
 on:
   pull_request:
     types: [opened, synchronize]
@@ -25,31 +25,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: devpulse/security-scan@v1
+      - uses: rakshex/security-scan@v1
         with:
-          api-key: ${{ secrets.DEVPULSE_API_KEY }}
+          api-key: ${{ secrets.RAKSHEX_API_KEY }}
           fail-on-critical: true
           post-comment: true
 ```
 
 ## Inputs
 
-| Input | Required | Default | Description |
-|-------|----------|---------|-------------|
-| `api-key` | ✅ | — | Your DevPulse API key |
-| `api-url` | ❌ | `https://api.devpulse.in` | DevPulse API base URL |
-| `fail-on-critical` | ❌ | `true` | Fail workflow on Critical findings |
-| `fail-on-high` | ❌ | `false` | Fail workflow on High findings |
-| `scan-openapi` | ❌ | — | Path to OpenAPI spec file |
-| `scan-postman` | ❌ | — | Path to Postman collection file |
-| `post-comment` | ❌ | `true` | Post findings as PR comment |
+| Input              | Required | Default                  | Description                        |
+| ------------------ | -------- | ------------------------ | ---------------------------------- |
+| `api-key`          | ✅       | —                        | Your Rakshex API key               |
+| `api-url`          | ❌       | `https://api.rakshex.in` | Rakshex API base URL               |
+| `fail-on-critical` | ❌       | `true`                   | Fail workflow on Critical findings |
+| `fail-on-high`     | ❌       | `false`                  | Fail workflow on High findings     |
+| `scan-openapi`     | ❌       | —                        | Path to OpenAPI spec file          |
+| `scan-postman`     | ❌       | —                        | Path to Postman collection file    |
+| `post-comment`     | ❌       | `true`                   | Post findings as PR comment        |
 
 ## Advanced Usage
 
 ```yaml
-- uses: devpulse/security-scan@v1
+- uses: rakshex/security-scan@v1
   with:
-    api-key: ${{ secrets.DEVPULSE_API_KEY }}
+    api-key: ${{ secrets.RAKSHEX_API_KEY }}
     fail-on-critical: true
     fail-on-high: true
     scan-openapi: ./openapi.yaml
@@ -59,10 +59,10 @@ jobs:
 
 ## Getting an API Key
 
-1. Sign up at [devpulse.in](https://devpulse.in)
+1. Sign up at [rakshex.in](https://rakshex.in)
 2. Go to Settings → API Keys
 3. Generate a new key
-4. Add to your repository secrets as `DEVPULSE_API_KEY`
+4. Add to your repository secrets as `RAKSHEX_API_KEY`
 
 ## License
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🚀 Launching DevPulse Full Stack..."
+echo "🚀 Launching Rakshex Full Stack..."
 
 # Check if .env exists
 if [ ! -f .env ]; then

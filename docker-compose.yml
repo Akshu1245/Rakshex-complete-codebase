@@ -3,13 +3,13 @@ version: "3.8"
 services:
   mysql:
     image: mysql:8.0
-    container_name: devpulse-mysql
+    container_name: rakshex-mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: devpulse
-      MYSQL_DATABASE: devpulse
-      MYSQL_USER: devpulse
-      MYSQL_PASSWORD: devpulse
+      MYSQL_ROOT_PASSWORD: rakshex
+      MYSQL_DATABASE: rakshex
+      MYSQL_USER: rakshex
+      MYSQL_PASSWORD: rakshex
     ports:
       - "3306:3306"
     volumes:
@@ -22,7 +22,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: devpulse-redis
+    container_name: rakshex-redis
     restart: unless-stopped
     ports:
       - "6379:6379"
@@ -38,10 +38,10 @@ services:
     build:
       context: .
       target: worker
-    container_name: devpulse-worker
+    container_name: rakshex-worker
     restart: unless-stopped
     environment:
-      - DATABASE_URL=mysql://devpulse:devpulse@mysql:3306/devpulse
+      - DATABASE_URL=mysql://rakshex:rakshex@mysql:3306/rakshex
       - REDIS_URL=redis://redis:6379
       - JWT_SECRET=${JWT_SECRET:-dev-secret-do-not-use-in-production}
       - INTERNAL_SERVICE_SECRET=${INTERNAL_SERVICE_SECRET:-}
@@ -56,7 +56,7 @@ services:
   # Optional: Jaeger for local trace visualization
   jaeger:
     image: jaegertracing/all-in-one:latest
-    container_name: devpulse-jaeger
+    container_name: rakshex-jaeger
     restart: unless-stopped
     ports:
       - "16686:16686"  # Jaeger UI

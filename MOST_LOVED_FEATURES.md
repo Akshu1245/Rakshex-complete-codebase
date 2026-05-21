@@ -1,4 +1,4 @@
-# DevPulse Most Loved Features
+# Rakshex Most Loved Features
 
 > What users actually love. Ranked by evidence.
 > Date: 2026-05-17

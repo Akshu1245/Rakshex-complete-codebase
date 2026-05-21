@@ -1,4 +1,4 @@
-# DevPulse Weekly Execution Review
+# Rakshex Weekly Execution Review
 
 > The operating rhythm of a real startup.
 > Date: 2026-05-17
@@ -47,15 +47,15 @@ SYSTEMS
 
 **2. What Worked (5 min)**
 
-- Top win this week: ******\_******
-- Best user feedback: ******\_******
-- Most impactful fix: ******\_******
+- Top win this week: **\*\***\_**\*\***
+- Best user feedback: **\*\***\_**\*\***
+- Most impactful fix: **\*\***\_**\*\***
 
 **3. What Didn't (5 min)**
 
-- Top blocker: ******\_******
-- Biggest mistake: ******\_******
-- Lesson learned: ******\_******
+- Top blocker: **\*\***\_**\*\***
+- Biggest mistake: **\*\***\_**\*\***
+- Lesson learned: **\*\***\_**\*\***
 
 **4. Next Week's Priorities (10 min)**
 
@@ -109,7 +109,7 @@ Blocked by:
 Bot posts in #metrics at 9 AM:
 
 ```
-📊 DevPulse Daily — May 17, 2026
+📊 Rakshex Daily — May 17, 2026
 
 New installs:    ___  (___ vs yesterday)
 Active users:     ___  (___ vs yesterday)

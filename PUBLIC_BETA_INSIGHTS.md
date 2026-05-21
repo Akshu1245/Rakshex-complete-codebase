@@ -1,4 +1,4 @@
-# DevPulse Public Beta Insights
+# Rakshex Public Beta Insights
 
 > Real data from real developers.
 > Date: 2026-05-17

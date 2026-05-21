@@ -1,4 +1,4 @@
-# DevPulse Y Combinator Application
+# Rakshex Y Combinator Application
 
 > Draft answers for YC application.
 > Date: 2026-05-17
@@ -9,11 +9,11 @@
 
 ### Company Name
 
-DevPulse Technologies
+Rakshex Technologies
 
 ### Company URL
 
-https://devpulse.in
+https://rakshex.in
 
 ### Demo Video
 
@@ -21,11 +21,11 @@ https://devpulse.in
 
 ### What is your company going to make?
 
-DevPulse is a VS Code extension that stops AI agents from burning your API budget.
+Rakshex is a VS Code extension that stops AI agents from burning your API budget.
 
 Every developer building with AI is paying 2-3× more for LLM APIs than they realize. Hidden reasoning tokens, infinite loops, and leaked API keys cost teams thousands of dollars monthly.
 
-DevPulse is the first tool that:
+Rakshex is the first tool that:
 
 1. Reveals hidden reasoning costs in real-time
 2. Auto-stops rogue AI agents with configurable kill-switches
@@ -100,11 +100,11 @@ None.
 
 ### What convinced you to apply to Y Combinator?
 
-YC's track record with developer tools (Stripe, Twilio, GitLab) and infrastructure companies. DevPulse is an infrastructure company for the AI era.
+YC's track record with developer tools (Stripe, Twilio, GitLab) and infrastructure companies. Rakshex is an infrastructure company for the AI era.
 
 ### If you had any other ideas you considered applying with, please list them.
 
-1. AgentGuard as standalone product (decided to bundle into DevPulse)
+1. AgentGuard as standalone product (decided to bundle into Rakshex)
 2. AI cost benchmarking platform (decided to include as feature)
 
 ---
@@ -113,7 +113,7 @@ YC's track record with developer tools (Stripe, Twilio, GitLab) and infrastructu
 
 ### Have you incorporated?
 
-Yes — DevPulse Technologies Pvt. Ltd., Bangalore, India
+Yes — Rakshex Technologies Pvt. Ltd., Bangalore, India
 
 ### Have you taken any investment yet?
 
@@ -157,7 +157,7 @@ Hidden reasoning tokens cost 3× more than visible ones.
 Rogue agents loop infinitely, burning hundreds overnight.
 API keys leak into shared collections.
 
-DevPulse is a VS Code extension that detects all three.
+Rakshex is a VS Code extension that detects all three.
 
 We reveal hidden costs, auto-stop infinite loops, and scan collections for vulnerabilities.
 

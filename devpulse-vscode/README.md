@@ -1,9 +1,9 @@
-# DevPulse — Stop AI agents from burning your API budget
+# Rakshex — Stop AI agents from burning your API budget
 
 > The first VS Code extension that reveals hidden LLM costs, auto-stops
 > infinite loops, and scans your API collections for vulnerabilities.
 
-![DevPulse hero](resources/screenshot-hero.png)
+![Rakshex hero](resources/screenshot-hero.png)
 
 ---
 
@@ -15,7 +15,7 @@ If you're building with AI, you're probably paying **3× more** for LLM APIs tha
 - **Rogue agents** can loop infinitely, burning $200+ overnight
 - **API keys leak** into shared collections without anyone noticing
 
-## What DevPulse Does
+## What Rakshex Does
 
 ### 1. Hidden Cost Detection 💰
 
@@ -50,16 +50,16 @@ Import any Postman, OpenAPI, or Bruno collection. Get a full security report in 
 
 ## Setup (30 Seconds)
 
-1. **Install** — Search "DevPulse" in the VS Code Extensions panel
-2. **Connect** — Run `DevPulse: Sign in with API Key` (get a free key at [devpulse.in](https://devpulse.in))
-3. **Import** — Drag any API collection into the DevPulse sidebar
+1. **Install** — Search "Rakshex" in the VS Code Extensions panel
+2. **Connect** — Run `Rakshex: Sign in with API Key` (get a free key at [rakshex.in](https://rakshex.in))
+3. **Import** — Drag any API collection into the Rakshex sidebar
 4. **Scan** — Click "Run Scan" and see your first findings
 
 Most developers find at least **2 issues** they didn't know about.
 
 ## What Developers Say
 
-> "DevPulse found $1,200 in hidden reasoning costs we didn't know existed."
+> "Rakshex found $1,200 in hidden reasoning costs we didn't know existed."
 > — Engineering Lead, Series B SaaS
 
 > "AgentGuard stopped an infinite loop that would have burned $500 overnight."
@@ -81,12 +81,12 @@ Most developers find at least **2 issues** they didn't know about.
 
 ## Commands
 
-| Command                         | What It Does                                     |
-| ------------------------------- | ------------------------------------------------ |
-| `DevPulse: Run scan`            | Scan any imported collection for vulnerabilities |
-| `DevPulse: Import collection`   | Import Postman, OpenAPI, or Bruno files          |
-| `DevPulse: Open security panel` | View findings dashboard inside VS Code           |
-| `DevPulse: Weekly summary`      | See money saved and threats blocked this week    |
+| Command                        | What It Does                                     |
+| ------------------------------ | ------------------------------------------------ |
+| `Rakshex: Run scan`            | Scan any imported collection for vulnerabilities |
+| `Rakshex: Import collection`   | Import Postman, OpenAPI, or Bruno files          |
+| `Rakshex: Open security panel` | View findings dashboard inside VS Code           |
+| `Rakshex: Weekly summary`      | See money saved and threats blocked this week    |
 
 ## Privacy First
 
@@ -95,7 +95,7 @@ Most developers find at least **2 issues** they didn't know about.
 - 🔒 **No prompt logging** — we never see your LLM prompts or responses
 - 🔒 **Telemetry is optional** — opt out anytime in settings
 
-Read our full [Privacy Policy](https://devpulse.in/privacy).
+Read our full [Privacy Policy](https://rakshex.in/privacy).
 
 ## Pricing
 
@@ -109,9 +109,9 @@ Read our full [Privacy Policy](https://devpulse.in/privacy).
 
 ## Support
 
-- 💬 [Discord community](https://discord.gg/devpulse)
-- 🐛 [GitHub Issues](https://github.com/akshaynhcm-droid/Devpulse-/issues)
-- 📧 [support@devpulse.in](mailto:support@devpulse.in)
+- 💬 [Discord community](https://discord.gg/rakshex)
+- 🐛 [GitHub Issues](https://github.com/rakshex/rakshex/issues)
+- 📧 [support@rakshex.in](mailto:support@rakshex.in)
 
 ## License
 

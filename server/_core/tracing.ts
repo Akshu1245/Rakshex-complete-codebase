@@ -59,7 +59,7 @@ const sdk = new NodeSDK({
     }),
   ],
   resource: resourceFromAttributes({
-    "service.name": "devpulse-api",
+    "service.name": "rakshex-api",
     "service.version": process.env.npm_package_version ?? "0.1.0",
     "deployment.environment": process.env.NODE_ENV ?? "development",
   }),
@@ -75,7 +75,7 @@ logger.info(
   {
     otelEndpoint: otelEndpoint ? otelEndpoint.replace(/\/\/[^@/]*@/, "//***@") : "disabled",
     sampleRate,
-    service: "devpulse-api",
+    service: "rakshex-api",
   },
   "[OTel] SDK initialized",
 );

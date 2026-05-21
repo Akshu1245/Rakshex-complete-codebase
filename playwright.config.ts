@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 /**
- * Playwright configuration for DevPulse E2E tests.
+ * Playwright configuration for Rakshex E2E tests.
  *
  * - Assumes the Next.js frontend dev server runs on http://localhost:3000
  * - All tRPC backend calls are stubbed inside each spec via page.route(),
@@ -23,9 +23,7 @@ export default defineConfig({
   },
 
   // Reporting
-  reporter: process.env.CI
-    ? [["list"], ["html", { open: "never" }]]
-    : [["list"]],
+  reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : [["list"]],
 
   // Shared settings for all projects
   use: {
@@ -45,7 +43,7 @@ export default defineConfig({
   // Automatically start the Next.js dev server before running tests
   webServer: {
     command: "npm run dev",
-    cwd: "./devpulse-frontend",
+    cwd: "./rakshex-frontend",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

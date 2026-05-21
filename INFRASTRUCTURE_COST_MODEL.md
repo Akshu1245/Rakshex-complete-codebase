@@ -1,4 +1,4 @@
-# DevPulse Infrastructure Cost Model
+# Rakshex Infrastructure Cost Model
 
 > Unit economics for investor conversations.
 > Date: 2026-05-17
@@ -52,7 +52,7 @@ Gross margin:          86%
 - Datadog: ~75% gross margin
 - Snyk: ~80% gross margin
 - GitHub: ~85% gross margin
-- **DevPulse: ~86% gross margin** ✅
+- **Rakshex: ~86% gross margin** ✅
 
 ### Payback Period
 
@@ -67,7 +67,7 @@ Gross margin:          86%
 
 - SaaS average: 3.0x LTV/CAC
 - Developer tools: 4.0x LTV/CAC
-- **DevPulse: 3.9x LTV/CAC** ✅
+- **Rakshex: 3.9x LTV/CAC** ✅
 
 ---
 

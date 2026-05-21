@@ -1,6 +1,6 @@
-# DevPulse Production Health Report
+# Rakshex Production Health Report
 
-> Is DevPulse actually reliable?
+> Is Rakshex actually reliable?
 > Date: 2026-05-17
 
 ---

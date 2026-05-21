@@ -1,4 +1,4 @@
-# DevPulse Incident Disclosure Template
+# Rakshex Incident Disclosure Template
 
 > Transparent communication during incidents.
 > Date: 2026-05-17
@@ -35,7 +35,7 @@ What we don't know yet:
 
 User action needed: [Yes/No — if yes, what]
 
-Updates: [status.devpulse.in link]
+Updates: [status.rakshex.in link]
 Next update: [Time]
 ```
 

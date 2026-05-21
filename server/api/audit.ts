@@ -28,10 +28,7 @@ export const auditRouter = router({
       }),
     )
     .query(async ({ input, ctx }) => {
-      const entries = await db.getAuditLogForUser(
-        input.userId ?? ctx.user.id,
-        1000,
-      );
+      const entries = await db.getAuditLogForUser(input.userId ?? ctx.user.id, 1000);
 
       let filtered = entries;
 
@@ -110,13 +107,7 @@ export const auditRouter = router({
       const dateStr = new Date().toISOString().slice(0, 10);
 
       if (input.format === "csv") {
-        const headers = [
-          "id",
-          "userId",
-          "action",
-          "ipAddress",
-          "createdAt",
-        ];
+        const headers = ["id", "userId", "action", "ipAddress", "createdAt"];
         const rows = filtered.map((e) =>
           [
             e.id,
@@ -128,7 +119,7 @@ export const auditRouter = router({
         );
         exportBody = [headers.join(","), ...rows].join("\n");
         contentType = "text/csv";
-        filename = `devpulse-audit-${dateStr}.csv`;
+        filename = `rakshex-audit-${dateStr}.csv`;
       } else {
         exportBody = filtered
           .map((e) =>
@@ -144,7 +135,7 @@ export const auditRouter = router({
           )
           .join("\n");
         contentType = "application/x-jsonlines";
-        filename = `devpulse-audit-${dateStr}.jsonl`;
+        filename = `rakshex-audit-${dateStr}.jsonl`;
       }
 
       logger.info(

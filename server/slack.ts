@@ -39,9 +39,7 @@ interface BudgetWarningOptions {
   percentUsed: number;
 }
 
-export async function sendSlackKillSwitchAlert(
-  opts: KillSwitchAlertOptions
-): Promise<void> {
+export async function sendSlackKillSwitchAlert(opts: KillSwitchAlertOptions): Promise<void> {
   const webhookUrl = process.env.SLACK_WEBHOOK_URL;
 
   if (!webhookUrl) {
@@ -51,18 +49,16 @@ export async function sendSlackKillSwitchAlert(
         userName: opts.userName,
         reason: opts.reason,
       },
-      "[Slack] Webhook not configured. Kill switch triggered"
+      "[Slack] Webhook not configured. Kill switch triggered",
     );
     return;
   }
 
   const percentUsed =
-    opts.budgetLimit > 0
-      ? Math.round((opts.currentSpend / opts.budgetLimit) * 100)
-      : 0;
+    opts.budgetLimit > 0 ? Math.round((opts.currentSpend / opts.budgetLimit) * 100) : 0;
 
   const payload = {
-    text: "🚨 *DevPulse Kill Switch Triggered*",
+    text: "🚨 *Rakshex Kill Switch Triggered*",
     blocks: [
       {
         type: "header",
@@ -108,7 +104,7 @@ export async function sendSlackKillSwitchAlert(
         elements: [
           {
             type: "mrkdwn",
-            text: "To re-enable LLM operations, go to DevPulse → Kill Switch → Reset",
+            text: "To re-enable LLM operations, go to Rakshex → Kill Switch → Reset",
           },
         ],
       },
@@ -122,41 +118,32 @@ export async function sendSlackKillSwitchAlert(
   });
 
   if (!response.ok) {
-    throw new ExternalServiceError(
-      `Slack webhook returned ${response.status}`,
-      {
-        safeMessage: "Could not deliver Slack alert.",
-        context: {
-          provider: "slack",
-          status: response.status,
-          body: await response.text(),
-        },
-      }
-    );
+    throw new ExternalServiceError(`Slack webhook returned ${response.status}`, {
+      safeMessage: "Could not deliver Slack alert.",
+      context: {
+        provider: "slack",
+        status: response.status,
+        body: await response.text(),
+      },
+    });
   }
 
   logger.info({ userId: opts.userId }, "[Slack] Kill switch alert sent");
 }
 
-export async function sendSlackScanAlert(
-  opts: ScanAlertOptions
-): Promise<void> {
+export async function sendSlackScanAlert(opts: ScanAlertOptions): Promise<void> {
   const webhookUrl = process.env.SLACK_WEBHOOK_URL;
 
   if (!webhookUrl) {
     logger.info(
       { collectionName: opts.collectionName },
-      "[Slack] Webhook not configured. Scan completed"
+      "[Slack] Webhook not configured. Scan completed",
     );
     return;
   }
 
   const triggerEmoji =
-    opts.triggeredBy === "github_push"
-      ? "🔄"
-      : opts.triggeredBy === "github_pr"
-        ? "🔀"
-        : "🔍";
+    opts.triggeredBy === "github_push" ? "🔄" : opts.triggeredBy === "github_pr" ? "🔀" : "🔍";
   const triggerText =
     opts.triggeredBy === "github_push"
       ? `GitHub push to ${opts.branch || "main"}`
@@ -164,17 +151,11 @@ export async function sendSlackScanAlert(
         ? `GitHub PR #${opts.prNumber}`
         : "Manual scan";
 
-  const severityEmoji =
-    opts.criticalCount > 0 ? "🚨" : opts.highCount > 0 ? "⚠️" : "✅";
-  const color =
-    opts.criticalCount > 0
-      ? "#FF0000"
-      : opts.highCount > 0
-        ? "#FFA500"
-        : "#36A64F";
+  const severityEmoji = opts.criticalCount > 0 ? "🚨" : opts.highCount > 0 ? "⚠️" : "✅";
+  const color = opts.criticalCount > 0 ? "#FF0000" : opts.highCount > 0 ? "#FFA500" : "#36A64F";
 
   const payload = {
-    text: `${severityEmoji} *DevPulse Security Scan Complete*`,
+    text: `${severityEmoji} *Rakshex Security Scan Complete*`,
     blocks: [
       {
         type: "header",
@@ -234,28 +215,20 @@ export async function sendSlackScanAlert(
   });
 
   if (!response.ok) {
-    throw new ExternalServiceError(
-      `Slack webhook returned ${response.status}`,
-      {
-        safeMessage: "Could not deliver Slack alert.",
-        context: {
-          provider: "slack",
-          status: response.status,
-          body: await response.text(),
-        },
-      }
-    );
+    throw new ExternalServiceError(`Slack webhook returned ${response.status}`, {
+      safeMessage: "Could not deliver Slack alert.",
+      context: {
+        provider: "slack",
+        status: response.status,
+        body: await response.text(),
+      },
+    });
   }
 
-  logger.info(
-    { collectionName: opts.collectionName },
-    "[Slack] Scan alert sent"
-  );
+  logger.info({ collectionName: opts.collectionName }, "[Slack] Scan alert sent");
 }
 
-export async function sendSlackBudgetWarning(
-  opts: BudgetWarningOptions
-): Promise<void> {
+export async function sendSlackBudgetWarning(opts: BudgetWarningOptions): Promise<void> {
   const webhookUrl = process.env.SLACK_WEBHOOK_URL;
 
   if (!webhookUrl) {
@@ -265,13 +238,13 @@ export async function sendSlackBudgetWarning(
         userName: opts.userName,
         percentUsed: opts.percentUsed,
       },
-      "[Slack] Webhook not configured. Budget warning"
+      "[Slack] Webhook not configured. Budget warning",
     );
     return;
   }
 
   const payload = {
-    text: `⚠️ *DevPulse Budget Warning*`,
+    text: `⚠️ *Rakshex Budget Warning*`,
     blocks: [
       {
         type: "header",
@@ -317,7 +290,7 @@ export async function sendSlackBudgetWarning(
         elements: [
           {
             type: "mrkdwn",
-            text: "To adjust budget limits, go to DevPulse → Kill Switch → Settings",
+            text: "To adjust budget limits, go to Rakshex → Kill Switch → Settings",
           },
         ],
       },
@@ -331,17 +304,14 @@ export async function sendSlackBudgetWarning(
   });
 
   if (!response.ok) {
-    throw new ExternalServiceError(
-      `Slack webhook returned ${response.status}`,
-      {
-        safeMessage: "Could not deliver Slack alert.",
-        context: {
-          provider: "slack",
-          status: response.status,
-          body: await response.text(),
-        },
-      }
-    );
+    throw new ExternalServiceError(`Slack webhook returned ${response.status}`, {
+      safeMessage: "Could not deliver Slack alert.",
+      context: {
+        provider: "slack",
+        status: response.status,
+        body: await response.text(),
+      },
+    });
   }
 
   logger.info({ userId: opts.userId }, "[Slack] Budget warning sent");

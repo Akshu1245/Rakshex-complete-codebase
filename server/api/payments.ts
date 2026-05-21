@@ -203,7 +203,7 @@ export const paymentsRouter = router({
                 userName: user.name ?? "",
                 amount: payment.amount / 100,
                 currency: payment.currency,
-                retryUrl: `${process.env.APP_URL || "https://devpulse.in"}/billing?retry=1`,
+                retryUrl: `${process.env.APP_URL || "https://rakshex.in"}/billing?retry=1`,
                 downgradeWarning: failureCount >= 2,
               }).catch((err: unknown) => logger.warn({ err }, "[Payments] Dunning email failed"));
             }

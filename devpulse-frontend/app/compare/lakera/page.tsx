@@ -1,61 +1,61 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "DevPulse vs Lakera Guard — Honest Comparison",
+  title: "Rakshex vs Lakera Guard — Honest Comparison",
   description:
-    "Lakera Guard is the leader in prompt injection defense. DevPulse adds API security, compliance, and cost governance. Side-by-side comparison.",
+    "Lakera Guard is the leader in prompt injection defense. Rakshex adds API security, compliance, and cost governance. Side-by-side comparison.",
 };
 
 const features = [
   {
     name: "Prompt Injection Defense",
     lakera: "Industry-leading (research-backed)",
-    devpulse: "Built-in engine with 50+ patterns + heuristic layers",
+    rakshex: "Built-in engine with 50+ patterns + heuristic layers",
   },
   {
     name: "PII Detection & Redaction",
     lakera: "Available",
-    devpulse: "Available + compliance-grade audit trail",
+    rakshex: "Available + compliance-grade audit trail",
   },
   {
     name: "API Security Scanning",
     lakera: "Not available",
-    devpulse: "Postman / OpenAPI collection scanner",
+    rakshex: "Postman / OpenAPI collection scanner",
   },
   {
     name: "Shadow API Detection",
     lakera: "Not available",
-    devpulse: "Automatic undocumented endpoint discovery",
+    rakshex: "Automatic undocumented endpoint discovery",
   },
   {
     name: "Kill Switch / Budget Cap",
     lakera: "Not available",
-    devpulse: "Hard stop + Slack/Email/Webhook alerts",
+    rakshex: "Hard stop + Slack/Email/Webhook alerts",
   },
   {
     name: "Compliance Reporting",
     lakera: "Not available",
-    devpulse: "PCI DSS, OWASP, SOC 2 mapped findings",
+    rakshex: "PCI DSS, OWASP, SOC 2 mapped findings",
   },
   {
     name: "LLM Cost Monitoring",
     lakera: "Not available",
-    devpulse: "Per-request cost tracking + anomaly detection",
+    rakshex: "Per-request cost tracking + anomaly detection",
   },
   {
     name: "VS Code Extension",
     lakera: "Not available",
-    devpulse: "In-editor scanning + real-time warnings",
+    rakshex: "In-editor scanning + real-time warnings",
   },
   {
     name: "GitHub App / CI Gate",
     lakera: "Not available",
-    devpulse: "PR-level security gate with auto-fix",
+    rakshex: "PR-level security gate with auto-fix",
   },
   {
     name: "Self-hosted Option",
     lakera: "Enterprise only",
-    devpulse: "Docker Compose (all tiers)",
+    rakshex: "Docker Compose (all tiers)",
   },
 ];
 
@@ -69,9 +69,9 @@ export default function CompareLakera() {
           </Link>
         </nav>
 
-        <h1 className="text-4xl font-bold mb-2">DevPulse vs Lakera Guard</h1>
+        <h1 className="text-4xl font-bold mb-2">Rakshex vs Lakera Guard</h1>
         <p className="text-xl text-gray-400 mb-8">
-          Lakera Guard is the most advanced prompt injection defense on the market. DevPulse covers
+          Lakera Guard is the most advanced prompt injection defense on the market. Rakshex covers
           prompt injection <em>plus</em> API security, compliance, and cost governance.
         </p>
 
@@ -81,7 +81,7 @@ export default function CompareLakera() {
               <tr>
                 <th className="p-4 text-white">Feature</th>
                 <th className="p-4 text-gray-300 w-1/3">Lakera Guard</th>
-                <th className="p-4 text-blue-300 w-1/3">DevPulse</th>
+                <th className="p-4 text-blue-300 w-1/3">Rakshex</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-700">
@@ -89,7 +89,7 @@ export default function CompareLakera() {
                 <tr key={i} className="hover:bg-gray-700/30 transition-colors">
                   <td className="p-4 font-medium">{f.name}</td>
                   <td className="p-4 text-gray-400">{f.lakera}</td>
-                  <td className="p-4 text-gray-200">{f.devpulse}</td>
+                  <td className="p-4 text-gray-200">{f.rakshex}</td>
                 </tr>
               ))}
             </tbody>
@@ -108,7 +108,7 @@ export default function CompareLakera() {
           </div>
 
           <div className="bg-gray-800/50 border border-blue-500/30 rounded-xl p-6">
-            <h3 className="text-xl font-bold mb-3 text-blue-400">When to choose DevPulse</h3>
+            <h3 className="text-xl font-bold mb-3 text-blue-400">When to choose Rakshex</h3>
             <ul className="list-disc list-inside text-gray-300 space-y-2">
               <li>You need prompt injection + API security + compliance in one tool</li>
               <li>You want self-hosted with Indian data residency</li>
@@ -124,7 +124,7 @@ export default function CompareLakera() {
             href="/demo"
             className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors"
           >
-            Try DevPulse Free →
+            Try Rakshex Free →
           </Link>
         </div>
       </div>

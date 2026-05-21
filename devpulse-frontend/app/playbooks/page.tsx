@@ -1,6 +1,17 @@
 "use client";
 import { useState } from "react";
-import { BookOpen, Play, CheckCircle, Clock, AlertTriangle, Zap, Shield, Search, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  BookOpen,
+  Play,
+  CheckCircle,
+  Clock,
+  AlertTriangle,
+  Zap,
+  Shield,
+  Search,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 
 interface Playbook {
   id: string;
@@ -17,7 +28,8 @@ const PLAYBOOKS: Playbook[] = [
   {
     id: "pb1",
     title: "Critical Secret Exposed in API Collection",
-    description: "Immediate response playbook when a live API key or credential is found in an imported collection.",
+    description:
+      "Immediate response playbook when a live API key or credential is found in an imported collection.",
     category: "security",
     steps: [
       "Immediately revoke the exposed credential in the provider dashboard (AWS IAM, GitHub, OpenAI, etc.)",
@@ -52,7 +64,8 @@ const PLAYBOOKS: Playbook[] = [
   {
     id: "pb3",
     title: "Prompt Injection Attack Detected",
-    description: "Response playbook for when a prompt injection or jailbreak attempt is blocked at the gateway.",
+    description:
+      "Response playbook for when a prompt injection or jailbreak attempt is blocked at the gateway.",
     category: "security",
     steps: [
       "Review the blocked payload in the audit log — understand the attack vector",
@@ -61,7 +74,7 @@ const PLAYBOOKS: Playbook[] = [
       "Add the attack pattern to your custom blocklist if not already covered",
       "Review system prompt hardening — add explicit role anchoring",
       "Enable PII redaction if user inputs are flowing into prompts",
-      "Report novel attack patterns to DevPulse (helps improve the detection library)",
+      "Report novel attack patterns to Rakshex (helps improve the detection library)",
     ],
     estimatedTime: "20–45 min",
     severity: "high",
@@ -88,7 +101,8 @@ const PLAYBOOKS: Playbook[] = [
   {
     id: "pb5",
     title: "Shadow API Discovered in Production",
-    description: "Handle undocumented endpoints found by the shadow API scanner that are live in production.",
+    description:
+      "Handle undocumented endpoints found by the shadow API scanner that are live in production.",
     category: "security",
     steps: [
       "Identify the framework and codebase the endpoint belongs to",
@@ -106,7 +120,8 @@ const PLAYBOOKS: Playbook[] = [
   {
     id: "pb6",
     title: "Agent Drift — Behavior Degradation",
-    description: "Response when an agent's output quality, cost, or latency drifts significantly from its baseline.",
+    description:
+      "Response when an agent's output quality, cost, or latency drifts significantly from its baseline.",
     category: "incident",
     steps: [
       "Open Agent Drift Monitor and find the affected agent",
@@ -141,7 +156,10 @@ export default function PlaybooksPage() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>("all");
 
-  const filtered = filter === "all" ? PLAYBOOKS : PLAYBOOKS.filter(p => p.category === filter || p.severity === filter);
+  const filtered =
+    filter === "all"
+      ? PLAYBOOKS
+      : PLAYBOOKS.filter((p) => p.category === filter || p.severity === filter);
 
   return (
     <div className="text-white p-6 max-w-5xl mx-auto">
@@ -151,7 +169,9 @@ export default function PlaybooksPage() {
             <BookOpen className="w-8 h-8 text-indigo-400" />
             Security Playbooks
           </h1>
-          <p className="text-gray-400 mt-1">Step-by-step runbooks for common security and cost incidents</p>
+          <p className="text-gray-400 mt-1">
+            Step-by-step runbooks for common security and cost incidents
+          </p>
         </div>
         <div className="text-right">
           <p className="text-2xl font-bold text-white">{PLAYBOOKS.length}</p>
@@ -161,9 +181,12 @@ export default function PlaybooksPage() {
 
       {/* Filters */}
       <div className="flex gap-2 mb-6 flex-wrap">
-        {["all", "security", "cost", "compliance", "incident", "critical", "high"].map(f => (
-          <button key={f} onClick={() => setFilter(f)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium capitalize transition-all ${filter === f ? "bg-indigo-600 text-white" : "bg-gray-800 text-gray-400 hover:bg-gray-700 border border-gray-700"}`}>
+        {["all", "security", "cost", "compliance", "incident", "critical", "high"].map((f) => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium capitalize transition-all ${filter === f ? "bg-indigo-600 text-white" : "bg-gray-800 text-gray-400 hover:bg-gray-700 border border-gray-700"}`}
+          >
             {f}
           </button>
         ))}
@@ -171,16 +194,27 @@ export default function PlaybooksPage() {
 
       {/* Playbook cards */}
       <div className="space-y-4">
-        {filtered.map(pb => (
-          <div key={pb.id} className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
+        {filtered.map((pb) => (
+          <div
+            key={pb.id}
+            className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden"
+          >
             <button
               className="w-full text-left p-5 flex items-start justify-between gap-4 hover:bg-gray-750 transition-colors"
               onClick={() => setExpanded(expanded === pb.id ? null : pb.id)}
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-2 flex-wrap">
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full border capitalize ${CATEGORY_COLORS[pb.category]}`}>{pb.category}</span>
-                  <span className={`text-xs font-semibold capitalize ${SEVERITY_COLORS[pb.severity]}`}>{pb.severity} severity</span>
+                  <span
+                    className={`text-xs font-bold px-2 py-0.5 rounded-full border capitalize ${CATEGORY_COLORS[pb.category]}`}
+                  >
+                    {pb.category}
+                  </span>
+                  <span
+                    className={`text-xs font-semibold capitalize ${SEVERITY_COLORS[pb.severity]}`}
+                  >
+                    {pb.severity} severity
+                  </span>
                   {pb.automated && (
                     <span className="text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full flex items-center gap-1">
                       <Zap className="w-3 h-3" /> Auto-detection
@@ -194,13 +228,19 @@ export default function PlaybooksPage() {
                 <p className="text-gray-400 text-sm mt-1">{pb.description}</p>
               </div>
               <div className="shrink-0 text-gray-500 mt-1">
-                {expanded === pb.id ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                {expanded === pb.id ? (
+                  <ChevronUp className="w-5 h-5" />
+                ) : (
+                  <ChevronDown className="w-5 h-5" />
+                )}
               </div>
             </button>
 
             {expanded === pb.id && (
               <div className="border-t border-gray-700 p-5">
-                <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-4">Response Steps</p>
+                <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-4">
+                  Response Steps
+                </p>
                 <ol className="space-y-3">
                   {pb.steps.map((step, i) => (
                     <li key={i} className="flex items-start gap-3">

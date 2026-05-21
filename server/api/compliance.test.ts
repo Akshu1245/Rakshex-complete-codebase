@@ -1,4 +1,4 @@
-// @ts-nocheck  
+// @ts-nocheck
 /**
  * Compliance Router Test Suite
  * Tests report generation, access control, and PDF export functionality
@@ -51,9 +51,7 @@ describe("Compliance Router", () => {
         requirementsData: mockRequirements,
       };
 
-      const { getCollectionById, createComplianceReport } = await import(
-        "../db"
-      );
+      const { getCollectionById, createComplianceReport } = await import("../db");
       const { generatePCIDSSRequirements } = await import("../utils/scanning");
 
       getCollectionById.mockResolvedValue(mockCollection);
@@ -66,9 +64,7 @@ describe("Compliance Router", () => {
       expect(collection.userId).toBe(ctx.user.id);
 
       const requirements = generatePCIDSSRequirements(collection.data);
-      const metRequirements = requirements.filter(
-        (r: any) => r.status === "met"
-      ).length;
+      const metRequirements = requirements.filter((r: any) => r.status === "met").length;
       const complianceScore = (metRequirements / requirements.length) * 100;
 
       const report = await createComplianceReport(
@@ -78,7 +74,7 @@ describe("Compliance Router", () => {
         complianceScore,
         requirements.length,
         metRequirements,
-        requirements
+        requirements,
       );
 
       expect(report.reportType).toBe("pci_dss");
@@ -105,9 +101,7 @@ describe("Compliance Router", () => {
         complianceScore: 66.67,
       };
 
-      const { getCollectionById, createComplianceReport } = await import(
-        "../db"
-      );
+      const { getCollectionById, createComplianceReport } = await import("../db");
       const { generateOWASPRequirements } = await import("../utils/scanning");
 
       getCollectionById.mockResolvedValue(mockCollection);
@@ -121,11 +115,10 @@ describe("Compliance Router", () => {
 
       const requirements = generateOWASPRequirements(collection.data);
       const manualRequirements = requirements.filter(
-        (r: any) => r.status === "manual_review"
+        (r: any) => r.status === "manual_review",
       ).length;
       const complianceScore =
-        ((requirements.length - manualRequirements) / requirements.length) *
-        100;
+        ((requirements.length - manualRequirements) / requirements.length) * 100;
 
       expect(complianceScore).toBeCloseTo(66.67, 0);
     });
@@ -145,15 +138,13 @@ describe("Compliance Router", () => {
 
       expect(collection.userId).not.toBe(ctx.user.id);
       expect(() => validateCollectionAccess(collection, ctx.user.id)).toThrow(
-        "Collection not found or access denied"
+        "Collection not found or access denied",
       );
     });
 
     it("should reject viewer role on report generation", () => {
       const ctx = createMockContext("user_123", "viewer");
-      expect(() => validateEditorProcedure(ctx.user)).toThrow(
-        "Editor or Admin role required"
-      );
+      expect(() => validateEditorProcedure(ctx.user)).toThrow("Editor or Admin role required");
     });
 
     it("should throw error for non-existent collection", async () => {
@@ -179,7 +170,7 @@ describe("Compliance Router", () => {
       ];
 
       const manualRequirements = requirements.filter(
-        (r: any) => r.status === "manual_review"
+        (r: any) => r.status === "manual_review",
       ).length;
       expect(manualRequirements).toBe(2);
     });
@@ -211,8 +202,7 @@ describe("Compliance Router", () => {
         },
       ];
 
-      const { getCollectionById, getComplianceReportsByCollectionId } =
-        await import("../db");
+      const { getCollectionById, getComplianceReportsByCollectionId } = await import("../db");
       getCollectionById.mockResolvedValue(mockCollection);
       getComplianceReportsByCollectionId.mockResolvedValue(mockReports);
 
@@ -242,7 +232,7 @@ describe("Compliance Router", () => {
       const collection = await getCollectionById("col_123");
 
       expect(() => validateCollectionAccess(collection, ctx.user.id)).toThrow(
-        "Collection not found or access denied"
+        "Collection not found or access denied",
       );
     });
 
@@ -261,10 +251,7 @@ describe("Compliance Router", () => {
 
       const page = 2;
       const pageSize = 10;
-      const paginated = mockReports.slice(
-        (page - 1) * pageSize,
-        page * pageSize
-      );
+      const paginated = mockReports.slice((page - 1) * pageSize, page * pageSize);
 
       expect(paginated).toHaveLength(10);
       expect(paginated[0].id).toBe("r10");
@@ -308,12 +295,8 @@ describe("Compliance Router", () => {
       expect(report.requirementsData).toHaveLength(3);
 
       const requirements = report.requirementsData;
-      const manualRequirements = requirements.filter(
-        r => r.status === "manual_review"
-      ).length;
-      const notMetRequirements = requirements.filter(
-        r => r.status === "not_met"
-      ).length;
+      const manualRequirements = requirements.filter((r) => r.status === "manual_review").length;
+      const notMetRequirements = requirements.filter((r) => r.status === "not_met").length;
 
       expect(manualRequirements).toBe(1);
       expect(notMetRequirements).toBe(1);
@@ -334,7 +317,7 @@ describe("Compliance Router", () => {
 
       expect(report.userId).not.toBe(ctx.user.id);
       expect(() => validateReportAccess(report, ctx.user.id)).toThrow(
-        "Report not found or access denied"
+        "Report not found or access denied",
       );
     });
 
@@ -370,9 +353,7 @@ describe("Compliance Router", () => {
         userId: "user_123",
       };
 
-      const { getComplianceReportById, getCollectionById } = await import(
-        "../db"
-      );
+      const { getComplianceReportById, getCollectionById } = await import("../db");
       getComplianceReportById.mockResolvedValue(mockReport);
       getCollectionById.mockResolvedValue(mockCollection);
 
@@ -383,10 +364,8 @@ describe("Compliance Router", () => {
       expect(report.userId).toBe(ctx.user.id);
 
       const requirements = report.requirementsData;
-      const metCount = requirements.filter(r => r.status === "met").length;
-      const notMetCount = requirements.filter(
-        r => r.status === "not_met"
-      ).length;
+      const metCount = requirements.filter((r) => r.status === "met").length;
+      const notMetCount = requirements.filter((r) => r.status === "not_met").length;
 
       // Simulate PDF generation
       const pdfBuffer = Buffer.from("mock-pdf-content");
@@ -410,7 +389,7 @@ describe("Compliance Router", () => {
       const report = await getComplianceReportById("report_123");
 
       expect(() => validateReportAccess(report, ctx.user.id)).toThrow(
-        "Report not found or access denied"
+        "Report not found or access denied",
       );
     });
 
@@ -433,19 +412,19 @@ describe("Compliance Router", () => {
         reportType: report.reportType,
         complianceScore: score,
         pdfBase64: Buffer.from("content").toString("base64"),
-        filename: `devpulse-compliance-report-${new Date().toISOString().split("T")[0]}.pdf`,
+        filename: `rakshex-compliance-report-${new Date().toISOString().split("T")[0]}.pdf`,
         exportDate: new Date().toISOString(),
       };
 
-      expect(exportResponse.filename).toContain("devpulse-compliance-report-");
+      expect(exportResponse.filename).toContain("rakshex-compliance-report-");
       expect(exportResponse.exportDate).toBeTruthy();
     });
 
     it("should generate correct filename with date", () => {
       const today = new Date().toISOString().split("T")[0];
-      const filename = `devpulse-compliance-report-${today}.pdf`;
+      const filename = `rakshex-compliance-report-${today}.pdf`;
 
-      expect(filename).toMatch(/^devpulse-compliance-report-.*\.pdf$/);
+      expect(filename).toMatch(/^rakshex-compliance-report-.*\.pdf$/);
       expect(filename).toContain(today);
     });
   });
@@ -458,7 +437,7 @@ describe("Compliance Router", () => {
         { id: "3", status: "met" },
       ];
 
-      const metCount = requirements.filter(r => r.status === "met").length;
+      const metCount = requirements.filter((r) => r.status === "met").length;
       const score = (metCount / requirements.length) * 100;
 
       expect(score).toBe(100);
@@ -471,7 +450,7 @@ describe("Compliance Router", () => {
         { id: "3", status: "not_met" },
       ];
 
-      const metCount = requirements.filter(r => r.status === "met").length;
+      const metCount = requirements.filter((r) => r.status === "met").length;
       const score = (metCount / requirements.length) * 100;
 
       expect(score).toBe(0);
@@ -483,7 +462,7 @@ describe("Compliance Router", () => {
         { id: "2", status: "not_met" },
       ];
 
-      const metCount = requirements.filter(r => r.status === "met").length;
+      const metCount = requirements.filter((r) => r.status === "met").length;
       const score = (metCount / requirements.length) * 100;
       const roundedScore = Math.round(score);
 
@@ -493,9 +472,8 @@ describe("Compliance Router", () => {
     it("should handle empty requirements array", () => {
       const requirements: any[] = [];
 
-      const metCount = requirements.filter(r => r.status === "met").length;
-      const score =
-        requirements.length > 0 ? (metCount / requirements.length) * 100 : 0;
+      const metCount = requirements.filter((r) => r.status === "met").length;
+      const score = requirements.length > 0 ? (metCount / requirements.length) * 100 : 0;
 
       expect(score).toBe(0);
     });

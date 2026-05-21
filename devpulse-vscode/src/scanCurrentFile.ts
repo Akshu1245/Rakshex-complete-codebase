@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import type { DevPulseApi } from "./api";
+import type { RakshexApi } from "./api";
 
 /**
  * Scans the currently active editor file for API definitions and
@@ -12,14 +12,12 @@ import type { DevPulseApi } from "./api";
  *   - Python (detects FastAPI/Flask route definitions)
  */
 export class ScanCurrentFileCommand {
-  constructor(private readonly api: DevPulseApi) {}
+  constructor(private readonly api: RakshexApi) {}
 
   async execute(): Promise<void> {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
-      void vscode.window.showInformationMessage(
-        "DevPulse: open a file to scan.",
-      );
+      void vscode.window.showInformationMessage("Rakshex: open a file to scan.");
       return;
     }
 
@@ -29,9 +27,7 @@ export class ScanCurrentFileCommand {
     const content = document.getText();
 
     if (content.trim().length === 0) {
-      void vscode.window.showInformationMessage(
-        "DevPulse: file is empty — nothing to scan.",
-      );
+      void vscode.window.showInformationMessage("Rakshex: file is empty — nothing to scan.");
       return;
     }
 
@@ -39,7 +35,7 @@ export class ScanCurrentFileCommand {
     const fileType = this.detectFileType(fileName, content);
     if (!fileType) {
       void vscode.window.showInformationMessage(
-        "DevPulse: this file doesn't look like an API definition. Supported: OpenAPI/Swagger (yaml/json), Postman collections, TypeScript/Python route files.",
+        "Rakshex: this file doesn't look like an API definition. Supported: OpenAPI/Swagger (yaml/json), Postman collections, TypeScript/Python route files.",
       );
       return;
     }
@@ -48,46 +44,43 @@ export class ScanCurrentFileCommand {
     await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
-        title: `DevPulse: Scanning ${fileName}…`,
+        title: `Rakshex: Scanning ${fileName}…`,
         cancellable: false,
       },
       async (progress) => {
         progress.report({ message: "Detecting API endpoints…" });
 
         try {
-          const findings = await this.scanContent(
-            fileName,
-            content,
-            fileType,
-          );
+          const findings = await this.scanContent(fileName, content, fileType);
 
           progress.report({
-            message: findings.length > 0
-              ? `Found ${findings.length} issue${findings.length !== 1 ? "s" : ""}`
-              : "No issues found",
+            message:
+              findings.length > 0
+                ? `Found ${findings.length} issue${findings.length !== 1 ? "s" : ""}`
+                : "No issues found",
           });
 
           if (findings.length > 0) {
             this.applyDiagnostics(document, findings);
 
-            void vscode.window.showWarningMessage(
-              `DevPulse: ${findings.length} security issue${findings.length !== 1 ? "s" : ""} found in ${fileName}. See the Problems panel or DevPulse Findings view.`,
-              "View Findings",
-            ).then((action) => {
-              if (action === "View Findings") {
-                vscode.commands.executeCommand("devpulse.findings.focus");
-              }
-            });
+            void vscode.window
+              .showWarningMessage(
+                `Rakshex: ${findings.length} security issue${findings.length !== 1 ? "s" : ""} found in ${fileName}. See the Problems panel or Rakshex Findings view.`,
+                "View Findings",
+              )
+              .then((action) => {
+                if (action === "View Findings") {
+                  vscode.commands.executeCommand("rakshex.findings.focus");
+                }
+              });
           } else {
             void vscode.window.showInformationMessage(
-              `DevPulse: no issues found in ${fileName}. ✅`,
+              `Rakshex: no issues found in ${fileName}. ✅`,
             );
           }
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
-          void vscode.window.showErrorMessage(
-            `DevPulse: scan failed — ${msg}`,
-          );
+          void vscode.window.showErrorMessage(`Rakshex: scan failed — ${msg}`);
         }
       },
     );
@@ -105,15 +98,8 @@ export class ScanCurrentFileCommand {
       if (trimmed.startsWith("{")) {
         try {
           const parsed = JSON.parse(trimmed);
-          if (
-            parsed.openapi ||
-            parsed.swagger ||
-            parsed.info?._postman_id ||
-            parsed.item
-          ) {
-            return parsed.openapi || parsed.swagger
-              ? "openapi"
-              : "postman";
+          if (parsed.openapi || parsed.swagger || parsed.info?._postman_id || parsed.item) {
+            return parsed.openapi || parsed.swagger ? "openapi" : "postman";
           }
         } catch {
           // Not JSON — check YAML
@@ -128,10 +114,17 @@ export class ScanCurrentFileCommand {
       }
     }
 
-    if (lower.endsWith(".ts") || lower.endsWith(".tsx") || lower.endsWith(".js") || lower.endsWith(".jsx")) {
+    if (
+      lower.endsWith(".ts") ||
+      lower.endsWith(".tsx") ||
+      lower.endsWith(".js") ||
+      lower.endsWith(".jsx")
+    ) {
       // TypeScript/JS: look for API route patterns
       if (
-        /\.get\(|\.post\(|\.put\(|\.patch\(|\.delete\(|\.all\(|router\.(get|post|put)|app\.(get|post|put)|createRoute|fetch\(/.test(content)
+        /\.get\(|\.post\(|\.put\(|\.patch\(|\.delete\(|\.all\(|router\.(get|post|put)|app\.(get|post|put)|createRoute|fetch\(/.test(
+          content,
+        )
       ) {
         return "typescript";
       }
@@ -139,7 +132,9 @@ export class ScanCurrentFileCommand {
 
     if (lower.endsWith(".py")) {
       if (
-        /@app\.(get|post|put|patch|delete)|@router\.(get|post|put)|@blueprint\.route|FastAPI|Flask|def\s+\w+.*request/i.test(content)
+        /@app\.(get|post|put|patch|delete)|@router\.(get|post|put)|@blueprint\.route|FastAPI|Flask|def\s+\w+.*request/i.test(
+          content,
+        )
       ) {
         return "python";
       }
@@ -152,13 +147,15 @@ export class ScanCurrentFileCommand {
     fileName: string,
     content: string,
     fileType: "openapi" | "postman" | "typescript" | "python",
-  ): Promise<Array<{
-    title: string;
-    severity: string;
-    line?: number;
-    description: string;
-    category?: string;
-  }>> {
+  ): Promise<
+    Array<{
+      title: string;
+      severity: string;
+      line?: number;
+      description: string;
+      category?: string;
+    }>
+  > {
     const findings: Array<{
       title: string;
       severity: string;
@@ -172,7 +169,8 @@ export class ScanCurrentFileCommand {
     // Check for hardcoded secrets (API keys, tokens, passwords)
     const secretPatterns = [
       {
-        regex: /(?:api[_-]?key|apikey|secret|token|password|passwd)\s*[:=]\s*["']([^"'\n]{8,})["']/gi,
+        regex:
+          /(?:api[_-]?key|apikey|secret|token|password|passwd)\s*[:=]\s*["']([^"'\n]{8,})["']/gi,
         title: "Hardcoded secret detected",
         severity: "Critical",
         category: "Secret Exposure",
@@ -244,7 +242,10 @@ export class ScanCurrentFileCommand {
     // TypeScript-specific checks
     if (fileType === "typescript") {
       for (let i = 0; i < lines.length; i++) {
-        if (/cors\(\)|cors\s*\(\s*\)/.test(lines[i]) && !/origin.*allowlist|allowedOrigins/.test(content)) {
+        if (
+          /cors\(\)|cors\s*\(\s*\)/.test(lines[i]) &&
+          !/origin.*allowlist|allowedOrigins/.test(content)
+        ) {
           findings.push({
             title: "CORS configured without origin allowlist",
             severity: "Medium",
@@ -262,7 +263,10 @@ export class ScanCurrentFileCommand {
     // OpenAPI-specific checks
     if (fileType === "openapi") {
       for (let i = 0; i < lines.length; i++) {
-        if (/security\s*:\s*\[\s*\]/.test(lines[i]) || /security\s*:\s*\[\s*\{\s*\}\s*\]/.test(lines[i])) {
+        if (
+          /security\s*:\s*\[\s*\]/.test(lines[i]) ||
+          /security\s*:\s*\[\s*\{\s*\}\s*\]/.test(lines[i])
+        ) {
           findings.push({
             title: "Endpoint with no security scheme",
             severity: "High",
@@ -287,8 +291,7 @@ export class ScanCurrentFileCommand {
       category?: string;
     }>,
   ): void {
-    const diagnosticCollection =
-      vscode.languages.createDiagnosticCollection("devpulse");
+    const diagnosticCollection = vscode.languages.createDiagnosticCollection("rakshex");
 
     const diagnostics: vscode.Diagnostic[] = [];
 
@@ -310,7 +313,7 @@ export class ScanCurrentFileCommand {
         severity,
       );
 
-      diagnostic.source = "DevPulse";
+      diagnostic.source = "Rakshex";
       diagnostic.code = finding.category ?? "security";
       diagnostics.push(diagnostic);
     }

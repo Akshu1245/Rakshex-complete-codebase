@@ -1,39 +1,39 @@
-# DevPulse Benchmark Reports
+# Rakshex Benchmark Reports
 
-> Proof that DevPulse works, backed by real data.
+> Proof that Rakshex works, backed by real data.
 > Date: 2026-05-17
 
 ---
 
-## REPORT 1: DevPulse vs Snyk — API Security Scanning
+## REPORT 1: Rakshex vs Snyk — API Security Scanning
 
 ### Methodology
 
 - **Dataset:** 100 open-source API collections (Postman + OpenAPI)
 - **Sources:** GitHub repos tagged `api`, `rest-api`, `openapi`
-- **Scanned by:** DevPulse and Snyk Code (free tier)
+- **Scanned by:** Rakshex and Snyk Code (free tier)
 - **Date:** May 2026
 
 ### Results
 
-| Metric                | DevPulse | Snyk   | Notes                          |
-| --------------------- | -------- | ------ | ------------------------------ |
-| Collections scanned   | 100      | 100    | Same dataset                   |
-| Total findings        | 312      | 198    | DevPulse found 57% more        |
-| Secret leaks detected | 89       | 34     | DevPulse: regex + entropy      |
-| Auth issues           | 67       | 23     | DevPulse checks all methods    |
-| Injection vectors     | 45       | 12     | DevPulse: query param analysis |
-| HTTPS issues          | 56       | 89     | Snyk stronger on TLS config    |
-| False positive rate   | 12%      | 8%     | DevPulse higher, improving     |
-| Scan time (avg)       | 3.2s     | 12.7s  | DevPulse 4× faster             |
-| VS Code integration   | Native   | Plugin | DevPulse: inline fixes         |
+| Metric                | Rakshex | Snyk   | Notes                         |
+| --------------------- | ------- | ------ | ----------------------------- |
+| Collections scanned   | 100     | 100    | Same dataset                  |
+| Total findings        | 312     | 198    | Rakshex found 57% more        |
+| Secret leaks detected | 89      | 34     | Rakshex: regex + entropy      |
+| Auth issues           | 67      | 23     | Rakshex checks all methods    |
+| Injection vectors     | 45      | 12     | Rakshex: query param analysis |
+| HTTPS issues          | 56      | 89     | Snyk stronger on TLS config   |
+| False positive rate   | 12%     | 8%     | Rakshex higher, improving     |
+| Scan time (avg)       | 3.2s    | 12.7s  | Rakshex 4× faster             |
+| VS Code integration   | Native  | Plugin | Rakshex: inline fixes         |
 
 ### Key Takeaways
 
-- DevPulse finds **57% more API-specific issues** than Snyk
-- DevPulse is **4× faster** for collection scanning
+- Rakshex finds **57% more API-specific issues** than Snyk
+- Rakshex is **4× faster** for collection scanning
 - Snyk has lower false positive rate (target: close gap to < 10%)
-- **Best together:** Snyk for app code, DevPulse for API layer
+- **Best together:** Snyk for app code, Rakshex for API layer
 
 ---
 
@@ -44,7 +44,7 @@
 - **Dataset:** 50 production AI applications
 - **Providers:** OpenAI (GPT-4, GPT-3.5), Anthropic (Claude), Gemini
 - **Tracking period:** 30 days
-- **Tool:** DevPulse cost tracker vs provider dashboards
+- **Tool:** Rakshex cost tracker vs provider dashboards
 
 ### Results
 
@@ -63,7 +63,7 @@
 3. **Context window overhead**: 10-20% additional
 4. **Tool call overhead**: 5-15% additional
 
-### Savings with DevPulse
+### Savings with Rakshex
 
 | Action                       | Estimated Savings  |
 | ---------------------------- | ------------------ |
@@ -142,7 +142,7 @@
 
 ### For Investors
 
-Include in pitch deck: "DevPulse finds 57% more issues than Snyk for API security"
+Include in pitch deck: "Rakshex finds 57% more issues than Snyk for API security"
 
 ### For Developers
 
@@ -154,7 +154,7 @@ Include in description: "47 rogue agents stopped, $1,247 saved in 30 days"
 
 ### For Sales
 
-Share with prospects: "Benchmark report: DevPulse vs Snyk for API scanning"
+Share with prospects: "Benchmark report: Rakshex vs Snyk for API scanning"
 
 ---
 

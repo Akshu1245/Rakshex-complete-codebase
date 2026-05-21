@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Partner Program — DevPulse",
+  title: "Partner Program — Rakshex",
   description:
-    "Join the DevPulse partner ecosystem. Reseller, referral, and integration partner programs for agencies, consultancies, and system integrators.",
+    "Join the Rakshex partner ecosystem. Reseller, referral, and integration partner programs for agencies, consultancies, and system integrators.",
   alternates: { canonical: "/partners" },
 };
 
@@ -13,8 +13,8 @@ export default function PartnersPage() {
       <div className="text-center py-20 px-4 border-b border-gray-800">
         <h1 className="text-4xl md:text-5xl font-bold mb-4">Partner With Us</h1>
         <p className="text-gray-400 max-w-2xl mx-auto text-lg">
-          Join the DevPulse ecosystem. Whether you are a consultancy, reseller, or technology
-          partner — we grow together.
+          Join the Rakshex ecosystem. Whether you are a consultancy, reseller, or technology partner
+          — we grow together.
         </p>
       </div>
 
@@ -29,12 +29,12 @@ export default function PartnersPage() {
             },
             {
               title: "Reseller Partners",
-              desc: "White-label DevPulse for your clients. Set your own pricing. Get dedicated support, co-branded materials, and sales training.",
+              desc: "White-label Rakshex for your clients. Set your own pricing. Get dedicated support, co-branded materials, and sales training.",
               cta: "Apply as Reseller",
             },
             {
               title: "Integration Partners",
-              desc: "Build integrations with DevPulse. Get technical documentation, sandbox access, and co-marketing support.",
+              desc: "Build integrations with Rakshex. Get technical documentation, sandbox access, and co-marketing support.",
               cta: "Apply as Integration Partner",
             },
           ].map((p) => (
@@ -45,7 +45,7 @@ export default function PartnersPage() {
               <h2 className="text-xl font-bold mb-3 text-blue-400">{p.title}</h2>
               <p className="text-gray-400 text-sm leading-relaxed flex-1 mb-6">{p.desc}</p>
               <Link
-                href="mailto:partners@devpulse.in"
+                href="mailto:partners@rakshex.in"
                 className="block text-center bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
               >
                 {p.cta} →
@@ -77,10 +77,10 @@ export default function PartnersPage() {
           <h2 className="text-xl font-bold mb-2">Ready to partner?</h2>
           <p className="text-gray-400 mb-4">Email us and we will set up a call within 24 hours.</p>
           <Link
-            href="mailto:partners@devpulse.in"
+            href="mailto:partners@rakshex.in"
             className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
           >
-            partners@devpulse.in
+            partners@rakshex.in
           </Link>
         </div>
       </div>

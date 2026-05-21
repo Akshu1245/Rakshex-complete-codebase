@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Enterprise AI Governance — DevPulse",
+  title: "Enterprise AI Governance — Rakshex",
   description:
-    "DevPulse Enterprise: SSO, RBAC, SOC 2 evidence, custom data retention, and 4-hour SLA. Secure AI at scale.",
+    "Rakshex Enterprise: SSO, RBAC, SOC 2 evidence, custom data retention, and 4-hour SLA. Secure AI at scale.",
   alternates: { canonical: "/solutions/enterprise" },
 };
 
@@ -82,7 +82,7 @@ export default function EnterprisePage() {
 
         <div className="text-center">
           <Link
-            href="mailto:enterprise@devpulse.in"
+            href="mailto:enterprise@rakshex.in"
             className="inline-block bg-purple-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors"
           >
             Contact Enterprise Sales →

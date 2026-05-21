@@ -64,7 +64,7 @@ const EnvSchema = z.object({
   SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(587),
   SMTP_USER: z.string().default(""),
   SMTP_PASS: z.string().default(""),
-  SMTP_FROM: z.string().default("noreply@devpulse.in"),
+  SMTP_FROM: z.string().default("noreply@rakshex.in"),
   APP_URL: z.string().url("APP_URL must be a valid URL").default("http://localhost:3000"),
 
   // Notifications — empty string allowed, but if set must be a URL.

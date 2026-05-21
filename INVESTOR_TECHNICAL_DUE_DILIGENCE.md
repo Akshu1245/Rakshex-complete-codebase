@@ -1,4 +1,4 @@
-# DevPulse — Technical Due Diligence
+# Rakshex — Technical Due Diligence
 
 > For investor review. Prepared by founding engineering team.
 > Date: 2026-05-17
@@ -9,7 +9,7 @@
 
 |                  |                                                                           |
 | ---------------- | ------------------------------------------------------------------------- |
-| **Product**      | DevPulse — AI-native developer security platform                          |
+| **Product**      | Rakshex — AI-native developer security platform                           |
 | **Category**     | Developer Tools + Cybersecurity + AI Infrastructure                       |
 | **Stage**        | Pre-launch / Beta                                                         |
 | **Architecture** | TypeScript/Node.js monolith, horizontally scalable                        |
@@ -207,4 +207,4 @@
 ---
 
 _Document prepared for investor due diligence._
-_Contact: security@devpulse.in_
+_Contact: security@rakshex.in_

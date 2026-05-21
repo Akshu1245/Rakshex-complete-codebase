@@ -172,7 +172,7 @@ export const router = t.router;
  *   - error status on failure
  */
 const otelMiddleware = t.middleware(async ({ ctx, path, type, next }) => {
-  const span = trace.getTracer("devpulse-trpc").startSpan(`trpc.${type}.${path}`);
+  const span = trace.getTracer("rakshex-trpc").startSpan(`trpc.${type}.${path}`);
   try {
     span.setAttribute("trpc.type", type);
     span.setAttribute("trpc.path", path);

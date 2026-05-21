@@ -1,4 +1,4 @@
-# DevPulse Incident Response Simulation
+# Rakshex Incident Response Simulation
 
 > Practice before panic.
 > Date: 2026-05-17
@@ -23,7 +23,7 @@ Primary MySQL instance crashes during peak hours (Tuesday 2 PM IST).
 
 - SRE checks RDS dashboard: instance status = "Failed"
 - Decision: Failover to read replica
-- Execute: `aws rds promote-read-replica devpulse-db-replica`
+- Execute: `aws rds promote-read-replica rakshex-db-replica`
 
 **T+5 min — Assessment**
 
@@ -54,7 +54,7 @@ Primary MySQL instance crashes during peak hours (Tuesday 2 PM IST).
 
 ### Scenario
 
-OpenAI API returns 503 errors for 30 minutes. DevPulse users can't validate keys.
+OpenAI API returns 503 errors for 30 minutes. Rakshex users can't validate keys.
 
 ### Timeline
 
@@ -153,14 +153,14 @@ Attacker sends 10,000 malformed scan requests / second.
 **SEV1 — User Notification:**
 
 ```
-DevPulse is experiencing a service disruption.
+Rakshex is experiencing a service disruption.
 
 Impact: [Brief description]
 Started: [Time]
 Status: We're actively working on a fix.
 ETA: [Time or "Investigating"]
 
-Updates: [status.devpulse.in link]
+Updates: [status.rakshex.in link]
 ```
 
 **SEV1 — Internal:**

@@ -1,6 +1,6 @@
-# DevPulse User Love Analysis
+# Rakshex User Love Analysis
 
-> What makes users love DevPulse.
+> What makes users love Rakshex.
 > Date: 2026-05-17
 
 ---

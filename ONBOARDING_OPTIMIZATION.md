@@ -1,4 +1,4 @@
-# DevPulse Onboarding Optimization
+# Rakshex Onboarding Optimization
 
 > Data-driven improvements to first-60-second experience.
 > Date: 2026-05-17

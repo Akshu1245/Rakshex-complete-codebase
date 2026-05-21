@@ -1,7 +1,7 @@
 {
-  "name": "@devpulse/sdk",
+  "name": "@rakshex/sdk",
   "version": "0.1.0",
-  "description": "DevPulse AI Runtime Telemetry SDK — drop-in wrapper for LLM providers",
+  "description": "Rakshex AI Runtime Telemetry SDK — drop-in wrapper for LLM providers",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -33,7 +33,7 @@
     "vitest": "^2.0.0"
   },
   "keywords": [
-    "devpulse",
+    "rakshex",
     "ai",
     "llm",
     "telemetry",

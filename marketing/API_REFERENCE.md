@@ -1,6 +1,6 @@
-# DevPulse API Reference
+# Rakshex API Reference
 
-Base URL: `https://api.devpulse.in` (self-hosted: your own domain)
+Base URL: `https://api.rakshex.in` (self-hosted: your own domain)
 
 All endpoints require authentication via:
 
@@ -412,9 +412,9 @@ Rate limit headers included in all responses:
 
 ## SDKs
 
-- **JavaScript/TypeScript:** `npm install @devpulse/sdk`
-- **Python:** `pip install devpulse`
-- **Go:** `go get github.com/devpulse/devpulse-go`
+- **JavaScript/TypeScript:** `npm install @rakshex/sdk`
+- **Python:** `pip install rakshex`
+- **Go:** `go get github.com/rakshex/rakshex-go`
 
 ## Changelog
 

@@ -1,4 +1,4 @@
-# DevPulse Execution Checklist
+# Rakshex Execution Checklist
 
 > The master checklist for operating like a real startup.
 > Date: 2026-05-17

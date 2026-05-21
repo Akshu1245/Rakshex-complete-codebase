@@ -151,7 +151,7 @@ function buildComment(
   warnings: number,
   critical: number,
 ): string {
-  const header = `## DevPulse Security Scan\n\n`;
+  const header = `## Rakshex Security Scan\n\n`;
   const summary = `✅ ${passed} passed | ⚠️ ${warnings} warnings | 🔴 ${critical} critical\n\n`;
 
   if (findings.length === 0) {
@@ -165,5 +165,5 @@ function buildComment(
     )
     .join("\n")}`;
 
-  return `${header}${summary}${table}\n\n> Review these findings before merging. [View in DevPulse](https://app.devpulse.in)`;
+  return `${header}${summary}${table}\n\n> Review these findings before merging. [View in Rakshex](https://app.rakshex.in)`;
 }

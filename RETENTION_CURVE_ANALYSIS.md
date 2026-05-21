@@ -1,4 +1,4 @@
-# DevPulse Retention Curve Analysis
+# Rakshex Retention Curve Analysis
 
 > Understanding who stays and why.
 > Date: 2026-05-17
@@ -80,7 +80,7 @@ Average    |      | ___% | ___% | ___% | ___% | ___% | ___% | ___%
 | AI Builder       | \_\_\_% | \_\_\_% | \_\_\_% | \_\_\_  |
 | Curious Explorer | \_\_\_% | \_\_\_% | \_\_\_% | \_\_\_  |
 
-**Insight:** ******\_****** segment retains at **\_× the rate of ****\_\_\_******
+**Insight:** **\*\***\_**\*\*** segment retains at **\_× the rate of \*\***\_\_\_**\*\***
 
 ---
 
@@ -96,7 +96,7 @@ Average    |      | ___% | ___% | ___% | ___% | ___% | ___% | ___%
 | Set up alert            | \_\_\_%      | \_\_\_%       |
 | Shared with team        | \_\_\_%      | \_\_\_%       |
 
-**Key insight:** Users who ******\_****** retain at \_\_\_× the rate of those who don't.
+**Key insight:** Users who **\*\***\_**\*\*** retain at \_\_\_× the rate of those who don't.
 
 ---
 

@@ -6,7 +6,7 @@
  * to clipboard) and "Dismiss".
  */
 import * as vscode from "vscode";
-import type { DevPulseApi, Finding, Severity } from "./api";
+import type { RakshexApi, Finding, Severity } from "./api";
 
 type ConfidenceLevel = "high" | "medium" | "low";
 
@@ -64,7 +64,7 @@ export class AutoFixTreeProvider implements vscode.TreeDataProvider<AutoFixNode>
   private dismissed = new Set<string>();
   private signedIn = false;
 
-  constructor(private readonly api: DevPulseApi) {}
+  constructor(private readonly api: RakshexApi) {}
 
   setSignedIn(signedIn: boolean): void {
     this.signedIn = signedIn;

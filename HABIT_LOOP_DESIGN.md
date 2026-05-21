@@ -1,6 +1,6 @@
-# DevPulse Habit Loop Design
+# Rakshex Habit Loop Design
 
-> Making DevPulse as habitual as checking email.
+> Making Rakshex as habitual as checking email.
 > Date: 2026-05-17
 
 ---
@@ -26,14 +26,14 @@
 
 ### Internal Triggers
 
-| Emotion                   | Trigger                      | DevPulse Action        |
+| Emotion                   | Trigger                      | Rakshex Action         |
 | ------------------------- | ---------------------------- | ---------------------- |
 | Anxiety about security    | "Did I leak a key?"          | Quick scan reassurance |
 | Fear about API costs      | "Why is my bill so high?"    | Check cost dashboard   |
 | Worry about AI agents     | "Is my agent still running?" | View AgentGuard status |
 | Pride in security posture | "I want to show I'm secure"  | Share weekly summary   |
 
-**Goal:** DevPulse becomes the default response to API security anxiety.
+**Goal:** Rakshex becomes the default response to API security anxiety.
 
 ---
 
@@ -44,7 +44,7 @@
 **Before:**
 
 ```
-1. Open DevPulse sidebar
+1. Open Rakshex sidebar
 2. Click "Import Collection"
 3. Navigate file picker
 4. Select file
@@ -109,7 +109,7 @@ Not every scan finds something. But every scan should feel rewarding:
 
 ## 4. INVESTMENT
 
-### Make Users Invest in DevPulse
+### Make Users Invest in Rakshex
 
 **Data Investment:**
 
@@ -143,7 +143,7 @@ Not every scan finds something. But every scan should feel rewarding:
 
 ```
 Trigger: Open VS Code (9 AM)
-  → Action: See DevPulse status bar badge
+  → Action: See Rakshex status bar badge
     → Reward: "No new issues" or "3 findings since yesterday"
       → Investment: Click to review, mark status, feel in control
 ```
@@ -152,7 +152,7 @@ Trigger: Open VS Code (9 AM)
 
 ```
 Trigger: About to deploy (Git push)
-  → Action: Run DevPulse scan (Ctrl+Shift+D)
+  → Action: Run Rakshex scan (Ctrl+Shift+D)
     → Reward: "All clear — safe to deploy" or "Fix 1 issue first"
       → Investment: Fix issue, deploy confidently
 ```

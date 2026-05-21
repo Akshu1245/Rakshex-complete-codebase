@@ -11,28 +11,28 @@ function JsonLdInjector() {
       "@graph": [
         {
           "@type": "Organization",
-          "@id": "https://devpulse.in/#organization",
-          name: "DevPulse",
-          url: "https://devpulse.in",
-          logo: "https://devpulse.in/logo.png",
+          "@id": "https://rakshex.in/#organization",
+          name: "Rakshex",
+          url: "https://rakshex.in",
+          logo: "https://rakshex.in/logo.png",
           description:
             "AI Runtime Governance Platform — security scanning, cost monitoring, and compliance for production AI agents.",
           sameAs: [
-            "https://twitter.com/devpulsehq",
-            "https://github.com/Akshu1245/devpulse-complete-codebase",
+            "https://twitter.com/rakshexhq",
+            "https://github.com/Akshu1245/rakshex-complete-codebase",
           ],
         },
         {
           "@type": "WebSite",
-          "@id": "https://devpulse.in/#website",
-          url: "https://devpulse.in",
-          name: "DevPulse",
-          publisher: { "@id": "https://devpulse.in/#organization" },
+          "@id": "https://rakshex.in/#website",
+          url: "https://rakshex.in",
+          name: "Rakshex",
+          publisher: { "@id": "https://rakshex.in/#organization" },
         },
         {
           "@type": "SoftwareApplication",
-          "@id": "https://devpulse.in/#product",
-          name: "DevPulse",
+          "@id": "https://rakshex.in/#product",
+          name: "Rakshex",
           applicationCategory: "DeveloperApplication",
           operatingSystem: "Any",
           offers: {
@@ -197,7 +197,7 @@ export default function LandingPage() {
             className="text-on-surface-variant max-w-2xl mx-auto mb-10"
             style={{ fontSize: "16px", lineHeight: 1.7 }}
           >
-            DevPulse scans every API endpoint, tracks every LLM token, and blocks every prompt
+            Rakshex scans every API endpoint, tracks every LLM token, and blocks every prompt
             injection — all inside your VS Code. Built with 4 patents, 478+ tests, and
             enterprise-grade security.
           </p>
@@ -338,7 +338,7 @@ export default function LandingPage() {
                 letterSpacing: "-0.01em",
               }}
             >
-              What Makes DevPulse Different
+              What Makes Rakshex Different
             </h2>
           </div>
           <div className="glass-card rounded-xl overflow-hidden">
@@ -349,10 +349,10 @@ export default function LandingPage() {
                   style={{ fontSize: "10px", letterSpacing: "0.1em" }}
                 >
                   <th className="px-6 py-4 text-on-surface-variant font-bold">CAPABILITY</th>
-                  {["Postman", "Snyk", "Datadog", "DevPulse"].map((h) => (
+                  {["Postman", "Snyk", "Datadog", "Rakshex"].map((h) => (
                     <th
                       key={h}
-                      className={`px-6 py-4 text-center font-bold ${h === "DevPulse" ? "text-primary" : "text-on-surface-variant"}`}
+                      className={`px-6 py-4 text-center font-bold ${h === "Rakshex" ? "text-primary" : "text-on-surface-variant"}`}
                     >
                       {h}
                     </th>
@@ -595,10 +595,10 @@ export default function LandingPage() {
           className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center pt-8 border-t border-outline-variant/20 text-on-surface-variant"
           style={{ fontSize: "12px" }}
         >
-          <p>© {new Date().getFullYear()} DevPulse by Rashi Technologies. Bengaluru, India.</p>
+          <p>© {new Date().getFullYear()} Rakshex by Rashi Technologies. Bengaluru, India.</p>
           <div className="flex items-center gap-6 mt-4 md:mt-0">
             <a
-              href="https://github.com/Akshu1245/devpulse-complete-codebase"
+              href="https://github.com/Akshu1245/rakshex-complete-codebase"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-on-surface transition-colors"
@@ -606,7 +606,7 @@ export default function LandingPage() {
               GitHub
             </a>
             <a
-              href="https://twitter.com/devpulsehq"
+              href="https://twitter.com/rakshexhq"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-on-surface transition-colors"
@@ -614,7 +614,7 @@ export default function LandingPage() {
               Twitter
             </a>
             <a
-              href="https://linkedin.com/company/devpulse"
+              href="https://linkedin.com/company/rakshex"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-on-surface transition-colors"

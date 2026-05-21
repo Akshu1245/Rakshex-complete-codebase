@@ -1,4 +1,4 @@
-# DevPulse Investor Pitch Deck
+# Rakshex Investor Pitch Deck
 
 > 12-slide deck for seed/Series A fundraising. Designed for 3-minute pitch + 10-minute Q&A.
 
@@ -6,12 +6,12 @@
 
 ## Slide 1 — Title
 
-**DevPulse — AI Runtime Governance Platform**
+**Rakshex — AI Runtime Governance Platform**
 
 - Tagline: "Secure Your AI Agents Before They Cost You"
 - Founded: Jan 2026 | Bengaluru, India
 - Raising: $500K Seed (18-month runway)
-- Contact: akshay@devpulse.in | +91-XXXX-XXXXXX
+- Contact: akshay@rakshex.in | +91-XXXX-XXXXXX
 
 **Logos:** 4 patents filed, Built in India, Y Combinator W26 (aspirational)
 
@@ -35,13 +35,13 @@
 
 **The gap:** Existing tools solve ONE of these. Nobody solves all three.
 
-| Tool         | Security | Cost   | Compliance |
-| ------------ | -------- | ------ | ---------- |
-| Helicone     | ❌       | ✅     | ❌         |
-| Portkey      | ❌       | ✅     | ❌         |
-| Lakera       | ✅       | ❌     | ❌         |
-| Snyk         | ⚠️       | ❌     | ❌         |
-| **DevPulse** | **✅**   | **✅** | **✅**     |
+| Tool        | Security | Cost   | Compliance |
+| ----------- | -------- | ------ | ---------- |
+| Helicone    | ❌       | ✅     | ❌         |
+| Portkey     | ❌       | ✅     | ❌         |
+| Lakera      | ✅       | ❌     | ❌         |
+| Snyk        | ⚠️       | ❌     | ❌         |
+| **Rakshex** | **✅**   | **✅** | **✅**     |
 
 ---
 
@@ -50,7 +50,7 @@
 **One platform. Every surface covered.**
 
 ```
-Developer → DevPulse → Secure AI in Production
+Developer → Rakshex → Secure AI in Production
 ```
 
 **Core Modules:**
@@ -115,7 +115,7 @@ TAM: AI Governance & Security (2026)
 ├── LLM ops / observability: $8B (CAGR 45%)
 └── Compliance automation: $12B (CAGR 28%)
 
-Intersection (DevPulse addressable): $4.5B
+Intersection (Rakshex addressable): $4.5B
 ```
 
 **TAM / SAM / SOM:**
@@ -189,9 +189,9 @@ Intersection (DevPulse addressable): $4.5B
 
 **Founders:**
 
-| Name              | Role                      | Background                                                                                                                        |
-| ----------------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| **Akshay Kammar** | CEO / Full-Stack Engineer | Built DevPulse solo. 4 patents. Previously built internal security tools at [previous company]. Computer Science, NHCE Bengaluru. |
+| Name              | Role                      | Background                                                                                                                       |
+| ----------------- | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **Akshay Kammar** | CEO / Full-Stack Engineer | Built Rakshex solo. 4 patents. Previously built internal security tools at [previous company]. Computer Science, NHCE Bengaluru. |
 
 **Advisory Board (to be formalized):**
 
@@ -260,17 +260,17 @@ Intersection (DevPulse addressable): $4.5B
 
 **The AI revolution is happening. Security is an afterthought.**
 
-**DevPulse makes it the foundation.**
+**Rakshex makes it the foundation.**
 
 > "We don't just observe AI. We govern it."
 
 **Next steps:**
 
-1. Live demo: https://devpulse.in/demo
-2. Self-serve signup: https://devpulse.in/register
-3. GitHub: github.com/Akshu1245/devpulse-complete-codebase
+1. Live demo: https://rakshex.in/demo
+2. Self-serve signup: https://rakshex.in/register
+3. GitHub: github.com/Akshu1245/rakshex-complete-codebase
 
-**Contact:** akshay@devpulse.in
+**Contact:** akshay@rakshex.in
 
 ---
 
@@ -284,9 +284,9 @@ Intersection (DevPulse addressable): $4.5B
 ### B. Customer Case Study (Rashi Technologies)
 
 - Problem: 12 microservices, no API documentation, unknown attack surface
-- Solution: DevPulse scan discovered 47 endpoints, 3 secrets, 2 BOLA vulnerabilities
+- Solution: Rakshex scan discovered 47 endpoints, 3 secrets, 2 BOLA vulnerabilities
 - Result: Fixed in 1 sprint, added to CI/CD, zero incidents since
-- Quote: _"DevPulse found things we didn't know we had."_
+- Quote: _"Rakshex found things we didn't know we had."_
 
 ### C. Patent Portfolio
 

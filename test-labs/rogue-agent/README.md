@@ -1,7 +1,7 @@
 # Rogue Agent Test Lab
 
 > Simulates an AI agent that enters an infinite loop and burns API budget.
-> Used to test DevPulse AgentGuard kill-switch detection.
+> Used to test Rakshex AgentGuard kill-switch detection.
 
 ---
 
@@ -38,7 +38,7 @@ agent.summarize("Company Q3 earnings report...")
 # Cost: ~$50-100 per run
 ```
 
-## Expected DevPulse Detection
+## Expected Rakshex Detection
 
 - **Anomaly:** API call rate > 10/min from single process
 - **Pattern:** Recursive call chain detected

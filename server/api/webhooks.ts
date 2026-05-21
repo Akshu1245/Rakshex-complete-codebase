@@ -1,7 +1,7 @@
 /**
  * Lifecycle webhooks — tRPC router.
  *
- * Phase 25 feature. Lets users register HTTP endpoints that DevPulse will
+ * Phase 25 feature. Lets users register HTTP endpoints that Rakshex will
  * call (with HMAC-signed bodies) when lifecycle events happen:
  *   - scan.complete
  *   - scan.started
@@ -176,7 +176,7 @@ export const webhooksRouter = router({
         // Only returned here — NEVER on subsequent reads.
         secret,
         message:
-          "Save this secret now — it will not be shown again. Use it to verify the X-DevPulse-Signature-256 header on incoming deliveries.",
+          "Save this secret now — it will not be shown again. Use it to verify the X-Rakshex-Signature-256 header on incoming deliveries.",
       };
     }),
 
@@ -256,7 +256,7 @@ export const webhooksRouter = router({
 
     const results = await deliver(ctx.user.id, event, {
       test: true,
-      message: "This is a test delivery from DevPulse.",
+      message: "This is a test delivery from Rakshex.",
       endpointId: endpoint.id,
       triggeredBy: ctx.user.id,
     });
@@ -325,7 +325,7 @@ function describeEvent(event: (typeof SUPPORTED_EVENTS)[number]): string {
     case "quota.warning":
       return "Fires when LLM/API spend reaches 80% of the configured monthly limit.";
     case "kill_switch.triggered":
-      return "Fires when DevPulse shuts off LLM traffic due to exceeding the budget.";
+      return "Fires when Rakshex shuts off LLM traffic due to exceeding the budget.";
     case "subscription.updated":
       return "Fires when the user's plan changes (upgrade, downgrade, cancellation).";
   }

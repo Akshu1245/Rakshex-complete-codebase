@@ -1,4 +1,4 @@
-# DevPulse Disaster Recovery Validation
+# Rakshex Disaster Recovery Validation
 
 > Test your backups before you need them.
 > Date: 2026-05-17
@@ -96,8 +96,8 @@
 ```bash
 # Daily backup integrity script
 #!/bin/bash
-BACKUP_FILE=$(aws s3 ls s3://devpulse-backups/ | tail -1)
-aws s3 cp s3://devpulse-backups/$BACKUP_FILE /tmp/test-restore.sql
+BACKUP_FILE=$(aws s3 ls s3://rakshex-backups/ | tail -1)
+aws s3 cp s3://rakshex-backups/$BACKUP_FILE /tmp/test-restore.sql
 mysql --dry-run < /tmp/test-restore.sql
 if [ $? -eq 0 ]; then
   echo "✅ Backup integrity verified"

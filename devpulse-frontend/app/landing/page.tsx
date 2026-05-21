@@ -192,7 +192,7 @@ export default function LandingPage() {
               Everything you need to secure AI
             </h2>
             <p className="text-slate-400 max-w-xl mx-auto">
-              From VS Code to production, DevPulse protects your AI infrastructure end-to-end.
+              From VS Code to production, Rakshex protects your AI infrastructure end-to-end.
             </p>
           </motion.div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -227,7 +227,7 @@ export default function LandingPage() {
           >
             <h2 className="text-3xl font-bold mb-4">Ready to secure your AI?</h2>
             <p className="text-slate-400 mb-8">
-              Join 500+ developers using DevPulse to protect their AI infrastructure.
+              Join 500+ developers using Rakshex to protect their AI infrastructure.
             </p>
             <button
               onClick={() =>
@@ -251,7 +251,7 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-500">
           <div className="flex items-center gap-2">
             <span className="text-lg">🛡</span>
-            <span className="font-semibold text-slate-300">DevPulse</span>
+            <span className="font-semibold text-slate-300">Rakshex</span>
           </div>
           <div className="flex gap-6">
             <a href="#" className="hover:text-slate-300 transition-colors">
@@ -267,7 +267,7 @@ export default function LandingPage() {
               GitHub
             </a>
           </div>
-          <div>© 2026 DevPulse Technologies</div>
+          <div>© 2026 Rakshex Technologies</div>
         </div>
       </footer>
     </div>

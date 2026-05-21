@@ -1,4 +1,4 @@
-# DevPulse Product-Market Fit Scoreboard
+# Rakshex Product-Market Fit Scoreboard
 
 > Measuring the signals that prove we're building something people want.
 > Date: 2026-05-17
@@ -11,7 +11,7 @@ Based on Rahul Vohra's Product-Market Fit framework and Sean Ellis's 40% rule.
 
 ### 1. The "Very Disappointed" Test (Sean Ellis)
 
-> "How would you feel if you could no longer use DevPulse?"
+> "How would you feel if you could no longer use Rakshex?"
 
 | Response              | Count | %     |
 | --------------------- | ----- | ----- |
@@ -28,7 +28,7 @@ Based on Rahul Vohra's Product-Market Fit framework and Sean Ellis's 40% rule.
 
 ### 2. The "Must-Have" Test
 
-> "What type of person do you think would benefit most from DevPulse?"
+> "What type of person do you think would benefit most from Rakshex?"
 
 If users describe themselves → strong signal.
 
@@ -45,7 +45,7 @@ If users describe themselves → strong signal.
 
 ### 3. The "Push" Test
 
-> "Have you recommended DevPulse to anyone?"
+> "Have you recommended Rakshex to anyone?"
 
 | Response                 | Count | %     |
 | ------------------------ | ----- | ----- |
@@ -60,7 +60,7 @@ If users describe themselves → strong signal.
 
 ### 4. The "Alternative" Test
 
-> "What would you use if DevPulse didn't exist?"
+> "What would you use if Rakshex didn't exist?"
 
 | Response                      | Count | %     |
 | ----------------------------- | ----- | ----- |

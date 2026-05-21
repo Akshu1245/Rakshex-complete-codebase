@@ -1,4 +1,4 @@
-# DevPulse VS Code Extension Release Checklist
+# Rakshex VS Code Extension Release Checklist
 
 > Steps to publish a new version to the VS Code marketplace.
 > Date: 2026-05-17
@@ -9,7 +9,7 @@
 
 ### Code Quality
 
-- [ ] All tests passing (`npm test` in devpulse-vscode/)
+- [ ] All tests passing (`npm test` in rakshex-vscode/)
 - [ ] TypeScript compiles with zero errors (`npx tsc --noEmit`)
 - [ ] ESLint passes (`npx eslint src/ --ext .ts`)
 - [ ] No `console.log` or `debugger` statements
@@ -33,7 +33,7 @@
 ## BUILD & TEST
 
 ```bash
-cd devpulse-vscode
+cd rakshex-vscode
 npm ci
 npm run compile
 npm run test
@@ -59,7 +59,7 @@ vsce package
 
 - [ ] `.vsix` file generated
 - [ ] File size < 5MB
-- [ ] Install from .vsix works: `code --install-extension devpulse-vscode-X.X.X.vsix`
+- [ ] Install from .vsix works: `code --install-extension rakshex-vscode-X.X.X.vsix`
 
 ---
 
@@ -69,10 +69,10 @@ vsce package
 vsce publish
 ```
 
-- [ ] Logged in with `vsce login devpulse`
+- [ ] Logged in with `vsce login rakshex`
 - [ ] PAT has `Marketplace > Publish` scope
 - [ ] Publish succeeds
-- [ ] Verify on marketplace: https://marketplace.visualstudio.com/items?itemName=devpulse.devpulse-vscode
+- [ ] Verify on marketplace: https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex-vscode
 - [ ] Download count visible
 
 ---
@@ -87,4 +87,4 @@ vsce publish
 
 ---
 
-_Checklist maintained by DevPulse engineering team._
+_Checklist maintained by Rakshex engineering team._

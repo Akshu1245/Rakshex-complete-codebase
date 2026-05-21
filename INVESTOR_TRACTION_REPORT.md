@@ -1,4 +1,4 @@
-# DevPulse Investor Traction Report
+# Rakshex Investor Traction Report
 
 > Proof that the market wants this.
 > Period: [Month]
@@ -9,10 +9,10 @@
 ## EXECUTIVE SUMMARY
 
 ```
-DevPulse is the first AI Runtime Protection platform.
+Rakshex is the first AI Runtime Protection platform.
 
 In [X] months of beta:
-• ___ developers actively using DevPulse
+• ___ developers actively using Rakshex
 • ___ scans run weekly
 • $___ in hidden API costs discovered for users
 • ___ rogue agents stopped
@@ -146,7 +146,7 @@ The market is pulling us forward.
 | Workflow lock-in   | Inside VS Code, where developers work  |
 | Data flywheel      | Every scan improves accuracy           |
 | Founder-market fit | Built by someone who lived the problem |
-| Brand association  | "DevPulse = AI security" in beta minds |
+| Brand association  | "Rakshex = AI security" in beta minds  |
 
 ---
 

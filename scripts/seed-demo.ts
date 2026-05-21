@@ -37,7 +37,7 @@ async function seed() {
   // 1. Create demo user
   const demoUser = {
     openId: "demo-user-openid",
-    email: "demo@devpulse.in",
+    email: "demo@rakshex.in",
     name: "Demo User",
     passwordHash: hashPassword("demo123456"),
     role: "admin" as const,
@@ -54,7 +54,7 @@ async function seed() {
   const [user] = await db
     .select({ id: schema.users.id })
     .from(schema.users)
-    .where({ email: "demo@devpulse.in" } as any);
+    .where({ email: "demo@rakshex.in" } as any);
   const userId = user.id;
 
   console.log(`   ✅ User created (id: ${userId})`);
@@ -330,7 +330,7 @@ async function seed() {
 
   await connection.end();
   console.log("\n🎉 Demo data seeded successfully!");
-  console.log("   Login: demo@devpulse.in / demo123456");
+  console.log("   Login: demo@rakshex.in / demo123456");
   console.log(`   Dashboard: http://localhost:3000/dashboard`);
 }
 

@@ -50,7 +50,7 @@ export default function PaywallModal({
   const plans = plansQuery.data ?? [];
 
   const createSubscription = trpc.payment.createSubscription.useMutation({
-    onSuccess: subData => {
+    onSuccess: (subData) => {
       const script = document.createElement("script");
       script.src = "https://checkout.razorpay.com/v1/checkout.js";
       script.async = true;
@@ -63,7 +63,7 @@ export default function PaywallModal({
         const options: RazorpayOptions = {
           key: subData.keyId,
           subscription_id: subData.subscriptionId,
-          name: "DevPulse",
+          name: "Rakshex",
           description: "Subscription",
           image: "/logo.png",
           handler: () => {
@@ -78,8 +78,7 @@ export default function PaywallModal({
       };
       document.body.appendChild(script);
     },
-    onError: (err: { message: string }) =>
-      setError(err.message || "Failed to create subscription"),
+    onError: (err: { message: string }) => setError(err.message || "Failed to create subscription"),
   });
 
   const handleUpgrade = (planId: string) => {
@@ -118,8 +117,7 @@ export default function PaywallModal({
           <div className="flex items-center gap-2 p-3 bg-amber-900/20 border border-amber-500/30 rounded-lg mb-6">
             <AlertCircle className="w-4 h-4 text-amber-400" />
             <span className="text-sm text-amber-300">
-              Required: {requiredPlan === "enterprise" ? "Enterprise" : "Pro"}{" "}
-              plan or higher
+              Required: {requiredPlan === "enterprise" ? "Enterprise" : "Pro"} plan or higher
             </span>
           </div>
         )}
@@ -139,8 +137,8 @@ export default function PaywallModal({
             </div>
           ) : (
             plans
-              .filter(p => p.id !== "free")
-              .map(plan => {
+              .filter((p) => p.id !== "free")
+              .map((plan) => {
                 const isRecommended = plan.id === requiredPlan;
                 const isCurrent = currentPlan === plan.id;
                 const isHigher =
@@ -197,26 +195,17 @@ export default function PaywallModal({
                           disabled={isLoading}
                           className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
                         >
-                          {isLoading ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            "Upgrade"
-                          )}
+                          {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Upgrade"}
                         </button>
                       ) : (
-                        <span className="text-sm text-gray-500">
-                          Lower tier
-                        </span>
+                        <span className="text-sm text-gray-500">Lower tier</span>
                       )}
                     </div>
 
                     {/* Features */}
                     <ul className="mt-3 space-y-1">
                       {plan.features.slice(0, 3).map((feature, idx) => (
-                        <li
-                          key={idx}
-                          className="flex items-start gap-2 text-sm text-gray-400"
-                        >
+                        <li key={idx} className="flex items-start gap-2 text-sm text-gray-400">
                           <Check className="w-3.5 h-3.5 text-green-400 mt-0.5 shrink-0" />
                           {feature}
                         </li>
@@ -230,9 +219,7 @@ export default function PaywallModal({
 
         {/* Footer */}
         <div className="flex items-center justify-between pt-4 border-t border-gray-800">
-          <p className="text-xs text-gray-500">
-            Secure payment via Razorpay. Cancel anytime.
-          </p>
+          <p className="text-xs text-gray-500">Secure payment via Razorpay. Cancel anytime.</p>
           <button
             onClick={onClose}
             className="px-4 py-2 text-gray-400 hover:text-gray-200 transition-colors"

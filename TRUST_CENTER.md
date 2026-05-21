@@ -1,13 +1,13 @@
-# DevPulse Trust Center
+# Rakshex Trust Center
 
-> Everything you need to trust DevPulse with your code.
+> Everything you need to trust Rakshex with your code.
 > Last updated: 2026-05-17
 
 ---
 
 ## OUR SECURITY PROMISE
 
-**DevPulse is designed to protect you, not watch you.**
+**Rakshex is designed to protect you, not watch you.**
 
 1. **Your code stays yours.** We never store your source code.
 2. **Your data is encrypted.** AES-256-GCM at rest, TLS 1.3 in transit.
@@ -52,7 +52,7 @@
                │ TLS 1.3
                ▼
 ┌─────────────────────────────────────┐
-│  DevPulse API (AWS)                │
+│  Rakshex API (AWS)                │
 │  • No code persistence              │
 │  • Scan results encrypted at rest   │
 │  • 30-second request timeout        │
@@ -83,18 +83,18 @@
 
 ## RESPONSIBLE DISCLOSURE
 
-Found a vulnerability in DevPulse? We want to know.
+Found a vulnerability in Rakshex? We want to know.
 
-**Contact:** security@devpulse.in
+**Contact:** security@rakshex.in
 **PGP Key:** [link]
 **Response time:** 24 hours
 **Bounty:** Up to $5,000 for critical issues
 
 **Scope:**
 
-- DevPulse API (api.devpulse.in)
+- Rakshex API (api.rakshex.in)
 - VS Code extension
-- Dashboard (devpulse.in)
+- Dashboard (rakshex.in)
 - Documentation
 
 **Rules:**
@@ -121,7 +121,7 @@ Found a vulnerability in DevPulse? We want to know.
 
 ## STATUS PAGE
 
-Real-time system status: [status.devpulse.in](https://status.devpulse.in)
+Real-time system status: [status.rakshex.in](https://status.rakshex.in)
 
 Subscribe to updates:
 
@@ -134,12 +134,12 @@ Subscribe to updates:
 
 ## CONTACT
 
-| Topic              | Contact                |
-| ------------------ | ---------------------- |
-| Security questions | security@devpulse.in   |
-| Privacy questions  | privacy@devpulse.in    |
-| Compliance         | compliance@devpulse.in |
-| General            | support@devpulse.in    |
+| Topic              | Contact               |
+| ------------------ | --------------------- |
+| Security questions | security@rakshex.in   |
+| Privacy questions  | privacy@rakshex.in    |
+| Compliance         | compliance@rakshex.in |
+| General            | support@rakshex.in    |
 
 ---
 

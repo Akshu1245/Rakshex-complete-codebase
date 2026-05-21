@@ -1,28 +1,28 @@
 import * as vscode from "vscode";
-import type { DevPulseApi, DashboardData, Finding, Severity } from "./api";
+import type { RakshexApi, DashboardData, Finding, Severity } from "./api";
 
 /**
- * Status bar item showing DevPulse health at a glance.
- *   - not signed in  : "$(shield) DevPulse: Sign in"
- *   - signed in ok   : "$(shield) DevPulse: 2C 5H 3M"
- *   - error          : "$(alert) DevPulse: Error"
+ * Status bar item showing Rakshex health at a glance.
+ *   - not signed in  : "$(shield) Rakshex: Sign in"
+ *   - signed in ok   : "$(shield) Rakshex: 2C 5H 3M"
+ *   - error          : "$(alert) Rakshex: Error"
  *
  * Color changes based on risk level:
  *   - Green: no critical/high findings
  *   - Yellow: high findings present
  *   - Red: critical findings present
  */
-export class DevPulseStatusBar {
+export class RakshexStatusBar {
   private readonly item: vscode.StatusBarItem;
   private findings: Finding[] = [];
 
   constructor(
-    private readonly api: DevPulseApi,
+    private readonly api: RakshexApi,
     private readonly getStreak?: () => number,
   ) {
     this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-    this.item.name = "DevPulse";
-    this.item.command = "devpulse.openSecurityPanel";
+    this.item.name = "Rakshex";
+    this.item.command = "rakshex.openSecurityPanel";
   }
 
   dispose(): void {
@@ -30,18 +30,18 @@ export class DevPulseStatusBar {
   }
 
   showSignedOut(): void {
-    this.item.text = "$(shield) DevPulse: Sign in";
-    this.item.tooltip = "Click or run 'DevPulse: Sign in with API Key'";
-    this.item.command = "devpulse.authenticate";
+    this.item.text = "$(shield) Rakshex: Sign in";
+    this.item.tooltip = "Click or run 'Rakshex: Sign in with API Key'";
+    this.item.command = "rakshex.authenticate";
     this.item.color = undefined;
     this.item.backgroundColor = undefined;
     this.item.show();
   }
 
   showError(message: string): void {
-    this.item.text = "$(alert) DevPulse";
-    this.item.tooltip = `DevPulse error: ${message}`;
-    this.item.command = "devpulse.refresh";
+    this.item.text = "$(alert) Rakshex";
+    this.item.tooltip = `Rakshex error: ${message}`;
+    this.item.command = "rakshex.refresh";
     this.item.color = new vscode.ThemeColor("errorForeground");
     this.item.backgroundColor = new vscode.ThemeColor("statusBarItem.errorBackground");
     this.item.show();
@@ -89,7 +89,7 @@ export class DevPulseStatusBar {
 
     // Detailed tooltip focused on value, not cost
     this.item.tooltip = [
-      `DevPulse Security Status`,
+      `Rakshex Security Status`,
       ``,
       streakLine,
       streakLine ? `` : null,
@@ -109,7 +109,7 @@ export class DevPulseStatusBar {
       .filter(Boolean)
       .join("\n");
 
-    this.item.command = "devpulse.openSecurityPanel";
+    this.item.command = "rakshex.openSecurityPanel";
     this.item.show();
   }
 

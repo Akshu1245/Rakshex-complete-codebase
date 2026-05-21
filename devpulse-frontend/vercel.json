@@ -4,6 +4,6 @@
   "outputDirectory": ".next",
   "installCommand": "pnpm install",
   "env": {
-    "NEXT_PUBLIC_APP_URL": "https://app.devpulse.in"
+    "NEXT_PUBLIC_APP_URL": "https://app.rakshex.in"
   }
 }

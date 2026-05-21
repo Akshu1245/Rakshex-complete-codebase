@@ -1,5 +1,5 @@
 /**
- * Typed domain errors for the DevPulse server.
+ * Typed domain errors for the Rakshex server.
  *
  * Why this file exists
  * ────────────────────
@@ -220,9 +220,7 @@ export class DatabaseUnavailableError extends AppError {
 
   constructor(operation?: string, options: AppErrorOptions = {}) {
     super(
-      operation
-        ? `Database not available for operation: ${operation}`
-        : "Database not available",
+      operation ? `Database not available for operation: ${operation}` : "Database not available",
       {
         ...options,
         safeMessage:
@@ -232,7 +230,7 @@ export class DatabaseUnavailableError extends AppError {
           ...(options.context ?? {}),
           ...(operation ? { operation } : {}),
         },
-      }
+      },
     );
   }
 }
@@ -278,10 +276,7 @@ export class InternalError extends AppError {
  *     assertDb(db, "upsertUser");
  *     // db is now non-null below this line
  */
-export function assertDb<T>(
-  db: T | null | undefined,
-  operation?: string
-): asserts db is T {
+export function assertDb<T>(db: T | null | undefined, operation?: string): asserts db is T {
   if (!db) {
     throw new DatabaseUnavailableError(operation);
   }
@@ -294,7 +289,7 @@ export function assertDb<T>(
 export function assertExists<T>(
   value: T | null | undefined,
   resource: string,
-  context?: Record<string, unknown>
+  context?: Record<string, unknown>,
 ): asserts value is T {
   if (value === null || value === undefined) {
     throw new NotFoundError(`${resource} not found`, { context });

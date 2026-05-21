@@ -376,7 +376,7 @@ export default function Dashboard() {
                       >
                         sensors
                       </span>
-                      No activity yet — wire up the DevPulse SDK to stream live agent traffic
+                      No activity yet — wire up the Rakshex SDK to stream live agent traffic
                     </td>
                   </tr>
                 ) : (
@@ -460,7 +460,7 @@ export default function Dashboard() {
               letterSpacing: "0.1em",
             }}
           >
-            DEVPULSE AI — SYSTEM ALPHA-9
+            RAKSHEX AI — SYSTEM ALPHA-9
           </span>
         </div>
       </div>

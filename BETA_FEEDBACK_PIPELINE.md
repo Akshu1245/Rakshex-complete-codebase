@@ -1,4 +1,4 @@
-# DevPulse Beta Feedback Pipeline
+# Rakshex Beta Feedback Pipeline
 
 > Systematic collection, triage, and action of user feedback.
 > Date: 2026-05-17
@@ -7,14 +7,14 @@
 
 ## 1. FEEDBACK CHANNELS
 
-| Channel                   | Purpose               | Owner       | Response Time |
-| ------------------------- | --------------------- | ----------- | ------------- |
-| In-product survey         | NPS, feature requests | Product     | Real-time     |
-| GitHub Issues             | Bugs, features        | Engineering | 4 hours       |
-| Slack (beta channel)      | Quick questions, bugs | Support     | 1 hour        |
-| Email support@devpulse.in | Detailed feedback     | Support     | 4 hours       |
-| Uninstall survey          | Churn reasons         | Product     | Daily review  |
-| Telemetry                 | Usage patterns        | Data        | Automated     |
+| Channel                  | Purpose               | Owner       | Response Time |
+| ------------------------ | --------------------- | ----------- | ------------- |
+| In-product survey        | NPS, feature requests | Product     | Real-time     |
+| GitHub Issues            | Bugs, features        | Engineering | 4 hours       |
+| Slack (beta channel)     | Quick questions, bugs | Support     | 1 hour        |
+| Email support@rakshex.in | Detailed feedback     | Support     | 4 hours       |
+| Uninstall survey         | Churn reasons         | Product     | Daily review  |
+| Telemetry                | Usage patterns        | Data        | Automated     |
 
 ---
 
@@ -81,7 +81,7 @@ Daily triage meeting (15 min)
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│  DevPulse Feedback Dashboard              [Week 20]   │
+│  Rakshex Feedback Dashboard              [Week 20]   │
 ├─────────────────────────────────────────────────────┤
 │  New Feedback: 23    Bugs: 8    Features: 12        │
 │  Avg Response Time: 2.3h    Satisfaction: 4.2/5     │

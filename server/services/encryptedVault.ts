@@ -10,7 +10,7 @@
  * Algorithm: AES-256-GCM, per-record 96-bit IV, 128-bit auth tag.
  *
  * Key management:
- *   - One root key held in `DEVPULSE_VAULT_KEY` (32-byte hex / base64 / utf8).
+ *   - One root key held in `RAKSHEX_VAULT_KEY` (32-byte hex / base64 / utf8).
  *   - Records carry their own 12-byte IV — never reuse an IV with the same
  *     key (GCM is catastrophic on IV reuse).
  *   - The encoded record is `v1.<iv_b64>.<tag_b64>.<ciphertext_b64>` so we
@@ -81,11 +81,7 @@ export interface VaultHandle {
 }
 
 function encodeBase64Url(buf: Buffer): string {
-  return buf
-    .toString("base64")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/g, "");
+  return buf.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
 
 function decodeBase64Url(s: string): Buffer {
@@ -97,7 +93,7 @@ export function createVault(cfg: VaultConfig): VaultHandle {
   const key = deriveKey(cfg.key);
   if (key.length !== KEY_LEN) {
     throw new Error(
-      `vault key must be 32 bytes (got ${key.length}); pass a 64-char hex string, a 32-byte base64 string, or a UTF-8 secret`
+      `vault key must be 32 bytes (got ${key.length}); pass a 64-char hex string, a 32-byte base64 string, or a UTF-8 secret`,
     );
   }
 
@@ -106,10 +102,7 @@ export function createVault(cfg: VaultConfig): VaultHandle {
       const iv = randomBytes(IV_LEN);
       const cipher = createCipheriv(ALGO, key, iv);
       cipher.setAAD(Buffer.from(tenantId, "utf8"));
-      const ct = Buffer.concat([
-        cipher.update(plaintext, "utf8"),
-        cipher.final(),
-      ]);
+      const ct = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
       const tag = cipher.getAuthTag();
       const encoded = `${VERSION}.${encodeBase64Url(iv)}.${encodeBase64Url(tag)}.${encodeBase64Url(ct)}`;
       return { ciphertext: encoded };

@@ -1,4 +1,4 @@
-# DevPulse Monetization Experiments
+# Rakshex Monetization Experiments
 
 > Testing what developers will pay for.
 > Date: 2026-05-17
@@ -89,16 +89,16 @@ Sample: All pricing page visitors
 
 Ask 4 questions to 30+ users:
 
-1. At what price would DevPulse be so expensive you'd not consider it?
+1. At what price would Rakshex be so expensive you'd not consider it?
    → Point of Marginal Cheapness: $\_\_\_
 
-2. At what price would DevPulse be priced so low you'd question its quality?
+2. At what price would Rakshex be priced so low you'd question its quality?
    → Point of Marginal Expensiveness: $\_\_\_
 
-3. At what price would DevPulse start to feel expensive but you'd still buy it?
+3. At what price would Rakshex start to feel expensive but you'd still buy it?
    → Optimal Price Point: $\_\_\_
 
-4. At what price would DevPulse be a bargain?
+4. At what price would Rakshex be a bargain?
    → Indifference Price Point: $\_\_\_
 
 **Optimal price range:** $**_ — $_**

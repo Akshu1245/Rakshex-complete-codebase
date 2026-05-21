@@ -1,6 +1,6 @@
 # Shadow API Test Lab
 
-> Contains undocumented endpoints that should be discovered by DevPulse
+> Contains undocumented endpoints that should be discovered by Rakshex
 > shadow API detection but don't appear in the official collection.
 
 ---
@@ -28,7 +28,7 @@ But the backend actually has 12 endpoints — 7 are undocumented "shadow APIs".
 11. POST /graphql — GraphQL endpoint (different from REST)
 12. GET /swagger.json — API spec exposed
 
-## Expected DevPulse Detection
+## Expected Rakshex Detection
 
 - **Discovery method:** Code analysis + traffic analysis
 - **Findings:** 7 undocumented endpoints

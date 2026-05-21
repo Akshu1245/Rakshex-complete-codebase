@@ -1,4 +1,4 @@
-# DevPulse Security Attestation
+# Rakshex Security Attestation
 
 > Public security posture.
 > Date: 2026-05-17
@@ -61,10 +61,10 @@
 
 | Element       | Detail                                                    |
 | ------------- | --------------------------------------------------------- |
-| Contact       | security@devpulse.in                                      |
+| Contact       | security@rakshex.in                                       |
 | Response time | 24 hours                                                  |
 | Bounty range  | $100 - $5,000                                             |
-| Scope         | api.devpulse.in, devpulse.in, VS Code extension           |
+| Scope         | api.rakshex.in, rakshex.in, VS Code extension             |
 | Rules         | No degradation of service, no data access beyond your own |
 | Hall of Fame  | [link]                                                    |
 

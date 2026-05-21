@@ -1,4 +1,4 @@
-# DevPulse Distribution Engine
+# Rakshex Distribution Engine
 
 > Growth strategy for developer adoption and investor visibility.
 > Date: 2026-05-17
@@ -57,7 +57,7 @@
 
 ### Listing Optimization
 
-- **Title:** "DevPulse — AI Security & Cost Intelligence"
+- **Title:** "Rakshex — AI Security & Cost Intelligence"
 - **Keywords:** security, AI, LLM, cost, API, scanner, AgentGuard
 - **Screenshots:** 5 images showing welcome view, findings, cost dashboard
 - **GIF demo:** 10-second loop showing scan → findings → fix
@@ -114,7 +114,7 @@
 ```
 I built a VS Code extension that stops AI agents from burning your API budget
 
-DevPulse sits between your code and LLM providers, detecting:
+Rakshex sits between your code and LLM providers, detecting:
 - Infinite loops before they cost $100
 - Hidden reasoning tokens (3x your visible cost)
 - API vulnerabilities in your collections
@@ -139,7 +139,7 @@ It's free during beta. Would love feedback!
 [Thread with screenshots]
 
 15/ If you're spending >$500/mo on LLM APIs,
-    you should probably try DevPulse.
+    you should probably try Rakshex.
     Free during beta: [link]
 ```
 
@@ -153,7 +153,7 @@ Here's why (and how to fix it):
 1. Hidden reasoning tokens...
 [Thread]
 
-Fix: DevPulse reveals hidden costs in real-time.
+Fix: Rakshex reveals hidden costs in real-time.
 Beta: [link]
 ```
 

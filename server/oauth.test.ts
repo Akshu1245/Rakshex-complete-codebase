@@ -6,14 +6,20 @@ import { registerOAuthRoutes } from "./_core/oauth";
 function mockReq(overrides: Partial<Request> = {}): Request {
   return {
     protocol: "https",
-    hostname: "app.devpulse.in",
+    hostname: "app.rakshex.in",
     headers: { "x-forwarded-proto": "https" },
     query: {},
     ...overrides,
   } as unknown as Request;
 }
 
-function mockRes(): { res: Response; cookies: Record<string, unknown>[]; redirects: string[]; getStatus: () => number; getBody: () => unknown } {
+function mockRes(): {
+  res: Response;
+  cookies: Record<string, unknown>[];
+  redirects: string[];
+  getStatus: () => number;
+  getBody: () => unknown;
+} {
   const cookies: Record<string, unknown>[] = [];
   const redirects: string[] = [];
   let _status = 200;
@@ -31,8 +37,12 @@ function mockRes(): { res: Response; cookies: Record<string, unknown>[]; redirec
     status(code: number) {
       _status = code;
       return {
-        json(data: unknown) { _body = data; },
-        send(data: unknown) { _body = data; },
+        json(data: unknown) {
+          _body = data;
+        },
+        send(data: unknown) {
+          _body = data;
+        },
       };
     },
     json(data: unknown) {
@@ -42,7 +52,9 @@ function mockRes(): { res: Response; cookies: Record<string, unknown>[]; redirec
   } as unknown as Response;
 
   return {
-    res, cookies, redirects,
+    res,
+    cookies,
+    redirects,
     getStatus: () => _status,
     getBody: () => _body,
   };

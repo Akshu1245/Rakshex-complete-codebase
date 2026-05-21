@@ -1,5 +1,5 @@
 /**
- * DevPulse Demo Mode — Cinematic YC Demo Experience
+ * Rakshex Demo Mode — Cinematic YC Demo Experience
  *
  * Provides seeded fake data and scripted interactions for
  * investor demos, Product Hunt launches, and onboarding.
@@ -96,12 +96,12 @@ export async function runDemoScenarios(): Promise<void> {
   const scenarios: DemoScenario[] = [
     {
       name: "🔍 Instant Security Scan",
-      description: "Shows how DevPulse detects vulnerabilities in seconds",
+      description: "Shows how Rakshex detects vulnerabilities in seconds",
       run: async () => {
         await vscode.window.withProgress(
           {
             location: vscode.ProgressLocation.Notification,
-            title: "DevPulse Demo: Running security scan...",
+            title: "Rakshex Demo: Running security scan...",
             cancellable: false,
           },
           async (progress) => {
@@ -114,7 +114,7 @@ export async function runDemoScenarios(): Promise<void> {
           },
         );
         void vscode.window.showInformationMessage(
-          "🛡️ DevPulse found 6 issues: 1 Critical, 2 High, 2 Medium, 1 Low",
+          "🛡️ Rakshex found 6 issues: 1 Critical, 2 High, 2 Medium, 1 Low",
         );
       },
     },
@@ -125,7 +125,7 @@ export async function runDemoScenarios(): Promise<void> {
         await vscode.window.withProgress(
           {
             location: vscode.ProgressLocation.Notification,
-            title: "DevPulse Demo: Analyzing token costs...",
+            title: "Rakshex Demo: Analyzing token costs...",
             cancellable: false,
           },
           async (progress) => {
@@ -147,7 +147,7 @@ export async function runDemoScenarios(): Promise<void> {
         await vscode.window.withProgress(
           {
             location: vscode.ProgressLocation.Notification,
-            title: "DevPulse Demo: Monitoring for rogue agents...",
+            title: "Rakshex Demo: Monitoring for rogue agents...",
             cancellable: false,
           },
           async (progress) => {
@@ -171,7 +171,7 @@ export async function runDemoScenarios(): Promise<void> {
 
   const picked = await vscode.window.showQuickPick(
     scenarios.map((s) => ({ label: s.name, description: s.description, scenario: s })),
-    { title: "DevPulse Demo Scenarios", placeHolder: "Pick a scenario to run" },
+    { title: "Rakshex Demo Scenarios", placeHolder: "Pick a scenario to run" },
   );
   if (picked) {
     await picked.scenario.run();

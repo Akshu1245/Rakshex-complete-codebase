@@ -3,7 +3,7 @@
  *
  * Each key belongs to a workspace and has a role that determines
  * what the key can do when used for authentication. Keys are used
- * by the DevPulse SDK, VS Code extension, CLI, and CI pipelines.
+ * by the Rakshex SDK, VS Code extension, CLI, and CI pipelines.
  */
 import { z } from "zod";
 import { router, adminProcedure, protectedProcedure } from "../_core/trpc";

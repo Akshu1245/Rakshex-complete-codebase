@@ -1,6 +1,6 @@
-# DevPulse True PMF Validation
+# Rakshex True PMF Validation
 
-> Proving developers cannot uninstall DevPulse.
+> Proving developers cannot uninstall Rakshex.
 > Date: 2026-05-17
 
 ---
@@ -79,8 +79,8 @@
 
 ## GROWTH WEDGE
 
-**What spreads:** **_
-**Why it spreads:** _**
+**What spreads:** **\_
+**Why it spreads:** \_**
 **How to amplify:** \_\_\_
 
 ---

@@ -26,7 +26,7 @@ export const teamRouter = router({
 
       await sendTeamInviteEmail({
         toEmail: input.email,
-        inviterName: ctx.user.name ?? "A DevPulse user",
+        inviterName: ctx.user.name ?? "A Rakshex user",
         role: input.role,
         token: member.id,
       }).catch((err) => logger.warn({ err: err }, "[Team] Email send failed"));
@@ -124,7 +124,7 @@ export const teamRouter = router({
       }
       await sendTeamInviteEmail({
         toEmail: member.memberEmail,
-        inviterName: ctx.user.name ?? "A DevPulse user",
+        inviterName: ctx.user.name ?? "A Rakshex user",
         role: member.role,
       }).catch((err) => logger.warn({ err: err }, "[Team] Email send failed"));
       return { success: true };
@@ -215,8 +215,8 @@ export const teamRouter = router({
 
       return {
         memberId: member.id,
-        workspaceName: inviter.name || inviter.email || "DevPulse Workspace",
-        inviterName: inviter.name || inviter.email || "A DevPulse user",
+        workspaceName: inviter.name || inviter.email || "Rakshex Workspace",
+        inviterName: inviter.name || inviter.email || "A Rakshex user",
         inviterEmail: inviter.email,
         role: member.role,
         invitedAt: member.invitedAt,

@@ -23,5 +23,5 @@
     "vitest.config.ts",
     "playwright.config.ts"
   ],
-  "exclude": ["node_modules", "devpulse-frontend", "devpulse-vscode", "dist", "vite.config.ts"]
+  "exclude": ["node_modules", "rakshex-frontend", "rakshex-vscode", "dist", "vite.config.ts"]
 }

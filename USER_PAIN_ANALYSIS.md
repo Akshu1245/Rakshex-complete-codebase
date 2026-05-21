@@ -1,4 +1,4 @@
-# DevPulse User Pain Analysis
+# Rakshex User Pain Analysis
 
 > Documented pain points from beta testing and how we fix them.
 > Date: 2026-05-17
@@ -7,7 +7,7 @@
 
 ## TOP 10 USER PAINS (Prioritized)
 
-### 1. "I don't know if DevPulse is working"
+### 1. "I don't know if Rakshex is working"
 
 **Severity:** CRITICAL | **Frequency:** Every new user
 **Root cause:** No visible progress or confirmation during first scan

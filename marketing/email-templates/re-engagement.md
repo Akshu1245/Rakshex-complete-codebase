@@ -6,7 +6,7 @@
 
 ## Email 1 — Week 1 Post-Downgrade
 
-**Subject:** What would bring you back to DevPulse?
+**Subject:** What would bring you back to Rakshex?
 
 ```
 Hi {{name}},
@@ -27,7 +27,7 @@ What is new since you left:
 • New compliance report templates
 
 Want to give Pro another try? Use code COMEBACK20 for 20% off your first 3 months:
-https://devpulse.in/billing?coupon=COMEBACK20
+https://rakshex.in/billing?coupon=COMEBACK20
 
 Akshay
 ```
@@ -36,12 +36,12 @@ Akshay
 
 ## Email 2 — Month 2 Post-Downgrade
 
-**Subject:** DevPulse has changed — want a second look?
+**Subject:** Rakshex has changed — want a second look?
 
 ```
 Hi {{name}},
 
-It has been a while. Since you last used DevPulse, we shipped some big features:
+It has been a while. Since you last used Rakshex, we shipped some big features:
 
 ✓ Shadow API Discovery — find undocumented endpoints
 ✓ Thinking Token Attribution — first-in-world cost isolation
@@ -51,7 +51,7 @@ It has been a while. Since you last used DevPulse, we shipped some big features:
 Plus, we filed 4 patents.
 
 If you are curious, I can set up a 15-minute personal demo:
-https://calendly.com/akshay-devpulse/15min
+https://calendly.com/akshay-rakshex/15min
 
 No pitch. Just showing you what is new.
 
@@ -62,22 +62,22 @@ Akshay
 
 ## Email 3 — Final Attempt (Month 3)
 
-**Subject:** Should we close your DevPulse account?
+**Subject:** Should we close your Rakshex account?
 
 ```
 Hi {{name}},
 
-This is my last email to you. If you are not interested in DevPulse anymore,
+This is my last email to you. If you are not interested in Rakshex anymore,
 I will stop reaching out.
 
 Before I go — one question:
 
-What is the #1 thing that would make DevPulse worth $99/month for you?
+What is the #1 thing that would make Rakshex worth $99/month for you?
 
 Reply with one sentence. I will personally read it and build it if it aligns with our roadmap.
 
 If I do not hear back, I will assume you have moved on. No hard feelings.
-Thank you for trying DevPulse.
+Thank you for trying Rakshex.
 
 Akshay
 ```

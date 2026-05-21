@@ -1,4 +1,4 @@
-# DevPulse YC Interview Preparation
+# Rakshex YC Interview Preparation
 
 > Practice until it's instinctive.
 > Date: 2026-05-17
@@ -8,14 +8,14 @@
 ## THE 1-MINUTE PITCH
 
 ```
-"DevPulse is the first AI Runtime Protection platform.
+"Rakshex is the first AI Runtime Protection platform.
 
 Every developer building with AI has the same problem:
 their AI agents are making API calls they can't see,
 leaking secrets they forgot existed, and running up
 bills they didn't expect.
 
-We built DevPulse to fix this.
+We built Rakshex to fix this.
 
 We're inside VS Code, so developers don't change their workflow.
 We find security issues and hidden costs in real-time.
@@ -104,7 +104,7 @@ If we don't do this now, Snyk or Datadog will in 12 months."
 "I'm a developer who spent [X] months building AI agents
 and got burned by surprise costs and security issues.
 
-I built DevPulse to solve my own problem.
+I built Rakshex to solve my own problem.
 [Technical depth — e.g., built the first version solo in 3 months].
 
 I've also [relevant experience — e.g., shipped products at

@@ -1,4 +1,4 @@
-# DevPulse Community Health Report
+# Rakshex Community Health Report
 
 > Are we building a real community?
 > Date: 2026-05-17

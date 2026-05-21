@@ -1,4 +1,4 @@
-# DevPulse — YC Demo Script
+# Rakshex — YC Demo Script
 
 > 3-minute demo for YC application and investor pitches.
 > Date: 2026-05-17
@@ -13,7 +13,7 @@
 >
 > Hidden reasoning tokens cost 3x more than visible ones. API keys leak in Postman collections. Shadow APIs appear overnight.
 >
-> I'm Akshay, and we built DevPulse — the first security platform that sits between your code and AI providers, protecting you from risks you can't see."
+> I'm Akshay, and we built Rakshex — the first security platform that sits between your code and AI providers, protecting you from risks you can't see."
 
 ---
 
@@ -31,9 +31,9 @@
 
 ## SOLUTION (1:00 - 1:45)
 
-**[Screen: DevPulse VS Code extension — scan results panel]**
+**[Screen: Rakshex VS Code extension — scan results panel]**
 
-> "DevPulse is three things in one:
+> "Rakshex is three things in one:
 >
 > **One:** Import any collection — Postman, OpenAPI, or Bruno — and we scan it for leaked secrets, exposed PII, and missing auth before it hits production.
 >
@@ -52,7 +52,7 @@
 **[Screen: Live demo — 45 seconds]**
 
 1. **Import collection:** "I'll import this Postman collection..."
-2. **Scan:** "DevPulse found 2 leaked API keys and a missing auth header."
+2. **Scan:** "Rakshex found 2 leaked API keys and a missing auth header."
 3. **Fix inline:** "Click fix — the key is rotated and the header is added."
 4. **View cost:** "Here's the cost breakdown — visible vs hidden reasoning tokens."
 5. **Enable AgentGuard:** "Now AgentGuard is active. If anything anomalous happens, it stops automatically."
@@ -75,9 +75,9 @@
 
 ## CLOSING (2:50 - 3:00)
 
-**[Screen: DevPulse logo + contact]**
+**[Screen: Rakshex logo + contact]**
 
-> "DevPulse is the security layer every AI application needs but nobody has built yet.
+> "Rakshex is the security layer every AI application needs but nobody has built yet.
 >
 > We're live in beta, 500 developers on the waitlist, and raising our seed round.
 >
@@ -96,12 +96,12 @@
 
 ### Slide B: Competitive Matrix
 
-|             | Snyk    | Datadog | Portkey | **DevPulse** |
-| ----------- | ------- | ------- | ------- | ------------ |
-| IDE-native  | Partial | No      | No      | **Yes**      |
-| LLM-aware   | No      | No      | Yes     | **Yes**      |
-| Cost intel  | No      | No      | Partial | **Yes**      |
-| Kill-switch | No      | No      | No      | **Yes**      |
+|             | Snyk    | Datadog | Portkey | **Rakshex** |
+| ----------- | ------- | ------- | ------- | ----------- |
+| IDE-native  | Partial | No      | No      | **Yes**     |
+| LLM-aware   | No      | No      | Yes     | **Yes**     |
+| Cost intel  | No      | No      | Partial | **Yes**     |
+| Kill-switch | No      | No      | No      | **Yes**     |
 
 ### Slide C: Team
 

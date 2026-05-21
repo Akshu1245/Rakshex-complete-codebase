@@ -1,7 +1,7 @@
 /**
  * Telemetry Ingest API Router
  *
- * Accepts batched telemetry events from the DevPulse SDK.
+ * Accepts batched telemetry events from the Rakshex SDK.
  * Validates, de-duplicates, enqueues to BullMQ for async processing,
  * and provides query endpoints for the dashboard.
  */
@@ -27,7 +27,17 @@ const telemetryEventSchema = z.object({
   workspaceId: z.string().min(1),
   agentId: z.string().min(1),
   userId: z.string().optional(),
-  provider: z.enum(["openai","anthropic","bedrock","vertex","cohere","mistral","groq","ollama","vllm"]),
+  provider: z.enum([
+    "openai",
+    "anthropic",
+    "bedrock",
+    "vertex",
+    "cohere",
+    "mistral",
+    "groq",
+    "ollama",
+    "vllm",
+  ]),
   model: z.string().min(1),
   requestTimestamp: z.string().datetime(),
   latencyMs: z.number().int().min(0),
@@ -35,7 +45,7 @@ const telemetryEventSchema = z.object({
   outputTokens: z.number().int().min(0),
   cachedTokens: z.number().int().min(0).default(0),
   costUsd: z.number().min(0),
-  status: z.enum(["ok","error","timeout","blocked"]),
+  status: z.enum(["ok", "error", "timeout", "blocked"]),
   redactionCount: z.number().int().min(0).default(0),
   promptHash: z.string().length(64),
   responseHash: z.string().length(64),
@@ -55,14 +65,18 @@ async function resolveWorkspaceByApiKey(apiKey: string): Promise<number | null> 
   try {
     const cached = await redis.get(cacheKey);
     if (cached) return parseInt(cached, 10);
-  } catch { /* Redis down, fall through */ }
+  } catch {
+    /* Redis down, fall through */
+  }
 
   const user = await db.getUserByApiKey(apiKey);
   if (!user) return null;
 
   try {
     await redis.setex(cacheKey, 300, String(user.id));
-  } catch { /* Best effort */ }
+  } catch {
+    /* Best effort */
+  }
 
   return user.id;
 }
@@ -99,104 +113,102 @@ function isDuplicate(eventId: string): boolean {
 export const telemetryRouter = router({
   // ── Ingest (SDK → Server, authenticated via API key) ──────────────────
 
-  ingest: publicProcedure
-    .input(ingestSchema)
-    .mutation(async ({ input, ctx }) => {
-      const startTime = Date.now();
+  ingest: publicProcedure.input(ingestSchema).mutation(async ({ input, ctx }) => {
+    const startTime = Date.now();
 
-      const apiKey =
-        (ctx.req.headers["x-api-key"] as string) ||
-        (ctx.req.headers.authorization as string)?.replace("Bearer ", "");
+    const apiKey =
+      (ctx.req.headers["x-api-key"] as string) ||
+      (ctx.req.headers.authorization as string)?.replace("Bearer ", "");
 
-      if (!apiKey || apiKey.trim().length < 8) {
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "Missing or invalid API key",
-        });
-      }
+    if (!apiKey || apiKey.trim().length < 8) {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "Missing or invalid API key",
+      });
+    }
 
-      const userId = await resolveWorkspaceByApiKey(apiKey.trim());
-      if (!userId) {
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "Invalid API key",
-        });
-      }
+    const userId = await resolveWorkspaceByApiKey(apiKey.trim());
+    if (!userId) {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "Invalid API key",
+      });
+    }
 
-      // Rate limit check
-      const allowed = await checkTelemetryRateLimit(input.events[0]?.workspaceId);
-      if (!allowed) {
-        throw new TRPCError({
-          code: "TOO_MANY_REQUESTS",
-          message: "Telemetry rate limit exceeded (1000/min per workspace)",
-        });
-      }
+    // Rate limit check
+    const allowed = await checkTelemetryRateLimit(input.events[0]?.workspaceId);
+    if (!allowed) {
+      throw new TRPCError({
+        code: "TOO_MANY_REQUESTS",
+        message: "Telemetry rate limit exceeded (1000/min per workspace)",
+      });
+    }
 
-      const accepted: string[] = [];
-      const rejected: string[] = [];
-      const rows: db.InsertAiEventRow[] = [];
+    const accepted: string[] = [];
+    const rejected: string[] = [];
+    const rows: db.InsertAiEventRow[] = [];
 
-      for (const event of input.events) {
-        try {
-          if (isDuplicate(event.eventId)) {
-            accepted.push(event.eventId);
-            continue;
-          }
-          rows.push({
-            eventId: event.eventId,
-            userId,
-            workspaceId: event.workspaceId,
-            agentId: event.agentId,
-            userHash: event.userId ?? null,
-            provider: event.provider,
-            model: event.model,
-            requestTimestamp: new Date(event.requestTimestamp),
-            latencyMs: event.latencyMs,
-            inputTokens: event.inputTokens,
-            outputTokens: event.outputTokens,
-            cachedTokens: event.cachedTokens,
-            costUsd: String(event.costUsd),
-            status: event.status,
-            redactionCount: event.redactionCount,
-            promptHash: event.promptHash,
-            responseHash: event.responseHash,
-            toolCalls: event.toolCalls,
-            metadata: event.metadata,
-          });
+    for (const event of input.events) {
+      try {
+        if (isDuplicate(event.eventId)) {
           accepted.push(event.eventId);
-        } catch (err) {
-          rejected.push(event.eventId);
-          logger.warn({ err, eventId: event.eventId }, "[Telemetry] Event rejected");
+          continue;
         }
+        rows.push({
+          eventId: event.eventId,
+          userId,
+          workspaceId: event.workspaceId,
+          agentId: event.agentId,
+          userHash: event.userId ?? null,
+          provider: event.provider,
+          model: event.model,
+          requestTimestamp: new Date(event.requestTimestamp),
+          latencyMs: event.latencyMs,
+          inputTokens: event.inputTokens,
+          outputTokens: event.outputTokens,
+          cachedTokens: event.cachedTokens,
+          costUsd: String(event.costUsd),
+          status: event.status,
+          redactionCount: event.redactionCount,
+          promptHash: event.promptHash,
+          responseHash: event.responseHash,
+          toolCalls: event.toolCalls,
+          metadata: event.metadata,
+        });
+        accepted.push(event.eventId);
+      } catch (err) {
+        rejected.push(event.eventId);
+        logger.warn({ err, eventId: event.eventId }, "[Telemetry] Event rejected");
       }
+    }
 
-      // Enqueue to BullMQ for async processing instead of direct DB insert
-      if (rows.length > 0) {
-        try {
-          await telemetryQueue.add("telemetry", {
-            events: rows,
-            workspaceId: input.events[0]?.workspaceId ?? "unknown",
-          });
-        } catch (err) {
-          logger.error({ err, count: rows.length }, "[Telemetry] Queue enqueue failed");
-          for (const r of rows) {
-            const idx = accepted.indexOf(r.eventId);
-            if (idx !== -1) {
-              accepted.splice(idx, 1);
-              rejected.push(r.eventId);
-            }
+    // Enqueue to BullMQ for async processing instead of direct DB insert
+    if (rows.length > 0) {
+      try {
+        await telemetryQueue.add("telemetry", {
+          events: rows,
+          workspaceId: input.events[0]?.workspaceId ?? "unknown",
+        });
+      } catch (err) {
+        logger.error({ err, count: rows.length }, "[Telemetry] Queue enqueue failed");
+        for (const r of rows) {
+          const idx = accepted.indexOf(r.eventId);
+          if (idx !== -1) {
+            accepted.splice(idx, 1);
+            rejected.push(r.eventId);
           }
         }
       }
+    }
 
-      const duration = Date.now() - startTime;
-      logger.info(
-        { accepted: accepted.length, rejected: rejected.length, duration },
-        "[Telemetry] Batch enqueued",
-      );
+    const duration = Date.now() - startTime;
+    logger.info(
+      { accepted: accepted.length, rejected: rejected.length, duration },
+      "[Telemetry] Batch enqueued",
+    );
 
-      return { accepted: accepted.length, rejected: rejected.length };
-    }),
+    return { accepted: accepted.length, rejected: rejected.length };
+  }),
 
   // ── Events list (for dashboard) ────────────────────────────────────────
 

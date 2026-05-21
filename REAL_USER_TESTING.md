@@ -1,6 +1,6 @@
-# DevPulse Real User Battle Testing
+# Rakshex Real User Battle Testing
 
-> How we validate DevPulse with actual developers before public launch.
+> How we validate Rakshex with actual developers before public launch.
 > Date: 2026-05-17
 
 ---
@@ -66,14 +66,14 @@ For each beta user, track:
 ### In-Product Feedback
 
 ```typescript
-// devpulse-vscode/src/feedback.ts
+// rakshex-vscode/src/feedback.ts
 export async function showFeedbackPrompt(context: vscode.ExtensionContext) {
   // Show after 3rd successful scan
-  const scanCount = context.globalState.get<number>("devpulse.scanCount") ?? 0;
+  const scanCount = context.globalState.get<number>("rakshex.scanCount") ?? 0;
   if (scanCount === 3) {
     const rating = await vscode.window.showQuickPick(
       ["⭐", "⭐⭐", "⭐⭐⭐", "⭐⭐⭐⭐", "⭐⭐⭐⭐⭐"],
-      { title: "How is DevPulse working for you?" },
+      { title: "How is Rakshex working for you?" },
     );
     if (rating) {
       telemetry.track("nps_rating", { stars: rating.length });
@@ -92,7 +92,7 @@ export async function showFeedbackPrompt(context: vscode.ExtensionContext) {
 
 ```
 When user uninstalls the extension:
-1. Open browser to "https://devpulse.in/uninstall-survey?user={hash}"
+1. Open browser to "https://rakshex.in/uninstall-survey?user={hash}"
 2. Ask: "Why are you leaving?"
    - Didn't find value
    - Too confusing
@@ -101,7 +101,7 @@ When user uninstalls the extension:
    - Too expensive
    - Other
 3. Ask: "What would make you come back?"
-4. Offer: "Email us directly: support@devpulse.in"
+4. Offer: "Email us directly: support@rakshex.in"
 ```
 
 ### Rage Click Detection
@@ -135,7 +135,7 @@ function detectRageClick(target: string) {
 ### Extension Health Report
 
 ```
-DevPulse Health Report (auto-generated on error)
+Rakshex Health Report (auto-generated on error)
 
 Version: 0.1.0
 VS Code: 1.85.0

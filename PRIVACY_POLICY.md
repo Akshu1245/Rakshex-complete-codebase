@@ -1,4 +1,4 @@
-# DevPulse Privacy Policy
+# Rakshex Privacy Policy
 
 > Last updated: May 17, 2026
 
@@ -66,12 +66,12 @@ All data is encrypted:
 
 | Right                | How to exercise                        |
 | -------------------- | -------------------------------------- |
-| Access your data     | Email security@devpulse.in             |
+| Access your data     | Email security@rakshex.in              |
 | Delete your data     | Settings → Delete Account (instant)    |
 | Export your data     | Settings → Export Data (JSON)          |
 | Opt out of telemetry | Settings → Privacy → Disable Telemetry |
 | Correct your data    | Edit in Settings                       |
-| Object to processing | Email security@devpulse.in             |
+| Object to processing | Email security@rakshex.in              |
 
 **Data deletion:** When you delete your account, all collections, scans, and personal data are permanently removed within 24 hours. Backups are purged within 30 days.
 
@@ -79,11 +79,11 @@ All data is encrypted:
 
 ## 5. COOKIES
 
-| Cookie               | Purpose                | Duration |
-| -------------------- | ---------------------- | -------- |
-| session              | Authentication         | 7 days   |
-| csrf                 | CSRF protection        | Session  |
-| \_devpulse_telemetry | Telemetry opt-out flag | 1 year   |
+| Cookie              | Purpose                | Duration |
+| ------------------- | ---------------------- | -------- |
+| session             | Authentication         | 7 days   |
+| csrf                | CSRF protection        | Session  |
+| \_rakshex_telemetry | Telemetry opt-out flag | 1 year   |
 
 No third-party tracking cookies.
 
@@ -117,9 +117,9 @@ See [SECURITY.md](SECURITY.md) for full details.
 
 ## 8. CONTACT
 
-**Data Protection Officer:** Akshay, DevPulse Technologies
-**Email:** privacy@devpulse.in
-**Address:** DevPulse Technologies Pvt. Ltd., Bangalore, India
+**Data Protection Officer:** Akshay, Rakshex Technologies
+**Email:** privacy@rakshex.in
+**Address:** Rakshex Technologies Pvt. Ltd., Bangalore, India
 
 ---
 

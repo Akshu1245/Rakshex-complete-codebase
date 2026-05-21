@@ -1,4 +1,4 @@
-# DevPulse Social Content Calendar
+# Rakshex Social Content Calendar
 
 > 30-day posting schedule for building developer authority.
 > Date: 2026-05-17
@@ -9,8 +9,8 @@
 
 1. **Educational** — Teach developers something useful (60% of posts)
 2. **Social Proof** — Share wins, testimonials, metrics (20% of posts)
-3. **Behind the Scenes** — Building DevPulse, mistakes, learnings (15% of posts)
-4. **Promotional** — Direct CTA for DevPulse (5% of posts)
+3. **Behind the Scenes** — Building Rakshex, mistakes, learnings (15% of posts)
+4. **Promotional** — Direct CTA for Rakshex (5% of posts)
 
 ---
 
@@ -35,7 +35,7 @@ After 5 years building API infrastructure at Flipkart, I saw one problem everywh
 
 AI developers bleeding money they can't see.
 
-I quit to build DevPulse — a tool that reveals hidden LLM costs and stops rogue agents.
+I quit to build Rakshex — a tool that reveals hidden LLM costs and stops rogue agents.
 
 Free during beta.
 
@@ -69,7 +69,7 @@ Your collection is probably more vulnerable than you think.
 ```
 Building in public update:
 
-DevPulse beta stats (Week 1):
+Rakshex beta stats (Week 1):
 - 25 developers invited
 - 18 activated (72%)
 - 12 ran scans
@@ -101,7 +101,7 @@ The agent was a "simple summarizer" that recursively called GPT-4 on its own out
 
 No termination condition = infinite loop = infinite cost.
 
-DevPulse caught it in 4.2 seconds.
+Rakshex caught it in 4.2 seconds.
 ```
 
 ### Wednesday (LinkedIn)
@@ -113,7 +113,7 @@ DevPulse caught it in 4.2 seconds.
 2. You don't know what "reasoning tokens" are
 3. You have no way to stop a runaway agent
 
-If 2 or more apply, you need DevPulse.
+If 2 or more apply, you need Rakshex.
 
 [Link]
 ```
@@ -123,7 +123,7 @@ If 2 or more apply, you need DevPulse.
 ```
 [Showoff Saturday] I built a tool that stops AI agents from burning money
 
-After getting a $50K surprise OpenAI bill at my previous company, I built DevPulse.
+After getting a $50K surprise OpenAI bill at my previous company, I built Rakshex.
 
 It's a VS Code extension that:
 - Reveals hidden reasoning costs
@@ -138,13 +138,13 @@ Free beta. Would love feedback!
 ### Friday (Twitter/X)
 
 ```
-DevPulse vs Snyk: API security benchmark
+Rakshex vs Snyk: API security benchmark
 
 Same 100 collections. Different results:
-- DevPulse: 312 findings
+- Rakshex: 312 findings
 - Snyk: 198 findings
 
-DevPulse is 4× faster and finds 57% more API-specific issues.
+Rakshex is 4× faster and finds 57% more API-specific issues.
 
 Full report: [link]
 ```
@@ -156,7 +156,7 @@ Full report: [link]
 ### Monday (Twitter/X)
 
 ```
-"DevPulse found $1,200 in hidden reasoning costs we didn't know existed."
+"Rakshex found $1,200 in hidden reasoning costs we didn't know existed."
 
 — Engineering Lead, Series B SaaS
 
@@ -191,7 +191,7 @@ Being transparent about our failures is how we earn trust.
 ```
 AI security is not optional.
 
-In the last 30 days, DevPulse users:
+In the last 30 days, Rakshex users:
 - Found 234 exposed secrets
 - Stopped 47 rogue agents
 - Saved $12,000 in hidden costs
@@ -225,7 +225,7 @@ Who's with us?
 ```
 We're launching on Product Hunt next Tuesday.
 
-DevPulse is a VS Code extension that:
+Rakshex is a VS Code extension that:
 - Stops AI agents from burning your budget
 - Reveals hidden LLM costs
 - Scans API collections for vulnerabilities
@@ -260,7 +260,7 @@ See you Tuesday at 00:01 PST.
 ### Thursday (All channels)
 
 ```
-🚀 DevPulse is live on Product Hunt!
+🚀 Rakshex is live on Product Hunt!
 
 Stop AI agents from burning your API budget.
 

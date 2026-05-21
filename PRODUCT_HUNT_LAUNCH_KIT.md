@@ -1,4 +1,4 @@
-# DevPulse Product Hunt Launch Kit
+# Rakshex Product Hunt Launch Kit
 
 > Complete asset checklist for launch day.
 > Date: 2026-05-17
@@ -11,16 +11,16 @@
 
 | Field        | Content                                     |
 | ------------ | ------------------------------------------- |
-| **Name**     | DevPulse                                    |
+| **Name**     | Rakshex                                     |
 | **Tagline**  | Stop AI agents from burning your API budget |
 | **Category** | Developer Tools                             |
-| **Website**  | https://devpulse.in                         |
+| **Website**  | https://rakshex.in                          |
 | **Maker**    | Akshay (@akshaynhcm)                        |
 
 ### Gallery Images (Required: 3, Recommended: 5)
 
 1. **Hero GIF** (800×600)
-   - VS Code sidebar open with DevPulse
+   - VS Code sidebar open with Rakshex
    - Scan running → findings appearing
    - Duration: 5 seconds, looping
 
@@ -46,7 +46,7 @@
 ### Thumbnail (Optional but recommended)
 
 - 240×240 PNG
-- DevPulse logo on dark background
+- Rakshex logo on dark background
 - Readable at small size
 
 ---
@@ -101,13 +101,13 @@
 
 ### "What makes this different from Snyk?"
 
-"Great question! Snyk is excellent for traditional app security. DevPulse is specifically built for AI/LLM applications:
+"Great question! Snyk is excellent for traditional app security. Rakshex is specifically built for AI/LLM applications:
 
 - We detect hidden reasoning tokens that providers don't show you
 - AgentGuard stops infinite loops in real-time (not just static analysis)
 - We're inside VS Code, so you fix issues without context switching
 
-Many of our users use both — Snyk for their app, DevPulse for their AI layer."
+Many of our users use both — Snyk for their app, Rakshex for their AI layer."
 
 ### "Is this free?"
 
@@ -123,7 +123,7 @@ Beta users get Pro free for 6 months."
 
 ### "Does this work with [X provider]?"
 
-"Yes! DevPulse works with any LLM provider that uses HTTP APIs:
+"Yes! Rakshex works with any LLM provider that uses HTTP APIs:
 
 ✅ OpenAI (GPT-4, GPT-3.5)
 ✅ Anthropic (Claude)
@@ -144,7 +144,7 @@ If you make HTTP calls to an LLM, we can monitor them."
 - SOC2 Type 2 audit in progress
 - You can delete all data instantly
 
-We're developers too — we built DevPulse because we were frustrated with tools that felt invasive."
+We're developers too — we built Rakshex because we were frustrated with tools that felt invasive."
 
 ---
 
@@ -162,7 +162,7 @@ We're developers too — we built DevPulse because we were frustrated with tools
 
 "Stop AI agents from burning your API budget.
 
-DevPulse reveals hidden reasoning tokens, auto-stops infinite loops, and scans your API collections for vulnerabilities — all inside VS Code.
+Rakshex reveals hidden reasoning tokens, auto-stops infinite loops, and scans your API collections for vulnerabilities — all inside VS Code.
 
 Features:
 
@@ -175,7 +175,7 @@ Free during beta. Setup takes 30 seconds."
 
 ### README Preview (First 3 lines visible in search)
 
-"# DevPulse
+"# Rakshex
 
 Stop AI agents from burning your API budget."
 
@@ -194,7 +194,7 @@ Here's what we learned about LLM cost optimization 🧵
 
 Your $0.02 GPT-4 call? Actually $0.06.
 
-We built DevPulse to reveal these hidden costs in real-time.
+We built Rakshex to reveal these hidden costs in real-time.
 
 3/ The scariest bug we found: an agent that recursively called itself for 6 hours.
 
@@ -206,9 +206,9 @@ AgentGuard stops these loops automatically.
 4/ We scanned 1,000 open-source API collections.
 Result: 47% had exposed secrets or auth issues.
 
-DevPulse finds these in seconds.
+Rakshex finds these in seconds.
 
-5/ DevPulse is live on Product Hunt today!
+5/ Rakshex is live on Product Hunt today!
 
 Free during beta. 30-second setup.
 
@@ -219,7 +219,7 @@ Would love your feedback 👇
 
 ### LinkedIn Post
 
-"After 6 months of building, I'm excited to share DevPulse — a VS Code extension that stops AI agents from burning your API budget.
+"After 6 months of building, I'm excited to share Rakshex — a VS Code extension that stops AI agents from burning your API budget.
 
 Three things we learned:
 
@@ -227,7 +227,7 @@ Three things we learned:
 2. Infinite loops in AI agents can burn $200+ overnight
 3. 47% of API collections have exposed secrets
 
-DevPulse solves all three. It's free during beta.
+Rakshex solves all three. It's free during beta.
 
 Check it out on Product Hunt: [link]"
 

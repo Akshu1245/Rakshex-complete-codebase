@@ -1,15 +1,15 @@
-# Vulnerable API — DevPulse Test Lab
+# Vulnerable API — Rakshex Test Lab
 
 > **WARNING:** This repository contains intentionally vulnerable code.
 > **DO NOT deploy to production.**
-> Used for testing DevPulse security scanning accuracy.
+> Used for testing Rakshex security scanning accuracy.
 
 ---
 
 ## Purpose
 
 This repo contains 15+ known vulnerabilities across common API security categories.
-DevPulse should detect ALL of them with high confidence.
+Rakshex should detect ALL of them with high confidence.
 
 ## Vulnerabilities Included
 
@@ -33,7 +33,7 @@ DevPulse should detect ALL of them with high confidence.
 
 ## Expected Scan Results
 
-When DevPulse scans the `api-collection.json` in this repo, it should find:
+When Rakshex scans the `api-collection.json` in this repo, it should find:
 
 - **15 total findings**
 - **3 Critical** (auth, injection, secrets)
@@ -44,13 +44,13 @@ When DevPulse scans the `api-collection.json` in this repo, it should find:
 ## Running the Test
 
 ```bash
-# Import this collection into DevPulse
-curl -X POST https://api.devpulse.in/trpc/collections.create \
+# Import this collection into Rakshex
+curl -X POST https://api.rakshex.in/trpc/collections.create \
   -H "Content-Type: application/json" \
   -d '{"name":"Vulnerable API Lab","format":"postman","data":@api-collection.json}'
 
 # Run scan
-curl -X POST https://api.devpulse.in/trpc/scanning.start \
+curl -X POST https://api.rakshex.in/trpc/scanning.start \
   -H "Content-Type: application/json" \
   -d '{"collectionId":"<id>","type":"full"}'
 ```
@@ -65,4 +65,4 @@ curl -X POST https://api.devpulse.in/trpc/scanning.start \
 
 ---
 
-_Maintained by DevPulse security team._
+_Maintained by Rakshex security team._

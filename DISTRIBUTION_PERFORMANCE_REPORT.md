@@ -1,4 +1,4 @@
-# DevPulse Distribution Performance Report
+# Rakshex Distribution Performance Report
 
 > How our growth engine is performing.
 > Date: 2026-05-17
@@ -58,8 +58,8 @@ Community      │    ___    │   ___    │   ___   │   ___    │   ___
 Product Hunt   │    ___    │   ___    │   ___   │   ___    │   ___
 ```
 
-**Best performing channel:** **_
-**Biggest drop-off:** _**
+**Best performing channel:** **\_
+**Biggest drop-off:** \_**
 **Highest quality users:** \_\_\_
 
 ---

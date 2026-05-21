@@ -1,4 +1,4 @@
-# DevPulse Live Incident Runbook
+# Rakshex Live Incident Runbook
 
 > What to do when things break.
 > Date: 2026-05-17
@@ -20,7 +20,7 @@
 
 ### API Down
 
-1. Check status page: status.devpulse.in
+1. Check status page: status.rakshex.in
 2. Verify LB health: `kubectl get pods`
 3. Check DB connections: `pg_stat_activity`
 4. Rollback if recent deploy: `kubectl rollout undo`

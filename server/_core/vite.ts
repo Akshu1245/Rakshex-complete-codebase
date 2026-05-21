@@ -27,26 +27,18 @@ export async function setupVite(app: Express, server: Server) {
     const nonce = (res.locals as { cspNonce?: string }).cspNonce ?? "";
 
     try {
-      const clientTemplate = path.resolve(
-        import.meta.dirname,
-        "../..",
-        "client",
-        "index.html"
-      );
+      const clientTemplate = path.resolve(import.meta.dirname, "../..", "client", "index.html");
 
       // Guard: the project no longer uses a Vite SPA in client/.
-      // The frontend is a separate Next.js app under devpulse-frontend/.
+      // The frontend is a separate Next.js app under rakshex-frontend/.
       if (!fs.existsSync(clientTemplate)) {
-        res
-          .status(200)
-          .set({ "Content-Type": "text/html" })
-          .end(`<!DOCTYPE html>
+        res.status(200).set({ "Content-Type": "text/html" }).end(`<!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"><title>DevPulse API</title></head>
+<head><meta charset="utf-8"><title>Rakshex API</title></head>
 <body style="font-family:system-ui,sans-serif;padding:2rem">
-  <h1>DevPulse Backend is running</h1>
+  <h1>Rakshex Backend is running</h1>
   <p>The frontend is a separate Next.js app. Start it with:</p>
-  <pre style="background:#f4f4f4;padding:1rem">cd devpulse-frontend && npm run dev</pre>
+  <pre style="background:#f4f4f4;padding:1rem">cd rakshex-frontend && npm run dev</pre>
   <p>API health check: <a href="/api/health">/api/health</a></p>
 </body>
 </html>`);
@@ -55,10 +47,7 @@ export async function setupVite(app: Express, server: Server) {
 
       // always reload the index.html file from disk incase it changes
       let template = await fs.promises.readFile(clientTemplate, "utf-8");
-      template = template.replace(
-        `src="/src/main.tsx"`,
-        `src="/src/main.tsx?v=${nanoid()}"`
-      );
+      template = template.replace(`src="/src/main.tsx"`, `src="/src/main.tsx?v=${nanoid()}"`);
       // Inject CSP nonce into script tags
       template = template.replace(/<script/g, `<script nonce="${nonce}"`);
       const page = await vite.transformIndexHtml(url, template);
@@ -77,7 +66,7 @@ export function serveStatic(app: Express) {
       : path.resolve(import.meta.dirname, "public");
   if (!fs.existsSync(distPath)) {
     logger.error(
-      `Could not find the build directory: ${distPath}, make sure to build the client first`
+      `Could not find the build directory: ${distPath}, make sure to build the client first`,
     );
   }
 
@@ -94,10 +83,7 @@ export function serveStatic(app: Express) {
         return res.sendFile(indexPath);
       }
       // Add nonce to script tags
-      const htmlWithNonce = data.replace(
-        /<script/g,
-        `<script nonce="${nonce}"`
-      );
+      const htmlWithNonce = data.replace(/<script/g, `<script nonce="${nonce}"`);
       res.setHeader("Content-Type", "text/html");
       res.send(htmlWithNonce);
     });

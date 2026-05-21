@@ -1,5 +1,5 @@
 /**
- * DevPulse Security Copilot Webview Panel.
+ * Rakshex Security Copilot Webview Panel.
  *
  * A chat interface that lets users ask security questions, explain findings,
  * and get fix suggestions using the copilotAsk tRPC endpoint.
@@ -8,7 +8,7 @@
  */
 import * as crypto from "crypto";
 import * as vscode from "vscode";
-import type { DevPulseApi } from "./api";
+import type { RakshexApi } from "./api";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -19,7 +19,7 @@ interface ChatMessage {
 
 export class CopilotViewPanel {
   private static current: CopilotViewPanel | undefined;
-  public static readonly viewType = "devpulse.copilot";
+  public static readonly viewType = "rakshex.copilot";
 
   private readonly panel: vscode.WebviewPanel;
   private disposables: vscode.Disposable[] = [];
@@ -28,12 +28,12 @@ export class CopilotViewPanel {
 
   private constructor(
     panel: vscode.WebviewPanel,
-    private readonly api: DevPulseApi
+    private readonly api: RakshexApi,
   ) {
     this.panel = panel;
     this.panel.onDidDispose(() => this.dispose(), null, this.disposables);
     this.panel.webview.onDidReceiveMessage(
-      msg => {
+      (msg) => {
         if (!msg || typeof msg !== "object") return;
         if (msg.type === "askQuestion") {
           void this.handleQuestion(msg.question as string, msg.context as string | undefined);
@@ -45,16 +45,12 @@ export class CopilotViewPanel {
         }
       },
       null,
-      this.disposables
+      this.disposables,
     );
   }
 
-  public static createOrShow(
-    extensionUri: vscode.Uri,
-    api: DevPulseApi
-  ): void {
-    const column =
-      vscode.window.activeTextEditor?.viewColumn ?? vscode.ViewColumn.One;
+  public static createOrShow(extensionUri: vscode.Uri, api: RakshexApi): void {
+    const column = vscode.window.activeTextEditor?.viewColumn ?? vscode.ViewColumn.One;
 
     if (CopilotViewPanel.current) {
       CopilotViewPanel.current.panel.reveal(column);
@@ -63,13 +59,13 @@ export class CopilotViewPanel {
 
     const panel = vscode.window.createWebviewPanel(
       CopilotViewPanel.viewType,
-      "DevPulse Security Copilot",
+      "Rakshex Security Copilot",
       column,
       {
         enableScripts: true,
         retainContextWhenHidden: true,
         localResourceRoots: [extensionUri],
-      }
+      },
     );
 
     CopilotViewPanel.current = new CopilotViewPanel(panel, api);
@@ -129,15 +125,15 @@ export class CopilotViewPanel {
   private generateFallbackResponse(question: string): string {
     const q = question.toLowerCase();
     if (q.includes("explain") && q.includes("finding")) {
-      return "I'd be happy to explain your findings, but I need a connection to the DevPulse backend to analyze them. Please check your API key and connection settings. In the meantime, critical findings typically involve SQL injection, authentication bypasses, or data exposure vulnerabilities that need immediate attention.";
+      return "I'd be happy to explain your findings, but I need a connection to the Rakshex backend to analyze them. Please check your API key and connection settings. In the meantime, critical findings typically involve SQL injection, authentication bypasses, or data exposure vulnerabilities that need immediate attention.";
     }
     if (q.includes("fix") || q.includes("suggest")) {
-      return "To suggest fixes, I need access to your findings through the DevPulse backend. Common security fixes include: using parameterized queries for SQL injection, implementing proper input validation for XSS, and ensuring authentication on all sensitive endpoints. Check your connection settings and try again.";
+      return "To suggest fixes, I need access to your findings through the Rakshex backend. Common security fixes include: using parameterized queries for SQL injection, implementing proper input validation for XSS, and ensuring authentication on all sensitive endpoints. Check your connection settings and try again.";
     }
     if (q.includes("review") || q.includes("posture")) {
-      return "For a comprehensive security review, I need to connect to your DevPulse workspace. This allows me to analyze your findings, identify patterns, and provide prioritized recommendations. Please verify your API key is configured correctly.";
+      return "For a comprehensive security review, I need to connect to your Rakshex workspace. This allows me to analyze your findings, identify patterns, and provide prioritized recommendations. Please verify your API key is configured correctly.";
     }
-    return "I'm your DevPulse Security Copilot. I can help explain findings, suggest fixes, and review your security posture. I need a connection to the DevPulse backend for detailed analysis. Please check your API key and network settings.";
+    return "I'm your Rakshex Security Copilot. I can help explain findings, suggest fixes, and review your security posture. I need a connection to the Rakshex backend for detailed analysis. Please check your API key and network settings.";
   }
 
   private updateChatUI(status: "thinking" | "idle"): void {
@@ -158,9 +154,7 @@ export class CopilotViewPanel {
     }
   }
 
-  private _getHtmlForWebview(
-    webview: vscode.Webview
-  ): string {
+  private _getHtmlForWebview(webview: vscode.Webview): string {
     const nonce = getNonce();
     const csp = [
       `default-src 'none'`,
@@ -177,7 +171,7 @@ export class CopilotViewPanel {
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy" content="${csp}" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DevPulse Security Copilot</title>
+  <title>Rakshex Security Copilot</title>
   <style>
     :root { color-scheme: var(--vscode-color-scheme, dark); }
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -376,7 +370,7 @@ export class CopilotViewPanel {
 </head>
 <body>
   <div class="header">
-    <h1>\u{1F916} DevPulse Copilot</h1>
+    <h1>\u{1F916} Rakshex Copilot</h1>
     <div class="header-right">
       <div class="connection-status connected" id="connection-status">
         <span class="connection-dot"></span>
@@ -397,7 +391,7 @@ export class CopilotViewPanel {
   <div class="chat-area" id="chat-area">
     <div class="empty-state" id="empty-state">
       <div class="empty-state-icon">🤖</div>
-      <h2>DevPulse Security Copilot</h2>
+      <h2>Rakshex Security Copilot</h2>
       <p>Ask me about your security findings, request fix suggestions, or get a security review.</p>
     </div>
   </div>
@@ -518,8 +512,7 @@ export class CopilotViewPanel {
 }
 
 function getNonce(): string {
-  const chars =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   const randomBytes = crypto.randomBytes(32);
   let text = "";
   for (let i = 0; i < 32; i++) {

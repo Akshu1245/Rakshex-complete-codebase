@@ -28,11 +28,11 @@ import type { LLMProvider, ProviderInvokeOptions } from "../_core/providers";
 /* ─── Pricing (per 1M tokens, USD) ─────────────────────────────────────── */
 
 const GEMINI_PRICING: Record<string, { prompt: number; completion: number }> = {
-  "gemini-2.5-flash": { prompt: 0.15, completion: 0.60 },
+  "gemini-2.5-flash": { prompt: 0.15, completion: 0.6 },
   "gemini-2.5-pro": { prompt: 1.25, completion: 10.0 },
-  "gemini-2.0-flash": { prompt: 0.10, completion: 0.40 },
+  "gemini-2.0-flash": { prompt: 0.1, completion: 0.4 },
   "gemini-2.0-pro": { prompt: 1.25, completion: 5.0 },
-  "gemini-1.5-flash": { prompt: 0.075, completion: 0.30 },
+  "gemini-1.5-flash": { prompt: 0.075, completion: 0.3 },
   "gemini-1.5-pro": { prompt: 1.25, completion: 5.0 },
 };
 
@@ -66,12 +66,13 @@ function toGeminiContents(messages: Message[]): {
 
   for (const msg of messages) {
     if (msg.role === "system") {
-      const text = typeof msg.content === "string"
-        ? msg.content
-        : (msg.content as TextContent[])
-            .filter(c => c.type === "text")
-            .map(c => c.text)
-            .join("\n");
+      const text =
+        typeof msg.content === "string"
+          ? msg.content
+          : (msg.content as TextContent[])
+              .filter((c) => c.type === "text")
+              .map((c) => c.text)
+              .join("\n");
       systemParts.push(text);
       continue;
     }
@@ -81,9 +82,12 @@ function toGeminiContents(messages: Message[]): {
 
     // Handle tool results
     if (msg.role === "tool") {
-      const response = typeof msg.content === "string"
-        ? { result: msg.content }
-        : (typeof msg.content === "object" ? msg.content as Record<string, unknown> : { result: String(msg.content) });
+      const response =
+        typeof msg.content === "string"
+          ? { result: msg.content }
+          : typeof msg.content === "object"
+            ? (msg.content as Record<string, unknown>)
+            : { result: String(msg.content) };
       parts.push({
         functionResponse: {
           name: msg.name ?? msg.tool_call_id ?? "unknown",
@@ -97,9 +101,8 @@ function toGeminiContents(messages: Message[]): {
     const contentParts = Array.isArray(msg.content) ? msg.content : [msg.content];
 
     // Check for tool_calls
-    const toolCalls: ToolCall[] | undefined = (
-      msg as Message & { tool_calls?: ToolCall[] }
-    ).tool_calls;
+    const toolCalls: ToolCall[] | undefined = (msg as Message & { tool_calls?: ToolCall[] })
+      .tool_calls;
 
     if (toolCalls && toolCalls.length > 0) {
       for (const tc of toolCalls) {
@@ -144,9 +147,8 @@ function toGeminiContents(messages: Message[]): {
   }
 
   return {
-    systemInstruction: systemParts.length > 0
-      ? { parts: systemParts.map(t => ({ text: t })) }
-      : undefined,
+    systemInstruction:
+      systemParts.length > 0 ? { parts: systemParts.map((t) => ({ text: t })) } : undefined,
     contents,
   };
 }
@@ -155,13 +157,15 @@ function toGeminiContents(messages: Message[]): {
 
 function toGeminiTools(tools?: Tool[]): GeminiTool[] | undefined {
   if (!tools || tools.length === 0) return undefined;
-  return [{
-    functionDeclarations: tools.map(t => ({
-      name: t.function.name,
-      description: t.function.description,
-      parameters: t.function.parameters,
-    })),
-  }];
+  return [
+    {
+      functionDeclarations: tools.map((t) => ({
+        name: t.function.name,
+        description: t.function.description,
+        parameters: t.function.parameters,
+      })),
+    },
+  ];
 }
 
 /* ─── Response translation ─────────────────────────────────────────────── */
@@ -195,11 +199,11 @@ function fromGeminiResponse(raw: GeminiResponse, model: string): InvokeResult {
   const parts = candidate?.content?.parts ?? [];
 
   const textParts = parts
-    .filter(p => "text" in p)
-    .map(p => ({ type: "text" as const, text: p.text ?? "" }));
+    .filter((p) => "text" in p)
+    .map((p) => ({ type: "text" as const, text: p.text ?? "" }));
 
   const toolCalls: ToolCall[] = parts
-    .filter(p => "functionCall" in p && p.functionCall)
+    .filter((p) => "functionCall" in p && p.functionCall)
     .map((p, i) => ({
       id: `call_${Date.now()}_${i}`,
       type: "function" as const,
@@ -221,15 +225,17 @@ function fromGeminiResponse(raw: GeminiResponse, model: string): InvokeResult {
     id: `gemini_${Date.now()}`,
     created: Math.floor(Date.now() / 1000),
     model,
-    choices: [{
-      index: 0,
-      message: {
-        role: "assistant",
-        content: textParts.length === 1 ? textParts[0].text : textParts,
-        ...(toolCalls.length > 0 ? { tool_calls: toolCalls } : {}),
+    choices: [
+      {
+        index: 0,
+        message: {
+          role: "assistant",
+          content: textParts.length === 1 ? textParts[0].text : textParts,
+          ...(toolCalls.length > 0 ? { tool_calls: toolCalls } : {}),
+        },
+        finish_reason: finishMap[candidate?.finishReason ?? ""] ?? candidate?.finishReason ?? null,
       },
-      finish_reason: finishMap[candidate?.finishReason ?? ""] ?? candidate?.finishReason ?? null,
-    }],
+    ],
     usage: raw.usageMetadata
       ? {
           prompt_tokens: raw.usageMetadata.promptTokenCount,
@@ -245,13 +251,12 @@ function fromGeminiResponse(raw: GeminiResponse, model: string): InvokeResult {
 export async function invokeGemini(
   params: InvokeParams,
   apiKey: string,
-  options: ProviderInvokeOptions & { baseUrl?: string } = {}
+  options: ProviderInvokeOptions & { baseUrl?: string } = {},
 ): Promise<InvokeResult> {
   if (options.killSwitchActive) {
-    throw new RuntimePolicyError(
-      "LLM API request blocked by DevPulse Kill Switch.",
-      { context: { policy: "kill_switch" } }
-    );
+    throw new RuntimePolicyError("LLM API request blocked by Rakshex Kill Switch.", {
+      context: { policy: "kill_switch" },
+    });
   }
 
   const model = options.model ?? "gemini-2.5-flash";
@@ -306,8 +311,13 @@ export async function invokeGemini(
       `Gemini invoke failed (${model}): ${response.status} ${response.statusText}`,
       {
         safeMessage: "AI request via Gemini failed. Please try again.",
-        context: { provider: "gemini", model, status: response.status, body: errorText.slice(0, 500) },
-      }
+        context: {
+          provider: "gemini",
+          model,
+          status: response.status,
+          body: errorText.slice(0, 500),
+        },
+      },
     );
   }
 
@@ -317,7 +327,10 @@ export async function invokeGemini(
   if (!raw.candidates || raw.candidates.length === 0) {
     throw new ExternalServiceError(
       "Gemini returned no candidates — content may be blocked by safety filters.",
-      { safeMessage: "The AI response was blocked by safety filters. Please try a different prompt." }
+      {
+        safeMessage:
+          "The AI response was blocked by safety filters. Please try a different prompt.",
+      },
     );
   }
 
@@ -326,11 +339,12 @@ export async function invokeGemini(
   // Auto-track token usage
   if (options.userId && result.usage) {
     const pricing = Object.entries(GEMINI_PRICING).find(([k]) => model.startsWith(k));
-    const { prompt: ppm, completion: cpm } = pricing?.[1] ?? { prompt: 0.15, completion: 0.60 };
-    const cost = (result.usage.prompt_tokens / 1_000_000) * ppm +
+    const { prompt: ppm, completion: cpm } = pricing?.[1] ?? { prompt: 0.15, completion: 0.6 };
+    const cost =
+      (result.usage.prompt_tokens / 1_000_000) * ppm +
       (result.usage.completion_tokens / 1_000_000) * cpm;
 
-    import("../db").then(async db => {
+    import("../db").then(async (db) => {
       try {
         await db.recordTokenUsage(
           options.userId!,
@@ -338,7 +352,7 @@ export async function invokeGemini(
           result.usage!.prompt_tokens,
           result.usage!.completion_tokens,
           raw.usageMetadata?.thoughtsTokenCount ?? 0,
-          cost
+          cost,
         );
       } catch (err) {
         logger.warn({ err }, "[Gemini] Failed to record token usage");
@@ -358,16 +372,14 @@ export const geminiProvider: LLMProvider = {
   async invoke(params: InvokeParams, options?: ProviderInvokeOptions): Promise<InvokeResult> {
     const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      throw new ExternalServiceError(
-        "Google API key not configured for Gemini.",
-        { safeMessage: "Gemini AI is not configured. Please contact support." }
-      );
+      throw new ExternalServiceError("Google API key not configured for Gemini.", {
+        safeMessage: "Gemini AI is not configured. Please contact support.",
+      });
     }
     return invokeGemini(params, apiKey, options);
   },
 
-  supportsModel: (model: string) =>
-    model.startsWith("gemini-"),
+  supportsModel: (model: string) => model.startsWith("gemini-"),
 
   supportsVision: () => true,
   supportsPromptCaching: () => false,

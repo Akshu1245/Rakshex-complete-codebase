@@ -1,4 +1,4 @@
-# DevPulse Beta Insights Dashboard
+# Rakshex Beta Insights Dashboard
 
 > Real-time view into beta health.
 > Date: 2026-05-17
@@ -90,11 +90,11 @@ Quality:      ___ / 25
 
 ### Top 5 Requests
 
-1. ******\_****** (\_\_ votes)
-2. ******\_****** (\_\_ votes)
-3. ******\_****** (\_\_ votes)
-4. ******\_****** (\_\_ votes)
-5. ******\_****** (\_\_ votes)
+1. **\*\***\_**\*\*** (\_\_ votes)
+2. **\*\***\_**\*\*** (\_\_ votes)
+3. **\*\***\_**\*\*** (\_\_ votes)
+4. **\*\***\_**\*\*** (\_\_ votes)
+5. **\*\***\_**\*\*** (\_\_ votes)
 
 ---
 

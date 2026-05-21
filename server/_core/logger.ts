@@ -28,11 +28,11 @@ const isProduction = process.env.NODE_ENV === "production";
 export const logger: Logger = pino({
   level: process.env.LOG_LEVEL || (isProduction ? "info" : "debug"),
   formatters: {
-    level: label => ({ level: label }),
+    level: (label) => ({ level: label }),
   },
   timestamp: pino.stdTimeFunctions.isoTime,
   base: {
-    service: process.env.SERVICE_NAME || "devpulse",
+    service: process.env.SERVICE_NAME || "rakshex",
     env: process.env.NODE_ENV || "development",
   },
   transport: isProduction
@@ -101,11 +101,7 @@ declare module "http" {
  * end-users can quote them in bug reports.
  */
 export function requestIdMiddleware(): RequestHandler {
-  return function attachRequestId(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) {
+  return function attachRequestId(req: Request, res: Response, next: NextFunction) {
     const inboundRequestId = req.header("x-request-id");
     const requestId =
       typeof inboundRequestId === "string" && inboundRequestId.length > 0
@@ -135,16 +131,11 @@ export function requestIdMiddleware(): RequestHandler {
  * traffic at `info`.
  */
 export function accessLogMiddleware(): RequestHandler {
-  return function logAccess(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) {
+  return function logAccess(req: Request, res: Response, next: NextFunction) {
     const start = process.hrtime.bigint();
     res.on("finish", () => {
       const durationMs = Number(process.hrtime.bigint() - start) / 1e6;
-      const userId =
-        (req as Request & { user?: { id?: number } }).user?.id ?? null;
+      const userId = (req as Request & { user?: { id?: number } }).user?.id ?? null;
       const log = req.log ?? logger;
       const payload = {
         userId,
@@ -176,7 +167,7 @@ export function accessLogMiddleware(): RequestHandler {
 export function logBusinessEvent(
   event: string,
   userId: number | null,
-  metadata?: Record<string, unknown>
+  metadata?: Record<string, unknown>,
 ): void {
   logger.info(
     {
@@ -184,6 +175,6 @@ export function logBusinessEvent(
       userId,
       ...metadata,
     },
-    `business_event:${event}`
+    `business_event:${event}`,
   );
 }

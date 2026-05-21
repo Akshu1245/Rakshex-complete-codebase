@@ -1,4 +1,4 @@
-# DevPulse Co-Founder Engineering Assessment
+# Rakshex Co-Founder Engineering Assessment
 
 > Comprehensive audit of what needs improvement before we are truly "market ready."
 > As your co-founder and CTO, here is what I would fix, build, and harden.
@@ -28,7 +28,7 @@
 ```js
 {
   key: "Content-Security-Policy",
-  value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com https://accounts.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' wss: https://api.devpulse.in https://*.sentry.io; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+  value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com https://accounts.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' wss: https://api.rakshex.in https://*.sentry.io; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
 }
 ```
 
@@ -192,7 +192,7 @@
 
 **Problem:** Comparison table exists but is text-only. No visual checkmarks/X marks.
 
-**Fix:** Add styled feature matrix table with DevPulse checkmarks vs competitor X marks.
+**Fix:** Add styled feature matrix table with Rakshex checkmarks vs competitor X marks.
 
 ### 20. No API Playground / Interactive Docs
 

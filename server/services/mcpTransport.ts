@@ -158,7 +158,7 @@ async function discoverViaStdio(command: string[]): Promise<McpDiscoverResult> {
     stdioRequest(session, "initialize", {
       protocolVersion: "2024-11-05",
       capabilities: {},
-      clientInfo: { name: "devpulse", version: "1.0.0" },
+      clientInfo: { name: "rakshex", version: "1.0.0" },
     })
       .then(() => {
         // Send initialized notification
@@ -233,7 +233,7 @@ async function discoverViaHttp(url: string): Promise<McpDiscoverResult> {
   const init = (await httpJsonRpc(url, "initialize", {
     protocolVersion: "2024-11-05",
     capabilities: {},
-    clientInfo: { name: "devpulse", version: "1.0.0" },
+    clientInfo: { name: "rakshex", version: "1.0.0" },
   })) as { serverInfo?: McpServerInfo };
 
   const result = (await httpJsonRpc(url, "tools/list")) as {
@@ -276,7 +276,7 @@ async function discoverViaSse(url: string): Promise<McpDiscoverResult> {
           sendSseCommand(postUrl, sessionId, "initialize", {
             protocolVersion: "2024-11-05",
             capabilities: {},
-            clientInfo: { name: "devpulse", version: "1.0.0" },
+            clientInfo: { name: "rakshex", version: "1.0.0" },
           })
             .then(() => {
               return sendSseCommand(postUrl, sessionId!, "tools/list", {});

@@ -1,5 +1,5 @@
 /**
- * DevPulse "Saved Me" Product Moments
+ * Rakshex "Saved Me" Product Moments
  *
  * Generates emotional retention loops by surfacing value delivered.
  */
@@ -13,7 +13,7 @@ interface ValueEvent {
   timestamp: number;
 }
 
-const STORAGE_KEY = "devpulse.valueEvents";
+const STORAGE_KEY = "rakshex.valueEvents";
 
 export class ValueMomentTracker {
   private events: ValueEvent[] = [];
@@ -38,22 +38,22 @@ export class ValueMomentTracker {
     switch (event.type) {
       case "money_saved":
         void vscode.window.showInformationMessage(
-          `💰 DevPulse saved you $${event.value.toFixed(2)} this week in hidden AI costs.`,
+          `💰 Rakshex saved you $${event.value.toFixed(2)} this week in hidden AI costs.`,
         );
         break;
       case "agent_stopped":
         void vscode.window.showWarningMessage(
-          `🛑 DevPulse stopped a rogue agent after ${event.value} calls. Potential savings: $${event.description}.`,
+          `🛑 Rakshex stopped a rogue agent after ${event.value} calls. Potential savings: $${event.description}.`,
         );
         break;
       case "secret_found":
         void vscode.window.showWarningMessage(
-          `🔓 DevPulse found ${event.value} exposed secret(s) in your collection. Rotate them immediately.`,
+          `🔓 Rakshex found ${event.value} exposed secret(s) in your collection. Rotate them immediately.`,
         );
         break;
       case "threat_blocked":
         void vscode.window.showInformationMessage(
-          `🛡️ DevPulse blocked a ${event.description} attack vector.`,
+          `🛡️ Rakshex blocked a ${event.description} attack vector.`,
         );
         break;
       case "cost_alert":
@@ -86,8 +86,8 @@ export class ValueMomentTracker {
   showWeeklySummaryPanel(): void {
     const summary = this.getWeeklySummary();
     const panel = vscode.window.createWebviewPanel(
-      "devpulse.weeklySummary",
-      "DevPulse Weekly Protection Summary",
+      "rakshex.weeklySummary",
+      "Rakshex Weekly Protection Summary",
       vscode.ViewColumn.One,
       { enableScripts: true },
     );
@@ -108,7 +108,7 @@ export class ValueMomentTracker {
 </head>
 <body>
   <div class="hero">
-    <div class="hero-title">🛡️ This Week, DevPulse Protected You</div>
+    <div class="hero-title">🛡️ This Week, Rakshex Protected You</div>
     <div class="hero-sub">${new Date().toLocaleDateString()}</div>
   </div>
   <div class="card">

@@ -1,6 +1,6 @@
 # Self-Hosting Guide
 
-Deploy DevPulse on your own infrastructure. This guide covers Docker Compose, environment setup, and first-run configuration.
+Deploy Rakshex on your own infrastructure. This guide covers Docker Compose, environment setup, and first-run configuration.
 
 ## Prerequisites
 
@@ -13,8 +13,8 @@ Deploy DevPulse on your own infrastructure. This guide covers Docker Compose, en
 
 ```bash
 # 1. Clone
-git clone https://github.com/Akshu1245/devpulse-complete-codebase.git
-cd devpulse-complete-codebase
+git clone https://github.com/Akshu1245/rakshex-complete-codebase.git
+cd rakshex-complete-codebase
 
 # 2. Copy and edit environment
 cp .env.example .env
@@ -25,14 +25,14 @@ nano .env
 
 ```bash
 # Database
-DATABASE_URL=mysql://devpulse:your-password@db:3306/devpulse
+DATABASE_URL=mysql://rakshex:your-password@db:3306/rakshex
 
 # Auth
 JWT_SECRET=$(openssl rand -hex 32)
 
 # App
-APP_URL=https://devpulse.your-company.com
-FRONTEND_URL=https://devpulse.your-company.com
+APP_URL=https://rakshex.your-company.com
+FRONTEND_URL=https://rakshex.your-company.com
 NODE_ENV=production
 
 # Payments (optional — leave blank to disable billing)
@@ -48,7 +48,7 @@ SMTP_HOST=smtp.example.com
 SMTP_PORT=587
 SMTP_USER=alerts@your-company.com
 SMTP_PASS=
-SMTP_FROM=DevPulse <alerts@your-company.com>
+SMTP_FROM=Rakshex <alerts@your-company.com>
 
 # GitHub App (optional — for PR scanning)
 GITHUB_APP_ID=
@@ -74,7 +74,7 @@ sudo docker compose -f docker-compose.prod.yml exec app pnpm run db:migrate
 sudo docker compose -f docker-compose.prod.yml exec app node scripts/create-admin.js
 ```
 
-Visit `https://devpulse.your-company.com` and sign in.
+Visit `https://rakshex.your-company.com` and sign in.
 
 ## Architecture
 
@@ -110,10 +110,10 @@ The production compose mounts `nginx/` with a default config. Replace `nginx/def
 ```nginx
 server {
   listen 443 ssl http2;
-  server_name devpulse.your-company.com;
+  server_name rakshex.your-company.com;
 
-  ssl_certificate /etc/letsencrypt/live/devpulse.your-company.com/fullchain.pem;
-  ssl_certificate_key /etc/letsencrypt/live/devpulse.your-company.com/privkey.pem;
+  ssl_certificate /etc/letsencrypt/live/rakshex.your-company.com/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/rakshex.your-company.com/privkey.pem;
 
   location / {
     proxy_pass http://app:3000;
@@ -131,7 +131,7 @@ Use Certbot to obtain certificates.
 
 ```bash
 # Automated daily backup (add to crontab)
-0 2 * * * docker compose -f docker-compose.prod.yml exec db mysqldump -u root -p devpulse > /backups/devpulse-$(date +\%Y\%m\%d).sql
+0 2 * * * docker compose -f docker-compose.prod.yml exec db mysqldump -u root -p rakshex > /backups/rakshex-$(date +\%Y\%m\%d).sql
 ```
 
 ### Redis
@@ -139,7 +139,7 @@ Use Certbot to obtain certificates.
 ```bash
 # Save and copy RDB
 docker compose -f docker-compose.prod.yml exec redis redis-cli BGSAVE
-docker cp devpulse-redis-1:/data/dump.rdb /backups/redis-$(date +%Y%m%d).rdb
+docker cp rakshex-redis-1:/data/dump.rdb /backups/redis-$(date +%Y%m%d).rdb
 ```
 
 ## Updates
@@ -167,11 +167,11 @@ docker compose -f docker-compose.prod.yml exec app pnpm run db:migrate
 
 ## Enterprise Support
 
-Self-hosted deployments with a DevPulse Enterprise license receive:
+Self-hosted deployments with a Rakshex Enterprise license receive:
 
 - Priority Slack/Teams support channel
 - Quarterly security patches
 - Custom SAML/SSO integration
 - Dedicated onboarding engineer
 
-Contact enterprise@devpulse.in for licensing.
+Contact enterprise@rakshex.in for licensing.

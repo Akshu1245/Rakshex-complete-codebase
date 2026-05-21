@@ -1,4 +1,4 @@
-# DevPulse Churn Prevention Playbook
+# Rakshex Churn Prevention Playbook
 
 > Stop users from leaving before they decide to.
 > Date: 2026-05-17
@@ -69,10 +69,10 @@ Or reply and tell us what's blocking you.
 ```
 Hi {{name}},
 
-Akshay here — founder of DevPulse.
+Akshay here — founder of Rakshex.
 
 I saw you haven't scanned recently. Is something broken?
-Or is DevPulse not solving the problem you hoped it would?
+Or is Rakshex not solving the problem you hoped it would?
 
 I'd love to fix whatever's in your way.
 
@@ -82,10 +82,10 @@ I'd love to fix whatever's in your way.
 **Day 14 — Value Reinforcement:**
 
 ```
-Subject: What would make DevPulse a 10/10?
+Subject: What would make Rakshex a 10/10?
 
 One question: What would need to change for you to
-use DevPulse every day?
+use Rakshex every day?
 
 [Reply here — I read every response]
 ```
@@ -147,7 +147,7 @@ Subject: I'll set it up for you
 
 Hi {{name}},
 
-You installed DevPulse but didn't finish setup.
+You installed Rakshex but didn't finish setup.
 
 I'll personally walk you through it — 5 minutes max.
 
@@ -215,7 +215,7 @@ We noticed a change in your team setup.
 Was it:
 - A team member leaving?
 - Budget constraints?
-- DevPulse not meeting needs?
+- Rakshex not meeting needs?
 
 We're here to help either way.
 
@@ -247,7 +247,7 @@ Subject: We fixed {{issue}} — want to try again?
 
 Hi {{name}},
 
-You left DevPulse because {{reason}}.
+You left Rakshex because {{reason}}.
 
 We fixed it. Here's how:
 {{explanation}}
@@ -261,7 +261,7 @@ We fixed it. Here's how:
 **Timing:** After major feature launch.
 
 ```
-Subject: DevPulse has changed since you left
+Subject: Rakshex has changed since you left
 
 Hi {{name}},
 
@@ -283,7 +283,7 @@ Subject: One honest question
 
 Hi {{name}},
 
-I'm Akshay, founder of DevPulse.
+I'm Akshay, founder of Rakshex.
 
 You were one of our early users, and we let you down.
 

@@ -14,7 +14,7 @@ vi.mock("../payments", () => ({
     customerId: `cust_${Date.now()}`,
     shortUrl: "https://razorpay.com/pay/test",
     status: "created",
-    planName: plan === "enterprise" ? "DevPulse Enterprise" : "DevPulse Pro",
+    planName: plan === "enterprise" ? "Rakshex Enterprise" : "Rakshex Pro",
     amount: plan === "enterprise" ? 499900 : 99900,
     currency: "INR",
     keyId: "rzp_test_key",

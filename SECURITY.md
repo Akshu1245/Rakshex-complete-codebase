@@ -1,6 +1,6 @@
 # Security Policy
 
-> DevPulse takes security seriously. We are a security company building security products.
+> Rakshex takes security seriously. We are a security company building security products.
 
 ---
 
@@ -19,7 +19,7 @@
 
 Instead, email us directly:
 
-📧 **security@devpulse.in**
+📧 **security@rakshex.in**
 
 We will acknowledge receipt within 24 hours and provide a timeline for resolution within 72 hours.
 

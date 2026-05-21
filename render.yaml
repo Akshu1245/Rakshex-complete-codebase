@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: devpulse-backend
+    name: rakshex-backend
     env: docker
     dockerfilePath: ./Dockerfile
     envVars:
@@ -10,7 +10,7 @@ services:
         value: ""
       - key: REDIS_URL
         fromService:
-          name: devpulse-redis
+          name: rakshex-redis
           type: redis
           property: connectionString
       - key: JWT_SECRET
@@ -34,7 +34,7 @@ services:
     healthCheckPath: /api/health
     autoDeploy: true
 
-  - name: devpulse-redis
+  - name: rakshex-redis
     type: redis
     plan: starter
     ipAllowList: []

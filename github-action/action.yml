@@ -1,4 +1,4 @@
-name: 'DevPulse Security Scan'
+name: 'Rakshex Security Scan'
 description: 'Scan API endpoints for OWASP vulnerabilities and LLM cost anomalies on every pull request'
 author: 'Rashi Technologies'
 branding:
@@ -7,12 +7,12 @@ branding:
 
 inputs:
   api-key:
-    description: 'DevPulse API key'
+    description: 'Rakshex API key'
     required: true
   api-url:
-    description: 'DevPulse API base URL'
+    description: 'Rakshex API base URL'
     required: false
-    default: 'https://api.devpulse.in'
+    default: 'https://api.rakshex.in'
   fail-on-critical:
     description: 'Fail the workflow if Critical severity findings exist'
     required: false
@@ -36,8 +36,8 @@ runs:
   using: 'docker'
   image: 'Dockerfile'
   env:
-    DEVPULSE_API_KEY: ${{ inputs.api-key }}
-    DEVPULSE_API_URL: ${{ inputs.api-url }}
+    RAKSHEX_API_KEY: ${{ inputs.api-key }}
+    RAKSHEX_API_URL: ${{ inputs.api-url }}
     FAIL_ON_CRITICAL: ${{ inputs.fail-on-critical }}
     FAIL_ON_HIGH: ${{ inputs.fail-on-high }}
     SCAN_OPENAPI: ${{ inputs.scan-openapi }}

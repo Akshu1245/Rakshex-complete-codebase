@@ -1,4 +1,4 @@
-# DevPulse Trust Manifesto
+# Rakshex Trust Manifesto
 
 > Security tools are trust products. This is how we earn it.
 > Date: 2026-05-17
@@ -29,7 +29,7 @@
 
 ```bash
 # Check what data we have about you
-curl https://api.devpulse.in/trpc/user.exportData \
+curl https://api.rakshex.in/trpc/user.exportData \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
@@ -65,11 +65,11 @@ Every finding must answer:
 
 ### VS Code Extension Permissions
 
-| Permission      | Why We Need It          | Can You Deny?                |
-| --------------- | ----------------------- | ---------------------------- |
-| Workspace files | Scan API collections    | ❌ Required for core feature |
-| Network access  | Connect to DevPulse API | ❌ Required for sync         |
-| Secret storage  | Store API key securely  | ❌ Required for auth         |
+| Permission      | Why We Need It         | Can You Deny?                |
+| --------------- | ---------------------- | ---------------------------- |
+| Workspace files | Scan API collections   | ❌ Required for core feature |
+| Network access  | Connect to Rakshex API | ❌ Required for sync         |
+| Secret storage  | Store API key securely | ❌ Required for auth         |
 
 ### What We DON'T Need
 
@@ -104,10 +104,10 @@ Wherever possible, processing happens locally:
 Every security event is logged:
 
 ```
-2026-05-17T14:32:01Z  User akshay@devpulse.in  Scan started  Collection: prod-apis
-2026-05-17T14:32:08Z  User akshay@devpulse.in  Finding found  Secret leak (Critical)
-2026-05-17T14:35:22Z  User akshay@devpulse.in  Finding marked valid
-2026-05-17T14:40:00Z  User akshay@devpulse.in  API key rotated
+2026-05-17T14:32:01Z  User akshay@rakshex.in  Scan started  Collection: prod-apis
+2026-05-17T14:32:08Z  User akshay@rakshex.in  Finding found  Secret leak (Critical)
+2026-05-17T14:35:22Z  User akshay@rakshex.in  Finding marked valid
+2026-05-17T14:40:00Z  User akshay@rakshex.in  API key rotated
 ```
 
 **You can:**
@@ -134,7 +134,7 @@ Every security event is logged:
 ┌─────────┼──────────────────────────────────────────────────┐
 │         ▼                                                │
 │  ┌──────────────────────────────────────────────────┐   │
-│  │  DevPulse API (Render)                            │   │
+│  │  Rakshex API (Render)                            │   │
 │  │  ┌────────┐  ┌────────┐  ┌────────┐  ┌──────┐  │   │
 │  │  │ Auth   │  │ Scanner│  │ Queue  │  │ Vault│  │   │
 │  │  └────────┘  └────────┘  └────────┘  └──────┘  │   │
@@ -191,13 +191,13 @@ Every security event is logged:
 
 ```bash
 # Check our security headers
-curl -I https://api.devpulse.in
+curl -I https://api.rakshex.in
 
 # Verify our SSL certificate
-echo | openssl s_client -connect api.devpulse.in:443 2>/dev/null | openssl x509 -noout -text
+echo | openssl s_client -connect api.rakshex.in:443 2>/dev/null | openssl x509 -noout -text
 
 # Check our DNS security
-dig +short TXT _dmarc.devpulse.in
+dig +short TXT _dmarc.rakshex.in
 ```
 
 ---

@@ -1,4 +1,4 @@
-# DevPulse Community Building Playbook
+# Rakshex Community Building Playbook
 
 > Turning users into advocates through transparency and belonging.
 > Date: 2026-05-17
@@ -32,7 +32,7 @@
 **Launch Message:**
 
 ```
-👋 Welcome to the DevPulse community!
+👋 Welcome to the Rakshex community!
 
 We're building the security layer for AI-powered applications.
 
@@ -59,9 +59,9 @@ Discord invite: [link]
 
 **First 5 Discussion Seeds:**
 
-1. "What API security issues have you found with DevPulse?"
+1. "What API security issues have you found with Rakshex?"
 2. "What's your biggest hidden API cost?"
-3. "Feature request: What would make DevPulse a 10/10 for you?"
+3. "Feature request: What would make Rakshex a 10/10 for you?"
 4. "Share your AgentGuard stories — has it stopped anything?"
 5. "Weekly security tip thread"
 
@@ -72,7 +72,7 @@ Discord invite: [link]
 **Monthly Report Template:**
 
 ```
-# DevPulse Transparency Report — [Month Year]
+# Rakshex Transparency Report — [Month Year]
 
 ## Stats
 - Active users: ___
@@ -105,14 +105,14 @@ Discord invite: [link]
 
 ## ADVOCACY PROGRAM
 
-### DevPulse Champions
+### Rakshex Champions
 
 **Criteria:**
 
 - Active user for 30+ days
 - Referred at least 1 user
 - Contributed feedback or bug report
-- Posted about DevPulse publicly
+- Posted about Rakshex publicly
 
 **Benefits:**
 
@@ -146,16 +146,16 @@ Discord invite: [link]
 ### User Spotlight Template
 
 ```
-🌟 DevPulse User Spotlight
+🌟 Rakshex User Spotlight
 
 Meet @username, [role] at [company].
 
-They've been using DevPulse for [X] weeks and have:
+They've been using Rakshex for [X] weeks and have:
 - Found [Y] security issues
 - Saved $[Z] in hidden costs
 - Stopped [N] rogue agents
 
-"[Their quote about DevPulse]"
+"[Their quote about Rakshex]"
 
 [Link to their project/profile]
 ```
@@ -178,7 +178,7 @@ They've been using DevPulse for [X] weeks and have:
 - Answer every Discord question personally
 - Write every blog post (not ghostwritten)
 - Share personal learnings and mistakes
-- Be reachable: akshay@devpulse.in
+- Be reachable: akshay@rakshex.in
 
 ---
 

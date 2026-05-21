@@ -1,4 +1,4 @@
-# DevPulse Community Growth Report
+# Rakshex Community Growth Report
 
 > Turning users into advocates.
 > Date: 2026-05-17
@@ -67,7 +67,7 @@
 | Signal                         | Count  | Value                  |
 | ------------------------------ | ------ | ---------------------- |
 | Organic social mentions        | \_\_\_ | Brand awareness        |
-| User blog posts about DevPulse | \_\_\_ | SEO + credibility      |
+| User blog posts about Rakshex  | \_\_\_ | SEO + credibility      |
 | Conference talks mentioning us | \_\_\_ | Enterprise credibility |
 | GitHub stars from community    | \_\_\_ | Social proof           |
 | Referrals from community       | \_\_\_ | Growth                 |

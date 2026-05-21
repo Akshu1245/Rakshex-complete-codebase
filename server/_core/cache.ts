@@ -3,7 +3,7 @@ import { logger } from "./logger";
 import crypto from "crypto";
 import { trace, SpanKind } from "@opentelemetry/api";
 
-const tracer = trace.getTracer("devpulse-redis");
+const tracer = trace.getTracer("rakshex-redis");
 
 /**
  * Span-wrapped Redis GET. Records hit/miss as span attribute.

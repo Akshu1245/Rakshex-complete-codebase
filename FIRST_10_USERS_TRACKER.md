@@ -1,4 +1,4 @@
-# DevPulse First 10 Users Tracker
+# Rakshex First 10 Users Tracker
 
 > Individual tracking for our earliest design partners.
 > Date: 2026-05-17
@@ -136,16 +136,10 @@
 
 **Blockers:**
 
--
+- **Wins:**
 
-**Wins:**
+- **Next actions:**
 
--
-
-**Next actions:**
-
--
-
----
+- ***
 
 _Tracker updated daily by growth team._

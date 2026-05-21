@@ -1,5 +1,5 @@
 /**
- * Import API — Migrate from competitors to DevPulse.
+ * Import API — Migrate from competitors to Rakshex.
  *
  * Endpoints:
  *   POST /api/import/preview   — Preview import data before committing
@@ -188,7 +188,8 @@ export function registerImportRoutes(app: Express) {
         {
           id: "universal_csv",
           name: "Universal CSV",
-          description: "Import any CSV with column mapping (Helicone CSV, Portkey CSV, custom formats)",
+          description:
+            "Import any CSV with column mapping (Helicone CSV, Portkey CSV, custom formats)",
           formats: ["csv"],
           requiresColumnMapping: true,
         },

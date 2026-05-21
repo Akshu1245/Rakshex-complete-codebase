@@ -1,7 +1,7 @@
 @echo off
 setlocal enabledelayedexpansion
 set "MEM_DIR=%USERPROFILE%\.commandcode\codemem\data"
-set "PROJECT_DIR=C:\Users\aksha\Downloads\DevPulse_Complete_Codebase"
+set "PROJECT_DIR=C:\Users\aksha\Downloads\Rakshex_Complete_Codebase"
 
 if "%1"=="" goto :usage
 

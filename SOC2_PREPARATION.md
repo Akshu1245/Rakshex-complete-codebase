@@ -1,4 +1,4 @@
-# DevPulse SOC 2 Preparation
+# Rakshex SOC 2 Preparation
 
 > Trust through verification.
 > Date: 2026-05-17

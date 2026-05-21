@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import type { DevPulseApi, Collection } from "./api";
+import type { RakshexApi, Collection } from "./api";
 import type { EngagementTracker } from "./engagementTracker";
 
 export class OnboardingTour {
@@ -8,7 +8,7 @@ export class OnboardingTour {
 
   constructor(
     private readonly context: vscode.ExtensionContext,
-    private readonly api: DevPulseApi,
+    private readonly api: RakshexApi,
     private readonly engagementTracker: EngagementTracker,
     private readonly onComplete: () => void,
   ) {}
@@ -23,8 +23,8 @@ export class OnboardingTour {
     if (completed >= 4) return; // already onboarded
 
     this.panel = vscode.window.createWebviewPanel(
-      "devpulse.onboardingTour",
-      "Welcome to DevPulse",
+      "rakshex.onboardingTour",
+      "Welcome to Rakshex",
       vscode.ViewColumn.One,
       { enableScripts: true },
     );
@@ -41,13 +41,13 @@ export class OnboardingTour {
         this.engagementTracker.recordOnboardingStep(step as any);
 
         if (step === "connect") {
-          await vscode.commands.executeCommand("devpulse.authenticate");
+          await vscode.commands.executeCommand("rakshex.authenticate");
         } else if (step === "import") {
-          await vscode.commands.executeCommand("devpulse.importCollections");
+          await vscode.commands.executeCommand("rakshex.importCollections");
         } else if (step === "scan") {
           await this.runFirstScan();
         } else if (step === "review") {
-          await vscode.commands.executeCommand("devpulse.openSecurityPanel");
+          await vscode.commands.executeCommand("rakshex.openSecurityPanel");
         }
 
         const updated = this.engagementTracker.getOnboardingProgress();
@@ -78,7 +78,7 @@ export class OnboardingTour {
       if (!picked) return;
       const scan = await this.api.triggerScan(picked.collectionId);
       void vscode.window.showInformationMessage(
-        `Scan queued (id ${scan.scanId}). Results will appear in the DevPulse panel.`,
+        `Scan queued (id ${scan.scanId}). Results will appear in the Rakshex panel.`,
       );
       this.engagementTracker.record("scan_run");
       this.engagementTracker.recordOnboardingStep("scanned");
@@ -95,7 +95,7 @@ export class OnboardingTour {
         id: "connect",
         label: "Connect your API key",
         icon: "🔑",
-        desc: "Link DevPulse to your account",
+        desc: "Link Rakshex to your account",
       },
       { id: "import", label: "Import a collection", icon: "📁", desc: "Add your API definitions" },
       {
@@ -108,7 +108,7 @@ export class OnboardingTour {
         id: "review",
         label: "Review your findings",
         icon: "🛡️",
-        desc: "See what DevPulse discovered",
+        desc: "See what Rakshex discovered",
       },
     ];
 
@@ -173,12 +173,12 @@ export class OnboardingTour {
 </head>
 <body>
   <div class="hero">
-    <h1>Welcome to DevPulse</h1>
+    <h1>Welcome to Rakshex</h1>
     <p>Secure your AI agents and APIs in 4 simple steps</p>
   </div>
   <div class="progress-bar"><div class="progress-fill"></div></div>
   ${stepHtml}
-  <div class="tip">💡 Tip: DevPulse scans your API collections for security issues, hidden costs, and compliance risks — all without uploading your source code.</div>
+  <div class="tip">💡 Tip: Rakshex scans your API collections for security issues, hidden costs, and compliance risks — all without uploading your source code.</div>
   <script nonce="${nonce}">
     const vscode = acquireVsCodeApi();
     function completeStep(step) {

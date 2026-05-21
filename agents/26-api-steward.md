@@ -12,22 +12,25 @@ I am API-STEWARD. When the VS Code extension breaks because someone renamed a tR
 
 ## API Surface Ownership
 
-### tRPC Contract (server/api/*)
+### tRPC Contract (server/api/\*)
+
 ```
 32 routers, each with queries + mutations consumed by:
-  - devpulse-frontend (tRPC React client)
-  - devpulse-vscode (HTTP client calling tRPC endpoints)
+  - rakshex-frontend (tRPC React client)
+  - rakshex-vscode (HTTP client calling tRPC endpoints)
   - Future SDKs (Python, TypeScript) — Phase 2
 ```
 
 ### Webhook Contract (external consumers)
+
 ```
 Payload shape: { id, event, createdAt, data }
-Signature: X-DevPulse-Signature-256: sha256=<hex>
+Signature: X-Rakshex-Signature-256: sha256=<hex>
 Consumed by: Customer SIEMs, PagerDuty, custom integrations
 ```
 
 ### Gateway API (internal)
+
 ```
 Endpoints:
   /api/internal/kill-switch
@@ -67,8 +70,8 @@ On every PR that touches an API file, I run:
    □ Signature scheme unchanged
 
 5. CLIENT IMPACT CHECK:
-   □ Search devpulse-frontend for tRPC calls to changed procedures
-   □ Search devpulse-vscode for HTTP calls to changed endpoints
+   □ Search rakshex-frontend for tRPC calls to changed procedures
+   □ Search rakshex-vscode for HTTP calls to changed endpoints
    □ Flag any caller that will break
 ```
 
@@ -90,6 +93,7 @@ Every API error must follow this contract:
 ```
 
 I reject any PR that:
+
 - Throws raw Error without TRPCError wrapping
 - Returns different error shapes per endpoint
 - Leaks stack traces or internal details in error messages

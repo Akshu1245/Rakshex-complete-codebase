@@ -32,7 +32,7 @@ function generateTotpSecret(): string {
  * Build an otpauth:// URI for authenticator apps.
  */
 function buildOtpauthUri(secret: string, email: string): string {
-  const issuer = encodeURIComponent("DevPulse");
+  const issuer = encodeURIComponent("Rakshex");
   const account = encodeURIComponent(email);
   return `otpauth://totp/${issuer}:${account}?secret=${secret}&issuer=${issuer}&algorithm=SHA1&digits=${TOTP_DIGITS}&period=${TOTP_STEP_SECONDS}`;
 }
@@ -162,7 +162,7 @@ export const settingsRouter = router({
       z.object({
         name: z.string().min(1).max(100).optional(),
         email: z.string().email().max(320).optional(),
-      })
+      }),
     )
     .mutation(async ({ input, ctx }) => {
       if (!ctx.user) {
@@ -184,7 +184,7 @@ export const settingsRouter = router({
         "profile_updated",
         { updates: Object.keys(updates) },
         ctx.req.ip,
-        ctx.req.headers["user-agent"] as string
+        ctx.req.headers["user-agent"] as string,
       );
 
       return { success: true };
@@ -204,7 +204,7 @@ export const settingsRouter = router({
 
     const sessions = await db.getUserSessions(ctx.user.id);
     return {
-      sessions: sessions.map(s => ({
+      sessions: sessions.map((s) => ({
         id: s.id,
         ipAddress: s.ipAddress,
         userAgent: s.userAgent,
@@ -227,7 +227,7 @@ export const settingsRouter = router({
 
       // Ownership check: verify the session belongs to the current user
       const sessions = await db.getUserSessions(ctx.user.id);
-      const owned = sessions.find(s => s.id === input.sessionId);
+      const owned = sessions.find((s) => s.id === input.sessionId);
       if (!owned) {
         throw new TRPCError({
           code: "NOT_FOUND",
@@ -242,7 +242,7 @@ export const settingsRouter = router({
         "session_revoked",
         { sessionId: input.sessionId },
         ctx.req.ip,
-        ctx.req.headers["user-agent"] as string
+        ctx.req.headers["user-agent"] as string,
       );
 
       return { success: true };
@@ -263,7 +263,7 @@ export const settingsRouter = router({
       "all_sessions_revoked",
       {},
       ctx.req.ip,
-      ctx.req.headers["user-agent"] as string
+      ctx.req.headers["user-agent"] as string,
     );
 
     return { success: true };
@@ -274,7 +274,7 @@ export const settingsRouter = router({
       z.object({
         currentPassword: z.string().min(8),
         newPassword: z.string().min(8).max(128),
-      })
+      }),
     )
     .mutation(async ({ input, ctx }) => {
       if (!ctx.user) {
@@ -314,7 +314,7 @@ export const settingsRouter = router({
         "password_changed",
         {},
         ctx.req.ip,
-        ctx.req.headers["user-agent"] as string
+        ctx.req.headers["user-agent"] as string,
       );
 
       // Revoke all other sessions for security
@@ -353,7 +353,7 @@ export const settingsRouter = router({
         weeklyDigest: z.boolean().optional(),
         teamActivity: z.boolean().optional(),
         promotionalEmails: z.boolean().optional(),
-      })
+      }),
     )
     .mutation(async ({ input, ctx }) => {
       if (!ctx.user) {
@@ -370,7 +370,7 @@ export const settingsRouter = router({
         "email_preferences_updated",
         { changed: Object.keys(input) },
         ctx.req.ip,
-        ctx.req.headers["user-agent"] as string
+        ctx.req.headers["user-agent"] as string,
       );
 
       return { success: true };
@@ -417,8 +417,11 @@ export const settingsRouter = router({
   enable2FA: protectedProcedure
     .input(
       z.object({
-        code: z.string().length(6).regex(/^\d{6}$/),
-      })
+        code: z
+          .string()
+          .length(6)
+          .regex(/^\d{6}$/),
+      }),
     )
     .mutation(async ({ input, ctx }) => {
       if (!ctx.user) {
@@ -426,7 +429,12 @@ export const settingsRouter = router({
       }
 
       const pending = await db.getPendingTotpSecret(ctx.user.id);
-      if (!pending || !pending.pendingTotpSecret || !pending.pendingTotpExpiresAt || new Date(pending.pendingTotpExpiresAt) < new Date()) {
+      if (
+        !pending ||
+        !pending.pendingTotpSecret ||
+        !pending.pendingTotpExpiresAt ||
+        new Date(pending.pendingTotpExpiresAt) < new Date()
+      ) {
         // Clear expired pending secret
         if (pending?.pendingTotpSecret) {
           await db.updatePendingTotpSecret(ctx.user.id, null, null);
@@ -454,7 +462,7 @@ export const settingsRouter = router({
         "2fa_enabled",
         {},
         ctx.req.ip,
-        ctx.req.headers["user-agent"] as string
+        ctx.req.headers["user-agent"] as string,
       );
 
       logger.info(`[2FA] Enabled for user ${ctx.user.id}`);
@@ -469,7 +477,7 @@ export const settingsRouter = router({
     .input(
       z.object({
         password: z.string().min(1),
-      })
+      }),
     )
     .mutation(async ({ input, ctx }) => {
       if (!ctx.user) {
@@ -496,7 +504,7 @@ export const settingsRouter = router({
         "2fa_disabled",
         {},
         ctx.req.ip,
-        ctx.req.headers["user-agent"] as string
+        ctx.req.headers["user-agent"] as string,
       );
 
       logger.info(`[2FA] Disabled for user ${ctx.user.id}`);
@@ -538,7 +546,7 @@ export const settingsRouter = router({
 
       const logs = await db.getAuditLogForUser(ctx.user.id, input.limit);
       return {
-        logs: logs.map(l => ({
+        logs: logs.map((l) => ({
           id: l.id,
           action: l.action,
           details: l.details,
@@ -553,7 +561,7 @@ export const settingsRouter = router({
       z.object({
         confirmation: z.literal("DELETE MY ACCOUNT"),
         reason: z.string().max(500).optional(),
-      })
+      }),
     )
     .mutation(async ({ input, ctx }) => {
       if (!ctx.user) {
@@ -569,7 +577,7 @@ export const settingsRouter = router({
         "account_deletion_requested",
         { reason: input.reason || "No reason provided" },
         ctx.req.ip,
-        ctx.req.headers["user-agent"] as string
+        ctx.req.headers["user-agent"] as string,
       );
 
       // Delete everything

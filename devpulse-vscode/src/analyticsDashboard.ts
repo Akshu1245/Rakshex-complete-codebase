@@ -20,8 +20,8 @@ export class AnalyticsDashboard {
     }
 
     this.panel = vscode.window.createWebviewPanel(
-      "devpulse.analytics",
-      "DevPulse Analytics",
+      "rakshex.analytics",
+      "Rakshex Analytics",
       vscode.ViewColumn.One,
       { enableScripts: true },
     );
@@ -45,13 +45,13 @@ export class AnalyticsDashboard {
     const installed = true;
     const tourStarted =
       progress.some((p) => p.step === "tour_started") ||
-      this.context.globalState.get<boolean>("devpulse.tourDismissed") === false;
+      this.context.globalState.get<boolean>("rakshex.tourDismissed") === false;
     const signedIn = progress.some((p) => p.step === "signed_in" && p.complete);
     const imported = progress.some((p) => p.step === "imported" && p.complete);
     const firstScan = progress.some((p) => p.step === "scanned" && p.complete);
     const foundIssue = progress.some((p) => p.step === "found_issue" && p.complete);
 
-    const installDate = this.context.globalState.get<number>("devpulse.installDate") ?? Date.now();
+    const installDate = this.context.globalState.get<number>("rakshex.installDate") ?? Date.now();
     const daysSinceInstall = Math.floor((Date.now() - installDate) / (1000 * 60 * 60 * 24));
 
     return {
@@ -154,7 +154,7 @@ export class AnalyticsDashboard {
   </style>
 </head>
 <body>
-  <h2>DevPulse Analytics</h2>
+  <h2>Rakshex Analytics</h2>
   <div class="subtitle">Product signals: retention, trust, PMF, and value</div>
 
   <div class="metric-card">

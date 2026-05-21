@@ -1,5 +1,5 @@
 /**
- * DevPulse Product Telemetry
+ * Rakshex Product Telemetry
  *
  * Privacy-safe analytics for understanding user behavior,
  * onboarding conversion, and product health.
@@ -129,12 +129,12 @@ class TelemetryService {
     const batch = this.buffer.splice(0, BATCH_SIZE);
 
     try {
-      const endpoint = process.env.TELEMETRY_ENDPOINT || "https://telemetry.devpulse.in/v1/events";
+      const endpoint = process.env.TELEMETRY_ENDPOINT || "https://telemetry.rakshex.in/v1/events";
       const response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "content-type": "application/json",
-          "x-telemetry-source": "devpulse-server",
+          "x-telemetry-source": "rakshex-server",
         },
         body: JSON.stringify({ events: batch }),
       });

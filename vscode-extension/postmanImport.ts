@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
-import type { DevPulseApi } from "./api";
+import type { RakshexApi } from "./api";
 
 interface PostmanCredential {
   type: string;
@@ -33,7 +33,7 @@ interface PostmanScanResult {
 export class PostmanImportCommand {
   constructor(
     private readonly context: vscode.ExtensionContext,
-    private readonly api: DevPulseApi
+    private readonly api: RakshexApi,
   ) {}
 
   async execute(): Promise<void> {
@@ -63,7 +63,7 @@ export class PostmanImportCommand {
       collection = JSON.parse(content);
     } catch (err) {
       vscode.window.showErrorMessage(
-        `DevPulse: Could not read Postman collection — ${err instanceof Error ? err.message : String(err)}`
+        `Rakshex: Could not read Postman collection — ${err instanceof Error ? err.message : String(err)}`,
       );
       return;
     }
@@ -72,7 +72,7 @@ export class PostmanImportCommand {
     await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
-        title: `🔍 DevPulse: Scanning ${fileName}...`,
+        title: `🔍 Rakshex: Scanning ${fileName}...`,
         cancellable: false,
       },
       async (progress) => {
@@ -85,14 +85,11 @@ export class PostmanImportCommand {
 
         // Step 5: Show results — THE OH CRAP MOMENT
         await this.showResults(result, filePath);
-      }
+      },
     );
   }
 
-  private async performScan(
-    collection: any,
-    fileName: string
-  ): Promise<PostmanScanResult> {
+  private async performScan(collection: any, fileName: string): Promise<PostmanScanResult> {
     const findings: PostmanFinding[] = [];
     const credentials: PostmanCredential[] = [];
     const endpoints: string[] = [];
@@ -108,8 +105,7 @@ export class PostmanImportCommand {
           const url =
             typeof req.url === "string"
               ? req.url
-              : req.url?.raw ||
-                (req.url?.host?.join(".") || "unknown");
+              : req.url?.raw || req.url?.host?.join(".") || "unknown";
           const method = req.method || "GET";
           const endpointId = `${method} ${url}`;
           endpoints.push(endpointId);
@@ -128,9 +124,7 @@ export class PostmanImportCommand {
 
           // Missing auth
           const headers = req.header || [];
-          const headerNames = headers.map((h: any) =>
-            (h.key || "").toLowerCase()
-          );
+          const headerNames = headers.map((h: any) => (h.key || "").toLowerCase());
           if (
             !headerNames.includes("authorization") &&
             !headerNames.includes("x-api-key") &&
@@ -142,8 +136,7 @@ export class PostmanImportCommand {
               title: "No authentication header detected",
               endpoint: endpointId,
               category: "OWASP API2:2023",
-              remediation:
-                "Add Authorization: Bearer <token> or X-API-Key header.",
+              remediation: "Add Authorization: Bearer <token> or X-API-Key header.",
             });
           }
 
@@ -175,10 +168,7 @@ export class PostmanImportCommand {
             const matches = allText.match(regex);
             if (matches) {
               matches.forEach((match) => {
-                const preview =
-                  match.substring(0, 8) +
-                  "..." +
-                  match.substring(match.length - 4);
+                const preview = match.substring(0, 8) + "..." + match.substring(match.length - 4);
                 credentials.push({
                   type,
                   location: currentPath,
@@ -224,39 +214,22 @@ export class PostmanImportCommand {
 
     // Deduplicate
     const uniqueFindings = findings.filter(
-      (f, i, arr) =>
-        arr.findIndex(
-          (t) => t.title === f.title && t.endpoint === f.endpoint
-        ) === i
+      (f, i, arr) => arr.findIndex((t) => t.title === f.title && t.endpoint === f.endpoint) === i,
     );
     const uniqueCredentials = credentials.filter(
-      (c, i, arr) =>
-        arr.findIndex((t) => t.keyPreview === c.keyPreview) === i
+      (c, i, arr) => arr.findIndex((t) => t.keyPreview === c.keyPreview) === i,
     );
 
     // Risk score
     const weights = { Critical: 10, High: 7, Medium: 4, Low: 1 };
-    const rawRisk = uniqueFindings.reduce(
-      (sum, f) => sum + (weights[f.severity] || 0),
-      0
-    );
+    const rawRisk = uniqueFindings.reduce((sum, f) => sum + (weights[f.severity] || 0), 0);
     const maxRisk = uniqueFindings.length * 10 || 1;
     const riskScore = Math.min(100, Math.round((rawRisk / maxRisk) * 100));
 
-    const criticalCount = uniqueFindings.filter(
-      (f) => f.severity === "Critical"
-    ).length;
-    const highCount = uniqueFindings.filter(
-      (f) => f.severity === "High"
-    ).length;
-    const owaspScore = Math.max(
-      0,
-      Math.round(100 - (criticalCount * 15 + highCount * 8))
-    );
-    const pciScore = Math.max(
-      0,
-      Math.round(100 - (criticalCount * 20 + highCount * 10))
-    );
+    const criticalCount = uniqueFindings.filter((f) => f.severity === "Critical").length;
+    const highCount = uniqueFindings.filter((f) => f.severity === "High").length;
+    const owaspScore = Math.max(0, Math.round(100 - (criticalCount * 15 + highCount * 8)));
+    const pciScore = Math.max(0, Math.round(100 - (criticalCount * 20 + highCount * 10)));
 
     return {
       collectionName: collection.info?.name || fileName,
@@ -270,15 +243,12 @@ export class PostmanImportCommand {
     };
   }
 
-  private async showResults(
-    result: PostmanScanResult,
-    filePath: string
-  ): Promise<void> {
+  private async showResults(result: PostmanScanResult, filePath: string): Promise<void> {
     const panel = vscode.window.createWebviewPanel(
-      "devpulsePostmanResults",
+      "rakshexPostmanResults",
       `🔍 ${result.collectionName}`,
       vscode.ViewColumn.One,
-      { enableScripts: true }
+      { enableScripts: true },
     );
 
     const hasCredentials = result.credentials.length > 0;
@@ -288,11 +258,11 @@ export class PostmanImportCommand {
     if (hasCredentials) {
       vscode.window
         .showWarningMessage(
-          `🚨 DevPulse found ${result.credentials.length} exposed credential${
+          `🚨 Rakshex found ${result.credentials.length} exposed credential${
             result.credentials.length > 1 ? "s" : ""
           } in your Postman collection. This has been visible to anyone with access.`,
           "View Details",
-          "Dismiss"
+          "Dismiss",
         )
         .then((selection) => {
           if (selection === "View Details") {
@@ -304,28 +274,25 @@ export class PostmanImportCommand {
     // Also show summary notification
     if (result.findings.length > 0) {
       vscode.window.showInformationMessage(
-        `DevPulse: ${result.findings.length} finding${
+        `Rakshex: ${result.findings.length} finding${
           result.findings.length > 1 ? "s" : ""
         } in ${result.endpoints.length} endpoint${
           result.endpoints.length > 1 ? "s" : ""
         }. Risk score: ${result.riskScore}/100.`,
         "Open Report",
-        "Copy Summary"
+        "Copy Summary",
       );
     } else {
       vscode.window.showInformationMessage(
-        `✅ DevPulse: All clear! No vulnerabilities found in ${result.collectionName}.`,
-        "Great!"
+        `✅ Rakshex: All clear! No vulnerabilities found in ${result.collectionName}.`,
+        "Great!",
       );
     }
 
     panel.webview.html = this.getResultsHtml(result, filePath);
   }
 
-  private getResultsHtml(
-    result: PostmanScanResult,
-    filePath: string
-  ): string {
+  private getResultsHtml(result: PostmanScanResult, filePath: string): string {
     const credentialSection = result.credentials.length
       ? `
       <div style="background: rgba(239,68,68,0.1); border: 2px solid rgba(239,68,68,0.5); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
@@ -349,7 +316,7 @@ export class PostmanImportCommand {
             </div>
             <span style="background: rgba(239,68,68,0.2); color: #ef4444; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">CRITICAL</span>
           </div>
-        `
+        `,
           )
           .join("")}
         <div style="background: rgba(0,0,0,0.2); border-radius: 8px; padding: 12px; margin-top: 12px;">
@@ -368,18 +335,18 @@ export class PostmanImportCommand {
               f.severity === "Critical"
                 ? "#ef4444"
                 : f.severity === "High"
-                ? "#f97316"
-                : f.severity === "Medium"
-                ? "#eab308"
-                : "#22c55e";
+                  ? "#f97316"
+                  : f.severity === "Medium"
+                    ? "#eab308"
+                    : "#22c55e";
             const bg =
               f.severity === "Critical"
                 ? "rgba(239,68,68,0.1)"
                 : f.severity === "High"
-                ? "rgba(249,115,22,0.1)"
-                : f.severity === "Medium"
-                ? "rgba(234,179,8,0.1)"
-                : "rgba(34,197,94,0.1)";
+                  ? "rgba(249,115,22,0.1)"
+                  : f.severity === "Medium"
+                    ? "rgba(234,179,8,0.1)"
+                    : "rgba(34,197,94,0.1)";
             return `
             <div style="background: ${bg}; border-left: 4px solid ${color}; border-radius: 8px; padding: 16px; margin-bottom: 12px;">
               <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
@@ -500,12 +467,12 @@ export class PostmanImportCommand {
     </div>
     <div class="score-card">
       <div class="score-label">OWASP</div>
-      <div class="score-value" style="color: ${result.owaspScore >= 80 ? '#22c55e' : result.owaspScore >= 50 ? '#eab308' : '#ef4444'};">${result.owaspScore}</div>
+      <div class="score-value" style="color: ${result.owaspScore >= 80 ? "#22c55e" : result.owaspScore >= 50 ? "#eab308" : "#ef4444"};">${result.owaspScore}</div>
       <div style="font-size: 11px; color: #64748b;">/100</div>
     </div>
     <div class="score-card">
       <div class="score-label">PCI DSS</div>
-      <div class="score-value" style="color: ${result.pciScore >= 80 ? '#22c55e' : result.pciScore >= 50 ? '#eab308' : '#ef4444'};">${result.pciScore}</div>
+      <div class="score-value" style="color: ${result.pciScore >= 80 ? "#22c55e" : result.pciScore >= 50 ? "#eab308" : "#ef4444"};">${result.pciScore}</div>
       <div style="font-size: 11px; color: #64748b;">/100</div>
     </div>
   </div>
@@ -518,10 +485,10 @@ export class PostmanImportCommand {
   <div class="cta-section">
     <h3 style="margin: 0 0 8px 0;">Want continuous protection?</h3>
     <p style="color: #cbd5e1; margin: 0 0 16px 0; font-size: 14px;">
-      Get DevPulse in VS Code for real-time scans, CI/CD integration, and cost monitoring.
+      Get Rakshex in VS Code for real-time scans, CI/CD integration, and cost monitoring.
     </p>
     <button class="btn-primary" onclick="vscode.postMessage({type:'signup'})">
-      Get DevPulse Free →
+      Get Rakshex Free →
     </button>
     <button class="btn-secondary" onclick="vscode.postMessage({type:'copyReport'})">
       📋 Copy Report

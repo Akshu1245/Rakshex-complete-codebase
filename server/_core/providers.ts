@@ -28,7 +28,7 @@ export interface LLMProvider {
   readonly name: string;
   readonly defaultModel: string;
 
-  /** Invoke the LLM with the canonical DevPulse params. */
+  /** Invoke the LLM with the canonical Rakshex params. */
   invoke(params: InvokeParams, options?: ProviderInvokeOptions): Promise<InvokeResult>;
 
   /** Whether this provider can handle a given model string. */
@@ -296,7 +296,7 @@ export async function routeLLM(
 ): Promise<InvokeResult> {
   // Kill-switch check (inline, before any provider dispatch)
   if (params.killSwitchActive) {
-    throw new RuntimePolicyError("LLM API request blocked by DevPulse Kill Switch.", {
+    throw new RuntimePolicyError("LLM API request blocked by Rakshex Kill Switch.", {
       context: { userId: params.userId, policy: "kill_switch" },
     });
   }
@@ -307,7 +307,7 @@ export async function routeLLM(
       const { getKillSwitchSettings } = await import("../db");
       const ks = await getKillSwitchSettings(params.userId);
       if (ks?.isActive) {
-        throw new RuntimePolicyError("LLM API request blocked by DevPulse Kill Switch.", {
+        throw new RuntimePolicyError("LLM API request blocked by Rakshex Kill Switch.", {
           context: { userId: params.userId, policy: "kill_switch" },
         });
       }

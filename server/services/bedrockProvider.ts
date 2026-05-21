@@ -97,25 +97,21 @@ function toBedrockMessages(messages: Message[]): {
         typeof msg.content === "string"
           ? msg.content
           : (msg.content as Array<TextContent>)
-              .filter(c => c.type === "text")
-              .map(c => c.text)
+              .filter((c) => c.type === "text")
+              .map((c) => c.text)
               .join("\n");
       systemPrompts.push(text);
       continue;
     }
 
-    const bedrockRole: "user" | "assistant" =
-      msg.role === "assistant" ? "assistant" : "user";
+    const bedrockRole: "user" | "assistant" = msg.role === "assistant" ? "assistant" : "user";
 
     const blocks: BedrockContentBlock[] = [];
 
     if (msg.role === "tool") {
       // Bedrock doesn't have a "tool" role — we convert tool results
       // to user content blocks with toolResult format.
-      const text =
-        typeof msg.content === "string"
-          ? msg.content
-          : JSON.stringify(msg.content);
+      const text = typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content);
       blocks.push({
         toolResult: {
           toolUseId: msg.tool_call_id ?? "unknown",
@@ -127,9 +123,8 @@ function toBedrockMessages(messages: Message[]): {
     }
 
     // Try to find tool_calls from the message object
-    const toolCalls: ToolCall[] | undefined = (
-      msg as Message & { tool_calls?: ToolCall[] }
-    ).tool_calls;
+    const toolCalls: ToolCall[] | undefined = (msg as Message & { tool_calls?: ToolCall[] })
+      .tool_calls;
 
     if (toolCalls && toolCalls.length > 0) {
       for (const tc of toolCalls) {
@@ -189,7 +184,7 @@ function toBedrockMessages(messages: Message[]): {
 function toBedrockToolConfig(
   tools?: InvokeParams["tools"],
   toolChoice?: ToolChoice,
-  outputSchema?: OutputSchema
+  outputSchema?: OutputSchema,
 ): Record<string, unknown> | undefined {
   if (!tools || tools.length === 0) {
     // Handle outputSchema-only case (no tools, just structured output)
@@ -210,7 +205,7 @@ function toBedrockToolConfig(
     return undefined;
   }
 
-  const bedrockTools = tools.map(t => ({
+  const bedrockTools = tools.map((t) => ({
     toolSpec: {
       name: t.function.name,
       description: t.function.description ?? "",
@@ -254,12 +249,7 @@ function hmacSha256(key: Buffer | string, data: string): Buffer {
   return crypto.createHmac("sha256", key).update(data).digest();
 }
 
-function getSignatureKey(
-  secretKey: string,
-  date: string,
-  region: string,
-  service: string
-): Buffer {
+function getSignatureKey(secretKey: string, date: string, region: string, service: string): Buffer {
   const kDate = hmacSha256("AWS4" + secretKey, date);
   const kRegion = hmacSha256(kDate, region);
   const kService = hmacSha256(kRegion, service);
@@ -273,13 +263,14 @@ function signRequest(
   service: string,
   body: string,
   credentials: BedrockCredentials,
-  headers: Record<string, string>
+  headers: Record<string, string>,
 ): Record<string, string> {
   const now = new Date();
-  const amzDate = now
-    .toISOString()
-    .replace(/[:-]|\.\d{3}/g, "")
-    .slice(0, 15) + "Z";
+  const amzDate =
+    now
+      .toISOString()
+      .replace(/[:-]|\.\d{3}/g, "")
+      .slice(0, 15) + "Z";
   const dateStamp = amzDate.slice(0, 8);
 
   const { hostname, pathname } = new URL(url);
@@ -293,12 +284,10 @@ function signRequest(
   }
 
   // Canonical request
-  const signedHeaders = Object.keys(headers)
-    .sort()
-    .join(";");
+  const signedHeaders = Object.keys(headers).sort().join(";");
   const canonicalHeaders = Object.keys(headers)
     .sort()
-    .map(k => `${k}:${headers[k]}`)
+    .map((k) => `${k}:${headers[k]}`)
     .join("\n");
 
   const canonicalRequest = [
@@ -313,19 +302,9 @@ function signRequest(
   // String to sign
   const algorithm = "AWS4-HMAC-SHA256";
   const credentialScope = `${dateStamp}/${region}/${service}/aws4_request`;
-  const stringToSign = [
-    algorithm,
-    amzDate,
-    credentialScope,
-    sha256(canonicalRequest),
-  ].join("\n");
+  const stringToSign = [algorithm, amzDate, credentialScope, sha256(canonicalRequest)].join("\n");
 
-  const signingKey = getSignatureKey(
-    credentials.secretAccessKey,
-    dateStamp,
-    region,
-    service
-  );
+  const signingKey = getSignatureKey(credentials.secretAccessKey, dateStamp, region, service);
   const signature = hmacSha256(signingKey, stringToSign).toString("hex");
 
   headers["authorization"] =
@@ -360,20 +339,17 @@ interface BedrockConverseResponse {
   metrics?: { latencyMs: number };
 }
 
-function fromBedrockResponse(
-  raw: BedrockConverseResponse,
-  modelId: string
-): InvokeResult {
+function fromBedrockResponse(raw: BedrockConverseResponse, modelId: string): InvokeResult {
   const msg = raw.output?.message;
   const content = msg?.content ?? [];
 
   const textParts = content
-    .filter(b => "text" in b)
-    .map(b => ({ type: "text" as const, text: b.text! }));
+    .filter((b) => "text" in b)
+    .map((b) => ({ type: "text" as const, text: b.text! }));
 
   const toolCalls: ToolCall[] = content
-    .filter(b => "toolUse" in b && b.toolUse)
-    .map(b => ({
+    .filter((b) => "toolUse" in b && b.toolUse)
+    .map((b) => ({
       id: b.toolUse!.toolUseId,
       type: "function" as const,
       function: {
@@ -411,21 +387,20 @@ function fromBedrockResponse(
 
 export async function invokeBedrock(
   params: InvokeParams,
-  options: BedrockInvokeOptions & { killSwitchActive?: boolean; userId?: number }
+  options: BedrockInvokeOptions & { killSwitchActive?: boolean; userId?: number },
 ): Promise<InvokeResult> {
   // Kill-switch check
   if (options.killSwitchActive) {
-    throw new RuntimePolicyError(
-      "LLM API request blocked by DevPulse Kill Switch.",
-      { context: { userId: options.userId, policy: "kill_switch" } }
-    );
+    throw new RuntimePolicyError("LLM API request blocked by Rakshex Kill Switch.", {
+      context: { userId: options.userId, policy: "kill_switch" },
+    });
   }
 
   const { systemPrompts, bedrockMessages } = toBedrockMessages(params.messages);
   const toolConfig = toBedrockToolConfig(
     params.tools,
     params.tool_choice ?? params.toolChoice,
-    params.outputSchema ?? params.output_schema
+    params.outputSchema ?? params.output_schema,
   );
 
   const body: Record<string, unknown> = {
@@ -433,7 +408,7 @@ export async function invokeBedrock(
   };
 
   if (systemPrompts.length > 0) {
-    body.system = systemPrompts.map(s => ({ text: s }));
+    body.system = systemPrompts.map((s) => ({ text: s }));
   }
 
   const model = options.modelId;
@@ -462,15 +437,7 @@ export async function invokeBedrock(
     accept: "application/json",
   };
 
-  signRequest(
-    "POST",
-    url,
-    options.region,
-    "bedrock",
-    bodyString,
-    options.credentials,
-    headers
-  );
+  signRequest("POST", url, options.region, "bedrock", bodyString, options.credentials, headers);
 
   const response = await fetchWithTimeout(url, {
     method: "POST",
@@ -480,9 +447,7 @@ export async function invokeBedrock(
   });
 
   if (!response.ok) {
-    const errorText = await response
-      .text()
-      .catch(() => "could not read response body");
+    const errorText = await response.text().catch(() => "could not read response body");
     throw new ExternalServiceError(
       `Bedrock invoke failed (${model}): ${response.status} ${response.statusText}`,
       {
@@ -494,7 +459,7 @@ export async function invokeBedrock(
           status: response.status,
           body: errorText.slice(0, 500),
         },
-      }
+      },
     );
   }
 
@@ -504,9 +469,10 @@ export async function invokeBedrock(
   // Auto-track token usage
   if (options.userId && result.usage) {
     const { prompt_tokens, completion_tokens } = result.usage;
-    const cost = (prompt_tokens / 1_000_000) * 0.4 + // approx pricing
+    const cost =
+      (prompt_tokens / 1_000_000) * 0.4 + // approx pricing
       (completion_tokens / 1_000_000) * 2.0;
-    import("../db").then(async db => {
+    import("../db").then(async (db) => {
       try {
         await db.recordTokenUsage(
           options.userId!,
@@ -514,7 +480,7 @@ export async function invokeBedrock(
           prompt_tokens,
           completion_tokens,
           0,
-          cost
+          cost,
         );
       } catch (err) {
         logger.warn({ err }, "[Bedrock] Failed to record token usage");
@@ -540,10 +506,9 @@ export const bedrockProvider: LLMProvider = {
     const sessionToken = process.env.AWS_SESSION_TOKEN || undefined;
 
     if (!accessKeyId || !secretAccessKey) {
-      throw new ExternalServiceError(
-        "AWS credentials not configured for Bedrock provider.",
-        { safeMessage: "Bedrock AI is not configured. Please contact support." }
-      );
+      throw new ExternalServiceError("AWS credentials not configured for Bedrock provider.", {
+        safeMessage: "Bedrock AI is not configured. Please contact support.",
+      });
     }
 
     return invokeBedrock(params, {

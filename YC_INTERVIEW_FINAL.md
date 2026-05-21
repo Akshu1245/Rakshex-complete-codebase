@@ -1,4 +1,4 @@
-# DevPulse YC Interview Final Prep
+# Rakshex YC Interview Final Prep
 
 > Crushing the YC interview.
 > Date: 2026-05-17
@@ -7,7 +7,7 @@
 
 ## 1-MINUTE PITCH
 
-DevPulse is AI runtime protection for developers.
+Rakshex is AI runtime protection for developers.
 
 We scan AI agents, API collections, and LLM calls in real time
 to find security issues, hidden costs, and compliance risks
@@ -24,7 +24,7 @@ We make money from teams who need to secure AI at scale.
 
 ### 1. What are you working on?
 
-**Strong:** DevPulse protects developers from AI security risks.
+**Strong:** Rakshex protects developers from AI security risks.
 We scan AI agents in real time, find issues before production,
 and stop cost overruns. **_ installs, _**% retention.
 
@@ -70,7 +70,7 @@ developers feel when they find a leaked key.
 ### 9. What's your vision?
 
 **Strong:** Every AI-powered application protected by default.
-DevPulse becomes as standard as HTTPS.
+Rakshex becomes as standard as HTTPS.
 
 ### 10. Why YC?
 

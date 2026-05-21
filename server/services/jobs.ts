@@ -21,10 +21,7 @@
  */
 import { logger } from "../_core/logger";
 import { getJobQueue } from "./jobQueue";
-import {
-  type ScanOptions,
-  runCollectionScan,
-} from "./scanService";
+import { type ScanOptions, runCollectionScan } from "./scanService";
 import { deliver, type WebhookEvent } from "./webhookDelivery";
 import { sendWeeklyDigestEmail } from "../email";
 import * as db from "../db";
@@ -65,7 +62,7 @@ export function registerJobWorkers(opts?: { force?: boolean }): void {
 
   q.registerWorker<ScanJob>(
     QUEUE_SCAN,
-    async data => {
+    async (data) => {
       logger.info(
         {
           queue: QUEUE_SCAN,
@@ -74,41 +71,39 @@ export function registerJobWorkers(opts?: { force?: boolean }): void {
           scanType: data.options.scanType,
           triggeredBy: data.options.triggeredBy,
         },
-        "[Jobs] running queued scan"
+        "[Jobs] running queued scan",
       );
       await runCollectionScan(data.userId, data.collectionId, data.options);
     },
-    { concurrency: 4, maxAttempts: 3 }
+    { concurrency: 4, maxAttempts: 3 },
   );
 
   q.registerWorker<WebhookDeliveryJob>(
     QUEUE_WEBHOOK_DELIVERY,
-    async data => {
+    async (data) => {
       await deliver(data.userId, data.event, data.data);
     },
-    { concurrency: 8, maxAttempts: 5 }
+    { concurrency: 8, maxAttempts: 5 },
   );
 
   q.registerWorker<WeeklyDigestJob>(
     QUEUE_WEEKLY_DIGEST,
-    async data => {
+    async (data) => {
       const user = await db.getUserById(data.userId);
       if (!user?.email) return;
       const oneWeekAgo = new Date();
       oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
       const scans = await db.getRecentScans(user.id, 7);
-      const recent = scans.filter(s => new Date(s.createdAt) >= oneWeekAgo);
+      const recent = scans.filter((s) => new Date(s.createdAt) >= oneWeekAgo);
       let totalFindings = 0;
       let criticalFindings = 0;
       for (const scan of recent) {
         const findings = await db.getFindingsByScanId(scan.id);
         totalFindings += findings.length;
-        criticalFindings += findings.filter(
-          f => f.severity === "Critical"
-        ).length;
+        criticalFindings += findings.filter((f) => f.severity === "Critical").length;
       }
       const collections = await db.getCollectionsByUserId(user.id);
-      const appUrl = process.env.APP_URL || "https://devpulse.in";
+      const appUrl = process.env.APP_URL || "https://rakshex.in";
       await sendWeeklyDigestEmail({
         toEmail: user.email,
         userName: user.name || "",
@@ -120,12 +115,12 @@ export function registerJobWorkers(opts?: { force?: boolean }): void {
         dashboardUrl: `${appUrl}/dashboard`,
       });
     },
-    { concurrency: 4, maxAttempts: 3 }
+    { concurrency: 4, maxAttempts: 3 },
   );
 
   logger.info(
     { queues: [QUEUE_SCAN, QUEUE_WEBHOOK_DELIVERY, QUEUE_WEEKLY_DIGEST] },
-    "[Jobs] background workers registered"
+    "[Jobs] background workers registered",
   );
 }
 
@@ -139,16 +134,12 @@ export async function enqueueScan(job: ScanJob): Promise<string> {
  * `deliver()` directly so the request response time does not depend on
  * the receiver's response time.
  */
-export async function enqueueWebhookDelivery(
-  job: WebhookDeliveryJob
-): Promise<string> {
+export async function enqueueWebhookDelivery(job: WebhookDeliveryJob): Promise<string> {
   return getJobQueue().enqueue(QUEUE_WEBHOOK_DELIVERY, job);
 }
 
 /** Enqueue a per-user weekly digest. Used by the cron job. */
-export async function enqueueWeeklyDigest(
-  job: WeeklyDigestJob
-): Promise<string> {
+export async function enqueueWeeklyDigest(job: WeeklyDigestJob): Promise<string> {
   return getJobQueue().enqueue(QUEUE_WEEKLY_DIGEST, job);
 }
 

@@ -1,14 +1,14 @@
-# @devpulse/sdk
+# @rakshex/sdk
 
-AI Runtime Telemetry SDK — drop-in wrapper for OpenAI and Anthropic SDKs that captures prompts, responses, tokens, cost, and latency and sends them to the DevPulse monitoring platform.
+AI Runtime Telemetry SDK — drop-in wrapper for OpenAI and Anthropic SDKs that captures prompts, responses, tokens, cost, and latency and sends them to the Rakshex monitoring platform.
 
 ## Quickstart
 
 ```ts
-import { DevPulse } from "@devpulse/sdk";
+import { Rakshex } from "@rakshex/sdk";
 import OpenAI from "openai";
 
-const dp = new DevPulse({
+const dp = new Rakshex({
   apiKey: "dp_xxx",
   workspaceId: "ws_xxx",
 });
@@ -25,32 +25,32 @@ const response = await openai.chat.completions.create({
 ## Installation
 
 ```bash
-npm install @devpulse/sdk
+npm install @rakshex/sdk
 ```
 
 ## Configuration
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `apiKey` | `string` | **required** | DevPulse API key |
-| `workspaceId` | `string` | **required** | Workspace to report to |
-| `ingestUrl` | `string` | `https://api.devpulse.in/v2/telemetry/events` | Ingest endpoint |
-| `sampleRate` | `number` | `1.0` | Fraction of calls to capture (0.0–1.0) |
-| `redactPII` | `boolean` | `true` | Strip PII before sending |
-| `batchSize` | `number` | `50` | Max events per batch |
-| `flushIntervalMs` | `number` | `5000` | Auto-flush interval |
-| `maxRetries` | `number` | `3` | Retries with exponential backoff |
-| `timeoutMs` | `number` | `10000` | HTTP request timeout |
+| Option            | Type      | Default                                      | Description                            |
+| ----------------- | --------- | -------------------------------------------- | -------------------------------------- |
+| `apiKey`          | `string`  | **required**                                 | Rakshex API key                        |
+| `workspaceId`     | `string`  | **required**                                 | Workspace to report to                 |
+| `ingestUrl`       | `string`  | `https://api.rakshex.in/v2/telemetry/events` | Ingest endpoint                        |
+| `sampleRate`      | `number`  | `1.0`                                        | Fraction of calls to capture (0.0–1.0) |
+| `redactPII`       | `boolean` | `true`                                       | Strip PII before sending               |
+| `batchSize`       | `number`  | `50`                                         | Max events per batch                   |
+| `flushIntervalMs` | `number`  | `5000`                                       | Auto-flush interval                    |
+| `maxRetries`      | `number`  | `3`                                          | Retries with exponential backoff       |
+| `timeoutMs`       | `number`  | `10000`                                      | HTTP request timeout                   |
 
 ## Supported Providers
 
-| Provider | Auto-Detect | Wrapper |
-|----------|-------------|---------|
-| OpenAI | ✅ | `dp.wrap(openai)` or `wrapOpenAI(openai, collector)` |
-| Anthropic | ✅ | `dp.wrap(anthropic)` or `wrapAnthropic(anthropic, collector)` |
-| AWS Bedrock | Manual capture | `dp.capture(event)` |
-| Google Vertex | Manual capture | `dp.capture(event)` |
-| Groq / Mistral / DeepSeek | Via OpenAI-compatible API | `dp.wrap(client)` |
+| Provider                  | Auto-Detect               | Wrapper                                                       |
+| ------------------------- | ------------------------- | ------------------------------------------------------------- |
+| OpenAI                    | ✅                        | `dp.wrap(openai)` or `wrapOpenAI(openai, collector)`          |
+| Anthropic                 | ✅                        | `dp.wrap(anthropic)` or `wrapAnthropic(anthropic, collector)` |
+| AWS Bedrock               | Manual capture            | `dp.capture(event)`                                           |
+| Google Vertex             | Manual capture            | `dp.capture(event)`                                           |
+| Groq / Mistral / DeepSeek | Via OpenAI-compatible API | `dp.wrap(client)`                                             |
 
 ## PII Redaction
 

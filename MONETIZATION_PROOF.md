@@ -1,4 +1,4 @@
-# DevPulse Monetization Proof
+# Rakshex Monetization Proof
 
 > Evidence developers will pay.
 > Date: 2026-05-17

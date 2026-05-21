@@ -35,7 +35,7 @@ export function PublicHeader() {
                   letterSpacing: "-0.02em",
                 }}
               >
-                DevPulse
+                Rakshex
               </span>
             </Link>
 

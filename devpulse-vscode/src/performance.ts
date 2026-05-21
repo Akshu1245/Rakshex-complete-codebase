@@ -1,5 +1,5 @@
 /**
- * DevPulse VS Code Extension Performance Optimizations
+ * Rakshex VS Code Extension Performance Optimizations
  *
  * Targets:
  *   - < 2s startup time
@@ -62,7 +62,7 @@ export function recordMemoryUsage(): void {
 
   if (used > MEMORY_LIMIT_MB * 0.9) {
     vscode.window.showWarningMessage(
-      `DevPulse memory usage is high (${used.toFixed(1)}MB). Consider reloading the window.`,
+      `Rakshex memory usage is high (${used.toFixed(1)}MB). Consider reloading the window.`,
     );
   }
 }

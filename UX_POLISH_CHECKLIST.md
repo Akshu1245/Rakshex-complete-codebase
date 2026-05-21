@@ -1,4 +1,4 @@
-# DevPulse UX Polish Checklist
+# Rakshex UX Polish Checklist
 
 > Obsess over product feel. Benchmark against the best.
 > Date: 2026-05-17
@@ -29,14 +29,14 @@
 
 ## SPEED BENCHMARKS
 
-| Action              | DevPulse | Target  | Linear  | Raycast |
-| ------------------- | -------- | ------- | ------- | ------- |
-| Extension activate  | \_\_\_   | < 2s    | < 1s    | < 1s    |
-| Sidebar open        | \_\_\_   | < 300ms | < 200ms | < 100ms |
-| Scan start feedback | \_\_\_   | < 100ms | < 50ms  | < 50ms  |
-| Finding render      | \_\_\_   | < 200ms | < 100ms | < 100ms |
-| Dashboard load      | \_\_\_   | < 1s    | < 500ms | < 300ms |
-| Auto-fix apply      | \_\_\_   | < 500ms | < 300ms | < 200ms |
+| Action              | Rakshex | Target  | Linear  | Raycast |
+| ------------------- | ------- | ------- | ------- | ------- |
+| Extension activate  | \_\_\_  | < 2s    | < 1s    | < 1s    |
+| Sidebar open        | \_\_\_  | < 300ms | < 200ms | < 100ms |
+| Scan start feedback | \_\_\_  | < 100ms | < 50ms  | < 50ms  |
+| Finding render      | \_\_\_  | < 200ms | < 100ms | < 100ms |
+| Dashboard load      | \_\_\_  | < 1s    | < 500ms | < 300ms |
+| Auto-fix apply      | \_\_\_  | < 500ms | < 300ms | < 200ms |
 
 ### Speed Fixes
 
@@ -69,7 +69,7 @@
 
 ### Status Bar
 
-- [ ] Minimal text: "DP: 3 🔴 2 🟡" not "DevPulse: 3 Critical, 2 High"
+- [ ] Minimal text: "DP: 3 🔴 2 🟡" not "Rakshex: 3 Critical, 2 High"
 - [ ] Click opens sidebar (not dashboard)
 - [ ] Color changes with severity (green → yellow → red)
 - [ ] Tooltip shows full breakdown
@@ -111,14 +111,14 @@
 
 ## MICROCOPY AUDIT
 
-| Location       | Current              | Better                                                       | Status |
-| -------------- | -------------------- | ------------------------------------------------------------ | ------ |
-| Welcome title  | "DevPulse"           | "Stop AI Agents from Burning Your Budget"                    |        |
-| Empty findings | "No recent findings" | "No issues found! Your APIs look secure."                    |        |
-| Scan button    | "Run scan"           | "Scan for Issues"                                            |        |
-| Connecting     | "Validating..."      | "Checking your API key..."                                   |        |
-| Error          | "Request failed"     | "Can't reach DevPulse. Check your connection and try again." |        |
-| Success        | "Scan complete"      | "Found 3 issues in 2.1s"                                     |        |
+| Location       | Current              | Better                                                      | Status |
+| -------------- | -------------------- | ----------------------------------------------------------- | ------ |
+| Welcome title  | "Rakshex"            | "Stop AI Agents from Burning Your Budget"                   |        |
+| Empty findings | "No recent findings" | "No issues found! Your APIs look secure."                   |        |
+| Scan button    | "Run scan"           | "Scan for Issues"                                           |        |
+| Connecting     | "Validating..."      | "Checking your API key..."                                  |        |
+| Error          | "Request failed"     | "Can't reach Rakshex. Check your connection and try again." |        |
+| Success        | "Scan complete"      | "Found 3 issues in 2.1s"                                    |        |
 
 ---
 
@@ -129,7 +129,7 @@
 | VS Code window 400px wide | Sidebar usable, no truncation          |
 | VS Code window 800px wide | Full experience                        |
 | Multi-monitor             | Status bar shows on active window only |
-| Workspace switch          | DevPulse state persists                |
+| Workspace switch          | Rakshex state persists                 |
 | VS Code reload            | Re-authenticates silently              |
 
 ---

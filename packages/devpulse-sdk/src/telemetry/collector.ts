@@ -1,18 +1,24 @@
 /**
- * DevPulse SDK — Telemetry Collector
+ * Rakshex SDK — Telemetry Collector
  *
  * Captures and enriches telemetry events: PII redaction, hashing,
  * cost calculation. Runs entirely client-side before any data leaves.
  */
 import { randomUUID } from "crypto";
-import type { DevPulseConfig, TelemetryEvent, Provider, ToolCallRecord, ChatMessage } from "../types.js";
+import type {
+  RakshexConfig,
+  TelemetryEvent,
+  Provider,
+  ToolCallRecord,
+  ChatMessage,
+} from "../types.js";
 import { redactPII, hashContent } from "./redact.js";
 import { calculateCost } from "./cost.js";
 
 export class TelemetryCollector {
-  private config: Required<DevPulseConfig>;
+  private config: Required<RakshexConfig>;
 
-  constructor(config: Required<DevPulseConfig>) {
+  constructor(config: Required<RakshexConfig>) {
     this.config = config;
   }
 
@@ -48,7 +54,12 @@ export class TelemetryCollector {
     }
 
     // Calculate cost
-    const { costUsd } = calculateCost(params.model, params.inputTokens, params.outputTokens, params.cachedTokens);
+    const { costUsd } = calculateCost(
+      params.model,
+      params.inputTokens,
+      params.outputTokens,
+      params.cachedTokens,
+    );
 
     // Hash content (so we can detect duplicates without storing raw text)
     const promptHash = hashContent(promptText);
@@ -79,7 +90,9 @@ export class TelemetryCollector {
   /**
    * Manually capture a pre-built event (or partial event).
    */
-  capture(event: Omit<TelemetryEvent, "eventId" | "workspaceId" | "requestTimestamp">): TelemetryEvent {
+  capture(
+    event: Omit<TelemetryEvent, "eventId" | "workspaceId" | "requestTimestamp">,
+  ): TelemetryEvent {
     return {
       eventId: randomUUID(),
       workspaceId: this.config.workspaceId,

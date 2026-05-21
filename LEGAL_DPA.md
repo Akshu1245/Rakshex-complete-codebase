@@ -2,12 +2,12 @@
 
 **Effective Date:** May 17, 2026
 
-This Data Processing Agreement ("DPA") forms part of the Terms of Service between DevPulse ("Processor") and the customer ("Controller") using DevPulse services.
+This Data Processing Agreement ("DPA") forms part of the Terms of Service between Rakshex ("Processor") and the customer ("Controller") using Rakshex services.
 
 ## 1. Definitions
 
 - **Controller** means the entity that determines the purposes and means of processing Personal Data.
-- **Processor** means DevPulse, which processes Personal Data on behalf of the Controller.
+- **Processor** means Rakshex, which processes Personal Data on behalf of the Controller.
 - **Personal Data** means any information relating to an identified or identifiable natural person.
 - **Data Subject** means the natural person to whom Personal Data relates.
 - **Subprocessor** means any third-party engaged by Processor to process Personal Data.
@@ -17,7 +17,7 @@ This Data Processing Agreement ("DPA") forms part of the Terms of Service betwee
 
 Processor will process Personal Data only:
 
-- As necessary to provide the DevPulse platform services
+- As necessary to provide the Rakshex platform services
 - In accordance with Controller's documented instructions
 - For the duration of the service agreement
 
@@ -92,9 +92,9 @@ This DPA terminates automatically upon termination of the main service agreement
 
 ## 8. Contact
 
-For DPA-related inquiries: dpa@devpulse.in
+For DPA-related inquiries: dpa@rakshex.in
 
 ---
 
-**DevPulse Technologies Pvt. Ltd.**
+**Rakshex Technologies Pvt. Ltd.**
 Bangalore, India

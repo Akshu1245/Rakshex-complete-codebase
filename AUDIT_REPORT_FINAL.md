@@ -1,4 +1,4 @@
-# DevPulse Market Launch Readiness Audit - FINAL REPORT
+# Rakshex Market Launch Readiness Audit - FINAL REPORT
 
 **Date:** 2026-05-19
 **Auditor:** AI Code Review
@@ -43,7 +43,7 @@
 
 ### 2. VSCode Extension - Fixed Entry Point Mismatch
 
-**File:** `devpulse-vscode/package.json`
+**File:** `rakshex-vscode/package.json`
 **Issue:** `main` field pointed to `./out/extension.js` but all build scripts output to `out/`, while CI was changed to use `dist/`
 **Result:** Extension would fail to activate when installed from VSIX
 
@@ -89,14 +89,14 @@
 ### Medium Priority
 
 1. **Frontend tRPC Type Safety Gap**
-   - File: `devpulse-frontend/lib/trpc.ts`
+   - File: `rakshex-frontend/lib/trpc.ts`
    - Uses `createTRPCReact()` with NO type parameter
    - Comment says: "simplified setup for deployment; types will be restored after backend is live"
    - **Impact:** Frontend API calls are untyped (`any`). Won't break at runtime, but fragile to API changes. No IDE autocomplete.
    - **Fix:** Import `AppRouter` type from backend and pass it to `createTRPCReact<AppRouter>()`
 
 2. **Landing Page Waitlist Not Wired**
-   - File: `devpulse-frontend/app/landing/page.tsx:15`
+   - File: `rakshex-frontend/app/landing/page.tsx:15`
    - TODO: "wire to waitlist API"
    - **Impact:** Users can enter email but it doesn't actually submit anywhere
    - **Fix:** Create waitlist API endpoint and connect frontend form
@@ -112,7 +112,7 @@
 
 4. **Frontend Build Not Included in Docker**
    - `Dockerfile.prod` only runs `pnpm run build` which is `tsc` (backend compilation)
-   - The frontend (`devpulse-frontend/`) is a separate Next.js app that needs its own build
+   - The frontend (`rakshex-frontend/`) is a separate Next.js app that needs its own build
    - In production, the backend serves a fallback HTML page saying "The frontend is a separate Next.js app"
    - **Impact:** Docker container only runs backend API, frontend must be deployed separately
    - **Fix:** Add frontend build stage to Dockerfile or deploy frontend separately to Vercel/Netlify
@@ -133,7 +133,7 @@
 ### What's Secure
 
 - **Auth:** JWT with refresh tokens, Argon2id password hashing, CSRF protection
-- **CORS:** Strict allowlist in production (`https://devpulse.in`, `https://app.devpulse.in`)
+- **CORS:** Strict allowlist in production (`https://rakshex.in`, `https://app.rakshex.in`)
 - **Rate Limiting:** Multi-tier rate limiting for auth, scan, and API key routes
 - **Helmet:** Security headers enabled
 - **Input Validation:** Zod schemas for all API inputs
@@ -164,19 +164,19 @@
 1. [ ] Run these commands in your terminal to commit and push all fixes:
 
 ```bash
-cd C:\Users\aksha\Downloads\DevPulse_Complete_Codebase
+cd C:\Users\aksha\Downloads\Rakshex_Complete_Codebase
 git add -A
 git commit -m "fix: all deployment blockers - Docker, VSCode extension paths, CI workflow, mysql2 pool"
 git push
 ```
 
-2. [ ] Verify CI pipeline passes at: https://github.com/Akshu1245/devpulse-complete-codebase/actions
+2. [ ] Verify CI pipeline passes at: https://github.com/Akshu1245/rakshex-complete-codebase/actions
 
 3. [ ] Set up production environment variables (see `.env.example`)
 
 4. [ ] Deploy backend Docker container to staging
 
-5. [ ] Deploy frontend (`devpulse-frontend`) separately to Vercel/Netlify
+5. [ ] Deploy frontend (`rakshex-frontend`) separately to Vercel/Netlify
 
 6. [ ] Test actual VSIX installation in VS Code
 
@@ -197,7 +197,7 @@ git push
 ## Files Changed in This Audit
 
 1. `Dockerfile.prod` - Fixed sha256 and --prod flag
-2. `devpulse-vscode/package.json` - Fixed main field and build scripts
-3. `devpulse-vscode/tsconfig.json` - Fixed outDir and exclude
+2. `rakshex-vscode/package.json` - Fixed main field and build scripts
+3. `rakshex-vscode/tsconfig.json` - Fixed outDir and exclude
 4. `.github/workflows/ci.yml` - Fixed all 4 failing CI checks
 5. `server/db.ts` - Fixed invalid mysql2 pool options

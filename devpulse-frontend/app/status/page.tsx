@@ -1,6 +1,6 @@
 export const metadata = {
-  title: "Status — DevPulse System Status",
-  description: "Real-time status of DevPulse services, APIs, and infrastructure.",
+  title: "Status — Rakshex System Status",
+  description: "Real-time status of Rakshex services, APIs, and infrastructure.",
   alternates: { canonical: "/status" },
 };
 

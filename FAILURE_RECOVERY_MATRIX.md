@@ -1,4 +1,4 @@
-# DevPulse Failure Recovery Matrix
+# Rakshex Failure Recovery Matrix
 
 > Every component failure and how the system responds.
 > Date: 2026-05-17
@@ -39,7 +39,7 @@ mysql -e "SHOW STATUS LIKE 'Threads_connected';"
 render deploy --restart
 
 # 3. Verify health check returns 200
-curl https://api.devpulse.in/api/health
+curl https://api.rakshex.in/api/health
 
 # 4. If still failing, enable emergency read-only mode
 # (serves cached data, queues writes)

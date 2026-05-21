@@ -4,14 +4,14 @@ export default function SecurityWhitepaper() {
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8">
       <div className="max-w-4xl mx-auto prose prose-invert">
-        <p className="text-blue-400 text-sm font-medium mb-2">DevPulse Security</p>
+        <p className="text-blue-400 text-sm font-medium mb-2">Rakshex Security</p>
         <h1 className="text-4xl font-bold mb-4">Security Architecture Whitepaper</h1>
         <p className="text-gray-400 mb-8">Last updated: May 2026 · 15 min read</p>
 
         <section className="mb-10">
           <h2 className="text-2xl font-bold mb-4">Executive Summary</h2>
           <p className="text-gray-300 leading-relaxed">
-            DevPulse is an AI Runtime Governance Platform that provides inline security scanning,
+            Rakshex is an AI Runtime Governance Platform that provides inline security scanning,
             cost monitoring, and compliance enforcement for production LLM applications. This
             document describes our security architecture, threat model, and the controls we
             implement to protect customer data.
@@ -118,7 +118,7 @@ export default function SecurityWhitepaper() {
               via processed_webhook_events table.
             </li>
             <li>
-              <strong>CORS:</strong> Strict allowlist (devpulse.in, app.devpulse.in). No wildcard or
+              <strong>CORS:</strong> Strict allowlist (rakshex.in, app.rakshex.in). No wildcard or
               dynamic reflection.
             </li>
             <li>
@@ -174,7 +174,7 @@ export default function SecurityWhitepaper() {
         <section className="mb-10">
           <h2 className="text-2xl font-bold mb-4">7. Intellectual Property</h2>
           <p className="text-gray-300 leading-relaxed">
-            DevPulse holds 4 provisional patents filed at NHCE (NHCE/DEV/2026/001–004) covering:
+            Rakshex holds 4 provisional patents filed at NHCE (NHCE/DEV/2026/001–004) covering:
           </p>
           <ul className="space-y-2 text-gray-300 mt-3">
             <li>Unified Risk Score Engine — combined security severity + cost anomaly scoring</li>
@@ -193,8 +193,8 @@ export default function SecurityWhitepaper() {
         <div className="mt-12 pt-8 border-t border-gray-700">
           <p className="text-gray-500 text-sm">
             For questions about this whitepaper, contact{" "}
-            <a href="mailto:security@devpulse.in" className="text-blue-400 hover:text-blue-300">
-              security@devpulse.in
+            <a href="mailto:security@rakshex.in" className="text-blue-400 hover:text-blue-300">
+              security@rakshex.in
             </a>
             .
           </p>

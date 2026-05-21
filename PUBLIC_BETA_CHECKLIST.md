@@ -1,4 +1,4 @@
-# DevPulse Public Beta Launch Checklist
+# Rakshex Public Beta Launch Checklist
 
 > Pre-launch verification for public beta, Product Hunt, and YC demo readiness.
 > Date: 2026-05-17

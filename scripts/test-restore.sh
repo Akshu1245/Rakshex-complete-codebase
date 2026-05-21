@@ -5,7 +5,7 @@
 set -e
 
 BACKUP_FILE=$1
-TEST_DB_NAME="devpulse_test_restore"
+TEST_DB_NAME="rakshex_test_restore"
 DB_HOST=${DB_HOST:-"db"}
 DB_USER=${DB_USER:-"root"}
 DB_PASS=${DB_PASSWORD:-"changeme_in_production"}

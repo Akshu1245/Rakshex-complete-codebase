@@ -1,17 +1,14 @@
 /**
- * DevPulse SDK — Anthropic Wrapper
+ * Rakshex SDK — Anthropic Wrapper
  *
  * Wraps an Anthropic client instance. Intercepts messages.create,
- * captures telemetry, and forwards to DevPulse.
+ * captures telemetry, and forwards to Rakshex.
  */
 import type { TelemetryCollector } from "../telemetry/collector.js";
 import type { ChatMessage, ToolCallRecord } from "../types.js";
 
-export function wrapAnthropic(
-  client: any,
-  collector: TelemetryCollector,
-): any {
-  if ((client as any)._devpulseWrapped) return client;
+export function wrapAnthropic(client: any, collector: TelemetryCollector): any {
+  if ((client as any)._rakshexWrapped) return client;
 
   const original = client.messages.create.bind(client.messages);
 
@@ -58,8 +55,9 @@ export function wrapAnthropic(
     }
 
     // Convert Anthropic messages to our format
-    const messages: ChatMessage[] = ([{ role: "system", content: params.system || "" }] as ChatMessage[])
-      .filter(m => m.content);
+    const messages: ChatMessage[] = (
+      [{ role: "system", content: params.system || "" }] as ChatMessage[]
+    ).filter((m) => m.content);
     for (const msg of params.messages || []) {
       messages.push({
         role: (msg.role || "user") as ChatMessage["role"],
@@ -67,10 +65,12 @@ export function wrapAnthropic(
       } as ChatMessage);
     }
 
-    const responseMessages: ChatMessage[] = [{
-      role: "assistant",
-      content: response.content?.map((b: any) => b.text || "").join("\n") || "",
-    }];
+    const responseMessages: ChatMessage[] = [
+      {
+        role: "assistant",
+        content: response.content?.map((b: any) => b.text || "").join("\n") || "",
+      },
+    ];
 
     collector.buildEvent({
       provider: "anthropic",
@@ -93,6 +93,6 @@ export function wrapAnthropic(
     return response;
   } as any;
 
-  (client as any)._devpulseWrapped = true;
+  (client as any)._rakshexWrapped = true;
   return client;
 }

@@ -1,4 +1,4 @@
-# DevPulse Chaos Testing Report
+# Rakshex Chaos Testing Report
 
 > Simulated failure scenarios and validation results.
 > Date: 2026-05-17
@@ -110,7 +110,7 @@ k6 run --vus 500 --duration 60s db-spike.js
 
 ```bash
 # 10,000 concurrent WebSocket connections
-artillery quick --count 10000 --num 100 ws://api.devpulse.in/ws
+artillery quick --count 10000 --num 100 ws://api.rakshex.in/ws
 ```
 
 ### Expected Behavior
@@ -139,7 +139,7 @@ artillery quick --count 10000 --num 100 ws://api.devpulse.in/ws
 # Send 1,000 malformed JSON payloads
 curl -X POST -H "Content-Type: application/json" \
   -d "not valid json" \
-  https://api.devpulse.in/trpc/scanning.start
+  https://api.rakshex.in/trpc/scanning.start
 ```
 
 ### Expected Behavior
@@ -221,7 +221,7 @@ node -e "require('./server/scan').startLargeScan('100mb.json')"
 ```bash
 # Generate 10,000 telemetry events in 1 second
 for i in {1..10000}; do
-  curl -X POST https://api.devpulse.in/telemetry -d '{"event":"test"}'
+  curl -X POST https://api.rakshex.in/telemetry -d '{"event":"test"}'
 done
 ```
 

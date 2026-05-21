@@ -1,4 +1,4 @@
-# DevPulse Trust Transparency Report
+# Rakshex Trust Transparency Report
 
 > What we do, what we don't, and why you can trust us.
 > Date: 2026-05-17
@@ -56,4 +56,4 @@
 
 ---
 
-_Published monthly. Contact: security@devpulse.in_
+_Published monthly. Contact: security@rakshex.in_

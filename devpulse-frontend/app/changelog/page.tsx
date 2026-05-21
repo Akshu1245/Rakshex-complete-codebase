@@ -1,7 +1,7 @@
 export const metadata = {
-  title: "Changelog — DevPulse Product Updates",
+  title: "Changelog — Rakshex Product Updates",
   description:
-    "Track every update, feature, and improvement to DevPulse. See what's new, what changed, and what's coming next.",
+    "Track every update, feature, and improvement to Rakshex. See what's new, what changed, and what's coming next.",
   alternates: { canonical: "/changelog" },
 };
 
@@ -62,7 +62,7 @@ export default function ChangelogPage() {
     <div className="min-h-screen bg-gray-900 text-white py-16 px-4">
       <div className="max-w-3xl mx-auto">
         <h1 className="text-4xl font-bold mb-2">Changelog</h1>
-        <p className="text-gray-400 mb-12">What's new in DevPulse. Updated with every release.</p>
+        <p className="text-gray-400 mb-12">What's new in Rakshex. Updated with every release.</p>
 
         <div className="space-y-12">
           {ENTRIES.map((entry) => (

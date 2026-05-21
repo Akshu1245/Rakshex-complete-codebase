@@ -43,12 +43,8 @@ function ProfileTab() {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-white">
-          Profile Information
-        </h3>
-        <p className="text-sm text-gray-400 mt-1">
-          Update your display name and email address
-        </p>
+        <h3 className="text-lg font-medium text-white">Profile Information</h3>
+        <p className="text-sm text-gray-400 mt-1">Update your display name and email address</p>
       </div>
 
       {message && (
@@ -61,38 +57,30 @@ function ProfileTab() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1">
-            Display Name
-          </label>
+          <label className="block text-sm font-medium text-gray-300 mb-1">Display Name</label>
           <input
             type="text"
             value={name}
-            onChange={e => setName(e.target.value)}
+            onChange={(e) => setName(e.target.value)}
             className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Your name"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1">
-            Email Address
-          </label>
+          <label className="block text-sm font-medium text-gray-300 mb-1">Email Address</label>
           <input
             type="email"
             value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={(e) => setEmail(e.target.value)}
             className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="your@email.com"
           />
-          <p className="text-xs text-gray-500 mt-1">
-            Changing email will require verification
-          </p>
+          <p className="text-xs text-gray-500 mt-1">Changing email will require verification</p>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1">
-            Plan
-          </label>
+          <label className="block text-sm font-medium text-gray-300 mb-1">Plan</label>
           <div className="flex items-center space-x-2">
             <span className="px-2 py-1 bg-blue-900/30 text-blue-400 rounded-full text-sm font-medium capitalize">
               {profile?.plan}
@@ -107,9 +95,7 @@ function ProfileTab() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1">
-            Role
-          </label>
+          <label className="block text-sm font-medium text-gray-300 mb-1">Role</label>
           <span className="px-2 py-1 bg-gray-700 text-gray-300 rounded-full text-sm font-medium capitalize">
             {profile?.role}
           </span>
@@ -131,8 +117,7 @@ function ProfileTab() {
 // SECURITY TAB
 // ============================================================================
 function SecurityTab() {
-  const { data: sessions, refetch: refetchSessions } =
-    trpc.settings.getSessions.useQuery();
+  const { data: sessions, refetch: refetchSessions } = trpc.settings.getSessions.useQuery();
   const revokeSession = trpc.settings.revokeSession.useMutation({
     onSuccess: () => refetchSessions(),
   });
@@ -271,25 +256,21 @@ function SecurityTab() {
 
         <form onSubmit={handlePasswordChange} className="mt-4 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">
-              Current Password
-            </label>
+            <label className="block text-sm font-medium text-gray-300 mb-1">Current Password</label>
             <input
               type="password"
               value={currentPassword}
-              onChange={e => setCurrentPassword(e.target.value)}
+              onChange={(e) => setCurrentPassword(e.target.value)}
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">
-              New Password
-            </label>
+            <label className="block text-sm font-medium text-gray-300 mb-1">New Password</label>
             <input
               type="password"
               value={newPassword}
-              onChange={e => setNewPassword(e.target.value)}
+              onChange={(e) => setNewPassword(e.target.value)}
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
               minLength={8}
@@ -302,7 +283,7 @@ function SecurityTab() {
             <input
               type="password"
               value={confirmPassword}
-              onChange={e => setConfirmPassword(e.target.value)}
+              onChange={(e) => setConfirmPassword(e.target.value)}
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
@@ -319,12 +300,8 @@ function SecurityTab() {
 
       {/* 2FA Section */}
       <div className="border-t border-gray-700 pt-6">
-        <h3 className="text-lg font-medium text-white">
-          Two-Factor Authentication
-        </h3>
-        <p className="text-sm text-gray-400 mt-1">
-          Add an extra layer of security to your account
-        </p>
+        <h3 className="text-lg font-medium text-white">Two-Factor Authentication</h3>
+        <p className="text-sm text-gray-400 mt-1">Add an extra layer of security to your account</p>
 
         {twoFAMessage && (
           <div
@@ -337,8 +314,9 @@ function SecurityTab() {
         {!twoFAEnabled && !show2FASetup && (
           <div className="mt-4 p-4 bg-gray-700/50 rounded-md border border-gray-600">
             <p className="text-sm text-gray-300 mb-3">
-              Two-factor authentication is currently <span className="text-red-400 font-medium">disabled</span>.
-              Enable it to require a verification code when signing in.
+              Two-factor authentication is currently{" "}
+              <span className="text-red-400 font-medium">disabled</span>. Enable it to require a
+              verification code when signing in.
             </p>
             <button
               onClick={handleEnable2FA}
@@ -363,10 +341,11 @@ function SecurityTab() {
                   className="w-48 h-48"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
+                    target.style.display = "none";
                     const parent = target.parentElement;
                     if (parent) {
-                      parent.innerHTML = '<div class="text-center p-4"><svg class="w-12 h-12 text-gray-800 mx-auto" viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm13-2h3v3h-3v-3zm0 5h3v3h-3v-3zm-3-5h2v2h-2v-2zm0 3h2v2h-2v-2zm3 0h3v5h-3v-5zm-3 2h2v3h-2v-3z"/></svg><p class="text-xs text-gray-500 mt-1">Scan with authenticator app</p></div>';
+                      parent.innerHTML =
+                        '<div class="text-center p-4"><svg class="w-12 h-12 text-gray-800 mx-auto" viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm13-2h3v3h-3v-3zm0 5h3v3h-3v-3zm-3-5h2v2h-2v-2zm0 3h2v2h-2v-2zm3 0h3v5h-3v-5zm-3 2h2v3h-2v-3z"/></svg><p class="text-xs text-gray-500 mt-1">Scan with authenticator app</p></div>';
                     }
                   }}
                 />
@@ -392,7 +371,9 @@ function SecurityTab() {
                 <input
                   type="text"
                   value={twoFAVerifyCode}
-                  onChange={e => setTwoFAVerifyCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  onChange={(e) =>
+                    setTwoFAVerifyCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+                  }
                   className="w-40 px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-center font-mono text-lg tracking-widest"
                   placeholder="000000"
                   maxLength={6}
@@ -445,16 +426,15 @@ function SecurityTab() {
                 Disable Two-Factor Authentication
               </h3>
               <p className="text-sm text-gray-400 mb-4">
-                This will reduce the security of your account. Please enter your password to confirm.
+                This will reduce the security of your account. Please enter your password to
+                confirm.
               </p>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Password
-                </label>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Password</label>
                 <input
                   type="password"
                   value={disable2FAPassword}
-                  onChange={e => setDisable2FAPassword(e.target.value)}
+                  onChange={(e) => setDisable2FAPassword(e.target.value)}
                   className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500"
                   placeholder="Enter your password"
                 />
@@ -486,12 +466,8 @@ function SecurityTab() {
       <div className="border-t border-gray-700 pt-6">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-medium text-white">
-              Active Sessions
-            </h3>
-            <p className="text-sm text-gray-400 mt-1">
-              Manage your active sessions across devices
-            </p>
+            <h3 className="text-lg font-medium text-white">Active Sessions</h3>
+            <p className="text-sm text-gray-400 mt-1">Manage your active sessions across devices</p>
           </div>
           <button
             onClick={() => revokeAllSessions.mutate()}
@@ -519,9 +495,7 @@ function SecurityTab() {
                 >
                   <div>
                     <p className="text-sm font-medium text-white">
-                      {session.userAgent?.includes("Mobile")
-                        ? "Mobile Device"
-                        : "Desktop"}
+                      {session.userAgent?.includes("Mobile") ? "Mobile Device" : "Desktop"}
                     </p>
                     <p className="text-xs text-gray-400">
                       {session.ipAddress || "Unknown IP"} • Last active{" "}
@@ -529,16 +503,14 @@ function SecurityTab() {
                     </p>
                   </div>
                   <button
-                    onClick={() =>
-                      revokeSession.mutate({ sessionId: session.id })
-                    }
+                    onClick={() => revokeSession.mutate({ sessionId: session.id })}
                     disabled={revokeSession.isPending}
                     className="text-red-400 hover:text-red-300 text-sm font-medium"
                   >
                     Revoke
                   </button>
                 </div>
-              )
+              ),
             )
           )}
         </div>
@@ -552,8 +524,7 @@ function SecurityTab() {
 // ============================================================================
 function NotificationsTab() {
   const utils = trpc.useUtils();
-  const { data: prefs, isLoading } =
-    trpc.settings.getEmailPreferences.useQuery();
+  const { data: prefs, isLoading } = trpc.settings.getEmailPreferences.useQuery();
   const updatePrefs = trpc.settings.updateEmailPreferences.useMutation({
     onSuccess: () => {
       utils.settings.getEmailPreferences.invalidate();
@@ -569,24 +540,14 @@ function NotificationsTab() {
   } | null>(null);
 
   const toggle = (
-    key:
-      | "scanComplete"
-      | "budgetAlerts"
-      | "weeklyDigest"
-      | "teamActivity"
-      | "promotionalEmails",
-    value: boolean
+    key: "scanComplete" | "budgetAlerts" | "weeklyDigest" | "teamActivity" | "promotionalEmails",
+    value: boolean,
   ) => {
     updatePrefs.mutate({ [key]: value });
   };
 
   const rows: {
-    key:
-      | "scanComplete"
-      | "budgetAlerts"
-      | "weeklyDigest"
-      | "teamActivity"
-      | "promotionalEmails";
+    key: "scanComplete" | "budgetAlerts" | "weeklyDigest" | "teamActivity" | "promotionalEmails";
     label: string;
     description: string;
   }[] = [
@@ -613,18 +574,16 @@ function NotificationsTab() {
     {
       key: "promotionalEmails",
       label: "Product updates",
-      description: "Occasional emails about new DevPulse features.",
+      description: "Occasional emails about new Rakshex features.",
     },
   ];
 
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-white">
-          Email Notifications
-        </h3>
+        <h3 className="text-lg font-medium text-white">Email Notifications</h3>
         <p className="text-sm text-gray-400 mt-1">
-          Choose which emails you want to receive from DevPulse.
+          Choose which emails you want to receive from Rakshex.
         </p>
       </div>
 
@@ -640,29 +599,23 @@ function NotificationsTab() {
         <p className="text-sm text-gray-400">Loading preferences…</p>
       ) : (
         <div className="space-y-3">
-          {rows.map(row => {
-            const checked = Boolean(
-              prefs[row.key as keyof typeof prefs] as unknown as boolean
-            );
+          {rows.map((row) => {
+            const checked = Boolean(prefs[row.key as keyof typeof prefs] as unknown as boolean);
             return (
               <label
                 key={row.key}
                 className="flex items-start justify-between p-3 rounded-md border border-gray-600 hover:bg-gray-700/50"
               >
                 <span>
-                  <span className="block text-sm font-medium text-white">
-                    {row.label}
-                  </span>
-                  <span className="block text-xs text-gray-400">
-                    {row.description}
-                  </span>
+                  <span className="block text-sm font-medium text-white">{row.label}</span>
+                  <span className="block text-xs text-gray-400">{row.description}</span>
                 </span>
                 <input
                   type="checkbox"
                   className="mt-1 h-4 w-4 rounded text-blue-600"
                   checked={checked}
                   disabled={updatePrefs.isPending}
-                  onChange={e => toggle(row.key, e.target.checked)}
+                  onChange={(e) => toggle(row.key, e.target.checked)}
                 />
               </label>
             );
@@ -682,9 +635,7 @@ function AuditTab() {
   return (
     <div className="space-y-2">
       <h3 className="text-lg font-medium text-white">Activity</h3>
-      <p className="text-sm text-gray-400">
-        Recent security-related events on your account.
-      </p>
+      <p className="text-sm text-gray-400">Recent security-related events on your account.</p>
       <div className="mt-4 space-y-2">
         {!auditLog?.logs || auditLog.logs.length === 0 ? (
           <p className="text-sm text-gray-400">No recent activity</p>
@@ -702,21 +653,15 @@ function AuditTab() {
               >
                 <div>
                   <span className="font-medium text-white">
-                    {log.action
-                      .replace(/_/g, " ")
-                      .replace(/\b\w/g, (l: string) => l.toUpperCase())}
+                    {log.action.replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase())}
                   </span>
                   {log.ipAddress && (
-                    <span className="text-gray-400 ml-2">
-                      from {log.ipAddress}
-                    </span>
+                    <span className="text-gray-400 ml-2">from {log.ipAddress}</span>
                   )}
                 </div>
-                <span className="text-gray-400">
-                  {new Date(log.createdAt).toLocaleString()}
-                </span>
+                <span className="text-gray-400">{new Date(log.createdAt).toLocaleString()}</span>
               </div>
-            )
+            ),
           )
         )}
       </div>
@@ -747,9 +692,7 @@ function DangerZoneTab() {
     <div className="space-y-8">
       {/* Security Audit Log */}
       <div>
-        <h3 className="text-lg font-medium text-white">
-          Security Audit Log
-        </h3>
+        <h3 className="text-lg font-medium text-white">Security Audit Log</h3>
         <p className="text-sm text-gray-400 mt-1">
           Recent security-related actions on your account
         </p>
@@ -776,16 +719,12 @@ function DangerZoneTab() {
                         .replace(/\b\w/g, (l: string) => l.toUpperCase())}
                     </span>
                     {log.ipAddress && (
-                      <span className="text-gray-400 ml-2">
-                        from {log.ipAddress}
-                      </span>
+                      <span className="text-gray-400 ml-2">from {log.ipAddress}</span>
                     )}
                   </div>
-                  <span className="text-gray-400">
-                    {new Date(log.createdAt).toLocaleString()}
-                  </span>
+                  <span className="text-gray-400">{new Date(log.createdAt).toLocaleString()}</span>
                 </div>
-              )
+              ),
             )
           )}
         </div>
@@ -795,8 +734,7 @@ function DangerZoneTab() {
       <div className="border-t border-gray-700 pt-6">
         <h3 className="text-lg font-medium text-red-400">Delete Account</h3>
         <p className="text-sm text-gray-400 mt-1">
-          Permanently delete your account and all associated data. This action
-          cannot be undone.
+          Permanently delete your account and all associated data. This action cannot be undone.
         </p>
 
         <div className="mt-4 p-4 bg-red-900/30 border border-red-500/50 rounded-md">
@@ -823,12 +761,9 @@ function DangerZoneTab() {
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-gray-800 rounded-lg max-w-md w-full p-6 border border-gray-700">
-            <h3 className="text-xl font-bold text-white mb-4">
-              Delete Your Account?
-            </h3>
+            <h3 className="text-xl font-bold text-white mb-4">Delete Your Account?</h3>
             <p className="text-sm text-gray-300 mb-4">
-              This action cannot be undone. All your data will be permanently
-              removed.
+              This action cannot be undone. All your data will be permanently removed.
             </p>
 
             <div className="mb-4">
@@ -837,7 +772,7 @@ function DangerZoneTab() {
               </label>
               <textarea
                 value={reason}
-                onChange={e => setReason(e.target.value)}
+                onChange={(e) => setReason(e.target.value)}
                 className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 rows={3}
                 placeholder="Help us improve..."
@@ -851,7 +786,7 @@ function DangerZoneTab() {
               <input
                 type="text"
                 value={confirmation}
-                onChange={e => setConfirmation(e.target.value)}
+                onChange={(e) => setConfirmation(e.target.value)}
                 className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500"
                 placeholder="DELETE MY ACCOUNT"
               />
@@ -871,10 +806,7 @@ function DangerZoneTab() {
                     reason,
                   })
                 }
-                disabled={
-                  confirmation !== "DELETE MY ACCOUNT" ||
-                  deleteAccount.isPending
-                }
+                disabled={confirmation !== "DELETE MY ACCOUNT" || deleteAccount.isPending}
                 className="flex-1 bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 disabled:opacity-50"
               >
                 {deleteAccount.isPending ? "Deleting..." : "Delete Forever"}
@@ -910,14 +842,9 @@ function SettingsContent() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-white">Settings</h1>
-              <p className="text-sm text-gray-400">
-                Manage your account preferences and security
-              </p>
+              <p className="text-sm text-gray-400">Manage your account preferences and security</p>
             </div>
-            <Link
-              href="/dashboard"
-              className="text-sm text-blue-400 hover:text-blue-300"
-            >
+            <Link href="/dashboard" className="text-sm text-blue-400 hover:text-blue-300">
               ← Back to Dashboard
             </Link>
           </div>
@@ -930,7 +857,7 @@ function SettingsContent() {
           {/* Sidebar */}
           <div className="w-full md:w-64 flex-shrink-0">
             <nav className="space-y-1">
-              {tabs.map(tab => (
+              {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}

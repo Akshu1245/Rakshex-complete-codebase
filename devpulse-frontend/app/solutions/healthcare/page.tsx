@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "AI Security for Healthcare — DevPulse",
+  title: "AI Security for Healthcare — Rakshex",
   description:
-    "DevPulse helps healthcare organizations secure AI agents, protect PHI, and comply with HIPAA. Built for hospitals, clinics, and healthtech.",
+    "Rakshex helps healthcare organizations secure AI agents, protect PHI, and comply with HIPAA. Built for hospitals, clinics, and healthtech.",
   alternates: { canonical: "/solutions/healthcare" },
 };
 

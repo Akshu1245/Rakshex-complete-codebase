@@ -1,4 +1,4 @@
-# DevPulse Beta Success Scorecard
+# Rakshex Beta Success Scorecard
 
 > How we measure if a beta user is successfully onboarded.
 > Date: 2026-05-17

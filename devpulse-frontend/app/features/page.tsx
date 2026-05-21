@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Features — DevPulse AI Runtime Governance",
+  title: "Features — Rakshex AI Runtime Governance",
   description:
-    "Complete feature breakdown of DevPulse: AI security scanning, LLM cost monitoring, compliance automation, shadow API detection, kill switch, and enterprise SSO.",
+    "Complete feature breakdown of Rakshex: AI security scanning, LLM cost monitoring, compliance automation, shadow API detection, kill switch, and enterprise SSO.",
   alternates: { canonical: "/features" },
 };
 
@@ -96,7 +96,7 @@ const FEATURES = [
       },
       {
         title: "JavaScript SDK",
-        desc: "One-line integration: `import { DevPulse } from '@devpulse/sdk'`. Automatic request interception and cost tracking.",
+        desc: "One-line integration: `import { Rakshex } from '@rakshex/sdk'`. Automatic request interception and cost tracking.",
       },
       {
         title: "Python SDK",
@@ -104,7 +104,7 @@ const FEATURES = [
       },
       {
         title: "Express.js Middleware",
-        desc: `app.use(devPulse.middleware()) — automatic route discovery, secret scanning, and cost attribution.`,
+        desc: `app.use(rakshex.middleware()) — automatic route discovery, secret scanning, and cost attribution.`,
       },
     ],
   },

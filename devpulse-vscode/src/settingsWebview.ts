@@ -1,5 +1,5 @@
 /**
- * DevPulse Settings Webview Panel.
+ * Rakshex Settings Webview Panel.
  *
  * A self-contained VS Code WebviewPanel that allows users to:
  *   - Configure API URL and Gateway URL
@@ -12,32 +12,32 @@
  */
 import * as crypto from "crypto";
 import * as vscode from "vscode";
-import type { DevPulseApi, DashboardData, ValidatedUser } from "./api";
+import type { RakshexApi, DashboardData, ValidatedUser } from "./api";
 
 export class SettingsWebviewPanel {
   private static current: SettingsWebviewPanel | undefined;
-  public static readonly viewType = "devpulse.settings";
+  public static readonly viewType = "rakshex.settings";
 
   private readonly panel: vscode.WebviewPanel;
   private disposables: vscode.Disposable[] = [];
 
   private constructor(
     panel: vscode.WebviewPanel,
-    private readonly api: DevPulseApi,
+    private readonly api: RakshexApi,
     private readonly readApiKey: () => string | undefined,
-    private readonly extensionContext: vscode.ExtensionContext
+    private readonly extensionContext: vscode.ExtensionContext,
   ) {
     this.panel = panel;
     this.panel.onDidDispose(() => this.dispose(), null, this.disposables);
     this.panel.webview.onDidReceiveMessage(
-      msg => {
+      (msg) => {
         if (!msg || typeof msg !== "object") return;
         if (msg.type === "updateSetting") {
           void this.handleUpdateSetting(msg.key as string, msg.value as unknown);
         } else if (msg.type === "generateApiKey") {
           void this.handleGenerateApiKey();
         } else if (msg.type === "signIn") {
-          vscode.commands.executeCommand("devpulse.authenticate");
+          vscode.commands.executeCommand("rakshex.authenticate");
         } else if (msg.type === "testConnection") {
           void this.handleTestConnection(msg.url as string);
         } else if (msg.type === "refresh") {
@@ -45,18 +45,17 @@ export class SettingsWebviewPanel {
         }
       },
       null,
-      this.disposables
+      this.disposables,
     );
   }
 
   public static createOrShow(
     extensionUri: vscode.Uri,
-    api: DevPulseApi,
+    api: RakshexApi,
     readApiKey: () => string | undefined,
-    context: vscode.ExtensionContext
+    context: vscode.ExtensionContext,
   ): void {
-    const column =
-      vscode.window.activeTextEditor?.viewColumn ?? vscode.ViewColumn.One;
+    const column = vscode.window.activeTextEditor?.viewColumn ?? vscode.ViewColumn.One;
 
     if (SettingsWebviewPanel.current) {
       SettingsWebviewPanel.current.panel.reveal(column);
@@ -66,13 +65,13 @@ export class SettingsWebviewPanel {
 
     const panel = vscode.window.createWebviewPanel(
       SettingsWebviewPanel.viewType,
-      "DevPulse Settings",
+      "Rakshex Settings",
       column,
       {
         enableScripts: true,
         retainContextWhenHidden: true,
         localResourceRoots: [extensionUri],
-      }
+      },
     );
 
     SettingsWebviewPanel.current = new SettingsWebviewPanel(panel, api, readApiKey, context);
@@ -80,7 +79,7 @@ export class SettingsWebviewPanel {
   }
 
   private async handleUpdateSetting(key: string, value: unknown): Promise<void> {
-    const cfg = vscode.workspace.getConfiguration("devpulse");
+    const cfg = vscode.workspace.getConfiguration("rakshex");
     const target = vscode.ConfigurationTarget.Global;
     try {
       if (typeof value === "boolean") {
@@ -90,36 +89,34 @@ export class SettingsWebviewPanel {
       } else if (typeof value === "string") {
         await cfg.update(key, value, target);
       }
-      vscode.window.showInformationMessage(`DevPulse: setting "${key}" updated.`);
+      vscode.window.showInformationMessage(`Rakshex: setting "${key}" updated.`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      vscode.window.showErrorMessage(`DevPulse: could not update setting — ${msg}`);
+      vscode.window.showErrorMessage(`Rakshex: could not update setting — ${msg}`);
     }
   }
 
   private async handleGenerateApiKey(): Promise<void> {
     const key = this.readApiKey();
     if (!key) {
-      vscode.window.showWarningMessage("DevPulse: sign in first to generate an API key.");
+      vscode.window.showWarningMessage("Rakshex: sign in first to generate an API key.");
       return;
     }
     const confirm = await vscode.window.showWarningMessage(
       "Generate a new API key? Your current key will be invalidated.",
       { modal: true },
-      "Generate"
+      "Generate",
     );
     if (confirm !== "Generate") return;
     try {
       const result = await this.api.generateApiKey();
       await vscode.env.clipboard.writeText(result.apiKey);
-      await this.extensionContext.secrets.store("devpulse.apiKey", result.apiKey);
-      vscode.window.showInformationMessage(
-        `New API key generated and copied to clipboard.`
-      );
+      await this.extensionContext.secrets.store("rakshex.apiKey", result.apiKey);
+      vscode.window.showInformationMessage(`New API key generated and copied to clipboard.`);
       void this.refresh();
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      vscode.window.showErrorMessage(`DevPulse: could not generate API key — ${msg}`);
+      vscode.window.showErrorMessage(`Rakshex: could not generate API key — ${msg}`);
     }
   }
 
@@ -134,24 +131,40 @@ export class SettingsWebviewPanel {
       });
       clearTimeout(timeout);
       if (res.ok) {
-        this.panel.webview.postMessage({ type: "testConnectionResult", status: "success", message: `Connected successfully (${res.status})` });
+        this.panel.webview.postMessage({
+          type: "testConnectionResult",
+          status: "success",
+          message: `Connected successfully (${res.status})`,
+        });
       } else {
-        this.panel.webview.postMessage({ type: "testConnectionResult", status: "error", message: `Server responded with ${res.status} ${res.statusText}` });
+        this.panel.webview.postMessage({
+          type: "testConnectionResult",
+          status: "error",
+          message: `Server responded with ${res.status} ${res.statusText}`,
+        });
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       if (msg.includes("abort")) {
-        this.panel.webview.postMessage({ type: "testConnectionResult", status: "error", message: "Connection timed out after 10 seconds" });
+        this.panel.webview.postMessage({
+          type: "testConnectionResult",
+          status: "error",
+          message: "Connection timed out after 10 seconds",
+        });
       } else {
-        this.panel.webview.postMessage({ type: "testConnectionResult", status: "error", message: `Could not connect: ${msg}` });
+        this.panel.webview.postMessage({
+          type: "testConnectionResult",
+          status: "error",
+          message: `Could not connect: ${msg}`,
+        });
       }
     }
   }
 
   private async refresh(): Promise<void> {
-    const cfg = vscode.workspace.getConfiguration("devpulse");
+    const cfg = vscode.workspace.getConfiguration("rakshex");
     const settings = {
-      apiUrl: cfg.get<string>("apiUrl", "https://api.devpulse.in"),
+      apiUrl: cfg.get<string>("apiUrl", "https://api.rakshex.in"),
       gatewayUrl: cfg.get<string>("gatewayUrl", "http://localhost:8081"),
       heartbeatIntervalSec: cfg.get<number>("heartbeatIntervalSec", 120),
       trackFileChanges: cfg.get<boolean>("trackFileChanges", true),
@@ -175,10 +188,12 @@ export class SettingsWebviewPanel {
       }
     }
 
-    this.panel.webview.html = this._getHtmlForWebview(
-      this.panel.webview,
-      { settings, user, dashboard, signedIn: Boolean(apiKey) }
-    );
+    this.panel.webview.html = this._getHtmlForWebview(this.panel.webview, {
+      settings,
+      user,
+      dashboard,
+      signedIn: Boolean(apiKey),
+    });
   }
 
   public dispose(): void {
@@ -202,7 +217,7 @@ export class SettingsWebviewPanel {
       user: ValidatedUser | null;
       dashboard: DashboardData | null;
       signedIn: boolean;
-    }
+    },
   ): string {
     const nonce = getNonce();
     const csp = [
@@ -220,7 +235,7 @@ export class SettingsWebviewPanel {
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy" content="${csp}" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DevPulse Settings</title>
+  <title>Rakshex Settings</title>
   <style>
     :root { color-scheme: var(--vscode-color-scheme, dark); }
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -415,15 +430,19 @@ export class SettingsWebviewPanel {
   </style>
 </head>
 <body>
-  <h1>⚙ DevPulse Settings</h1>
-  <p class="sub">Configure your DevPulse extension preferences.</p>
+  <h1>⚙ Rakshex Settings</h1>
+  <p class="sub">Configure your Rakshex extension preferences.</p>
 
-  ${!signedIn ? `
+  ${
+    !signedIn
+      ? `
     <div class="sign-in-notice">
       <p>Sign in to access all settings and view your plan details.</p>
       <p><a href="#" id="sign-in-link">Sign in with API Key</a></p>
     </div>
-  ` : ""}
+  `
+      : ""
+  }
 
   <!-- Connection Settings -->
   <div class="section">
@@ -431,7 +450,7 @@ export class SettingsWebviewPanel {
     <div class="field">
       <label class="field-label" for="apiUrl">API URL</label>
       <input type="text" id="apiUrl" value="${escapeHtml(settings.apiUrl)}" />
-      <div class="field-hint">Base URL of the DevPulse backend.</div>
+      <div class="field-hint">Base URL of the Rakshex backend.</div>
       <div class="test-connection-row">
         <button class="btn-test" id="test-connection-btn">\u26A1 Test Connection</button>
         <span class="connection-result" id="connection-result">
@@ -443,7 +462,7 @@ export class SettingsWebviewPanel {
     <div class="field">
       <label class="field-label" for="gatewayUrl">Gateway URL</label>
       <input type="text" id="gatewayUrl" value="${escapeHtml(settings.gatewayUrl)}" />
-      <div class="field-hint">Base URL of the DevPulse inline LLM gateway.</div>
+      <div class="field-hint">Base URL of the Rakshex inline LLM gateway.</div>
     </div>
   </div>
 
@@ -480,23 +499,29 @@ export class SettingsWebviewPanel {
   <!-- API Key -->
   <div class="section">
     <div class="section-title">🔑 API Key</div>
-    ${signedIn ? `
+    ${
+      signedIn
+        ? `
       <p style="margin-bottom: 12px; color: var(--vscode-descriptionForeground, #8b8b8b);">
         Your API key is stored securely in VS Code's SecretStorage.
       </p>
       <button class="btn btn-danger" id="generate-key-btn">🔄 Generate New API Key</button>
       <div class="field-hint" style="margin-top: 6px;">This will invalidate your current key.</div>
-    ` : `
+    `
+        : `
       <p style="color: var(--vscode-descriptionForeground, #8b8b8b);">
         Sign in to manage your API key.
       </p>
-    `}
+    `
+    }
   </div>
 
   <!-- Plan & Usage -->
   <div class="section">
     <div class="section-title">📊 Plan & Usage</div>
-    ${signedIn && user ? `
+    ${
+      signedIn && user
+        ? `
       <div class="plan-card">
         <div class="plan-icon">👤</div>
         <div>
@@ -504,7 +529,9 @@ export class SettingsWebviewPanel {
           <div class="plan-email">${escapeHtml(user.email ?? user.name ?? "User")}</div>
         </div>
       </div>
-      ${dashboard ? `
+      ${
+        dashboard
+          ? `
         <div class="usage-grid">
           <div class="usage-item">
             <div class="usage-label">Collections</div>
@@ -523,12 +550,16 @@ export class SettingsWebviewPanel {
             <div class="usage-value">$${dashboard.weeklyCost.toFixed(2)}</div>
           </div>
         </div>
-      ` : ""}
-    ` : `
+      `
+          : ""
+      }
+    `
+        : `
       <p style="color: var(--vscode-descriptionForeground, #8b8b8b);">
         Sign in to view your plan and usage details.
       </p>
-    `}
+    `
+    }
   </div>
 
   <script nonce="${nonce}">
@@ -643,8 +674,7 @@ export class SettingsWebviewPanel {
 }
 
 function getNonce(): string {
-  const chars =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   const randomBytes = crypto.randomBytes(32);
   let text = "";
   for (let i = 0; i < 32; i++) {

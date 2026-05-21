@@ -32,9 +32,9 @@ Each squad gets its own environment to prevent conflicts:
 
 ```powershell
 # Isolated databases per squad
-$env:UNIT_DB         = "devpulse_test_unit_$(Get-Random)"
-$env:INTEGRATION_DB  = "devpulse_test_integration_$(Get-Random)"
-$env:E2E_DB          = "devpulse_test_e2e_$(Get-Random)"
+$env:UNIT_DB         = "rakshex_test_unit_$(Get-Random)"
+$env:INTEGRATION_DB  = "rakshex_test_integration_$(Get-Random)"
+$env:E2E_DB          = "rakshex_test_e2e_$(Get-Random)"
 
 # Isolated ports
 $env:UNIT_PORT       = 3001
@@ -47,16 +47,16 @@ $env:E2E_PORT        = 3003
 ```powershell
 function Invoke-TestSwarm {
   $swarmStart = Get-Date
-  
+
   $jobs = @()
-  
+
   # UNIT-SQUAD: Fast, no DB needed for pure logic
   $jobs += Start-Job -Name "UNIT" -ScriptBlock {
     cd $using:PWD
     npx vitest run --config vitest.config.ts --coverage --reporter=json > .team/swarm/unit-results.json
     return @{ Squad = "UNIT"; ExitCode = $LASTEXITCODE; Duration = (Get-Date) }
   }
-  
+
   # INTEGRATION-SQUAD: tRPC + real DB (migrated fresh)
   $jobs += Start-Job -Name "INTEGRATION" -ScriptBlock {
     cd $using:PWD
@@ -65,7 +65,7 @@ function Invoke-TestSwarm {
     npx vitest run --config vitest.config.ts --testPathPattern="integration|api" > .team/swarm/integration-results.json
     return @{ Squad = "INTEGRATION"; ExitCode = $LASTEXITCODE }
   }
-  
+
   # E2E-SQUAD: Playwright full browser automation
   $jobs += Start-Job -Name "E2E" -ScriptBlock {
     cd $using:PWD
@@ -73,21 +73,21 @@ function Invoke-TestSwarm {
     npx playwright test --reporter=json > .team/swarm/e2e-results.json
     return @{ Squad = "E2E"; ExitCode = $LASTEXITCODE }
   }
-  
+
   # VISUAL-SQUAD: Component + screenshot testing
   $jobs += Start-Job -Name "VISUAL" -ScriptBlock {
     cd $using:PWD
     npx chromatic --exit-zero-on-changes > .team/swarm/visual-results.json 2>&1
     return @{ Squad = "VISUAL"; ExitCode = $LASTEXITCODE }
   }
-  
+
   # A11Y-SQUAD: Accessibility automated scanning
   $jobs += Start-Job -Name "A11Y" -ScriptBlock {
     cd $using:PWD
-    npx axe-core/cli devpulse-frontend/app --tags wcag2a,wcag2aa > .team/swarm/a11y-results.json
+    npx axe-core/cli rakshex-frontend/app --tags wcag2a,wcag2aa > .team/swarm/a11y-results.json
     return @{ Squad = "A11Y"; ExitCode = $LASTEXITCODE }
   }
-  
+
   # PERF-SQUAD: Lighthouse + bundle analysis
   $jobs += Start-Job -Name "PERF" -ScriptBlock {
     cd $using:PWD
@@ -95,22 +95,22 @@ function Invoke-TestSwarm {
     npx bundlesize > .team/swarm/bundle-results.json
     return @{ Squad = "PERF"; ExitCode = $LASTEXITCODE }
   }
-  
+
   # Wait for ALL with 5-minute timeout per squad
   $results = $jobs | Wait-Job -Timeout 300 | Receive-Job
   $swarmEnd = Get-Date
   $totalSeconds = ($swarmEnd - $swarmStart).TotalSeconds
-  
+
   # Aggregate results
   $passed = ($results | Where-Object { $_.ExitCode -eq 0 }).Count
   $failed = ($results | Where-Object { $_.ExitCode -ne 0 }).Count
-  
+
   Write-Host "═══ TEST SWARM COMPLETE ═══" -ForegroundColor Cyan
   Write-Host "Total time: ${totalSeconds}s (sequential would be ~480s)" -ForegroundColor Green
   Write-Host "Squads: $passed passed, $failed failed" -ForegroundColor $(if($failed -eq 0){"Green"}else{"Red"})
-  
+
   $jobs | Remove-Job -Force
-  
+
   # Fail fast if any critical squad failed
   if ($failed -gt 0) {
     Write-Host "CRITICAL: Test swarm failed — blocking merge/deploy" -ForegroundColor Red

@@ -1,4 +1,4 @@
-# DevPulse Enterprise Pipeline Report
+# Rakshex Enterprise Pipeline Report
 
 > Real enterprise interest and progress.
 > Date: 2026-05-17

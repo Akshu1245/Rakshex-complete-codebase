@@ -12,7 +12,7 @@ interface User {
 
 /**
  * Inline SVG signup chart. Deliberately dependency-free — Recharts isn't
- * installed in devpulse-frontend and we don't want to expand the bundle
+ * installed in rakshex-frontend and we don't want to expand the bundle
  * just to render ~30 bars. Computes counts client-side from the existing
  * admin users list, so no new backend endpoint is required.
  */
@@ -30,11 +30,11 @@ export function AdminSignupChart({ users }: { users: User[] }) {
     for (const u of users) {
       if (!u.created_at) continue;
       const iso = u.created_at.slice(0, 10);
-      const day = days.find(d => d.iso === iso);
+      const day = days.find((d) => d.iso === iso);
       if (day) day.count++;
     }
 
-    const max = Math.max(1, ...days.map(d => d.count));
+    const max = Math.max(1, ...days.map((d) => d.count));
     const totalThisMonth = days.reduce((sum, d) => sum + d.count, 0);
     return { bars: days, max, totalThisMonth };
   }, [users]);
@@ -60,7 +60,7 @@ export function AdminSignupChart({ users }: { users: User[] }) {
         role="img"
         aria-label="Daily signups for the last 30 days"
       >
-        {yTicks.map(t => {
+        {yTicks.map((t) => {
           const y = padding.top + chartH - (t / max) * chartH;
           return (
             <g key={t}>
@@ -72,13 +72,7 @@ export function AdminSignupChart({ users }: { users: User[] }) {
                 stroke="#374151"
                 strokeDasharray="2 2"
               />
-              <text
-                x={padding.left - 6}
-                y={y + 3}
-                textAnchor="end"
-                fill="#9ca3af"
-                fontSize="9"
-              >
+              <text x={padding.left - 6} y={y + 3} textAnchor="end" fill="#9ca3af" fontSize="9">
                 {t}
               </text>
             </g>
@@ -105,7 +99,7 @@ export function AdminSignupChart({ users }: { users: User[] }) {
         })}
         {bars
           .filter((_, i) => i % 5 === 0 || i === bars.length - 1)
-          .map(d => {
+          .map((d) => {
             const i = bars.indexOf(d);
             const x = padding.left + i * barW + barW / 2;
             return (
@@ -166,15 +160,8 @@ export function AdminPlanMixChart({ users }: { users: User[] }) {
           role="img"
           aria-label="Plan distribution"
         >
-          <circle
-            cx={cx}
-            cy={cy}
-            r={r}
-            fill="none"
-            stroke="#1f2937"
-            strokeWidth={strokeW}
-          />
-          {segments.map(seg => {
+          <circle cx={cx} cy={cy} r={r} fill="none" stroke="#1f2937" strokeWidth={strokeW} />
+          {segments.map((seg) => {
             const value = totals.counts[seg.key];
             const frac = value / totals.total;
             const length = frac * circumference;
@@ -195,33 +182,17 @@ export function AdminPlanMixChart({ users }: { users: User[] }) {
             offset += length;
             return circle;
           })}
-          <text
-            x={cx}
-            y={cy - 2}
-            textAnchor="middle"
-            fill="#f3f4f6"
-            fontSize="20"
-            fontWeight="700"
-          >
+          <text x={cx} y={cy - 2} textAnchor="middle" fill="#f3f4f6" fontSize="20" fontWeight="700">
             {totals.counts.pro + totals.counts.enterprise}
           </text>
-          <text
-            x={cx}
-            y={cy + 16}
-            textAnchor="middle"
-            fill="#9ca3af"
-            fontSize="10"
-          >
+          <text x={cx} y={cy + 16} textAnchor="middle" fill="#9ca3af" fontSize="10">
             paid users
           </text>
         </svg>
       </div>
       <ul className="text-xs w-full space-y-1">
-        {segments.map(seg => (
-          <li
-            key={seg.key}
-            className="flex items-center justify-between text-gray-300"
-          >
+        {segments.map((seg) => (
+          <li key={seg.key} className="flex items-center justify-between text-gray-300">
             <span className="flex items-center gap-2">
               <span
                 className="inline-block w-2.5 h-2.5 rounded-sm"

@@ -3,7 +3,7 @@ import { Counter, Gauge, Histogram, Registry } from "prom-client";
 export const register = new Registry();
 
 register.setDefaultLabels({
-  app: "devpulse",
+  app: "rakshex",
 });
 
 export const httpRequestsTotal = new Counter({
@@ -48,11 +48,7 @@ export const findingsCounter = new Counter({
   registers: [register],
 });
 
-export function incrementHttpRequest(
-  method: string,
-  route: string,
-  status: number
-) {
+export function incrementHttpRequest(method: string, route: string, status: number) {
   httpRequestsTotal.inc({ method, route, status: status.toString() });
 }
 
@@ -60,12 +56,9 @@ export function observeHttpRequestDuration(
   method: string,
   route: string,
   status: number,
-  duration: number
+  duration: number,
 ) {
-  httpRequestDuration.observe(
-    { method, route, status: status.toString() },
-    duration
-  );
+  httpRequestDuration.observe({ method, route, status: status.toString() }, duration);
 }
 
 export function incrementScanExecution(scanType: string, status: string) {

@@ -1,5 +1,5 @@
 /**
- * Security Copilot — chat-over-DevPulse-data.
+ * Security Copilot — chat-over-Rakshex-data.
  *
  * The copilot answers questions about a tenant's runtime data:
  *   - "How many prompt-injection attempts did we block today?"
@@ -65,8 +65,7 @@ const INTENT_RULES: Array<{
   },
   {
     intent: "shadow_drift",
-    match:
-      /\b(?:shadow|rogue|unsanctioned).*?(?:drift|new|change|appeared|disappeared|gone)\b/i,
+    match: /\b(?:shadow|rogue|unsanctioned).*?(?:drift|new|change|appeared|disappeared|gone)\b/i,
   },
   {
     intent: "blocked_attempts_today",
@@ -82,7 +81,8 @@ const INTENT_RULES: Array<{
   },
   {
     intent: "redteam_score_trend",
-    match: /(red[- ]?team|security score|attack simulation|score).*?(trend|over time|history|last)/i,
+    match:
+      /(red[- ]?team|security score|attack simulation|score).*?(trend|over time|history|last)/i,
   },
   { intent: "open_autofixes", match: /(autofix|remediation|fix|suggestion).*(open|pending)/i },
   { intent: "help", match: /^(help|what can you do|examples?|commands?)\b/i },
@@ -113,37 +113,33 @@ export interface CopilotAnswer {
   references: Array<{ kind: string; id?: string | number; label: string }>;
 }
 
-export async function answerForTenant(
-  userId: number,
-  query: string
-): Promise<CopilotAnswer> {
+export async function answerForTenant(userId: number, query: string): Promise<CopilotAnswer> {
   const match = classifyQuery(query);
   const { intent } = match;
   switch (intent) {
     case "blocked_attempts_today": {
       const audit = await getGatewayAuditRecent(userId, 1000);
       const todayStr = new Date().toISOString().slice(0, 10);
-      const today = audit.filter(r => r.createdAt.toISOString().startsWith(todayStr));
-      const blocked = today.filter(r => r.decision === "blocked");
-      const top = aggregateTop(blocked.map(r => r.blockReason ?? "unknown"));
+      const today = audit.filter((r) => r.createdAt.toISOString().startsWith(todayStr));
+      const blocked = today.filter((r) => r.decision === "blocked");
+      const top = aggregateTop(blocked.map((r) => r.blockReason ?? "unknown"));
       return {
         intent,
         text:
           blocked.length === 0
             ? "No prompt-injection attempts blocked today. The gateway has been quiet."
-            : `Blocked ${blocked.length} attempt(s) today. Top reasons: ${top.slice(0, 3)
+            : `Blocked ${blocked.length} attempt(s) today. Top reasons: ${top
+                .slice(0, 3)
                 .map(([reason, count]) => `${reason} (${count})`)
                 .join(", ")}.`,
         data: { count: blocked.length, byReason: top },
-        references: [
-          { kind: "page", label: "Runtime audit log" },
-        ],
+        references: [{ kind: "page", label: "Runtime audit log" }],
       };
     }
     case "most_expensive_model": {
       const audit = await getGatewayAuditRecent(userId, 5000);
       const since = Date.now() - 7 * 24 * 60 * 60 * 1000;
-      const recent = audit.filter(r => r.createdAt.getTime() >= since);
+      const recent = audit.filter((r) => r.createdAt.getTime() >= since);
       const byModel = new Map<string, { tokens: number; cost: number; calls: number }>();
       for (const r of recent) {
         const acc = byModel.get(r.model) ?? { tokens: 0, cost: 0, calls: 0 };
@@ -152,9 +148,7 @@ export async function answerForTenant(
         acc.calls += 1;
         byModel.set(r.model, acc);
       }
-      const ranked = Array.from(byModel.entries()).sort(
-        (a, b) => b[1].cost - a[1].cost
-      );
+      const ranked = Array.from(byModel.entries()).sort((a, b) => b[1].cost - a[1].cost);
       const top = ranked[0];
       return {
         intent,
@@ -167,8 +161,8 @@ export async function answerForTenant(
     }
     case "shadow_hosts_recent": {
       const events = await listShadowAiEvents(userId, 500);
-      const rogue = events.filter(e => !e.isAllowlisted);
-      const byHost = aggregateTop(rogue.map(e => e.detectedHost));
+      const rogue = events.filter((e) => !e.isAllowlisted);
+      const byHost = aggregateTop(rogue.map((e) => e.detectedHost));
       return {
         intent,
         text:
@@ -184,14 +178,13 @@ export async function answerForTenant(
     }
     case "redteam_score_trend": {
       const runs = await listRedteamRuns(userId, 25);
-      const completed = runs.filter(r => r.status === "completed");
+      const completed = runs.filter((r) => r.status === "completed");
       const scores = completed
-        .map(r => ({ at: r.finishedAt ?? r.createdAt, score: r.securityScore ?? 0 }))
+        .map((r) => ({ at: r.finishedAt ?? r.createdAt, score: r.securityScore ?? 0 }))
         .sort((a, b) => a.at.getTime() - b.at.getTime());
       const last = scores.at(-1);
       const first = scores.at(0);
-      const delta =
-        last && first ? last.score - first.score : 0;
+      const delta = last && first ? last.score - first.score : 0;
       return {
         intent,
         text: last
@@ -202,20 +195,18 @@ export async function answerForTenant(
         data: scores,
         references: completed
           .slice(0, 5)
-          .map(r => ({ kind: "redteam_run", id: r.id, label: `Run ${r.id.slice(0, 8)}` })),
+          .map((r) => ({ kind: "redteam_run", id: r.id, label: `Run ${r.id.slice(0, 8)}` })),
       };
     }
     case "wow_regressions": {
       const audit = await getGatewayAuditRecent(userId, 5000);
       const runs = await listRedteamRuns(userId, 100);
       const signals = computeWowRegressions(audit, runs);
-      const regressions = signals.filter(s => s.isRegression);
-      const lines = signals.map(s => {
+      const regressions = signals.filter((s) => s.isRegression);
+      const lines = signals.map((s) => {
         const arrow = s.isRegression ? "↑" : "→";
         const pct =
-          s.pctChange === null
-            ? "n/a"
-            : `${s.pctChange >= 0 ? "+" : ""}${s.pctChange.toFixed(1)}%`;
+          s.pctChange === null ? "n/a" : `${s.pctChange >= 0 ? "+" : ""}${s.pctChange.toFixed(1)}%`;
         const unit = s.signal === "cost_usd" ? "$" : "";
         return `- ${s.signal.replace(/_/g, " ")} ${arrow} ${unit}${s.thisWeek} vs ${unit}${s.priorWeek} (${pct})`;
       });
@@ -238,10 +229,8 @@ export async function answerForTenant(
       const drift = computeShadowDrift(events);
       const newList = drift.newHosts
         .slice(0, 10)
-        .map(h => `${h.host} (${h.calls} call${h.calls === 1 ? "" : "s"})`);
-      const vanishedList = drift.vanishedHosts
-        .slice(0, 10)
-        .map(h => h.host);
+        .map((h) => `${h.host} (${h.calls} call${h.calls === 1 ? "" : "s"})`);
+      const vanishedList = drift.vanishedHosts.slice(0, 10).map((h) => h.host);
       const newSummary =
         drift.newHosts.length === 0
           ? "No new shadow hosts in the last 7 days."
@@ -268,23 +257,19 @@ export async function answerForTenant(
       if (!range) {
         return {
           intent,
-          text:
-            "I detected a date-range intent but couldn't parse the window. Try `last 30 days` or `between 2026-04-01 and 2026-04-15`.",
+          text: "I detected a date-range intent but couldn't parse the window. Try `last 30 days` or `between 2026-04-01 and 2026-04-15`.",
           references: [{ kind: "_intent", label: intent }],
         };
       }
       const audit = await getGatewayAuditRecent(userId, 5000);
       const inRange = audit.filter(
-        r =>
+        (r) =>
           r.createdAt.getTime() >= range.start.getTime() &&
-          r.createdAt.getTime() <= range.end.getTime()
+          r.createdAt.getTime() <= range.end.getTime(),
       );
-      const blocked = inRange.filter(r => r.decision === "blocked").length;
-      const allowed = inRange.filter(r => r.decision === "allowed").length;
-      const cost = inRange.reduce(
-        (sum, r) => sum + Number(r.estimatedCostUsd) || 0,
-        0
-      );
+      const blocked = inRange.filter((r) => r.decision === "blocked").length;
+      const allowed = inRange.filter((r) => r.decision === "allowed").length;
+      const cost = inRange.reduce((sum, r) => sum + Number(r.estimatedCostUsd) || 0, 0);
       return {
         intent,
         text:
@@ -314,8 +299,7 @@ export async function answerForTenant(
       // me to redo?" so the user can disambiguate.
       return {
         intent,
-        text:
-          "I caught a follow-up but I'm not sure which earlier question you mean. Try asking the question with the new window directly, e.g. \"what about last 30 days?\" with the metric named.",
+        text: 'I caught a follow-up but I\'m not sure which earlier question you mean. Try asking the question with the new window directly, e.g. "what about last 30 days?" with the metric named.',
         references: [{ kind: "_intent", label: intent }],
       };
     }
@@ -327,18 +311,16 @@ export async function answerForTenant(
           fixes.length === 0
             ? "No open auto-fix suggestions. Everything is current."
             : `${fixes.length} open suggestion(s). Latest: "${fixes[0]?.title ?? "n/a"}".`,
-        data: fixes.slice(0, 10).map(f => ({
+        data: fixes.slice(0, 10).map((f) => ({
           id: f.id,
           title: f.title,
           findingType: f.findingType,
         })),
-        references: fixes
-          .slice(0, 10)
-          .map(f => ({
-            kind: "autofix",
-            id: f.id,
-            label: f.title.slice(0, 64),
-          })),
+        references: fixes.slice(0, 10).map((f) => ({
+          kind: "autofix",
+          id: f.id,
+          label: f.title.slice(0, 64),
+        })),
       };
     }
     case "help":
@@ -378,7 +360,7 @@ function aggregateTop(values: string[]): Array<[string, number]> {
 export async function startConversation(
   userId: number,
   conversationId: string,
-  title: string
+  title: string,
 ): Promise<void> {
   await createCopilotConversation(userId, conversationId, title);
 }
@@ -386,7 +368,7 @@ export async function startConversation(
 export async function sendCopilotMessage(
   userId: number,
   conversationId: string,
-  query: string
+  query: string,
 ): Promise<CopilotAnswer> {
   await appendCopilotMessage({
     conversationId,
@@ -412,7 +394,7 @@ export async function sendCopilotMessage(
 
   // Persist the resolved intent so the *next* turn can detect a chain
   // of follow-ups.
-  const refsWithIntent = answer.references.some(r => r.kind === "_intent")
+  const refsWithIntent = answer.references.some((r) => r.kind === "_intent")
     ? answer.references
     : [...answer.references, { kind: "_intent", label: answer.intent }];
 
@@ -424,7 +406,7 @@ export async function sendCopilotMessage(
   });
   logger.info(
     { userId, conversationId, intent: answer.intent, followUp: followUp.isFollowUp },
-    "[Copilot] answered query"
+    "[Copilot] answered query",
   );
   return { ...answer, references: refsWithIntent };
 }

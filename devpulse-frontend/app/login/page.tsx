@@ -76,7 +76,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <Link href="/" className="text-3xl font-bold text-blue-500">
-              DevPulse
+              Rakshex
             </Link>
             <p className="text-gray-400 mt-2">Two-Factor Authentication</p>
           </div>
@@ -98,9 +98,7 @@ export default function LoginPage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-lg font-medium mb-2">
-                Two-Factor Authentication
-              </h3>
+              <h3 className="text-lg font-medium mb-2">Two-Factor Authentication</h3>
               <p className="text-gray-400 text-sm">
                 Enter the 6-digit code from your authenticator app
               </p>
@@ -114,9 +112,7 @@ export default function LoginPage() {
                 <input
                   type="text"
                   value={twoFACode}
-                  onChange={e =>
-                    setTwoFACode(e.target.value.replace(/\D/g, "").slice(0, 6))
-                  }
+                  onChange={(e) => setTwoFACode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                   className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-center font-mono text-lg tracking-widest"
                   placeholder="000000"
                   maxLength={6}
@@ -164,7 +160,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <Link href="/" className="text-3xl font-bold text-blue-500">
-              DevPulse
+              Rakshex
             </Link>
             <p className="text-gray-400 mt-2">Reset your password</p>
           </div>
@@ -189,8 +185,7 @@ export default function LoginPage() {
                 </div>
                 <h3 className="text-lg font-medium mb-2">Check your email</h3>
                 <p className="text-gray-400 text-sm mb-4">
-                  If an account exists, we&apos;ve sent password reset
-                  instructions to {forgotEmail}
+                  If an account exists, we&apos;ve sent password reset instructions to {forgotEmail}
                 </p>
                 <button
                   onClick={() => {
@@ -212,7 +207,7 @@ export default function LoginPage() {
                   <input
                     type="email"
                     value={forgotEmail}
-                    onChange={e => setForgotEmail(e.target.value)}
+                    onChange={(e) => setForgotEmail(e.target.value)}
                     className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="your@email.com"
                     required
@@ -249,7 +244,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="text-3xl font-bold text-blue-500">
-            DevPulse
+            Rakshex
           </Link>
           <p className="text-gray-400 mt-2">Sign in to your account</p>
         </div>
@@ -263,28 +258,20 @@ export default function LoginPage() {
               <div className="w-full border-t border-gray-600"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gray-800 text-gray-400">
-                Or continue with email
-              </span>
+              <span className="px-2 bg-gray-800 text-gray-400">Or continue with email</span>
             </div>
           </div>
 
           {/* Email/Password Form */}
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-4"
-            data-testid="login-form"
-          >
+          <form onSubmit={handleSubmit} className="space-y-4" data-testid="login-form">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">
-                Email
-              </label>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
               <input
                 type="email"
                 name="email"
                 autoComplete="email"
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="your@email.com"
                 required
@@ -292,13 +279,11 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">
-                Password
-              </label>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Password</label>
               <PasswordField
                 name="password"
                 value={password}
-                onChange={e => setPassword(e.target.value)}
+                onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
                 required
               />
@@ -309,7 +294,7 @@ export default function LoginPage() {
                 <input
                   type="checkbox"
                   checked={rememberMe}
-                  onChange={e => setRememberMe(e.target.checked)}
+                  onChange={(e) => setRememberMe(e.target.checked)}
                   className="rounded border-gray-600 bg-gray-700 text-blue-600"
                 />
                 <span className="ml-2 text-sm text-gray-400">Remember me</span>
@@ -340,10 +325,7 @@ export default function LoginPage() {
 
           <p className="text-center text-gray-400 text-sm">
             Don&apos;t have an account?{" "}
-            <Link
-              href="/register"
-              className="text-blue-400 hover:text-blue-300"
-            >
+            <Link href="/register" className="text-blue-400 hover:text-blue-300">
               Create one
             </Link>
           </p>

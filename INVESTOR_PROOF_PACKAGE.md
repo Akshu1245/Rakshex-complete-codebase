@@ -1,13 +1,13 @@
-# DevPulse Investor Proof Package
+# Rakshex Investor Proof Package
 
-> Evidence that DevPulse is real.
+> Evidence that Rakshex is real.
 > Date: 2026-05-17
 
 ---
 
 ## EXECUTIVE SUMMARY
 
-DevPulse is AI runtime protection for developers.
+Rakshex is AI runtime protection for developers.
 **_ installs. _**% retention. $**_ MRR. Growing _**% MoM.
 
 ---
@@ -38,12 +38,12 @@ DevPulse is AI runtime protection for developers.
 
 ## MOAT
 
-| Moat     | Evidence                           |
-| -------- | ---------------------------------- |
-| Data     | **_ scans, _** findings            |
-| Trust    | **_ NPS, _** referrals             |
-| Habit    | \_\_\_ D30 retention               |
-| Category | "AI runtime protection" = DevPulse |
+| Moat     | Evidence                          |
+| -------- | --------------------------------- |
+| Data     | **_ scans, _** findings           |
+| Trust    | **_ NPS, _** referrals            |
+| Habit    | \_\_\_ D30 retention              |
+| Category | "AI runtime protection" = Rakshex |
 
 ---
 

@@ -1,4 +1,4 @@
-# DevPulse Incident Response Runbook
+# Rakshex Incident Response Runbook
 
 > Step-by-step procedures for common production incidents.
 > Date: 2026-05-17

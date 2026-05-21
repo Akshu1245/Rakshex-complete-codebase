@@ -1,6 +1,6 @@
-# DevPulse User Behavior Patterns
+# Rakshex User Behavior Patterns
 
-> Understanding how developers actually use DevPulse.
+> Understanding how developers actually use Rakshex.
 > Date: 2026-05-17
 
 ---

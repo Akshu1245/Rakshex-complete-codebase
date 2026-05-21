@@ -1,4 +1,4 @@
-# DevPulse Positioning & Messaging Guide
+# Rakshex Positioning & Messaging Guide
 
 > Every piece of copy must pass the 5-second test.
 > Date: 2026-05-17
@@ -7,7 +7,7 @@
 
 ## THE ONE SENTENCE
 
-**DevPulse stops AI agents from burning your API budget.**
+**Rakshex stops AI agents from burning your API budget.**
 
 ---
 
@@ -16,7 +16,7 @@
 "Every developer building with AI is bleeding money they can't see.
 Hidden reasoning tokens cost 3× more than visible ones.
 Rogue agents loop infinitely, burning credits overnight.
-DevPulse sits between your code and LLM providers,
+Rakshex sits between your code and LLM providers,
 detecting hidden costs, stopping infinite loops,
 and finding API vulnerabilities before they hit production."
 
@@ -27,13 +27,13 @@ and finding API vulnerabilities before they hit production."
 ### For Developers (Primary)
 
 **Pain:** "My LLM bill was 3× what I expected."
-**Solution:** DevPulse reveals hidden reasoning costs in real-time.
+**Solution:** Rakshex reveals hidden reasoning costs in real-time.
 **Outcome:** Cut AI spend by 20-40%.
 
 ### For Security Teams (Secondary)
 
 **Pain:** "We found an API key in a shared Postman collection."
-**Solution:** DevPulse scans every collection for secrets and vulnerabilities.
+**Solution:** Rakshex scans every collection for secrets and vulnerabilities.
 **Outcome:** Prevent data breaches before deploy.
 
 ### For Engineering Leaders (Tertiary)
@@ -83,7 +83,7 @@ and finding API vulnerabilities before they hit production."
 
 ### Landing Page Headline
 
-**Before:** "DevPulse — AI Security & Cost Intelligence Platform"
+**Before:** "Rakshex — AI Security & Cost Intelligence Platform"
 **After:** "Stop AI agents from burning your API budget"
 
 ### Landing Page Subheadline
@@ -104,7 +104,7 @@ and finding API vulnerabilities before they hit production."
 ### Pricing Page
 
 **Before:** "Choose the plan that's right for your team"
-**After:** "Start free. Upgrade when DevPulse has saved you more than it costs."
+**After:** "Start free. Upgrade when Rakshex has saved you more than it costs."
 
 ### Error State
 
@@ -114,11 +114,11 @@ and finding API vulnerabilities before they hit production."
 ### Empty State (No Collections)
 
 **Before:** "You don't have any collections yet."
-**After:** "Import your first API collection to see what DevPulse finds. Most people find at least 2 issues they didn't know about."
+**After:** "Import your first API collection to see what Rakshex finds. Most people find at least 2 issues they didn't know about."
 
 ### Onboarding Step 1
 
-**Before:** "Connect your DevPulse account"
+**Before:** "Connect your Rakshex account"
 **After:** "Let's get you set up in 60 seconds"
 
 ### Feature Description
@@ -140,7 +140,7 @@ and finding API vulnerabilities before they hit production."
 
 Hidden reasoning tokens cost 3× more than visible ones. Rogue agents loop infinitely overnight. API keys leak into shared collections.
 
-DevPulse is a VS Code extension that:
+Rakshex is a VS Code extension that:
 
 - Reveals hidden LLM costs in real-time
 - Auto-stops infinite loops and cost spikes
@@ -152,11 +152,11 @@ Free during beta. Setup takes 30 seconds."
 
 "Hi Product Hunt! 👋
 
-I'm Akshay, and I built DevPulse because I was paying 3× more for LLM APIs than I realized.
+I'm Akshay, and I built Rakshex because I was paying 3× more for LLM APIs than I realized.
 
 The problem: AI providers hide reasoning tokens. Your $0.02 API call actually costs $0.06. Across thousands of calls, that's real money.
 
-DevPulse is the first tool that:
+Rakshex is the first tool that:
 
 1. Shows you hidden costs per API call
 2. Stops rogue agents automatically
@@ -173,11 +173,11 @@ Free during beta. Would love your feedback!"
 ### Opening
 
 ```markdown
-# DevPulse
+# Rakshex
 
 **Stop AI agents from burning your API budget.**
 
-DevPulse is a VS Code extension that detects hidden LLM costs,
+Rakshex is a VS Code extension that detects hidden LLM costs,
 auto-stops infinite loops, and scans API collections for vulnerabilities.
 
 [Install from VS Code Marketplace] [View Demo] [Read Docs]

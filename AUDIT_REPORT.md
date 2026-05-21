@@ -1,4 +1,4 @@
-# DevPulse Market Launch Readiness Audit
+# Rakshex Market Launch Readiness Audit
 
 **Date:** 2026-05-19
 **Auditor:** AI Code Review
@@ -37,7 +37,7 @@
 
 ### 2. VSCode Extension - Fixed Entry Point
 
-**File:** `devpulse-vscode/package.json`
+**File:** `rakshex-vscode/package.json`
 **Issue:** `main` field pointed to `./out/extension.js` but esbuild outputs to `dist/extension.js`
 **Result:** Extension would fail to activate when installed
 
@@ -78,13 +78,13 @@
 ### Medium Priority
 
 1. **Frontend tRPC Types Missing**
-   - File: `devpulse-frontend/lib/trpc.ts`
+   - File: `rakshex-frontend/lib/trpc.ts`
    - Comment says "simplified setup for deployment; types will be restored after backend is live"
    - This means frontend lacks type-safe API calls. Will compile but has `any` types.
    - **Impact:** Reduced developer experience, potential runtime errors if API changes
 
 2. **TODO Comments in Production Code**
-   - `devpulse-frontend/app/trust/page.tsx`: Contains TODO about testimonial data
+   - `rakshex-frontend/app/trust/page.tsx`: Contains TODO about testimonial data
    - `server/services/telemetry.ts`: Contains TODO about batch size tuning
    - `server/services/research/competitiveWatch.ts`: Contains TODO about rate limiting
    - **Impact:** Low - these are minor polish items, not blockers
@@ -97,7 +97,7 @@
 ### Low Priority
 
 4. **Frontend Landing Page**
-   - `devpulse-frontend/app/landing/page.tsx` contains TODO about animation library
+   - `rakshex-frontend/app/landing/page.tsx` contains TODO about animation library
    - **Impact:** Low - visual polish only
 
 5. **20 Open Dependabot PRs**

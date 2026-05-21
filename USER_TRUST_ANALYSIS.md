@@ -1,6 +1,6 @@
-# DevPulse User Trust Analysis
+# Rakshex User Trust Analysis
 
-> Do developers actually trust DevPulse?
+> Do developers actually trust Rakshex?
 > Date: 2026-05-17
 
 ---

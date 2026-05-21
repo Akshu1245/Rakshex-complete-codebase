@@ -5,18 +5,18 @@
 
 ## Identity
 
-I am the QA Lead for DevPulse. I own the testing strategy, define quality gates that must pass before any PR merges, and ensure the test suite remains fast, reliable, and comprehensive. I don't write individual tests — I design the strategy and validate that QA-TESTER covers everything.
+I am the QA Lead for Rakshex. I own the testing strategy, define quality gates that must pass before any PR merges, and ensure the test suite remains fast, reliable, and comprehensive. I don't write individual tests — I design the strategy and validate that QA-TESTER covers everything.
 
 ## Current Test Infrastructure
 
-| Suite | Tool | Location | Count | Status |
-|---|---|---|---|---|
-| Server unit tests | Vitest | server/ (inline *.test.ts) | 478 | ✅ All passing |
-| Gateway tests | Vitest | server/ (gateway *.test.ts) | 68 | ✅ All passing |
-| Python SDK tests | pytest | (external) | 9 | ✅ All passing |
-| VS Code scanner tests | Vitest | devpulse-vscode/ | 14 | ✅ All passing |
-| E2E tests | Playwright | e2e/ | 5 specs | ✅ All passing |
-| TypeScript compilation | tsc --noEmit | root | - | ✅ Clean |
+| Suite                  | Tool         | Location                     | Count   | Status         |
+| ---------------------- | ------------ | ---------------------------- | ------- | -------------- |
+| Server unit tests      | Vitest       | server/ (inline \*.test.ts)  | 478     | ✅ All passing |
+| Gateway tests          | Vitest       | server/ (gateway \*.test.ts) | 68      | ✅ All passing |
+| Python SDK tests       | pytest       | (external)                   | 9       | ✅ All passing |
+| VS Code scanner tests  | Vitest       | rakshex-vscode/              | 14      | ✅ All passing |
+| E2E tests              | Playwright   | e2e/                         | 5 specs | ✅ All passing |
+| TypeScript compilation | tsc --noEmit | root                         | -       | ✅ Clean       |
 
 ## Quality Gates (Must Pass Before Merge)
 
@@ -34,15 +34,15 @@ I am the QA Lead for DevPulse. I own the testing strategy, define quality gates 
 
 ## Coverage Requirements by Layer
 
-| Layer | Minimum Coverage | Critical Areas |
-|---|---|---|
-| server/api/ (tRPC routers) | 80% | Auth, payments, kill-switch |
-| server/services/ | 85% | gateway, scanning, autofix, policies |
-| server/_core/ | 90% | env.ts, llm.ts, index.ts |
-| drizzle/schema.ts | N/A (type-checked) | Migration correctness |
-| devpulse-frontend/ | 70% | Auth flow, billing, onboarding |
-| devpulse-vscode/ | 75% | Extension entry, scanner |
-| e2e/ | Critical paths | Auth, onboarding, kill-switch, billing |
+| Layer                      | Minimum Coverage   | Critical Areas                         |
+| -------------------------- | ------------------ | -------------------------------------- |
+| server/api/ (tRPC routers) | 80%                | Auth, payments, kill-switch            |
+| server/services/           | 85%                | gateway, scanning, autofix, policies   |
+| server/\_core/             | 90%                | env.ts, llm.ts, index.ts               |
+| drizzle/schema.ts          | N/A (type-checked) | Migration correctness                  |
+| rakshex-frontend/          | 70%                | Auth flow, billing, onboarding         |
+| rakshex-vscode/            | 75%                | Extension entry, scanner               |
+| e2e/                       | Critical paths     | Auth, onboarding, kill-switch, billing |
 
 ## Test Strategy Rules
 

@@ -1,11 +1,11 @@
 /**
- * DevPulse SDK — Types
+ * Rakshex SDK — Types
  */
 
-export interface DevPulseConfig {
+export interface RakshexConfig {
   apiKey: string;
   workspaceId: string;
-  ingestUrl?: string; // default: https://api.devpulse.in
+  ingestUrl?: string; // default: https://api.rakshex.in
   sampleRate?: number; // 0.0-1.0, default: 1.0
   redactPII?: boolean; // default: true
   batchSize?: number; // default: 50

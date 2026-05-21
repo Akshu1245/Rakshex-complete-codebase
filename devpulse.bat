@@ -1,6 +1,6 @@
 @echo off
-REM DevPulse Universal CLI
-set DEV_HOME=C:\Users\aksha\Downloads\DevPulse_Complete_Codebase
+REM Rakshex Universal CLI
+set DEV_HOME=C:\Users\aksha\Downloads\Rakshex_Complete_Codebase
 set TASK_GEN=%DEV_HOME%\scripts\task_generator.py
 
 if "%1"=="" goto :status
@@ -29,22 +29,22 @@ if "%2"=="" (python "%TASK_GEN%" --once) else (python "%TASK_GEN%" --path "%2" -
 goto :end
 
 :status
-echo DevPulse — AI Runtime Governance Platform
+echo Rakshex — AI Runtime Governance Platform
 echo ==========================================
-python "%TASK_GEN%" --list 2>nul || echo No projects monitored. Run: devpulse watch ^<path^>
+python "%TASK_GEN%" --list 2>nul || echo No projects monitored. Run: rakshex watch ^<path^>
 echo.
-echo Commands: devpulse [watch^|discover^|list^|scan^|status^|help]
+echo Commands: rakshex [watch^|discover^|list^|scan^|status^|help]
 goto :end
 
 :help
-echo DevPulse — AI Runtime Governance Platform
+echo Rakshex — AI Runtime Governance Platform
 echo ==========================================
-echo   devpulse watch ^<path^>       Add a project to monitor
-echo   devpulse discover             Auto-find all git repos on your machine
-echo   devpulse list                 Show all monitored projects
-echo   devpulse scan [path]          Discover tasks in all/specific project
-echo   devpulse status               Show current status
-echo   devpulse help                 Show this help
+echo   rakshex watch ^<path^>       Add a project to monitor
+echo   rakshex discover             Auto-find all git repos on your machine
+echo   rakshex list                 Show all monitored projects
+echo   rakshex scan [path]          Discover tasks in all/specific project
+echo   rakshex status               Show current status
+echo   rakshex help                 Show this help
 goto :end
 
 :end

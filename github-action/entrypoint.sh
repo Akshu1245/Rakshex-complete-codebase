@@ -1,8 +1,8 @@
 #!/bin/sh
 set -e
 
-echo "🔍 DevPulse Security Scan starting..."
-echo "API URL: $DEVPULSE_API_URL"
+echo "🔍 Rakshex Security Scan starting..."
+echo "API URL: $RAKSHEX_API_URL"
 
 # Extract PR info from GitHub event
 PR_NUMBER=$(jq -r '.pull_request.number' "$GITHUB_EVENT_PATH")
@@ -49,8 +49,8 @@ if [ -f "Cargo.toml" ]; then FRAMEWORK="rust"; fi
 
 echo "🔧 Detected framework: $FRAMEWORK"
 
-# Run scan via DevPulse API
-echo "🚀 Sending scan request to DevPulse..."
+# Run scan via Rakshex API
+echo "🚀 Sending scan request to Rakshex..."
 
 SCAN_PAYLOAD=$(cat <<EOF
 {
@@ -66,7 +66,7 @@ SCAN_PAYLOAD=$(cat <<EOF
 EOF
 )
 
-RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$DEVPULSE_API_URL/api/github/scan"   -H "Authorization: Bearer $DEVPULSE_API_KEY"   -H "Content-Type: application/json"   -d "$SCAN_PAYLOAD")
+RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$RAKSHEX_API_URL/api/github/scan"   -H "Authorization: Bearer $RAKSHEX_API_KEY"   -H "Content-Type: application/json"   -d "$SCAN_PAYLOAD")
 
 HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
 BODY=$(echo "$RESPONSE" | sed '$d')
@@ -121,4 +121,4 @@ if [ "$FAIL_ON_HIGH" = "true" ] && [ "$HIGH" -gt 0 ]; then
   exit 1
 fi
 
-echo "✅ DevPulse scan complete."
+echo "✅ Rakshex scan complete."

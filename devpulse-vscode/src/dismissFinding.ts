@@ -1,11 +1,11 @@
 import * as vscode from "vscode";
-import type { DevPulseApi } from "./api";
+import type { RakshexApi } from "./api";
 import type { EngagementTracker } from "./engagementTracker";
 import type { FindingsTreeProvider } from "./findingsProvider";
 
 export async function dismissFinding(
   finding: FindingItem,
-  api: DevPulseApi,
+  api: RakshexApi,
   findingsProvider: FindingsTreeProvider,
   engagementTracker: EngagementTracker,
 ): Promise<void> {
@@ -44,7 +44,7 @@ export async function dismissFinding(
 
     // Track locally for trust learning
     const dismissed = (vscode.workspace
-      .getConfiguration("devpulse")
+      .getConfiguration("rakshex")
       .get<unknown[]>("dismissedFindings") ?? []) as unknown[];
     dismissed.push({
       id: finding.id,
@@ -53,9 +53,7 @@ export async function dismissFinding(
       timestamp: Date.now(),
       title: finding.label,
     });
-    await vscode.workspace
-      .getConfiguration("devpulse")
-      .update("dismissedFindings", dismissed, true);
+    await vscode.workspace.getConfiguration("rakshex").update("dismissedFindings", dismissed, true);
 
     // Telemetry — track dismissal as engagement event
     engagementTracker.record("finding_status_changed");

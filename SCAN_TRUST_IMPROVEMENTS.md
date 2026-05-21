@@ -1,4 +1,4 @@
-# DevPulse Scan Trust Improvements
+# Rakshex Scan Trust Improvements
 
 > Continuously improve scan quality so developers rely on findings.
 > Date: 2026-05-17

@@ -4,10 +4,10 @@
 
 ---
 
-**Subject:** Welcome to DevPulse — Your 14-day Pro trial starts now 🚀
+**Subject:** Welcome to Rakshex — Your 14-day Pro trial starts now 🚀
 
-**From:** Akshay Kammar <akshay@devpulse.in>
-**Reply-To:** support@devpulse.in
+**From:** Akshay Kammar <akshay@rakshex.in>
+**Reply-To:** support@rakshex.in
 
 ---
 
@@ -16,21 +16,21 @@
 ```
 Hi {{name}},
 
-Welcome to DevPulse! Your 14-day Pro trial is now active.
+Welcome to Rakshex! Your 14-day Pro trial is now active.
 
 Here is what you can do right now:
 
 1. SCAN YOUR FIRST COLLECTION
    Drop a Postman or OpenAPI collection at:
-   https://devpulse.in/dashboard/collections
+   https://rakshex.in/dashboard/collections
 
 2. SET A BUDGET CAP
    Go to Kill Switch settings and set your monthly LLM budget:
-   https://devpulse.in/kill-switch
+   https://rakshex.in/kill-switch
 
 3. INVITE YOUR TEAM
    Pro includes 5 team members. Invite them from:
-   https://devpulse.in/team
+   https://rakshex.in/team
 
 Your trial includes:
 • Unlimited collections
@@ -40,11 +40,11 @@ Your trial includes:
 • Team collaboration (5 seats)
 
 Need help? Reply to this email or join our community:
-https://github.com/Akshu1245/devpulse-complete-codebase/discussions
+https://github.com/Akshu1245/rakshex-complete-codebase/discussions
 
 Best,
 Akshay Kammar
-Founder, DevPulse
+Founder, Rakshex
 ```
 
 ## HTML Version
@@ -55,7 +55,7 @@ Founder, DevPulse
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Welcome to DevPulse</title>
+    <title>Welcome to Rakshex</title>
   </head>
   <body
     style="margin:0;padding:0;background:#0f172a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;"
@@ -74,7 +74,7 @@ Founder, DevPulse
               <td
                 style="padding:30px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);text-align:center;"
               >
-                <h1 style="color:#fff;margin:0;font-size:24px;">Welcome to DevPulse</h1>
+                <h1 style="color:#fff;margin:0;font-size:24px;">Welcome to Rakshex</h1>
                 <p style="color:rgba(255,255,255,0.8);margin:8px 0 0;">
                   Your 14-day Pro trial is active
                 </p>
@@ -85,8 +85,7 @@ Founder, DevPulse
               <td style="padding:30px;color:#e2e8f0;">
                 <p style="margin:0 0 20px;">Hi {{name}},</p>
                 <p style="margin:0 0 20px;line-height:1.6;">
-                  Welcome to DevPulse! Your 14-day Pro trial is now active. Here is what to do
-                  first:
+                  Welcome to Rakshex! Your 14-day Pro trial is now active. Here is what to do first:
                 </p>
 
                 <!-- Steps -->
@@ -100,7 +99,7 @@ Founder, DevPulse
                         Drop a Postman or OpenAPI collection and find vulnerabilities in 3 seconds.
                       </p>
                       <a
-                        href="https://devpulse.in/dashboard/collections"
+                        href="https://rakshex.in/dashboard/collections"
                         style="color:#3b82f6;text-decoration:none;font-size:14px;"
                         >Start Scanning →</a
                       >
@@ -116,7 +115,7 @@ Founder, DevPulse
                         Prevent runaway LLM costs with our autonomous kill switch.
                       </p>
                       <a
-                        href="https://devpulse.in/kill-switch"
+                        href="https://rakshex.in/kill-switch"
                         style="color:#3b82f6;text-decoration:none;font-size:14px;"
                         >Configure Kill Switch →</a
                       >
@@ -132,7 +131,7 @@ Founder, DevPulse
                         Pro includes 5 team members. Collaboration makes security better.
                       </p>
                       <a
-                        href="https://devpulse.in/team"
+                        href="https://rakshex.in/team"
                         style="color:#3b82f6;text-decoration:none;font-size:14px;"
                         >Manage Team →</a
                       >
@@ -147,7 +146,7 @@ Founder, DevPulse
                 <p style="margin:20px 0 0;">
                   Best,<br />
                   <strong style="color:#fff;">Akshay Kammar</strong><br />
-                  <span style="color:#94a3b8;font-size:14px;">Founder, DevPulse</span>
+                  <span style="color:#94a3b8;font-size:14px;">Founder, Rakshex</span>
                 </p>
               </td>
             </tr>
@@ -157,9 +156,9 @@ Founder, DevPulse
                 style="padding:20px 30px;background:#0f172a;text-align:center;border-top:1px solid #334155;"
               >
                 <p style="margin:0;color:#64748b;font-size:12px;">
-                  DevPulse by Rashi Technologies · Bengaluru, India<br />
-                  <a href="https://devpulse.in/privacy" style="color:#64748b;">Privacy</a> ·
-                  <a href="https://devpulse.in/terms" style="color:#64748b;">Terms</a>
+                  Rakshex by Rashi Technologies · Bengaluru, India<br />
+                  <a href="https://rakshex.in/privacy" style="color:#64748b;">Privacy</a> ·
+                  <a href="https://rakshex.in/terms" style="color:#64748b;">Terms</a>
                 </p>
               </td>
             </tr>
@@ -177,8 +176,8 @@ Founder, DevPulse
 {
   "name": "Akshay",
   "trial_end_date": "May 31, 2026",
-  "collections_url": "https://devpulse.in/dashboard/collections",
-  "kill_switch_url": "https://devpulse.in/kill-switch",
-  "team_url": "https://devpulse.in/team"
+  "collections_url": "https://rakshex.in/dashboard/collections",
+  "kill_switch_url": "https://rakshex.in/kill-switch",
+  "team_url": "https://rakshex.in/team"
 }
 ```

@@ -15,11 +15,11 @@
 ```
 Hi {{name}},
 
-Quick check-in — have you dropped your first API collection into DevPulse yet?
+Quick check-in — have you dropped your first API collection into Rakshex yet?
 
 If not, here is a 2-minute walkthrough:
 
-1. Go to https://devpulse.in/dashboard/collections
+1. Go to https://rakshex.in/dashboard/collections
 2. Click "New Collection"
 3. Upload your Postman .json or OpenAPI .yaml
 4. Click "Scan"
@@ -45,9 +45,9 @@ One of our early users had a rogue chatbot burn through $12,000 in a weekend.
 
 Their mistake? No budget cap.
 
-DevPulse's kill switch prevents this. Set it up in 30 seconds:
+Rakshex's kill switch prevents this. Set it up in 30 seconds:
 
-https://devpulse.in/kill-switch
+https://rakshex.in/kill-switch
 
 → Set monthly budget
 → Choose alert channels (Slack/Email)
@@ -70,7 +70,7 @@ Hi {{name}},
 Your Pro trial includes 5 team members. Most security issues are found faster with more eyes.
 
 Invite your team:
-https://devpulse.in/team
+https://rakshex.in/team
 
 They will get:
 • Shared collections
@@ -97,7 +97,7 @@ Your 14-day Pro trial ends tomorrow ({{trial_end_date}}).
 Here is what happens:
 
 STAY ON PRO:
-→ https://devpulse.in/billing
+→ https://rakshex.in/billing
 → $99/month, cancel anytime
 → Keep unlimited collections + advanced features
 

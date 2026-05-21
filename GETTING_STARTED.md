@@ -1,4 +1,4 @@
-# Getting Started with DevPulse
+# Getting Started with Rakshex
 
 Go from zero to first security scan in under 5 minutes.
 
@@ -8,19 +8,19 @@ Go from zero to first security scan in under 5 minutes.
 
 - Node.js 20+ and pnpm
 - Docker (for database and Redis)
-- A DevPulse account (free at [devpulse.in](https://devpulse.in))
+- A Rakshex account (free at [rakshex.in](https://rakshex.in))
 
 ---
 
 ## Option 1: Cloud (Fastest — 2 minutes)
 
-1. **Create an account** at [devpulse.in/register](https://devpulse.in/register)
+1. **Create an account** at [rakshex.in/register](https://rakshex.in/register)
 2. **Verify your email** — check inbox for confirmation link
-3. **Log in** at [devpulse.in/login](https://devpulse.in/login)
+3. **Log in** at [rakshex.in/login](https://rakshex.in/login)
 4. **Import your first collection:**
    - Go to **Collections** → **Import Collection**
    - Drop a Postman collection or OpenAPI spec
-   - DevPulse automatically scans for credential leaks
+   - Rakshex automatically scans for credential leaks
 5. **Run your first scan:**
    - Click **Scan** on any collection
    - Choose **Full Scan** for comprehensive analysis
@@ -32,8 +32,8 @@ Go from zero to first security scan in under 5 minutes.
 
 ```bash
 # 1. Clone
-git clone https://github.com/Akshu1245/devpulse-complete-codebase.git
-cd devpulse-complete-codebase
+git clone https://github.com/Akshu1245/rakshex-complete-codebase.git
+cd rakshex-complete-codebase
 
 # 2. Install dependencies
 pnpm install
@@ -60,7 +60,7 @@ pnpm run dev
 
 ### Minute 1: Import a Collection
 
-Navigate to **Collections** and import a Postman or OpenAPI file. DevPulse immediately:
+Navigate to **Collections** and import a Postman or OpenAPI file. Rakshex immediately:
 
 - Parses endpoints, methods, and parameters
 - Scans for hardcoded secrets (AWS keys, Stripe tokens, database passwords)
@@ -107,7 +107,7 @@ Budget Limit: $1,000 USD
 Alert at: 80% ($800)
 ```
 
-If any runaway script tries to blow the budget, DevPulse hard-stops traffic and alerts via Slack, email, and webhook.
+If any runaway script tries to blow the budget, Rakshex hard-stops traffic and alerts via Slack, email, and webhook.
 
 ---
 
@@ -115,8 +115,8 @@ If any runaway script tries to blow the budget, DevPulse hard-stops traffic and 
 
 | Goal               | Action                                                          |
 | ------------------ | --------------------------------------------------------------- |
-| Connect VS Code    | Install the DevPulse extension from the VS Code marketplace     |
-| Add CI/CD security | Add the DevPulse GitHub Action to your repository               |
+| Connect VS Code    | Install the Rakshex extension from the VS Code marketplace      |
+| Add CI/CD security | Add the Rakshex GitHub Action to your repository                |
 | Invite your team   | Go to **Team** → **Invite Members**                             |
 | Set up alerts      | Go to **Alerts** → **Create Rule** for Slack or email           |
 | View costs         | Go to **Token Analytics** for per-model spend breakdown         |
@@ -129,13 +129,13 @@ If any runaway script tries to blow the budget, DevPulse hard-stops traffic and 
 ### JavaScript / TypeScript
 
 ```bash
-npm install @devpulse/sdk
+npm install @rakshex/sdk
 ```
 
 ```typescript
-import { DevPulse } from "@devpulse/sdk";
+import { Rakshex } from "@rakshex/sdk";
 
-const dp = new DevPulse({ apiKey: "dp_your_key_here" });
+const dp = new Rakshex({ apiKey: "dp_your_key_here" });
 
 // This single call does: routing, security scan, cost tracking, PII redaction
 const result = await dp.llm.invoke({
@@ -147,13 +147,13 @@ const result = await dp.llm.invoke({
 ### Python
 
 ```bash
-pip install devpulse
+pip install rakshex
 ```
 
 ```python
-from devpulse import DevPulse
+from rakshex import Rakshex
 
-dp = DevPulse(api_key="dp_your_key_here")
+dp = Rakshex(api_key="dp_your_key_here")
 
 result = dp.llm.invoke(
     model="gpt-4o",
@@ -164,12 +164,12 @@ result = dp.llm.invoke(
 ### Express.js Middleware
 
 ```typescript
-import { devpulseMiddleware } from "@devpulse/sdk/express";
+import { rakshexMiddleware } from "@rakshex/sdk/express";
 
 app.use(
   "/api/llm",
-  devpulseMiddleware({
-    apiKey: process.env.DEVPULSE_API_KEY,
+  rakshexMiddleware({
+    apiKey: process.env.RAKSHEX_API_KEY,
     budgetLimitUSD: 1000,
     blockPromptInjection: true,
     redactPII: true,
@@ -181,7 +181,7 @@ app.use(
 
 ## Need Help?
 
-- **Docs:** [docs.devpulse.in](https://docs.devpulse.in) (coming soon)
-- **Discord:** [discord.gg/devpulse](https://discord.gg/devpulse) (coming soon)
-- **Email:** support@devpulse.in
-- **GitHub Issues:** [github.com/Akshu1245/devpulse-complete-codebase/issues](https://github.com/Akshu1245/devpulse-complete-codebase/issues)
+- **Docs:** [docs.rakshex.in](https://docs.rakshex.in) (coming soon)
+- **Discord:** [discord.gg/rakshex](https://discord.gg/rakshex) (coming soon)
+- **Email:** support@rakshex.in
+- **GitHub Issues:** [github.com/Akshu1245/rakshex-complete-codebase/issues](https://github.com/Akshu1245/rakshex-complete-codebase/issues)

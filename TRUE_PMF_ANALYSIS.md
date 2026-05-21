@@ -1,4 +1,4 @@
-# DevPulse True Product-Market Fit Analysis
+# Rakshex True Product-Market Fit Analysis
 
 > Finding the exact moment users decide to stay.
 > Date: 2026-05-17
@@ -9,7 +9,7 @@
 
 ### What Is the "Aha" Moment?
 
-The moment a user realizes DevPulse is valuable:
+The moment a user realizes Rakshex is valuable:
 
 | Scenario                   | Aha Moment                         | % of Users |
 | -------------------------- | ---------------------------------- | ---------- |
@@ -26,7 +26,7 @@ The moment a user realizes DevPulse is valuable:
 ### The "Very Disappointed" Test
 
 ```
-"How would you feel if you could no longer use DevPulse?"
+"How would you feel if you could no longer use Rakshex?"
 
 Very disappointed:        ___%  (target: ≥ 40%)
 Somewhat disappointed:    ___%
@@ -75,17 +75,17 @@ Status: 🔴 No PMF / 🟡 Early signals / 🟢 Strong PMF
 
 ### Referral Behavior
 
-| Signal                               | Count  |
-| ------------------------------------ | ------ |
-| Users who invited teammate           | \_\_\_ |
-| Users who posted about us            | \_\_\_ |
-| Users who left review                | \_\_\_ |
-| "DevPulse" mentioned in job postings | \_\_\_ |
+| Signal                              | Count  |
+| ----------------------------------- | ------ |
+| Users who invited teammate          | \_\_\_ |
+| Users who posted about us           | \_\_\_ |
+| Users who left review               | \_\_\_ |
+| "Rakshex" mentioned in job postings | \_\_\_ |
 
 ### "Would You Pay?" Test
 
 ```
-"If DevPulse cost $29/month, would you pay?"
+"If Rakshex cost $29/month, would you pay?"
 
 Definitely:     ___%
 Probably:       ___%
@@ -114,7 +114,7 @@ Willingness to pay: ___% (target: > 30%)
 
 ## STRONGEST WEDGE
 
-**Primary wedge:** ******\_******
+**Primary wedge:** **\*\***\_**\*\***
 
 **Why users can't get it elsewhere:**
 

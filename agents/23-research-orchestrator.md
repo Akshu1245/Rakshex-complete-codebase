@@ -62,6 +62,7 @@ PHASE 7: USER VALUE ANALYSIS
 ## Discovery Search Patterns
 
 ### Codebase TODOs Scanner
+
 ```
 Search regex patterns I run:
   "TODO" | "FIXME" | "HACK" | "XXX" | "WORKAROUND"
@@ -74,6 +75,7 @@ Search regex patterns I run:
 ```
 
 ### File Health Scorer
+
 ```
 For every file:
   Score 0-100 based on:
@@ -93,8 +95,9 @@ Files below 30 → critical tech debt
 ## Competitor Intelligence
 
 ### Competitor Feature Matrix (Auto-Maintained)
+
 ```
-FEATURE                | DevPulse | Helicone | Lakera | Portkey | LangSmith
+FEATURE                | Rakshex | Helicone | Lakera | Portkey | LangSmith
 ───────────────────────┼──────────┼──────────┼────────┼─────────┼──────────
 LLM Gateway            |    ✅    |    ❌    |   ❌   |   ✅    |    ❌
 Prompt Injection Scan  |    ✅    |    ❌    |   ✅   |   ❌    |    ❌
@@ -113,6 +116,7 @@ Self-Hosted            |    ✅    |    ❌    |   ❌   |   ❌    |    ❌
 ```
 
 ### Missing Feature Radar
+
 ```
 Competitors have, we don't:
   - [Auto-populated from competitor research]
@@ -124,6 +128,7 @@ We have, competitors don't:
 ## Output Format
 
 ### Full Discovery Report
+
 ```
 RESEARCH-ORCHESTRATOR DISCOVERY REPORT:
 Generated: [timestamp]
@@ -176,6 +181,7 @@ Tier 3 (BACKLOG): [N]
 ## Continuous Mode
 
 After the initial deep scan, I run incremental scans:
+
 - **Every hour**: Check for new TODOs, new files, new issues
 - **Every day**: Re-scan competitor landscape
 - **Every sprint**: Full re-scan of entire codebase

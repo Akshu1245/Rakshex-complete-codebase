@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Open Source — DevPulse",
+  title: "Open Source — Rakshex",
   description:
-    "DevPulse is built on open source. View our GitHub repository, contribute to the project, and explore our tech stack.",
+    "Rakshex is built on open source. View our GitHub repository, contribute to the project, and explore our tech stack.",
   alternates: { canonical: "/open-source" },
 };
 
@@ -57,7 +57,7 @@ export default function OpenSourcePage() {
         <section className="bg-gray-800 p-8 rounded-xl border border-gray-700">
           <h2 className="text-xl font-bold mb-4">License</h2>
           <p className="text-gray-300 text-sm leading-relaxed mb-4">
-            DevPulse is open source under the <strong>MIT License</strong>. You are free to use,
+            Rakshex is open source under the <strong>MIT License</strong>. You are free to use,
             modify, and distribute the code. Commercial use is permitted. Attribution is appreciated
             but not required.
           </p>
@@ -91,7 +91,7 @@ export default function OpenSourcePage() {
         {/* CTA */}
         <div className="text-center">
           <Link
-            href="https://github.com/Akshu1245/devpulse-complete-codebase"
+            href="https://github.com/Akshu1245/rakshex-complete-codebase"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-block bg-white text-gray-900 px-8 py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors"

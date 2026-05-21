@@ -10,21 +10,21 @@ Send this to customers after 30 days of usage:
 
 ---
 
-**Subject:** Quick question — how is DevPulse working for you?
+**Subject:** Quick question — how is Rakshex working for you?
 
 Hi [First Name],
 
-You have been using DevPulse for about a month now. I would love to hear how it is going.
+You have been using Rakshex for about a month now. I would love to hear how it is going.
 
 Specifically:
 
 1. What problem were you trying to solve when you signed up?
-2. What was the biggest surprise after using DevPulse for a few weeks?
-3. What is the one feature you would miss most if you had to stop using DevPulse?
-4. Would you recommend DevPulse to another team? Why or why not?
+2. What was the biggest surprise after using Rakshex for a few weeks?
+3. What is the one feature you would miss most if you had to stop using Rakshex?
+4. Would you recommend Rakshex to another team? Why or why not?
 5. Can we use your feedback on our website? (We can keep it anonymous or use first name + company type.)
 
-It takes 2 minutes. Your insights help us improve and help other teams decide if DevPulse is right for them.
+It takes 2 minutes. Your insights help us improve and help other teams decide if Rakshex is right for them.
 
 [Google Form Link or Reply to Email]
 
@@ -37,25 +37,25 @@ Thanks,
 
 ### Format 1: The Problem-Solution
 
-> "Before DevPulse, we had no visibility into prompt injection attempts. Our observability tool logged latency but never flagged adversarial inputs. Within two weeks of using DevPulse, we caught 14 injection attempts and blocked a data exfiltration attempt. The kill switch alone saved us a $40K overspend incident."
+> "Before Rakshex, we had no visibility into prompt injection attempts. Our observability tool logged latency but never flagged adversarial inputs. Within two weeks of using Rakshex, we caught 14 injection attempts and blocked a data exfiltration attempt. The kill switch alone saved us a $40K overspend incident."
 >
 > — [Name], [Title], [Company Type]
 
 ### Format 2: The Metric
 
-> "DevPulse reduced our LLM security review time from 3 days to 20 minutes. The auto-mapped PCI DSS findings meant our auditor signed off in half the time. ROI was clear in the first month."
+> "Rakshex reduced our LLM security review time from 3 days to 20 minutes. The auto-mapped PCI DSS findings meant our auditor signed off in half the time. ROI was clear in the first month."
 >
 > — [Name], [Title], [Company Type]
 
 ### Format 3: The Switch
 
-> "We were using Helicone for observability and Lakera for prompt injection. Two tools, two bills, two dashboards. DevPulse unified both for less than we paid for Lakera alone. Plus we got API security scanning we did not even know we needed."
+> "We were using Helicone for observability and Lakera for prompt injection. Two tools, two bills, two dashboards. Rakshex unified both for less than we paid for Lakera alone. Plus we got API security scanning we did not even know we needed."
 >
 > — [Name], [Title], [Company Type]
 
 ### Format 4: The Technical
 
-> "The VS Code extension caught a credential leak in a Postman collection before it hit production. That would have been a $250K breach. DevPulse is now mandatory in our CI/CD pipeline."
+> "The VS Code extension caught a credential leak in a Postman collection before it hit production. That would have been a $250K breach. Rakshex is now mandatory in our CI/CD pipeline."
 >
 > — [Name], [Title], [Company Type]
 
@@ -79,7 +79,7 @@ Ask customers for a 60-second Loom:
 
 **Prompt:**
 
-> "Record a 60-second video answering one question: What is the one thing DevPulse does that no other tool you tried could do?"
+> "Record a 60-second video answering one question: What is the one thing Rakshex does that no other tool you tried could do?"
 >
 > Tips: Screen share your dashboard if comfortable. First name + company type only — no need for full company name if sensitive.
 
@@ -89,7 +89,7 @@ Ask customers for a 60-second Loom:
 
 If the customer cannot go on record:
 
-> "A fintech company with $50M AUM reduced LLM security incidents by 90% after implementing DevPulse. They particularly valued the kill switch, which prevented a $40K overspend in the first month."
+> "A fintech company with $50M AUM reduced LLM security incidents by 90% after implementing Rakshex. They particularly valued the kill switch, which prevented a $40K overspend in the first month."
 >
 > — Anonymous, Head of Engineering, Fintech
 

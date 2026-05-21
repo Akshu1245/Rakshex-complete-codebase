@@ -1,5 +1,5 @@
 /**
- * DevPulse Security Webview Panel — Market-Ready Edition.
+ * Rakshex Security Webview Panel — Market-Ready Edition.
  *
  * A self-contained VS Code WebviewPanel that shows:
  *   - Dashboard overview with severity breakdown & risk score gauge
@@ -12,7 +12,7 @@
  */
 import * as crypto from "crypto";
 import * as vscode from "vscode";
-import type { DevPulseApi, DashboardData, Finding, FindingStatus, Severity } from "./api";
+import type { RakshexApi, DashboardData, Finding, FindingStatus, Severity } from "./api";
 
 type PanelState = {
   dashboard: DashboardData | null;
@@ -24,7 +24,7 @@ type PanelState = {
 
 export class SecurityWebviewPanel {
   private static current: SecurityWebviewPanel | undefined;
-  public static readonly viewType = "devpulse.security";
+  public static readonly viewType = "rakshex.security";
 
   private readonly panel: vscode.WebviewPanel;
   private disposables: vscode.Disposable[] = [];
@@ -34,7 +34,7 @@ export class SecurityWebviewPanel {
 
   private constructor(
     panel: vscode.WebviewPanel,
-    private readonly api: DevPulseApi,
+    private readonly api: RakshexApi,
     private readonly context?: vscode.ExtensionContext,
   ) {
     this.panel = panel;
@@ -47,13 +47,13 @@ export class SecurityWebviewPanel {
         } else if (msg.type === "updateFindingStatus") {
           void this.handleUpdateFindingStatus(msg.findingId as string, msg.status as FindingStatus);
         } else if (msg.type === "runScan") {
-          vscode.commands.executeCommand("devpulse.runScan");
+          vscode.commands.executeCommand("rakshex.runScan");
         } else if (msg.type === "testPrompt") {
-          vscode.commands.executeCommand("devpulse.testPrompt");
+          vscode.commands.executeCommand("rakshex.testPrompt");
         } else if (msg.type === "openDashboard") {
-          vscode.commands.executeCommand("devpulse.openDashboard");
+          vscode.commands.executeCommand("rakshex.openDashboard");
         } else if (msg.type === "setCompactMode") {
-          void this.context?.globalState.update("devpulse.securityCompactMode", Boolean(msg.value));
+          void this.context?.globalState.update("rakshex.securityCompactMode", Boolean(msg.value));
         }
       },
       null,
@@ -64,7 +64,7 @@ export class SecurityWebviewPanel {
 
   public static createOrShow(
     extensionUri: vscode.Uri,
-    api: DevPulseApi,
+    api: RakshexApi,
     context?: vscode.ExtensionContext,
   ): void {
     const column = vscode.window.activeTextEditor?.viewColumn ?? vscode.ViewColumn.One;
@@ -77,7 +77,7 @@ export class SecurityWebviewPanel {
 
     const panel = vscode.window.createWebviewPanel(
       SecurityWebviewPanel.viewType,
-      "DevPulse Security Dashboard",
+      "Rakshex Security Dashboard",
       column,
       {
         enableScripts: true,
@@ -108,7 +108,7 @@ export class SecurityWebviewPanel {
       void this.refresh();
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      vscode.window.showErrorMessage(`DevPulse: could not update finding — ${msg}`);
+      vscode.window.showErrorMessage(`Rakshex: could not update finding — ${msg}`);
     }
   }
 
@@ -276,13 +276,13 @@ export class SecurityWebviewPanel {
       : dashboard === null
         ? `<div class="loading-container">
             <div class="spinner"></div>
-            <p>Loading DevPulse dashboard…</p>
+            <p>Loading Rakshex dashboard…</p>
           </div>`
         : `
       <header class="hdr">
         <div class="hdr-left">
-          <h1>🛡 DevPulse Security Dashboard</h1>
-          <p class="sub">Live data from your DevPulse workspace${lastUpdated ? ` · Last updated: ${escapeHtml(lastUpdated)}` : ""}</p>
+          <h1>🛡 Rakshex Security Dashboard</h1>
+          <p class="sub">Live data from your Rakshex workspace${lastUpdated ? ` · Last updated: ${escapeHtml(lastUpdated)}` : ""}</p>
         </div>
         <div class="hdr-right">
           <button class="btn btn-ghost" id="refresh-btn" title="Refresh now">
@@ -449,7 +449,7 @@ export class SecurityWebviewPanel {
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy" content="${csp}" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DevPulse Security Dashboard</title>
+  <title>Rakshex Security Dashboard</title>
   <style>
     :root { color-scheme: var(--vscode-color-scheme, dark); }
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -724,7 +724,7 @@ export class SecurityWebviewPanel {
     }
   </style>
 </head>
-<body class="${this.context?.globalState.get<boolean>("devpulse.securityCompactMode") ? "compact-mode" : ""}">
+<body class="${this.context?.globalState.get<boolean>("rakshex.securityCompactMode") ? "compact-mode" : ""}">
   <div class="refresh-overlay" id="refresh-overlay"><div class="refresh-bar"></div></div>
   <div class="refresh-badge" id="refresh-badge">Refreshing…</div>
   ${body}
@@ -776,7 +776,7 @@ export class SecurityWebviewPanel {
           var errorHint = errorCategory === "auth"
             ? "Your API key may be invalid or expired. Try signing in again."
             : errorCategory === "network"
-              ? "Could not reach the DevPulse server. Check your network connection and API URL."
+              ? "Could not reach the Rakshex server. Check your network connection and API URL."
               : "";
           var errorHtml = '<div class="error-container">' +
             '<div class="error-icon">' + errorIcon + '</div>' +
@@ -798,7 +798,7 @@ export class SecurityWebviewPanel {
         // Update last updated timestamp
         var subEl = document.querySelector(".hdr .sub");
         if (subEl) {
-          subEl.textContent = "Live data from your DevPulse workspace" + (lastUpdated ? " · Last updated: " + lastUpdated : "");
+          subEl.textContent = "Live data from your Rakshex workspace" + (lastUpdated ? " · Last updated: " + lastUpdated : "");
         }
 
         // Compute severity counts
@@ -855,7 +855,7 @@ export class SecurityWebviewPanel {
           }).join("");
           bindActionBtns();
           // Re-apply saved filter after DOM update
-          var savedFilter = localStorage.getItem("devpulse.filter") || "all";
+          var savedFilter = localStorage.getItem("rakshex.filter") || "all";
           document.querySelectorAll(".finding-row").forEach(function (row) {
             row.style.display = (savedFilter === "all" || row.getAttribute("data-severity") === savedFilter) ? "" : "none";
           });
@@ -932,7 +932,7 @@ export class SecurityWebviewPanel {
         compactToggleBtn.addEventListener("click", function () {
           isCompact = !isCompact;
           document.body.classList.toggle("compact-mode", isCompact);
-          localStorage.setItem("devpulse.compactMode", String(isCompact));
+          localStorage.setItem("rakshex.compactMode", String(isCompact));
           vscode.postMessage({ type: "setCompactMode", value: isCompact });
           compactToggleBtn.textContent = isCompact ? "◫ Full" : "◫ Compact";
         });
@@ -940,8 +940,8 @@ export class SecurityWebviewPanel {
 
       // Filter buttons with localStorage persistence
       (function initFilter() {
-        var savedFilter = localStorage.getItem("devpulse.filter") || "all";
-        var savedStatus = localStorage.getItem("devpulse.statusFilter") || "all";
+        var savedFilter = localStorage.getItem("rakshex.filter") || "all";
+        var savedStatus = localStorage.getItem("rakshex.statusFilter") || "all";
 
         function applyFilters() {
           document.querySelectorAll(".finding-row").forEach(function (row) {
@@ -959,7 +959,7 @@ export class SecurityWebviewPanel {
             document.querySelectorAll("#filter-bar .filter-btn").forEach(function (b) { b.classList.remove("active"); });
             btn.classList.add("active");
             savedFilter = btn.getAttribute("data-filter") || "all";
-            localStorage.setItem("devpulse.filter", savedFilter);
+            localStorage.setItem("rakshex.filter", savedFilter);
             applyFilters();
           });
         });
@@ -972,7 +972,7 @@ export class SecurityWebviewPanel {
             document.querySelectorAll("#status-filter-bar .filter-btn").forEach(function (b) { b.classList.remove("active"); });
             btn.classList.add("active");
             savedStatus = btn.getAttribute("data-status") || "all";
-            localStorage.setItem("devpulse.statusFilter", savedStatus);
+            localStorage.setItem("rakshex.statusFilter", savedStatus);
             applyFilters();
           });
         });

@@ -1,4 +1,4 @@
-# DevPulse User Interview Playbook
+# Rakshex User Interview Playbook
 
 > How to talk to beta users and extract actionable insights.
 > Date: 2026-05-17
@@ -24,13 +24,13 @@
 "How do you check for security issues in your API collections?"
 ```
 
-### 3. DevPulse Experience (10 min)
+### 3. Rakshex Experience (10 min)
 
 ```
-"Walk me through your first time using DevPulse."
+"Walk me through your first time using Rakshex."
 "What was the first finding you saw? What did you think?"
-"Did you fix any finding because of DevPulse?"
-"What's the most valuable thing DevPulse has done for you?"
+"Did you fix any finding because of Rakshex?"
+"What's the most valuable thing Rakshex has done for you?"
 "What's the most frustrating thing?"
 "If you could change one thing, what would it be?"
 ```
@@ -38,8 +38,8 @@
 ### 4. Future (5 min)
 
 ```
-"How likely are you to recommend DevPulse to a friend? (0-10)"
-"If DevPulse disappeared tomorrow, what would you use instead?"
+"How likely are you to recommend Rakshex to a friend? (0-10)"
+"If Rakshex disappeared tomorrow, what would you use instead?"
 "What would make you pay $29/month for this?"
 "Who else on your team should use this?"
 ```
@@ -71,7 +71,7 @@ After each interview, score the user on:
 | Dimension                | Score (1-5)                        | Evidence |
 | ------------------------ | ---------------------------------- | -------- |
 | **Pain intensity**       | How much do they feel the problem? |          |
-| **Product-market fit**   | How well does DevPulse solve it?   |          |
+| **Product-market fit**   | How well does Rakshex solve it?    |          |
 | **Onboarding ease**      | How smooth was first use?          |          |
 | **Value clarity**        | Can they articulate the ROI?       |          |
 | **Retention likelihood** | Will they still use in 30 days?    |          |
@@ -88,11 +88,11 @@ After each interview, score the user on:
 ## INTERVIEW SCHEDULING TEMPLATE
 
 ```
-Subject: Quick chat about DevPulse? (10 min)
+Subject: Quick chat about Rakshex? (10 min)
 
 Hi {{name}},
 
-You've been using DevPulse for {{days}} days. I'd love to
+You've been using Rakshex for {{days}} days. I'd love to
 hear about your experience — good, bad, or ugly.
 
 Can we do a quick 10-minute call this week?

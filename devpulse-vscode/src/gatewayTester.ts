@@ -1,5 +1,5 @@
 /**
- * Inline test runner for the DevPulse gateway.
+ * Inline test runner for the Rakshex gateway.
  *
  * Lets a developer paste a prompt directly from VS Code and see whether it
  * would be blocked by the live gateway policy chain (PII redaction, prompt
@@ -21,7 +21,7 @@ interface PolicyVerdict {
 export async function runGatewayTest(
   gatewayUrl: string,
   apiKey: string,
-  promptText: string
+  promptText: string,
 ): Promise<PolicyVerdict> {
   const url = `${gatewayUrl.replace(/\/$/, "")}/v1/chat/completions`;
   const resp = await fetch(url, {
@@ -29,7 +29,7 @@ export async function runGatewayTest(
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
-      "x-devpulse-dry-run": "true",
+      "x-rakshex-dry-run": "true",
     },
     body: JSON.stringify({
       model: "gpt-4o-mini",
@@ -55,27 +55,24 @@ export async function runGatewayTest(
 
 export async function registerGatewayCommand(
   context: vscode.ExtensionContext,
-  readApiKey: () => string | undefined
+  readApiKey: () => string | undefined,
 ): Promise<void> {
   context.subscriptions.push(
-    vscode.commands.registerCommand("devpulse.testPromptThroughGateway", async () => {
+    vscode.commands.registerCommand("rakshex.testPromptThroughGateway", async () => {
       const apiKey = readApiKey();
       if (!apiKey) {
         void vscode.window.showWarningMessage(
-          "DevPulse: sign in first to test prompts through the gateway."
+          "Rakshex: sign in first to test prompts through the gateway.",
         );
         return;
       }
-      const cfg = vscode.workspace.getConfiguration("devpulse");
-      const gatewayUrl =
-        cfg.get<string>("gatewayUrl") ?? "http://localhost:8081";
+      const cfg = vscode.workspace.getConfiguration("rakshex");
+      const gatewayUrl = cfg.get<string>("gatewayUrl") ?? "http://localhost:8081";
       const editor = vscode.window.activeTextEditor;
       const initial =
-        editor && !editor.selection.isEmpty
-          ? editor.document.getText(editor.selection)
-          : "";
+        editor && !editor.selection.isEmpty ? editor.document.getText(editor.selection) : "";
       const prompt = await vscode.window.showInputBox({
-        title: "DevPulse — test prompt through gateway",
+        title: "Rakshex — test prompt through gateway",
         prompt:
           "Paste the prompt you want to validate. The gateway will run all policies and return the decision.",
         value: initial,
@@ -86,19 +83,17 @@ export async function registerGatewayCommand(
         const verdict = await runGatewayTest(gatewayUrl, apiKey, prompt);
         if (verdict.decision === "allowed") {
           void vscode.window.showInformationMessage(
-            "DevPulse: prompt would be allowed by all policies."
+            "Rakshex: prompt would be allowed by all policies.",
           );
         } else {
           void vscode.window.showWarningMessage(
-            `DevPulse: prompt would be BLOCKED — ${verdict.reason ?? "policy violation"}`
+            `Rakshex: prompt would be BLOCKED — ${verdict.reason ?? "policy violation"}`,
           );
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        void vscode.window.showErrorMessage(
-          `DevPulse: gateway test failed — ${msg}`
-        );
+        void vscode.window.showErrorMessage(`Rakshex: gateway test failed — ${msg}`);
       }
-    })
+    }),
   );
 }

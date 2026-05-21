@@ -1,4 +1,4 @@
-# DevPulse Production Blockers
+# Rakshex Production Blockers
 
 > Items that MUST be resolved before public launch, investor demo, or SOC2 audit.
 > Date: 2026-05-17 | Severity: P0 = Launch Blocker, P1 = Demo Blocker, P2 = SOC2 Blocker
@@ -114,7 +114,7 @@
 
 **Status:** ❌ MISSING
 **Impact:** Downtime without communication = churn.
-**Fix:** Add status.devpulse.in via Instatus or UptimeRobot.
+**Fix:** Add status.rakshex.in via Instatus or UptimeRobot.
 **Effort:** 1 hour
 
 ### P3.3 Incident Response Runbook

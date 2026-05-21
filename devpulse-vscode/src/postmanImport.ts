@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
-import type { DevPulseApi } from "./api";
+import type { RakshexApi } from "./api";
 
 interface PostmanCredential {
   type: string;
@@ -33,7 +33,7 @@ interface PostmanScanResult {
 export class PostmanImportCommand {
   constructor(
     private readonly context: vscode.ExtensionContext,
-    private readonly api: DevPulseApi,
+    private readonly api: RakshexApi,
   ) {}
 
   async execute(): Promise<void> {
@@ -63,7 +63,7 @@ export class PostmanImportCommand {
       collection = JSON.parse(content);
     } catch (err) {
       vscode.window.showErrorMessage(
-        `DevPulse: Could not read Postman collection — ${err instanceof Error ? err.message : String(err)}`,
+        `Rakshex: Could not read Postman collection — ${err instanceof Error ? err.message : String(err)}`,
       );
       return;
     }
@@ -72,7 +72,7 @@ export class PostmanImportCommand {
     await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
-        title: `🔍 DevPulse: Scanning ${fileName}...`,
+        title: `🔍 Rakshex: Scanning ${fileName}...`,
         cancellable: false,
       },
       async (progress) => {
@@ -245,7 +245,7 @@ export class PostmanImportCommand {
 
   private async showResults(result: PostmanScanResult, filePath: string): Promise<void> {
     const panel = vscode.window.createWebviewPanel(
-      "devpulsePostmanResults",
+      "rakshexPostmanResults",
       `🔍 ${result.collectionName}`,
       vscode.ViewColumn.One,
       { enableScripts: true },
@@ -258,7 +258,7 @@ export class PostmanImportCommand {
     if (hasCredentials) {
       vscode.window
         .showWarningMessage(
-          `🚨 DevPulse found ${result.credentials.length} exposed credential${
+          `🚨 Rakshex found ${result.credentials.length} exposed credential${
             result.credentials.length > 1 ? "s" : ""
           } in your Postman collection. This has been visible to anyone with access.`,
           "View Details",
@@ -274,7 +274,7 @@ export class PostmanImportCommand {
     // Also show summary notification
     if (result.findings.length > 0) {
       vscode.window.showInformationMessage(
-        `DevPulse: ${result.findings.length} finding${
+        `Rakshex: ${result.findings.length} finding${
           result.findings.length > 1 ? "s" : ""
         } in ${result.endpoints.length} endpoint${
           result.endpoints.length > 1 ? "s" : ""
@@ -284,7 +284,7 @@ export class PostmanImportCommand {
       );
     } else {
       vscode.window.showInformationMessage(
-        `✅ DevPulse: All clear! No vulnerabilities found in ${result.collectionName}.`,
+        `✅ Rakshex: All clear! No vulnerabilities found in ${result.collectionName}.`,
         "Great!",
       );
     }
@@ -485,10 +485,10 @@ export class PostmanImportCommand {
   <div class="cta-section">
     <h3 style="margin: 0 0 8px 0;">Want continuous protection?</h3>
     <p style="color: #cbd5e1; margin: 0 0 16px 0; font-size: 14px;">
-      Get DevPulse in VS Code for real-time scans, CI/CD integration, and cost monitoring.
+      Get Rakshex in VS Code for real-time scans, CI/CD integration, and cost monitoring.
     </p>
     <button class="btn-primary" onclick="vscode.postMessage({type:'signup'})">
-      Get DevPulse Free →
+      Get Rakshex Free →
     </button>
     <button class="btn-secondary" onclick="vscode.postMessage({type:'copyReport'})">
       📋 Copy Report

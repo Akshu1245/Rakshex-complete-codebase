@@ -1,4 +1,4 @@
-# DevPulse — Full Codebase Audit
+# Rakshex — Full Codebase Audit
 
 ### Investor-Pitch Readiness Report | May 2026
 
@@ -81,7 +81,7 @@ Tables confirmed real:
 
 ---
 
-### 3. Frontend (`/devpulse-frontend/`)
+### 3. Frontend (`/rakshex-frontend/`)
 
 **Strength: 6.5/10. Structurally complete, but many pages are likely thin shells.**
 
@@ -107,7 +107,7 @@ Tables confirmed real:
 
 ---
 
-### 4. VS Code Extension (`/devpulse-vscode/`)
+### 4. VS Code Extension (`/rakshex-vscode/`)
 
 **Strength: 7/10. Real code, real features, NOT yet published.**
 
@@ -129,7 +129,7 @@ Tables confirmed real:
 
 ---
 
-### 5. SDK (`/packages/devpulse-sdk/`)
+### 5. SDK (`/packages/rakshex-sdk/`)
 
 **Strength: 8/10.**
 
@@ -208,19 +208,19 @@ Tables confirmed real:
 
 ### ❌ NOT DONE — Blocking for serious investor pitch
 
-| Item                              | Status                                                    |
-| --------------------------------- | --------------------------------------------------------- |
-| Production deployment             | NOT deployed — no live URL                                |
-| Brand domain                      | `devpulse.in` NOT purchased yet (in checklist, unchecked) |
-| Landing page                      | NOT built                                                 |
-| VS Code Marketplace publish       | NOT done                                                  |
-| NPM/PyPI SDK publish              | NOT done                                                  |
-| GitHub App registration           | NOT done                                                  |
-| Stripe live keys                  | NOT configured                                            |
-| DPDP Act compliance docs          | NOT done                                                  |
-| Privacy Policy / Terms of Service | Pages exist in frontend but content unknown               |
-| Mobile responsiveness             | NOT confirmed                                             |
-| SOC2 Type 1                       | 0% — calendar/paperwork process                           |
+| Item                              | Status                                                   |
+| --------------------------------- | -------------------------------------------------------- |
+| Production deployment             | NOT deployed — no live URL                               |
+| Brand domain                      | `rakshex.in` NOT purchased yet (in checklist, unchecked) |
+| Landing page                      | NOT built                                                |
+| VS Code Marketplace publish       | NOT done                                                 |
+| NPM/PyPI SDK publish              | NOT done                                                 |
+| GitHub App registration           | NOT done                                                 |
+| Stripe live keys                  | NOT configured                                           |
+| DPDP Act compliance docs          | NOT done                                                 |
+| Privacy Policy / Terms of Service | Pages exist in frontend but content unknown              |
+| Mobile responsiveness             | NOT confirmed                                            |
+| SOC2 Type 1                       | 0% — calendar/paperwork process                          |
 
 ---
 
@@ -229,7 +229,7 @@ Tables confirmed real:
 ### Priority 1 — Must fix in 48 hours
 
 **1. Fix the CI `|| true` on frontend TypeScript**  
-`cd devpulse-frontend && npm ci && npx tsc --noEmit || true` silently eats all frontend TS errors. Remove `|| true`. Fix whatever errors come up. An investor's technical advisor will catch this immediately and it signals sloppy engineering standards.
+`cd rakshex-frontend && npm ci && npx tsc --noEmit || true` silently eats all frontend TS errors. Remove `|| true`. Fix whatever errors come up. An investor's technical advisor will catch this immediately and it signals sloppy engineering standards.
 
 **2. Wire the missing routers**  
 `server/routers/_app-update.ts` shows `cost`, `fix`, `github` routers are NOT in the main `appRouter`. Either wire them or delete the file. A dangling TODO file in the repo root is a mess.
@@ -245,7 +245,7 @@ At minimum: `collections.create` → scan queue → finding insert should be ato
 **5. Deploy to a live URL**  
 Railway.app or Fly.io. Free tier. You need a URL to demo, not a localhost. An investor cannot evaluate a product they can't open in a browser. This is a hard requirement.
 
-**6. Buy devpulse.in + basic landing page**  
+**6. Buy rakshex.in + basic landing page**  
 The domain is in your checklist and unchecked. ₹800/year on GoDaddy. Landing page can be a single HTML file. Do it today.
 
 **7. Populate real test data for the demo**  
@@ -326,7 +326,7 @@ The scaffolding is real. "MCP governance is in private beta with early design pa
 | Day 1 | Fix CI `                                                         |     | true`, wire missing routers, buy domain |
 | Day 2 | Deploy to Railway/Fly.io, configure env vars                     |
 | Day 3 | Add Indian PII rules (Aadhaar/PAN/GSTIN/IFSC)                    |
-| Day 4 | Basic landing page at devpulse.in, pricing page                  |
+| Day 4 | Basic landing page at rakshex.in, pricing page                   |
 | Day 5 | Prepare and record 5-minute demo video                           |
 | Day 6 | Seed demo environment with realistic data, dry run pitch 3 times |
 | Day 7 | Investor pitch ready                                             |

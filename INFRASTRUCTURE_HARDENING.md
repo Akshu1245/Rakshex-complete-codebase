@@ -1,4 +1,4 @@
-# DevPulse Infrastructure Hardening
+# Rakshex Infrastructure Hardening
 
 > Production resilience checklist for traffic spikes, outages, and failures.
 > Date: 2026-05-17
@@ -176,7 +176,7 @@ npm run test:chaos
 ### Tools
 
 - k6: `k6 run --vus 100 --duration 60s load-test.js`
-- Artillery: `artillery quick --count 1000 --num 50 http://api.devpulse.in/health`
+- Artillery: `artillery quick --count 1000 --num 50 http://api.rakshex.in/health`
 
 ---
 

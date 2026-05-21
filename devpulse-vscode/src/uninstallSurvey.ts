@@ -1,13 +1,13 @@
 import * as vscode from "vscode";
-import type { DevPulseApi } from "./api";
+import type { RakshexApi } from "./api";
 
 export class UninstallSurvey {
-  constructor(private readonly api: DevPulseApi) {}
+  constructor(private readonly api: RakshexApi) {}
 
   async show(): Promise<void> {
     const panel = vscode.window.createWebviewPanel(
-      "devpulse.uninstallSurvey",
-      "Help us improve DevPulse",
+      "rakshex.uninstallSurvey",
+      "Help us improve Rakshex",
       vscode.ViewColumn.One,
       { enableScripts: true },
     );
@@ -23,7 +23,7 @@ export class UninstallSurvey {
             wouldReturn: msg.wouldReturn,
             timestamp: new Date().toISOString(),
           });
-          void vscode.window.showInformationMessage("Thank you for helping us improve DevPulse.");
+          void vscode.window.showInformationMessage("Thank you for helping us improve Rakshex.");
           panel.dispose();
         } catch {
           panel.dispose();
@@ -139,7 +139,7 @@ export class UninstallSurvey {
 <body>
   <div id="form">
     <h2>Sorry to see you go</h2>
-    <div class="subtitle">Your feedback helps us improve DevPulse for developers like you.</div>
+    <div class="subtitle">Your feedback helps us improve Rakshex for developers like you.</div>
 
     <div style="font-size: 12px; font-weight: 600; margin-bottom: 10px; color: #888;">Why are you uninstalling?</div>
     ${reasonHtml}
@@ -148,7 +148,7 @@ export class UninstallSurvey {
 
     <div class="return-row">
       <input type="checkbox" id="wouldReturn" />
-      <label for="wouldReturn">I'd try DevPulse again if you fixed my issue</label>
+      <label for="wouldReturn">I'd try Rakshex again if you fixed my issue</label>
     </div>
 
     <div class="btn-row">
@@ -159,7 +159,7 @@ export class UninstallSurvey {
 
   <div class="thank-you" id="thank-you">
     <h3>Thank you 🙏</h3>
-    <p>We read every piece of feedback. If you change your mind, DevPulse will be right here.</p>
+    <p>We read every piece of feedback. If you change your mind, Rakshex will be right here.</p>
   </div>
 
   <script nonce="${nonce}">

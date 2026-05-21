@@ -1,6 +1,6 @@
-# DevPulse Real-World Usage Report
+# Rakshex Real-World Usage Report
 
-> Evidence-based validation of how real developers use DevPulse.
+> Evidence-based validation of how real developers use Rakshex.
 > Period: [Beta Week X]
 > Date: 2026-05-17
 
@@ -43,7 +43,7 @@ Invited     → Installed   → Connected  → Imported   → Scanned   → Retu
  100%          ___%          ___%         ___%         ___%        ___%
 ```
 
-**Biggest drop-off:** ******\_****** at \_\_\_%
+**Biggest drop-off:** **\*\***\_**\*\*** at \_\_\_%
 
 ---
 
@@ -142,9 +142,9 @@ Invited     → Installed   → Connected  → Imported   → Scanned   → Retu
 
 ### This Week
 
-1. ******\_****** (owner: **_, due: _**)
-2. ******\_****** (owner: **_, due: _**)
-3. ******\_****** (owner: **_, due: _**)
+1. **\*\***\_**\*\*** (owner: **_, due: _**)
+2. **\*\***\_**\*\*** (owner: **_, due: _**)
+3. **\*\***\_**\*\*** (owner: **_, due: _**)
 
 ### Next Week
 

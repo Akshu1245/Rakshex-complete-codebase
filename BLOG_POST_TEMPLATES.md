@@ -1,4 +1,4 @@
-# DevPulse Engineering Blog Templates
+# Rakshex Engineering Blog Templates
 
 > Ready-to-publish content for building technical authority.
 > Date: 2026-05-17
@@ -20,7 +20,7 @@ We Analyzed 50 AI Apps. They're Paying 2× More Than They Realize.
 4. Why providers hide this (technical + business reasons)
 5. How we detect it (patent-pending method)
 6. Actionable: How developers can audit their own costs
-7. CTA: Try DevPulse free
+7. CTA: Try Rakshex free
 ```
 
 ### Key Stats to Include
@@ -53,7 +53,7 @@ Stopping a $500 Infinite Loop in 4.2 Seconds
 5. Kill switch: How we stop it without breaking the app
 6. Results: 47 incidents blocked in 30 days
 7. Technical deep dive (optional section)
-8. CTA: Install DevPulse
+8. CTA: Install Rakshex
 ```
 
 ### Code Snippet to Include
@@ -92,7 +92,7 @@ if (callRate > 20 && timeWindow < 60) {
 4. Case study: The worst collection we found
 5. Why this matters for AI apps specifically
 6. How to scan your own collections
-7. CTA: Free scan with DevPulse
+7. CTA: Free scan with Rakshex
 ```
 
 ### Chart to Include
@@ -136,7 +136,7 @@ Your API Has Endpoints You Don't Know About. That's a Problem.
 3. How they happen (refactoring, microservices, legacy code)
 4. Real case study: Admin endpoint exposed for 2 years
 5. How to discover shadow APIs in your codebase
-6. Automated detection with DevPulse
+6. Automated detection with Rakshex
 7. Prevention strategies
 8. CTA: Scan your API
 ```

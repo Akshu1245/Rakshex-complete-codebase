@@ -33,10 +33,10 @@ export class RetentionEngine {
 
   /** D1, D7, D30 retention for the current user */
   getRetentionCohort(): { d1: boolean; d7: boolean; d30: boolean; installedAt: number } {
-    const installDate = this.context.globalState.get<number>("devpulse.installDate") ?? Date.now();
+    const installDate = this.context.globalState.get<number>("rakshex.installDate") ?? Date.now();
     const records =
       this.context.globalState.get<Array<{ event: string; timestamp: number }>>(
-        "devpulse.engagement",
+        "rakshex.engagement",
       ) ?? [];
 
     const daysSinceInstall = Math.floor((Date.now() - installDate) / DAY_MS);
@@ -66,10 +66,10 @@ export class RetentionEngine {
     const progress = this.engagementTracker.getOnboardingProgress();
     const records =
       this.context.globalState.get<Array<{ event: string; timestamp: number }>>(
-        "devpulse.engagement",
+        "rakshex.engagement",
       ) ?? [];
 
-    const installDate = this.context.globalState.get<number>("devpulse.installDate") ?? Date.now();
+    const installDate = this.context.globalState.get<number>("rakshex.installDate") ?? Date.now();
     const signedIn = progress.some((p) => p.step === "signed_in" && p.complete);
     const firstScanTs = progress.find((p) => p.step === "scanned" && p.complete)?.timestamp;
     const scanEvents = records
@@ -92,11 +92,11 @@ export class RetentionEngine {
   getTrustSignals(): TrustSignal {
     const dismissals =
       this.context.globalState.get<Array<{ reason: string; timestamp: number }>>(
-        "devpulse.dismissals",
+        "rakshex.dismissals",
       ) ?? [];
     const records =
       this.context.globalState.get<Array<{ event: string; timestamp: number }>>(
-        "devpulse.engagement",
+        "rakshex.engagement",
       ) ?? [];
 
     const falsePositives = dismissals.filter((d) => d.reason === "False Positive").length;
@@ -132,7 +132,7 @@ export class RetentionEngine {
     const weeklyStats = this.engagementTracker.getWeeklyStats();
     const records =
       this.context.globalState.get<Array<{ event: string; timestamp: number }>>(
-        "devpulse.engagement",
+        "rakshex.engagement",
       ) ?? [];
 
     const findingsChanged = records.filter((r) => r.event === "finding_status_changed").length;
@@ -160,7 +160,7 @@ export class RetentionEngine {
     };
   }
 
-  /** Value metrics: what real value has DevPulse delivered */
+  /** Value metrics: what real value has Rakshex delivered */
   getValueMetrics(): {
     scansTotal: number;
     findingsDiscovered: number;
@@ -170,7 +170,7 @@ export class RetentionEngine {
   } {
     const records =
       this.context.globalState.get<Array<{ event: string; timestamp: number }>>(
-        "devpulse.engagement",
+        "rakshex.engagement",
       ) ?? [];
 
     const scansTotal = records.filter((r) => r.event === "scan_run").length;
@@ -195,14 +195,14 @@ export class RetentionEngine {
   recordDismissal(reason: string): void {
     const dismissals =
       this.context.globalState.get<Array<{ reason: string; timestamp: number }>>(
-        "devpulse.dismissals",
+        "rakshex.dismissals",
       ) ?? [];
     dismissals.push({ reason, timestamp: Date.now() });
     // Keep last 200
     if (dismissals.length > 200) {
-      void this.context.globalState.update("devpulse.dismissals", dismissals.slice(-200));
+      void this.context.globalState.update("rakshex.dismissals", dismissals.slice(-200));
     } else {
-      void this.context.globalState.update("devpulse.dismissals", dismissals);
+      void this.context.globalState.update("rakshex.dismissals", dismissals);
     }
   }
 }

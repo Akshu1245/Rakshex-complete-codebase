@@ -1,4 +1,4 @@
-# DevPulse — Marketing & Sales Materials
+# Rakshex — Marketing & Sales Materials
 
 ## Cold Outreach Email Templates
 
@@ -16,7 +16,7 @@ I noticed {company} is building with LLMs. Are you tracking:
 
 Most teams I talk to can't answer these. They're shipping fast with AI and the security/cost surface is invisible until something breaks.
 
-I'm building DevPulse — an AI Runtime Governance Platform that scans your API surface, tracks LLM costs per endpoint, and blocks prompt injection in real time. It sits inside your VS Code and CI/CD, not another dashboard to check.
+I'm building Rakshex — an AI Runtime Governance Platform that scans your API surface, tracks LLM costs per endpoint, and blocks prompt injection in real time. It sits inside your VS Code and CI/CD, not another dashboard to check.
 
 **Quick numbers from our existing users:**
 
@@ -28,7 +28,7 @@ Would you be open to a 20-minute demo? I'll show you your blind spots live — n
 
 Best,
 {yourName}
-Founder, DevPulse
+Founder, Rakshex
 
 ---
 
@@ -40,7 +40,7 @@ Hi {firstName},
 
 Postman's March 2026 decision killed the free tier for 500,000 companies. Teams are scrambling to find alternatives.
 
-DevPulse is a direct replacement that adds security scanning + LLM cost monitoring on top of API collections. You import your existing Postman/OAI collections and get:
+Rakshex is a direct replacement that adds security scanning + LLM cost monitoring on top of API collections. You import your existing Postman/OAI collections and get:
 
 - Security findings mapped to OWASP + PCI DSS
 - Credential leak detection (AWS keys, API keys, JWT)
@@ -51,7 +51,7 @@ DevPulse is a direct replacement that adds security scanning + LLM cost monitori
 
 We're offering a special migration program for teams leaving Postman: free collection import + 30-day Pro trial.
 
-Want to see it in action? devpulse.in/demo — no signup needed.
+Want to see it in action? rakshex.in/demo — no signup needed.
 
 Best,
 {yourName}
@@ -68,7 +68,7 @@ Just circling back — I know inboxes get crazy.
 
 One thing I've heard from {similarCompany} teams: the real panic moment is finding an OpenAI key hardcoded in a Postman collection that's been public for 6 months.
 
-Our demo at devpulse.in/demo takes 3 seconds. Drop any Postman JSON and you'll see every secret, every insecure endpoint, and your actual risk score. No signup.
+Our demo at rakshex.in/demo takes 3 seconds. Drop any Postman JSON and you'll see every secret, every insecure endpoint, and your actual risk score. No signup.
 
 If you try it and hate it, I'll stop emailing you. Fair?
 
@@ -81,7 +81,7 @@ Best,
 
 ### Minute 1: The Hook
 
-> "41% of all code in 2026 is AI-generated. That code has API endpoints. Those endpoints have vulnerabilities. Nobody is reviewing them. DevPulse automates that review."
+> "41% of all code in 2026 is AI-generated. That code has API endpoints. Those endpoints have vulnerabilities. Nobody is reviewing them. Rakshex automates that review."
 
 ### Minute 2: The Scan
 

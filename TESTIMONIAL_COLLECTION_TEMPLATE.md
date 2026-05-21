@@ -1,4 +1,4 @@
-# DevPulse Testimonial Collection System
+# Rakshex Testimonial Collection System
 
 > How we capture and use social proof.
 > Date: 2026-05-17
@@ -12,17 +12,17 @@
 ```
 After 3rd successful scan:
 
-🎉 "You've found X issues with DevPulse!"
+🎉 "You've found X issues with Rakshex!"
 
-Quick question: How likely are you to recommend DevPulse
+Quick question: How likely are you to recommend Rakshex
  to a fellow developer? (0-10)
 
 [0] [1] [2] ... [10]
 
 If 9-10: "Would you mind sharing why? (We'll use this to
- help other developers discover DevPulse)"
+ help other developers discover Rakshex)"
 
-If 0-6: "What would make DevPulse a 10 for you?"
+If 0-6: "What would make Rakshex a 10 for you?"
 ```
 
 ### 2. Email Request
@@ -32,15 +32,15 @@ Subject: Quick favor — 30 seconds?
 
 Hi {{name}},
 
-You've been using DevPulse for {{weeks}} weeks and have
+You've been using Rakshex for {{weeks}} weeks and have
 found {{findings}} issues.
 
 Would you mind sharing one sentence about your experience?
 
 Something like:
-- "DevPulse helped me..."
-- "I use DevPulse because..."
-- "The best thing about DevPulse is..."
+- "Rakshex helped me..."
+- "I use Rakshex because..."
+- "The best thing about Rakshex is..."
 
 Reply to this email — I read every one.
 
@@ -55,7 +55,7 @@ Akshay
 At end of user interview:
 
 "Last question: If you were talking to another developer
-building with AI, how would you describe DevPulse in
+building with AI, how would you describe Rakshex in
 one sentence?"
 
 Record exact words. Ask permission to use.
@@ -88,7 +88,7 @@ Record exact words. Ask permission to use.
 
 **Challenge:** {{problem_they_faced}}
 
-**Solution:** How they used DevPulse
+**Solution:** How they used Rakshex
 
 **Results:**
 - {{metric_1}}: {{value_1}}

@@ -1,4 +1,4 @@
-# DevPulse Retention Compounding Report
+# Rakshex Retention Compounding Report
 
 > Is retention getting better over time?
 > Date: 2026-05-17

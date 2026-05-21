@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Cookie Policy — DevPulse",
-  description: "How DevPulse uses cookies and tracking technologies.",
+  title: "Cookie Policy — Rakshex",
+  description: "How Rakshex uses cookies and tracking technologies.",
 };
 
 export default function CookiePolicy() {
@@ -85,7 +85,7 @@ export default function CookiePolicy() {
               essential cookies may prevent you from signing in or using core features.
             </p>
             <p className="mt-2">
-              When you first visit DevPulse, we show a cookie consent banner. You can change your
+              When you first visit Rakshex, we show a cookie consent banner. You can change your
               preferences at any time by clicking the cookie icon in the footer.
             </p>
           </section>
@@ -102,8 +102,8 @@ export default function CookiePolicy() {
             <h2 className="text-2xl font-bold text-white mb-3">6. Contact</h2>
             <p>
               Questions about cookies? Email{" "}
-              <a href="mailto:privacy@devpulse.in" className="text-blue-400 hover:text-blue-300">
-                privacy@devpulse.in
+              <a href="mailto:privacy@rakshex.in" className="text-blue-400 hover:text-blue-300">
+                privacy@rakshex.in
               </a>
               .
             </p>

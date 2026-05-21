@@ -15,10 +15,7 @@
  * without round-tripping to the dashboard.
  */
 import * as vscode from "vscode";
-import {
-  detectRoutesInFile,
-  type DetectedRoute,
-} from "./shadowApiScanner";
+import { detectRoutesInFile, type DetectedRoute } from "./shadowApiScanner";
 
 const FILE_GLOB = "**/*.{js,jsx,ts,tsx,mjs,cjs,py,java,kt,php}";
 const EXCLUDE_GLOB =
@@ -42,11 +39,7 @@ async function readFileSafe(uri: vscode.Uri): Promise<string | null> {
 }
 
 export async function runShadowApiScan(): Promise<DetectedWithUri[]> {
-  const files = await vscode.workspace.findFiles(
-    FILE_GLOB,
-    EXCLUDE_GLOB,
-    MAX_FILES
-  );
+  const files = await vscode.workspace.findFiles(FILE_GLOB, EXCLUDE_GLOB, MAX_FILES);
   if (files.length === 0) return [];
 
   const detected: DetectedWithUri[] = [];
@@ -65,16 +58,16 @@ export interface ShadowApiOptions {
 
 export function registerShadowApiCommand(
   context: vscode.ExtensionContext,
-  options?: ShadowApiOptions
+  options?: ShadowApiOptions,
 ): void {
-  const channel = vscode.window.createOutputChannel("DevPulse Shadow API");
+  const channel = vscode.window.createOutputChannel("Rakshex Shadow API");
   context.subscriptions.push(channel);
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("devpulse.scanShadowApis", async () => {
+    vscode.commands.registerCommand("rakshex.scanShadowApis", async () => {
       if (options && !options.isTrusted()) {
         void vscode.window.showWarningMessage(
-          "DevPulse: shadow API scanning requires a trusted workspace. Trust this workspace to enable scanning."
+          "Rakshex: shadow API scanning requires a trusted workspace. Trust this workspace to enable scanning.",
         );
         return;
       }
@@ -82,31 +75,29 @@ export function registerShadowApiCommand(
       const detected = await vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
-          title: "DevPulse: scanning workspace for shadow APIs",
+          title: "Rakshex: scanning workspace for shadow APIs",
         },
-        () => runShadowApiScan()
+        () => runShadowApiScan(),
       );
 
       channel.clear();
-      channel.appendLine(
-        `# DevPulse Shadow API scan — ${new Date().toISOString()}`
-      );
+      channel.appendLine(`# Rakshex Shadow API scan — ${new Date().toISOString()}`);
       channel.appendLine(`Detected ${detected.length} HTTP route(s).`);
       for (const r of detected) {
         channel.appendLine(
-          `${r.method.padEnd(7)} ${r.path.padEnd(40)} ${r.framework.padEnd(13)} ${vscode.workspace.asRelativePath(r.uri)}:${r.line}`
+          `${r.method.padEnd(7)} ${r.path.padEnd(40)} ${r.framework.padEnd(13)} ${vscode.workspace.asRelativePath(r.uri)}:${r.line}`,
         );
       }
       channel.show(true);
 
       if (detected.length === 0) {
         await vscode.window.showInformationMessage(
-          "DevPulse: no HTTP routes detected in this workspace."
+          "Rakshex: no HTTP routes detected in this workspace.",
         );
         return;
       }
 
-      const items = detected.map(r => ({
+      const items = detected.map((r) => ({
         label: `${r.method} ${r.path}`,
         description: `${r.framework} · ${vscode.workspace.asRelativePath(r.uri)}:${r.line}`,
         detail: r.snippet.slice(0, 120),
@@ -123,6 +114,6 @@ export function registerShadowApiCommand(
       const range = new vscode.Range(lineIndex, 0, lineIndex, 0);
       editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
       editor.selection = new vscode.Selection(range.start, range.start);
-    })
+    }),
   );
 }

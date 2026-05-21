@@ -1,16 +1,16 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "FAQ — DevPulse AI Governance Platform",
+  title: "FAQ — Rakshex AI Governance Platform",
   description:
-    "Frequently asked questions about DevPulse pricing, security, compliance, setup, and enterprise features.",
+    "Frequently asked questions about Rakshex pricing, security, compliance, setup, and enterprise features.",
   alternates: { canonical: "/faq" },
 };
 
 const FAQS = [
   {
-    q: "What is DevPulse?",
-    a: "DevPulse is an AI Runtime Governance platform that combines security scanning, cost monitoring, and compliance automation into one tool. It helps developers and enterprises secure, monitor, and govern AI agents in production.",
+    q: "What is Rakshex?",
+    a: "Rakshex is an AI Runtime Governance platform that combines security scanning, cost monitoring, and compliance automation into one tool. It helps developers and enterprises secure, monitor, and govern AI agents in production.",
   },
   {
     q: "How long does setup take?",
@@ -26,7 +26,7 @@ const FAQS = [
   },
   {
     q: "How does the kill switch work?",
-    a: "You set budget caps, anomaly thresholds, or red-team scores. When any threshold is breached, DevPulse blocks all LLM API calls within milliseconds. You get alerted in Slack/Discord, and can reset manually or automatically.",
+    a: "You set budget caps, anomaly thresholds, or red-team scores. When any threshold is breached, Rakshex blocks all LLM API calls within milliseconds. You get alerted in Slack/Discord, and can reset manually or automatically.",
   },
   {
     q: "What compliance standards do you support?",
@@ -38,10 +38,10 @@ const FAQS = [
   },
   {
     q: "What is shadow API discovery?",
-    a: "Shadow APIs are undocumented endpoints that exist in your codebase but not in your documentation. DevPulse statically analyzes your code (Express, FastAPI, Flask, Django, Spring Boot, Laravel) to find these hidden surfaces — no production traffic needed.",
+    a: "Shadow APIs are undocumented endpoints that exist in your codebase but not in your documentation. Rakshex statically analyzes your code (Express, FastAPI, Flask, Django, Spring Boot, Laravel) to find these hidden surfaces — no production traffic needed.",
   },
   {
-    q: "Can I self-host DevPulse?",
+    q: "Can I self-host Rakshex?",
     a: "Yes. We provide a Docker Compose setup and Kubernetes Helm chart for private cloud deployment. See our Self-Hosting Guide for step-by-step instructions. Enterprise plans include dedicated support for self-hosted deployments.",
   },
   {
@@ -54,7 +54,7 @@ const FAQS = [
   },
   {
     q: "Do you offer enterprise support?",
-    a: "Yes. Enterprise plans include 4-hour SLA, dedicated Slack channel, quarterly business reviews, custom onboarding, and priority feature requests. Contact enterprise@devpulse.in for details.",
+    a: "Yes. Enterprise plans include 4-hour SLA, dedicated Slack channel, quarterly business reviews, custom onboarding, and priority feature requests. Contact enterprise@rakshex.in for details.",
   },
 ];
 
@@ -64,8 +64,8 @@ export default function FAQPage() {
       <div className="max-w-3xl mx-auto">
         <h1 className="text-4xl font-bold mb-4">Frequently Asked Questions</h1>
         <p className="text-gray-400 mb-12">
-          Everything you need to know about DevPulse. Can't find your question?{" "}
-          <Link href="mailto:support@devpulse.in" className="text-blue-400 hover:text-blue-300">
+          Everything you need to know about Rakshex. Can't find your question?{" "}
+          <Link href="mailto:support@rakshex.in" className="text-blue-400 hover:text-blue-300">
             Email us
           </Link>
           .

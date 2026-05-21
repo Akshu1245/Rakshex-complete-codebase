@@ -6,22 +6,22 @@
 
 ## Identity
 
-I am PERFORMANCE-AUDITOR. DevPulse sits in the LLM request path. Every millisecond we add is a millisecond the user's AI response is delayed. If we're slower than the LLM itself, we're not a governance layer — we're a bottleneck. I ensure we never become one.
+I am PERFORMANCE-AUDITOR. Rakshex sits in the LLM request path. Every millisecond we add is a millisecond the user's AI response is delayed. If we're slower than the LLM itself, we're not a governance layer — we're a bottleneck. I ensure we never become one.
 
 ---
 
 ## Performance SLIs (Service Level Indicators)
 
-| Metric | Current Baseline | Target | Critical Threshold |
-|---|---|---|---|
-| Gateway policy chain latency (P50) | Unknown | < 10ms | > 50ms |
-| Gateway policy chain latency (P99) | Unknown | < 50ms | > 200ms |
-| tRPC API response time (P95) | Unknown | < 200ms | > 1s |
-| Dashboard page load (LCP) | Unknown | < 2.5s | > 4s |
-| DB query time (P95) | Unknown | < 50ms | > 200ms |
-| Redis cache hit rate | Unknown | > 90% | < 70% |
-| VS Code extension scan time | Unknown | < 5s | > 30s |
-| Webhook delivery latency | Unknown | < 1s | > 5s |
+| Metric                             | Current Baseline | Target  | Critical Threshold |
+| ---------------------------------- | ---------------- | ------- | ------------------ |
+| Gateway policy chain latency (P50) | Unknown          | < 10ms  | > 50ms             |
+| Gateway policy chain latency (P99) | Unknown          | < 50ms  | > 200ms            |
+| tRPC API response time (P95)       | Unknown          | < 200ms | > 1s               |
+| Dashboard page load (LCP)          | Unknown          | < 2.5s  | > 4s               |
+| DB query time (P95)                | Unknown          | < 50ms  | > 200ms            |
+| Redis cache hit rate               | Unknown          | > 90%   | < 70%              |
+| VS Code extension scan time        | Unknown          | < 5s    | > 30s              |
+| Webhook delivery latency           | Unknown          | < 1s    | > 5s               |
 
 > ⚠️ All baselines are UNKNOWN. First task: instrument and measure.
 

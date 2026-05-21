@@ -52,11 +52,11 @@ class WebSocketManager {
           }
         }
 
-        // Fallback to devpulse_session cookie (legacy session support)
+        // Fallback to rakshex_session cookie (legacy session support)
         if (!token) {
           const cookieHeader = socket.handshake.headers?.cookie;
           if (cookieHeader) {
-            const match = cookieHeader.match(/devpulse_session=([^;]+)/);
+            const match = cookieHeader.match(/rakshex_session=([^;]+)/);
             if (match) {
               const sessionData = JSON.parse(
                 Buffer.from(decodeURIComponent(match[1]), "base64").toString("utf-8"),

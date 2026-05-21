@@ -1,24 +1,24 @@
-# DevPulse Press Kit
+# Rakshex Press Kit
 
-> Everything a journalist, blogger, or analyst needs to write about DevPulse.
+> Everything a journalist, blogger, or analyst needs to write about Rakshex.
 
 ---
 
 ## Quick Facts
 
-|                   |                                                         |
-| ----------------- | ------------------------------------------------------- |
-| **Company**       | DevPulse by Rashi Technologies                          |
-| **Founded**       | January 2026                                            |
-| **Headquarters**  | Bengaluru, Karnataka, India                             |
-| **Founder & CEO** | Akshay Kammar                                           |
-| **Product**       | AI Runtime Governance Platform                          |
-| **Website**       | https://devpulse.in                                     |
-| **GitHub**        | https://github.com/Akshu1245/devpulse-complete-codebase |
-| **Pricing**       | Free / $99 Pro / $499 Enterprise per month              |
-| **Patents**       | 4 filed (NHCE/DEV/2026/001–004)                         |
-| **Tech Stack**    | TypeScript, Next.js, tRPC, Drizzle ORM, MySQL, Redis    |
-| **Funding**       | Raising $500K Seed on $3M cap                           |
+|                   |                                                        |
+| ----------------- | ------------------------------------------------------ |
+| **Company**       | Rakshex by Rashi Technologies                          |
+| **Founded**       | January 2026                                           |
+| **Headquarters**  | Bengaluru, Karnataka, India                            |
+| **Founder & CEO** | Akshay Kammar                                          |
+| **Product**       | AI Runtime Governance Platform                         |
+| **Website**       | https://rakshex.in                                     |
+| **GitHub**        | https://github.com/Akshu1245/rakshex-complete-codebase |
+| **Pricing**       | Free / $99 Pro / $499 Enterprise per month             |
+| **Patents**       | 4 filed (NHCE/DEV/2026/001–004)                        |
+| **Tech Stack**    | TypeScript, Next.js, tRPC, Drizzle ORM, MySQL, Redis   |
+| **Funding**       | Raising $500K Seed on $3M cap                          |
 
 ---
 
@@ -26,19 +26,19 @@
 
 ### Short (50 words)
 
-> DevPulse is an AI Runtime Governance platform that helps developers and enterprises secure, monitor, and govern AI agents in production. It combines security scanning, cost monitoring, and compliance automation into one tool. Founded in 2026 in Bengaluru, India, DevPulse has filed 4 patents and is used by fintech and healthcare companies.
+> Rakshex is an AI Runtime Governance platform that helps developers and enterprises secure, monitor, and govern AI agents in production. It combines security scanning, cost monitoring, and compliance automation into one tool. Founded in 2026 in Bengaluru, India, Rakshex has filed 4 patents and is used by fintech and healthcare companies.
 
 ### Medium (100 words)
 
-> DevPulse is an AI Runtime Governance platform built for developers shipping AI to production. The platform combines three critical capabilities — security scanning (prompt injection detection, API vulnerability assessment, secret discovery), cost monitoring (per-request LLM cost tracking, anomaly detection, autonomous kill switch), and compliance automation (SOC 2 evidence builder, PCI DSS mapping, OWASP scoring). Founded in January 2026 in Bengaluru, India, DevPulse has filed 4 patents including the world's first thinking token attribution system. The company serves fintech, healthcare, and enterprise SaaS customers and is currently raising a $500K seed round.
+> Rakshex is an AI Runtime Governance platform built for developers shipping AI to production. The platform combines three critical capabilities — security scanning (prompt injection detection, API vulnerability assessment, secret discovery), cost monitoring (per-request LLM cost tracking, anomaly detection, autonomous kill switch), and compliance automation (SOC 2 evidence builder, PCI DSS mapping, OWASP scoring). Founded in January 2026 in Bengaluru, India, Rakshex has filed 4 patents including the world's first thinking token attribution system. The company serves fintech, healthcare, and enterprise SaaS customers and is currently raising a $500K seed round.
 
 ### Long (200 words)
 
-> DevPulse is an AI Runtime Governance platform that addresses the three biggest risks companies face when deploying AI in production: security vulnerabilities, runaway costs, and compliance gaps. The platform offers a comprehensive suite that includes an 87-payload prompt injection detection library, API vulnerability scanning for BOLA/IDOR and OWASP Top 10, per-request LLM cost tracking across 6 providers, Holt-Winters spend forecasting, an autonomous kill switch that blocks LLM calls when budgets are breached, and automated compliance reporting for SOC 2, PCI DSS v4.0.1, and GDPR.
+> Rakshex is an AI Runtime Governance platform that addresses the three biggest risks companies face when deploying AI in production: security vulnerabilities, runaway costs, and compliance gaps. The platform offers a comprehensive suite that includes an 87-payload prompt injection detection library, API vulnerability scanning for BOLA/IDOR and OWASP Top 10, per-request LLM cost tracking across 6 providers, Holt-Winters spend forecasting, an autonomous kill switch that blocks LLM calls when budgets are breached, and automated compliance reporting for SOC 2, PCI DSS v4.0.1, and GDPR.
 >
-> Founded in January 2026 by Akshay Kammar in Bengaluru, India, DevPulse has filed 4 patents including the world's first thinking token attribution system (Patent NHCE/DEV/2026/002), which isolates reasoning tokens from models like OpenAI o1/o3 and Claude to compute exact costs. The platform is built on TypeScript, Next.js, and tRPC, with 478+ server-side tests and 37 API routers.
+> Founded in January 2026 by Akshay Kammar in Bengaluru, India, Rakshex has filed 4 patents including the world's first thinking token attribution system (Patent NHCE/DEV/2026/002), which isolates reasoning tokens from models like OpenAI o1/o3 and Claude to compute exact costs. The platform is built on TypeScript, Next.js, and tRPC, with 478+ server-side tests and 37 API routers.
 >
-> DevPulse is currently raising a $500K seed round on a $3M valuation cap to expand the team and accelerate customer acquisition. The product is available at devpulse.in with a free tier, $99/month Pro plan, and $499/month Enterprise plan.
+> Rakshex is currently raising a $500K seed round on a $3M valuation cap to expand the team and accelerate customer acquisition. The product is available at rakshex.in with a free tier, $99/month Pro plan, and $499/month Enterprise plan.
 
 ---
 
@@ -46,7 +46,7 @@
 
 ### For Security Audiences
 
-- DevPulse is the only platform that covers prompt injection, API vulnerabilities, AND secret scanning in one tool.
+- Rakshex is the only platform that covers prompt injection, API vulnerabilities, AND secret scanning in one tool.
 - 87-payload adversarial testing library updated weekly.
 - Kill switch provides sub-second response to budget or anomaly triggers.
 
@@ -73,15 +73,15 @@
 
 ## Founder Bio
 
-**Akshay Kammar — Founder & CEO, DevPulse**
+**Akshay Kammar — Founder & CEO, Rakshex**
 
-Akshay Kammar is the founder and CEO of DevPulse, an AI Runtime Governance platform built in Bengaluru, India. He single-handedly built the platform over 4 months, filing 4 patents in the process, including the world's first thinking token attribution system for LLM cost monitoring.
+Akshay Kammar is the founder and CEO of Rakshex, an AI Runtime Governance platform built in Bengaluru, India. He single-handedly built the platform over 4 months, filing 4 patents in the process, including the world's first thinking token attribution system for LLM cost monitoring.
 
 Previously, Akshay built internal security tools that prevented multiple production incidents. He holds a degree in Computer Science from NHCE, Bengaluru.
 
 Akshay is passionate about making AI security accessible to every developer, not just Fortune 500 security teams. He believes the future of AI governance is default, not optional.
 
-**Contact:** akshay@devpulse.in | +91-XXXX-XXXXXX
+**Contact:** akshay@rakshex.in | +91-XXXX-XXXXXX
 **Location:** Bengaluru, Karnataka, India
 **Social:** [Twitter/X] [LinkedIn]
 
@@ -104,7 +104,7 @@ Akshay is passionate about making AI security accessible to every developer, not
 
 ### Logo Usage
 
-- Use the DevPulse logo with the tagline "Secure Your AI Agents Before They Cost You"
+- Use the Rakshex logo with the tagline "Secure Your AI Agents Before They Cost You"
 - Minimum clear space: 2x logo height on all sides
 - Do not distort, rotate, or change logo colors
 - Acceptable backgrounds: Dark (#0f172a), White, or transparent
@@ -124,10 +124,10 @@ Akshay is passionate about making AI security accessible to every developer, not
 
 ## Media Contacts
 
-**General Inquiries:** press@devpulse.in
-**Security Issues:** security@devpulse.in
-**Founder Interviews:** akshay@devpulse.in
-**Investor Relations:** investors@devpulse.in
+**General Inquiries:** press@rakshex.in
+**Security Issues:** security@rakshex.in
+**Founder Interviews:** akshay@rakshex.in
+**Investor Relations:** investors@rakshex.in
 
 **Response Time:**
 
@@ -141,7 +141,7 @@ Akshay is passionate about making AI security accessible to every developer, not
 
 ### 1. "The Solo Founder Building India's First AI Governance Platform"
 
-Focus: Akshay's journey building DevPulse alone, filing 4 patents, and the India advantage.
+Focus: Akshay's journey building Rakshex alone, filing 4 patents, and the India advantage.
 
 ### 2. "Why Every Company Needs an AI Kill Switch"
 
@@ -151,7 +151,7 @@ Focus: The $50K weekend story, autonomous circuit breakers, and preventing LLM c
 
 Focus: Thinking token attribution, reasoning cost isolation, and the patent behind it.
 
-### 4. "DevPulse vs The Giants: How a Startup Competes with Snyk and Datadog"
+### 4. "Rakshex vs The Giants: How a Startup Competes with Snyk and Datadog"
 
 Focus: Integration strategy, open source, and the "complements, not replaces" positioning.
 
@@ -163,7 +163,7 @@ Focus: OWASP LLM Top 10, prompt injection economics, and why 2026 is the year AI
 
 ## Previous Coverage
 
-> As of May 2026, DevPulse has not been featured in external media.
+> As of May 2026, Rakshex has not been featured in external media.
 > This section will be updated as coverage is secured.
 
 ---
@@ -172,12 +172,12 @@ Focus: OWASP LLM Top 10, prompt injection economics, and why 2026 is the year AI
 
 **About the Product:**
 
-1. What problem does DevPulse solve that nobody else does?
+1. What problem does Rakshex solve that nobody else does?
 2. How does the kill switch work in practice?
 3. What is "thinking token attribution" and why did you patent it?
 
 **About the Market:** 4. Why is 2026 the inflection point for AI governance? 5. How do you compete with established players like Snyk and Datadog? 6. What is the biggest misconception about AI security?
 
-**About the Company:** 7. Why did you build this as a solo founder? 8. What is the India advantage in building dev tools? 9. What is next for DevPulse after the seed round?
+**About the Company:** 7. Why did you build this as a solo founder? 8. What is the India advantage in building dev tools? 9. What is next for Rakshex after the seed round?
 
 **About the Founder:** 10. What keeps you up at night as a founder? 11. What is the best piece of advice you have received? 12. What would you do differently if you started over?

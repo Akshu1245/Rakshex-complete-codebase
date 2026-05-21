@@ -6,7 +6,7 @@ export default function ComparisonIndex() {
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-2">DevPulse vs Competitors</h1>
+        <h1 className="text-3xl font-bold mb-2">Rakshex vs Competitors</h1>
         <p className="text-gray-400 mb-8">Honest comparison pages. No fluff. Just facts.</p>
 
         <div className="space-y-4">
@@ -48,7 +48,7 @@ export default function ComparisonIndex() {
               className="block bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-blue-500 transition-colors group"
             >
               <h3 className="text-xl font-bold mb-1 group-hover:text-blue-400 transition-colors">
-                DevPulse vs {comp.name}
+                Rakshex vs {comp.name}
               </h3>
               <p className="text-gray-400 text-sm">{comp.tagline}</p>
             </Link>

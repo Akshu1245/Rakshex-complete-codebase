@@ -1,23 +1,23 @@
 /**
- * DevPulse SDK — Main Client
+ * Rakshex SDK — Main Client
  *
- * Creates a DevPulse telemetry client. Wraps LLM provider instances
+ * Creates a Rakshex telemetry client. Wraps LLM provider instances
  * to automatically capture and report all AI calls.
  */
-import type { DevPulseConfig, TelemetryEvent, Provider } from "./types.js";
+import type { RakshexConfig, TelemetryEvent, Provider } from "./types.js";
 import { TelemetryCollector } from "./telemetry/collector.js";
 import { BatchReporter } from "./reporters/batch.js";
 import { wrapOpenAI } from "./wrappers/openai.js";
 import { wrapAnthropic } from "./wrappers/anthropic.js";
 
-const DEFAULT_INGEST_URL = "https://api.devpulse.in/v2/telemetry/events";
+const DEFAULT_INGEST_URL = "https://api.rakshex.in/v2/telemetry/events";
 
-export class DevPulse {
-  private config: Required<DevPulseConfig>;
+export class Rakshex {
+  private config: Required<RakshexConfig>;
   private reporter: BatchReporter;
   private collector: TelemetryCollector;
 
-  constructor(config: DevPulseConfig) {
+  constructor(config: RakshexConfig) {
     this.config = {
       ingestUrl: DEFAULT_INGEST_URL,
       sampleRate: 1.0,
@@ -38,7 +38,7 @@ export class DevPulse {
    * Wrap an OpenAI client instance. All completions, embeddings, etc.
    * will be automatically captured and reported.
    */
-  wrap<T extends object>(client: T & { _devpulseWrapped?: true }): T {
+  wrap<T extends object>(client: T & { _rakshexWrapped?: true }): T {
     // Detect provider by constructor name
     const name = client.constructor?.name || "";
 

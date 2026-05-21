@@ -1,6 +1,6 @@
-# Contributing to DevPulse
+# Contributing to Rakshex
 
-Thank you for your interest in making DevPulse better. This document covers how to report issues, propose features, and submit code.
+Thank you for your interest in making Rakshex better. This document covers how to report issues, propose features, and submit code.
 
 ## Code of Conduct
 
@@ -22,8 +22,8 @@ When reporting a bug, include:
 
 ```bash
 # 1. Clone
-git clone https://github.com/Akshu1245/devpulse-complete-codebase.git
-cd devpulse-complete-codebase
+git clone https://github.com/Akshu1245/rakshex-complete-codebase.git
+cd rakshex-complete-codebase
 
 # 2. Install dependencies
 pnpm install
@@ -47,8 +47,8 @@ pnpm run dev
   - `services/` — Business logic
   - `engines/` — Scanning engines
   - `queues/` — BullMQ workers
-- `devpulse-frontend/` — Next.js 14 dashboard
-- `devpulse-vscode/` — VS Code extension
+- `rakshex-frontend/` — Next.js 14 dashboard
+- `rakshex-vscode/` — VS Code extension
 - `drizzle/` — Database schema and migrations
 - `github-action/` — GitHub Actions marketplace action
 
@@ -91,7 +91,7 @@ test: add coverage for webhook SSRF guard
 
 ## Security
 
-If you discover a security vulnerability, please email `security@devpulse.in` instead of opening a public issue. We will respond within 48 hours.
+If you discover a security vulnerability, please email `security@rakshex.in` instead of opening a public issue. We will respond within 48 hours.
 
 ## License
 

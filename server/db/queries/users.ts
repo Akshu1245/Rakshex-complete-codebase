@@ -6,9 +6,7 @@ import { logger } from "../../_core/logger";
 import { sendWelcomeEmail } from "../../email";
 import crypto from "crypto";
 
-export async function upsertUser(
-  user: InsertUser
-): Promise<{ isNew: boolean }> {
+export async function upsertUser(user: InsertUser): Promise<{ isNew: boolean }> {
   if (!user.openId) {
     throw new ValidationError("User openId is required for upsert");
   }
@@ -19,11 +17,7 @@ export async function upsertUser(
     return { isNew: false };
   }
 
-  const existing = await db
-    .select()
-    .from(users)
-    .where(eq(users.openId, user.openId))
-    .limit(1);
+  const existing = await db.select().from(users).where(eq(users.openId, user.openId)).limit(1);
 
   if (existing.length > 0) {
     await db
@@ -43,9 +37,7 @@ export async function upsertUser(
     sendWelcomeEmail({
       toEmail: user.email,
       userName: user.name || "there",
-    }).catch(err =>
-      logger.warn({ err }, "[Email] Failed to send welcome email")
-    );
+    }).catch((err) => logger.warn({ err }, "[Email] Failed to send welcome email"));
   }
 
   return { isNew: true };
@@ -58,11 +50,7 @@ export async function getUserByOpenId(openId: string) {
     return undefined;
   }
 
-  const result = await db
-    .select()
-    .from(users)
-    .where(eq(users.openId, openId))
-    .limit(1);
+  const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
 
   return result.length > 0 ? result[0] : undefined;
 }
@@ -79,18 +67,11 @@ export async function getUserByEmail(email: string) {
   const db = await getDb();
   if (!db) return undefined;
 
-  const result = await db
-    .select()
-    .from(users)
-    .where(eq(users.email, email))
-    .limit(1);
+  const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
   return result.length > 0 ? result[0] : undefined;
 }
 
-export async function updateUserPassword(
-  userId: number,
-  hashedPassword: string
-) {
+export async function updateUserPassword(userId: number, hashedPassword: string) {
   const db = await getDb();
   assertDb(db, "updateUserPassword");
 
@@ -100,17 +81,11 @@ export async function updateUserPassword(
     .where(eq(users.id, userId));
 }
 
-export async function updateUserPlan(
-  userId: number,
-  plan: "free" | "pro" | "enterprise"
-) {
+export async function updateUserPlan(userId: number, plan: "free" | "pro" | "enterprise") {
   const db = await getDb();
   assertDb(db, "updateUserPlan");
 
-  await db
-    .update(users)
-    .set({ plan, updatedAt: new Date() })
-    .where(eq(users.id, userId));
+  await db.update(users).set({ plan, updatedAt: new Date() }).where(eq(users.id, userId));
 }
 
 export async function getAllUsers() {
@@ -121,18 +96,14 @@ export async function getAllUsers() {
 }
 
 /**
- * Look up a user by their DevPulse API key (as used by the VS Code
+ * Look up a user by their Rakshex API key (as used by the VS Code
  * extension and any `Bearer dp_*` / `x-api-key` callers).
  */
 export async function getUserByApiKey(apiKey: string) {
   const db = await getDb();
   if (!db) return undefined;
 
-  const result = await db
-    .select()
-    .from(users)
-    .where(eq(users.apiKey, apiKey))
-    .limit(1);
+  const result = await db.select().from(users).where(eq(users.apiKey, apiKey)).limit(1);
   return result.length > 0 ? result[0] : undefined;
 }
 
@@ -143,10 +114,7 @@ export async function updateUserApiKey(userId: number, apiKey: string) {
   const db = await getDb();
   assertDb(db, "updateUserApiKey");
 
-  await db
-    .update(users)
-    .set({ apiKey, updatedAt: new Date() })
-    .where(eq(users.id, userId));
+  await db.update(users).set({ apiKey, updatedAt: new Date() }).where(eq(users.id, userId));
 }
 
 /**
@@ -157,7 +125,7 @@ export async function recordVSCodeActivity(
   userId: number,
   type: string,
   data: Record<string, unknown>,
-  timestamp: Date
+  timestamp: Date,
 ) {
   const db = await getDb();
   assertDb(db, "recordVSCodeActivity");

@@ -1,4 +1,4 @@
-# DevPulse Market-Ready Checklist
+# Rakshex Market-Ready Checklist
 
 > Last updated: May 17, 2026. Items marked [x] are code-complete and deployed to Vercel. Items marked [u] require YOUR action (cannot be automated).
 
@@ -22,7 +22,7 @@
 
 ### Website & Brand
 
-- [u] Purchase devpulse.in domain (needs credit card)
+- [u] Purchase rakshex.in domain (needs credit card)
 - [x] Landing page with hero, features, pricing, comparison table
 - [x] Pricing page (Free/Pro/Enterprise) at `/pricing`
 - [x] Terms of Service at `/terms`
@@ -132,7 +132,7 @@ These cannot be automated by code. You must complete them manually:
 
 ### 2. Domain Purchase (10 min)
 
-- Buy `devpulse.in` on Namecheap/GoDaddy/Cloudflare
+- Buy `rakshex.in` on Namecheap/GoDaddy/Cloudflare
 - Add A record → Vercel IP (76.76.21.21)
 - Add CNAME `www` → `cname.vercel-dns.com`
 - Add domain in Vercel dashboard
@@ -141,7 +141,7 @@ These cannot be automated by code. You must complete them manually:
 ### 3. Email Service (20 min)
 
 - Sign up for SendGrid (free tier: 100 emails/day)
-- Verify `devpulse.in` domain
+- Verify `rakshex.in` domain
 - Generate API key → add to Render env vars
 - Test with signup flow
 - **Status:** BLOCKING password reset, dunning, welcome emails
@@ -163,8 +163,8 @@ These cannot be automated by code. You must complete them manually:
 
 ### 6. Social Media (30 min)
 
-- Create @devpulsehq on Twitter/X
-- Create DevPulse company page on LinkedIn
+- Create @rakshexhq on Twitter/X
+- Create Rakshex company page on LinkedIn
 - Use bios and banners from `marketing/SOCIAL_MEDIA_LAUNCH_KIT.md`
 - **Status:** BLOCKING organic reach
 

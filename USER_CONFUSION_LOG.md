@@ -1,4 +1,4 @@
-# DevPulse User Confusion Log
+# Rakshex User Confusion Log
 
 > Record every moment a user gets stuck, hesitates, or asks "how do I...?"
 > Date: 2026-05-17

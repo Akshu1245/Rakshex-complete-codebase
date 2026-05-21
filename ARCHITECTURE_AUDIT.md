@@ -1,4 +1,4 @@
-# DevPulse Architecture Audit
+# Rakshex Architecture Audit
 
 > Comprehensive architecture review by founding engineering team.
 > Date: 2026-05-17 | Tests: 578/578 passing | Coverage: 37 suites
@@ -7,7 +7,7 @@
 
 ## 1. EXECUTIVE SUMMARY
 
-**Verdict:** DevPulse has a **production-grade foundation** with enterprise-class architecture patterns. The codebase demonstrates Staff+ engineering decisions across security, scalability, and observability. Remaining gaps are operational polish and feature completeness, not architectural risk.
+**Verdict:** Rakshex has a **production-grade foundation** with enterprise-class architecture patterns. The codebase demonstrates Staff+ engineering decisions across security, scalability, and observability. Remaining gaps are operational polish and feature completeness, not architectural risk.
 
 **Score:** 8.5/10 architecture maturity (YC Series A ready)
 
@@ -167,7 +167,7 @@ Future split candidates:
 
 ## 8. CONCLUSION
 
-DevPulse's architecture is **investor-grade**. The team has made correct hard choices:
+Rakshex's architecture is **investor-grade**. The team has made correct hard choices:
 
 - Type safety over velocity
 - Security over convenience

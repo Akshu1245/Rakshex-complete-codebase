@@ -68,7 +68,7 @@ registerTool({
       browser = await chromium.launch({ headless: true });
 
       const context = await browser.newContext({
-        userAgent: "DevPulse-Research/1.0 (compatible; research bot)",
+        userAgent: "Rakshex-Research/1.0 (compatible; research bot)",
         viewport: { width: 1280, height: 720 },
       });
 

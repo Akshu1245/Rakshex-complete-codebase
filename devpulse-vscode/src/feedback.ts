@@ -1,13 +1,13 @@
 import * as vscode from "vscode";
-import type { DevPulseApi } from "./api";
+import type { RakshexApi } from "./api";
 
 export class FeedbackCommand {
-  constructor(private readonly api: DevPulseApi) {}
+  constructor(private readonly api: RakshexApi) {}
 
   async execute(): Promise<void> {
     const panel = vscode.window.createWebviewPanel(
-      "devpulse.feedback",
-      "Send Feedback to DevPulse",
+      "rakshex.feedback",
+      "Send Feedback to Rakshex",
       vscode.ViewColumn.One,
       { enableScripts: true },
     );
@@ -23,11 +23,11 @@ export class FeedbackCommand {
             email: msg.email || undefined,
             timestamp: new Date().toISOString(),
           });
-          void vscode.window.showInformationMessage("DevPulse: Thank you for your feedback!");
+          void vscode.window.showInformationMessage("Rakshex: Thank you for your feedback!");
           panel.dispose();
         } catch {
           void vscode.window.showErrorMessage(
-            "DevPulse: Could not send feedback. Please try again or email hello@devpulse.in",
+            "Rakshex: Could not send feedback. Please try again or email hello@rakshex.in",
           );
         }
       }
@@ -80,7 +80,7 @@ export class FeedbackCommand {
 </head>
 <body>
   <h2>Send Feedback</h2>
-  <div class="subtitle">Help us make DevPulse better. We read every message.</div>
+  <div class="subtitle">Help us make Rakshex better. We read every message.</div>
 
   <label for="category">What kind of feedback?</label>
   <select id="category">

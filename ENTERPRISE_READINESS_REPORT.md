@@ -1,4 +1,4 @@
-# DevPulse Enterprise Readiness Report
+# Rakshex Enterprise Readiness Report
 
 > What it takes to sell to serious organizations.
 > Date: 2026-05-17
@@ -40,7 +40,7 @@
 
 ```
 User → IdP (Okta/Google/Azure)
-  → SAML Response → DevPulse API
+  → SAML Response → Rakshex API
     → Validate signature
     → Create/fetch user
     → Issue JWT
@@ -172,7 +172,7 @@ A: Account deletion purges all data within 30 days. Immediate deletion available
 A: Primary: AWS Mumbai (ap-south-1). Backups: AWS Singapore (ap-southeast-1).
 
 **Q: Do you have a bug bounty?**
-A: Yes. Up to $5,000 for critical vulnerabilities. Contact security@devpulse.in.
+A: Yes. Up to $5,000 for critical vulnerabilities. Contact security@rakshex.in.
 
 ---
 

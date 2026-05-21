@@ -1,4 +1,4 @@
-# DevPulse YC Interview Practice Script
+# Rakshex YC Interview Practice Script
 
 > Scripts for 1-minute, 3-minute, and 10-minute pitches.
 > Date: 2026-05-17
@@ -15,7 +15,7 @@ than they realize.
 
 Hidden reasoning tokens. Infinite loops. Leaked API keys.
 
-DevPulse is a VS Code extension that detects all three.
+Rakshex is a VS Code extension that detects all three.
 
 We reveal hidden costs, auto-stop rogue agents, and scan API
 collections for vulnerabilities — without leaving the editor.
@@ -57,7 +57,7 @@ GitHub repos and found secrets in 23% of them.
 No existing tool solves all three."
 
 [0:45-1:30] SOLUTION
-"DevPulse is a VS Code extension with three features:
+"Rakshex is a VS Code extension with three features:
 
 Hidden Cost Detection: We attribute every API call to its
 real cost, including hidden reasoning tokens. We show you
@@ -73,7 +73,7 @@ Everything happens inside VS Code. No context switching.
 
 [1:30-2:00] TRACTION
 "In 30 days of beta:
-- 500 developers using DevPulse
+- 500 developers using Rakshex
 - $14,000 in hidden costs found
 - 47 rogue agents stopped
 - 234 exposed secrets found
@@ -119,14 +119,14 @@ millions of developers."
 **Demo Script (3 minutes):**
 
 ```
-"Let me show you DevPulse in action.
+"Let me show you Rakshex in action.
 
-[0:00] Here's VS Code with the DevPulse sidebar.
+[0:00] Here's VS Code with the Rakshex sidebar.
 I've imported a Postman collection with 15 endpoints.
 
 [0:10] I click 'Run Scan'. Watch this.
 
-[0:15] DevPulse found 6 issues: 1 Critical, 2 High.
+[0:15] Rakshex found 6 issues: 1 Critical, 2 High.
 Let me show you the Critical one.
 
 [0:30] 'Exposed API key in DELETE /users/456'
@@ -150,7 +150,7 @@ agents stopped, secrets found.
 [1:45] Everything happens inside VS Code. One click to fix.
 No context switching. No external dashboards.
 
-[2:00] That's DevPulse. Questions?"
+[2:00] That's Rakshex. Questions?"
 ```
 
 ---

@@ -3,7 +3,7 @@
  * concise, triage-focused natural-language summary that security engineers
  * can paste straight into a ticket or Slack thread.
  *
- * Owns a DevPulse-tuned system prompt — deliberately *not* copied from any
+ * Owns a Rakshex-tuned system prompt — deliberately *not* copied from any
  * third-party agent. The prompt is specific to security-finding triage
  * (severity framing, actionable next steps, no invented CVEs).
  */
@@ -39,7 +39,7 @@ export interface SummaryResult {
 }
 
 /**
- * DevPulse finding-triage system prompt. Reviewed & tuned by hand — every
+ * Rakshex finding-triage system prompt. Reviewed & tuned by hand — every
  * sentence in here is deliberate.
  *
  * Design notes:
@@ -53,7 +53,7 @@ export interface SummaryResult {
  *   so even models that skip "respond in JSON" literal instructions will
  *   comply.
  */
-const SYSTEM_PROMPT = `You are DevPulse's security-triage analyst. You help engineers
+const SYSTEM_PROMPT = `You are Rakshex's security-triage analyst. You help engineers
 understand the output of a static API security scan by writing concise,
 actionable summaries.
 
@@ -67,7 +67,7 @@ and fix something, file a ticket for later, or mark it as accepted risk. So:
 - Never invent CVE IDs, CVSS scores, exploit chains, or product names. If
   you don't know, don't guess. The raw scan data is authoritative.
 - Never recommend "hire a professional". Users already did, they hired
-  DevPulse. Give them the fix, don't punt.
+  Rakshex. Give them the fix, don't punt.
 - If there are no Critical/High findings, say so plainly — don't pad.
 
 Write for a senior backend engineer who is skim-reading in Slack. No
@@ -94,13 +94,11 @@ const OUTPUT_SCHEMA = {
         type: "array",
         maxItems: 5,
         items: { type: "string" },
-        description:
-          "Bullet list of the 1-5 most important findings to act on, each ≤ 120 chars.",
+        description: "Bullet list of the 1-5 most important findings to act on, each ≤ 120 chars.",
       },
       suggestedNextAction: {
         type: "string",
-        description:
-          "One concrete next action the engineer should take today, ≤ 160 chars.",
+        description: "One concrete next action the engineer should take today, ≤ 160 chars.",
       },
     },
   },
@@ -111,7 +109,7 @@ function buildUserMessage(req: SummaryRequest): string {
   // We prioritise Critical > High > Medium > Low.
   const severityRank = { Critical: 0, High: 1, Medium: 2, Low: 3 } as const;
   const sorted = [...req.findings].sort(
-    (a, b) => severityRank[a.severity] - severityRank[b.severity]
+    (a, b) => severityRank[a.severity] - severityRank[b.severity],
   );
   const MAX_FINDINGS = 80;
   const trimmed = sorted.slice(0, MAX_FINDINGS);
@@ -122,8 +120,7 @@ function buildUserMessage(req: SummaryRequest): string {
 
   const findingLines = trimmed
     .map((f, idx) => {
-      const loc =
-        f.endpoint || f.method ? ` [${f.method || ""} ${f.endpoint || ""}]` : "";
+      const loc = f.endpoint || f.method ? ` [${f.method || ""} ${f.endpoint || ""}]` : "";
       const remediation = f.remediation ? ` Fix: ${f.remediation}` : "";
       return `${idx + 1}. [${f.severity}] ${f.title}${loc} — ${f.category ?? "uncategorised"}.${remediation}`;
     })
@@ -141,9 +138,7 @@ ${findingLines}${truncated}
 Produce a triage summary conforming to the schema.`;
 }
 
-export async function summarizeFindings(
-  req: SummaryRequest
-): Promise<SummaryResult> {
+export async function summarizeFindings(req: SummaryRequest): Promise<SummaryResult> {
   if (req.findings.length === 0) {
     return {
       summary: `Clean scan — ${req.scanType} scan of ${req.collectionName} produced no findings. No action required.`,
@@ -167,9 +162,12 @@ export async function summarizeFindings(
   // invokeLLM returns OpenAI-shape responses; the JSON is in the first
   // choice's content.
   const raw = result.choices?.[0]?.message?.content;
-  const text = typeof raw === "string" ? raw : Array.isArray(raw) ? raw
-    .map(p => ("text" in p ? p.text : ""))
-    .join("") : "";
+  const text =
+    typeof raw === "string"
+      ? raw
+      : Array.isArray(raw)
+        ? raw.map((p) => ("text" in p ? p.text : "")).join("")
+        : "";
 
   try {
     const parsed = JSON.parse(text) as SummaryResult;

@@ -9,7 +9,7 @@
  *   - WHY it matters
  *   - HOW dangerous it is
  *   - HOW to fix it
- *   - HOW confident DevPulse is
+ *   - HOW confident Rakshex is
  */
 
 export type ConfidenceLevel = "low" | "medium" | "high" | "critical";

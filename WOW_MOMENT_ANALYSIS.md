@@ -1,4 +1,4 @@
-# DevPulse Wow Moment Analysis
+# Rakshex Wow Moment Analysis
 
 > Track the moments users say "whoa" or "this is exactly what I needed."
 > Date: 2026-05-17

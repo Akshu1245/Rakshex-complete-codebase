@@ -1,4 +1,4 @@
-# DevPulse Retention Dashboard
+# Rakshex Retention Dashboard
 
 > What we track to ensure developers stay.
 > Date: 2026-05-17
@@ -10,7 +10,7 @@
 ### North Star: Weekly Active Developers (WAD)
 
 ```
-Definition: Unique developers who interact with DevPulse in a 7-day window
+Definition: Unique developers who interact with Rakshex in a 7-day window
   (open sidebar, run scan, view finding, or check dashboard)
 
 Target:
@@ -167,7 +167,7 @@ Target: 1 "saved me" moment per user per month
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│  DevPulse Retention Dashboard                    [Refresh]   │
+│  Rakshex Retention Dashboard                    [Refresh]   │
 ├──────────────────────────────────────────────────────────────┤
 │                                                              │
 │  WAD: 347    ▲ 12% WoW    Activation: 48%    ▲ 3%          │

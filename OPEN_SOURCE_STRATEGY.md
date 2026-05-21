@@ -1,4 +1,4 @@
-# DevPulse Open Source Strategy
+# Rakshex Open Source Strategy
 
 > Strategic open-sourcing for trust, growth, and community.
 > Date: 2026-05-17
@@ -29,9 +29,9 @@
 
 ### Phase 1: Rules + SDKs (Now)
 
-- [ ] `devpulse-scanner-rules` — MIT licensed security rules
-- [ ] `devpulse-sdk` — TypeScript SDK for API integration
-- [ ] `devpulse-vscode-utils` — VS Code extension helpers
+- [ ] `rakshex-scanner-rules` — MIT licensed security rules
+- [ ] `rakshex-sdk` — TypeScript SDK for API integration
+- [ ] `rakshex-vscode-utils` — VS Code extension helpers
 
 ### Phase 2: Engines (Q3 2026)
 
@@ -47,36 +47,36 @@
 
 ### Phase 4: Platform (Q1 2027)
 
-- [ ] `devpulse-community` — Self-hosted scanner (limited features)
-- [ ] `devpulse-cli` — Command-line scanner
+- [ ] `rakshex-community` — Self-hosted scanner (limited features)
+- [ ] `rakshex-cli` — Command-line scanner
 
 ---
 
 ## 3. REPOSITORY STRUCTURE
 
 ```
-devpulse/
-├── devpulse/                    ← Main repo (proprietary)
+rakshex/
+├── rakshex/                    ← Main repo (proprietary)
 │   ├── server/
-│   ├── devpulse-vscode/
-│   └── devpulse-frontend/
+│   ├── rakshex-vscode/
+│   └── rakshex-frontend/
 │
-├── devpulse-scanner-rules/      ← Open source (MIT)
+├── rakshex-scanner-rules/      ← Open source (MIT)
 │   ├── rules/
 │   ├── tests/
 │   └── README.md
 │
-├── devpulse-sdk/                ← Open source (MIT)
+├── rakshex-sdk/                ← Open source (MIT)
 │   ├── src/
 │   ├── examples/
 │   └── README.md
 │
-├── devpulse-test-labs/          ← Open source (MIT)
+├── rakshex-test-labs/          ← Open source (MIT)
 │   ├── vulnerable-api/
 │   ├── rogue-agent/
 │   └── shadow-api/
 │
-└── devpulse-community/          ← Open source (AGPL)
+└── rakshex-community/          ← Open source (AGPL)
     ├── scanner/
     ├── cli/
     └── README.md
@@ -89,8 +89,8 @@ devpulse/
 ### For Rules Contributors
 
 ```bash
-# 1. Fork devpulse-scanner-rules
-git clone https://github.com/yourname/devpulse-scanner-rules.git
+# 1. Fork rakshex-scanner-rules
+git clone https://github.com/yourname/rakshex-scanner-rules.git
 
 # 2. Add a rule
 cat > rules/insecure-cors.yaml <<EOF

@@ -19,9 +19,9 @@ export default function BillingFailurePage() {
         </div>
         <h1 className="text-2xl font-bold">Payment didn&apos;t complete</h1>
         <p className="text-gray-400 mt-2">
-          We didn&apos;t receive confirmation from Razorpay. This usually means
-          the checkout was cancelled, or your card was declined. No money has
-          been charged, and your current plan is unchanged.
+          We didn&apos;t receive confirmation from Razorpay. This usually means the checkout was
+          cancelled, or your card was declined. No money has been charged, and your current plan is
+          unchanged.
         </p>
 
         <div className="mt-6 rounded-md border border-gray-800 bg-gray-950 p-4 text-left text-sm text-gray-400">
@@ -29,16 +29,12 @@ export default function BillingFailurePage() {
           <ul className="list-disc list-inside space-y-1">
             <li>Retry with a different card or UPI method.</li>
             <li>
-              Check that your bank&apos;s international / recurring-payment
-              setting is enabled.
+              Check that your bank&apos;s international / recurring-payment setting is enabled.
             </li>
             <li>
               If you were charged but the plan didn&apos;t activate, contact{" "}
-              <a
-                href="mailto:support@devpulse.in"
-                className="text-blue-400 hover:underline"
-              >
-                support@devpulse.in
+              <a href="mailto:support@rakshex.in" className="text-blue-400 hover:underline">
+                support@rakshex.in
               </a>{" "}
               with the Razorpay Order ID from your bank statement.
             </li>
@@ -53,7 +49,7 @@ export default function BillingFailurePage() {
             <ArrowLeft className="w-4 h-4" /> Try again
           </Link>
           <a
-            href="mailto:support@devpulse.in?subject=DevPulse%20payment%20failed"
+            href="mailto:support@rakshex.in?subject=Rakshex%20payment%20failed"
             className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md border border-gray-700 hover:bg-gray-800 text-gray-200 text-sm font-medium transition-colors"
           >
             <LifeBuoy className="w-4 h-4" /> Contact support

@@ -1,5 +1,5 @@
 /**
- * DevPulse Welcome / Onboarding View.
+ * Rakshex Welcome / Onboarding View.
  *
  * Shown in the activity bar when the user is not authenticated.
  * Provides:
@@ -15,7 +15,7 @@ import * as crypto from "crypto";
 import * as vscode from "vscode";
 
 export class WelcomeViewProvider implements vscode.WebviewViewProvider {
-  public static readonly viewType = "devpulse.welcome";
+  public static readonly viewType = "rakshex.welcome";
 
   private view?: vscode.WebviewView;
 
@@ -44,13 +44,11 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
           void this.onConnect(apiKey);
         }
       } else if (msg.type === "authenticate") {
-        vscode.commands.executeCommand("devpulse.authenticate");
+        vscode.commands.executeCommand("rakshex.authenticate");
       } else if (msg.type === "openDocs") {
-        vscode.env.openExternal(
-          vscode.Uri.parse("https://github.com/akshaynhcm-droid/Devpulse-#readme"),
-        );
+        vscode.env.openExternal(vscode.Uri.parse("https://rakshex.in"));
       } else if (msg.type === "createAccount") {
-        vscode.env.openExternal(vscode.Uri.parse("https://devpulse.in/signup"));
+        vscode.env.openExternal(vscode.Uri.parse("https://rakshex.in/signup"));
       } else if (msg.type === "quickAction" && this.onQuickAction) {
         this.onQuickAction(msg.action as string);
       }
@@ -72,7 +70,7 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy" content="${csp}" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DevPulse</title>
+  <title>Rakshex</title>
   <style>
     :root { color-scheme: var(--vscode-color-scheme, dark); }
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -524,7 +522,7 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
 <body>
   <div class="hero">
     <div class="logo-ring">🛡</div>
-    <div class="brand">DevPulse</div>
+    <div class="brand">Rakshex</div>
     <div class="tagline">Security &amp; cost intelligence for AI agents</div>
   </div>
 
@@ -548,7 +546,7 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
       <span id="error-feedback-msg"></span>
     </div>
     <input type="password" id="api-key-input" placeholder="Paste your API key (dp_...)" />
-    <button class="btn" id="connect-btn">Connect to DevPulse</button>
+    <button class="btn" id="connect-btn">Connect to Rakshex</button>
   </div>
 
   <!-- Trust badges -->
@@ -685,7 +683,7 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
           hideError();
           if (!key) { showError("Please enter your API key."); return; }
           if (key.length < 8) { showError("API key must be at least 8 characters."); return; }
-          if (!key.startsWith("dp_")) { showError('API key should start with "dp_". Check your DevPulse dashboard.'); return; }
+          if (!key.startsWith("dp_")) { showError('API key should start with "dp_". Check your Rakshex dashboard.'); return; }
           connectBtn.disabled = true;
           connectBtn.textContent = "Connecting\u2026";
           vscode.postMessage({ type: "connect", apiKey: key });
@@ -714,7 +712,7 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
         var msg = event.data;
         if (msg && msg.type === "connectError") {
           showError(msg.message || "Connection failed. Check your API key.");
-          if (connectBtn) { connectBtn.disabled = false; connectBtn.textContent = "Connect to DevPulse"; }
+          if (connectBtn) { connectBtn.disabled = false; connectBtn.textContent = "Connect to Rakshex"; }
         }
       });
     }());

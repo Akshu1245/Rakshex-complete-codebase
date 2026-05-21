@@ -4,10 +4,10 @@
  * Fires lifecycle events to user-registered HTTP endpoints. Generalises the
  * hard-coded Slack integration in server/slack.ts so any customer with an
  * internal alerting stack (PagerDuty, Opsgenie, Teams, a custom SIEM) can
- * react to DevPulse events without us having to build a bespoke integration.
+ * react to Rakshex events without us having to build a bespoke integration.
  *
  * Signature scheme (compatible with Razorpay/Stripe/GitHub conventions):
- *   Header:  X-DevPulse-Signature-256: sha256=<hex-hmac-sha256(body)>
+ *   Header:  X-Rakshex-Signature-256: sha256=<hex-hmac-sha256(body)>
  *   Body:    JSON document with { id, event, createdAt, data }
  *
  * Receivers verify by computing HMAC-SHA256 of the raw body with their
@@ -210,10 +210,10 @@ async function deliverToEndpoint(
         signal: controller.signal,
         headers: {
           "content-type": "application/json",
-          "user-agent": "DevPulse-Webhook/1.0",
-          "x-devpulse-event": payload.event,
-          "x-devpulse-delivery-id": payload.id,
-          "x-devpulse-signature-256": signature,
+          "user-agent": "Rakshex-Webhook/1.0",
+          "x-rakshex-event": payload.event,
+          "x-rakshex-delivery-id": payload.id,
+          "x-rakshex-signature-256": signature,
         },
         body,
         // @ts-expect-error: Node's undici fetch accepts a dispatcher/agent at

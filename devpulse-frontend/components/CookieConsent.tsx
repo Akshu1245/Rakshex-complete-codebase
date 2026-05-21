@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-const COOKIE_KEY = "devpulse.cookieConsent.v1";
+const COOKIE_KEY = "rakshex.cookieConsent.v1";
 
 type ConsentChoice = "accepted" | "rejected" | null;
 
 /**
- * Cookie-consent banner with accept/reject options. Because DevPulse only sets
+ * Cookie-consent banner with accept/reject options. Because Rakshex only sets
  * first-party strictly-necessary cookies (session + CSRF), the informational
  * notice covers the ePrivacy art. 5(3) exemption. If you later add analytics
  * or marketing cookies, wire them behind the acceptance state.
@@ -30,7 +30,7 @@ export function CookieConsent() {
     try {
       window.localStorage.setItem(
         COOKIE_KEY,
-        JSON.stringify({ choice, at: new Date().toISOString() })
+        JSON.stringify({ choice, at: new Date().toISOString() }),
       );
     } catch {
       // no-op
@@ -49,12 +49,9 @@ export function CookieConsent() {
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="leading-relaxed">
-          DevPulse uses strictly necessary first-party cookies for
-          authentication and security. No tracking, no advertising. See our{" "}
-          <Link
-            href="/privacy"
-            className="text-blue-400 underline hover:text-blue-300"
-          >
+          Rakshex uses strictly necessary first-party cookies for authentication and security. No
+          tracking, no advertising. See our{" "}
+          <Link href="/privacy" className="text-blue-400 underline hover:text-blue-300">
             Privacy Policy
           </Link>{" "}
           for details.

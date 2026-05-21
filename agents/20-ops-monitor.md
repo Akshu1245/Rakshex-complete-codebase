@@ -5,30 +5,34 @@
 
 ## Identity
 
-I am the monitoring agent for DevPulse. I watch the platform 24/7. I detect anomalies, alert on issues, and provide the data needed for debugging and capacity planning. I'm the eyes and ears of the platform.
+I am the monitoring agent for Rakshex. I watch the platform 24/7. I detect anomalies, alert on issues, and provide the data needed for debugging and capacity planning. I'm the eyes and ears of the platform.
 
 ## Monitoring Sources
 
 ### Sentry
+
 - Error tracking and crash reporting
 - Performance monitoring (transaction traces)
 - Release health tracking
 - Alert rules for error rate spikes
 
-### Prometheus (prom-client in server/_core/metrics.ts)
+### Prometheus (prom-client in server/\_core/metrics.ts)
+
 - HTTP request metrics (count, duration, status codes)
 - Gateway request metrics (latency, token usage, errors)
 - Database query metrics
 - Redis cache hit rate
 - BullMQ queue depth
 
-### Health Checks (server/_core/health.ts)
+### Health Checks (server/\_core/health.ts)
+
 - `/health` — Overall system health
 - Database connectivity
 - Redis connectivity
 - External service reachability
 
-### Structured Logs (Pino, server/_core/logger.ts)
+### Structured Logs (Pino, server/\_core/logger.ts)
+
 - Request ID tracking
 - PII redaction
 - Error stack traces
@@ -36,11 +40,11 @@ I am the monitoring agent for DevPulse. I watch the platform 24/7. I detect anom
 
 ## Alert Severities
 
-| Severity | Trigger | Response |
-|---|---|---|
-| 🔴 **Critical** | Platform down, 5xx > 10%, DB down | Immediate page |
-| 🟠 **Warning** | 4xx spike, queue backlog, slow responses | Next business hour |
-| 🟡 **Info** | Unusual but non-critical | Daily digest |
+| Severity        | Trigger                                  | Response           |
+| --------------- | ---------------------------------------- | ------------------ |
+| 🔴 **Critical** | Platform down, 5xx > 10%, DB down        | Immediate page     |
+| 🟠 **Warning**  | 4xx spike, queue backlog, slow responses | Next business hour |
+| 🟡 **Info**     | Unusual but non-critical                 | Daily digest       |
 
 ## Monitoring Dashboards
 
@@ -95,13 +99,13 @@ Dashboard: Jobs
 
 ## Key Metrics (SLIs)
 
-| SLI | Target |
-|---|---|
-| Uptime | 99.9% |
-| API latency P95 | < 500ms |
-| Gateway latency P95 | < 2s |
-| Error rate | < 1% |
-| Queue processing time | < 60s |
+| SLI                   | Target  |
+| --------------------- | ------- |
+| Uptime                | 99.9%   |
+| API latency P95       | < 500ms |
+| Gateway latency P95   | < 2s    |
+| Error rate            | < 1%    |
+| Queue processing time | < 60s   |
 
 ## Dependencies
 

@@ -58,7 +58,7 @@ interface AnthropicMessage {
 
 function toAnthropicMessages(
   messages: Message[],
-  enableCaching = false
+  enableCaching = false,
 ): {
   system: string | Array<{ type: "text"; text: string; cache_control?: { type: "ephemeral" } }>;
   anthropicMessages: AnthropicMessage[];
@@ -71,12 +71,13 @@ function toAnthropicMessages(
     const isLastMessage = i === messages.length - 1;
 
     if (msg.role === "system") {
-      const text = typeof msg.content === "string"
-        ? msg.content
-        : (msg.content as Array<{ type: "text"; text: string }>)
-            .filter(c => c.type === "text")
-            .map(c => c.text)
-            .join("\n");
+      const text =
+        typeof msg.content === "string"
+          ? msg.content
+          : (msg.content as Array<{ type: "text"; text: string }>)
+              .filter((c) => c.type === "text")
+              .map((c) => c.text)
+              .join("\n");
       systemParts.push(text);
       continue;
     }
@@ -88,11 +89,13 @@ function toAnthropicMessages(
       const text = typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content);
       anthropicMessages.push({
         role: "user",
-        content: [{
-          type: "tool_result",
-          tool_use_id: msg.tool_call_id ?? "unknown",
-          content: text,
-        }],
+        content: [
+          {
+            type: "tool_result",
+            tool_use_id: msg.tool_call_id ?? "unknown",
+            content: text,
+          },
+        ],
       });
       continue;
     }
@@ -132,7 +135,9 @@ function toAnthropicMessages(
 
   // System prompt with optional cache_control
   if (enableCaching && systemText) {
-    const systemArray = [{ type: "text" as const, text: systemText, cache_control: { type: "ephemeral" as const } }];
+    const systemArray = [
+      { type: "text" as const, text: systemText, cache_control: { type: "ephemeral" as const } },
+    ];
     return { system: systemArray, anthropicMessages };
   }
   return { system: systemText || "", anthropicMessages };
@@ -140,13 +145,15 @@ function toAnthropicMessages(
 
 /* ─── Tool translation ─────────────────────────────────────────────────── */
 
-function toAnthropicTools(tools?: Tool[]): Array<{
-  name: string;
-  description?: string;
-  input_schema: Record<string, unknown>;
-}> | undefined {
+function toAnthropicTools(tools?: Tool[]):
+  | Array<{
+      name: string;
+      description?: string;
+      input_schema: Record<string, unknown>;
+    }>
+  | undefined {
   if (!tools || tools.length === 0) return undefined;
-  return tools.map(t => ({
+  return tools.map((t) => ({
     name: t.function.name,
     description: t.function.description,
     input_schema: t.function.parameters ?? { type: "object", properties: {} },
@@ -158,19 +165,18 @@ function toAnthropicTools(tools?: Tool[]): Array<{
 export async function invokeAnthropic(
   params: InvokeParams,
   apiKey: string,
-  options: ProviderInvokeOptions & { enableCaching?: boolean; thinkingBudget?: number } = {}
+  options: ProviderInvokeOptions & { enableCaching?: boolean; thinkingBudget?: number } = {},
 ): Promise<InvokeResult> {
   if (options.killSwitchActive) {
-    throw new RuntimePolicyError(
-      "LLM API request blocked by DevPulse Kill Switch.",
-      { context: { policy: "kill_switch" } }
-    );
+    throw new RuntimePolicyError("LLM API request blocked by Rakshex Kill Switch.", {
+      context: { policy: "kill_switch" },
+    });
   }
 
   const model = options.model ?? "claude-3-5-sonnet-20241022";
   const { system, anthropicMessages } = toAnthropicMessages(
     params.messages,
-    options.enableCaching ?? false
+    options.enableCaching ?? false,
   );
 
   const body: Record<string, unknown> = {
@@ -202,10 +208,7 @@ export async function invokeAnthropic(
   // Extended thinking
   if (options.thinkingBudget && options.thinkingBudget > 0) {
     body.thinking = { type: "enabled", budget_tokens: options.thinkingBudget };
-    body.max_tokens = Math.max(
-      (body.max_tokens as number) || 4096,
-      options.thinkingBudget + 1024
-    );
+    body.max_tokens = Math.max((body.max_tokens as number) || 4096, options.thinkingBudget + 1024);
   }
 
   const response = await fetchWithTimeout("https://api.anthropic.com/v1/messages", {
@@ -226,12 +229,17 @@ export async function invokeAnthropic(
       `Anthropic invoke failed (${model}): ${response.status} ${response.statusText}`,
       {
         safeMessage: "AI request via Anthropic failed. Please try again.",
-        context: { provider: "anthropic", model, status: response.status, body: errorText.slice(0, 500) },
-      }
+        context: {
+          provider: "anthropic",
+          model,
+          status: response.status,
+          body: errorText.slice(0, 500),
+        },
+      },
     );
   }
 
-  const raw = await response.json() as {
+  const raw = (await response.json()) as {
     id: string;
     model: string;
     content: Array<{
@@ -251,12 +259,12 @@ export async function invokeAnthropic(
   };
 
   const textContent = raw.content
-    .filter(b => b.type === "text")
-    .map(b => ({ type: "text" as const, text: b.text ?? "" }));
+    .filter((b) => b.type === "text")
+    .map((b) => ({ type: "text" as const, text: b.text ?? "" }));
 
   const toolCalls: ToolCall[] = raw.content
-    .filter(b => b.type === "tool_use")
-    .map(b => ({
+    .filter((b) => b.type === "tool_use")
+    .map((b) => ({
       id: b.id ?? `toolu_${Date.now()}`,
       type: "function" as const,
       function: {
@@ -269,15 +277,17 @@ export async function invokeAnthropic(
     id: raw.id,
     created: Math.floor(Date.now() / 1000),
     model: raw.model,
-    choices: [{
-      index: 0,
-      message: {
-        role: "assistant",
-        content: textContent.length === 1 ? textContent[0].text : textContent,
-        ...(toolCalls.length > 0 ? { tool_calls: toolCalls } : {}),
+    choices: [
+      {
+        index: 0,
+        message: {
+          role: "assistant",
+          content: textContent.length === 1 ? textContent[0].text : textContent,
+          ...(toolCalls.length > 0 ? { tool_calls: toolCalls } : {}),
+        },
+        finish_reason: raw.stop_reason === "end_turn" ? "stop" : (raw.stop_reason ?? "stop"),
       },
-      finish_reason: raw.stop_reason === "end_turn" ? "stop" : raw.stop_reason ?? "stop",
-    }],
+    ],
     usage: {
       prompt_tokens: raw.usage.input_tokens,
       completion_tokens: raw.usage.output_tokens,
@@ -288,9 +298,10 @@ export async function invokeAnthropic(
   // Auto-track token usage
   if (options.userId && result.usage) {
     const pricing = ANTHROPIC_PRICING[model] ?? { prompt: 3, completion: 15 };
-    const cost = (result.usage.prompt_tokens / 1_000_000) * pricing.prompt +
+    const cost =
+      (result.usage.prompt_tokens / 1_000_000) * pricing.prompt +
       (result.usage.completion_tokens / 1_000_000) * pricing.completion;
-    import("../db").then(async db => {
+    import("../db").then(async (db) => {
       try {
         await db.recordTokenUsage(
           options.userId!,
@@ -298,7 +309,7 @@ export async function invokeAnthropic(
           result.usage!.prompt_tokens,
           result.usage!.completion_tokens,
           raw.usage.cache_read_input_tokens ?? 0,
-          cost
+          cost,
         );
       } catch (err) {
         logger.warn({ err }, "[Anthropic] Failed to record token usage");
@@ -318,10 +329,9 @@ export const anthropicProvider: LLMProvider = {
   async invoke(params: InvokeParams, options?: ProviderInvokeOptions): Promise<InvokeResult> {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
-      throw new ExternalServiceError(
-        "Anthropic API key not configured.",
-        { safeMessage: "Anthropic AI is not configured. Please contact support." }
-      );
+      throw new ExternalServiceError("Anthropic API key not configured.", {
+        safeMessage: "Anthropic AI is not configured. Please contact support.",
+      });
     }
     return invokeAnthropic(params, apiKey, {
       ...options,
@@ -332,8 +342,7 @@ export const anthropicProvider: LLMProvider = {
     });
   },
 
-  supportsModel: (model: string) =>
-    model.startsWith("claude-"),
+  supportsModel: (model: string) => model.startsWith("claude-"),
 
   supportsVision: () => true,
   supportsPromptCaching: () => true,

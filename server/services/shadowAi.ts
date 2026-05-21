@@ -9,15 +9,12 @@
  * The classifier is deliberately conservative — it never blocks traffic; it
  * only labels and persists. Enforcement happens at the gateway. This service
  * exists so customers can pipe their existing egress logs (Datadog, AWS VPC
- * flow logs, gateway access logs) into DevPulse and immediately see which
+ * flow logs, gateway access logs) into Rakshex and immediately see which
  * applications are routing around the sanctioned path.
  */
 
 import { logger } from "../_core/logger";
-import type {
-  AiAllowlistRow,
-  InsertShadowAiEventRow,
-} from "../../drizzle/schema";
+import type { AiAllowlistRow, InsertShadowAiEventRow } from "../../drizzle/schema";
 
 export interface ShadowAiInputEvent {
   source: string;
@@ -61,7 +58,7 @@ const KNOWN_LLM_HOSTS = [
 
 export function classifyShadowEvent(
   event: ShadowAiInputEvent,
-  allowlist: ReadonlyArray<AiAllowlistRow>
+  allowlist: ReadonlyArray<AiAllowlistRow>,
 ): {
   isAllowlisted: boolean;
   severity: "info" | "low" | "medium" | "high" | "critical";
@@ -70,17 +67,15 @@ export function classifyShadowEvent(
   const host = event.host.toLowerCase();
   const model = event.model?.toLowerCase();
   const allowlistedByHost = allowlist.some(
-    row => row.kind === "host" && hostMatches(host, row.pattern)
+    (row) => row.kind === "host" && hostMatches(host, row.pattern),
   );
   const allowlistedByModel =
     typeof model === "string" &&
     allowlist.some(
-      row =>
-        row.kind === "model" &&
-        model.toLowerCase().includes(row.pattern.toLowerCase())
+      (row) => row.kind === "model" && model.toLowerCase().includes(row.pattern.toLowerCase()),
     );
   const isAllowlisted = allowlistedByHost || allowlistedByModel;
-  const isLLMHost = KNOWN_LLM_HOSTS.some(known => host.includes(known));
+  const isLLMHost = KNOWN_LLM_HOSTS.some((known) => host.includes(known));
   if (isAllowlisted) return { isAllowlisted, severity: "info", isLLMHost };
   if (!isLLMHost) return { isAllowlisted, severity: "low", isLLMHost };
   // Unsanctioned LLM call → medium by default; bumped to "high" if it's a
@@ -117,7 +112,7 @@ function parseEvent(input: unknown): ShadowAiInputEvent | null {
 
 export async function ingestShadowAiEvents(
   db: ShadowAiDb,
-  events: ReadonlyArray<unknown>
+  events: ReadonlyArray<unknown>,
 ): Promise<ShadowAiSummary> {
   const summary: ShadowAiSummary = {
     total: 0,
@@ -155,9 +150,7 @@ export async function ingestShadowAiEvents(
         severity: cls.severity,
         ...(ev.model ? { detectedModel: ev.model } : {}),
         ...(ev.raw ? { rawSignals: ev.raw } : {}),
-        ...(ev.occurredAt
-          ? { occurredAt: new Date(ev.occurredAt) }
-          : {}),
+        ...(ev.occurredAt ? { occurredAt: new Date(ev.occurredAt) } : {}),
       };
       await db.recordShadowAiEvent(row);
     } catch (err) {

@@ -1,12 +1,12 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Best Portkey Alternative for AI Governance (2026) — DevPulse",
+  title: "Best Portkey Alternative for AI Governance (2026) — Rakshex",
   description:
-    "Portkey is the best LLM gateway. DevPulse adds security scanning, compliance reporting, and a real kill switch. Honest comparison.",
+    "Portkey is the best LLM gateway. Rakshex adds security scanning, compliance reporting, and a real kill switch. Honest comparison.",
   keywords: [
     "Portkey alternative",
-    "Portkey vs DevPulse",
+    "Portkey vs Rakshex",
     "LLM gateway security",
     "AI governance",
     "prompt injection",
@@ -35,7 +35,7 @@ export default function BlogPortkeyAlternative() {
           <p className="text-xl text-gray-200">
             Portkey has the most sophisticated LLM routing and fallback system on the market. If you
             need multi-provider load balancing, it is the right tool. But routing is not governance.
-            This post covers what Portkey does not — and why teams are adding DevPulse.
+            This post covers what Portkey does not — and why teams are adding Rakshex.
           </p>
 
           <h2 className="text-2xl font-bold text-white mt-8">What Portkey Does Well</h2>
@@ -49,7 +49,7 @@ export default function BlogPortkeyAlternative() {
 
           <h2 className="text-2xl font-bold text-white mt-8">Where Portkey Leaves Gaps</h2>
           <p>
-            Portkey's philosophy is "route safely." DevPulse's is "route safely, scan for threats,
+            Portkey's philosophy is "route safely." Rakshex's is "route safely, scan for threats,
             and stop traffic if something is wrong." The gaps:
           </p>
           <ul className="list-disc list-inside space-y-2">
@@ -61,7 +61,7 @@ export default function BlogPortkeyAlternative() {
           </ul>
 
           <h2 className="text-2xl font-bold text-white mt-8">
-            DevPulse vs Portkey: Governance Comparison
+            Rakshex vs Portkey: Governance Comparison
           </h2>
           <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden my-4">
             <table className="w-full text-left text-sm">
@@ -69,7 +69,7 @@ export default function BlogPortkeyAlternative() {
                 <tr>
                   <th className="p-3">Capability</th>
                   <th className="p-3 text-center">Portkey</th>
-                  <th className="p-3 text-center text-blue-300">DevPulse</th>
+                  <th className="p-3 text-center text-blue-300">Rakshex</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-700">
@@ -97,24 +97,24 @@ export default function BlogPortkeyAlternative() {
           </div>
 
           <h2 className="text-2xl font-bold text-white mt-8">When to Use Both</h2>
-          <p>If you need Portkey's advanced routing AND DevPulse's security, you can run both:</p>
+          <p>If you need Portkey's advanced routing AND Rakshex's security, you can run both:</p>
           <ol className="list-decimal list-inside space-y-2">
             <li>Keep Portkey as your LLM router</li>
             <li>
-              Route DevPulse <em>after</em> Portkey for security scanning
+              Route Rakshex <em>after</em> Portkey for security scanning
             </li>
-            <li>DevPulse captures the final request/response for audit + cost tracking</li>
+            <li>Rakshex captures the final request/response for audit + cost tracking</li>
           </ol>
           <p>
-            Most teams eventually simplify to DevPulse alone once they realize the routing they
+            Most teams eventually simplify to Rakshex alone once they realize the routing they
             thought they needed was mostly workaround for missing security controls.
           </p>
 
           <h2 className="text-2xl font-bold text-white mt-8">The Verdict</h2>
           <p>
-            Portkey is the best router. DevPulse is the best security + governance layer. If you
-            only need routing, Portkey wins. If you need to ship AI to production safely, DevPulse
-            closes the gaps Portkey is not designed to cover.
+            Portkey is the best router. Rakshex is the best security + governance layer. If you only
+            need routing, Portkey wins. If you need to ship AI to production safely, Rakshex closes
+            the gaps Portkey is not designed to cover.
           </p>
         </div>
 
@@ -124,7 +124,7 @@ export default function BlogPortkeyAlternative() {
             href="/demo"
             className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors"
           >
-            Try DevPulse Free →
+            Try Rakshex Free →
           </Link>
         </div>
       </div>

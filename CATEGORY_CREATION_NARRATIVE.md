@@ -1,4 +1,4 @@
-# DevPulse Category Creation Narrative
+# Rakshex Category Creation Narrative
 
 > We're not competing in security. We're creating AI runtime protection.
 > Date: 2026-05-17
@@ -47,7 +47,7 @@ No existing tool stops this.
 ```
 ┌─────────────────────────────────────┐
 │  AI Runtime Protection              │
-│  (DevPulse)                         │
+│  (Rakshex)                         │
 ├─────────────────────────────────────┤
 │  Agent Monitoring                   │
 │  • Loop detection                   │
@@ -101,7 +101,7 @@ AI agents didn't exist 3 years ago. Now:
 | Enterprise demand | SOC2 requires AI security      |
 | VC interest       | $2B+ invested in AI security   |
 
-### 4. DevPulse Is First
+### 4. Rakshex Is First
 
 - First VS Code extension for AI security
 - First hidden cost attribution for reasoning tokens
@@ -120,7 +120,7 @@ AI agents didn't exist 3 years ago. Now:
 Today, 30M developers are building AI agents with zero
 security tooling designed for them.
 
-DevPulse is creating that category.
+Rakshex is creating that category.
 
 We're not a better Snyk. We're what comes after Snyk.
 
@@ -135,7 +135,7 @@ We're building that essential layer."
 ```
 "You wouldn't deploy a web app without HTTPS.
 
-You shouldn't deploy an AI agent without DevPulse.
+You shouldn't deploy an AI agent without Rakshex.
 
 We catch the things that only happen when AI is running:
 - Infinite loops burning your budget
@@ -150,7 +150,7 @@ Built for developers. No security team needed."
 ```
 "Your developers are using AI. Are you protected?
 
-DevPulse is the first AI Runtime Protection platform.
+Rakshex is the first AI Runtime Protection platform.
 
 We monitor, detect, and prevent:
 - Budget overruns from AI agents
@@ -174,7 +174,7 @@ SOC2-ready. Enterprise-grade. Deployed in minutes."
     Security             │
                          │
                     ┌────┴────┐
-                    │ DevPulse │
+                    │ Rakshex │
                     │ (first)  │
                     └─────────┘
 ```
@@ -190,13 +190,13 @@ SOC2-ready. Enterprise-grade. Deployed in minutes."
 
 ## METRICS THAT PROVE CATEGORY CREATION
 
-| Metric                                     | Target                  | Timeline  |
-| ------------------------------------------ | ----------------------- | --------- |
-| "AI Runtime Protection" search volume      | #1 result               | 6 months  |
-| DevPulse = AI security (brand association) | 50% unprompted          | 12 months |
-| Competitors mentioning us                  | 3+                      | 12 months |
-| Analyst coverage (Gartner, Forrester)      | 1 mention               | 18 months |
-| Category coined in industry                | "AI Runtime Protection" | 12 months |
+| Metric                                    | Target                  | Timeline  |
+| ----------------------------------------- | ----------------------- | --------- |
+| "AI Runtime Protection" search volume     | #1 result               | 6 months  |
+| Rakshex = AI security (brand association) | 50% unprompted          | 12 months |
+| Competitors mentioning us                 | 3+                      | 12 months |
+| Analyst coverage (Gartner, Forrester)     | 1 mention               | 18 months |
+| Category coined in industry               | "AI Runtime Protection" | 12 months |
 
 ---
 

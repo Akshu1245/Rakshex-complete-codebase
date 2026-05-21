@@ -1,4 +1,4 @@
-# DevPulse Product Polish Report
+# Rakshex Product Polish Report
 
 > Every pixel, every millisecond, every word.
 > Date: 2026-05-17
@@ -117,7 +117,7 @@ Every interaction should be:
 | Critical alert  | "CRITICAL: Secret detected" | "We found an API key — let's fix it 🔑"      |
 | Cost alert      | "High cost"                 | "This endpoint cost $247 this week"          |
 | AgentGuard stop | "AgentGuard stopped agent"  | "Stopped a runaway agent — saved ~$32 💰"    |
-| Onboarding      | "Welcome to DevPulse"       | "Let's secure your AI agents in 2 minutes"   |
+| Onboarding      | "Welcome to Rakshex"        | "Let's secure your AI agents in 2 minutes"   |
 
 ---
 

@@ -20,30 +20,30 @@ export default function ROICalculator() {
     const manualMonitoringCost = manualMonitoringHours * hourlyRate;
     const totalCostOfNothing = annualIncidentCost + auditPrepCost + manualMonitoringCost;
 
-    // Cost of DevPulse
-    const devPulseProCost = 99 * 12; // $99/mo
-    const devPulseSetupHours = 8;
-    const devPulseSetupCost = devPulseSetupHours * hourlyRate;
-    const reducedIncidents = Math.max(0, incidentsPerYear - 1); // DevPulse prevents ~1 incident/yr
+    // Cost of Rakshex
+    const rakshexProCost = 99 * 12; // $99/mo
+    const rakshexSetupHours = 8;
+    const rakshexSetupCost = rakshexSetupHours * hourlyRate;
+    const reducedIncidents = Math.max(0, incidentsPerYear - 1); // Rakshex prevents ~1 incident/yr
     const reducedIncidentCost = reducedIncidents * avgIncidentCost;
-    const totalDevPulseCost = devPulseProCost + devPulseSetupCost + reducedIncidentCost;
+    const totalRakshexCost = rakshexProCost + rakshexSetupCost + reducedIncidentCost;
 
-    const savings = totalCostOfNothing - totalDevPulseCost;
-    const roi = ((savings - devPulseProCost) / devPulseProCost) * 100;
+    const savings = totalCostOfNothing - totalRakshexCost;
+    const roi = ((savings - rakshexProCost) / rakshexProCost) * 100;
     const paybackMonths =
-      devPulseProCost > 0 ? (devPulseSetupCost + devPulseProCost) / (savings / 12) : 0;
+      rakshexProCost > 0 ? (rakshexSetupCost + rakshexProCost) / (savings / 12) : 0;
 
     return {
       totalCostOfNothing,
-      totalDevPulseCost,
+      totalRakshexCost,
       savings,
       roi: Math.round(roi),
       paybackMonths: Math.max(0.1, paybackMonths),
       annualIncidentCost,
       auditPrepCost,
       manualMonitoringCost,
-      devPulseProCost,
-      devPulseSetupCost,
+      rakshexProCost,
+      rakshexSetupCost,
     };
   }, [monthlySpend, incidentsPerYear, avgIncidentCost, teamSize, hourlyRate, complianceRequired]);
 
@@ -61,7 +61,7 @@ export default function ROICalculator() {
 
         <h1 className="text-4xl font-bold mb-2">AI Security ROI Calculator</h1>
         <p className="text-gray-400 mb-8">
-          Calculate what unmonitored AI agents cost your organization — and what DevPulse saves.
+          Calculate what unmonitored AI agents cost your organization — and what Rakshex saves.
         </p>
 
         <div className="grid lg:grid-cols-2 gap-8">
@@ -181,29 +181,27 @@ export default function ROICalculator() {
             </div>
 
             <div className="bg-gray-800/50 border border-blue-500/30 rounded-xl p-6">
-              <h2 className="text-xl font-bold text-blue-400 mb-4">Cost with DevPulse</h2>
+              <h2 className="text-xl font-bold text-blue-400 mb-4">Cost with Rakshex</h2>
               <div className="space-y-3 text-gray-300">
                 <div className="flex justify-between">
-                  <span>DevPulse Pro (annual)</span>
-                  <span className="font-mono">{fmt(results.devPulseProCost)}</span>
+                  <span>Rakshex Pro (annual)</span>
+                  <span className="font-mono">{fmt(results.rakshexProCost)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Setup (one-time)</span>
-                  <span className="font-mono">{fmt(results.devPulseSetupCost)}</span>
+                  <span className="font-mono">{fmt(results.rakshexSetupCost)}</span>
                 </div>
                 <div className="flex justify-between text-gray-500">
                   <span>Residual incident cost (1/yr)</span>
                   <span className="font-mono">
                     {fmt(
-                      results.totalDevPulseCost -
-                        results.devPulseProCost -
-                        results.devPulseSetupCost,
+                      results.totalRakshexCost - results.rakshexProCost - results.rakshexSetupCost,
                     )}
                   </span>
                 </div>
                 <div className="border-t border-gray-700 pt-3 flex justify-between font-bold text-blue-300">
                   <span>Total annual cost</span>
-                  <span className="font-mono">{fmt(results.totalDevPulseCost)}</span>
+                  <span className="font-mono">{fmt(results.totalRakshexCost)}</span>
                 </div>
               </div>
             </div>

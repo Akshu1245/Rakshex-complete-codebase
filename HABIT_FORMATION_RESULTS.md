@@ -1,6 +1,6 @@
-# DevPulse Habit Formation Results
+# Rakshex Habit Formation Results
 
-> Are users forming habits around DevPulse?
+> Are users forming habits around Rakshex?
 > Date: 2026-05-17
 
 ---

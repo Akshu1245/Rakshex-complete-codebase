@@ -6,7 +6,7 @@ import type { Request } from "express";
 function mockReq(overrides: Partial<Request> = {}): Request {
   return {
     protocol: "https",
-    hostname: "app.devpulse.in",
+    hostname: "app.rakshex.in",
     headers: {},
     ...overrides,
   } as unknown as Request;
@@ -40,8 +40,8 @@ describe("getSessionCookieOptions", () => {
   it("uses sameSite=lax for same-origin requests", () => {
     const req = mockReq({
       protocol: "https",
-      hostname: "app.devpulse.in",
-      headers: { origin: "https://app.devpulse.in" },
+      hostname: "app.rakshex.in",
+      headers: { origin: "https://app.rakshex.in" },
     });
     const opts = getSessionCookieOptions(req);
     expect(opts.sameSite).toBe("lax");
@@ -50,9 +50,9 @@ describe("getSessionCookieOptions", () => {
   it("uses sameSite=none for cross-origin HTTPS requests", () => {
     const req = mockReq({
       protocol: "https",
-      hostname: "api.devpulse.in",
+      hostname: "api.rakshex.in",
       headers: {
-        origin: "https://app.devpulse.in",
+        origin: "https://app.rakshex.in",
         "x-forwarded-proto": "https",
       },
     });
@@ -63,17 +63,17 @@ describe("getSessionCookieOptions", () => {
   it("uses sameSite=lax for cross-origin HTTP requests", () => {
     const req = mockReq({
       protocol: "http",
-      hostname: "api.devpulse.in",
-      headers: { origin: "https://app.devpulse.in" },
+      hostname: "api.rakshex.in",
+      headers: { origin: "https://app.rakshex.in" },
     });
     const opts = getSessionCookieOptions(req);
     expect(opts.sameSite).toBe("lax");
   });
 
   it("sets domain for non-localhost hostnames", () => {
-    const req = mockReq({ hostname: "app.devpulse.in" });
+    const req = mockReq({ hostname: "app.rakshex.in" });
     const opts = getSessionCookieOptions(req);
-    expect(opts.domain).toBe(".app.devpulse.in");
+    expect(opts.domain).toBe(".app.rakshex.in");
   });
 
   it("does not set domain for localhost", () => {
@@ -100,8 +100,8 @@ describe("getSessionCookieOptions", () => {
   it("handles subdomain origin as same-origin", () => {
     const req = mockReq({
       protocol: "https",
-      hostname: "devpulse.in",
-      headers: { origin: "https://app.devpulse.in" },
+      hostname: "rakshex.in",
+      headers: { origin: "https://app.rakshex.in" },
     });
     const opts = getSessionCookieOptions(req);
     expect(opts.sameSite).toBe("lax");

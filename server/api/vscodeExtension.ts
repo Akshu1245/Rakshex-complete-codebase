@@ -1,6 +1,6 @@
 /**
  * VS Code Extension API Router
- * Provides endpoints for the DevPulse VS Code extension
+ * Provides endpoints for the Rakshex VS Code extension
  */
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
@@ -48,22 +48,17 @@ export const vscodeExtensionRouter = router({
   recordActivity: protectedProcedure
     .input(
       z.object({
-        type: z.enum([
-          "heartbeat",
-          "file_change",
-          "session_start",
-          "session_end",
-        ]),
+        type: z.enum(["heartbeat", "file_change", "session_start", "session_end"]),
         data: z.record(z.string(), z.any()),
         timestamp: z.string().datetime(),
-      })
+      }),
     )
     .mutation(async ({ input, ctx }) => {
       // Per-user 60-events-per-minute rate limit, distributed via Redis.
       const { allowed } = await rateLimitSlidingWindow(
         `ratelimit:vscode-activity:${ctx.user.id}`,
         ACTIVITY_LIMIT,
-        ACTIVITY_WINDOW_MS
+        ACTIVITY_WINDOW_MS,
       );
       if (!allowed) {
         throw new TRPCError({
@@ -73,12 +68,7 @@ export const vscodeExtensionRouter = router({
       }
 
       // Store activity in database
-      await db.recordVSCodeActivity(
-        ctx.user.id,
-        input.type,
-        input.data,
-        new Date(input.timestamp)
-      );
+      await db.recordVSCodeActivity(ctx.user.id, input.type, input.data, new Date(input.timestamp));
       return { success: true };
     }),
 
@@ -92,15 +82,9 @@ export const vscodeExtensionRouter = router({
       db.getTokenUsageByUserId(ctx.user.id, 7),
     ]);
 
-    const totalFindings = recentScans.reduce(
-      (sum, scan) => sum + (scan.totalFindings || 0),
-      0
-    );
+    const totalFindings = recentScans.reduce((sum, scan) => sum + (scan.totalFindings || 0), 0);
     const openFindings = await db.getOpenFindingsCount(ctx.user.id);
-    const weeklyCost = tokenUsage.reduce(
-      (sum, u) => sum + toNumber(u.costUSD),
-      0
-    );
+    const weeklyCost = tokenUsage.reduce((sum, u) => sum + toNumber(u.costUSD), 0);
 
     return {
       collections: collections.length,
@@ -140,7 +124,7 @@ export const vscodeExtensionRouter = router({
 
       const findings = await db.getFindingsByScanId(lastScan.id);
       const criticalFindings = findings.filter(
-        f => f.severity === "Critical" || f.severity === "High"
+        (f) => f.severity === "Critical" || f.severity === "High",
       );
 
       return {
@@ -180,8 +164,7 @@ export const vscodeExtensionRouter = router({
       if (user.plan === "free" && (user.scansRemaining ?? 0) <= 0) {
         throw new TRPCError({
           code: "FORBIDDEN",
-          message:
-            "Scan limit reached. Upgrade to Pro for unlimited scans.",
+          message: "Scan limit reached. Upgrade to Pro for unlimited scans.",
         });
       }
 
@@ -193,7 +176,7 @@ export const vscodeExtensionRouter = router({
         "pending",
         0,
         "LOW",
-        0
+        0,
       );
 
       // Decrement free user scans
@@ -212,11 +195,8 @@ export const vscodeExtensionRouter = router({
   getRecentFindings: protectedProcedure
     .input(z.object({ limit: z.number().int().min(1).max(50).default(5) }))
     .query(async ({ input, ctx }) => {
-      const findings = await db.getRecentFindingsForUser(
-        ctx.user.id,
-        input.limit
-      );
-      return findings.map(f => ({
+      const findings = await db.getRecentFindingsForUser(ctx.user.id, input.limit);
+      return findings.map((f) => ({
         id: f.id,
         title: f.title,
         severity: f.severity,
@@ -234,7 +214,7 @@ export const vscodeExtensionRouter = router({
       z.object({
         findingId: z.string(),
         status: z.enum(["open", "in-progress", "resolved"]),
-      })
+      }),
     )
     .mutation(async ({ input, ctx }) => {
       const finding = await db.getFindingById(input.findingId);
@@ -253,7 +233,9 @@ export const vscodeExtensionRouter = router({
    * Copilot ask endpoint for VS Code extension
    */
   copilotAsk: protectedProcedure
-    .input(z.object({ question: z.string().min(1).max(2000), context: z.string().max(500).optional() }))
+    .input(
+      z.object({ question: z.string().min(1).max(2000), context: z.string().max(500).optional() }),
+    )
     .mutation(async ({ input, ctx }) => {
       // Try to use the copilot service if available
       try {
@@ -308,5 +290,5 @@ function generateCopilotFallback(question: string): string {
   if (q.includes("auth") || q.includes("authentication")) {
     return "Authentication vulnerabilities often stem from weak password policies, missing MFA, or improper session management. Remediation: Enforce strong passwords, implement multi-factor authentication, use secure session cookies with HttpOnly/Secure flags, and implement account lockout after failed attempts.";
   }
-  return "I'm your DevPulse Security Copilot. I can help explain findings, suggest fixes, and review your security posture. For detailed analysis, ensure your DevPulse workspace has recent scan data available.";
+  return "I'm your Rakshex Security Copilot. I can help explain findings, suggest fixes, and review your security posture. For detailed analysis, ensure your Rakshex workspace has recent scan data available.";
 }

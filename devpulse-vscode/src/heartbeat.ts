@@ -1,10 +1,10 @@
 import * as vscode from "vscode";
-import type { DevPulseApi } from "./api";
+import type { RakshexApi } from "./api";
 
 /**
  * Periodic + event-driven activity reporting. Never sends file contents.
- * Respects `devpulse.heartbeatIntervalSec` (0 disables) and
- * `devpulse.trackFileChanges`.
+ * Respects `rakshex.heartbeatIntervalSec` (0 disables) and
+ * `rakshex.trackFileChanges`.
  */
 export class HeartbeatService implements vscode.Disposable {
   private timer: ReturnType<typeof setInterval> | undefined;
@@ -12,7 +12,7 @@ export class HeartbeatService implements vscode.Disposable {
   private readonly pendingFileChanges = new Set<string>();
 
   constructor(
-    private readonly api: DevPulseApi,
+    private readonly api: RakshexApi,
     private readonly isSignedIn: () => boolean,
   ) {}
 
@@ -21,7 +21,7 @@ export class HeartbeatService implements vscode.Disposable {
   }
 
   start(): void {
-    const cfg = vscode.workspace.getConfiguration("devpulse");
+    const cfg = vscode.workspace.getConfiguration("rakshex");
     const intervalSec = cfg.get<number>("heartbeatIntervalSec", 120);
     const trackFiles = cfg.get<boolean>("trackFileChanges", true);
 

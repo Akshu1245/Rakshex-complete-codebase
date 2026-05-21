@@ -1,22 +1,19 @@
 /**
- * DevPulse SDK — OpenAI Wrapper
+ * Rakshex SDK — OpenAI Wrapper
  *
  * Wraps an OpenAI client instance. Intercepts chat.completions.create,
- * captures telemetry, and forwards to DevPulse.
+ * captures telemetry, and forwards to Rakshex.
  *
  * Usage:
- *   const dp = new DevPulse({ apiKey, workspaceId });
+ *   const dp = new Rakshex({ apiKey, workspaceId });
  *   const openai = dp.wrap(new OpenAI());
  *   const response = await openai.chat.completions.create({ ... });
  */
 import type { TelemetryCollector } from "../telemetry/collector.js";
 import type { ToolCallRecord } from "../types.js";
 
-export function wrapOpenAI(
-  client: any,
-  collector: TelemetryCollector,
-): any {
-  if ((client as any)._devpulseWrapped) return client;
+export function wrapOpenAI(client: any, collector: TelemetryCollector): any {
+  if ((client as any)._rakshexWrapped) return client;
 
   const original = client.chat.completions.create.bind(client.chat.completions);
 
@@ -81,6 +78,6 @@ export function wrapOpenAI(
     return response;
   } as any;
 
-  (client as any)._devpulseWrapped = true;
+  (client as any)._rakshexWrapped = true;
   return client;
 }

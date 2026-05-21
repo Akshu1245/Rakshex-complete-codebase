@@ -1,4 +1,4 @@
-# DevPulse 3-Minute Demo Narrative
+# Rakshex 3-Minute Demo Narrative
 
 > The exact script for investor demos, Product Hunt videos, and YC interviews.
 > Date: 2026-05-17
@@ -7,11 +7,11 @@
 
 ## THE HOOK (0:00 - 0:15)
 
-**[Screen: VS Code with DevPulse sidebar open]**
+**[Screen: VS Code with Rakshex sidebar open]**
 
 > "Every developer building with AI is paying 2-3× more for LLM APIs than they realize.
 >
-> I'm Akshay, founder of DevPulse. We built the first tool that stops AI agents from burning your API budget."
+> I'm Akshay, founder of Rakshex. We built the first tool that stops AI agents from burning your API budget."
 
 ---
 
@@ -35,9 +35,9 @@
 
 ## SOLUTION OVERVIEW (0:45 - 1:15)
 
-**[Screen: DevPulse VS Code extension — welcome view]**
+**[Screen: Rakshex VS Code extension — welcome view]**
 
-> "DevPulse is a VS Code extension that protects you from three things:
+> "Rakshex is a VS Code extension that protects you from three things:
 >
 > One: Hidden cost detection. We attribute every API call to its real cost — including reasoning tokens providers hide.
 >
@@ -58,7 +58,7 @@
 
 ### Step 2: Run Scan (15s)
 
-> "DevPulse found 6 issues: 1 Critical, 2 High, 2 Medium, 1 Low."
+> "Rakshex found 6 issues: 1 Critical, 2 High, 2 Medium, 1 Low."
 > [Click scan, results appear]
 
 ### Step 3: Show Hidden Cost (15s)
@@ -84,7 +84,7 @@
 
 > "In 30 days of beta:
 >
-> - 500 developers using DevPulse
+> - 500 developers using Rakshex
 > - 47 rogue agents stopped
 > - $12,000 in hidden costs found
 > - 87% true positive rate on security scans"
@@ -93,13 +93,13 @@
 
 ## ASK (2:30 - 3:00)
 
-**[Screen: DevPulse logo + contact]**
+**[Screen: Rakshex logo + contact]**
 
 > "We're raising our seed round to scale from hundreds to millions of developers.
 >
 > The AI infrastructure market is exploding, and somebody needs to protect developers from the costs and risks.
 >
-> DevPulse is that protection.
+> Rakshex is that protection.
 >
 > Thank you."
 
@@ -116,12 +116,12 @@
 
 ### Slide B: Competitive Positioning
 
-|             | Snyk    | Datadog | Portkey | **DevPulse** |
-| ----------- | ------- | ------- | ------- | ------------ |
-| IDE-native  | Partial | No      | No      | **Yes**      |
-| LLM-aware   | No      | No      | Yes     | **Yes**      |
-| Cost intel  | No      | No      | Partial | **Yes**      |
-| Kill-switch | No      | No      | No      | **Yes**      |
+|             | Snyk    | Datadog | Portkey | **Rakshex** |
+| ----------- | ------- | ------- | ------- | ----------- |
+| IDE-native  | Partial | No      | No      | **Yes**     |
+| LLM-aware   | No      | No      | Yes     | **Yes**     |
+| Cost intel  | No      | No      | Partial | **Yes**     |
+| Kill-switch | No      | No      | No      | **Yes**     |
 
 ### Slide C: Business Model
 

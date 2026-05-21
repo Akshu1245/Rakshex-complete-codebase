@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import type { DevPulseApi, Finding, FindingStatus, Severity } from "./api";
+import type { RakshexApi, Finding, FindingStatus, Severity } from "./api";
 
 const SEVERITY_ORDER: Severity[] = ["Critical", "High", "Medium", "Low"];
 
@@ -68,21 +68,21 @@ export class FindingsTreeProvider implements vscode.TreeDataProvider<FindingsNod
   private expandedSeverityGroups = new Set<string>();
 
   constructor(
-    private readonly api: DevPulseApi,
+    private readonly api: RakshexApi,
     private readonly context?: vscode.ExtensionContext,
   ) {
     if (context) {
-      this.compactMode = context.globalState.get<boolean>("devpulse.compactMode") ?? false;
+      this.compactMode = context.globalState.get<boolean>("rakshex.compactMode") ?? false;
       this.severityFilter =
-        context.globalState.get<Severity | null>("devpulse.severityFilter") ?? null;
-      const expanded = context.globalState.get<string[]>("devpulse.expandedSeverityGroups") ?? [];
+        context.globalState.get<Severity | null>("rakshex.severityFilter") ?? null;
+      const expanded = context.globalState.get<string[]>("rakshex.expandedSeverityGroups") ?? [];
       this.expandedSeverityGroups = new Set(expanded);
     }
   }
 
   toggleCompactMode(): void {
     this.compactMode = !this.compactMode;
-    void this.context?.globalState.update("devpulse.compactMode", this.compactMode);
+    void this.context?.globalState.update("rakshex.compactMode", this.compactMode);
     this._onDidChange.fire();
   }
 
@@ -92,7 +92,7 @@ export class FindingsTreeProvider implements vscode.TreeDataProvider<FindingsNod
 
   setSeverityFilter(severity: Severity | null): void {
     this.severityFilter = severity;
-    void this.context?.globalState.update("devpulse.severityFilter", severity);
+    void this.context?.globalState.update("rakshex.severityFilter", severity);
     this._onDidChange.fire();
   }
 
@@ -175,7 +175,7 @@ export class FindingsTreeProvider implements vscode.TreeDataProvider<FindingsNod
     item.id = f.id;
     if (f.status !== "resolved") {
       item.command = {
-        command: "devpulse.markFindingResolved",
+        command: "rakshex.markFindingResolved",
         title: "Resolve",
         arguments: [node],
       };
@@ -202,7 +202,7 @@ export class FindingsTreeProvider implements vscode.TreeDataProvider<FindingsNod
         if (isOffline) {
           return [
             new MessageNode(
-              "DevPulse is temporarily unreachable. Check your connection or run 'DevPulse: Check Health'.",
+              "Rakshex is temporarily unreachable. Check your connection or run 'Rakshex: Check Health'.",
             ),
           ];
         }

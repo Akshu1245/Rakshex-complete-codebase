@@ -1,4 +1,4 @@
-# DevPulse Engagement Score System
+# Rakshex Engagement Score System
 
 > Quantifying user health for proactive retention.
 > Date: 2026-05-17
@@ -96,7 +96,7 @@ Final Score = Weighted Score × Decay Factor
 **Day 14 of inactivity:**
 
 ```
-📧 Email: "What would make DevPulse a 10?"
+📧 Email: "What would make Rakshex a 10?"
 📋 1-question survey
 🎁 Incentive: $50 Amazon gift card for call
 ```
@@ -132,7 +132,7 @@ Final Score = Weighted Score × Decay Factor
 ```
 📧 "You're a power user — here's what's next"
 🚀 Pro features preview
-💰 "You've saved $X with DevPulse"
+💰 "You've saved $X with Rakshex"
 ```
 
 **Trigger:**
@@ -140,7 +140,7 @@ Final Score = Weighted Score × Decay Factor
 ```
 🎉 In-app: "You've scanned 50 times!"
 🏆 Badge unlock
-📣 "Share your DevPulse story"
+📣 "Share your Rakshex story"
 ```
 
 ### Power (Score 81-100)

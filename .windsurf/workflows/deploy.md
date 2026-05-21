@@ -1,8 +1,8 @@
 ---
-description: Production deployment workflow for DevPulse (Railway backend + Vercel frontend + VSCode Marketplace)
+description: Production deployment workflow for Rakshex (Railway backend + Vercel frontend + VSCode Marketplace)
 ---
 
-# DevPulse Production Deployment
+# Rakshex Production Deployment
 
 ## Prerequisites Verified
 
@@ -30,7 +30,7 @@ The Drizzle schema uses `mysqlTable`, `mysqlEnum`, `drizzle-orm/mysql2`, and `my
 ```powershell
 railway login
 railway link
-# Select your "devpulse-backend" project
+# Select your "rakshex-backend" project
 ```
 
 ### 1.2 Add MySQL Database
@@ -47,7 +47,7 @@ railway link
 
 ### 1.4 Set Environment Variables
 
-Railway Dashboard → devpulse-backend → Variables tab. Paste these:
+Railway Dashboard → rakshex-backend → Variables tab. Paste these:
 
 ```env
 NODE_ENV=production
@@ -55,8 +55,8 @@ PORT=3000
 DATABASE_URL=<auto-injected by Railway MySQL>
 REDIS_URL=<auto-injected by Railway Redis>
 JWT_SECRET=<generate: openssl rand -hex 32>
-FRONTEND_URL=https://devpulse.in
-APP_URL=https://devpulse.in
+FRONTEND_URL=https://rakshex.in
+APP_URL=https://rakshex.in
 GOOGLE_CLIENT_ID=<from Google Cloud Console>
 GOOGLE_CLIENT_SECRET=<from Google Cloud Console>
 RAZORPAY_KEY_ID=<from Razorpay dashboard>
@@ -66,7 +66,7 @@ SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=<your Gmail>
 SMTP_PASS=<Gmail app password>
-SMTP_FROM=noreply@devpulse.in
+SMTP_FROM=noreply@rakshex.in
 SENTRY_DSN=<from Sentry project>
 GATEWAY_SERVICE_TOKEN=<generate: openssl rand -hex 32>
 INTERNAL_SERVICE_SECRET=<generate: openssl rand -hex 32>
@@ -82,8 +82,8 @@ INTERNAL_SERVICE_SECRET=<generate: openssl rand -hex 32>
 ### 1.6 Deploy Backend
 
 ```powershell
-railway up --service devpulse-backend
-railway logs --service devpulse-backend
+railway up --service rakshex-backend
+railway logs --service rakshex-backend
 ```
 
 Watch for:
@@ -95,8 +95,8 @@ Watch for:
 
 ### 1.7 Get Public URL
 
-Railway Dashboard → devpulse-backend → Settings → Networking → Generate Domain
-Copy the URL (e.g. `https://devpulse-backend.up.railway.app`)
+Railway Dashboard → rakshex-backend → Settings → Networking → Generate Domain
+Copy the URL (e.g. `https://rakshex-backend.up.railway.app`)
 
 ### 1.8 Health Check
 
@@ -112,18 +112,18 @@ curl https://<your-railway-domain>/api/health
 ### 2.1 Login & Deploy
 
 ```powershell
-cd devpulse-frontend
+cd rakshex-frontend
 vercel --prod
 ```
 
 Follow prompts:
 
 - Link to existing project: **No**
-- Project name: `devpulse-frontend`
+- Project name: `rakshex-frontend`
 
 ### 2.2 Set Environment Variables
 
-Vercel Dashboard → devpulse-frontend → Settings → Environment Variables:
+Vercel Dashboard → rakshex-frontend → Settings → Environment Variables:
 
 ```env
 NEXT_PUBLIC_TS_API_URL=https://<your-railway-domain>
@@ -139,11 +139,11 @@ vercel --prod
 
 ### 2.4 Update CORS in Railway
 
-Railway Dashboard → devpulse-backend → Variables:
-Update `FRONTEND_URL` to your Vercel URL (e.g. `https://devpulse-frontend.vercel.app`)
+Railway Dashboard → rakshex-backend → Variables:
+Update `FRONTEND_URL` to your Vercel URL (e.g. `https://rakshex-frontend.vercel.app`)
 
 ```powershell
-railway up --service devpulse-backend
+railway up --service rakshex-backend
 ```
 
 ---
@@ -154,7 +154,7 @@ railway up --service devpulse-backend
 
 - Go to https://marketplace.visualstudio.com/manage
 - Sign in with Microsoft account
-- Create publisher: `devpulse`
+- Create publisher: `rakshex`
 
 ### 3.2 Create PAT
 
@@ -167,8 +167,8 @@ railway up --service devpulse-backend
 ### 3.3 Login
 
 ```powershell
-cd devpulse-vscode
-vsce login devpulse
+cd rakshex-vscode
+vsce login rakshex
 # Paste PAT when prompted
 ```
 
@@ -180,11 +180,11 @@ vsce package
 vsce publish
 ```
 
-Live URL: `https://marketplace.visualstudio.com/items?itemName=devpulse.devpulse`
+Live URL: `https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex`
 
 ---
 
-## Phase 4 — Custom Domain (devpulse.in)
+## Phase 4 — Custom Domain (rakshex.in)
 
 ### 4.1 Point to Vercel
 
@@ -193,12 +193,12 @@ Registrar DNS:
 - Type A, Name `@`, Value `76.76.21.21`
 - Type CNAME, Name `www`, Value `cname.vercel-dns.com`
 
-Vercel Dashboard → devpulse-frontend → Settings → Domains → Add `devpulse.in`
+Vercel Dashboard → rakshex-frontend → Settings → Domains → Add `rakshex.in`
 
 ### 4.2 Point API to Railway
 
-Railway Dashboard → devpulse-backend → Settings → Networking → Custom Domain
-Add: `api.devpulse.in`
+Railway Dashboard → rakshex-backend → Settings → Networking → Custom Domain
+Add: `api.rakshex.in`
 Railway shows a CNAME target — add it in DNS:
 
 - Type CNAME, Name `api`, Value `<railway-provided-cname>`
@@ -206,15 +206,15 @@ Railway shows a CNAME target — add it in DNS:
 Update Railway Variables:
 
 ```env
-APP_URL=https://api.devpulse.in
-FRONTEND_URL=https://devpulse.in
+APP_URL=https://api.rakshex.in
+FRONTEND_URL=https://rakshex.in
 ```
 
 Update Vercel Variables:
 
 ```env
-NEXT_PUBLIC_TS_API_URL=https://api.devpulse.in
-VITE_API_URL=https://api.devpulse.in
+NEXT_PUBLIC_TS_API_URL=https://api.rakshex.in
+VITE_API_URL=https://api.rakshex.in
 ```
 
 Redeploy both services.

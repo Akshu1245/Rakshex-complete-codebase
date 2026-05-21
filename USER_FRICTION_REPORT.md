@@ -1,4 +1,4 @@
-# DevPulse User Friction Report
+# Rakshex User Friction Report
 
 > Every friction point that costs us a user.
 > Date: 2026-05-17
@@ -22,9 +22,9 @@
 
 ### #1: \_\_\_
 
-**Frequency:** **_/week
+**Frequency:** **\_/week
 **Severity:** 🔴 High
-**Users affected:** _**
+**Users affected:** \_**
 **Time to fix:** \_\_\_ min
 
 **Description:**
@@ -45,9 +45,9 @@
 
 ### #2: \_\_\_
 
-**Frequency:** **_/week
+**Frequency:** **\_/week
 **Severity:** 🔴 High
-**Users affected:** _**
+**Users affected:** \_**
 
 **Description:**
 

@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Trust Center — DevPulse Security & Compliance",
+  title: "Trust Center — Rakshex Security & Compliance",
   description:
-    "DevPulse trust center: security architecture, compliance certifications, data handling, encryption, penetration testing, and incident response.",
+    "Rakshex trust center: security architecture, compliance certifications, data handling, encryption, penetration testing, and incident response.",
   alternates: { canonical: "/trust" },
 };
 
@@ -170,8 +170,8 @@ export default function TrustCenter() {
             </ul>
             <p className="text-gray-400 text-sm mt-4">
               Report security issues to{" "}
-              <Link href="mailto:security@devpulse.in" className="text-blue-400 hover:underline">
-                security@devpulse.in
+              <Link href="mailto:security@rakshex.in" className="text-blue-400 hover:underline">
+                security@rakshex.in
               </Link>
               . We follow responsible disclosure with a 90-day fix commitment.
             </p>
@@ -203,7 +203,7 @@ export default function TrustCenter() {
         <div className="text-center py-8">
           <h2 className="text-xl font-bold mb-4">Need our full security whitepaper?</h2>
           <Link
-            href="mailto:security@devpulse.in?subject=Security Whitepaper Request"
+            href="mailto:security@rakshex.in?subject=Security Whitepaper Request"
             className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
           >
             Request Security Whitepaper →

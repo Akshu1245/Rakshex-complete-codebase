@@ -8,11 +8,11 @@ TBD — align with a weekday (Tuesday or Wednesday morning PST) for maximum traf
 
 ## Product Listing
 
-**Name:** DevPulse
+**Name:** Rakshex
 **Tagline:** Open-source security + cost monitoring for production AI agents
 **Category:** Developer Tools
-**Website:** https://devpulse.in
-**Maker:** @devpulsehq (Twitter) + individual maker accounts
+**Website:** https://rakshex.in
+**Maker:** @rakshexhq (Twitter) + individual maker accounts
 
 ### Description (260 char max)
 
@@ -20,7 +20,7 @@ Secure your AI agents before they cost you money or leak data. Open-source. Self
 
 ### Full Description
 
-DevPulse is the open-source platform that monitors, secures, and governs production AI agents — all in one place.
+Rakshex is the open-source platform that monitors, secures, and governs production AI agents — all in one place.
 
 **Security**
 
@@ -74,7 +74,7 @@ _Prep 6 PNGs at 1600×900 with clean UI, no fake data, real scan results._
 
 > Hey PH community — built this after watching a client's AI agent leak PII to a third-party LLM because their "observability tool" only logged latency, not content. That incident cost them a compliance audit and 3 weeks of engineering time.
 >
-> DevPulse is different: it actually scans for prompt injection, shadow APIs, and credential leaks — not just token counts. And it's open-source, so you can self-host on your own infra (Indian data residency, EU, whatever you need).
+> Rakshex is different: it actually scans for prompt injection, shadow APIs, and credential leaks — not just token counts. And it's open-source, so you can self-host on your own infra (Indian data residency, EU, whatever you need).
 >
 > The kill switch is my favorite feature: set a monthly budget, and if a runaway script tries to blow it, traffic hard-stops. No "alert that gets buried in Slack." Actually stops.
 >
@@ -132,7 +132,7 @@ _Prep 6 PNGs at 1600×900 with clean UI, no fake data, real scan results._
 >
 > Today it launches on @ProductHunt.
 >
-> Here's why DevPulse is different 🧵
+> Here's why Rakshex is different 🧵
 
 **Tweet 2 (Problem):**
 
@@ -141,7 +141,7 @@ _Prep 6 PNGs at 1600×900 with clean UI, no fake data, real scan results._
 > 1. They only observe (Helicone, Portkey) — no blocking
 > 2. They only block (Lakera) — no cost visibility
 >
-> DevPulse does both. Security + cost + compliance. One stack.
+> Rakshex does both. Security + cost + compliance. One stack.
 
 **Tweet 3 (Security):**
 
@@ -189,9 +189,9 @@ _Prep 6 PNGs at 1600×900 with clean UI, no fake data, real scan results._
 
 ## LinkedIn Post
 
-> After 6 months of solo building in Bangalore, I'm launching DevPulse on Product Hunt today.
+> After 6 months of solo building in Bangalore, I'm launching Rakshex on Product Hunt today.
 >
-> DevPulse is an open-source platform that secures, monitors, and governs production AI agents. Think: prompt injection detection + cost anomaly alerts + PCI DSS compliance reporting + a kill switch that actually stops traffic — all in one stack.
+> Rakshex is an open-source platform that secures, monitors, and governs production AI agents. Think: prompt injection detection + cost anomaly alerts + PCI DSS compliance reporting + a kill switch that actually stops traffic — all in one stack.
 >
 > Why I built it: A client leaked PII to a third-party LLM because their observability tool only logged latency, not content. That incident cost them a compliance audit and 3 weeks of engineering time. Existing tools were either observability-only (Helicone, Portkey) or security-only (Lakera). No one did both.
 >
@@ -211,12 +211,12 @@ _Prep 6 PNGs at 1600×900 with clean UI, no fake data, real scan results._
 
 ## Communities to Share
 
-- Hacker News ("Show HN: DevPulse — open-source AI agent security")
+- Hacker News ("Show HN: Rakshex — open-source AI agent security")
 - Reddit r/MachineLearning (if allowed)
 - Reddit r/webdev
 - Indie Hackers
 - Dev.to
 - LinkedIn personal + company page
 - Twitter/X personal + company
-- DevPulse Discord (if exists)
+- Rakshex Discord (if exists)
 - Relevant Slack communities (AI Engineers, MLOps, etc.)

@@ -1,10 +1,10 @@
 @echo off
-REM devpulse-init.bat — Initialize any project with DevPulse memory + team structure
-REM Usage: devpulse-init [project-name]
+REM rakshex-init.bat — Initialize any project with Rakshex memory + team structure
+REM Usage: rakshex-init [project-name]
 REM Drop this in a folder in your PATH
 
 set PROJECT_DIR=%CD%
-echo Initializing DevPulse for: %PROJECT_DIR%
+echo Initializing Rakshex for: %PROJECT_DIR%
 
 REM Team structure
 mkdir .team\inbox 2>nul
@@ -31,4 +31,4 @@ if not exist .env (
     )
 )
 
-echo DevPulse ready in %PROJECT_DIR%
+echo Rakshex ready in %PROJECT_DIR%

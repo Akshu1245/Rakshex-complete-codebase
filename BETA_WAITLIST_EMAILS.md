@@ -1,4 +1,4 @@
-# DevPulse Beta Email Sequences
+# Rakshex Beta Email Sequences
 
 > Ready-to-send emails for beta acquisition and retention.
 > Date: 2026-05-17
@@ -10,14 +10,14 @@
 ### Email 1: "You're in!" (Send immediately on invite)
 
 ```
-Subject: You're in the DevPulse beta 🛡️
+Subject: You're in the Rakshex beta 🛡️
 
 Hi {{first_name}},
 
-You're one of 50 developers getting early access to DevPulse.
+You're one of 50 developers getting early access to Rakshex.
 
 What is it?
-DevPulse is a VS Code extension that stops AI agents from burning
+Rakshex is a VS Code extension that stops AI agents from burning
 your API budget. It finds hidden reasoning costs, auto-stops
 infinite loops, and scans your API collections for vulnerabilities.
 
@@ -34,13 +34,13 @@ Most people find at least 2 issues they didn't know about.
 Questions? Reply to this email — I read every one.
 
 Akshay
-Founder, DevPulse
+Founder, Rakshex
 ```
 
 ### Email 2: "How's it going?" (Day 2, only if no scan)
 
 ```
-Subject: Need help with your first DevPulse scan?
+Subject: Need help with your first Rakshex scan?
 
 Hi {{first_name}},
 
@@ -53,7 +53,7 @@ vulnerabilities. Import it and run a scan. Takes 30 seconds.
 
 Option 2: Import your own
 Drag any Postman, OpenAPI, or Bruno collection into the
-DevPulse sidebar. We'll do the rest.
+Rakshex sidebar. We'll do the rest.
 
 Stuck? Reply and I'll personally walk you through it.
 
@@ -63,11 +63,11 @@ Akshay
 ### Email 3: "What did you find?" (Day 7, if scan completed)
 
 ```
-Subject: What did DevPulse find in your API collections?
+Subject: What did Rakshex find in your API collections?
 
 Hi {{first_name}},
 
-You've been using DevPulse for a week. I'm curious:
+You've been using Rakshex for a week. I'm curious:
 
 1. What's the most surprising thing you found?
 2. Did any finding save you money or prevent a security issue?
@@ -78,7 +78,7 @@ prioritize what we build next.
 
 If you found value, would you mind leaving a review on the
 VS Code Marketplace? It takes 30 seconds and helps other
-developers discover DevPulse.
+developers discover Rakshex.
 
 [Leave a review]
 
@@ -89,11 +89,11 @@ Akshay
 ### Email 4: "Weekly Protection Summary" (Every Monday)
 
 ```
-Subject: Your DevPulse weekly protection summary
+Subject: Your Rakshex weekly protection summary
 
 Hi {{first_name}},
 
-Here's what DevPulse protected you from this week:
+Here's what Rakshex protected you from this week:
 
 💰 Hidden costs detected: ${{money_saved}}
 🛑 Rogue agents stopped: {{agents_stopped}}
@@ -106,17 +106,17 @@ Your most critical finding:
 [View full dashboard]
 
 See you next week,
-The DevPulse team
+The Rakshex team
 ```
 
 ### Email 5: "We're launching soon" (Day 30, pre-launch)
 
 ```
-Subject: DevPulse is launching on Product Hunt next week
+Subject: Rakshex is launching on Product Hunt next week
 
 Hi {{first_name}},
 
-After 6 months of building, we're launching DevPulse publicly
+After 6 months of building, we're launching Rakshex publicly
 next Tuesday on Product Hunt.
 
 As a beta user, you've shaped the product more than you know.
@@ -146,7 +146,7 @@ Subject: What happened?
 
 Hi {{first_name}},
 
-I noticed you uninstalled DevPulse from VS Code. I'm sorry
+I noticed you uninstalled Rakshex from VS Code. I'm sorry
 we didn't meet your expectations.
 
 Mind telling me why? (30 seconds, anonymous)
@@ -175,10 +175,10 @@ Subject: Give $29, get $29
 
 Hi {{first_name}},
 
-DevPulse has saved you ${{total_saved}} so far.
+Rakshex has saved you ${{total_saved}} so far.
 
 Know another developer building with AI? Gift them a free
-month of DevPulse Pro.
+month of Rakshex Pro.
 
 [Send a free month]
 

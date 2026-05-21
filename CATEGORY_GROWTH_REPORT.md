@@ -1,4 +1,4 @@
-# DevPulse Category Growth Report
+# Rakshex Category Growth Report
 
 > Owning AI runtime protection.
 > Date: 2026-05-17
@@ -11,7 +11,7 @@
 | --------------------------------- | ----------------- |
 | "AI runtime protection" in search | \_\_\_ queries/mo |
 | Competitors using our language    | \_\_\_            |
-| DevPulse mentioned in industry    | \_\_\_            |
+| Rakshex mentioned in industry     | \_\_\_            |
 | Category creation content views   | \_\_\_            |
 
 ---

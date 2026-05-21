@@ -1,4 +1,4 @@
-# DevPulse Daily Beta Report
+# Rakshex Daily Beta Report
 
 > Template for tracking beta execution day by day.
 > Date: 2026-05-17
@@ -25,7 +25,7 @@ Install → Connect → Import → Scan → Return
   __%       __%       __%      __%      __%
 ```
 
-**Biggest drop-off:** ******\_****** (at \_\_%)
+**Biggest drop-off:** **\*\***\_**\*\*** (at \_\_%)
 
 ### Feedback (Last 24h)
 
@@ -43,8 +43,8 @@ Install → Connect → Import → Scan → Return
 
 **Top feature requests:**
 
-1. ******\_****** (\_\_ votes)
-2. ******\_****** (\_\_ votes)
+1. **\*\***\_**\*\*** (\_\_ votes)
+2. **\*\***\_**\*\*** (\_\_ votes)
 
 ### Scans & Findings (Last 24h)
 

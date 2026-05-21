@@ -1,5 +1,5 @@
 #!/bin/bash
-# Database Backup Script for DevPulse
+# Database Backup Script for Rakshex
 # Usage: ./backup.sh [daily|monthly]
 
 set -e
@@ -7,9 +7,9 @@ set -e
 BACKUP_TYPE=${1:-daily}
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 BACKUP_DIR="/backups/${BACKUP_TYPE}"
-S3_BUCKET=${S3_BACKUP_BUCKET:-"devpulse-backups"}
+S3_BUCKET=${S3_BACKUP_BUCKET:-"rakshex-backups"}
 DB_HOST=${DB_HOST:-"db"}
-DB_NAME=${DB_NAME:-"devpulse_db"}
+DB_NAME=${DB_NAME:-"rakshex_db"}
 DB_USER=${DB_USER:-"root"}
 DB_PASS=${DB_PASSWORD:-"changeme_in_production"}
 RETENTION_DAYS=${BACKUP_RETENTION_DAYS:-30}

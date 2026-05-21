@@ -1,6 +1,6 @@
 # Pricing Negotiation Playbook
 
-Internal guide for DevPulse sales team and founders. Use these frameworks for Pro → Enterprise upgrades and custom deals.
+Internal guide for Rakshex sales team and founders. Use these frameworks for Pro → Enterprise upgrades and custom deals.
 
 ---
 
@@ -20,13 +20,13 @@ Internal guide for DevPulse sales team and founders. Use these frameworks for Pr
 ### 1. The Skeptical Engineer
 
 **Profile:** "I can build this myself in a weekend."
-**Response:** "You absolutely can build prompt injection detection. But maintaining 50+ payload patterns, shadow API discovery, and PCI DSS mappings across 4 engineers is 2–3 months of work. DevPulse costs $99. Your team's time costs $75/hr."
+**Response:** "You absolutely can build prompt injection detection. But maintaining 50+ payload patterns, shadow API discovery, and PCI DSS mappings across 4 engineers is 2–3 months of work. Rakshex costs $99. Your team's time costs $75/hr."
 **Tactic:** ROI calculator. Show engineer-hours saved.
 
 ### 2. The Budget-Conscious Manager
 
 **Profile:** "My CEO won't approve another tool."
-**Response:** "DevPulse replaces 3+ tools. If you are paying for Helicone ($200/mo) + Lakera ($500/mo) + a compliance consultant ($2K/mo), DevPulse at $99 replaces all three."
+**Response:** "Rakshex replaces 3+ tools. If you are paying for Helicone ($200/mo) + Lakera ($500/mo) + a compliance consultant ($2K/mo), Rakshex at $99 replaces all three."
 **Tactic:** Consolidation savings. Show tool replacement math.
 
 ### 3. The Risk-Averse CISO
@@ -53,7 +53,7 @@ Internal guide for DevPulse sales team and founders. Use these frameworks for Pr
 
 **Example:**
 
-> "Enterprise is typically $12K/year for teams under 50. Based on your $50K/month LLM spend and 2 incidents last year, DevPulse saves you roughly $80K annually. If you commit to annual billing, we can do $10K/year — that's 2 months free."
+> "Enterprise is typically $12K/year for teams under 50. Based on your $50K/month LLM spend and 2 incidents last year, Rakshex saves you roughly $80K annually. If you commit to annual billing, we can do $10K/year — that's 2 months free."
 
 ### Framework 2: The Alternatives Close
 
@@ -61,7 +61,7 @@ Internal guide for DevPulse sales team and founders. Use these frameworks for Pr
 >
 > 1. **Status quo:** Continue with observability-only tools, handle security incidents reactively, manually build compliance reports. Cost: $X in incidents + $Y in engineer time.
 > 2. **Build internally:** 2–3 engineers × 3 months = $80K+ in salary, plus ongoing maintenance.
-> 3. **DevPulse:** $99/mo Pro or custom Enterprise. Operational in 1 day.
+> 3. **Rakshex:** $99/mo Pro or custom Enterprise. Operational in 1 day.
 >
 > Which option makes the most sense for your timeline?"
 
@@ -119,7 +119,7 @@ Base: $12,000/year
 
 **If Pro ($99/mo):**
 
-> "What is the cost of one security incident at your company? If DevPulse prevents one credential leak or one prompt injection, it pays for itself 100× over."
+> "What is the cost of one security incident at your company? If Rakshex prevents one credential leak or one prompt injection, it pays for itself 100× over."
 
 **If Enterprise:**
 
@@ -133,7 +133,7 @@ Base: $12,000/year
 
 ## Competitor Pricing Intel
 
-| Competitor | Pricing                     | DevPulse Advantage                    |
+| Competitor | Pricing                     | Rakshex Advantage                     |
 | ---------- | --------------------------- | ------------------------------------- |
 | Helicone   | $0–$500+/mo (per-request)   | Flat fee, security included           |
 | Portkey    | $0–$1,000+/mo (per-request) | Flat fee, kill switch included        |
@@ -148,6 +148,6 @@ Base: $12,000/year
 ## Closing Techniques
 
 1. **The assumptive close:** "Shall we start with the annual Pro plan or do you need Enterprise features?"
-2. **The summary close:** "You need prompt injection defense, PCI DSS reporting, and a kill switch. DevPulse does all three for $99/mo. Shall we get you set up?"
+2. **The summary close:** "You need prompt injection defense, PCI DSS reporting, and a kill switch. Rakshex does all three for $99/mo. Shall we get you set up?"
 3. **The urgency close:** "We are offering 20% off annual Enterprise through end of quarter. Would locking that in now work for your budget cycle?"
 4. **The post-close:** After signature, immediately schedule onboarding call within 48 hours. Momentum matters.

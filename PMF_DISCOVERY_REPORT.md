@@ -1,4 +1,4 @@
-# DevPulse Product-Market Fit Discovery Report
+# Rakshex Product-Market Fit Discovery Report
 
 > Evidence-based PMF analysis.
 > Date: 2026-05-17
@@ -9,7 +9,7 @@
 
 ### 1. Sean Ellis Test
 
-> "How would you feel if you could no longer use DevPulse?"
+> "How would you feel if you could no longer use Rakshex?"
 
 | Response              | Count  | %       |
 | --------------------- | ------ | ------- |
@@ -85,7 +85,7 @@ Avg       |100%| ___%| ___%| ___%| ___%| ___%| ___%
 
 ## STRONGEST WEDGE
 
-**Primary wedge:** ******\_******
+**Primary wedge:** **\*\***\_**\*\***
 
 **Why it works:**
 
@@ -102,7 +102,7 @@ Avg       |100%| ___%| ___%| ___%| ___%| ___%| ___%
 
 ## STRONGEST RETENTION DRIVER
 
-**What keeps users:** ******\_******
+**What keeps users:** **\*\***\_**\*\***
 
 **Evidence:**
 

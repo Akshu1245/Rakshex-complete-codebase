@@ -1,16 +1,16 @@
-# DevPulse — AI Runtime Protection
+# Rakshex — AI Runtime Protection
 
 > Find security issues, hidden costs, and compliance risks in your AI agents and APIs before they hit production.
 
-[![Version](https://img.shields.io/visual-studio-marketplace/v/devpulse.devpulse)](https://marketplace.visualstudio.com/items?itemName=devpulse.devpulse)
-[![Installs](https://img.shields.io/visual-studio-marketplace/i/devpulse.devpulse)](https://marketplace.visualstudio.com/items?itemName=devpulse.devpulse)
-[![Rating](https://img.shields.io/visual-studio-marketplace/r/devpulse.devpulse)](https://marketplace.visualstudio.com/items?itemName=devpulse.devpulse)
+[![Version](https://img.shields.io/visual-studio-marketplace/v/rakshex.rakshex)](https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex)
+[![Installs](https://img.shields.io/visual-studio-marketplace/i/rakshex.rakshex)](https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex)
+[![Rating](https://img.shields.io/visual-studio-marketplace/r/rakshex.rakshex)](https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex)
 
 ---
 
-## What DevPulse Does
+## What Rakshex Does
 
-DevPulse scans your AI agent configurations, API collections, and LLM integrations directly inside VS Code to find:
+Rakshex scans your AI agent configurations, API collections, and LLM integrations directly inside VS Code to find:
 
 - **Leaked API keys** in environment files and collections
 - **Hidden token costs** from unoptimized LLM calls
@@ -26,19 +26,19 @@ DevPulse scans your AI agent configurations, API collections, and LLM integratio
 
 ```bash
 # From VS Code Marketplace
-ext install devpulse
+ext install rakshex
 
-# Or search "DevPulse" in the Extensions sidebar
+# Or search "Rakshex" in the Extensions sidebar
 ```
 
 ---
 
 ## Quick Start (30 seconds)
 
-1. **Install** the DevPulse extension
-2. **Sign in** with your API key (generate one free at [devpulse.in](https://devpulse.in))
+1. **Install** the Rakshex extension
+2. **Sign in** with your API key (generate one free at [rakshex.in](https://rakshex.in))
 3. **Import** a Postman collection or OpenAPI spec
-4. **Run scan** — DevPulse finds issues in seconds
+4. **Run scan** — Rakshex finds issues in seconds
 5. **Review findings** in the Security Dashboard
 
 ---
@@ -108,7 +108,7 @@ One-click fixes for common issues:
 
 - **VS Code** (primary) — this extension
 - **JetBrains** — coming Q3 2026
-- **CLI** — `npm install -g @devpulse/cli`
+- **CLI** — `npm install -g @rakshex/cli`
 - **CI/CD** — GitHub Actions, GitLab CI
 
 ---
@@ -122,13 +122,13 @@ One-click fixes for common issues:
 | **Team**       | $99/mo | Engineering orgs, 10 users, SSO, audit logs      |
 | **Enterprise** | Custom | Large orgs, dedicated support, SLA               |
 
-[Start free →](https://devpulse.in/signup)
+[Start free →](https://rakshex.in/signup)
 
 ---
 
 ## What Developers Say
 
-> "Found a leaked OpenAI key in a collection I'd shared with the team. DevPulse caught it in 10 seconds."
+> "Found a leaked OpenAI key in a collection I'd shared with the team. Rakshex caught it in 10 seconds."
 > — _Senior Engineer, Series B startup_
 
 > "The cost tracking alone saved us $400 in the first month. We had an agent in an infinite loop burning tokens."
@@ -138,30 +138,30 @@ One-click fixes for common issues:
 
 ## Documentation
 
-- [Getting Started](https://docs.devpulse.in/getting-started)
-- [Security Rules](https://docs.devpulse.in/rules)
-- [AgentGuard Configuration](https://docs.devpulse.in/agentguard)
-- [API Reference](https://docs.devpulse.in/api)
-- [Self-Hosting](https://docs.devpulse.in/self-host)
+- [Getting Started](https://docs.rakshex.in/getting-started)
+- [Security Rules](https://docs.rakshex.in/rules)
+- [AgentGuard Configuration](https://docs.rakshex.in/agentguard)
+- [API Reference](https://docs.rakshex.in/api)
+- [Self-Hosting](https://docs.rakshex.in/self-host)
 
 ---
 
 ## Contributing
 
-We welcome contributions! See our [Contributing Guide](https://github.com/akshaynhcm-droid/Devpulse-/blob/main/CONTRIBUTING.md).
+We welcome contributions! See our [Contributing Guide](https://github.com/rakshex/rakshex/blob/main/CONTRIBUTING.md).
 
-- Report issues: [GitHub Issues](https://github.com/akshaynhcm-droid/Devpulse-/issues)
-- Feature requests: [GitHub Discussions](https://github.com/akshaynhcm-droid/Devpulse-/discussions)
-- Join our community: [Discord](https://discord.gg/devpulse)
+- Report issues: [GitHub Issues](https://github.com/rakshex/rakshex/issues)
+- Feature requests: [GitHub Discussions](https://github.com/rakshex/rakshex/discussions)
+- Join our community: [Discord](https://discord.gg/rakshex)
 
 ---
 
 ## Security
 
-Found a vulnerability? Please see our [Responsible Disclosure Policy](https://devpulse.in/security).
+Found a vulnerability? Please see our [Responsible Disclosure Policy](https://rakshex.in/security).
 
 ---
 
 ## License
 
-MIT © DevPulse
+MIT © Rakshex

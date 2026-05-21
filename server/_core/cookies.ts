@@ -14,17 +14,15 @@ function isSecureRequest(req: Request) {
   const forwardedProto = req.headers["x-forwarded-proto"];
   if (!forwardedProto) return false;
 
-  const protoList = Array.isArray(forwardedProto)
-    ? forwardedProto
-    : forwardedProto.split(",");
+  const protoList = Array.isArray(forwardedProto) ? forwardedProto : forwardedProto.split(",");
 
-  return protoList.some(proto => proto.trim().toLowerCase() === "https");
+  return protoList.some((proto) => proto.trim().toLowerCase() === "https");
 }
 
 /**
  * Determine if the request is cross-origin (frontend on a different domain
  * from the API). When the frontend is served from a different origin
- * (e.g. app.devpulse.in calling api.devpulse.in), we need sameSite="none"
+ * (e.g. app.rakshex.in calling api.rakshex.in), we need sameSite="none"
  * so the browser sends the cookie cross-origin. For same-origin deployments
  * (frontend and API on the same host), "lax" is the safer default.
  */
@@ -45,7 +43,7 @@ function isCrossOriginRequest(req: Request): boolean {
 }
 
 export function getSessionCookieOptions(
-  req: Request
+  req: Request,
 ): Pick<CookieOptions, "domain" | "httpOnly" | "path" | "sameSite" | "secure"> {
   const hostname = req.hostname;
   const shouldSetDomain =
@@ -68,9 +66,7 @@ export function getSessionCookieOptions(
   // Use "none" only when the request is truly cross-origin AND over HTTPS.
   // For same-origin requests, "lax" is the safer default and still allows
   // top-level navigations (GET) from external links.
-  const sameSite: "strict" | "lax" | "none" = isCrossOrigin && isSecure
-    ? "none"
-    : "lax";
+  const sameSite: "strict" | "lax" | "none" = isCrossOrigin && isSecure ? "none" : "lax";
 
   return {
     domain,

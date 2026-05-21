@@ -10,7 +10,7 @@ import { test, expect } from "@playwright/test";
 test.describe("Critical Journey: signup → scan → results", () => {
   const testUser = {
     name: "E2E Test User",
-    email: `e2e-${Date.now()}@devpulse.test`,
+    email: `e2e-${Date.now()}@rakshex.test`,
     password: "TestPassword123!",
   };
 

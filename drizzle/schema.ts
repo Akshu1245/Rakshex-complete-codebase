@@ -525,7 +525,7 @@ export type AuditLog = typeof auditLog.$inferSelect;
 export type InsertAuditLog = typeof auditLog.$inferInsert;
 
 /**
- * Lifecycle Webhooks - user-registered HTTP endpoints that DevPulse calls
+ * Lifecycle Webhooks - user-registered HTTP endpoints that Rakshex calls
  * when events fire (scan.complete, finding.discovered, quota.warning,
  * kill_switch.triggered). Generalises what the hard-coded Slack integration
  * already does. Each delivery is signed with an HMAC-SHA256 digest of the
@@ -620,7 +620,7 @@ export type InsertProcessedWebhookEvent = typeof processedWebhookEvents.$inferIn
  * MCP Server registry — Sprint 2 scaffolding for "MCP Governance".
  *
  * An MCP server (Model Context Protocol) is a process that exposes one or
- * more *tools* an LLM agent can call. DevPulse models the registry, the
+ * more *tools* an LLM agent can call. Rakshex models the registry, the
  * permission graph (which user/agent may call which tool on which server),
  * and an immutable audit log of every tool invocation routed through the
  * gateway. The actual MCP transport (stdio / streamable-http / sse) is
@@ -690,7 +690,7 @@ export type InsertMcpTool = typeof mcpTools.$inferInsert;
 
 /**
  * MCP Tool Invocation Log — append-only audit trail of every tool call
- * routed through the DevPulse gateway. Source of truth for the "permission
+ * routed through the Rakshex gateway. Source of truth for the "permission
  * graph" view (who used what when), abuse detection, and compliance
  * evidence.
  *
@@ -1261,7 +1261,7 @@ export type ImportHistoryRow = typeof importHistory.$inferSelect;
 export type InsertImportHistoryRow = typeof importHistory.$inferInsert;
 
 /**
- * AI Events — persisted telemetry from the DevPulse SDK.
+ * AI Events — persisted telemetry from the Rakshex SDK.
  * One row per LLM call (prompt/response/tool-call/cost/latency).
  * Columnar-friendly indexes for dashboard aggregation queries.
  */

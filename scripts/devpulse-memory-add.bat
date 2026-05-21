@@ -1,8 +1,8 @@
 @echo off
-REM devpulse-memory-add.bat — Add memory to existing project
-REM Usage: devpulse-memory-add
+REM rakshex-memory-add.bat — Add memory to existing project
+REM Usage: rakshex-memory-add
 
-echo Adding DevPulse memory to %CD%
+echo Adding Rakshex memory to %CD%
 
 mkdir .team\inbox 2>nul
 mkdir .team\outbox 2>nul

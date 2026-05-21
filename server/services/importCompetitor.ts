@@ -1,5 +1,5 @@
 /**
- * Competitor Import System — Migrate from any AI governance tool to DevPulse.
+ * Competitor Import System — Migrate from any AI governance tool to Rakshex.
  *
  * Supports: Helicone, Portkey, Lakera Guard, LangSmith, Postman, Swagger/OpenAPI,
  *           Insomnia, Bruno, and universal CSV/JSON with column mapping.
@@ -94,10 +94,7 @@ async function ingestGatewayRecord(args: {
 }
 
 function logComplete(userId: number, source: string, result: ImportResult): void {
-  logger.info(
-    { userId, importSource: source, ...result },
-    `[Import] ${source} import complete`
-  );
+  logger.info({ userId, importSource: source, ...result }, `[Import] ${source} import complete`);
 }
 
 // ── Helicone Import ──────────────────────────────────────────────────────────
@@ -114,10 +111,7 @@ interface HeliconeRequestRow {
   cost?: number;
 }
 
-export async function importHelicone(
-  userId: number,
-  raw: string | object
-): Promise<ImportResult> {
+export async function importHelicone(userId: number, raw: string | object): Promise<ImportResult> {
   const startTime = Date.now();
   const result = emptyResult("helicone");
 
@@ -145,9 +139,7 @@ export async function importHelicone(
           totalTokens,
           promptFingerprint: "helicone-import",
           latencyMs: row.latency || 0,
-          timestamp: row.request_created_at
-            ? new Date(row.request_created_at)
-            : new Date(),
+          timestamp: row.request_created_at ? new Date(row.request_created_at) : new Date(),
         });
 
         result.gatewayLogsImported++;
@@ -182,10 +174,7 @@ interface PortkeyLogRow {
   status?: string;
 }
 
-export async function importPortkey(
-  userId: number,
-  raw: string | object
-): Promise<ImportResult> {
+export async function importPortkey(userId: number, raw: string | object): Promise<ImportResult> {
   const startTime = Date.now();
   const result = emptyResult("portkey");
 
@@ -213,9 +202,7 @@ export async function importPortkey(
           totalTokens,
           promptFingerprint: "portkey-import",
           latencyMs: row.latency || 0,
-          timestamp: row.requestTimestamp
-            ? new Date(row.requestTimestamp)
-            : new Date(),
+          timestamp: row.requestTimestamp ? new Date(row.requestTimestamp) : new Date(),
         });
 
         result.gatewayLogsImported++;
@@ -251,10 +238,7 @@ interface LakeraPolicyExport {
   enabled_checks?: string[];
 }
 
-export async function importLakera(
-  userId: number,
-  raw: string | object
-): Promise<ImportResult> {
+export async function importLakera(userId: number, raw: string | object): Promise<ImportResult> {
   const startTime = Date.now();
   const result = emptyResult("lakera");
 
@@ -266,12 +250,8 @@ export async function importLakera(
       policy = raw as LakeraPolicyExport;
     }
 
-    const allowlistYaml = (policy.allowlists || [])
-      .map((item) => `  - "${item}"`)
-      .join("\n");
-    const blocklistYaml = (policy.blocklists || [])
-      .map((item) => `  - "${item}"`)
-      .join("\n");
+    const allowlistYaml = (policy.allowlists || []).map((item) => `  - "${item}"`).join("\n");
+    const blocklistYaml = (policy.blocklists || []).map((item) => `  - "${item}"`).join("\n");
 
     const yamlPolicy = `# Auto-generated from Lakera Guard import
 # Original policy: ${policy.policy_name || "Unnamed"}
@@ -340,10 +320,7 @@ interface LangSmithRun {
   cost?: number;
 }
 
-export async function importLangSmith(
-  userId: number,
-  raw: string | object
-): Promise<ImportResult> {
+export async function importLangSmith(userId: number, raw: string | object): Promise<ImportResult> {
   const startTime = Date.now();
   const result = emptyResult("langsmith");
 
@@ -418,7 +395,7 @@ export interface ColumnMapping {
 export async function importUniversalCSV(
   userId: number,
   csvContent: string,
-  columnMapping: ColumnMapping[]
+  columnMapping: ColumnMapping[],
 ): Promise<ImportResult> {
   const startTime = Date.now();
   const result = emptyResult("universal_csv");
@@ -445,8 +422,7 @@ export async function importUniversalCSV(
       try {
         const getValue = (field: ColumnMapping["targetField"]): string => {
           for (const m of columnMapping) {
-            if (m.targetField === field && row[m.sourceColumn])
-              return row[m.sourceColumn];
+            if (m.targetField === field && row[m.sourceColumn]) return row[m.sourceColumn];
           }
           return "";
         };
@@ -454,9 +430,7 @@ export async function importUniversalCSV(
         const model = getValue("model") || "unknown";
         const totalTokens = parseInt(getValue("totalTokens") || "0", 10);
         const latencyMs = parseInt(getValue("latencyMs") || "0", 10);
-        const timestamp = getValue("timestamp")
-          ? new Date(getValue("timestamp"))
-          : new Date();
+        const timestamp = getValue("timestamp") ? new Date(getValue("timestamp")) : new Date();
 
         await ingestGatewayRecord({
           userId,
@@ -494,7 +468,7 @@ export async function importUniversalCSV(
 export async function importUniversalJSON(
   userId: number,
   jsonContent: string | object,
-  arrayPath?: string
+  arrayPath?: string,
 ): Promise<ImportResult> {
   const startTime = Date.now();
   const result = emptyResult("universal_json");
@@ -533,7 +507,9 @@ export async function importUniversalJSON(
         const model = row.model || row.request_model || row.response_model || "unknown";
         const promptTokens = parseInt(row.prompt_tokens || row.promptTokens || "0", 10);
         const completionTokens = parseInt(row.completion_tokens || row.completionTokens || "0", 10);
-        const totalTokens = parseInt(row.total_tokens || row.totalTokens || "0", 10) || promptTokens + completionTokens;
+        const totalTokens =
+          parseInt(row.total_tokens || row.totalTokens || "0", 10) ||
+          promptTokens + completionTokens;
         const latencyMs = parseInt(row.latency || row.latencyMs || row.latency_ms || "0", 10);
         const timestamp =
           row.timestamp || row.created_at || row.createdAt
@@ -546,11 +522,7 @@ export async function importUniversalJSON(
           model,
           provider: row.provider || "unknown",
           decision:
-            row.decision === "blocked"
-              ? "blocked"
-              : row.status === "error"
-                ? "errored"
-                : "allowed",
+            row.decision === "blocked" ? "blocked" : row.status === "error" ? "errored" : "allowed",
           promptTokens,
           completionTokens,
           totalTokens,
@@ -577,10 +549,7 @@ export async function importUniversalJSON(
 
 // ── Preview ─────────────────────────────────────────────────────────────────
 
-export function previewImport(
-  source: ImportSource,
-  raw: string | object
-): ImportPreview {
+export function previewImport(source: ImportSource, raw: string | object): ImportPreview {
   const preview: ImportPreview = {
     source,
     detectedFormat: source,
@@ -602,16 +571,14 @@ export function previewImport(
         if (lines.length > 0) {
           preview.columns = parseCSVLine(lines[0]);
           preview.recordCount = Math.max(0, lines.length - 1);
-          preview.sampleRows = lines
-            .slice(1, Math.min(4, lines.length))
-            .map((line) => {
-              const vals = parseCSVLine(line);
-              const obj: Record<string, unknown> = {};
-              preview.columns.forEach((col, idx) => {
-                obj[col] = vals[idx] || "";
-              });
-              return obj;
+          preview.sampleRows = lines.slice(1, Math.min(4, lines.length)).map((line) => {
+            const vals = parseCSVLine(line);
+            const obj: Record<string, unknown> = {};
+            preview.columns.forEach((col, idx) => {
+              obj[col] = vals[idx] || "";
             });
+            return obj;
+          });
           preview.estimatedGatewayLogsImport = preview.recordCount;
           preview.detectedFormat = "csv";
           if (preview.columns.length === 0) {
@@ -644,12 +611,10 @@ export function previewImport(
         c.includes("timestamp") ||
         c.includes("created_at") ||
         c.includes("time") ||
-        c.includes("date")
+        c.includes("date"),
     );
     if (!hasTimestamp) {
-      preview.warnings.push(
-        "No timestamp column detected — all records will use current time"
-      );
+      preview.warnings.push("No timestamp column detected — all records will use current time");
     }
   } catch (err) {
     preview.warnings.push(`Preview error: ${(err as Error).message}`);

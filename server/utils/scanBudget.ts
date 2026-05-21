@@ -5,7 +5,7 @@ import { logger } from "../_core/logger";
  * Inspired by Claude Code's `query/tokenBudget.ts` — not a port, but the
  * same idea: if the last N iterations have produced no new useful work,
  * the remaining ones probably won't either, so stop instead of burning
- * time/quota. This keeps DevPulse scans fast on giant API collections
+ * time/quota. This keeps Rakshex scans fast on giant API collections
  * (thousand-endpoint OpenAPI specs) without sacrificing correctness for
  * small ones.
  *
@@ -20,11 +20,7 @@ import { logger } from "../_core/logger";
  *   if (budget.stopped) logger.warn(budget.stopReason);
  */
 
-export type StopReason =
-  | "max_iterations_reached"
-  | "diminishing_returns"
-  | "hard_timeout"
-  | null;
+export type StopReason = "max_iterations_reached" | "diminishing_returns" | "hard_timeout" | null;
 
 export interface ScanBudgetOptions {
   /** Absolute cap on iterations, regardless of stall detection. */

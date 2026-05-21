@@ -67,7 +67,7 @@ function createTransport() {
   const smtpPort = ENV.smtpPort;
   const smtpUser = ENV.smtpUser;
   const smtpPass = ENV.smtpPass;
-  const smtpFrom = ENV.smtpFrom || "noreply@devpulse.in";
+  const smtpFrom = ENV.smtpFrom || "noreply@rakshex.in";
 
   if (!smtpHost || !smtpUser || !smtpPass) {
     return null; // No SMTP configured
@@ -87,24 +87,24 @@ function createTransport() {
 export async function sendTeamInviteEmail(
   opts: TeamInviteEmailOptions & { token?: string },
 ): Promise<void> {
-  const appUrl = process.env.APP_URL || "https://devpulse.in";
+  const appUrl = process.env.APP_URL || "https://rakshex.in";
   const inviteUrl = opts.token ? `${appUrl}/invite/${opts.token}` : appUrl;
-  const subject = `You've been invited to DevPulse by ${opts.inviterName}`;
+  const subject = `You've been invited to Rakshex by ${opts.inviterName}`;
 
   const html = `
 <!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"><title>DevPulse Invitation</title></head>
+<head><meta charset="utf-8"><title>Rakshex Invitation</title></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background:#f9fafb; margin:0; padding:40px 0;">
   <div style="max-width:520px; margin:0 auto; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.08);">
     <div style="background:linear-gradient(135deg,#2563eb,#1d4ed8); padding:32px; text-align:center;">
-      <h1 style="color:#fff; margin:0; font-size:24px; letter-spacing:-0.5px;">DevPulse</h1>
+      <h1 style="color:#fff; margin:0; font-size:24px; letter-spacing:-0.5px;">Rakshex</h1>
       <p style="color:#bfdbfe; margin:8px 0 0; font-size:14px;">API Security & LLM Intelligence Platform</p>
     </div>
     <div style="padding:40px 32px;">
       <h2 style="color:#111827; font-size:20px; margin:0 0 16px;">You've been invited!</h2>
       <p style="color:#374151; line-height:1.6; margin:0 0 24px;">
-        <strong>${opts.inviterName}</strong> has invited you to join their DevPulse workspace as a <strong>${opts.role}</strong>.
+        <strong>${opts.inviterName}</strong> has invited you to join their Rakshex workspace as a <strong>${opts.role}</strong>.
       </p>
       <div style="background:#f3f4f6; border-radius:8px; padding:16px; margin:0 0 28px;">
         <p style="color:#6b7280; font-size:13px; margin:0 0 4px; text-transform:uppercase; letter-spacing:0.5px; font-weight:600;">Your Role</p>
@@ -128,7 +128,7 @@ export async function sendTeamInviteEmail(
     </div>
     <div style="background:#f9fafb; border-top:1px solid #e5e7eb; padding:20px 32px; text-align:center;">
       <p style="color:#9ca3af; font-size:12px; margin:0;">
-        © ${new Date().getFullYear()} DevPulse. API Security Made Simple.
+        © ${new Date().getFullYear()} Rakshex. API Security Made Simple.
       </p>
     </div>
   </div>
@@ -145,7 +145,7 @@ export async function sendTeamInviteEmail(
   }
 
   await config.transport.sendMail({
-    from: `"DevPulse" <${config.from}>`,
+    from: `"Rakshex" <${config.from}>`,
     to: opts.toEmail,
     subject,
     html,
@@ -155,7 +155,7 @@ export async function sendTeamInviteEmail(
 }
 
 export async function sendPasswordResetEmail(opts: PasswordResetEmailOptions): Promise<void> {
-  const subject = "Reset your DevPulse password";
+  const subject = "Reset your Rakshex password";
 
   const html = `
 <!DOCTYPE html>
@@ -164,7 +164,7 @@ export async function sendPasswordResetEmail(opts: PasswordResetEmailOptions): P
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background:#f9fafb; margin:0; padding:40px 0;">
   <div style="max-width:520px; margin:0 auto; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.08);">
     <div style="background:linear-gradient(135deg,#2563eb,#1d4ed8); padding:32px; text-align:center;">
-      <h1 style="color:#fff; margin:0; font-size:24px; letter-spacing:-0.5px;">DevPulse</h1>
+      <h1 style="color:#fff; margin:0; font-size:24px; letter-spacing:-0.5px;">Rakshex</h1>
       <p style="color:#bfdbfe; margin:8px 0 0; font-size:14px;">API Security & LLM Intelligence Platform</p>
     </div>
     <div style="padding:40px 32px;">
@@ -185,7 +185,7 @@ export async function sendPasswordResetEmail(opts: PasswordResetEmailOptions): P
     </div>
     <div style="background:#f9fafb; border-top:1px solid #e5e7eb; padding:20px 32px; text-align:center;">
       <p style="color:#9ca3af; font-size:12px; margin:0;">
-        © ${new Date().getFullYear()} DevPulse. API Security Made Simple.
+        © ${new Date().getFullYear()} Rakshex. API Security Made Simple.
       </p>
     </div>
   </div>
@@ -201,7 +201,7 @@ export async function sendPasswordResetEmail(opts: PasswordResetEmailOptions): P
   }
 
   await config.transport.sendMail({
-    from: `"DevPulse" <${config.from}>`,
+    from: `"Rakshex" <${config.from}>`,
     to: opts.toEmail,
     subject,
     html,
@@ -211,23 +211,23 @@ export async function sendPasswordResetEmail(opts: PasswordResetEmailOptions): P
 }
 
 export async function sendWelcomeEmail(opts: WelcomeEmailOptions): Promise<void> {
-  const appUrl = process.env.APP_URL || "https://devpulse.in";
-  const subject = "Welcome to DevPulse!";
+  const appUrl = process.env.APP_URL || "https://rakshex.in";
+  const subject = "Welcome to Rakshex!";
 
   const html = `
 <!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"><title>Welcome to DevPulse</title></head>
+<head><meta charset="utf-8"><title>Welcome to Rakshex</title></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background:#f9fafb; margin:0; padding:40px 0;">
   <div style="max-width:520px; margin:0 auto; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.08);">
     <div style="background:linear-gradient(135deg,#2563eb,#1d4ed8); padding:32px; text-align:center;">
-      <h1 style="color:#fff; margin:0; font-size:24px; letter-spacing:-0.5px;">Welcome to DevPulse!</h1>
+      <h1 style="color:#fff; margin:0; font-size:24px; letter-spacing:-0.5px;">Welcome to Rakshex!</h1>
       <p style="color:#bfdbfe; margin:8px 0 0; font-size:14px;">API Security & LLM Intelligence Platform</p>
     </div>
     <div style="padding:40px 32px;">
       <h2 style="color:#111827; font-size:20px; margin:0 0 16px;">Hello ${opts.userName || "there"}!</h2>
       <p style="color:#374151; line-height:1.6; margin:0 0 24px;">
-        Thanks for joining DevPulse. You're now part of a community of developers who take API security seriously.
+        Thanks for joining Rakshex. You're now part of a community of developers who take API security seriously.
       </p>
       <div style="background:#f3f4f6; border-radius:8px; padding:16px; margin:0 0 28px;">
         <p style="color:#6b7280; font-size:13px; margin:0 0 8px; text-transform:uppercase; letter-spacing:0.5px; font-weight:600;">Quick Start</p>
@@ -247,7 +247,7 @@ export async function sendWelcomeEmail(opts: WelcomeEmailOptions): Promise<void>
     </div>
     <div style="background:#f9fafb; border-top:1px solid #e5e7eb; padding:20px 32px; text-align:center;">
       <p style="color:#9ca3af; font-size:12px; margin:0;">
-        © ${new Date().getFullYear()} DevPulse. API Security Made Simple.
+        © ${new Date().getFullYear()} Rakshex. API Security Made Simple.
       </p>
     </div>
   </div>
@@ -262,7 +262,7 @@ export async function sendWelcomeEmail(opts: WelcomeEmailOptions): Promise<void>
   }
 
   await config.transport.sendMail({
-    from: `"DevPulse" <${config.from}>`,
+    from: `"Rakshex" <${config.from}>`,
     to: opts.toEmail,
     subject,
     html,
@@ -282,11 +282,11 @@ export async function sendScanCompleteEmail(opts: ScanCompleteEmailOptions): Pro
   const html = `
 <!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"><title>Scan Complete - DevPulse</title></head>
+<head><meta charset="utf-8"><title>Scan Complete - Rakshex</title></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background:#f9fafb; margin:0; padding:40px 0;">
   <div style="max-width:520px; margin:0 auto; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.08);">
     <div style="background:linear-gradient(135deg,#2563eb,#1d4ed8); padding:32px; text-align:center;">
-      <h1 style="color:#fff; margin:0; font-size:24px; letter-spacing:-0.5px;">DevPulse</h1>
+      <h1 style="color:#fff; margin:0; font-size:24px; letter-spacing:-0.5px;">Rakshex</h1>
       <p style="color:#bfdbfe; margin:8px 0 0; font-size:14px;">API Security & LLM Intelligence Platform</p>
     </div>
     <div style="padding:40px 32px;">
@@ -337,7 +337,7 @@ export async function sendScanCompleteEmail(opts: ScanCompleteEmailOptions): Pro
     </div>
     <div style="background:#f9fafb; border-top:1px solid #e5e7eb; padding:20px 32px; text-align:center;">
       <p style="color:#9ca3af; font-size:12px; margin:0;">
-        © ${new Date().getFullYear()} DevPulse. API Security Made Simple.
+        © ${new Date().getFullYear()} Rakshex. API Security Made Simple.
       </p>
     </div>
   </div>
@@ -354,7 +354,7 @@ export async function sendScanCompleteEmail(opts: ScanCompleteEmailOptions): Pro
   }
 
   await config.transport.sendMail({
-    from: `"DevPulse" <${config.from}>`,
+    from: `"Rakshex" <${config.from}>`,
     to: opts.toEmail,
     subject,
     html,
@@ -364,16 +364,16 @@ export async function sendScanCompleteEmail(opts: ScanCompleteEmailOptions): Pro
 }
 
 export async function sendBudgetWarningEmail(opts: BudgetWarningEmailOptions): Promise<void> {
-  const subject = `⚠️ DevPulse: 80% of your AI budget used`;
+  const subject = `⚠️ Rakshex: 80% of your AI budget used`;
 
   const html = `
 <!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"><title>Budget Warning - DevPulse</title></head>
+<head><meta charset="utf-8"><title>Budget Warning - Rakshex</title></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background:#f9fafb; margin:0; padding:40px 0;">
   <div style="max-width:520px; margin:0 auto; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.08);">
     <div style="background:linear-gradient(135deg,#f59e0b,#d97706); padding:32px; text-align:center;">
-      <h1 style="color:#fff; margin:0; font-size:24px; letter-spacing:-0.5px;">DevPulse</h1>
+      <h1 style="color:#fff; margin:0; font-size:24px; letter-spacing:-0.5px;">Rakshex</h1>
       <p style="color:#fef3c7; margin:8px 0 0; font-size:14px;">API Security & LLM Intelligence Platform</p>
     </div>
     <div style="padding:40px 32px;">
@@ -418,7 +418,7 @@ export async function sendBudgetWarningEmail(opts: BudgetWarningEmailOptions): P
     </div>
     <div style="background:#f9fafb; border-top:1px solid #e5e7eb; padding:20px 32px; text-align:center;">
       <p style="color:#9ca3af; font-size:12px; margin:0;">
-        © ${new Date().getFullYear()} DevPulse. API Security Made Simple.
+        © ${new Date().getFullYear()} Rakshex. API Security Made Simple.
       </p>
     </div>
   </div>
@@ -433,7 +433,7 @@ export async function sendBudgetWarningEmail(opts: BudgetWarningEmailOptions): P
   }
 
   await config.transport.sendMail({
-    from: `"DevPulse" <${config.from}>`,
+    from: `"Rakshex" <${config.from}>`,
     to: opts.toEmail,
     subject,
     html,
@@ -458,7 +458,7 @@ interface WeeklyDigestEmailOptions {
 }
 
 export async function sendWeeklyDigestEmail(opts: WeeklyDigestEmailOptions): Promise<void> {
-  const subject = `📊 Your DevPulse Weekly Security Digest`;
+  const subject = `📊 Your Rakshex Weekly Security Digest`;
 
   const html = `
 <!DOCTYPE html>
@@ -468,12 +468,12 @@ export async function sendWeeklyDigestEmail(opts: WeeklyDigestEmailOptions): Pro
   <div style="max-width:520px; margin:0 auto; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.08);">
     <div style="background:linear-gradient(135deg,#2563eb,#1d4ed8); padding:32px; text-align:center;">
       <h1 style="color:#fff; margin:0; font-size:24px;">📊 Weekly Security Digest</h1>
-      <p style="color:#bfdbfe; margin:8px 0 0; font-size:14px;">DevPulse Security Platform</p>
+      <p style="color:#bfdbfe; margin:8px 0 0; font-size:14px;">Rakshex Security Platform</p>
     </div>
     <div style="padding:40px 32px;">
       <h2 style="color:#111827; font-size:20px; margin:0 0 16px;">Hi ${opts.userName || "there"},</h2>
       <p style="color:#374151; line-height:1.6; margin:0 0 24px;">
-        Here's your weekly security summary for DevPulse.
+        Here's your weekly security summary for Rakshex.
       </p>
       
       <div style="background:#f3f4f6; border-radius:8px; padding:20px; margin:0 0 28px;">
@@ -504,7 +504,7 @@ export async function sendWeeklyDigestEmail(opts: WeeklyDigestEmailOptions): Pro
     </div>
     <div style="background:#f9fafb; border-top:1px solid #e5e7eb; padding:20px 32px; text-align:center;">
       <p style="color:#9ca3af; font-size:12px; margin:0;">
-        © ${new Date().getFullYear()} DevPulse. API Security Made Simple.
+        © ${new Date().getFullYear()} Rakshex. API Security Made Simple.
       </p>
     </div>
   </div>
@@ -519,7 +519,7 @@ export async function sendWeeklyDigestEmail(opts: WeeklyDigestEmailOptions): Pro
   }
 
   await config.transport.sendMail({
-    from: `"DevPulse" <${config.from}>`,
+    from: `"Rakshex" <${config.from}>`,
     to: opts.toEmail,
     subject,
     html,
@@ -543,7 +543,7 @@ interface KillSwitchRecoveryEmailOptions {
 export async function sendKillSwitchRecoveryEmail(
   opts: KillSwitchRecoveryEmailOptions,
 ): Promise<void> {
-  const subject = `✅ DevPulse Kill Switch Reset — AI calls resumed`;
+  const subject = `✅ Rakshex Kill Switch Reset — AI calls resumed`;
 
   const html = `
 <!DOCTYPE html>
@@ -558,7 +558,7 @@ export async function sendKillSwitchRecoveryEmail(
     <div style="padding:40px 32px;">
       <h2 style="color:#111827; font-size:20px; margin:0 0 16px;">Hi ${opts.userName || "there"},</h2>
       <p style="color:#374151; line-height:1.6; margin:0 0 24px;">
-        Your DevPulse AI operations have been <strong>successfully resumed</strong> after the kill switch was triggered.
+        Your Rakshex AI operations have been <strong>successfully resumed</strong> after the kill switch was triggered.
       </p>
       
       <div style="background:#f0fdf4; border-radius:8px; padding:20px; margin:0 0 28px; border-left:4px solid #16a34a;">
@@ -579,7 +579,7 @@ export async function sendKillSwitchRecoveryEmail(
     </div>
     <div style="background:#f9fafb; border-top:1px solid #e5e7eb; padding:20px 32px; text-align:center;">
       <p style="color:#9ca3af; font-size:12px; margin:0;">
-        © ${new Date().getFullYear()} DevPulse. API Security Made Simple.
+        © ${new Date().getFullYear()} Rakshex. API Security Made Simple.
       </p>
     </div>
   </div>
@@ -596,7 +596,7 @@ export async function sendKillSwitchRecoveryEmail(
   }
 
   await config.transport.sendMail({
-    from: `"DevPulse" <${config.from}>`,
+    from: `"Rakshex" <${config.from}>`,
     to: opts.toEmail,
     subject,
     html,
@@ -607,8 +607,8 @@ export async function sendKillSwitchRecoveryEmail(
 
 export async function sendPaymentFailedEmail(opts: PaymentFailedEmailOptions): Promise<void> {
   const subject = opts.downgradeWarning
-    ? `⚠️ DevPulse: Payment failed — account will be downgraded`
-    : `⚠️ DevPulse: Payment failed — please update your billing`;
+    ? `⚠️ Rakshex: Payment failed — account will be downgraded`
+    : `⚠️ Rakshex: Payment failed — please update your billing`;
 
   const html = `
 <!DOCTYPE html>
@@ -623,7 +623,7 @@ export async function sendPaymentFailedEmail(opts: PaymentFailedEmailOptions): P
     <div style="padding:40px 32px;">
       <h2 style="color:#111827; font-size:20px; margin:0 0 16px;">Hi ${opts.userName || "there"},</h2>
       <p style="color:#374151; line-height:1.6; margin:0 0 24px;">
-        We were unable to process your DevPulse subscription payment of <strong>${opts.currency} ${opts.amount.toFixed(2)}</strong>.
+        We were unable to process your Rakshex subscription payment of <strong>${opts.currency} ${opts.amount.toFixed(2)}</strong>.
       </p>
       ${
         opts.downgradeWarning
@@ -640,12 +640,12 @@ export async function sendPaymentFailedEmail(opts: PaymentFailedEmailOptions): P
         Update Payment Method →
       </a>
       <p style="color:#9ca3af; font-size:12px; text-align:center; margin:0;">
-        Questions? Reply to this email or contact support@devpulse.in
+        Questions? Reply to this email or contact support@rakshex.in
       </p>
     </div>
     <div style="background:#f9fafb; border-top:1px solid #e5e7eb; padding:20px 32px; text-align:center;">
       <p style="color:#9ca3af; font-size:12px; margin:0;">
-        © ${new Date().getFullYear()} DevPulse. API Security Made Simple.
+        © ${new Date().getFullYear()} Rakshex. API Security Made Simple.
       </p>
     </div>
   </div>
@@ -662,7 +662,7 @@ export async function sendPaymentFailedEmail(opts: PaymentFailedEmailOptions): P
   }
 
   await config.transport.sendMail({
-    from: `"DevPulse" <${config.from}>`,
+    from: `"Rakshex" <${config.from}>`,
     to: opts.toEmail,
     subject,
     html,

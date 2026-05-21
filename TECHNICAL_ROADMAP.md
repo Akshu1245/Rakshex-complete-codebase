@@ -1,4 +1,4 @@
-# DevPulse Technical Roadmap
+# Rakshex Technical Roadmap
 
 > Engineering priorities for the next 18 months.
 > Date: 2026-05-17

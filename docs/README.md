@@ -1,6 +1,6 @@
-# DevPulse Documentation
+# Rakshex Documentation
 
-Welcome to the DevPulse documentation. This site covers everything from quickstarts to advanced configuration.
+Welcome to the Rakshex documentation. This site covers everything from quickstarts to advanced configuration.
 
 ## Quick Start
 
@@ -43,19 +43,19 @@ Welcome to the DevPulse documentation. This site covers everything from quicksta
 - [Python SDK](../GETTING_STARTED.md#python)
 - [Express.js Middleware](../GETTING_STARTED.md#expressjs-middleware)
 - [GitHub Actions](../github-action/README.md)
-- [VS Code Extension](../devpulse-vscode/README.md)
+- [VS Code Extension](../rakshex-vscode/README.md)
 
 ## Migration Guides
 
-- [Helicone → DevPulse](../marketing/MIGRATION_GUIDES.md#helicone--devpulse)
-- [Portkey → DevPulse](../marketing/MIGRATION_GUIDES.md#portkey--devpulse)
-- [Lakera → DevPulse](../marketing/MIGRATION_GUIDES.md#lakera--devpulse)
+- [Helicone → Rakshex](../marketing/MIGRATION_GUIDES.md#helicone--rakshex)
+- [Portkey → Rakshex](../marketing/MIGRATION_GUIDES.md#portkey--rakshex)
+- [Lakera → Rakshex](../marketing/MIGRATION_GUIDES.md#lakera--rakshex)
 
 ## Enterprise
 
 - [Enterprise Demo Deck](../marketing/ENTERPRISE_DEMO_DECK.md)
 - [Pricing Playbook](../marketing/PRICING_PLAYBOOK.md)
-- [ROI Calculator](https://devpulse.in/roi-calculator)
+- [ROI Calculator](https://rakshex.in/roi-calculator)
 
 ## Contributing
 
@@ -64,6 +64,6 @@ Welcome to the DevPulse documentation. This site covers everything from quicksta
 
 ## Support
 
-- Email: support@devpulse.in
-- Security: security@devpulse.in
-- GitHub Issues: [github.com/Akshu1245/devpulse-complete-codebase/issues](https://github.com/Akshu1245/devpulse-complete-codebase/issues)
+- Email: support@rakshex.in
+- Security: security@rakshex.in
+- GitHub Issues: [github.com/Akshu1245/rakshex-complete-codebase/issues](https://github.com/Akshu1245/rakshex-complete-codebase/issues)

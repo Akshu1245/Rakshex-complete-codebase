@@ -1,4 +1,4 @@
-# DevPulse Real Company Execution
+# Rakshex Real Company Execution
 
 > Operating like a world-class startup.
 > Date: 2026-05-17

@@ -1,4 +1,4 @@
-# DevPulse Terms of Service
+# Rakshex Terms of Service
 
 > Last updated: May 17, 2026
 
@@ -6,11 +6,11 @@
 
 ## 1. ACCEPTANCE
 
-By using DevPulse, you agree to these terms. If you disagree, do not use the service.
+By using Rakshex, you agree to these terms. If you disagree, do not use the service.
 
 ## 2. SERVICE DESCRIPTION
 
-DevPulse provides:
+Rakshex provides:
 
 - API security scanning and analysis
 - LLM cost tracking and optimization
@@ -35,14 +35,14 @@ DevPulse provides:
 ### You MAY NOT:
 
 - Scan systems you don't own without authorization
-- Use DevPulse to attack, exploit, or harm others
-- Resell DevPulse access without enterprise agreement
+- Use Rakshex to attack, exploit, or harm others
+- Resell Rakshex access without enterprise agreement
 - Circumvent rate limits or access controls
 - Upload malware or illegal content
 
 ## 5. DATA & PRIVACY
 
-See [PRIVACY_POLICY.md](PRIVACY_POLICY.md). By using DevPulse, you agree to our privacy practices.
+See [PRIVACY_POLICY.md](PRIVACY_POLICY.md). By using Rakshex, you agree to our privacy practices.
 
 ## 6. PAYMENT
 
@@ -66,13 +66,13 @@ See [PRIVACY_POLICY.md](PRIVACY_POLICY.md). By using DevPulse, you agree to our 
 ## 8. INTELLECTUAL PROPERTY
 
 - **You own:** Your API collections, scan results, custom policies
-- **We own:** DevPulse software, algorithms, brand, documentation
+- **We own:** Rakshex software, algorithms, brand, documentation
 - **Open source:** Scanner rules and SDKs are MIT licensed
 - **Patents:** Thinking token attribution patent pending
 
 ## 9. LIMITATION OF LIABILITY
 
-DevPulse is provided "as is". We are not liable for:
+Rakshex is provided "as is". We are not liable for:
 
 - Indirect, incidental, or consequential damages
 - Loss of profits or data
@@ -97,10 +97,10 @@ We will notify of material changes 30 days in advance via email.
 
 ## 13. CONTACT
 
-**Legal:** legal@devpulse.in
-**Support:** support@devpulse.in
-**Address:** DevPulse Technologies Pvt. Ltd., Bangalore, India
+**Legal:** legal@rakshex.in
+**Support:** support@rakshex.in
+**Address:** Rakshex Technologies Pvt. Ltd., Bangalore, India
 
 ---
 
-_Questions? Email legal@devpulse.in_
+_Questions? Email legal@rakshex.in_

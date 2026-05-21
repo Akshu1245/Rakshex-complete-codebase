@@ -232,7 +232,7 @@ export const scanningRouter = router({
 
   /**
    * Phase 25 — LLM-powered triage summary for a completed scan. Returns
-   * a DevPulse-tuned summary suitable for pasting into a ticket or Slack.
+   * a Rakshex-tuned summary suitable for pasting into a ticket or Slack.
    * Explicit endpoint (not auto-run on every scan) so users can opt in per
    * scan and we only burn tokens when a human is actually going to read it.
    */

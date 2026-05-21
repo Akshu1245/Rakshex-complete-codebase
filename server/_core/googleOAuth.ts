@@ -20,7 +20,7 @@ function getGoogleClient(): OAuth2Client {
   if (!googleClient) {
     googleClient = new OAuth2Client(
       ENV.googleClientId,
-      ENV.googleClientSecret
+      ENV.googleClientSecret,
       // redirectUri is set per-request
     );
   }
@@ -45,8 +45,7 @@ export function registerGoogleOAuthRoutes(app: Express) {
   app.get("/api/oauth/google", (req: Request, res: Response) => {
     if (!isGoogleConfigured()) {
       res.status(503).json({
-        error:
-          "Google OAuth is not configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.",
+        error: "Google OAuth is not configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.",
       });
       return;
     }
@@ -71,7 +70,7 @@ export function registerGoogleOAuthRoutes(app: Express) {
   /**
    * GET /api/oauth/google/callback
    * Handles the authorization code from Google, exchanges it for tokens,
-   * fetches user profile, and creates a DevPulse session.
+   * fetches user profile, and creates a Rakshex session.
    */
   app.get("/api/oauth/google/callback", async (req: Request, res: Response) => {
     const code = req.query.code as string | undefined;
@@ -84,16 +83,12 @@ export function registerGoogleOAuthRoutes(app: Express) {
     }
 
     if (!code) {
-      res
-        .status(400)
-        .json({ error: "Authorization code missing from Google callback" });
+      res.status(400).json({ error: "Authorization code missing from Google callback" });
       return;
     }
 
     if (!isGoogleConfigured()) {
-      res
-        .status(503)
-        .json({ error: "Google OAuth is not configured on the server." });
+      res.status(503).json({ error: "Google OAuth is not configured on the server." });
       return;
     }
 
@@ -129,8 +124,7 @@ export function registerGoogleOAuthRoutes(app: Express) {
 
       // Use Google's `sub` (subject) as the stable openId
       const openId = `google:${payload.sub}`;
-      const name =
-        payload.name ?? payload.email?.split("@")[0] ?? "Google User";
+      const name = payload.name ?? payload.email?.split("@")[0] ?? "Google User";
       const email = payload.email ?? null;
 
       // Upsert the user in our DB
@@ -154,10 +148,7 @@ export function registerGoogleOAuthRoutes(app: Express) {
         maxAge: ONE_YEAR_MS,
       });
 
-      logger.info(
-        { user: email ?? openId },
-        "[Google OAuth] User signed in"
-      );
+      logger.info({ user: email ?? openId }, "[Google OAuth] User signed in");
       res.redirect(302, "/");
     } catch (err) {
       logger.error({ err }, "[Google OAuth] Callback error");

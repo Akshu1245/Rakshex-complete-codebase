@@ -1,4 +1,4 @@
-# DevPulse Activation Conversion Report
+# Rakshex Activation Conversion Report
 
 > Turning installers into active users.
 > Date: 2026-05-17

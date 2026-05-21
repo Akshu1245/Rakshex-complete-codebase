@@ -15,8 +15,7 @@ import { trpc } from "@/lib/trpc";
  */
 export default function BillingSuccessPage() {
   const planQuery = trpc.payment.getCurrentPlan.useQuery(undefined, {
-    refetchInterval: data =>
-      data && (data as { plan?: string }).plan !== "free" ? false : 3000,
+    refetchInterval: (data) => (data && (data as { plan?: string }).plan !== "free" ? false : 3000),
   });
 
   const current = planQuery.data as { plan?: string } | undefined;
@@ -40,12 +39,9 @@ export default function BillingSuccessPage() {
             </div>
             <h1 className="text-2xl font-bold">Payment successful</h1>
             <p className="text-gray-400 mt-2">
-              Welcome to DevPulse{" "}
-              <span className="capitalize font-semibold text-blue-300">
-                {current?.plan}
-              </span>
-              . Your new plan is active — scans, collections, and team-member
-              limits have been lifted.
+              Welcome to Rakshex{" "}
+              <span className="capitalize font-semibold text-blue-300">{current?.plan}</span>. Your
+              new plan is active — scans, collections, and team-member limits have been lifted.
             </p>
           </>
         ) : loading ? (
@@ -53,8 +49,8 @@ export default function BillingSuccessPage() {
             <Loader2 className="w-10 h-10 text-blue-400 animate-spin mx-auto" />
             <h1 className="text-2xl font-bold mt-4">Finalizing payment…</h1>
             <p className="text-gray-400 mt-2">
-              Razorpay has processed your payment. We&apos;re waiting for the
-              webhook to activate your plan. This usually takes a few seconds.
+              Razorpay has processed your payment. We&apos;re waiting for the webhook to activate
+              your plan. This usually takes a few seconds.
             </p>
           </>
         ) : (
@@ -64,10 +60,9 @@ export default function BillingSuccessPage() {
             </div>
             <h1 className="text-2xl font-bold">Almost done</h1>
             <p className="text-gray-400 mt-2">
-              Your payment is processing. If your plan doesn&apos;t reflect the
-              upgrade within a few minutes, please refresh — activation is
-              driven by the signed Razorpay webhook and rarely, it may arrive
-              out-of-order.
+              Your payment is processing. If your plan doesn&apos;t reflect the upgrade within a few
+              minutes, please refresh — activation is driven by the signed Razorpay webhook and
+              rarely, it may arrive out-of-order.
             </p>
           </>
         )}

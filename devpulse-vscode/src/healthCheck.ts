@@ -1,13 +1,13 @@
 import * as vscode from "vscode";
-import type { DevPulseApi } from "./api";
+import type { RakshexApi } from "./api";
 
 export class HealthCheckCommand {
-  constructor(private readonly api: DevPulseApi) {}
+  constructor(private readonly api: RakshexApi) {}
 
   async execute(): Promise<void> {
     const panel = vscode.window.createWebviewPanel(
-      "devpulse.healthCheck",
-      "DevPulse Health",
+      "rakshex.healthCheck",
+      "Rakshex Health",
       vscode.ViewColumn.One,
       { enableScripts: true },
     );
@@ -30,7 +30,7 @@ export class HealthCheckCommand {
 
     // Check 2: API connectivity
     try {
-      const baseUrl = (this.api as any).getBaseUrl?.() ?? "https://api.devpulse.in";
+      const baseUrl = (this.api as any).getBaseUrl?.() ?? "https://api.rakshex.in";
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 5000);
       const res = await fetch(`${baseUrl.replace(/\/+$/, "")}/health`, {
@@ -55,7 +55,7 @@ export class HealthCheckCommand {
       results.push({
         name: "API Server",
         status: "fail",
-        message: "Cannot reach DevPulse API. Check your internet connection.",
+        message: "Cannot reach Rakshex API. Check your internet connection.",
       });
     }
 
@@ -73,7 +73,7 @@ export class HealthCheckCommand {
         results.push({
           name: "Authentication",
           status: "warn",
-          message: "Not signed in. Run 'DevPulse: Sign in with API Key' to connect.",
+          message: "Not signed in. Run 'Rakshex: Sign in with API Key' to connect.",
         });
       } else {
         results.push({
@@ -149,7 +149,7 @@ export class HealthCheckCommand {
   </style>
 </head>
 <body>
-  <h2>DevPulse Health</h2>
+  <h2>Rakshex Health</h2>
   <div class="subtitle">Diagnose connectivity and configuration issues</div>
 
   <div class="status-banner ${allPass ? "pass" : "warn"}">
@@ -163,7 +163,7 @@ export class HealthCheckCommand {
   </table>
 
   <div class="tip">
-    If the API server is unreachable, check your internet connection or verify the API URL in DevPulse settings.
+    If the API server is unreachable, check your internet connection or verify the API URL in Rakshex settings.
   </div>
 
   <div class="actions">

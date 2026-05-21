@@ -1,4 +1,4 @@
-# DevPulse Enterprise Expansion Strategy
+# Rakshex Enterprise Expansion Strategy
 
 > How we grow from developer tool to enterprise platform.
 > Date: 2026-05-17
@@ -96,7 +96,7 @@
 
 ### Product-Led Growth (Bottom-Up)
 
-1. Developer discovers DevPulse via VS Code marketplace
+1. Developer discovers Rakshex via VS Code marketplace
 2. Individual usage → team invite
 3. Team usage → enterprise trial
 4. Enterprise trial → closed deal
@@ -118,7 +118,7 @@
 
 ## 5. COMPETITIVE POSITIONING (ENTERPRISE)
 
-|                | Snyk       | Datadog     | Portkey | **DevPulse**       |
+|                | Snyk       | Datadog     | Portkey | **Rakshex**        |
 | -------------- | ---------- | ----------- | ------- | ------------------ |
 | **Price**      | $52/dev/mo | $15/host/mo | Custom  | **$50-100/dev/mo** |
 | **IDE-native** | Partial    | No          | No      | **Yes**            |

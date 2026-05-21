@@ -1,4 +1,4 @@
-# DevPulse Landing Page Copy
+# Rakshex Landing Page Copy
 
 > Clear, developer-focused messaging that converts.
 > No buzzwords. No hype. Just value.
@@ -13,7 +13,7 @@
 
 ### Subheadline
 
-DevPulse sits between your code and LLM providers, detecting hidden reasoning costs, infinite loops, and API vulnerabilities before they hit production.
+Rakshex sits between your code and LLM providers, detecting hidden reasoning costs, infinite loops, and API vulnerabilities before they hit production.
 
 ### CTA
 
@@ -50,7 +50,7 @@ Secrets leak into collections, docs, and repos. You don't know until it's too la
 
 **See what providers hide.**
 
-DevPulse attributes every API call to its real cost — including hidden reasoning tokens.
+Rakshex attributes every API call to its real cost — including hidden reasoning tokens.
 
 - See per-endpoint spend breakdown
 - Get alerts when costs spike
@@ -105,7 +105,7 @@ Vulnerabilities, hidden costs, and rogue agents — surfaced instantly.
 
 ### Quote 1
 
-> "DevPulse found $1,200 in hidden reasoning costs we didn't know existed."
+> "Rakshex found $1,200 in hidden reasoning costs we didn't know existed."
 > **— Engineering Lead, Series B SaaS**
 
 ### Quote 2
@@ -149,7 +149,7 @@ Vulnerabilities, hidden costs, and rogue agents — surfaced instantly.
 
 ## FAQ
 
-**Q: Does DevPulse see my source code?**
+**Q: Does Rakshex see my source code?**
 A: No. We only scan the API collections you explicitly import. We never access your source code, prompts, or API responses.
 
 **Q: Is my data encrypted?**
@@ -174,7 +174,7 @@ A: 87% true positive rate, with confidence scores on every finding.
 
 ### Subheadline
 
-Join 500+ developers who trust DevPulse to protect their AI infrastructure.
+Join 500+ developers who trust Rakshex to protect their AI infrastructure.
 
 ### CTA Button
 
@@ -184,7 +184,7 @@ Join 500+ developers who trust DevPulse to protect their AI infrastructure.
 
 ## META / SEO
 
-**Title:** DevPulse — Security & Cost Intelligence for AI Agents
+**Title:** Rakshex — Security & Cost Intelligence for AI Agents
 **Description:** Stop AI agents from burning your API budget. Detect hidden reasoning costs, infinite loops, and API vulnerabilities in seconds.
 **Keywords:** AI security, LLM cost, API security, developer tools, AgentGuard, reasoning tokens
 

@@ -1,6 +1,6 @@
-# DevPulse Launch Checklist
+# Rakshex Launch Checklist
 
-> Final checklist to take DevPulse from "code complete" to "fully live."
+> Final checklist to take Rakshex from "code complete" to "fully live."
 > Everything marked [x] is DONE. Everything marked [ ] requires YOUR action.
 
 ---
@@ -16,21 +16,21 @@
 ### 1.2 Deploy Backend Services
 
 ```bash
-cd /path/to/DevPulse_Complete_Codebase
+cd /path/to/Rakshex_Complete_Codebase
 render login
 render blueprints apply --confirm
 ```
 
 - [ ] Run the commands above
-- [ ] Verify `devpulse-backend` web service appears in Render dashboard
-- [ ] Verify `devpulse-redis` appears in Render dashboard
+- [ ] Verify `rakshex-backend` web service appears in Render dashboard
+- [ ] Verify `rakshex-redis` appears in Render dashboard
 
 ### 1.3 Create MySQL Database
 
 **Option A: Render MySQL (easiest)**
 
 - [ ] Go to https://dashboard.render.com → New → MySQL
-- [ ] Name: `devpulse-db`
+- [ ] Name: `rakshex-db`
 - [ ] Plan: Starter ($7/mo)
 - [ ] Region: Singapore (for India users)
 - [ ] Wait for "Available" status
@@ -39,22 +39,22 @@ render blueprints apply --confirm
 **Option B: PlanetScale (serverless)**
 
 - [ ] Go to https://planetscale.com → Sign up
-- [ ] Create database: `devpulse`
+- [ ] Create database: `rakshex`
 - [ ] Copy connection string from **Connect** → **Node.js**
 
 ### 1.4 Set Environment Variables on Render
 
-Go to Render Dashboard → `devpulse-backend` → **Environment**:
+Go to Render Dashboard → `rakshex-backend` → **Environment**:
 
 ```
-DATABASE_URL=mysql://username:password@host:3306/devpulse    ← REQUIRED
-APP_URL=https://devpulse-backend-xxx.onrender.com            ← auto-set
-NEXT_PUBLIC_APP_URL=https://app.devpulse.in                  ← after domain
+DATABASE_URL=mysql://username:password@host:3306/rakshex    ← REQUIRED
+APP_URL=https://rakshex-backend-xxx.onrender.com            ← auto-set
+NEXT_PUBLIC_APP_URL=https://app.rakshex.in                  ← after domain
 SMTP_HOST=smtp.sendgrid.net                                    ← after email setup
 SMTP_PORT=587
 SMTP_USER=apikey
 SMTP_PASS=SG.xxx.your-sendgrid-api-key                         ← after email setup
-SMTP_FROM=noreply@devpulse.in
+SMTP_FROM=noreply@rakshex.in
 RAZORPAY_KEY_ID=rzp_live_xxx                                   ← after Razorpay
 RAZORPAY_KEY_SECRET=xxx                                        ← after Razorpay
 SENTRY_DSN=xxx                                                 ← after Sentry
@@ -71,7 +71,7 @@ npx drizzle-kit migrate
 ### 1.6 Verify Backend Health
 
 ```bash
-curl https://devpulse-backend-xxx.onrender.com/api/health
+curl https://rakshex-backend-xxx.onrender.com/api/health
 # Expected: {"status":"ok","timestamp":"..."}
 ```
 
@@ -81,13 +81,13 @@ curl https://devpulse-backend-xxx.onrender.com/api/health
 
 ### 2.1 Update API URL in Vercel
 
-- [ ] Go to https://vercel.com/dashboard → `devpulse-frontend` → **Settings** → **Environment Variables**
+- [ ] Go to https://vercel.com/dashboard → `rakshex-frontend` → **Settings** → **Environment Variables**
 - [ ] Update `NEXT_PUBLIC_TS_API_URL` to your Render backend URL
 - [ ] Click **Redeploy**
 
 ### 2.2 Buy Domain (optional but recommended)
 
-- [ ] Buy `devpulse.in` on Namecheap / GoDaddy / Cloudflare
+- [ ] Buy `rakshex.in` on Namecheap / GoDaddy / Cloudflare
 - [ ] Add A record: `@` → `76.76.21.21` (Vercel IP)
 - [ ] Add CNAME: `www` → `cname.vercel-dns.com`
 - [ ] Add domain in Vercel dashboard
@@ -99,7 +99,7 @@ curl https://devpulse-backend-xxx.onrender.com/api/health
 ### 3.1 SendGrid Setup
 
 - [ ] Sign up at https://sendgrid.com
-- [ ] Verify `devpulse.in` domain (add CNAME records to DNS)
+- [ ] Verify `rakshex.in` domain (add CNAME records to DNS)
 - [ ] Create API key: Settings → API Keys → Create API Key (Full Access)
 - [ ] Copy API key to Render env var `SMTP_PASS`
 
@@ -117,7 +117,7 @@ curl https://devpulse-backend-xxx.onrender.com/api/health
 - [ ] Go to https://dashboard.razorpay.com
 - [ ] Generate API keys (Live mode)
 - [ ] Add to Render env vars: `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`
-- [ ] Set webhook URL: `https://api.devpulse.in/api/trpc/payment.handleWebhook`
+- [ ] Set webhook URL: `https://api.rakshex.in/api/trpc/payment.handleWebhook`
 - [ ] Add webhook secret to env var `RAZORPAY_WEBHOOK_SECRET`
 
 ---
@@ -133,7 +133,7 @@ curl https://devpulse-backend-xxx.onrender.com/api/health
 ### 5.2 UptimeRobot
 
 - [ ] Sign up at https://uptimerobot.com
-- [ ] Add monitors for `https://devpulse.in` and `https://api.devpulse.in/api/health`
+- [ ] Add monitors for `https://rakshex.in` and `https://api.rakshex.in/api/health`
 
 ---
 
@@ -143,13 +143,13 @@ curl https://devpulse-backend-xxx.onrender.com/api/health
 
 - [ ] Create Azure DevOps account: https://dev.azure.com/
 - [ ] Create Personal Access Token with "Marketplace" scope
-- [ ] Run: `npx @vscode/vsce login devpulse`
+- [ ] Run: `npx @vscode/vsce login rakshex`
 - [ ] Enter your PAT when prompted
 
 ### 6.2 Publish Extension
 
 ```bash
-cd devpulse-vscode
+cd rakshex-vscode
 npm install
 npm run esbuild
 npx @vscode/vsce package --no-dependencies
@@ -158,7 +158,7 @@ npx @vscode/vsce publish
 
 ### 6.3 Verify
 
-- [ ] Search "DevPulse" in VS Code Extensions marketplace
+- [ ] Search "Rakshex" in VS Code Extensions marketplace
 - [ ] Install and test with your deployed backend
 
 ---
@@ -167,13 +167,13 @@ npx @vscode/vsce publish
 
 ### 7.1 Twitter/X
 
-- [ ] Create account @devpulsehq
+- [ ] Create account @rakshexhq
 - [ ] Upload profile pic and banner (from `marketing/SOCIAL_MEDIA_LAUNCH_KIT.md`)
 - [ ] Pin the launch tweet (already written in social kit)
 
 ### 7.2 LinkedIn
 
-- [ ] Create DevPulse company page
+- [ ] Create Rakshex company page
 - [ ] Upload logo and cover image
 - [ ] Post launch announcement (already written in social kit)
 
@@ -206,7 +206,7 @@ npx @vscode/vsce publish
 
 ## PHASE 10: Final Verification (15 min)
 
-- [ ] Frontend loads at `https://devpulse.in` (or Vercel URL)
+- [ ] Frontend loads at `https://rakshex.in` (or Vercel URL)
 - [ ] Signup flow works end-to-end
 - [ ] Welcome email arrives in inbox
 - [ ] Razorpay test payment succeeds

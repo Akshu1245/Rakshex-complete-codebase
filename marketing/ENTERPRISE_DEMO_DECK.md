@@ -1,4 +1,4 @@
-# DevPulse Enterprise Demo Deck
+# Rakshex Enterprise Demo Deck
 
 Use this 10-slide deck structure for enterprise sales calls and investor pitches.
 
@@ -6,12 +6,12 @@ Use this 10-slide deck structure for enterprise sales calls and investor pitches
 
 ## Slide 1: Title
 
-**DevPulse — AI Runtime Governance Platform**
+**Rakshex — AI Runtime Governance Platform**
 
 Subtitle: Secure, monitor, and govern production AI agents
 
 - Built in India · 4 Patents Pending · Open Source
-- [devpulse.in](https://devpulse.in)
+- [rakshex.in](https://rakshex.in)
 
 ---
 
@@ -31,11 +31,11 @@ Subtitle: Secure, monitor, and govern production AI agents
 
 ## Slide 3: The Solution
 
-**DevPulse = Observability + Security + Compliance + Cost Governance**
+**Rakshex = Observability + Security + Compliance + Cost Governance**
 
 One platform. One dashboard. One bill.
 
-| Layer                    | What DevPulse Does                                                         |
+| Layer                    | What Rakshex Does                                                          |
 | ------------------------ | -------------------------------------------------------------------------- |
 | **Security**             | Prompt injection, PII redaction, shadow API discovery, credential scanning |
 | **Cost**                 | Per-request cost tracking, anomaly detection, hard kill switch             |
@@ -129,7 +129,7 @@ MySQL 8 (AES-256 at rest) ←──→ Redis 7 (cache + queues)
 
 **Quote (anonymous, fintech):**
 
-> "We leaked PII to a third-party LLM because our observability tool only logged latency. DevPulse caught the injection and stopped the request before it reached the model. Saved us a compliance audit."
+> "We leaked PII to a third-party LLM because our observability tool only logged latency. Rakshex caught the injection and stopped the request before it reached the model. Saved us a compliance audit."
 
 **Metrics:**
 
@@ -150,9 +150,9 @@ MySQL 8 (AES-256 at rest) ←──→ Redis 7 (cache + queues)
 
 **Contact:**
 
-- Email: enterprise@devpulse.in
-- Website: [devpulse.in](https://devpulse.in)
-- GitHub: [github.com/Akshu1245/devpulse-complete-codebase](https://github.com/Akshu1245/devpulse-complete-codebase)
+- Email: enterprise@rakshex.in
+- Website: [rakshex.in](https://rakshex.in)
+- GitHub: [github.com/Akshu1245/rakshex-complete-codebase](https://github.com/Akshu1245/rakshex-complete-codebase)
 
 ---
 
@@ -162,15 +162,15 @@ MySQL 8 (AES-256 at rest) ←──→ Redis 7 (cache + queues)
 
 **"We already use Helicone/Portkey."**
 
-> DevPulse is additive, not replacement. Run alongside for 30 days. Most teams migrate fully once they see the security findings their observability tool never surfaced.
+> Rakshex is additive, not replacement. Run alongside for 30 days. Most teams migrate fully once they see the security findings their observability tool never surfaced.
 
 **"We handle security separately."**
 
-> That's exactly the problem — separate tools for observability, security, compliance, and cost. DevPulse unifies them so your engineers have one dashboard, not four.
+> That's exactly the problem — separate tools for observability, security, compliance, and cost. Rakshex unifies them so your engineers have one dashboard, not four.
 
 **"We are not regulated."**
 
-> PCI DSS and SOC 2 are table stakes for enterprise customers. Even if you are not regulated today, your customers are asking for these reports. DevPulse auto-generates them.
+> PCI DSS and SOC 2 are table stakes for enterprise customers. Even if you are not regulated today, your customers are asking for these reports. Rakshex auto-generates them.
 
 **"Open source means less secure."**
 

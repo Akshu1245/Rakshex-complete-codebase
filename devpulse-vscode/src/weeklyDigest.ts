@@ -1,11 +1,11 @@
 import * as vscode from "vscode";
-import type { DevPulseApi, DashboardData, Finding } from "./api";
+import type { RakshexApi, DashboardData, Finding } from "./api";
 import type { EngagementTracker } from "./engagementTracker";
 import { RetentionEngine } from "./retentionEngine";
 
 export class WeeklyDigestCommand {
   constructor(
-    private readonly api: DevPulseApi,
+    private readonly api: RakshexApi,
     private readonly engagementTracker: EngagementTracker,
     private readonly context?: vscode.ExtensionContext,
   ) {}
@@ -47,14 +47,14 @@ export class WeeklyDigestCommand {
 
       const openNow = findings.filter((f) => f.status === "open").length;
       const lastWeekOpen =
-        this.context?.globalState.get<number>("devpulse.lastWeekOpenCount") ?? openNow;
+        this.context?.globalState.get<number>("rakshex.lastWeekOpenCount") ?? openNow;
       const postureTrend =
         openNow < lastWeekOpen ? "improving" : openNow > lastWeekOpen ? "declining" : "stable";
-      void this.context?.globalState.update("devpulse.lastWeekOpenCount", openNow);
+      void this.context?.globalState.update("rakshex.lastWeekOpenCount", openNow);
 
       const panel = vscode.window.createWebviewPanel(
-        "devpulse.weeklyDigest",
-        "DevPulse Weekly Digest",
+        "rakshex.weeklyDigest",
+        "Rakshex Weekly Digest",
         vscode.ViewColumn.One,
         { enableScripts: false },
       );
@@ -79,7 +79,7 @@ export class WeeklyDigestCommand {
       });
     } catch (err) {
       void vscode.window.showErrorMessage(
-        `DevPulse: could not load weekly digest — ${err instanceof Error ? err.message : String(err)}`,
+        `Rakshex: could not load weekly digest — ${err instanceof Error ? err.message : String(err)}`,
       );
     }
   }
@@ -178,7 +178,7 @@ export class WeeklyDigestCommand {
 
     const milestoneText =
       streak === 7
-        ? "🎯 Milestone: 7-day scan streak achieved! DevPulse is now part of your workflow."
+        ? "🎯 Milestone: 7-day scan streak achieved! Rakshex is now part of your workflow."
         : streak === 3
           ? "🔥 Milestone: 3-day scan streak! You're building a security habit."
           : null;
@@ -246,7 +246,7 @@ export class WeeklyDigestCommand {
   </style>
 </head>
 <body>
-  <h1>�️ What DevPulse did for you this week</h1>
+  <h1>�️ What Rakshex did for you this week</h1>
   <div class="subtitle">Value-focused security summary</div>
 
   ${milestoneText ? `<div class="value-box" style="background:#EFF6FF;border-left-color:#3B82F6"><strong style="color:#1E40AF">${milestoneText}</strong></div>` : ""}
@@ -308,7 +308,7 @@ export class WeeklyDigestCommand {
       ? `
   <div class="card" style="border-left:4px solid #8B5CF6;padding-left:16px">
     <h3>🚀 Getting Started</h3>
-    <p style="font-size:13px;margin:8px 0">Complete these steps to get the most from DevPulse:</p>
+    <p style="font-size:13px;margin:8px 0">Complete these steps to get the most from Rakshex:</p>
     <ul style="font-size:12px;color:#aaa;margin:6px 0;padding-left:16px;list-style:none">
       ${onboardingProgress.map((s) => `<li style="margin:3px 0">${s.complete ? "✅" : "◯"} ${s.step.replace("_", " ")}</li>`).join("")}
     </ul>

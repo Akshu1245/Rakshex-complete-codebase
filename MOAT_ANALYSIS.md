@@ -1,4 +1,4 @@
-# DevPulse Moat Analysis
+# Rakshex Moat Analysis
 
 > Defensibility assessment for investor conversations.
 > Date: 2026-05-17
@@ -28,13 +28,13 @@
 
 ### Competitive Landscape
 
-| Competitor   | Integration            | Friction                           |
-| ------------ | ---------------------- | ---------------------------------- |
-| Snyk         | IDE plugin, dashboard  | High (separate login, separate UI) |
-| Datadog      | Dashboard, limited IDE | Very high                          |
-| StackHawk    | CI/CD only             | Extreme (no dev workflow)          |
-| Portkey      | Dashboard + proxy      | Medium (no IDE, no VS Code)        |
-| **DevPulse** | **VS Code-native**     | **Lowest in category**             |
+| Competitor  | Integration            | Friction                           |
+| ----------- | ---------------------- | ---------------------------------- |
+| Snyk        | IDE plugin, dashboard  | High (separate login, separate UI) |
+| Datadog     | Dashboard, limited IDE | Very high                          |
+| StackHawk   | CI/CD only             | Extreme (no dev workflow)          |
+| Portkey     | Dashboard + proxy      | Medium (no IDE, no VS Code)        |
+| **Rakshex** | **VS Code-native**     | **Lowest in category**             |
 
 ### Lock-In Mechanism
 
@@ -128,7 +128,7 @@ Better detection ← Pattern training ← Anonymized aggregation
 ### Growth Loop
 
 ```
-Developer discovers DevPulse → Shares with team
+Developer discovers Rakshex → Shares with team
     ↑                                    ↓
 Team invites more devs ← Better team features
 ```
@@ -156,7 +156,7 @@ Team invites more devs ← Better team features
 
 ### Direct Competitors
 
-|                 | Snyk           | Datadog Synthetics | StackHawk | **DevPulse**         |
+|                 | Snyk           | Datadog Synthetics | StackHawk | **Rakshex**          |
 | --------------- | -------------- | ------------------ | --------- | -------------------- |
 | **Target**      | Security teams | DevOps             | DevSecOps | **Developers**       |
 | **Integration** | CI/CD + IDE    | Dashboard          | CI/CD     | **VS Code-native**   |

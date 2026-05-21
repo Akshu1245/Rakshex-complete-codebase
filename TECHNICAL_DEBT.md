@@ -1,4 +1,4 @@
-# DevPulse Technical Debt Register
+# Rakshex Technical Debt Register
 
 > Honest accounting of shortcuts, workarounds, and "we'll fix it later" decisions.
 > Date: 2026-05-17 | Debt Items: 23 | Estimated Payoff: 80 hours
@@ -73,7 +73,7 @@
 
 ### T-008: Frontend `any` Types (23 occurrences)
 
-**Location:** `devpulse-frontend/`
+**Location:** `rakshex-frontend/`
 **Debt:** `as any` bypasses TypeScript safety in 23 places.
 **Payoff:** Replace with proper types from shared schema.
 **Cost:** 4 hours | **Interest:** Runtime crashes, refactoring fear

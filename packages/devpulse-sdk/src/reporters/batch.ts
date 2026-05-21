@@ -1,20 +1,20 @@
 /**
- * DevPulse SDK — Batch Reporter
+ * Rakshex SDK — Batch Reporter
  *
- * Batches telemetry events and sends them to the DevPulse ingest API.
+ * Batches telemetry events and sends them to the Rakshex ingest API.
  * Runs a flush timer. Handles retries, backpressure, and shutdown.
  */
-import type { DevPulseConfig, TelemetryEvent } from "../types.js";
+import type { RakshexConfig, TelemetryEvent } from "../types.js";
 import type { TelemetryCollector } from "../telemetry/collector.js";
 
 export class BatchReporter {
-  private config: Required<DevPulseConfig>;
+  private config: Required<RakshexConfig>;
   private collector: TelemetryCollector;
   private buffer: TelemetryEvent[] = [];
   private timer: ReturnType<typeof setInterval> | null = null;
   private flushing = false;
 
-  constructor(config: Required<DevPulseConfig>, collector: TelemetryCollector) {
+  constructor(config: Required<RakshexConfig>, collector: TelemetryCollector) {
     this.config = config;
     this.collector = collector;
   }
@@ -74,7 +74,7 @@ export class BatchReporter {
         headers: {
           "Content-Type": "application/json",
           "Content-Encoding": compressed.encoding,
-          "Authorization": `Bearer ${this.config.apiKey}`,
+          Authorization: `Bearer ${this.config.apiKey}`,
           "X-Workspace-Id": this.config.workspaceId,
           "X-SDK-Version": "0.1.0",
         },

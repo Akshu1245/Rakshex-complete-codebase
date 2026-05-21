@@ -6,7 +6,7 @@
  * single-character structural tokens (`{`, `}`, `:`, `,`, `"`) so the real
  * bytes-per-token ratio is closer to 2, not the usual 4 for prose/code.
  *
- * For DevPulse specifically: API-scan payloads are mostly JSON, and token
+ * For Rakshex specifically: API-scan payloads are mostly JSON, and token
  * analytics previously applied a flat 4:1 ratio that systematically
  * underestimated cost for heavy-JSON users. Using this helper in
  * `tokenAnalytics.estimateCost` tightens the estimate by ~40% on JSON bodies.
@@ -17,9 +17,7 @@
  * content kind. Callers should pass the extension without the leading dot
  * (e.g. "json", "md", "ts"), lowercased — but we accept a few synonyms.
  */
-export function bytesPerTokenForFileType(
-  fileExtensionOrMime: string
-): number {
+export function bytesPerTokenForFileType(fileExtensionOrMime: string): number {
   const ext = fileExtensionOrMime
     .toLowerCase()
     .replace(/^\./, "")
@@ -69,13 +67,8 @@ export function bytesPerTokenForFileType(
  * bytes-per-token ratio when we know the kind of content we're counting.
  * Cheap, synchronous, no API round-trip.
  */
-export function roughTokenCountEstimation(
-  content: string,
-  fileExtensionOrMime?: string
-): number {
-  const bytesPerToken = fileExtensionOrMime
-    ? bytesPerTokenForFileType(fileExtensionOrMime)
-    : 4;
+export function roughTokenCountEstimation(content: string, fileExtensionOrMime?: string): number {
+  const bytesPerToken = fileExtensionOrMime ? bytesPerTokenForFileType(fileExtensionOrMime) : 4;
   return Math.round(content.length / bytesPerToken);
 }
 
@@ -87,7 +80,7 @@ export function roughTokenCountEstimation(
 export function estimateCostForContent(
   content: string,
   pricePer1MTokens: number,
-  fileExtensionOrMime?: string
+  fileExtensionOrMime?: string,
 ): { tokens: number; costUSD: number } {
   const tokens = roughTokenCountEstimation(content, fileExtensionOrMime);
   const costUSD = (tokens / 1_000_000) * pricePer1MTokens;

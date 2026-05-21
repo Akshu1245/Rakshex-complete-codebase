@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "AI Security for Fintech — DevPulse",
+  title: "AI Security for Fintech — Rakshex",
   description:
-    "DevPulse helps fintech companies secure AI agents, comply with PCI DSS, and prevent API leaks. Built for regulated financial services.",
+    "Rakshex helps fintech companies secure AI agents, comply with PCI DSS, and prevent API leaks. Built for regulated financial services.",
   alternates: { canonical: "/solutions/fintech" },
 };
 
@@ -49,7 +49,7 @@ export default function FintechPage() {
         </div>
 
         <div className="bg-gray-800/50 rounded-xl p-8 border border-gray-700 mb-16">
-          <h2 className="text-2xl font-bold mb-6">Why Fintechs Choose DevPulse</h2>
+          <h2 className="text-2xl font-bold mb-6">Why Fintechs Choose Rakshex</h2>
           <div className="grid md:grid-cols-3 gap-6 text-center">
             {[
               { value: "₹0", label: "Data leakage risk with PII redaction" },

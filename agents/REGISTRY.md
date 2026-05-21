@@ -1,4 +1,4 @@
-# DevPulse Agent Registry & Team Coordination
+# Rakshex Agent Registry & Team Coordination
 
 ## ⚡ AUTONOMY MODE
 
@@ -32,8 +32,8 @@ PULSE-COMMAND ←═══ ALL REPORTS FLOW HERE ════╗
 │                                                ║
 ├── DEVELOPMENT (8)                              ║
 │   ├── 07-dev-backend     — server/             ║
-│   ├── 08-dev-frontend    — devpulse-frontend/  ║
-│   ├── 09-dev-vscode      — devpulse-vscode/    ║
+│   ├── 08-dev-frontend    — rakshex-frontend/  ║
+│   ├── 09-dev-vscode      — rakshex-vscode/    ║
 │   ├── 10-dev-database    — drizzle/             ║
 │   ├── 11-dev-api         — server/api/         ║
 │   ├── 12-dev-security    — Security engine      ║
@@ -136,82 +136,82 @@ DISCOVER → DECIDE → EXECUTE → LEARN → DISCOVER → ...
 
 ## Meeting Cadence
 
-| Cadence | What | Who |
-|---|---|---|
-| **Every 2 days** | Team sync standup | All 23 agents report status |
-| **End of sprint** | Retrospective | All agents, facilitated by PULSE-COMMAND |
-| **Start of sprint** | Planning | Leadership + EM-DELIVERY |
-| **On incident** | War room | OPS-MONITOR + BUG-HUNTER + DEV-SECURITY |
-| **On demand** | Any agent can request a sync via EM-DELIVERY |
+| Cadence             | What                                         | Who                                      |
+| ------------------- | -------------------------------------------- | ---------------------------------------- |
+| **Every 2 days**    | Team sync standup                            | All 23 agents report status              |
+| **End of sprint**   | Retrospective                                | All agents, facilitated by PULSE-COMMAND |
+| **Start of sprint** | Planning                                     | Leadership + EM-DELIVERY                 |
+| **On incident**     | War room                                     | OPS-MONITOR + BUG-HUNTER + DEV-SECURITY  |
+| **On demand**       | Any agent can request a sync via EM-DELIVERY |
 
 ---
 
 ## Decision Authority
 
-| Decision | Autonomous? |
-|---|---|
-| What to build next | ✅ Yes |
-| Code changes | ✅ Yes |
-| Creating tests | ✅ Yes |
-| Creating docs | ✅ Yes |
-| PR merging | ✅ Yes |
-| Creating new agents | ✅ Yes |
-| Architecture decisions (non-breaking) | ✅ Yes |
-| Bug fixes | ✅ Yes |
-| DB migrations to production | ❌ Needs human |
-| Production deployment | ❌ Needs human |
-| Package changes | ❌ Needs human |
-| Security rule changes | ❌ Needs human |
-| Stripe/Razorpay config | ❌ Needs human |
+| Decision                              | Autonomous?    |
+| ------------------------------------- | -------------- |
+| What to build next                    | ✅ Yes         |
+| Code changes                          | ✅ Yes         |
+| Creating tests                        | ✅ Yes         |
+| Creating docs                         | ✅ Yes         |
+| PR merging                            | ✅ Yes         |
+| Creating new agents                   | ✅ Yes         |
+| Architecture decisions (non-breaking) | ✅ Yes         |
+| Bug fixes                             | ✅ Yes         |
+| DB migrations to production           | ❌ Needs human |
+| Production deployment                 | ❌ Needs human |
+| Package changes                       | ❌ Needs human |
+| Security rule changes                 | ❌ Needs human |
+| Stripe/Razorpay config                | ❌ Needs human |
 
 ---
 
 ## Communication
 
-| How | When |
-|---|---|
-| **Silent** | Normal operation — team works, ships, improves |
-| **Team sync report** | Every 2 days — status, blockers, next steps |
-| **Approval request** | When protected operation needs human confirmation |
-| **Incident alert** | Immediately when OPS-MONITOR detects critical issue |
-| **Status report** | When you ask "status" |
-| **Sprint retro** | At end of each sprint cycle |
+| How                  | When                                                |
+| -------------------- | --------------------------------------------------- |
+| **Silent**           | Normal operation — team works, ships, improves      |
+| **Team sync report** | Every 2 days — status, blockers, next steps         |
+| **Approval request** | When protected operation needs human confirmation   |
+| **Incident alert**   | Immediately when OPS-MONITOR detects critical issue |
+| **Status report**    | When you ask "status"                               |
+| **Sprint retro**     | At end of each sprint cycle                         |
 
 ---
 
 ## Agent Files Index
 
-| # | File | Agent | Layer |
-|---|---|---|---|
-| 00 | `agents/00-master-orchestrator.md` | PULSE-COMMAND | Command |
-| 01 | `agents/01-ceo-strategy.md` | CEO-STRATEGY | Leadership |
-| 02 | `agents/02-cto-architect.md` | CTO-ARCHITECT | Leadership |
-| 03 | `agents/03-cpo-product.md` | CPO-PRODUCT | Leadership |
-| 04 | `agents/04-vp-engineering.md` | VP-ENGINEERING | Leadership |
-| 05 | `agents/05-em-delivery.md` | EM-DELIVERY | Management |
-| 06 | `agents/06-qa-lead.md` | QA-LEAD | Management |
-| 07 | `agents/07-dev-backend.md` | DEV-BACKEND | Development |
-| 08 | `agents/08-dev-frontend.md` | DEV-FRONTEND | Development |
-| 09 | `agents/09-dev-vscode.md` | DEV-VSCODE | Development |
-| 10 | `agents/10-dev-database.md` | DEV-DATABASE | Development |
-| 11 | `agents/11-dev-api.md` | DEV-API | Development |
-| 12 | `agents/12-dev-security.md` | DEV-SECURITY | Development |
-| 13 | `agents/13-dev-devops.md` | DEV-DEVOPS | Development |
-| 14 | `agents/14-dev-fullstack.md` | DEV-FULLSTACK | Development |
-| 15 | `agents/15-qa-tester.md` | QA-TESTER | Specialized |
-| 16 | `agents/16-docs-writer.md` | DOCS-WRITER | Specialized |
-| 17 | `agents/17-reviewer.md` | REVIEWER | Specialized |
-| 18 | `agents/18-bug-hunter.md` | BUG-HUNTER | Specialized |
-| 19 | `agents/19-ops-release.md` | OPS-RELEASE | Operations |
-| 20 | `agents/20-ops-monitor.md` | OPS-MONITOR | Operations |
-| 22 | `agents/22-agent-factory.md` | AGENT-FACTORY | Autonomy |
-| 23 | `agents/23-research-orchestrator.md` | RESEARCH-ORCHESTRATOR | Autonomy |
-| 24 | `agents/24-error-recovery.md` | ERROR-RECOVERY | Autonomy |
-| 25 | `agents/25-dependency-guardian.md` | DEPENDENCY-GUARDIAN | Guardians |
-| 26 | `agents/26-api-steward.md` | API-STEWARD | Guardians |
-| 27 | `agents/27-competitive-watch.md` | COMPETITIVE-WATCH | Guardians |
-| 28 | `agents/28-performance-auditor.md` | PERFORMANCE-AUDITOR | Guardians |
-| 29 | `agents/29-swarm-test-legion.md` | SWARM-TEST-LEGION | Swarm Commander |
-| 30 | `agents/30-swarm-security-squad.md` | SWARM-SECURITY-SQUAD | Swarm Commander |
-| 31 | `agents/31-swarm-migration-corps.md` | SWARM-MIGRATION-CORPS | Swarm Commander |
-| — | `agents/REGISTRY.md` | This file | Reference |
+| #   | File                                 | Agent                 | Layer           |
+| --- | ------------------------------------ | --------------------- | --------------- |
+| 00  | `agents/00-master-orchestrator.md`   | PULSE-COMMAND         | Command         |
+| 01  | `agents/01-ceo-strategy.md`          | CEO-STRATEGY          | Leadership      |
+| 02  | `agents/02-cto-architect.md`         | CTO-ARCHITECT         | Leadership      |
+| 03  | `agents/03-cpo-product.md`           | CPO-PRODUCT           | Leadership      |
+| 04  | `agents/04-vp-engineering.md`        | VP-ENGINEERING        | Leadership      |
+| 05  | `agents/05-em-delivery.md`           | EM-DELIVERY           | Management      |
+| 06  | `agents/06-qa-lead.md`               | QA-LEAD               | Management      |
+| 07  | `agents/07-dev-backend.md`           | DEV-BACKEND           | Development     |
+| 08  | `agents/08-dev-frontend.md`          | DEV-FRONTEND          | Development     |
+| 09  | `agents/09-dev-vscode.md`            | DEV-VSCODE            | Development     |
+| 10  | `agents/10-dev-database.md`          | DEV-DATABASE          | Development     |
+| 11  | `agents/11-dev-api.md`               | DEV-API               | Development     |
+| 12  | `agents/12-dev-security.md`          | DEV-SECURITY          | Development     |
+| 13  | `agents/13-dev-devops.md`            | DEV-DEVOPS            | Development     |
+| 14  | `agents/14-dev-fullstack.md`         | DEV-FULLSTACK         | Development     |
+| 15  | `agents/15-qa-tester.md`             | QA-TESTER             | Specialized     |
+| 16  | `agents/16-docs-writer.md`           | DOCS-WRITER           | Specialized     |
+| 17  | `agents/17-reviewer.md`              | REVIEWER              | Specialized     |
+| 18  | `agents/18-bug-hunter.md`            | BUG-HUNTER            | Specialized     |
+| 19  | `agents/19-ops-release.md`           | OPS-RELEASE           | Operations      |
+| 20  | `agents/20-ops-monitor.md`           | OPS-MONITOR           | Operations      |
+| 22  | `agents/22-agent-factory.md`         | AGENT-FACTORY         | Autonomy        |
+| 23  | `agents/23-research-orchestrator.md` | RESEARCH-ORCHESTRATOR | Autonomy        |
+| 24  | `agents/24-error-recovery.md`        | ERROR-RECOVERY        | Autonomy        |
+| 25  | `agents/25-dependency-guardian.md`   | DEPENDENCY-GUARDIAN   | Guardians       |
+| 26  | `agents/26-api-steward.md`           | API-STEWARD           | Guardians       |
+| 27  | `agents/27-competitive-watch.md`     | COMPETITIVE-WATCH     | Guardians       |
+| 28  | `agents/28-performance-auditor.md`   | PERFORMANCE-AUDITOR   | Guardians       |
+| 29  | `agents/29-swarm-test-legion.md`     | SWARM-TEST-LEGION     | Swarm Commander |
+| 30  | `agents/30-swarm-security-squad.md`  | SWARM-SECURITY-SQUAD  | Swarm Commander |
+| 31  | `agents/31-swarm-migration-corps.md` | SWARM-MIGRATION-CORPS | Swarm Commander |
+| —   | `agents/REGISTRY.md`                 | This file             | Reference       |

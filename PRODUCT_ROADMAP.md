@@ -1,8 +1,8 @@
-# DevPulse — Product Roadmap (Phase 2 → 6)
+# Rakshex — Product Roadmap (Phase 2 → 6)
 
 **Status of this document:** Living plan. Phase 1 (security hardening + product
 positioning) is shipped on `devin/1778265742-phase-1-hardening`. Phases 2 → 6
-below are the work that turns DevPulse from "API security + cost monitoring"
+below are the work that turns Rakshex from "API security + cost monitoring"
 into a true **Enterprise AI Runtime Governance Platform** comparable in
 positioning to Wiz, Datadog AI, Cloudflare AI Gateway, Lakera, Traceable AI,
 and Palo Alto Prisma AIRS.
@@ -20,7 +20,7 @@ roughly halve calendar time but not effort.
 Shipped on this branch. Summary:
 
 - Zod-validated environment schema with fail-fast in production.
-- Strict CORS allowlist (`devpulse.in`, `www.devpulse.in`, `app.devpulse.in`).
+- Strict CORS allowlist (`rakshex.in`, `www.rakshex.in`, `app.rakshex.in`).
 - Refresh-token rotation foundation (sessions table tracks IP + user-agent +
   expiry; `auth.logoutAllSessions`, `auth.listSessions`, `auth.revokeSession`
   procedures landed).
@@ -56,7 +56,7 @@ What is **not** Phase 1:
 
 ### Deliverables
 
-1. **DevPulse SDK (TypeScript + Python)** — drop-in wrapper around OpenAI,
+1. **Rakshex SDK (TypeScript + Python)** — drop-in wrapper around OpenAI,
    Anthropic, Bedrock, Vertex, Cohere, Mistral, MiniMax, Groq, and
    self-hosted Ollama / vLLM. Captures:
    - prompt, response, system message, function/tool calls, tool results
@@ -263,7 +263,7 @@ CREATE TABLE ai_events (
    - DB read-replica lag chaos test
 3. **Disaster recovery** — point-in-time recovery for the database;
    cross-region replication of S3 blobs; documented RTO 1h / RPO 15min.
-4. **Status page + incident process** — `status.devpulse.in`, paged
+4. **Status page + incident process** — `status.rakshex.in`, paged
    on-call rotation in PagerDuty, post-mortem template.
 5. **Penetration test** — engage a 3rd party (e.g., Cure53, Trail of Bits)
    for a 2-week black-box + grey-box pentest. Fix all critical/high before
@@ -295,15 +295,15 @@ CREATE TABLE ai_events (
 
 ## Cumulative timeline summary
 
-| Phase | Duration | End-of-phase customer-facing capability |
-|---|---|---|
-| 1 — Hardening (shipped) | – | Production-grade auth + observability foundation |
-| 2 — AI Runtime Telemetry | 8 wks | "I can see every AI call my agents make in real time" |
-| 3 — Policy Engine + MCP | 6 wks | "I can block / redact / approve risky AI traffic in-line" |
-| 4 — Security Copilot | 9 wks | "DevPulse explains findings and ships fixes via PR" |
-| 5 — Multi-tenancy + SSO | 6 wks | "We can roll DevPulse out enterprise-wide via Okta" |
-| 6 — Compliance + load + DR | 8 wks | "We pass procurement + SOC 2 evidence review" |
-| **Total to enterprise-ready** | **~37 weeks (≈9 months) single engineer** | |
+| Phase                         | Duration                                  | End-of-phase customer-facing capability                   |
+| ----------------------------- | ----------------------------------------- | --------------------------------------------------------- |
+| 1 — Hardening (shipped)       | –                                         | Production-grade auth + observability foundation          |
+| 2 — AI Runtime Telemetry      | 8 wks                                     | "I can see every AI call my agents make in real time"     |
+| 3 — Policy Engine + MCP       | 6 wks                                     | "I can block / redact / approve risky AI traffic in-line" |
+| 4 — Security Copilot          | 9 wks                                     | "Rakshex explains findings and ships fixes via PR"        |
+| 5 — Multi-tenancy + SSO       | 6 wks                                     | "We can roll Rakshex out enterprise-wide via Okta"        |
+| 6 — Compliance + load + DR    | 8 wks                                     | "We pass procurement + SOC 2 evidence review"             |
+| **Total to enterprise-ready** | **~37 weeks (≈9 months) single engineer** |                                                           |
 
 A team of 3 could plausibly compress this to **~5 months** with parallelism
 on phases 2/3 (telemetry + policy engine share infra) and phases 4/5
@@ -316,7 +316,7 @@ on phases 2/3 (telemetry + policy engine share infra) and phases 4/5
 - Mobile / iOS SDK
 - On-prem / air-gapped deployment (k8s helm chart + dedicated DB)
 - Federated multi-region deploy with active-active write
-- Private LLM hosting (DevPulse-managed inference)
+- Private LLM hosting (Rakshex-managed inference)
 - Marketplace of pre-built policies / detectors
 - Public bug bounty (separate budget + ops)
 
@@ -324,7 +324,7 @@ on phases 2/3 (telemetry + policy engine share infra) and phases 4/5
 
 ## How this document is meant to be used
 
-- The README's "What DevPulse does" table is the **shipped** surface area.
+- The README's "What Rakshex does" table is the **shipped** surface area.
 - This document is the **next 9 months** of product surface area.
 - Investor / customer pitches that reference Phase 2-6 capabilities should
   be marked "on roadmap" until the phase ships.

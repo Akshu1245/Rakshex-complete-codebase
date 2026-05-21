@@ -1,4 +1,4 @@
-// @ts-nocheck  
+// @ts-nocheck
 /**
  * Team Router Test Suite
  * Tests team invitations, role management, and IDOR prevention
@@ -25,10 +25,7 @@ vi.mock("../db", () => ({
 }));
 
 // Mock trpc context
-const createMockContext = (
-  userId: string,
-  email: string = "test@example.com"
-) => ({
+const createMockContext = (userId: string, email: string = "test@example.com") => ({
   user: { id: userId, email, name: "Test User", role: "editor" },
 });
 
@@ -56,17 +53,13 @@ describe("Team Router", () => {
       expect(existing).toBeNull();
 
       // Create invitation
-      const member = await inviteTeamMember(
-        ctx.user.id,
-        input.email,
-        input.role
-      );
+      const member = await inviteTeamMember(ctx.user.id, input.email, input.role);
       expect(member.role).toBe("editor");
 
       // Send email
       await sendTeamInviteEmail({
         toEmail: input.email,
-        inviterName: ctx.user.name ?? "A DevPulse user",
+        inviterName: ctx.user.name ?? "A Rakshex user",
         role: input.role,
         token: member.id,
       });
@@ -86,18 +79,13 @@ describe("Team Router", () => {
       const existing = await getTeamMemberByEmail(ctx.user.id, input.email);
       expect(existing).not.toBeNull();
       expect(() => validateNewInvitation(existing)).toThrow(
-        "An invitation has already been sent to this email address"
+        "An invitation has already been sent to this email address",
       );
     });
 
     it("should reject invalid email format", () => {
-      const invalidEmails = [
-        "notanemail",
-        "@nodomain.com",
-        "spaces here@example.com",
-        "",
-      ];
-      invalidEmails.forEach(email => {
+      const invalidEmails = ["notanemail", "@nodomain.com", "spaces here@example.com", ""];
+      invalidEmails.forEach((email) => {
         expect(() => validateEmail(email)).toThrow();
       });
     });
@@ -106,11 +94,11 @@ describe("Team Router", () => {
       const validRoles = ["admin", "editor", "viewer"];
       const invalidRoles = ["superadmin", "guest", "moderator", ""];
 
-      validRoles.forEach(role => {
+      validRoles.forEach((role) => {
         expect(() => validateRole(role)).not.toThrow();
       });
 
-      invalidRoles.forEach(role => {
+      invalidRoles.forEach((role) => {
         expect(() => validateRole(role)).toThrow();
       });
     });
@@ -129,18 +117,14 @@ describe("Team Router", () => {
       inviteTeamMember.mockResolvedValue(mockMember);
       sendTeamInviteEmail.mockRejectedValue(new Error("SMTP failed"));
 
-      const member = await inviteTeamMember(
-        "user_123",
-        "newuser@example.com",
-        "editor"
-      );
+      const member = await inviteTeamMember("user_123", "newuser@example.com", "editor");
       await expect(
         sendTeamInviteEmail({
           toEmail: "newuser@example.com",
           inviterName: "Test User",
           role: "editor",
           token: member.id,
-        })
+        }),
       ).rejects.toThrow("SMTP failed");
     });
   });
@@ -176,10 +160,7 @@ describe("Team Router", () => {
 
       const page = 1;
       const pageSize = 20;
-      const paginated = mockMembers.slice(
-        (page - 1) * pageSize,
-        page * pageSize
-      );
+      const paginated = mockMembers.slice((page - 1) * pageSize, page * pageSize);
 
       expect(paginated).toHaveLength(3);
       expect(paginated[0].role).toBe("admin");
@@ -232,7 +213,7 @@ describe("Team Router", () => {
 
       expect(member.userId).not.toBe(ctx.user.id);
       expect(() => validateMemberAccess(member, ctx.user.id)).toThrow(
-        "Team member not found or access denied"
+        "Team member not found or access denied",
       );
     });
 
@@ -291,7 +272,7 @@ describe("Team Router", () => {
 
       expect(member.userId).not.toBe(ctx.user.id);
       expect(() => validateMemberAccess(member, ctx.user.id)).toThrow(
-        "Team member not found or access denied"
+        "Team member not found or access denied",
       );
     });
   });
@@ -320,7 +301,7 @@ describe("Team Router", () => {
 
       await sendTeamInviteEmail({
         toEmail: member.memberEmail,
-        inviterName: ctx.user.name ?? "A DevPulse user",
+        inviterName: ctx.user.name ?? "A Rakshex user",
         role: member.role,
       });
       expect(sendTeamInviteEmail).toHaveBeenCalled();
@@ -339,9 +320,7 @@ describe("Team Router", () => {
       const { sendTeamInviteEmail } = await import("../email");
 
       getTeamMemberById.mockResolvedValue(mockMember);
-      sendTeamInviteEmail.mockRejectedValue(
-        new Error("Email service unavailable")
-      );
+      sendTeamInviteEmail.mockRejectedValue(new Error("Email service unavailable"));
 
       const ctx = createMockContext("owner_123");
       const member = await getTeamMemberById("member_123");
@@ -350,9 +329,9 @@ describe("Team Router", () => {
       await expect(
         sendTeamInviteEmail({
           toEmail: member.memberEmail,
-          inviterName: ctx.user.name ?? "A DevPulse user",
+          inviterName: ctx.user.name ?? "A Rakshex user",
           role: member.role,
-        })
+        }),
       ).rejects.toThrow("Email service unavailable");
     });
   });
@@ -376,10 +355,7 @@ describe("Team Router", () => {
       expect(member.status).toBe("pending");
 
       await acceptTeamInvitation("member_123", ctx.user.id);
-      expect(acceptTeamInvitation).toHaveBeenCalledWith(
-        "member_123",
-        ctx.user.id
-      );
+      expect(acceptTeamInvitation).toHaveBeenCalledWith("member_123", ctx.user.id);
     });
 
     it("should reject acceptance if email does not match", async () => {
@@ -397,7 +373,7 @@ describe("Team Router", () => {
 
       expect(member.memberEmail).not.toBe(ctx.user.email);
       expect(() => validateInvitationEmail(member, ctx.user.email)).toThrow(
-        "This invitation is not for your email address"
+        "This invitation is not for your email address",
       );
     });
 
@@ -415,9 +391,7 @@ describe("Team Router", () => {
       const member = await getTeamMemberById("member_123");
 
       expect(member.status).not.toBe("pending");
-      expect(() => validatePendingStatus(member)).toThrow(
-        "Invitation is no longer pending"
-      );
+      expect(() => validatePendingStatus(member)).toThrow("Invitation is no longer pending");
     });
   });
 
@@ -455,7 +429,7 @@ describe("Team Router", () => {
       const member = await getTeamMemberById("member_123");
 
       expect(() => validateInvitationEmail(member, ctx.user.email)).toThrow(
-        "This invitation is not for your email address"
+        "This invitation is not for your email address",
       );
     });
   });
@@ -489,9 +463,7 @@ describe("Team Router", () => {
 
     it("should return empty list if user has no email", async () => {
       const ctx = { user: { id: "user_id", email: null, name: "Test" } };
-      const invitations = ctx.user.email
-        ? await getPendingInvitationsForUser(ctx.user.email)
-        : [];
+      const invitations = ctx.user.email ? await getPendingInvitationsForUser(ctx.user.email) : [];
 
       expect(invitations).toEqual([]);
     });
@@ -526,7 +498,7 @@ describe("Team Router", () => {
 
       const result = {
         memberId: member.id,
-        workspaceName: inviter.name || inviter.email || "DevPulse Workspace",
+        workspaceName: inviter.name || inviter.email || "Rakshex Workspace",
         inviterName: inviter.name || inviter.email,
         inviterEmail: inviter.email,
         role: member.role,
@@ -578,10 +550,7 @@ describe("Team Router", () => {
       expect(member.status).toBe("pending");
 
       await acceptTeamInvitation("token_abc123", ctx.user.id);
-      expect(acceptTeamInvitation).toHaveBeenCalledWith(
-        "token_abc123",
-        ctx.user.id
-      );
+      expect(acceptTeamInvitation).toHaveBeenCalledWith("token_abc123", ctx.user.id);
     });
 
     it("should reject if email does not match", async () => {
@@ -599,7 +568,7 @@ describe("Team Router", () => {
 
       expect(member.memberEmail).not.toBe(ctx.user.email);
       expect(() => validateInvitationEmail(member, ctx.user.email)).toThrow(
-        "This invitation is not for your email address"
+        "This invitation is not for your email address",
       );
     });
 
@@ -616,9 +585,7 @@ describe("Team Router", () => {
       const ctx = createMockContext("user_id", "user@example.com");
       const member = await getTeamMemberById("token_abc123");
 
-      expect(() => validatePendingStatus(member)).toThrow(
-        "Invitation is no longer pending"
-      );
+      expect(() => validatePendingStatus(member)).toThrow("Invitation is no longer pending");
     });
   });
 
@@ -655,7 +622,7 @@ describe("Team Router", () => {
       const member = await getTeamMemberById("token_abc123");
 
       expect(() => validateInvitationEmail(member, ctx.user.email)).toThrow(
-        "This invitation is not for your email address"
+        "This invitation is not for your email address",
       );
     });
   });
@@ -680,9 +647,7 @@ function validateRole(role: string) {
 
 function validateNewInvitation(existing: any) {
   if (existing) {
-    throw new Error(
-      "An invitation has already been sent to this email address"
-    );
+    throw new Error("An invitation has already been sent to this email address");
   }
   return true;
 }
