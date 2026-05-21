@@ -1,5 +1,6 @@
 "use client";
 import { trpc } from "@/lib/trpc";
+import { EmptyState } from "@/components/EmptyState";
 
 export default function TokenAnalyticsPage() {
   const analyticsQuery = trpc.tokenAnalytics.getAnalytics.useQuery({
@@ -185,19 +186,17 @@ export default function TokenAnalyticsPage() {
                 </h3>
               </div>
               {byModel.length === 0 ? (
-                <div className="p-12 text-center">
-                  <span
-                    className="material-symbols-outlined text-on-surface-variant/30"
-                    style={{ fontSize: "56px" }}
-                  >
-                    query_stats
-                  </span>
-                  <p
-                    className="text-on-surface-variant mt-4"
-                    style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "13px" }}
-                  >
-                    No model data yet — start making LLM calls to see cost breakdown
-                  </p>
+                <div className="p-6">
+                  <EmptyState
+                    icon={
+                      <span className="material-symbols-outlined" style={{ fontSize: "32px" }}>
+                        bar_chart_4_bars
+                      </span>
+                    }
+                    title="No token usage tracked yet"
+                    description="Connect an LLM provider via OpenRouter or direct API key to start tracking costs per request."
+                    actions={[{ label: "Open Settings", href: "/settings" }]}
+                  />
                 </div>
               ) : (
                 <div className="overflow-x-auto">
@@ -267,19 +266,17 @@ export default function TokenAnalyticsPage() {
                 </h3>
               </div>
               {usage.length === 0 ? (
-                <div className="p-12 text-center">
-                  <span
-                    className="material-symbols-outlined text-on-surface-variant/30"
-                    style={{ fontSize: "56px" }}
-                  >
-                    timeline
-                  </span>
-                  <p
-                    className="text-on-surface-variant mt-4"
-                    style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "13px" }}
-                  >
-                    No usage records yet
-                  </p>
+                <div className="p-6">
+                  <EmptyState
+                    icon={
+                      <span className="material-symbols-outlined" style={{ fontSize: "32px" }}>
+                        timeline
+                      </span>
+                    }
+                    title="No token usage tracked yet"
+                    description="Connect an LLM provider via OpenRouter or direct API key to start tracking costs per request."
+                    compact
+                  />
                 </div>
               ) : (
                 <div className="overflow-x-auto max-h-96 overflow-y-auto">

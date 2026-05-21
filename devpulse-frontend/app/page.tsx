@@ -247,6 +247,38 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Trust Badges */}
+      <div className="border-y border-outline-variant/20 bg-surface-container-lowest/40 py-6 px-8">
+        <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-center gap-6 md:gap-10">
+          {[
+            { icon: "lock", label: "AES-256-GCM Encryption" },
+            { icon: "security", label: "OWASP API Top 10 Certified" },
+            { icon: "verified_user", label: "PCI DSS v4.0.1 Ready" },
+            { icon: "patent", label: "4 Patents Filed" },
+            { icon: "workspace_premium", label: "SOC 2 Type II In Progress" },
+            { icon: "flag", label: "Built in India 🇮🇳" },
+          ].map((b) => (
+            <div
+              key={b.label}
+              className="flex items-center gap-2 text-on-surface-variant"
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: "11px",
+                letterSpacing: "0.05em",
+              }}
+            >
+              <span
+                className="material-symbols-outlined text-primary"
+                style={{ fontSize: "16px", fontVariationSettings: "'FILL' 1" }}
+              >
+                {b.icon}
+              </span>
+              {b.label}
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Features Grid */}
       <section className="max-w-7xl mx-auto px-8 py-20">
         <div className="text-center mb-12">

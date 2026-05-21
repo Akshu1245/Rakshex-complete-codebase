@@ -1,7 +1,7 @@
 {
-  "name": "DevPulse — AI Runtime Governance",
-  "short_name": "DevPulse",
-  "description": "Secure, monitor, and govern AI agents in production. Security scanning, cost monitoring, and compliance automation.",
+  "name": "Rakshex — API Security & LLM Cost Intelligence",
+  "short_name": "Rakshex",
+  "description": "API Security & LLM Cost Intelligence. Built in India. Protected by 4 Patents. OWASP scanning, prompt injection blocking, and LLM cost attribution.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",

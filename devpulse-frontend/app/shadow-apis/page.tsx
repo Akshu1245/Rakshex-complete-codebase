@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { EmptyState } from "@/components/EmptyState";
 
 export default function ShadowAPIsPage() {
   const utils = trpc.useUtils();
@@ -284,19 +285,17 @@ export default function ShadowAPIsPage() {
               </p>
             </div>
           ) : shadowAPIs.length === 0 ? (
-            <div className="p-12 text-center">
-              <span
-                className="material-symbols-outlined text-primary/30"
-                style={{ fontSize: "56px" }}
-              >
-                check_circle
-              </span>
-              <p
-                className="text-on-surface-variant mt-4"
-                style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "13px" }}
-              >
-                No shadow APIs found — all endpoints are documented
-              </p>
+            <div className="p-6">
+              <EmptyState
+                icon={
+                  <span className="material-symbols-outlined" style={{ fontSize: "32px" }}>
+                    visibility
+                  </span>
+                }
+                title="No shadow APIs detected"
+                description="Shadow APIs appear when undocumented endpoints are discovered during scanning. Run a scan to start."
+                actions={[{ label: "Run Scan", href: "/collections" }]}
+              />
             </div>
           ) : (
             <div className="overflow-x-auto">

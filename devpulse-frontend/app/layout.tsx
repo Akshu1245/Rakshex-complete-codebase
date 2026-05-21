@@ -13,40 +13,41 @@ import { TrialBanner } from "@/app/components/TrialBanner";
 // Inter kept for fallback but primary fonts loaded via CSS
 const inter = Inter({ subsets: ["latin"] });
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://devpulse.in";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://rakshex.in";
 
 export const metadata: Metadata = {
-  title: "DevPulse — AI Runtime Governance Platform",
+  title: "Rakshex — API Security & LLM Cost Intelligence",
   description:
-    "Real-time AI Agent Security Scanning, Cost Monitoring & Compliance. Built in India with 4 patents. Scan APIs, detect shadow endpoints, block prompt injection.",
-  generator: "DevPulse",
+    "API Security & LLM Cost Intelligence. Built in India. Protected by 4 Patents. Scan APIs, detect shadow endpoints, block prompt injection, attribute LLM costs.",
+  generator: "Rakshex",
   keywords: [
-    "AI security",
-    "API scanning",
+    "API security",
     "LLM cost monitoring",
-    "prompt injection",
+    "prompt injection detection",
     "shadow API detection",
     "PCI DSS compliance",
     "AI governance",
     "LLM runtime security",
     "AI agent protection",
+    "OWASP API Top 10",
+    "Rakshex",
   ],
   metadataBase: new URL(SITE_URL),
   alternates: { canonical: "/" },
   robots: { index: true, follow: true },
   openGraph: {
-    title: "DevPulse — Secure Your AI Agents",
+    title: "Rakshex — Secure Your APIs & Control LLM Costs",
     description:
-      "Real-time security scanning, cost anomaly detection, and PII redaction for production LLM applications.",
+      "Real-time OWASP API scanning, LLM cost attribution, thinking token tracking, and PCI DSS compliance. Built in India with 4 patents.",
     type: "website",
-    siteName: "DevPulse",
+    siteName: "Rakshex",
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "DevPulse — AI Runtime Governance Platform",
-    description: "Real-time AI Agent Security Scanning, Cost Monitoring & Compliance.",
-    creator: "@devpulsehq",
+    title: "Rakshex — API Security & LLM Cost Intelligence",
+    description: "API Security & LLM Cost Intelligence. Built in India. Protected by 4 Patents.",
+    creator: "@rakshexhq",
   },
 };
 

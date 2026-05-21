@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
+import { EmptyState } from "@/components/EmptyState";
 
 const PAGE_SIZE = 50;
 
@@ -14,18 +15,17 @@ export default function AuditLogPage() {
   const filteredLogs = useMemo(() => {
     const all = auditQuery.data?.logs ?? [];
     if (!filter) return all;
-    return all.filter(l => l.action === filter);
+    return all.filter((l) => l.action === filter);
   }, [auditQuery.data, filter]);
 
   const totalPages = Math.max(1, Math.ceil(filteredLogs.length / PAGE_SIZE));
-  const pagedLogs = filteredLogs.slice(
-    (page - 1) * PAGE_SIZE,
-    page * PAGE_SIZE
-  );
+  const pagedLogs = filteredLogs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const loading = auditQuery.isLoading;
 
   // Reset to page 1 when filter changes
-  useEffect(() => { setPage(1); }, [filter]);
+  useEffect(() => {
+    setPage(1);
+  }, [filter]);
 
   const formatDate = (dateStr: string | Date) => {
     return new Date(dateStr).toLocaleString();
@@ -46,7 +46,11 @@ export default function AuditLogPage() {
   };
 
   /** Derive a human-readable resource label from the log entry */
-  const getResourceLabel = (log: { action: string; details?: unknown; ipAddress?: string | null }) => {
+  const getResourceLabel = (log: {
+    action: string;
+    details?: unknown;
+    ipAddress?: string | null;
+  }) => {
     if (log.details && typeof log.details === "object") {
       // Try common resource identifier keys
       const d = log.details as Record<string, unknown>;
@@ -75,7 +79,7 @@ export default function AuditLogPage() {
         <div className="mb-4 flex gap-4">
           <select
             value={filter}
-            onChange={e => setFilter(e.target.value)}
+            onChange={(e) => setFilter(e.target.value)}
             className="border border-gray-600 rounded-lg px-3 py-2 bg-gray-800 text-white focus:ring-2 focus:ring-blue-500 outline-none"
           >
             <option value="">All Actions</option>
@@ -91,6 +95,16 @@ export default function AuditLogPage() {
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
           </div>
+        ) : filteredLogs.length === 0 ? (
+          <EmptyState
+            icon={
+              <span className="material-symbols-outlined" style={{ fontSize: "32px" }}>
+                description
+              </span>
+            }
+            title="No audit events yet"
+            description="User actions and security events appear here automatically as your team uses Rakshex."
+          />
         ) : (
           <>
             <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
@@ -116,7 +130,7 @@ export default function AuditLogPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {pagedLogs.map(log => (
+                    {pagedLogs.map((log) => (
                       <tr
                         key={log.id}
                         data-testid={`audit-entry-${log.action}`}
@@ -127,16 +141,12 @@ export default function AuditLogPage() {
                         </td>
                         <td className="p-3">
                           <span
-                            className={`px-2 py-1 rounded text-sm ${getActionColor(
-                              log.action
-                            )}`}
+                            className={`px-2 py-1 rounded text-sm ${getActionColor(log.action)}`}
                           >
                             {log.action}
                           </span>
                         </td>
-                        <td className="p-3 text-sm text-gray-300">
-                          {getResourceLabel(log)}
-                        </td>
+                        <td className="p-3 text-sm text-gray-300">{getResourceLabel(log)}</td>
                         <td className="p-3 text-sm text-gray-300">
                           {log.details ? (
                             <pre className="text-xs text-gray-400 max-w-xs overflow-x-auto">
@@ -158,7 +168,7 @@ export default function AuditLogPage() {
 
             <div className="mt-4 flex justify-between items-center">
               <button
-                onClick={() => setPage(p => Math.max(1, p - 1))}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
                 className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-300 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
@@ -168,7 +178,7 @@ export default function AuditLogPage() {
                 Page {page} of {totalPages}
               </span>
               <button
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
                 className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-300 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
