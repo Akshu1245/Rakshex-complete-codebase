@@ -4,119 +4,159 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 
 export default function ROICalculator() {
-  const [monthlySpend, setMonthlySpend] = useState(5000);
-  const [incidentsPerYear, setIncidentsPerYear] = useState(2);
-  const [avgIncidentCost, setAvgIncidentCost] = useState(25000);
-  const [teamSize, setTeamSize] = useState(5);
-  const [hourlyRate, setHourlyRate] = useState(75);
-  const [complianceRequired, setComplianceRequired] = useState(true);
+  // Inputs with requested default values
+  const [monthlySpend, setMonthlySpend] = useState<number>(500);
+  const [agentCount, setAgentCount] = useState<number>(5);
+  const [incidentCost, setIncidentCost] = useState<number>(50,000);
+  const [teamSize, setTeamSize] = useState<number>(3);
+  const [manualAuditHours, setManualAuditHours] = useState<number>(4);
 
+  // Hourly engineering rate for value calculations
+  const HOURLY_RATE = 80;
+
+  // Real-time calculations based on requested formulas
   const results = useMemo(() => {
-    // Cost of doing nothing
-    const annualIncidentCost = incidentsPerYear * avgIncidentCost;
-    const auditPrepHours = complianceRequired ? teamSize * 40 : 0; // 1 week per person
-    const auditPrepCost = auditPrepHours * hourlyRate;
-    const manualMonitoringHours = teamSize * 4 * 12; // 4 hrs/month/person
-    const manualMonitoringCost = manualMonitoringHours * hourlyRate;
-    const totalCostOfNothing = annualIncidentCost + auditPrepCost + manualMonitoringCost;
+    // 1. Estimated monthly savings from cost optimization: (LLM spend × 30%)
+    const monthlyCostSavings = monthlySpend * 0.30;
+    const annualCostSavings = monthlyCostSavings * 12;
 
-    // Cost of Rakshex
-    const rakshexProCost = 99 * 12; // $99/mo
-    const rakshexSetupHours = 8;
-    const rakshexSetupCost = rakshexSetupHours * hourlyRate;
-    const reducedIncidents = Math.max(0, incidentsPerYear - 1); // Rakshex prevents ~1 incident/yr
-    const reducedIncidentCost = reducedIncidents * avgIncidentCost;
-    const totalRakshexCost = rakshexProCost + rakshexSetupCost + reducedIncidentCost;
+    // 2. Estimated annual breach risk reduction value: (incident cost × 15% probability × 12)
+    const annualBreachRiskReduction = incidentCost * 0.15 * 12;
 
-    const savings = totalCostOfNothing - totalRakshexCost;
-    const roi = ((savings - rakshexProCost) / rakshexProCost) * 100;
-    const paybackMonths =
-      rakshexProCost > 0 ? (rakshexSetupCost + rakshexProCost) / (savings / 12) : 0;
+    // 3. Engineering hours saved per year: (manual audit hours × 52)
+    const hoursSavedPerYear = manualAuditHours * 52;
+    const valueOfHoursSaved = hoursSavedPerYear * HOURLY_RATE;
+
+    // 4. Total annual ROI: sum of above (translating hours/monthly metrics into annual dollars)
+    const totalAnnualROI = annualCostSavings + annualBreachRiskReduction + valueOfHoursSaved;
+
+    // 5. RakshEx Pro cost: $99/mo = $1,188/yr
+    const rakshexProCost = 1188;
+
+    // 6. ROI multiplier: Total annual ROI / $1,188
+    const roiMultiplier = rakshexProCost > 0 ? totalAnnualROI / rakshexProCost : 0;
 
     return {
-      totalCostOfNothing,
-      totalRakshexCost,
-      savings,
-      roi: Math.round(roi),
-      paybackMonths: Math.max(0.1, paybackMonths),
-      annualIncidentCost,
-      auditPrepCost,
-      manualMonitoringCost,
+      monthlyCostSavings,
+      annualCostSavings,
+      annualBreachRiskReduction,
+      hoursSavedPerYear,
+      valueOfHoursSaved,
+      totalAnnualROI,
       rakshexProCost,
-      rakshexSetupCost,
+      roiMultiplier,
     };
-  }, [monthlySpend, incidentsPerYear, avgIncidentCost, teamSize, hourlyRate, complianceRequired]);
+  }, [monthlySpend, incidentCost, manualAuditHours]);
 
   const fmt = (n: number) =>
     n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-8">
+    <div className="min-h-screen bg-slate-950 text-slate-100 py-16 px-4 font-sans">
       <div className="max-w-5xl mx-auto">
-        <nav className="text-sm text-gray-400 mb-4">
-          <Link href="/pricing" className="hover:text-blue-400">
-            ← Pricing
-          </Link>
-        </nav>
+        <header className="mb-12 text-center md:text-left">
+          <h1 className="text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">
+            AI Security ROI Calculator
+          </h1>
+          <p className="text-slate-400 mt-2 text-base max-w-2xl">
+            See how much your team can optimize LLM API usage and reduce vulnerability risk exposure with RakshEx.
+          </p>
+        </header>
 
-        <h1 className="text-4xl font-bold mb-2">AI Security ROI Calculator</h1>
-        <p className="text-gray-400 mb-8">
-          Calculate what unmonitored AI agents cost your organization — and what Rakshex saves.
-        </p>
+        <div className="grid lg:grid-cols-12 gap-8">
+          {/* Inputs Panel */}
+          <div className="lg:col-span-7 bg-slate-900/40 border border-slate-900 rounded-2xl p-8 space-y-6">
+            <h2 className="text-xl font-bold text-white mb-4">Calculator Inputs</h2>
 
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Inputs */}
-          <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 space-y-5">
-            <h2 className="text-xl font-bold text-blue-400">Your Environment</h2>
-
+            {/* Monthly LLM Spend */}
             <div>
-              <label className="block text-sm text-gray-400 mb-1">Monthly LLM Spend (USD)</label>
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-sm font-medium text-slate-400">Monthly LLM API Spend ($)</label>
+                <input
+                  type="number"
+                  value={monthlySpend}
+                  onChange={(e) => setMonthlySpend(Math.max(0, Number(e.target.value)))}
+                  className="w-24 bg-slate-950 border border-slate-800 rounded px-2 py-1 text-right text-sm text-blue-400 font-mono focus:outline-none focus:border-blue-500"
+                />
+              </div>
               <input
                 type="range"
-                min="500"
-                max="100000"
-                step="500"
+                min="100"
+                max="50000"
+                step="100"
                 value={monthlySpend}
                 onChange={(e) => setMonthlySpend(Number(e.target.value))}
-                className="w-full accent-blue-500"
+                className="w-full accent-blue-500 bg-slate-950 h-1.5 rounded-lg appearance-none cursor-pointer"
               />
-              <div className="text-right text-blue-300 font-mono">{fmt(monthlySpend)}</div>
+              <div className="flex justify-between text-[10px] text-slate-600 mt-1">
+                <span>$100</span>
+                <span>$50,000</span>
+              </div>
             </div>
 
+            {/* AI Agents Running */}
             <div>
-              <label className="block text-sm text-gray-400 mb-1">
-                Security Incidents per Year
-              </label>
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-sm font-medium text-slate-400">Number of AI Agents Running</label>
+                <input
+                  type="number"
+                  value={agentCount}
+                  onChange={(e) => setAgentCount(Math.max(0, Number(e.target.value)))}
+                  className="w-24 bg-slate-950 border border-slate-800 rounded px-2 py-1 text-right text-sm text-blue-400 font-mono focus:outline-none focus:border-blue-500"
+                />
+              </div>
               <input
                 type="range"
-                min="0"
-                max="12"
+                min="1"
+                max="100"
                 step="1"
-                value={incidentsPerYear}
-                onChange={(e) => setIncidentsPerYear(Number(e.target.value))}
-                className="w-full accent-blue-500"
+                value={agentCount}
+                onChange={(e) => setAgentCount(Number(e.target.value))}
+                className="w-full accent-blue-500 bg-slate-950 h-1.5 rounded-lg appearance-none cursor-pointer"
               />
-              <div className="text-right text-blue-300 font-mono">{incidentsPerYear}</div>
+              <div className="flex justify-between text-[10px] text-slate-600 mt-1">
+                <span>1</span>
+                <span>100 agents</span>
+              </div>
             </div>
 
+            {/* Average Incident Cost */}
             <div>
-              <label className="block text-sm text-gray-400 mb-1">
-                Avg Cost per Incident (USD)
-              </label>
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-sm font-medium text-slate-400">Avg Incident Cost if Breach Occurs ($)</label>
+                <input
+                  type="number"
+                  value={incidentCost}
+                  onChange={(e) => setIncidentCost(Math.max(0, Number(e.target.value)))}
+                  className="w-28 bg-slate-950 border border-slate-800 rounded px-2 py-1 text-right text-sm text-blue-400 font-mono focus:outline-none focus:border-blue-500"
+                />
+              </div>
               <input
                 type="range"
-                min="5000"
-                max="200000"
+                min="1000"
+                max="500000"
                 step="5000"
-                value={avgIncidentCost}
-                onChange={(e) => setAvgIncidentCost(Number(e.target.value))}
-                className="w-full accent-blue-500"
+                value={incidentCost}
+                onChange={(e) => setIncidentCost(Number(e.target.value))}
+                className="w-full accent-blue-500 bg-slate-950 h-1.5 rounded-lg appearance-none cursor-pointer"
               />
-              <div className="text-right text-blue-300 font-mono">{fmt(avgIncidentCost)}</div>
+              <div className="flex justify-between text-[10px] text-slate-600 mt-1">
+                <span>$1,000</span>
+                <span>$500,000</span>
+              </div>
             </div>
 
+            {/* Team Size */}
             <div>
-              <label className="block text-sm text-gray-400 mb-1">Engineering Team Size</label>
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-sm font-medium text-slate-400">Team Size (Engineers)</label>
+                <input
+                  type="number"
+                  value={teamSize}
+                  onChange={(e) => setTeamSize(Math.max(0, Number(e.target.value)))}
+                  className="w-24 bg-slate-950 border border-slate-800 rounded px-2 py-1 text-right text-sm text-blue-400 font-mono focus:outline-none focus:border-blue-500"
+                />
+              </div>
               <input
                 type="range"
                 min="1"
@@ -124,105 +164,111 @@ export default function ROICalculator() {
                 step="1"
                 value={teamSize}
                 onChange={(e) => setTeamSize(Number(e.target.value))}
-                className="w-full accent-blue-500"
+                className="w-full accent-blue-500 bg-slate-950 h-1.5 rounded-lg appearance-none cursor-pointer"
               />
-              <div className="text-right text-blue-300 font-mono">{teamSize}</div>
+              <div className="flex justify-between text-[10px] text-slate-600 mt-1">
+                <span>1</span>
+                <span>50 engineers</span>
+              </div>
             </div>
 
+            {/* Hours spent on audits */}
             <div>
-              <label className="block text-sm text-gray-400 mb-1">Avg Hourly Rate (USD)</label>
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-sm font-medium text-slate-400">Hours/Week on Manual API Audits</label>
+                <input
+                  type="number"
+                  value={manualAuditHours}
+                  onChange={(e) => setManualAuditHours(Math.max(0, Number(e.target.value)))}
+                  className="w-24 bg-slate-950 border border-slate-800 rounded px-2 py-1 text-right text-sm text-blue-400 font-mono focus:outline-none focus:border-blue-500"
+                />
+              </div>
               <input
                 type="range"
-                min="25"
-                max="300"
-                step="5"
-                value={hourlyRate}
-                onChange={(e) => setHourlyRate(Number(e.target.value))}
-                className="w-full accent-blue-500"
+                min="0"
+                max="40"
+                step="1"
+                value={manualAuditHours}
+                onChange={(e) => setManualAuditHours(Number(e.target.value))}
+                className="w-full accent-blue-500 bg-slate-950 h-1.5 rounded-lg appearance-none cursor-pointer"
               />
-              <div className="text-right text-blue-300 font-mono">{fmt(hourlyRate)}</div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                checked={complianceRequired}
-                onChange={(e) => setComplianceRequired(e.target.checked)}
-                className="w-5 h-5 accent-blue-500"
-              />
-              <label className="text-gray-300">Compliance required (PCI DSS / SOC 2 / GDPR)</label>
+              <div className="flex justify-between text-[10px] text-slate-600 mt-1">
+                <span>0</span>
+                <span>40 hours</span>
+              </div>
             </div>
           </div>
 
-          {/* Results */}
-          <div className="space-y-6">
-            <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
-              <h2 className="text-xl font-bold text-red-400 mb-4">Cost of Doing Nothing</h2>
-              <div className="space-y-3 text-gray-300">
-                <div className="flex justify-between">
-                  <span>Annual incident cost</span>
-                  <span className="font-mono">{fmt(results.annualIncidentCost)}</span>
+          {/* Outputs Panel */}
+          <div className="lg:col-span-5 space-y-6">
+            {/* Main ROI Multiplier Callout */}
+            <div className="bg-gradient-to-br from-emerald-950/20 to-teal-950/20 border border-emerald-500/30 rounded-2xl p-6 text-center">
+              <span className="text-xs font-semibold text-emerald-400 uppercase tracking-widest block mb-1">
+                Estimated ROI Multiplier
+              </span>
+              <p className="text-5xl font-extrabold text-emerald-400 tracking-tight my-2">
+                {results.roiMultiplier.toFixed(1)}x ROI
+              </p>
+              <p className="text-sm text-emerald-300">
+                Total annual savings of <strong className="text-white">{fmt(results.totalAnnualROI)}</strong>
+              </p>
+            </div>
+
+            {/* Calculations List */}
+            <div className="bg-slate-900/40 border border-slate-900 rounded-2xl p-6 space-y-4">
+              <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Live Cost Savings Breakdown</h3>
+              
+              <div className="flex justify-between items-start border-b border-slate-900 pb-3">
+                <div>
+                  <span className="text-sm font-semibold text-white block">Cost Optimization Savings</span>
+                  <span className="text-xs text-slate-500">30% reduction on LLM API spend</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Manual monitoring (engineer time)</span>
-                  <span className="font-mono">{fmt(results.manualMonitoringCost)}</span>
+                <div className="text-right">
+                  <span className="text-sm font-bold text-slate-200 font-mono">{fmt(results.monthlyCostSavings)}/mo</span>
+                  <span className="text-xs text-slate-500 block">({fmt(results.annualCostSavings)}/yr)</span>
                 </div>
-                {complianceRequired && (
-                  <div className="flex justify-between">
-                    <span>Audit preparation (engineer time)</span>
-                    <span className="font-mono">{fmt(results.auditPrepCost)}</span>
-                  </div>
-                )}
-                <div className="border-t border-gray-700 pt-3 flex justify-between font-bold text-red-300">
-                  <span>Total annual cost</span>
-                  <span className="font-mono">{fmt(results.totalCostOfNothing)}</span>
+              </div>
+
+              <div className="flex justify-between items-start border-b border-slate-900 pb-3">
+                <div>
+                  <span className="text-sm font-semibold text-white block">Breach Risk Reduction</span>
+                  <span className="text-xs text-slate-500">15% probability reduction × 12 mo</span>
                 </div>
+                <div className="text-right">
+                  <span className="text-sm font-bold text-slate-200 font-mono">{fmt(results.annualBreachRiskReduction)}/yr</span>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-start pb-1">
+                <div>
+                  <span className="text-sm font-semibold text-white block">Engineering Hours Saved</span>
+                  <span className="text-xs text-slate-500">52 weeks × manual audit hours</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-sm font-bold text-slate-200 font-mono">{results.hoursSavedPerYear} hrs/yr</span>
+                  <span className="text-xs text-slate-500 block">({fmt(results.valueOfHoursSaved)} value @ $80/hr)</span>
+                </div>
+              </div>
+
+              <div className="border-t border-slate-800 pt-4 flex justify-between items-center text-slate-400 text-sm">
+                <span>RakshEx Pro Plan Cost</span>
+                <span className="font-mono text-slate-300 font-semibold">$99/mo = $1,188/yr</span>
               </div>
             </div>
 
-            <div className="bg-gray-800/50 border border-blue-500/30 rounded-xl p-6">
-              <h2 className="text-xl font-bold text-blue-400 mb-4">Cost with Rakshex</h2>
-              <div className="space-y-3 text-gray-300">
-                <div className="flex justify-between">
-                  <span>Rakshex Pro (annual)</span>
-                  <span className="font-mono">{fmt(results.rakshexProCost)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Setup (one-time)</span>
-                  <span className="font-mono">{fmt(results.rakshexSetupCost)}</span>
-                </div>
-                <div className="flex justify-between text-gray-500">
-                  <span>Residual incident cost (1/yr)</span>
-                  <span className="font-mono">
-                    {fmt(
-                      results.totalRakshexCost - results.rakshexProCost - results.rakshexSetupCost,
-                    )}
-                  </span>
-                </div>
-                <div className="border-t border-gray-700 pt-3 flex justify-between font-bold text-blue-300">
-                  <span>Total annual cost</span>
-                  <span className="font-mono">{fmt(results.totalRakshexCost)}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-green-900/20 border border-green-700/40 rounded-xl p-6 text-center">
-              <p className="text-green-300 text-sm uppercase tracking-wide mb-1">Annual Savings</p>
-              <p className="text-4xl font-bold text-green-400 mb-2">{fmt(results.savings)}</p>
-              <p className="text-green-300 text-sm">
-                {results.roi}x ROI · Payback in {results.paybackMonths.toFixed(1)} months
+            {/* Trial CTA */}
+            <div className="text-center pt-2">
+              <Link
+                href="/demo"
+                className="w-full block text-center px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold text-base rounded-xl transition-all shadow-lg shadow-blue-500/20"
+              >
+                Start Free Trial
+              </Link>
+              <p className="text-[11px] text-slate-500 mt-2">
+                14-day full featured trial. Setup in 5 minutes.
               </p>
             </div>
           </div>
-        </div>
-
-        <div className="mt-12 text-center">
-          <Link
-            href="/demo"
-            className="inline-block px-8 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors"
-          >
-            Start Free Trial →
-          </Link>
         </div>
       </div>
     </div>
