@@ -1,56 +1,65 @@
 "use client";
+
 import Link from "next/link";
-import { useState } from "react";
+
+const COMPETITORS = [
+  {
+    slug: "snyk",
+    name: "Snyk",
+    tagline: "Code-level vulnerability scanner, blind to live API and LLM surfaces.",
+  },
+  {
+    slug: "datadog",
+    name: "Datadog LLM",
+    tagline: "Infrastructure observability giant, but AI security is an afterthought.",
+  },
+  {
+    slug: "traceable-ai",
+    name: "Traceable AI",
+    tagline: "Enterprise API security, lacking runtime LLM cost attribution & agent firewalls.",
+  },
+  {
+    slug: "salt-security",
+    name: "Salt Security",
+    tagline: "API anomaly detection, not built for non-deterministic AI agentic flows.",
+  },
+  {
+    slug: "noname-security",
+    name: "Noname Security",
+    tagline: "Posture management and scanning, missing dynamic prompt injection blocking.",
+  },
+];
 
 export default function ComparisonIndex() {
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-8">
+    <div className="min-h-screen bg-slate-950 text-slate-100 py-16 px-4 font-sans">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-2">Rakshex vs Competitors</h1>
-        <p className="text-gray-400 mb-8">Honest comparison pages. No fluff. Just facts.</p>
+        <header className="mb-12">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-950 text-blue-400 border border-blue-900/60 mb-4">
+            ⚖️ Competitive Analysis
+          </span>
+          <h1 className="text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">
+            Compare RakshEx
+          </h1>
+          <p className="text-slate-400 mt-2 text-base">
+            Honest comparisons with traditional code scanners, observability engines, and legacy API protection tools.
+          </p>
+        </header>
 
-        <div className="space-y-4">
-          {[
-            {
-              slug: "helicone",
-              name: "Helicone",
-              tagline: "AI observability done right, but missing security",
-            },
-            {
-              slug: "portkey",
-              name: "Portkey",
-              tagline: "Great gateway, but where's the compliance?",
-            },
-            {
-              slug: "lakera",
-              name: "Lakera Guard",
-              tagline: "Prompt injection specialist, but only one piece of the puzzle",
-            },
-            {
-              slug: "langsmith",
-              name: "LangSmith",
-              tagline: "LLM tracing champion, not a security platform",
-            },
-            {
-              slug: "datadog",
-              name: "Datadog LLM",
-              tagline: "Observability giant, but AI governance is an afterthought",
-            },
-            {
-              slug: "snyk",
-              name: "Snyk",
-              tagline: "Code security leader, blind to API and AI surfaces",
-            },
-          ].map((comp) => (
+        <div className="grid md:grid-cols-2 gap-6">
+          {COMPETITORS.map((comp) => (
             <Link
               key={comp.slug}
               href={`/compare/${comp.slug}`}
-              className="block bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-blue-500 transition-colors group"
+              className="block bg-slate-900/30 border border-slate-900 hover:border-blue-500/50 p-6 rounded-2xl transition-all group"
             >
-              <h3 className="text-xl font-bold mb-1 group-hover:text-blue-400 transition-colors">
-                Rakshex vs {comp.name}
+              <h3 className="text-lg font-bold text-white mb-2 group-hover:text-blue-400 transition-colors">
+                RakshEx vs {comp.name}
               </h3>
-              <p className="text-gray-400 text-sm">{comp.tagline}</p>
+              <p className="text-slate-400 text-sm leading-relaxed mb-4">{comp.tagline}</p>
+              <span className="text-xs text-blue-400 group-hover:underline font-semibold flex items-center gap-1">
+                View full comparison <span className="group-hover:translate-x-1 transition-transform inline-block">→</span>
+              </span>
             </Link>
           ))}
         </div>
