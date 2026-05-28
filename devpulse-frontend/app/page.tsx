@@ -332,7 +332,65 @@ export default function LandingPage() {
           animation: marquee 25s linear infinite;
         }
         .animate-marquee:hover {
-          animation-play-state: running; /* Do not pause on hover */
+          animation-play-state: running;
+        }
+        @keyframes shield-pulse {
+          0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0px rgba(6,182,212,0)); }
+          50% { transform: scale(1.1); filter: drop-shadow(0 0 8px rgba(6,182,212,0.4)); }
+        }
+        .hover-shield:hover svg {
+          animation: shield-pulse 1.5s infinite ease-in-out;
+        }
+        @keyframes key-rotate {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        .hover-key:hover svg {
+          animation: key-rotate 2s infinite linear;
+        }
+        @keyframes brain-pulse {
+          0%, 100% { opacity: 0.3; }
+          50% { opacity: 1; }
+        }
+        .hover-brain:hover .brain-dot {
+          animation: brain-pulse 1s infinite alternate;
+        }
+        @keyframes ghost-fade {
+          0%, 100% { opacity: 0.3; }
+          50% { opacity: 0.9; }
+        }
+        .hover-ghost:hover svg {
+          animation: ghost-fade 1.5s infinite ease-in-out;
+        }
+        @keyframes line-draw {
+          0% { stroke-dashoffset: 20; }
+          100% { stroke-dashoffset: 0; }
+        }
+        .hover-graph:hover .graph-line {
+          stroke-dasharray: 20;
+          animation: line-draw 1.5s infinite linear;
+        }
+        @keyframes doc-check {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.25); }
+        }
+        .hover-doc:hover .doc-check-icon {
+          animation: doc-check 0.8s infinite ease-in-out;
+        }
+        @keyframes net-connect {
+          0%, 100% { transform: scale(1); opacity: 0.5; }
+          50% { transform: scale(1.2); opacity: 1; }
+        }
+        .hover-net:hover .net-node {
+          animation: net-connect 1.5s infinite ease-in-out;
+        }
+        @keyframes switch-glow {
+          0%, 100% { filter: drop-shadow(0 0 2px rgba(239, 68, 68, 0.4)); }
+          50% { filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.8)); }
+        }
+        .hover-switch:hover svg {
+          animation: switch-glow 1.5s infinite ease-in-out;
+          color: #ef4444;
         }
       `}</style>
 
@@ -450,6 +508,245 @@ export default function LandingPage() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 4 — Animated Product Feature Cards */}
+      <section className="py-24 px-6 max-w-7xl mx-auto border-t border-slate-900">
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-500/20 bg-cyan-500/5 text-cyan-400 mb-4">
+            <span className="text-[10px] uppercase font-mono font-bold tracking-widest">
+              Capabilities
+            </span>
+          </div>
+          <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight font-body-lg">
+            Everything You Need to Ship Secure AI
+          </h2>
+          <p className="mt-4 text-slate-400 text-sm md:text-base max-w-xl mx-auto">
+            Interactive, autonomous governance tools for production-grade agentic workflows.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Card 1: Security Scanner */}
+          <div className="group relative bg-slate-900 border border-slate-800 hover:border-cyan-500/30 p-6 rounded-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_10px_30px_rgba(6,182,212,0.08)] flex flex-col justify-between hover-shield">
+            <div>
+              <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 mb-6 transition-colors group-hover:bg-cyan-500/20">
+                <svg
+                  className="w-6 h-6 transition-transform duration-300"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-white tracking-tight">Security Scanner</h3>
+              <p className="mt-3 text-xs text-slate-400 leading-relaxed">
+                87-payload library. OWASP API Top 10. PCI DSS v4.0.1 mapped.
+              </p>
+            </div>
+            <div className="mt-6 flex items-center gap-1.5 text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
+              Learn More
+              <span className="material-symbols-outlined text-[10px]">arrow_forward</span>
+            </div>
+          </div>
+
+          {/* Card 2: Kill Switch */}
+          <div className="group relative bg-slate-900 border border-slate-800 hover:border-red-500/30 p-6 rounded-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_10px_30px_rgba(239,68,68,0.08)] flex flex-col justify-between hover-switch">
+            <div>
+              <div className="w-12 h-12 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center text-slate-500 mb-6 transition-colors group-hover:bg-red-500/10 group-hover:border-red-500/30">
+                <svg
+                  className="w-6 h-6 transition-colors duration-300"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-white tracking-tight">Kill Switch</h3>
+              <p className="mt-3 text-xs text-slate-400 leading-relaxed">
+                Sub-second circuit breaker. Trips on budget, anomaly, or red-team score.
+              </p>
+            </div>
+            <div className="mt-6 flex items-center gap-1.5 text-[10px] font-mono text-red-400 font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
+              Learn More
+              <span className="material-symbols-outlined text-[10px]">arrow_forward</span>
+            </div>
+          </div>
+
+          {/* Card 3: Cost Monitor */}
+          <div className="group relative bg-slate-900 border border-slate-800 hover:border-cyan-500/30 p-6 rounded-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_10px_30px_rgba(6,182,212,0.08)] flex flex-col justify-between hover-graph">
+            <div>
+              <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 mb-6 transition-colors group-hover:bg-cyan-500/20">
+                <svg
+                  className="w-6 h-6"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path className="graph-line" d="M3 3v18h18" />
+                  <path className="graph-line" d="M18.7 8l-5.1 5.2-2.8-2.7-7 7.1" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-white tracking-tight">Cost Monitor</h3>
+              <p className="mt-3 text-xs text-slate-400 leading-relaxed">
+                Holt-Winters forecasting. Per-model breakdown. Budget caps.
+              </p>
+            </div>
+            <div className="mt-6 flex items-center gap-1.5 text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
+              Learn More
+              <span className="material-symbols-outlined text-[10px]">arrow_forward</span>
+            </div>
+          </div>
+
+          {/* Card 4: Thinking Token Attribution */}
+          <div className="group relative bg-slate-900 border border-slate-800 hover:border-cyan-500/30 p-6 rounded-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_10px_30px_rgba(6,182,212,0.08)] flex flex-col justify-between hover-brain">
+            <div>
+              <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 mb-6 transition-colors group-hover:bg-cyan-500/20">
+                <svg
+                  className="w-6 h-6"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1 0-3.12 3 3 0 0 1 0-4.88 2.5 2.5 0 0 1 0-3.12A2.5 2.5 0 0 1 9.5 2z" />
+                  <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 0-3.12 3 3 0 0 0 0-4.88 2.5 2.5 0 0 0 0-3.12A2.5 2.5 0 0 0 14.5 2z" />
+                  <circle className="brain-dot" cx="9.5" cy="8" r="1" fill="currentColor" />
+                  <circle className="brain-dot" cx="14.5" cy="12" r="1" fill="currentColor" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-white tracking-tight">
+                Thinking Token Attribution
+              </h3>
+              <p className="mt-3 text-xs text-slate-400 leading-relaxed">
+                World-first isolation of reasoning tokens. Patent NHCE/DEV/2026/002.
+              </p>
+            </div>
+            <div className="mt-6 flex items-center gap-1.5 text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
+              Learn More
+              <span className="material-symbols-outlined text-[10px]">arrow_forward</span>
+            </div>
+          </div>
+
+          {/* Card 5: Shadow API Discovery */}
+          <div className="group relative bg-slate-900 border border-slate-800 hover:border-cyan-500/30 p-6 rounded-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_10px_30px_rgba(6,182,212,0.08)] flex flex-col justify-between hover-ghost">
+            <div>
+              <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 mb-6 transition-colors group-hover:bg-cyan-500/20">
+                <svg
+                  className="w-6 h-6"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M9 10h.01M15 10h.01M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-white tracking-tight">Shadow API Discovery</h3>
+              <p className="mt-3 text-xs text-slate-400 leading-relaxed">
+                Static route extraction for Express, FastAPI, Flask, Django, Spring Boot.
+              </p>
+            </div>
+            <div className="mt-6 flex items-center gap-1.5 text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
+              Learn More
+              <span className="material-symbols-outlined text-[10px]">arrow_forward</span>
+            </div>
+          </div>
+
+          {/* Card 6: Credential Scanner */}
+          <div className="group relative bg-slate-900 border border-slate-800 hover:border-cyan-500/30 p-6 rounded-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_10px_30px_rgba(6,182,212,0.08)] flex flex-col justify-between hover-key">
+            <div>
+              <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 mb-6 transition-colors group-hover:bg-cyan-500/20">
+                <svg
+                  className="w-6 h-6 origin-center"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.778-7.778zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3-3.5 3.5z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-white tracking-tight">Credential Scanner</h3>
+              <p className="mt-3 text-xs text-slate-400 leading-relaxed">
+                AWS, GitHub, OpenAI, Anthropic, Stripe. Aadhaar + PAN for India.
+              </p>
+            </div>
+            <div className="mt-6 flex items-center gap-1.5 text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
+              Learn More
+              <span className="material-symbols-outlined text-[10px]">arrow_forward</span>
+            </div>
+          </div>
+
+          {/* Card 7: Compliance Reports */}
+          <div className="group relative bg-slate-900 border border-slate-800 hover:border-cyan-500/30 p-6 rounded-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_10px_30px_rgba(6,182,212,0.08)] flex flex-col justify-between hover-doc">
+            <div>
+              <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 mb-6 transition-colors group-hover:bg-cyan-500/20">
+                <svg
+                  className="w-6 h-6"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line
+                    className="doc-check-icon"
+                    x1="16"
+                    y1="13"
+                    x2="8"
+                    y2="13"
+                    strokeDasharray="3,3"
+                  />
+                  <polyline className="doc-check-icon text-cyan-300" points="9 17 11 19 15 15" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-white tracking-tight">Compliance Reports</h3>
+              <p className="mt-3 text-xs text-slate-400 leading-relaxed">
+                SOC2, PCI DSS, OWASP. Export JSON, CSV, PDF. Vanta/Drata ready.
+              </p>
+            </div>
+            <div className="mt-6 flex items-center gap-1.5 text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
+              Learn More
+              <span className="material-symbols-outlined text-[10px]">arrow_forward</span>
+            </div>
+          </div>
+
+          {/* Card 8: MCP Governance */}
+          <div className="group relative bg-slate-900 border border-slate-800 hover:border-cyan-500/30 p-6 rounded-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_10px_30px_rgba(6,182,212,0.08)] flex flex-col justify-between hover-net">
+            <div>
+              <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 mb-6 transition-colors group-hover:bg-cyan-500/20">
+                <svg
+                  className="w-6 h-6"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <circle className="net-node" cx="12" cy="5" r="3" />
+                  <circle className="net-node" cx="5" cy="19" r="3" />
+                  <circle className="net-node" cx="19" cy="19" r="3" />
+                  <line x1="12" y1="8" x2="6.8" y2="16.5" />
+                  <line x1="12" y1="8" x2="17.2" y2="16.5" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-white tracking-tight">MCP Governance</h3>
+              <p className="mt-3 text-xs text-slate-400 leading-relaxed">
+                Tool registry, risk scoring, approval workflows, allowlists per agent.
+              </p>
+            </div>
+            <div className="mt-6 flex items-center gap-1.5 text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
+              Learn More
+              <span className="material-symbols-outlined text-[10px]">arrow_forward</span>
+            </div>
           </div>
         </div>
       </section>
