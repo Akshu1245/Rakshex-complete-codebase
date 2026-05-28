@@ -51,20 +51,35 @@ export default function AboutPage() {
 
       {/* Founder */}
       <div className="max-w-4xl mx-auto py-16 px-4">
-        <h2 className="text-2xl font-bold mb-10 text-center">Team</h2>
-        <div className="bg-gray-800 rounded-xl p-8 border border-gray-700 max-w-xl mx-auto">
-          <div className="flex items-start gap-6">
-            <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-2xl font-bold shrink-0">
-              AK
+        <h2 className="text-2xl font-bold mb-10 text-center font-mono">Team</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <div className="bg-gray-800 rounded-xl p-8 border border-gray-700">
+            <div className="flex items-start gap-6">
+              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-2xl font-bold shrink-0 text-white font-mono">
+                AK
+              </div>
+              <div>
+                <h3 className="text-xl font-bold">Akshay Kammar</h3>
+                <p className="text-blue-400 text-sm mb-2 font-mono">Co-Founder & CEO</p>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  Co-inventor on 4 filed patents. Previously built internal security tools and orchestration layers. Computer Science from NHCE, Bengaluru. Believes AI security should be default, not an afterthought.
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-xl font-bold">Akshay Kammar</h3>
-              <p className="text-blue-400 text-sm mb-2">Founder & CEO</p>
-              <p className="text-gray-400 text-sm leading-relaxed">
-                Built Rakshex solo over 4 months. 4 patents filed. Previously built internal
-                security tools. Computer Science from NHCE, Bengaluru. Believes AI security should
-                be default, not an afterthought.
-              </p>
+          </div>
+
+          <div className="bg-gray-800 rounded-xl p-8 border border-gray-700">
+            <div className="flex items-start gap-6">
+              <div className="w-20 h-20 bg-gradient-to-br from-purple-600 to-pink-500 rounded-full flex items-center justify-center text-2xl font-bold shrink-0 text-white font-mono">
+                AN
+              </div>
+              <div>
+                <h3 className="text-xl font-bold">Anushree</h3>
+                <p className="text-blue-400 text-sm mb-2 font-mono">Co-Founder & CTO</p>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  Co-inventor on patents NHCE/DEV/2026/003 and NHCE/DEV/2026/004. Specialist in runtime AI model auditing and compliance systems. Computer Science from NHCE, Bengaluru.
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -72,7 +87,7 @@ export default function AboutPage() {
 
       {/* Location */}
       <div className="max-w-4xl mx-auto py-16 px-4 text-center">
-        <h2 className="text-2xl font-bold mb-4">Built in India</h2>
+        <h2 className="text-2xl font-bold mb-4 font-mono">Built in India</h2>
         <p className="text-gray-400 max-w-xl mx-auto">
           Headquartered in Bengaluru, Karnataka — the Silicon Valley of India. Building for the
           world from day one.
@@ -82,15 +97,15 @@ export default function AboutPage() {
       {/* Investors / Backing */}
       <div className="bg-gray-800/50 py-16">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-2xl font-bold mb-4">Raising Seed</h2>
-          <p className="text-gray-400 mb-6">
-            Currently raising $500K Seed on a $3M cap to hire our first engineers and designers.
+          <h2 className="text-2xl font-bold mb-4 font-mono">Investor Relations</h2>
+          <p className="text-gray-400 mb-6 max-w-2xl mx-auto">
+            Backed by 4 provisional patents and a growing waitlist. If you&apos;re an investor interested in AI security infrastructure, reach out at akshay@rakshex.in
           </p>
           <Link
             href="mailto:akshay@rakshex.in"
-            className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+            className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors font-mono"
           >
-            Contact for Investor Deck →
+            Contact Co-Founders →
           </Link>
         </div>
       </div>
