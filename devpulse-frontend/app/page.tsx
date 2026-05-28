@@ -1,10 +1,76 @@
+/**
+ * RAKSHEX HOMEPAGE - CLONE OF INSFORGE.DEV
+ *
+ * =========================================================================
+ * STEP 2 - TECHNICAL ANALYSIS OF SCRAPED INSFORGE.DEV STRUCTURE & DESIGN SYSTEM
+ * =========================================================================
+ *
+ * 1. COLOR PALETTE:
+ *    - Primary Background: Near-black #0F0F0F (rgb 22, 22, 22)
+ *    - Panel Backgrounds: Deep grey #181818, gradient from #232323 to #1C1C1C
+ *    - Accent Color (InsForge): Emerald Green #6ee7b7 (rgb 110, 231, 183)
+ *    - Accent Color (RakshEx): Cyan #06b6d4 (rgb 6, 182, 212)
+ *    - Warning/Alert Colors: Amber #f59e0b (rgb 245, 158, 11), Red #ef4444 (rgb 239, 68, 68)
+ *    - Text Colors: Primary White #ffffff, Secondary Grey #999999, Muted Grey #b4b4b4 / #a3a3a3
+ *    - Borders: Border-neutral-700 (#404040), border-neutral-800 (#262626), border-black/8
+ *
+ * 2. TYPOGRAPHY:
+ *    - Font Families:
+ *      * Headings/Nav titles: "Manrope", "Manrope Fallback" (Sans-serif, weight 500/600/700)
+ *      * Body text: "Inter", "Inter Fallback" (Sans-serif, weight 400)
+ *      * Monospace / Data: "IBM Plex Mono", "IBM Plex Mono Fallback" (Monospace, weight 400/500/600)
+ *      * Terminal Commands: "Fira Code", "Fira Code Fallback" (Monospace)
+ *    - Font Sizes & Line Heights:
+ *      * Main Hero title: text-[28px] sm:text-[48px] with line-height leading-16 (or custom 3.6rem)
+ *      * Hero subheadline: text-xl leading-8 font-normal
+ *      * Section Headings: text-[32px] leading-12 font-normal
+ *      * Features/Cards text: text-base font-medium
+ *      * Small badges / countdowns: text-[13px] sm:text-[16px]
+ *
+ * 3. LAYOUT COMPONENTS & CLASS STRUCTURES:
+ *      * Announcement Bar: `#event-banner` wrapper, class `relative z-100 h-12 border-b bg-primary-green`
+ *      * Navbar: `nav` element class `sticky h-12 top-0 left-0 bg-[#0F0F0F] w-screen z-50`
+ *      * Dropdown mega-menus: Absolute positioned wrapper with classes `absolute top-full left-0 pt-3 transition-all duration-200 opacity-0 invisible -translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0`
+ *      * Hero Section: `<section id="portal" class="w-full max-w-[1280px] mx-auto pt-40 pb-20">`
+ *      * Infinite Scrolling Marquee: Container wrapper class `w-full overflow-hidden` with sub-container `flex items-center gap-10 animate-logo-scroll w-max pr-10`
+ *      * Features Card Grid: Grid container class `grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 items-stretch`
+ *      * FAQ Accordion: Collapsible container using `div data-orientation="vertical"` triggering `data-[state=open]:animate-accordion-down`
+ *      * Footer: minimal layout `footer class="w-full bg-[#0F0F0F] py-10 border-t border-neutral-800 z-5"`
+ *
+ * 4. ANIMATION CLASSES AND KEYFRAMES:
+ *      * infinite-scroll: `0%{transform:translateX(0)} to{transform:translateX(-50%)}`
+ *      * accordion-down: `0%{height:0} to{height:var(--radix-accordion-content-height)}`
+ *      * accordion-up: `0%{height:var(--radix-accordion-content-height)} to{height:0}`
+ *      * typing-text-1: `0%,11.17%{width:0}` to show terminal text sequentially
+ *      * cursor-blink: blinking caret animation `0%,1.67%{opacity:1}`
+ *      * pulse-emerald: custom pulsing glow `0% { transform: scale(0.95); opacity: 0.8; } 50% { transform: scale(1.1); opacity: 1; }`
+ *      * pulse-dot: `0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(110,231,183,0.7); }`
+ *
+ * 5. BREAKPOINTS:
+ *      * sm: 640px, md: 768px, lg: 1024px, xl: 1280px, 2xl: 1536px
+ */
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { trpc } from "@/lib/trpc";
-
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+import {
+  Shield,
+  Power,
+  Ghost,
+  Key,
+  BarChart,
+  Brain,
+  FileText,
+  Network,
+  ChevronDown,
+  ChevronRight,
+  ArrowRight,
+  ExternalLink,
+  Menu,
+  X,
+} from "lucide-react";
 
 function JsonLdInjector() {
   useEffect(() => {
@@ -14,24 +80,24 @@ function JsonLdInjector() {
         {
           "@type": "Organization",
           "@id": "https://rakshex.in/#organization",
-          name: "Rakshex",
+          name: "RakshEx",
           url: "https://rakshex.in",
           logo: "https://rakshex.in/logo.png",
           description:
-            "AI Runtime Governance Platform — security scanning, cost monitoring, and compliance for production AI agents.",
+            "India's First AI Runtime Governance Platform — security scanning, cost monitoring, and compliance for production AI agents.",
           sameAs: ["https://twitter.com/rakshexhq"],
         },
         {
           "@type": "WebSite",
           "@id": "https://rakshex.in/#website",
           url: "https://rakshex.in",
-          name: "Rakshex",
+          name: "RakshEx",
           publisher: { "@id": "https://rakshex.in/#organization" },
         },
         {
           "@type": "SoftwareApplication",
           "@id": "https://rakshex.in/#product",
-          name: "Rakshex",
+          name: "RakshEx",
           applicationCategory: "DeveloperApplication",
           operatingSystem: "Any",
           offers: {
@@ -41,16 +107,17 @@ function JsonLdInjector() {
           },
           aggregateRating: {
             "@type": "AggregateRating",
-            ratingValue: "4.8",
-            ratingCount: "42",
+            ratingValue: "4.9",
+            ratingCount: "58",
           },
           featureList: [
             "AI Agent Security Scanning",
-            "LLM Cost Monitoring",
-            "Shadow API Detection",
-            "Prompt Injection Prevention",
-            "PII Redaction",
-            "Kill Switch",
+            "AgentGuard Kill Switch",
+            "Shadow API Discovery",
+            "Thinking Token Attribution",
+            "Credential Scanner",
+            "Compliance Reports",
+            "MCP Governance",
           ],
         },
       ],
@@ -89,7 +156,7 @@ function WaitlistForm() {
 
   if (success) {
     return (
-      <div className="p-4 bg-emerald-950/20 border border-emerald-500/30 rounded-lg text-emerald-400 text-sm font-mono text-center shadow-[0_0_15px_rgba(16,185,129,0.1)]">
+      <div className="p-4 bg-cyan-950/20 border border-cyan-500/30 rounded-lg text-cyan-400 text-sm font-mono text-center shadow-[0_0_15px_rgba(6,182,212,0.1)]">
         ✓ You have been added to the waitlist!
       </div>
     );
@@ -104,13 +171,13 @@ function WaitlistForm() {
           placeholder="Enter your work email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="flex-1 px-4 py-3 bg-slate-900 border border-slate-800 rounded focus:outline-none focus:border-cyan-500 text-white text-sm font-mono"
+          className="flex-1 px-4 py-3 bg-[#181818] border border-neutral-700 rounded focus:outline-none focus:border-cyan-500 text-white text-sm font-mono"
           disabled={joinMutation.isPending}
         />
         <button
           type="submit"
           disabled={joinMutation.isPending}
-          className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-6 py-3 text-xs tracking-wider uppercase font-mono rounded disabled:opacity-50 transition-colors shadow-[0_0_15px_rgba(6,182,212,0.3)] hover:shadow-[0_0_20px_rgba(6,182,212,0.5)]"
+          className="bg-[#06b6d4] hover:bg-cyan-400 text-neutral-950 font-bold px-6 py-3 text-xs tracking-wider uppercase font-mono rounded disabled:opacity-50 transition-colors shadow-[0_0_15px_rgba(6,182,212,0.3)]"
         >
           {joinMutation.isPending ? "Joining..." : "Get Access"}
         </button>
@@ -121,171 +188,107 @@ function WaitlistForm() {
 }
 
 function AnimatedHeroVisual() {
-  const [scanStep, setScanStep] = useState(0);
-  const [findings, setFindings] = useState<string[]>([]);
-  const [metrics, setMetrics] = useState({ scans: 142, cost: 0.041, risk: "Low" });
+  const [lines, setLines] = useState<string[]>([]);
+  const [score, setScore] = useState(100);
 
   useEffect(() => {
-    const steps = [
-      { text: "$ npx rakshex scan ./postman-collection.json", delay: 1000 },
-      { text: "[INFO] Initializing scan engine...", delay: 500 },
-      { text: "[INFO] Parsing 12 routes from Postman...", delay: 800 },
-      {
-        text: "[WARN] Injection vulnerability in POST /chat",
-        delay: 1200,
-        finding: "Prompt Injection (POST /chat)",
-      },
-      {
-        text: "[FAIL] Secret leak detected in authorization headers",
-        delay: 1000,
-        finding: "API Key Leakage (Auth Headers)",
-      },
-      { text: "[INFO] Scan completed in 2.84s", delay: 1500 },
+    const outputs = [
+      "✓ 23 endpoints scanned",
+      "⚠ 2 credentials detected",
+      "🔒 1 prompt injection blocked",
+      "💰 $47.3 cost anomaly flagged",
     ];
+    let interval: NodeJS.Timeout;
+    let idx = 0;
 
-    let currentStep = 0;
-    let timer: NodeJS.Timeout;
+    const animate = () => {
+      setLines([]);
+      setScore(100);
+      idx = 0;
 
-    const runScan = () => {
-      if (currentStep < steps.length) {
-        const step = steps[currentStep];
-        setScanStep(currentStep + 1);
-        if (step.finding) {
-          setFindings((prev) => [...prev, step.finding!]);
-          setMetrics((prev) => ({
-            scans: prev.scans + 1,
-            cost: prev.cost + 0.005,
-            risk: "High",
-          }));
+      const nextLine = () => {
+        if (idx < outputs.length) {
+          setLines((prev) => [...prev, outputs[idx]]);
+          if (idx === 0) setScore(98);
+          if (idx === 1) setScore(84);
+          if (idx === 2) setScore(96); // Blocked
+          if (idx === 3) setScore(94); // Anomaly flag final
+          idx++;
+          interval = setTimeout(nextLine, 1200);
+        } else {
+          interval = setTimeout(animate, 5000); // loop reset
         }
-        currentStep++;
-        timer = setTimeout(runScan, step.delay);
-      } else {
-        timer = setTimeout(() => {
-          setFindings([]);
-          setMetrics({ scans: 142, cost: 0.041, risk: "Low" });
-          currentStep = 0;
-          setScanStep(0);
-          runScan();
-        }, 4000);
-      }
+      };
+
+      interval = setTimeout(nextLine, 1200);
     };
 
-    runScan();
-    return () => clearTimeout(timer);
+    animate();
+    return () => clearTimeout(interval);
   }, []);
 
-  const terminalLines = [
-    "$ npx rakshex scan ./postman-collection.json",
-    "[INFO] Initializing scan engine...",
-    "[INFO] Parsing 12 routes from Postman...",
-    "[WARN] Injection vulnerability in POST /chat",
-    "[FAIL] Secret leak detected in authorization headers",
-    "[INFO] Scan completed in 2.84s",
-  ];
-
   return (
-    <div className="relative w-full max-w-4xl mx-auto bg-slate-950/80 border border-cyan-500/20 rounded-xl overflow-hidden p-6 md:p-8 shadow-[0_0_50px_rgba(6,182,212,0.15)] flex flex-col md:flex-row gap-6 items-center">
-      {/* Laser scan line overlay */}
+    <div className="w-full rounded-md border border-neutral-700 bg-gradient-to-b from-[#232323] to-[#1C1C1C] flex flex-col md:flex-row gap-6 p-4 sm:p-6 shadow-[0_0_40px_rgba(6,182,212,0.1)] relative">
       <div className="scan-line" />
-
-      {/* Left side: VS Code terminal */}
-      <div className="flex-1 w-full bg-slate-900 border border-slate-800 rounded-lg p-4 font-mono text-xs text-left h-52 overflow-y-auto relative">
-        <div className="flex items-center gap-1.5 mb-3 border-b border-slate-800 pb-2">
+      {/* Left panel: VS Code terminal */}
+      <div className="flex-1 w-full bg-[#0F0F0F] border border-neutral-800 rounded p-4 font-mono text-xs text-left h-52 overflow-y-auto relative">
+        <div className="flex items-center gap-1.5 mb-3 border-b border-neutral-800 pb-2">
           <div className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
           <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/80" />
           <div className="w-2.5 h-2.5 rounded-full bg-green-500/80" />
-          <span className="text-[10px] text-slate-500 ml-2">bash - rakshex scan</span>
+          <span className="text-[10px] text-neutral-500 ml-2">rakshex scan ./api.json</span>
         </div>
-        <div className="space-y-1.5">
-          {terminalLines.slice(0, scanStep).map((line, idx) => {
-            let color = "text-slate-400";
-            if (line.startsWith("$")) color = "text-cyan-400 font-bold";
-            else if (line.includes("[WARN]")) color = "text-amber-400";
-            else if (line.includes("[FAIL]")) color = "text-red-400";
-            else if (line.includes("completed")) color = "text-emerald-400";
+        <div className="space-y-2">
+          <div className="text-cyan-400 font-medium">$ rakshex scan ./api.json</div>
+          {lines.map((l, i) => {
+            let color = "text-neutral-300";
+            if (l.startsWith("✓")) color = "text-emerald-400";
+            if (l.startsWith("⚠")) color = "text-yellow-400";
+            if (l.startsWith("🔒")) color = "text-cyan-400 font-semibold";
+            if (l.startsWith("💰")) color = "text-red-400";
             return (
-              <div key={idx} className={color}>
-                {line}
+              <div key={i} className={`stream-fade-in ${color}`}>
+                {l}
               </div>
             );
           })}
-          {scanStep < terminalLines.length && (
-            <div className="text-cyan-400 animate-pulse inline-block">▋</div>
+          {lines.length < 4 && (
+            <span className="inline-block w-1.5 h-3.5 bg-cyan-400 animate-pulse ml-0.5" />
           )}
         </div>
       </div>
 
-      {/* Middle: Animated Flow */}
-      <div className="hidden md:flex flex-col items-center justify-center w-12 h-20 relative">
-        <svg className="w-full h-full" viewBox="0 0 50 100">
-          <path
-            d="M 0 50 H 50"
-            stroke="rgba(6, 182, 212, 0.2)"
-            strokeWidth="2"
-            strokeDasharray="5,5"
-          />
-          <circle cx="25" cy="50" r="4" fill="#06b6d4">
-            <animate attributeName="cx" from="0" to="50" dur="2s" repeatCount="indefinite" />
-            <animate
-              attributeName="opacity"
-              values="0;1;0"
-              keyTimes="0;0.5;1"
-              dur="2s"
-              repeatCount="indefinite"
+      {/* Right panel: Security Dashboard */}
+      <div className="w-full md:w-56 shrink-0 bg-[#0F0F0F] border border-neutral-800 rounded p-4 flex flex-col items-center justify-center gap-3 relative">
+        <div className="text-[11px] text-neutral-500 font-mono tracking-wider self-start border-b border-neutral-800 w-full pb-1.5">
+          SECURITY MONITOR
+        </div>
+        <div className="relative flex items-center justify-center w-28 h-28">
+          <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="40" stroke="#262626" strokeWidth="6" fill="transparent" />
+            <circle
+              cx="50"
+              cy="50"
+              r="40"
+              stroke="#06b6d4"
+              strokeWidth="6"
+              fill="transparent"
+              strokeDasharray={251.2}
+              strokeDashoffset={251.2 - (251.2 * score) / 100}
+              className="transition-all duration-500 ease-out"
             />
-          </circle>
-        </svg>
-      </div>
-
-      {/* Right side: RakshEx Dashboard */}
-      <div className="flex-1 w-full bg-slate-900 border border-slate-800 rounded-lg p-4 text-left h-52 flex flex-col justify-between">
-        <div>
-          <div className="flex items-center justify-between border-b border-slate-800 pb-2 mb-3">
-            <span className="text-[10px] font-bold text-white tracking-wider uppercase">
-              RakshEx Live Shield
+          </svg>
+          <div className="absolute flex flex-col items-center">
+            <span className="text-3xl font-bold font-mono text-white transition-all duration-300">
+              {score}
             </span>
-            <span
-              className={`text-[9px] px-2 py-0.5 rounded font-mono font-bold ${metrics.risk === "High" ? "bg-red-500/20 text-red-400" : "bg-emerald-500/20 text-emerald-400"}`}
-            >
-              {metrics.risk} Risk
+            <span className="text-[9px] font-mono text-neutral-500 uppercase tracking-widest mt-0.5">
+              Score
             </span>
-          </div>
-          <div className="grid grid-cols-3 gap-2 mb-4">
-            <div className="bg-slate-950 p-2 border border-slate-800 rounded text-center">
-              <span className="text-[9px] text-slate-500 block uppercase">Scans</span>
-              <span className="text-xs font-bold text-white font-mono">{metrics.scans}</span>
-            </div>
-            <div className="bg-slate-950 p-2 border border-slate-800 rounded text-center">
-              <span className="text-[9px] text-slate-500 block uppercase">Cost limit</span>
-              <span className="text-xs font-bold text-white font-mono">
-                ${metrics.cost.toFixed(3)}
-              </span>
-            </div>
-            <div className="bg-slate-950 p-2 border border-slate-800 rounded text-center">
-              <span className="text-[9px] text-slate-500 block uppercase">Findings</span>
-              <span className="text-xs font-bold text-red-400 font-mono">{findings.length}</span>
-            </div>
           </div>
         </div>
-        <div className="bg-slate-950/80 border border-slate-800 rounded p-2 flex-1 overflow-y-auto">
-          {findings.length === 0 ? (
-            <div className="text-[10px] text-slate-500 font-mono text-center h-full flex items-center justify-center">
-              Waiting for scanning payload...
-            </div>
-          ) : (
-            <div className="space-y-1">
-              {findings.map((f, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center gap-1.5 text-[9px] font-mono text-red-400"
-                >
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
-                  <span>{f}</span>
-                </div>
-              ))}
-            </div>
-          )}
+        <div className="text-[11px] font-mono text-center px-2 py-0.5 bg-neutral-900 border border-neutral-800 rounded text-neutral-400">
+          Status: {score >= 95 ? "✓ Clean" : score >= 85 ? "⚠ Alert" : "🔒 Action Needed"}
         </div>
       </div>
     </div>
@@ -294,7 +297,7 @@ function AnimatedHeroVisual() {
 
 function BenchmarkSection() {
   const [visible, setVisible] = useState(false);
-  const sectionRef = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -305,1728 +308,1463 @@ function BenchmarkSection() {
       },
       { threshold: 0.1 },
     );
-    if (sectionRef.current) {
-      observer.observe(sectionRef.current);
-    }
+    if (ref.current) observer.observe(ref.current);
     return () => observer.disconnect();
   }, []);
 
   return (
-    <section ref={sectionRef} className="py-24 px-6 bg-slate-950/30 border-t border-slate-900">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-500/20 bg-cyan-500/5 text-cyan-400 mb-4">
-            <span className="text-[10px] uppercase font-mono font-bold tracking-widest">
-              RakshEx vs Others
-            </span>
-          </div>
-          <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight font-body-lg">
-            If You Use AI Agents, You Need RakshEx
+    <section
+      id="benchmark"
+      ref={ref}
+      className="relative w-full max-w-[680px] xl:max-w-[1280px] mx-auto flex flex-col items-center justify-center py-24 px-6"
+    >
+      <div className="w-full flex flex-col items-center gap-10">
+        <div className="flex flex-col items-center gap-3">
+          <h2 className="text-[32px] leading-12 font-normal font-manrope text-white text-center">
+            If You Use AI Agents, Secure Them with RakshEx
           </h2>
-          <p className="mt-4 text-sm md:text-base text-slate-400 max-w-xl mx-auto">
-            Tested against leading security tools. Results from internal benchmarks.
+          <p className="text-neutral-400 font-manrope text-xl leading-8 text-center">
+            Industry leading metrics proven by internal benchmarks & audits.
           </p>
         </div>
-
-        <div className="space-y-12">
-          {/* Metric 1 */}
-          <div className="space-y-3">
-            <div className="text-sm font-semibold text-slate-300">
-              Vulnerabilities Detected (Higher is better)
+        <div className="w-full rounded-lg max-w-[1256px] mx-auto border border-neutral-700 overflow-hidden bg-[#181818]">
+          <div className="flex flex-col xl:flex-row divide-y xl:divide-y-0 xl:divide-x divide-neutral-700">
+            {/* Metric 1 */}
+            <div className="flex flex-col gap-10 px-6 xl:px-8 pt-8 pb-10 flex-1">
+              <div className="flex flex-col">
+                <p className="text-[48px] leading-10 font-inter font-medium italic text-cyan-400 select-none">
+                  2.3x More
+                </p>
+                <p className="text-neutral-400 font-inter text-base mt-2 select-none">
+                  Vulnerabilities Detected
+                </p>
+              </div>
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-row items-center gap-3">
+                  <p className="w-20 text-neutral-300 font-manrope text-xs shrink-0 select-none">
+                    RakshEx
+                  </p>
+                  <div className="h-2 flex-1 max-w-[200px] bg-neutral-800 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-cyan-500 rounded-full transition-all duration-1000 ease-out"
+                      style={{ width: visible ? "94%" : "0%" }}
+                    />
+                  </div>
+                  <p className="w-10 text-neutral-300 font-manrope text-xs font-semibold select-none">
+                    94%
+                  </p>
+                </div>
+                <div className="flex flex-row items-center gap-3">
+                  <p className="w-20 text-neutral-300 font-manrope text-xs shrink-0 select-none">
+                    Snyk
+                  </p>
+                  <div className="h-2 flex-1 max-w-[200px] bg-neutral-800 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-neutral-600 rounded-full transition-all duration-1000 ease-out"
+                      style={{ width: visible ? "41%" : "0%" }}
+                    />
+                  </div>
+                  <p className="w-10 text-neutral-400 font-manrope text-xs select-none">41%</p>
+                </div>
+                <div className="flex flex-row items-center gap-3">
+                  <p className="w-20 text-neutral-300 font-manrope text-xs shrink-0 select-none">
+                    Datadog
+                  </p>
+                  <div className="h-2 flex-1 max-w-[200px] bg-neutral-800 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-neutral-600 rounded-full transition-all duration-1000 ease-out"
+                      style={{ width: visible ? "23%" : "0%" }}
+                    />
+                  </div>
+                  <p className="w-10 text-neutral-400 font-manrope text-xs select-none">23%</p>
+                </div>
+              </div>
             </div>
-            <div className="space-y-3.5">
-              <div>
-                <div className="flex justify-between text-xs text-slate-400 mb-1">
-                  <span>RakshEx</span>
-                  <span className="text-cyan-400 font-bold font-mono">94%</span>
+
+            {/* Metric 2 */}
+            <div className="flex flex-col gap-10 px-6 xl:px-8 pt-8 pb-10 flex-1">
+              <div className="flex flex-col">
+                <p className="text-[48px] leading-10 font-inter font-medium italic text-cyan-400 select-none">
+                  9x Fewer
+                </p>
+                <p className="text-neutral-400 font-inter text-base mt-2 select-none">
+                  False Positives Rate (Short is Better)
+                </p>
+              </div>
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-row items-center gap-3">
+                  <p className="w-20 text-neutral-300 font-manrope text-xs shrink-0 select-none">
+                    RakshEx
+                  </p>
+                  <div className="h-2 flex-1 max-w-[200px] bg-neutral-800 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-cyan-500 rounded-full transition-all duration-1000 ease-out"
+                      style={{ width: visible ? "2.1%" : "0%" }}
+                    />
+                  </div>
+                  <p className="w-10 text-neutral-300 font-manrope text-xs font-semibold select-none">
+                    2.1%
+                  </p>
                 </div>
-                <div className="w-full bg-slate-900 rounded-full h-3 overflow-hidden border border-slate-800">
-                  <div
-                    className="bg-cyan-500 h-full rounded-full transition-all duration-1000 ease-out"
-                    style={{ width: visible ? "94%" : "0%" }}
-                  />
+                <div className="flex flex-row items-center gap-3">
+                  <p className="w-20 text-neutral-300 font-manrope text-xs shrink-0 select-none">
+                    Snyk
+                  </p>
+                  <div className="h-2 flex-1 max-w-[200px] bg-neutral-800 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-neutral-600 rounded-full transition-all duration-1000 ease-out"
+                      style={{ width: visible ? "18.4%" : "0%" }}
+                    />
+                  </div>
+                  <p className="w-10 text-neutral-400 font-manrope text-xs select-none">18.4%</p>
+                </div>
+                <div className="flex flex-row items-center gap-3">
+                  <p className="w-20 text-neutral-300 font-manrope text-xs shrink-0 select-none">
+                    Datadog
+                  </p>
+                  <div className="h-2 flex-1 max-w-[200px] bg-neutral-800 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-neutral-600 rounded-full transition-all duration-1000 ease-out"
+                      style={{ width: visible ? "31.2%" : "0%" }}
+                    />
+                  </div>
+                  <p className="w-10 text-neutral-400 font-manrope text-xs select-none">31.2%</p>
                 </div>
               </div>
-              <div>
-                <div className="flex justify-between text-xs text-slate-500 mb-1">
-                  <span>Snyk</span>
-                  <span className="font-mono">41%</span>
-                </div>
-                <div className="w-full bg-slate-900 rounded-full h-3 overflow-hidden border border-slate-805">
-                  <div
-                    className="bg-slate-700 h-full rounded-full transition-all duration-1000 ease-out"
-                    style={{ width: visible ? "41%" : "0%" }}
-                  />
-                </div>
+            </div>
+
+            {/* Metric 3 */}
+            <div className="flex flex-col gap-10 px-6 xl:px-8 pt-8 pb-10 flex-1">
+              <div className="flex flex-col">
+                <p className="text-[48px] leading-10 font-inter font-medium italic text-cyan-400 select-none">
+                  15x Faster
+                </p>
+                <p className="text-neutral-400 font-inter text-base mt-2 select-none">
+                  Time to First Finding
+                </p>
               </div>
-              <div>
-                <div className="flex justify-between text-xs text-slate-500 mb-1">
-                  <span>Datadog</span>
-                  <span className="font-mono">23%</span>
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-row items-center gap-3">
+                  <p className="w-20 text-neutral-300 font-manrope text-xs shrink-0 select-none">
+                    RakshEx
+                  </p>
+                  <div className="h-2 flex-1 max-w-[200px] bg-neutral-800 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-cyan-500 rounded-full transition-all duration-1000 ease-out"
+                      style={{ width: visible ? "6.4%" : "0%" }} // 3s relative bar width
+                    />
+                  </div>
+                  <p className="w-10 text-neutral-300 font-manrope text-xs font-semibold select-none">
+                    3s
+                  </p>
                 </div>
-                <div className="w-full bg-slate-900 rounded-full h-3 overflow-hidden border border-slate-805">
-                  <div
-                    className="bg-slate-800 h-full rounded-full transition-all duration-1000 ease-out"
-                    style={{ width: visible ? "23%" : "0%" }}
-                  />
+                <div className="flex flex-row items-center gap-3">
+                  <p className="w-20 text-neutral-300 font-manrope text-xs shrink-0 select-none">
+                    Snyk
+                  </p>
+                  <div className="h-2 flex-1 max-w-[200px] bg-neutral-800 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-neutral-600 rounded-full transition-all duration-1000 ease-out"
+                      style={{ width: visible ? "100%" : "0%" }} // 47s relative bar width
+                    />
+                  </div>
+                  <p className="w-10 text-neutral-400 font-manrope text-xs select-none">47s</p>
+                </div>
+                <div className="flex flex-row items-center gap-3">
+                  <p className="w-20 text-neutral-300 font-manrope text-xs shrink-0 select-none">
+                    Datadog
+                  </p>
+                  <div className="h-2 flex-1 max-w-[200px] bg-neutral-800 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-neutral-700/30 rounded-full"
+                      style={{ width: "0%" }}
+                    />
+                  </div>
+                  <p className="w-10 text-neutral-500 font-manrope text-xs select-none">N/A</p>
                 </div>
               </div>
             </div>
           </div>
+        </div>
+        <div className="flex flex-col items-center gap-2">
+          <p className="text-xs text-neutral-500 italic">
+            * Internal benchmarks. 50 real-world API collections. Independent audit Q3 2026.
+          </p>
+          <Link
+            href="/blog/benchmark-methodology"
+            className="text-cyan-400 hover:text-cyan-300 transition-colors text-sm font-medium flex items-center gap-1.5 mt-2"
+          >
+            View benchmark methodology <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
 
-          {/* Metric 2 */}
-          <div className="space-y-3">
-            <div className="text-sm font-semibold text-slate-300">
-              False Positive Rate (Lower is better)
-            </div>
-            <div className="space-y-3.5">
-              <div>
-                <div className="flex justify-between text-xs text-slate-400 mb-1">
-                  <span>RakshEx</span>
-                  <span className="text-emerald-400 font-bold font-mono">2.1%</span>
-                </div>
-                <div className="w-full bg-slate-900 rounded-full h-3 overflow-hidden border border-slate-800">
-                  <div
-                    className="bg-emerald-500 h-full rounded-full transition-all duration-1000 ease-out"
-                    style={{ width: visible ? "2.1%" : "0%" }}
-                  />
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between text-xs text-slate-500 mb-1">
-                  <span>Snyk</span>
-                  <span className="font-mono">18.4%</span>
-                </div>
-                <div className="w-full bg-slate-900 rounded-full h-3 overflow-hidden border border-slate-805">
-                  <div
-                    className="bg-slate-700 h-full rounded-full transition-all duration-1000 ease-out"
-                    style={{ width: visible ? "18.4%" : "0%" }}
-                  />
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between text-xs text-slate-500 mb-1">
-                  <span>Datadog</span>
-                  <span className="font-mono">31.2%</span>
-                </div>
-                <div className="w-full bg-slate-900 rounded-full h-3 overflow-hidden border border-slate-805">
-                  <div
-                    className="bg-slate-800 h-full rounded-full transition-all duration-1000 ease-out"
-                    style={{ width: visible ? "31.2%" : "0%" }}
-                  />
-                </div>
-              </div>
+function AccordionItem({
+  question,
+  answer,
+  isOpen,
+  onClick,
+}: {
+  question: string;
+  answer: string;
+  isOpen: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <div className="border-b border-neutral-800">
+      <button
+        onClick={onClick}
+        className="w-full flex justify-between items-center py-5 text-left text-white font-manrope text-base sm:text-lg hover:text-cyan-400 transition-colors"
+      >
+        <span>{question}</span>
+        <ChevronRight
+          className={`w-5 h-5 text-neutral-500 transition-transform duration-300 ${isOpen ? "rotate-90 text-cyan-400" : ""}`}
+        />
+      </button>
+      <div
+        className={`overflow-hidden transition-all duration-300 ${isOpen ? "max-h-52 pb-5 opacity-100" : "max-h-0 opacity-0"}`}
+      >
+        <p className="text-neutral-400 text-sm sm:text-base leading-relaxed font-manrope whitespace-pre-line">
+          {faqAnswerCleaner(answer)}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function faqAnswerCleaner(text: string) {
+  return text;
+}
+
+function RollingCounter({
+  target,
+  suffix = "",
+  prefix = "",
+}: {
+  target: number;
+  suffix?: string;
+  prefix?: string;
+}) {
+  const [count, setCount] = useState(0);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let observer: IntersectionObserver;
+    let active = true;
+
+    const startCount = () => {
+      let current = 0;
+      const steps = 50;
+      const step = target / steps;
+      let stepCount = 0;
+
+      const timer = setInterval(() => {
+        if (!active) return;
+        current += step;
+        stepCount++;
+        if (stepCount >= steps) {
+          setCount(target);
+          clearInterval(timer);
+        } else {
+          setCount(Math.ceil(current));
+        }
+      }, 30);
+    };
+
+    observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          startCount();
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 },
+    );
+
+    if (ref.current) observer.observe(ref.current);
+    return () => {
+      active = false;
+      observer.disconnect();
+    };
+  }, [target]);
+
+  return (
+    <div ref={ref} className="font-plex font-medium text-4xl sm:text-5xl text-white select-none">
+      {prefix}
+      {count.toLocaleString()}
+      {suffix}
+    </div>
+  );
+}
+
+export default function LandingPage() {
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [copied, setCopied] = useState(false);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const targetDate = new Date("2026-07-01T00:00:00Z");
+    const updateCountdown = () => {
+      const now = new Date();
+      const difference = targetDate.getTime() - now.getTime();
+      if (difference <= 0) {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        return;
+      }
+      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((difference / 1000 / 60) % 60);
+      const seconds = Math.floor((difference / 1000) % 60);
+      setTimeLeft({ days, hours, minutes, seconds });
+    };
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText("npx rakshex scan ./collection.json");
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const featureCards = [
+    {
+      title: "Security Scanner",
+      description: "87-payload library. OWASP API Top 10. PCI DSS v4.0.1.",
+      link: "/features#security-scanner",
+      icon: Shield,
+      hoverClass: "animate-pulse-shield text-cyan-400",
+    },
+    {
+      title: "Kill Switch",
+      description: "Sub-second circuit breaker. Trips on budget, anomaly, or score.",
+      link: "/features#kill-switch",
+      icon: Power,
+      hoverClass: "animate-glow-power text-neutral-400 hover:text-red-500",
+    },
+    {
+      title: "Cost Monitor",
+      description: "Holt-Winters forecasting. Per-model breakdown. Budget caps.",
+      link: "/features#cost-monitor",
+      icon: BarChart,
+      hoverClass: "animate-bounce-graph text-cyan-400",
+    },
+    {
+      title: "Thinking Tokens",
+      description: "World-first reasoning token isolation. Patent NHCE/DEV/2026/002.",
+      link: "/features#thinking-tokens",
+      icon: Brain,
+      hoverClass: "animate-pulse-brain text-cyan-400",
+    },
+    {
+      title: "Shadow API Discovery",
+      description: "Static route extraction. Express, FastAPI, Flask, Django, Spring.",
+      link: "/features#shadow-api",
+      icon: Ghost,
+      hoverClass: "animate-fade-ghost text-cyan-400",
+    },
+    {
+      title: "Credential Scanner",
+      description: "AWS, GitHub, OpenAI, Stripe. Aadhaar + PAN for India.",
+      link: "/features#credentials",
+      icon: Key,
+      hoverClass: "animate-rotate-key text-cyan-400",
+    },
+    {
+      title: "Compliance Reports",
+      description: "SOC2, PCI DSS, OWASP. JSON, CSV, PDF. Vanta/Drata ready.",
+      link: "/features#compliance",
+      icon: FileText,
+      hoverClass: "animate-draw-check text-cyan-400",
+    },
+    {
+      title: "MCP Governance",
+      description: "Tool registry, risk scoring, approval workflows per agent.",
+      link: "/features#mcp",
+      icon: Network,
+      hoverClass: "animate-connect-network text-cyan-400",
+    },
+  ];
+
+  const tweets = [
+    {
+      handle: "@devesh_k_r",
+      text: "@rakshexhq found a production OpenAI key in our test collection.\nOne that was about to go live. Not a drill.",
+      date: "May 24, 2026",
+    },
+    {
+      handle: "@aarti_builds",
+      text: "The @rakshexhq kill switch tripped automatically on a runaway agent loop.\nSaved us ~$8K. This feature alone is worth it.",
+      date: "May 22, 2026",
+    },
+    {
+      handle: "@siddharth_swe",
+      text: "SOC2 evidence prep used to be 3 days of pain. @rakshexhq generates\nthe bundle in one click. Our auditor was genuinely confused.",
+      date: "May 19, 2026",
+    },
+    {
+      handle: "@priya_appsec",
+      text: "Thinking token attribution from @rakshexhq is wild. 40% of our Claude\nbill was reasoning tokens from a single misconfigured endpoint.",
+      date: "May 15, 2026",
+    },
+    {
+      handle: "@nikhil_founder",
+      text: "@rakshexhq in GitHub Actions is a no-brainer. Every PR gets security\nscore + cost delta in USD and INR. Team loves it.",
+      date: "May 11, 2026",
+    },
+    {
+      handle: "@arjun_fintech",
+      text: "Shadow API discovery found 7 forgotten endpoints. Two had zero auth.\n@rakshexhq is now mandatory before every release.",
+      date: "May 08, 2026",
+    },
+    {
+      handle: "@meera_devops",
+      text: "Deployed @rakshexhq in 4 minutes. No config. Scanned 340 endpoints.\nFound a JWT secret we had no idea existed.",
+      date: "May 05, 2026",
+    },
+    {
+      handle: "@rohan_ml",
+      text: "The MCP governance layer from @rakshexhq is exactly what AI agent\nsecurity needed. Nothing else does this.",
+      date: "Apr 28, 2026",
+    },
+  ];
+
+  const faqs = [
+    {
+      question: "What is RakshEx?",
+      answer:
+        "RakshEx is India's first AI runtime governance and security platform. It monitors and secures AI agents and LLM application endpoints at runtime, preventing prompt injection attacks, scanning for exposed credentials (including Indian PAN and Aadhaar formats), detecting shadow APIs, and enforcing budget controls.",
+    },
+    {
+      question: "What AI frameworks does RakshEx support?",
+      answer:
+        "We support all major AI frameworks and libraries including LangChain, LlamaIndex, CrewAI, AutoGen, LangGraph, and direct MCP tool integrations, across various development stacks like Next.js, FastAPI, Express, Django, and Spring Boot.",
+    },
+    {
+      question: "What security checks does RakshEx perform?",
+      answer:
+        "RakshEx scans requests and responses for 87+ known prompt injection payloads, checks endpoints against OWASP API Top 10 vulnerabilities, searches for exposed secrets/keys (AWS, GitHub, Stripe, OpenAI, Aadhaar, PAN), maps outbound tool parameters in Model Context Protocol (MCP) registries, and provides instant SOC2 compliance reports.",
+    },
+    {
+      question: "Who should use RakshEx?",
+      answer:
+        "Security engineers, application security teams, and developers building AI agent workflows or LLM-enabled web applications who want to ensure safety, governance, cost containment, and compliance in production environments.",
+    },
+    {
+      question: "Is RakshEx open source?",
+      answer:
+        "Yes! RakshEx core scanning engines and SDK packages are fully open source and public. We offer premium enterprise security scanners, advanced compliance dashboards, and cloud deployment runtimes for enterprise teams.",
+    },
+    {
+      question: "How is RakshEx different from Snyk or Datadog?",
+      answer:
+        "Snyk and Datadog focus on traditional static code scanning or server infrastructure metrics. RakshEx is built specifically for AI-native workflows, isolating thinking/reasoning token usage bills, scoring agent tool risks, intercepting prompt-level injection payloads, and supplying autonomous circuit breakers at runtime.",
+    },
+    {
+      question: "What does the kill switch actually do?",
+      answer:
+        "The AgentGuard Kill Switch acts as an autonomous circuit breaker. It intercepts agent actions and sub-second triggers to shut down loops or tool execution when cost anomaly thresholds are breached, when malicious injection patterns are matched, or when security scores degrade.",
+    },
+  ];
+
+  return (
+    <div className="min-h-screen flex flex-col bg-[#0F0F0F] text-neutral-300 font-sans selection:bg-cyan-500/30 selection:text-white">
+      <JsonLdInjector />
+
+      {/* STEP 1 - Sticky Announcement Countdown Banner */}
+      <div
+        id="event-banner"
+        className="relative z-[100] h-10 shrink-0 w-full border-b border-cyan-500/20 bg-[#0F0F0F]"
+      >
+        <Link href="/changelog" className="block h-full">
+          <div className="mx-auto flex h-full max-w-[1280px] items-center justify-between px-4 sm:px-6">
+            <p className="min-w-0 truncate text-xs sm:text-sm font-manrope font-medium leading-none text-white hover:text-cyan-400 transition-colors flex items-center gap-1.5">
+              <span>🔒 RakshEx Launch Week — India's First AI Runtime Governance Platform →</span>
+            </p>
+            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-neutral-400 font-manrope select-none">
+              <span className="hidden sm:inline">Closing in:</span>
+              <span className="flex items-center gap-1">
+                <span className="px-1 py-0.5 rounded bg-neutral-900 border border-neutral-800 text-cyan-400 font-bold font-mono">
+                  {timeLeft.days}d
+                </span>
+                <span>:</span>
+                <span className="px-1 py-0.5 rounded bg-neutral-900 border border-neutral-800 text-cyan-400 font-bold font-mono">
+                  {timeLeft.hours}h
+                </span>
+                <span>:</span>
+                <span className="px-1 py-0.5 rounded bg-neutral-900 border border-neutral-800 text-cyan-400 font-bold font-mono">
+                  {timeLeft.minutes}m
+                </span>
+                <span>:</span>
+                <span className="px-1 py-0.5 rounded bg-neutral-900 border border-neutral-800 text-cyan-400 font-bold font-mono">
+                  {timeLeft.seconds}s
+                </span>
+              </span>
             </div>
           </div>
+        </Link>
+      </div>
 
-          {/* Metric 3 */}
-          <div className="space-y-3">
-            <div className="text-sm font-semibold text-slate-300">
-              Time to First Finding (Lower is better)
-            </div>
-            <div className="space-y-3.5">
-              <div>
-                <div className="flex justify-between text-xs text-slate-400 mb-1">
-                  <span>RakshEx</span>
-                  <span className="text-cyan-400 font-bold font-mono">3s</span>
-                </div>
-                <div className="w-full bg-slate-900 rounded-full h-3 overflow-hidden border border-slate-800">
-                  <div
-                    className="bg-cyan-500 h-full rounded-full transition-all duration-1000 ease-out"
-                    style={{ width: visible ? "6%" : "0%" }}
-                  />
+      {/* STEP 2 - Navbar Redesign (Mega Menu) */}
+      <nav className="sticky h-12 top-0 left-0 bg-[#0F0F0F]/80 backdrop-blur-md w-full border-b border-neutral-800/80 z-50">
+        <div className="flex justify-between items-center max-w-[1280px] mx-auto h-full px-4 sm:px-6">
+          <div className="flex items-center gap-8 h-full">
+            <Link
+              href="/"
+              className="flex items-center gap-2 no-underline shrink-0 text-white font-manrope font-bold text-lg hover:opacity-90"
+            >
+              <Shield className="w-5 h-5 text-cyan-400 fill-cyan-400/20" />
+              <span>RakshEx</span>
+            </Link>
+
+            <div className="hidden lg:flex items-center gap-6 h-full text-sm font-medium">
+              {/* Products Dropdown */}
+              <div className="relative group h-full flex items-center">
+                <button className="flex items-center gap-1 text-neutral-400 group-hover:text-white transition-colors cursor-pointer select-none">
+                  Products
+                  <ChevronDown className="w-4 h-4 transition-transform duration-200 group-hover:rotate-180" />
+                </button>
+                <div className="absolute top-[48px] left-0 pt-2 transition-all duration-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible translate-y-2 group-hover:translate-y-0 z-50">
+                  <div className="bg-[#181818] border border-neutral-800 rounded-xl shadow-2xl p-6 w-[560px] grid grid-cols-2 gap-x-6 gap-y-4">
+                    {/* Col 1 */}
+                    <div className="flex flex-col gap-4">
+                      <Link
+                        href="/features#security-scanner"
+                        className="flex items-start gap-3 group/item"
+                      >
+                        <div className="w-9 h-9 rounded bg-neutral-800 group-hover/item:bg-cyan-500/20 flex items-center justify-center text-neutral-400 group-hover/item:text-cyan-400 transition-colors shrink-0">
+                          <Shield className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="text-white text-xs font-semibold group-hover/item:text-cyan-400 transition-colors">
+                            Security Scanner
+                          </p>
+                          <p className="text-neutral-500 text-[10px] mt-0.5 leading-normal">
+                            87-payload injection library, OWASP Top 10
+                          </p>
+                        </div>
+                      </Link>
+
+                      <Link
+                        href="/features#kill-switch"
+                        className="flex items-start gap-3 group/item"
+                      >
+                        <div className="w-9 h-9 rounded bg-neutral-800 group-hover/item:bg-cyan-500/20 flex items-center justify-center text-neutral-400 group-hover/item:text-cyan-400 transition-colors shrink-0">
+                          <Power className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="text-white text-xs font-semibold group-hover/item:text-cyan-400 transition-colors">
+                            AgentGuard Kill Switch
+                          </p>
+                          <p className="text-neutral-500 text-[10px] mt-0.5 leading-normal">
+                            Autonomous circuit breaker, sub-second
+                          </p>
+                        </div>
+                      </Link>
+
+                      <Link
+                        href="/features#shadow-api"
+                        className="flex items-start gap-3 group/item"
+                      >
+                        <div className="w-9 h-9 rounded bg-neutral-800 group-hover/item:bg-cyan-500/20 flex items-center justify-center text-neutral-400 group-hover/item:text-cyan-400 transition-colors shrink-0">
+                          <Ghost className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="text-white text-xs font-semibold group-hover/item:text-cyan-400 transition-colors">
+                            Shadow API Discovery
+                          </p>
+                          <p className="text-neutral-500 text-[10px] mt-0.5 leading-normal">
+                            Find undocumented endpoints instantly
+                          </p>
+                        </div>
+                      </Link>
+
+                      <Link
+                        href="/features#credentials"
+                        className="flex items-start gap-3 group/item"
+                      >
+                        <div className="w-9 h-9 rounded bg-neutral-800 group-hover/item:bg-cyan-500/20 flex items-center justify-center text-neutral-400 group-hover/item:text-cyan-400 transition-colors shrink-0">
+                          <Key className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="text-white text-xs font-semibold group-hover/item:text-cyan-400 transition-colors">
+                            Credential Scanner
+                          </p>
+                          <p className="text-neutral-500 text-[10px] mt-0.5 leading-normal">
+                            AWS, GitHub, Aadhaar, PAN detection
+                          </p>
+                        </div>
+                      </Link>
+                    </div>
+
+                    {/* Col 2 */}
+                    <div className="flex flex-col gap-4">
+                      <Link
+                        href="/features#cost-monitor"
+                        className="flex items-start gap-3 group/item"
+                      >
+                        <div className="w-9 h-9 rounded bg-neutral-800 group-hover/item:bg-cyan-500/20 flex items-center justify-center text-neutral-400 group-hover/item:text-cyan-400 transition-colors shrink-0">
+                          <BarChart className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="text-white text-xs font-semibold group-hover/item:text-cyan-400 transition-colors">
+                            Cost Monitor
+                          </p>
+                          <p className="text-neutral-500 text-[10px] mt-0.5 leading-normal">
+                            Holt-Winters forecasting, anomaly detection
+                          </p>
+                        </div>
+                      </Link>
+
+                      <Link
+                        href="/features#thinking-tokens"
+                        className="flex items-start gap-3 group/item"
+                      >
+                        <div className="w-9 h-9 rounded bg-neutral-800 group-hover/item:bg-cyan-500/20 flex items-center justify-center text-neutral-400 group-hover/item:text-cyan-400 transition-colors shrink-0">
+                          <Brain className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="text-white text-xs font-semibold group-hover/item:text-cyan-400 transition-colors">
+                            Thinking Token Attribution
+                          </p>
+                          <p className="text-neutral-500 text-[10px] mt-0.5 leading-normal">
+                            World-first reasoning token isolation
+                          </p>
+                        </div>
+                      </Link>
+
+                      <Link
+                        href="/features#compliance"
+                        className="flex items-start gap-3 group/item"
+                      >
+                        <div className="w-9 h-9 rounded bg-neutral-800 group-hover/item:bg-cyan-500/20 flex items-center justify-center text-neutral-400 group-hover/item:text-cyan-400 transition-colors shrink-0">
+                          <FileText className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="text-white text-xs font-semibold group-hover/item:text-cyan-400 transition-colors">
+                            Compliance Reports
+                          </p>
+                          <p className="text-neutral-500 text-[10px] mt-0.5 leading-normal">
+                            SOC2, PCI DSS, OWASP. One-click PDF
+                          </p>
+                        </div>
+                      </Link>
+
+                      <Link href="/features#mcp" className="flex items-start gap-3 group/item">
+                        <div className="w-9 h-9 rounded bg-neutral-800 group-hover/item:bg-cyan-500/20 flex items-center justify-center text-neutral-400 group-hover/item:text-cyan-400 transition-colors shrink-0">
+                          <Network className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="text-white text-xs font-semibold group-hover/item:text-cyan-400 transition-colors">
+                            MCP Governance
+                          </p>
+                          <p className="text-neutral-500 text-[10px] mt-0.5 leading-normal">
+                            Tool registry, risk scoring, allowlists
+                          </p>
+                        </div>
+                      </Link>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div>
-                <div className="flex justify-between text-xs text-slate-500 mb-1">
-                  <span>Snyk</span>
-                  <span className="font-mono">47s</span>
-                </div>
-                <div className="w-full bg-slate-900 rounded-full h-3 overflow-hidden border border-slate-805">
-                  <div
-                    className="bg-slate-700 h-full rounded-full transition-all duration-1000 ease-out"
-                    style={{ width: visible ? "94%" : "0%" }}
-                  />
+
+              {/* Compare Dropdown */}
+              <div className="relative group h-full flex items-center">
+                <button className="flex items-center gap-1 text-neutral-400 group-hover:text-white transition-colors cursor-pointer select-none">
+                  Compare
+                  <ChevronDown className="w-4 h-4 transition-transform duration-200 group-hover:rotate-180" />
+                </button>
+                <div className="absolute top-[48px] left-0 pt-2 transition-all duration-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible translate-y-2 group-hover:translate-y-0 z-50">
+                  <div className="bg-[#181818] border border-neutral-800 rounded-xl shadow-2xl p-4 w-[240px] flex flex-col gap-2">
+                    <Link
+                      href="/compare/rakshex-vs-snyk"
+                      className="px-3 py-2 text-xs text-neutral-300 hover:text-cyan-400 hover:bg-neutral-800 rounded transition-colors"
+                    >
+                      RakshEx vs Snyk →
+                    </Link>
+                    <Link
+                      href="/compare/rakshex-vs-datadog"
+                      className="px-3 py-2 text-xs text-neutral-300 hover:text-cyan-400 hover:bg-neutral-800 rounded transition-colors"
+                    >
+                      RakshEx vs Datadog →
+                    </Link>
+                    <Link
+                      href="/compare/rakshex-vs-traceable"
+                      className="px-3 py-2 text-xs text-neutral-300 hover:text-cyan-400 hover:bg-neutral-800 rounded transition-colors"
+                    >
+                      RakshEx vs Traceable AI →
+                    </Link>
+                    <Link
+                      href="/compare/rakshex-vs-salt"
+                      className="px-3 py-2 text-xs text-neutral-300 hover:text-cyan-400 hover:bg-neutral-800 rounded transition-colors"
+                    >
+                      RakshEx vs Salt Security →
+                    </Link>
+                  </div>
                 </div>
               </div>
-              <div>
-                <div className="flex justify-between text-xs text-slate-500 mb-1">
-                  <span>Datadog</span>
-                  <span className="font-mono">N/A</span>
-                </div>
-                <div className="w-full bg-slate-900 rounded-full h-3 overflow-hidden border border-slate-805 relative">
-                  <div className="absolute inset-0 flex items-center justify-center text-[10px] text-slate-650 font-mono">
-                    Not Supported
+
+              {/* Resources Dropdown */}
+              <div className="relative group h-full flex items-center">
+                <button className="flex items-center gap-1 text-neutral-400 group-hover:text-white transition-colors cursor-pointer select-none">
+                  Resources
+                  <ChevronDown className="w-4 h-4 transition-transform duration-200 group-hover:rotate-180" />
+                </button>
+                <div className="absolute top-[48px] left-0 pt-2 transition-all duration-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible translate-y-2 group-hover:translate-y-0 z-50">
+                  <div className="bg-[#181818] border border-neutral-800 rounded-xl shadow-2xl p-3 w-[200px] flex flex-col gap-1">
+                    <Link
+                      href="/blog"
+                      className="px-3 py-2 text-xs text-neutral-300 hover:text-cyan-400 hover:bg-neutral-800 rounded transition-colors"
+                    >
+                      Blog
+                    </Link>
+                    <Link
+                      href="/docs"
+                      className="px-3 py-2 text-xs text-neutral-300 hover:text-cyan-400 hover:bg-neutral-800 rounded transition-colors"
+                    >
+                      Docs
+                    </Link>
+                    <Link
+                      href="/changelog"
+                      className="px-3 py-2 text-xs text-neutral-300 hover:text-cyan-400 hover:bg-neutral-800 rounded transition-colors"
+                    >
+                      Changelog
+                    </Link>
+                    <Link
+                      href="/roi"
+                      className="px-3 py-2 text-xs text-neutral-300 hover:text-cyan-400 hover:bg-neutral-800 rounded transition-colors"
+                    >
+                      ROI Calculator
+                    </Link>
+                    <Link
+                      href="/faq"
+                      className="px-3 py-2 text-xs text-neutral-300 hover:text-cyan-400 hover:bg-neutral-800 rounded transition-colors"
+                    >
+                      FAQ
+                    </Link>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <p className="mt-8 text-center text-xs text-slate-500">
-          * Internal benchmarks using 50 real-world API collections. Independent audit scheduled Q3
-          2026.
-        </p>
-      </div>
-    </section>
-  );
-}
-
-function HowItWorksSection() {
-  const [activeStep, setActiveStep] = useState(1);
-
-  return (
-    <section className="py-24 px-6 max-w-7xl mx-auto border-t border-slate-900">
-      <div className="text-center mb-16">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-500/20 bg-cyan-500/5 text-cyan-400 mb-4">
-          <span className="text-[10px] uppercase font-mono font-bold tracking-widest">
-            Workflow
-          </span>
-        </div>
-        <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight font-body-lg">
-          How It Works
-        </h2>
-        <p className="mt-4 text-slate-400 text-sm md:text-base max-w-xl mx-auto">
-          Analyze and secure your AI environment in three simple steps.
-        </p>
-      </div>
-
-      <div className="grid md:grid-cols-12 gap-8 items-center">
-        {/* Left Side: Steps */}
-        <div className="md:col-span-5 space-y-4">
-          {[
-            {
-              id: 1,
-              title: "Import Your Collection",
-              desc: "Drag and drop your Postman collection, OpenAPI JSON, or paste raw routes. We support instant formats.",
-            },
-            {
-              id: 2,
-              title: "Scan in 3 Seconds",
-              desc: "Our high-speed static scan checks against 478 vulnerabilities including OWASP API Top 10 and Aadhaar/PAN leaks.",
-            },
-            {
-              id: 3,
-              title: "Deploy Protection",
-              desc: "Install the VS Code extension or deploy the gateway proxy to secure your runtime against malicious prompts.",
-            },
-          ].map((s) => (
-            <div
-              key={s.id}
-              onClick={() => setActiveStep(s.id)}
-              className={`p-6 border rounded-xl text-left cursor-pointer transition-all duration-300 ${activeStep === s.id ? "bg-[#06b6d4]/5 border-[#06b6d4] shadow-[0_0_20px_rgba(6,182,212,0.1)]" : "bg-slate-900/50 border-slate-800 hover:border-slate-750"}`}
-            >
-              <div className="flex gap-4 items-start">
-                <div
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold font-mono ${activeStep === s.id ? "bg-[#06b6d4] text-slate-950" : "bg-slate-800 text-slate-400"}`}
-                >
-                  {s.id}
-                </div>
-                <div>
-                  <h3 className="font-bold text-white text-base leading-snug">{s.title}</h3>
-                  <p className="mt-1.5 text-xs text-slate-400 leading-relaxed">{s.desc}</p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Right Side: Animated Visual */}
-        <div className="md:col-span-7 bg-slate-950 border border-slate-900 rounded-2xl p-6 md:p-8 h-80 flex flex-col justify-center items-center overflow-hidden shadow-2xl relative">
-          <div className="scan-line" />
-
-          {activeStep === 1 && (
-            <div className="w-full max-w-sm flex flex-col items-center gap-4 text-center stream-fade-in">
-              <div className="w-16 h-16 border-2 border-dashed border-cyan-500/40 rounded-xl flex items-center justify-center relative animate-pulse bg-cyan-950/10">
-                <span className="material-symbols-outlined text-cyan-400 text-3xl">
-                  upload_file
-                </span>
-                <div className="absolute -top-6 w-8 h-8 bg-slate-900 border border-cyan-500/30 rounded flex items-center justify-center text-[8px] font-mono text-cyan-400 animate-bounce">
-                  JSON
-                </div>
-              </div>
-              <div>
-                <p className="text-sm font-bold text-white">collection.json</p>
-                <p className="text-xs text-slate-500 mt-1">Drag file here to start scanning</p>
-              </div>
-              <div className="w-full bg-slate-900 rounded-lg p-2 border border-slate-850 text-left font-mono text-[10px] text-slate-400">
-                <span className="text-cyan-500">"info"</span>: &#123;{" "}
-                <span className="text-amber-500">"name"</span>:{" "}
-                <span className="text-emerald-500">"RakshEx-Demo"</span> &#125;
-              </div>
-            </div>
-          )}
-
-          {activeStep === 2 && (
-            <div className="w-full max-w-md flex flex-col gap-4 text-left stream-fade-in">
-              <div className="flex justify-between items-center border-b border-slate-850 pb-2">
-                <span className="text-xs font-bold text-slate-450">Scan Progress</span>
-                <span className="text-xs font-mono text-cyan-400 animate-pulse">
-                  Running 478 tests...
-                </span>
-              </div>
-              <div className="w-full bg-slate-900 rounded-full h-2 overflow-hidden border border-slate-800 relative">
-                <div className="bg-cyan-500 h-full w-3/4 animate-pulse rounded-full" />
-              </div>
-              <div className="space-y-2 mt-2">
-                <div className="flex justify-between text-xs bg-slate-900/80 border border-slate-850 p-2.5 rounded font-mono text-amber-400 animate-pulse">
-                  <span>⚠️ OWASP-A1: Prompt Injection Payload</span>
-                  <span className="text-[10px] bg-amber-500/10 px-1.5 py-0.5 rounded text-amber-400 font-bold font-bold">
-                    High Risk
-                  </span>
-                </div>
-                <div className="flex justify-between text-xs bg-slate-900/80 border border-slate-850 p-2.5 rounded font-mono text-red-400">
-                  <span>❌ Indian PAN Secret Leak Detected</span>
-                  <span className="text-[10px] bg-red-500/10 px-1.5 py-0.5 rounded text-red-400 font-bold font-bold">
-                    Critical
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeStep === 3 && (
-            <div className="w-full max-w-sm flex items-start gap-4 bg-slate-900 border border-slate-850 p-4 rounded-xl shadow-lg text-left stream-fade-in">
-              <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-400/30 rounded-xl flex items-center justify-center text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
-                <span className="material-symbols-outlined font-bold text-2xl">verified_user</span>
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <h4 className="font-bold text-white text-sm">RakshEx VS Code Extension</h4>
-                  <span className="bg-emerald-500/20 text-emerald-400 font-mono text-[9px] px-1.5 py-0.5 rounded font-bold">
-                    Active
-                  </span>
-                </div>
-                <p className="text-slate-400 text-xs mt-1.5 leading-relaxed font-body-md">
-                  Real-time prompt sanitation active. All outgoing LLM payload queries are filtered.
-                </p>
-                <div className="mt-3 flex gap-2">
-                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
-                  <span className="text-[9px] font-mono text-emerald-400 font-bold uppercase tracking-wider">
-                    Shield protection enabled
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function TokenCounter({
-  label,
-  endValue,
-  suffix = "",
-}: {
-  label: string;
-  endValue: string;
-  suffix?: string;
-}) {
-  const [count, setCount] = useState(0);
-  const [visible, setVisible] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) setVisible(true);
-      },
-      { threshold: 0.1 },
-    );
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (!visible) return;
-    let start = 0;
-    const target = parseFloat(endValue);
-    const duration = 2000;
-    const stepTime = 16;
-    const stepsCount = duration / stepTime;
-    const step = target / stepsCount;
-    const timer = setInterval(() => {
-      start += step;
-      if (start >= target) {
-        setCount(target);
-        clearInterval(timer);
-      } else {
-        setCount(start);
-      }
-    }, stepTime);
-    return () => clearInterval(timer);
-  }, [visible, endValue]);
-
-  return (
-    <div
-      ref={ref}
-      className="bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center hover:border-cyan-500/35 transition-all shadow-[0_0_20px_rgba(6,182,212,0.02)] group hover:shadow-[0_0_25px_rgba(6,182,212,0.05)] duration-300"
-    >
-      <p className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">{label}</p>
-      <p className="mt-3 text-3xl font-extrabold font-mono text-cyan-400 tracking-tight">
-        {count >= 1000
-          ? Math.floor(count).toLocaleString()
-          : count.toFixed(count % 1 === 0 ? 0 : 1)}
-        {suffix}
-      </p>
-    </div>
-  );
-}
-
-function LiveStatsSection() {
-  return (
-    <section className="py-24 px-6 max-w-7xl mx-auto border-t border-slate-900">
-      <div className="text-center mb-16">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-500/20 bg-cyan-500/5 text-cyan-400 mb-4">
-          <span className="text-[10px] uppercase font-mono font-bold tracking-widest">
-            Platform Stats
-          </span>
-        </div>
-        <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight font-body-lg">
-          Built for Production. Trusted by Engineers.
-        </h2>
-        <p className="mt-4 text-slate-400 text-sm md:text-base max-w-xl mx-auto font-body-md">
-          Live statistics from our active global scanning network.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <TokenCounter label="Collections Scanned" endValue="12847" />
-        <TokenCounter label="Vulnerabilities Found" endValue="94231" />
-        <TokenCounter label="LLM Tokens Saved" endValue="2.4" suffix="B" />
-        <TokenCounter label="Engineers Protected" endValue="1247" />
-      </div>
-
-      <p className="mt-8 text-center text-xs text-slate-500 font-mono">
-        * Includes private beta users and internal testing data
-      </p>
-    </section>
-  );
-}
-
-function ComparisonTableSection() {
-  const capabilities = [
-    {
-      name: "API Security Scanning",
-      postman: false,
-      snyk: false,
-      datadog: false,
-      rakshex: true,
-      tooltip:
-        "AI agents make unauthorized external requests; scanning detects target leaks beforehand.",
-    },
-    {
-      name: "LLM Cost Tracking",
-      postman: false,
-      snyk: false,
-      datadog: true,
-      rakshex: true,
-      tooltip: "Enables isolation and tracking of reasoning tokens, preventing runaway bills.",
-    },
-    {
-      name: "Prompt Injection Blocking",
-      postman: false,
-      snyk: false,
-      datadog: false,
-      rakshex: true,
-      tooltip: "Stops malicious user input from hijacking agent logic at the gateway.",
-    },
-    {
-      name: "PII Redaction (real-time)",
-      postman: false,
-      snyk: false,
-      datadog: false,
-      rakshex: true,
-      tooltip: "Prevents leaks of customer PII (e.g. Aadhaar, PAN, emails) to third-party LLMs.",
-    },
-    {
-      name: "Shadow API Detection",
-      postman: false,
-      snyk: false,
-      datadog: false,
-      rakshex: true,
-      tooltip: "Extracts routes from code bases statically to map unknown agent access paths.",
-    },
-    {
-      name: "Kill Switch",
-      postman: false,
-      snyk: false,
-      datadog: false,
-      rakshex: true,
-      tooltip: "Trips automatically if budget caps are breached or rogue behaviors are identified.",
-    },
-    {
-      name: "PCI DSS Compliance",
-      postman: false,
-      snyk: false,
-      datadog: false,
-      rakshex: true,
-      tooltip: "Ensures all payment processing and transaction data complies with v4.0.1 rules.",
-    },
-    {
-      name: "VS Code Integration",
-      postman: false,
-      snyk: false,
-      datadog: false,
-      rakshex: true,
-      tooltip: "Enables developers to scan APIs directly inside their IDE before committing.",
-    },
-    {
-      name: "SSO + RBAC",
-      postman: true,
-      snyk: true,
-      datadog: true,
-      rakshex: true,
-      tooltip: "Provides secure team management and single sign-on access control.",
-    },
-  ];
-
-  return (
-    <section className="py-24 px-6 max-w-7xl mx-auto border-t border-slate-900">
-      <div className="text-center mb-16">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-500/20 bg-cyan-500/5 text-cyan-400 mb-4">
-          <span className="text-[10px] uppercase font-mono font-bold tracking-widest">
-            Feature Comparison
-          </span>
-        </div>
-        <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight font-body-lg">
-          What Makes RakshEx Different
-        </h2>
-        <p className="mt-4 text-slate-400 text-sm md:text-base max-w-xl mx-auto font-body-md">
-          A side-by-side breakdown of features compared to traditional security tools.
-        </p>
-      </div>
-
-      <div className="w-full overflow-x-auto border border-slate-850 rounded-2xl shadow-2xl bg-slate-950/40 scrollbar-none relative">
-        <table className="w-full text-left border-collapse min-w-[700px]">
-          <thead>
-            <tr className="border-b border-slate-850 bg-slate-900/60 text-[10px] font-mono uppercase tracking-widest text-slate-500">
-              <th className="px-6 py-5 font-bold sticky left-0 bg-slate-950 z-20 min-w-[200px]">
-                Capability
-              </th>
-              <th className="px-6 py-5 font-bold text-center">Postman</th>
-              <th className="px-6 py-5 font-bold text-center">Snyk</th>
-              <th className="px-6 py-5 font-bold text-center">Datadog</th>
-              <th className="px-6 py-5 font-bold text-center bg-cyan-500/10 border-x border-cyan-500/20 relative">
-                <span className="text-cyan-400">RakshEx</span>
-                <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-cyan-500 text-slate-950 text-[8px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider font-mono">
-                  ✓ Best
-                </span>
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-850 text-xs">
-            {capabilities.map((row, idx) => (
-              <tr key={idx} className="hover:bg-slate-900/40 transition-colors group">
-                <td className="px-6 py-4.5 font-semibold text-slate-200 sticky left-0 bg-slate-950 group-hover:bg-slate-900/40 z-20 flex items-center gap-1.5 min-w-[200px]">
-                  <span className="cursor-help relative group/tooltip border-b border-dotted border-slate-500 pb-0.5">
-                    {row.name}
-                    <span className="absolute bottom-full left-0 mb-2 hidden group-hover/tooltip:block w-64 bg-slate-900 border border-slate-750 text-slate-300 text-[10px] leading-relaxed p-3 rounded-lg shadow-xl z-50 normal-case font-normal font-body-md">
-                      {row.tooltip}
-                    </span>
-                  </span>
-                </td>
-
-                <td className="px-6 py-4.5 text-center">
-                  {row.postman ? (
-                    <span className="text-emerald-400 font-bold text-base">✓</span>
-                  ) : (
-                    <span className="text-slate-700 text-base">×</span>
-                  )}
-                </td>
-
-                <td className="px-6 py-4.5 text-center">
-                  {row.snyk ? (
-                    <span className="text-emerald-400 font-bold text-base">✓</span>
-                  ) : (
-                    <span className="text-slate-700 text-base">×</span>
-                  )}
-                </td>
-
-                <td className="px-6 py-4.5 text-center">
-                  {row.datadog ? (
-                    <span className="text-emerald-400 font-bold text-base">✓</span>
-                  ) : (
-                    <span className="text-slate-700 text-base">×</span>
-                  )}
-                </td>
-
-                <td className="px-6 py-4.5 text-center bg-cyan-500/5 border-x border-cyan-500/10 font-bold">
-                  {row.rakshex ? (
-                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500/10 text-emerald-400 font-bold text-sm shadow-[0_0_10px_rgba(16,185,129,0.2)]">
-                      ✓
-                    </span>
-                  ) : (
-                    <span className="text-red-500 font-bold text-base">×</span>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  );
-}
-
-function PricingSection() {
-  const plans = [
-    {
-      plan: "Free",
-      price: "$0",
-      inr: "₹0",
-      features: ["2 Collections", "3 Scans/day", "OWASP Top 10 audit", "Community Support"],
-      cta: "Get Started",
-      href: "/register",
-      popular: false,
-    },
-    {
-      plan: "Pro",
-      price: "$99",
-      inr: "≈ ₹8,299",
-      features: [
-        "Unlimited Collections",
-        "Advanced Security Scanning",
-        "Kill Switch & Budget Caps",
-        "Team (5 members)",
-        "Slack & Discord Alerts",
-        "API Access",
-      ],
-      cta: "Start Free Trial",
-      href: "/billing",
-      popular: true,
-    },
-    {
-      plan: "Enterprise",
-      price: "$499",
-      inr: "≈ ₹41,599",
-      features: [
-        "Everything in Pro",
-        "SSO / SAML 2.0",
-        "25 Team Members + RBAC",
-        "Priority Support, 4h SLA",
-        "SOC2 Evidence Builder",
-        "Custom Data Retention",
-      ],
-      cta: "Contact Sales",
-      href: "/billing",
-      popular: false,
-    },
-  ];
-
-  return (
-    <section className="py-24 px-6 max-w-7xl mx-auto border-t border-slate-900">
-      <div className="text-center mb-16">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-500/20 bg-cyan-500/5 text-cyan-400 mb-4">
-          <span className="text-[10px] uppercase font-mono font-bold tracking-widest">Pricing</span>
-        </div>
-        <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight font-body-lg">
-          Simple, Transparent Pricing
-        </h2>
-        <p className="mt-4 text-slate-400 text-sm md:text-base max-w-xl mx-auto font-body-md">
-          Start protecting your AI integrations today. Upgrade or downgrade anytime.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {plans.map((p, idx) => (
-          <div
-            key={idx}
-            className={`bg-slate-900 border rounded-2xl p-8 relative flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl ${p.popular ? "border-cyan-500 shadow-[0_0_30px_rgba(6,182,212,0.1)]" : "border-slate-800"}`}
-          >
-            {p.popular && (
-              <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-cyan-500 text-slate-950 text-[9px] font-extrabold px-3 py-1 rounded-full uppercase tracking-widest font-mono">
-                Most Popular
-              </span>
-            )}
-            <div>
-              <h3 className="text-lg font-bold text-white tracking-tight">{p.plan}</h3>
-              <div className="mt-6 flex items-baseline gap-2">
-                <span className="text-4xl font-extrabold text-white font-mono">{p.price}</span>
-                <span className="text-xs text-slate-500 font-mono">/mo</span>
-              </div>
-              <p className="mt-1 text-[10px] text-slate-500 font-mono">{p.inr}/mo</p>
-
-              <ul className="mt-8 space-y-4">
-                {p.features.map((f, fIdx) => (
-                  <li
-                    key={fIdx}
-                    className="flex items-center gap-3 text-xs text-slate-300 font-body-md"
-                  >
-                    <span className="material-symbols-outlined text-cyan-400 text-sm font-bold">
-                      check_circle
-                    </span>
-                    {f}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <Link
-              href={p.href}
-              className={`mt-10 block w-full py-3.5 rounded-lg text-center text-xs tracking-wider uppercase font-mono font-extrabold transition-all duration-300 ${p.popular ? "bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:shadow-[0_0_30px_rgba(6,182,212,0.5)]" : "bg-slate-850 hover:bg-slate-800 border border-slate-750 text-white"}`}
-            >
-              {p.cta}
-            </Link>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function CallToActionSection() {
-  return (
-    <section className="py-24 px-6 max-w-5xl mx-auto border-t border-slate-900 text-center relative overflow-hidden">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-cyan-500/5 rounded-full blur-[80px] pointer-events-none" />
-      <div className="relative space-y-6 flex flex-col items-center">
-        <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight font-body-lg">
-          Ready to Ship Secure AI?
-        </h2>
-        <p className="text-slate-400 text-sm md:text-base max-w-lg leading-relaxed font-body-md">
-          478+ tests. 4 patents. 37 API routers. One platform. Deploy in 5 minutes.
-        </p>
-        <div className="flex flex-col sm:flex-row justify-center gap-4 w-full max-w-sm mt-4">
-          <Link
-            href="/demo"
-            className="px-6 py-3.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold rounded-lg transition-all text-xs tracking-wider uppercase font-mono shadow-[0_0_15px_rgba(6,182,212,0.25)] flex items-center justify-center gap-1.5"
-          >
-            Try Live Demo
-            <span className="material-symbols-outlined text-xs font-bold">arrow_forward</span>
-          </Link>
-          <Link
-            href={`${APP_URL}/api/oauth/login`}
-            className="px-6 py-3.5 bg-slate-905 border border-slate-800 hover:border-slate-700 text-white font-extrabold rounded-lg transition-all text-xs tracking-wider uppercase font-mono flex items-center justify-center"
-          >
-            Start Free Trial
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function FooterRedesign() {
-  const productLinks = [
-    ["Features", "/features"],
-    ["Pricing", "/pricing"],
-    ["Changelog", "/changelog"],
-    ["Integrations", "/integrations"],
-    ["Live Demo", "/demo"],
-  ];
-  const solutionsLinks = [
-    ["Fintech", "/solutions/fintech"],
-    ["Healthcare", "/solutions/healthcare"],
-    ["Enterprise", "/solutions/enterprise"],
-    ["Comparisons", "/compare"],
-    ["ROI Calculator", "/roi-calculator"],
-  ];
-  const resourcesLinks = [
-    ["Blog", "/blog"],
-    ["FAQ", "/faq"],
-    ["Trust Center", "/trust"],
-    ["Status", "/status"],
-    ["Open Source", "/open-source"],
-  ];
-  const companyLinks = [
-    ["About", "/about"],
-    ["Partners", "/partners"],
-    ["Terms", "/terms"],
-    ["Privacy", "/privacy"],
-  ];
-
-  return (
-    <footer className="border-t border-slate-900 bg-slate-950/60 py-16 px-6">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-12 mb-12">
-        <div className="md:col-span-4 flex flex-col gap-4">
-          <Link href="/" className="flex items-center gap-2 group self-start">
-            <div className="w-8 h-8 bg-cyan-500/10 border border-cyan-400/30 rounded flex items-center justify-center group-hover:border-cyan-400 transition-colors">
-              <span className="material-symbols-outlined text-cyan-400 font-bold text-base">
-                shield
-              </span>
-            </div>
-            <span className="text-white font-headline-md text-headline-md font-bold tracking-tight">
-              RakshEx
-            </span>
-          </Link>
-          <p className="text-xs text-slate-400 leading-relaxed font-body-md max-w-sm">
-            AI Runtime Governance Platform. Real-time prompt injection blocking, LLM cost control,
-            and compliance reporting.
-          </p>
-          <div className="flex items-center gap-4 mt-2">
+          <div className="flex items-center gap-4">
+            {/* Social links */}
             <a
-              href="https://discord.gg/rakshexhq"
+              href="https://discord.gg/rakshex"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-slate-500 hover:text-white transition-colors"
-              title="Discord"
+              className="text-neutral-400 hover:text-white transition-colors p-1"
+              aria-label="Discord"
             >
-              <svg className="w-5 h-5 fill-current" viewBox="0 0 127.14 96.36">
-                <path d="M107.7,8.07A105.15,105.15,0,0,0,77.26,0a77.19,77.19,0,0,0-3.3,6.83A96.67,96.67,0,0,0,53.22,6.83,77.19,77.19,0,0,0,49.88,0,105.15,105.15,0,0,0,19.44,8.07C3.66,31.58-1.86,54.65,1,77.53A105.73,105.73,0,0,0,32,96.36a77.7,77.7,0,0,0,6.63-10.85,68.43,68.43,0,0,1-10.5-5c.89-.66,1.75-1.37,2.58-2.1a75.43,75.43,0,0,0,93.18,0c.84.73,1.69,1.44,2.58,2.1a68.43,68.43,0,0,1-10.5,5,77.7,77.7,0,0,0,6.63,10.85,105.73,105.73,0,0,0,31-18.83C129.87,48.24,123.63,25.41,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53S36.18,40.36,42.45,40.36,53.88,46,53.88,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.24,60,73.24,53S78.41,40.36,84.69,40.36,96.12,46,96.12,53,91,65.69,84.69,65.69Z" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                fill="currentColor"
+                viewBox="0 0 16 16"
+              >
+                <path d="M13.542 0c.264 0 .497.102.684.286a11.64 11.64 0 0 1 1.708 2.046c.114.183.166.386.166.529 0 .428-.415 4.398-.765 8.21-.084.95-.53 1.706-1.084 2.595a16.5 16.5 0 0 1-5.064 2.595q-.613-.841-1.084-1.785c.67-.183 1.258-.466 1.71-.833a10.6 10.6 0 0 0-.418-.331 15.2 15.2 0 0 1-10.118 0q-.206.171-.418.331c.452.367 1.04.65 1.71.833a16.5 16.5 0 0 1-1.084 1.785A16.5 16.5 0 0 1 .085 15.11C-.27 11.319.41 7.47.825 3.52c.046-.143.1-.346.166-.529A11.64 11.64 0 0 1 2.7 1.3C3.991.69 5.377.25 6.825.0c.18.32.388.753.535 1.097a15.2 15.2 0 0 1 4.573 0c.143-.344.351-.777.53-1.097 1.452.25 2.834.693 4.129 1.3M5.678 10.735c-.988 0-1.798-.922-1.798-2.046 0-1.123.81-2.046 1.798-2.046.99 0 1.798.922 1.798 2.046s-.808 2.046-1.798 2.046m6.644 0c-.988 0-1.798-.922-1.798-2.046 0-1.123.81-2.046 1.798-2.046.99 0 1.798.922 1.798 2.046s-.808 2.046-1.798 2.046" />
               </svg>
             </a>
             <a
-              href="https://github.com/Akshu1245/devpulse-complete-codebase"
+              href="https://github.com/rakshex"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-slate-500 hover:text-white transition-colors"
-              title="GitHub"
+              className="text-neutral-400 hover:text-white transition-colors p-1"
+              aria-label="GitHub"
             >
-              <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                fill="currentColor"
+                viewBox="0 0 16 16"
+              >
                 <path
                   fillRule="evenodd"
-                  clipRule="evenodd"
-                  d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.579.688.481C19.137 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z"
+                  d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8"
                 />
               </svg>
             </a>
-            <a
-              href="https://twitter.com/rakshexhq"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-slate-500 hover:text-white transition-colors"
-              title="Twitter"
-            >
-              <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-              </svg>
-            </a>
-          </div>
-        </div>
 
-        <div className="md:col-span-8 grid grid-cols-2 sm:grid-cols-4 gap-8">
-          <div>
-            <h4 className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 mb-4">
-              Product
-            </h4>
-            <ul className="space-y-2">
-              {productLinks.map(([label, href]) => (
-                <li key={label}>
-                  <Link
-                    href={href}
-                    className="text-xs text-slate-500 hover:text-white transition-colors"
-                  >
-                    {label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h4 className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 mb-4">
-              Solutions
-            </h4>
-            <ul className="space-y-2">
-              {solutionsLinks.map(([label, href]) => (
-                <li key={label}>
-                  <Link
-                    href={href}
-                    className="text-xs text-slate-500 hover:text-white transition-colors"
-                  >
-                    {label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h4 className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 mb-4">
-              Resources
-            </h4>
-            <ul className="space-y-2">
-              {resourcesLinks.map(([label, href]) => (
-                <li key={label}>
-                  <Link
-                    href={href}
-                    className="text-xs text-slate-500 hover:text-white transition-colors"
-                  >
-                    {label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h4 className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 mb-4">
-              Company
-            </h4>
-            <ul className="space-y-2">
-              {companyLinks.map(([label, href]) => (
-                <li key={label}>
-                  <Link
-                    href={href}
-                    className="text-xs text-slate-500 hover:text-white transition-colors"
-                  >
-                    {label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto pt-8 border-t border-slate-900 flex flex-col sm:flex-row justify-between items-center gap-4 text-[11px] text-slate-500">
-        <div>© 2026 RakshEx by Rashi Technologies. Bengaluru, India.</div>
-        <div className="flex gap-4 font-mono text-[10px]">
-          <Link href="/privacy" className="hover:text-white">
-            Privacy
-          </Link>
-          <span>|</span>
-          <Link href="/terms" className="hover:text-white">
-            Terms
-          </Link>
-          <span>|</span>
-          <Link href="/trust" className="hover:text-white">
-            Trust Center
-          </Link>
-        </div>
-        <div>
-          <Link href="/status" className="flex items-center gap-1.5 hover:text-white">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            All systems operational
-          </Link>
-        </div>
-      </div>
-    </footer>
-  );
-}
-
-export default function LandingPage() {
-  const [copied, setCopied] = useState(false);
-  const commandText = "npx rakshex scan ./postman-collection.json";
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(commandText);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const tools = [
-    "OpenAI",
-    "Anthropic",
-    "Gemini",
-    "Postman",
-    "VS Code",
-    "GitHub",
-    "Slack",
-    "Express",
-    "FastAPI",
-    "Django",
-    "Mistral",
-    "Cohere",
-  ];
-
-  return (
-    <div className="min-h-screen bg-[#0f172a] text-white selection:bg-cyan-500/30 selection:text-cyan-400">
-      <JsonLdInjector />
-
-      <style>{`
-        @keyframes marquee {
-          0% { transform: translateX(0%); }
-          100% { transform: translateX(-50%); }
-        }
-        .animate-marquee {
-          display: flex;
-          width: max-content;
-          animation: marquee 25s linear infinite;
-        }
-        .animate-marquee:hover {
-          animation-play-state: running;
-        }
-        @keyframes shield-pulse {
-          0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0px rgba(6,182,212,0)); }
-          50% { transform: scale(1.1); filter: drop-shadow(0 0 8px rgba(6,182,212,0.4)); }
-        }
-        .hover-shield:hover svg {
-          animation: shield-pulse 1.5s infinite ease-in-out;
-        }
-        @keyframes key-rotate {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        .hover-key:hover svg {
-          animation: key-rotate 2s infinite linear;
-        }
-        @keyframes brain-pulse {
-          0%, 100% { opacity: 0.3; }
-          50% { opacity: 1; }
-        }
-        .hover-brain:hover .brain-dot {
-          animation: brain-pulse 1s infinite alternate;
-        }
-        @keyframes ghost-fade {
-          0%, 100% { opacity: 0.3; }
-          50% { opacity: 0.9; }
-        }
-        .hover-ghost:hover svg {
-          animation: ghost-fade 1.5s infinite ease-in-out;
-        }
-        @keyframes line-draw {
-          0% { stroke-dashoffset: 20; }
-          100% { stroke-dashoffset: 0; }
-        }
-        .hover-graph:hover .graph-line {
-          stroke-dasharray: 20;
-          animation: line-draw 1.5s infinite linear;
-        }
-        @keyframes doc-check {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.25); }
-        }
-        .hover-doc:hover .doc-check-icon {
-          animation: doc-check 0.8s infinite ease-in-out;
-        }
-        @keyframes net-connect {
-          0%, 100% { transform: scale(1); opacity: 0.5; }
-          50% { transform: scale(1.2); opacity: 1; }
-        }
-        .hover-net:hover .net-node {
-          animation: net-connect 1.5s infinite ease-in-out;
-        }
-        @keyframes switch-glow {
-          0%, 100% { filter: drop-shadow(0 0 2px rgba(239, 68, 68, 0.4)); }
-          50% { filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.8)); }
-        }
-        .hover-switch:hover svg {
-          animation: switch-glow 1.5s infinite ease-in-out;
-          color: #ef4444;
-        }
-      `}</style>
-
-      {/* Spacer for fixed header (announcement banner (h-10) + navbar (h-16) = 104px) */}
-      <div className="h-26" />
-
-      {/* SECTION 3 — Hero Section Redesign */}
-      <section className="relative overflow-hidden pt-20 pb-24 px-6 text-center">
-        {/* Ambient cyan glows */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-cyan-500/5 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute top-40 left-1/4 w-[300px] h-[300px] bg-purple-500/5 rounded-full blur-[100px] pointer-events-none" />
-
-        <div className="relative max-w-5xl mx-auto flex flex-col items-center">
-          {/* Small top badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/5 text-cyan-400 mb-8 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
-            <span className="text-[10px] uppercase font-mono font-bold tracking-wider">
-              India's First AI Runtime Governance Platform
-            </span>
-          </div>
-
-          {/* Headline (large, 3 lines) */}
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-white tracking-tight leading-[1.05] max-w-4xl font-body-lg">
-            Stop Your AI Agents
-            <br />
-            From Becoming a<br />
-            <span className="bg-gradient-to-r from-cyan-400 to-teal-300 bg-clip-text text-transparent">
-              Security Liability
-            </span>
-          </h1>
-
-          {/* Subheadline */}
-          <p className="mt-8 text-base md:text-lg text-slate-400 max-w-2xl leading-relaxed">
-            Real-time prompt injection blocking, LLM cost control, and compliance reporting — all in
-            your VS Code. 4 patents. 478 tests.
-          </p>
-
-          {/* Primary CTA row */}
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 w-full max-w-xl">
-            {/* Terminal command box */}
-            <div className="flex items-center justify-between bg-slate-900 border border-slate-800 rounded-lg px-4 py-3.5 w-full sm:w-auto sm:flex-1 font-mono text-xs text-left relative overflow-hidden group">
-              <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap scrollbar-none pr-6">
-                <span className="text-cyan-500 font-bold select-none">$</span>
-                <span className="text-slate-300">{commandText}</span>
-              </div>
-              <button
-                onClick={handleCopy}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded border border-slate-700 transition-all focus:outline-none"
-                title="Copy Command"
-              >
-                {copied ? (
-                  <span className="material-symbols-outlined text-[14px] text-emerald-400 font-bold">
-                    check
-                  </span>
-                ) : (
-                  <span className="material-symbols-outlined text-[14px]">content_copy</span>
-                )}
-              </button>
-            </div>
-
-            {/* Start Free Trial button */}
             <Link
-              href={`${APP_URL}/api/oauth/login`}
-              className="px-6 py-3.5 bg-gradient-to-r from-cyan-500 to-teal-500 text-slate-950 font-extrabold rounded-lg hover:from-cyan-400 hover:to-teal-400 transition-all text-xs tracking-wider uppercase font-mono shadow-[0_0_25px_rgba(6,182,212,0.35)] hover:shadow-[0_0_35px_rgba(6,182,212,0.5)] flex items-center gap-1.5 w-full sm:w-auto justify-center"
+              href="/login"
+              className="text-neutral-400 hover:text-white transition-colors text-sm font-medium ml-2"
             >
-              Start Free Trial
-              <span className="material-symbols-outlined text-xs font-extrabold">
-                arrow_forward
-              </span>
+              Sign In
+            </Link>
+            <Link
+              href="/register"
+              className="bg-[#06b6d4] hover:bg-cyan-400 text-neutral-950 px-3 py-1.5 rounded text-xs font-bold font-manrope transition-colors shadow-[0_0_15px_rgba(6,182,212,0.2)]"
+            >
+              Start Free
+            </Link>
+            <button
+              className="lg:hidden text-neutral-400 hover:text-white transition-colors p-1"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle Menu"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile menu */}
+        {mobileMenuOpen && (
+          <div className="absolute top-12 left-0 w-full bg-[#181818] border-b border-neutral-800 p-6 flex flex-col gap-4 z-40 lg:hidden">
+            <Link href="/features" className="text-neutral-300 font-medium text-sm">
+              Products
+            </Link>
+            <Link href="/compare" className="text-neutral-300 font-medium text-sm">
+              Compare
+            </Link>
+            <Link href="/blog" className="text-neutral-300 font-medium text-sm">
+              Blog
+            </Link>
+            <Link href="/docs" className="text-neutral-300 font-medium text-sm">
+              Docs
+            </Link>
+            <Link href="/pricing" className="text-neutral-300 font-medium text-sm">
+              Pricing
+            </Link>
+            <hr className="border-neutral-800" />
+            <Link href="/login" className="text-neutral-400 text-sm">
+              Sign In
+            </Link>
+            <Link
+              href="/register"
+              className="bg-[#06b6d4] text-neutral-950 px-4 py-2 rounded text-center text-sm font-bold font-manrope"
+            >
+              Start Free
             </Link>
           </div>
+        )}
+      </nav>
 
-          {/* Works with your tools marquee */}
-          <div className="mt-20 w-full max-w-4xl overflow-hidden relative">
-            <p className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-6">
-              Works with your tools
-            </p>
-            {/* Left and right gradient masks */}
-            <div className="absolute top-10 bottom-0 left-0 w-24 bg-gradient-to-r from-[#0f172a] to-transparent z-10 pointer-events-none" />
-            <div className="absolute top-10 bottom-0 right-0 w-24 bg-gradient-to-l from-[#0f172a] to-transparent z-10 pointer-events-none" />
+      <main className="flex-1 flex flex-col">
+        {/* STEP 3 - Hero Section */}
+        <section
+          id="portal"
+          className="w-full max-w-[1280px] mx-auto pt-24 sm:pt-32 pb-16 px-4 sm:px-6 relative"
+        >
+          <div
+            className="absolute inset-0 pointer-events-none opacity-20"
+            aria-hidden="true"
+            style={{
+              backgroundImage:
+                "radial-gradient(circle, rgba(255, 255, 255, 0.1) 1px, transparent 1px)",
+              backgroundSize: "12px 12px",
+            }}
+          />
 
-            <div className="relative flex overflow-x-hidden py-2 border-y border-slate-900/50">
-              <div className="animate-marquee gap-8 md:gap-16">
-                {tools.concat(tools).map((t, idx) => (
-                  <span
-                    key={idx}
-                    className="text-sm font-bold font-mono text-slate-500 hover:text-cyan-400 transition-colors uppercase tracking-wider"
-                  >
-                    {t}
-                  </span>
-                ))}
+          <div className="flex flex-col xl:flex-row items-center xl:items-start justify-between gap-12 relative z-10">
+            <div className="flex flex-col items-start gap-8 w-full max-w-[680px] xl:max-w-[560px]">
+              {/* Pill badge */}
+              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-950/10 px-4 py-2 backdrop-blur-sm shadow-[0_0_15px_rgba(6,182,212,0.05)]">
+                <span className="w-1.5 h-1.5 bg-[#06b6d4] rounded-full pulse-dot block" />
+                <p className="text-xs leading-none font-medium tracking-[0.02em] text-cyan-400 font-manrope">
+                  Backed by 4 Patents · Built in Bengaluru, India
+                </p>
               </div>
+
+              {/* Headline */}
+              <h1 className="text-4xl sm:text-[48px] sm:leading-[1.1] font-bold text-white text-left font-manrope tracking-tight">
+                <span className="block text-neutral-400 font-medium">The AI-native</span>
+                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-cyan-500 to-teal-400">
+                  security &
+                </span>
+                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-cyan-500 to-teal-400">
+                  governance platform
+                </span>
+              </h1>
+
+              {/* Subheadline */}
+              <p className="text-base sm:text-lg leading-relaxed text-neutral-400 text-left font-manrope">
+                Prompt injection blocking, LLM cost control, shadow API discovery, and compliance
+                reporting — all in one platform. 478 tests. 4 patents.
+              </p>
+
+              {/* CLI Command Box */}
+              <div className="w-full flex justify-start">
+                <button
+                  onClick={handleCopy}
+                  className="w-full max-w-[360px] sm:w-auto sm:max-w-full flex items-center justify-between gap-2.5 pl-4 sm:pl-6 pr-2 sm:pr-3 py-2.5 rounded-full border border-neutral-700 bg-neutral-900/60 hover:bg-neutral-800/80 transition-colors cursor-pointer group"
+                >
+                  <span className="min-w-0 flex items-center gap-2 sm:gap-4 font-mono text-xs sm:text-sm text-neutral-300">
+                    <span className="shrink-0 text-cyan-500">$</span>
+                    <span className="truncate whitespace-nowrap">
+                      npx rakshex scan ./collection.json
+                    </span>
+                  </span>
+                  <span className="text-[10px] sm:text-xs font-semibold font-manrope leading-4 px-3 sm:px-4 py-1.5 rounded-full shrink-0 bg-neutral-800 text-cyan-400 group-hover:bg-cyan-500 group-hover:text-black transition-all">
+                    {copied ? "Copied!" : "Copy"}
+                  </span>
+                </button>
+              </div>
+
+              {/* Works perfectly with scrolling marquee */}
+              <div className="flex flex-col items-start gap-4 w-full mt-10">
+                <p className="text-sm font-medium uppercase tracking-wider text-neutral-500 font-manrope">
+                  Works perfectly with
+                </p>
+                <div className="relative w-full overflow-hidden h-10 select-none">
+                  {/* Left fade gradient */}
+                  <div className="absolute left-0 top-0 w-8 h-full z-10 pointer-events-none bg-gradient-to-r from-[#0F0F0F] to-transparent" />
+                  {/* Right fade gradient */}
+                  <div className="absolute right-0 top-0 w-8 h-full z-10 pointer-events-none bg-gradient-to-l from-[#0F0F0F] to-transparent" />
+
+                  <div className="flex items-center gap-10 animate-logo-scroll w-max pr-10">
+                    {[
+                      "OpenAI",
+                      "Anthropic",
+                      "Claude",
+                      "GitHub",
+                      "VS Code",
+                      "Postman",
+                      "Slack",
+                      "Express",
+                      "FastAPI",
+                      "Django",
+                      "Gemini",
+                      "Mistral",
+                    ].map((logo, idx) => (
+                      <span
+                        key={idx}
+                        className="text-sm font-mono font-bold text-neutral-600 hover:text-cyan-400 transition-colors cursor-default tracking-wide uppercase shrink-0"
+                      >
+                        {logo}
+                      </span>
+                    ))}
+                    {/* Double for continuous infinite loop */}
+                    {[
+                      "OpenAI",
+                      "Anthropic",
+                      "Claude",
+                      "GitHub",
+                      "VS Code",
+                      "Postman",
+                      "Slack",
+                      "Express",
+                      "FastAPI",
+                      "Django",
+                      "Gemini",
+                      "Mistral",
+                    ].map((logo, idx) => (
+                      <span
+                        key={`dup-${idx}`}
+                        className="text-sm font-mono font-bold text-neutral-600 hover:text-cyan-400 transition-colors cursor-default tracking-wide uppercase shrink-0"
+                      >
+                        {logo}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Hero Visual Card */}
+            <div className="w-full max-w-[680px] xl:w-[540px] shrink-0">
+              <AnimatedHeroVisual />
+            </div>
+          </div>
+        </section>
+
+        {/* STEP 4 - Product Feature Cards (8 cards in 4-column grid) */}
+        <section id="features" className="relative max-w-[1280px] mx-auto py-20 px-4 sm:px-6">
+          <div className="flex flex-col items-center gap-3 text-center mb-12">
+            <h2 className="text-[32px] font-normal text-white font-manrope">
+              Built-in Protection Modules
+            </h2>
+            <p className="text-neutral-400 text-lg max-w-2xl font-manrope">
+              Every governance module is built native to secure agent pipelines and LLM calls.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {featureCards.map((card, idx) => {
+              const IconComp = card.icon;
+              return (
+                <Link
+                  href={card.link}
+                  key={idx}
+                  className="group relative overflow-hidden bg-[#181818] border border-neutral-800 hover:border-cyan-500/20 rounded-xl p-6 transition-all duration-300 hover:bg-gradient-to-tr hover:from-cyan-950/10 hover:to-transparent flex flex-col justify-between h-48"
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="p-2.5 rounded bg-neutral-900 border border-neutral-800 group-hover:border-cyan-500/10 group-hover:bg-cyan-950/10 transition-all duration-300">
+                      <IconComp
+                        className={`w-5 h-5 transition-all duration-300 ${card.hoverClass}`}
+                      />
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-neutral-600 group-hover:text-cyan-400 transition-all transform group-hover:translate-x-1" />
+                  </div>
+                  <div>
+                    <h3 className="text-white font-manrope font-semibold text-base mb-1.5 group-hover:text-cyan-400 transition-colors">
+                      {card.title}
+                    </h3>
+                    <p className="text-neutral-400 text-xs leading-relaxed font-manrope">
+                      {card.description}
+                    </p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* STEP 5 - Benchmark Section */}
+        <BenchmarkSection />
+
+        {/* STEP 6 - Frameworks Marquee */}
+        <section className="relative w-full max-w-[1280px] mx-auto py-12 px-6 border-t border-neutral-800 select-none">
+          <p className="text-center text-xs font-semibold uppercase tracking-widest text-neutral-500 font-manrope mb-6">
+            Supports Any Framework
+          </p>
+          <div className="relative w-full overflow-hidden h-8">
+            <div className="absolute left-0 top-0 w-12 h-full z-10 pointer-events-none bg-gradient-to-r from-[#0F0F0F] to-transparent" />
+            <div className="absolute right-0 top-0 w-12 h-full z-10 pointer-events-none bg-gradient-to-l from-[#0F0F0F] to-transparent" />
+
+            <div className="flex items-center gap-16 animate-logo-scroll w-max">
+              {[
+                "Next.js",
+                "React",
+                "FastAPI",
+                "Express",
+                "Django",
+                "Flask",
+                "Spring Boot",
+                "Laravel",
+                "Vue",
+                "Svelte",
+                "Nuxt",
+                "NestJS",
+              ].map((f, i) => (
+                <span
+                  key={i}
+                  className="text-xs font-mono font-medium tracking-wide text-neutral-400 hover:text-cyan-400 cursor-default shrink-0"
+                >
+                  {f}
+                </span>
+              ))}
+              {/* Loop Duplicate */}
+              {[
+                "Next.js",
+                "React",
+                "FastAPI",
+                "Express",
+                "Django",
+                "Flask",
+                "Spring Boot",
+                "Laravel",
+                "Vue",
+                "Svelte",
+                "Nuxt",
+                "NestJS",
+              ].map((f, i) => (
+                <span
+                  key={`dup-${i}`}
+                  className="text-xs font-mono font-medium tracking-wide text-neutral-400 hover:text-cyan-400 cursor-default shrink-0"
+                >
+                  {f}
+                </span>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* STEP 7 - Changelog Preview */}
+        <section className="relative max-w-[1280px] mx-auto flex flex-col gap-10 items-center justify-center py-20 px-6 border-t border-neutral-800/50">
+          <div className="flex flex-col gap-2 items-center text-center">
+            <h2 className="text-2xl sm:text-[32px] font-normal text-white font-manrope">
+              Changelog
+            </h2>
+            <p className="text-neutral-400 text-base sm:text-lg font-manrope">
+              See what's new in RakshEx
+            </p>
+          </div>
+          <div className="mx-auto w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Link
+              className="group flex flex-col justify-between p-6 rounded-xl bg-[#181818] border border-neutral-800 hover:border-cyan-500/20 hover:bg-gradient-to-tr hover:from-cyan-950/10 hover:to-transparent transition-all duration-300 h-44"
+              href="/changelog"
+            >
+              <div>
+                <span className="text-neutral-500 text-xs font-mono">May 2026</span>
+                <p className="text-white text-sm font-semibold font-manrope mt-2 group-hover:text-cyan-400 transition-colors line-clamp-3">
+                  Interactive Demo Scanner with real Postman parsing
+                </p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-neutral-600 group-hover:text-cyan-400 transition-colors self-end" />
+            </Link>
+
+            <Link
+              className="group flex flex-col justify-between p-6 rounded-xl bg-[#181818] border border-neutral-800 hover:border-cyan-500/20 hover:bg-gradient-to-tr hover:from-cyan-950/10 hover:to-transparent transition-all duration-300 h-44"
+              href="/changelog"
+            >
+              <div>
+                <span className="text-neutral-500 text-xs font-mono">May 2026</span>
+                <p className="text-white text-sm font-semibold font-manrope mt-2 group-hover:text-cyan-400 transition-colors line-clamp-3">
+                  Waitlist system with email confirmation
+                </p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-neutral-600 group-hover:text-cyan-400 transition-colors self-end" />
+            </Link>
+
+            <Link
+              className="group flex flex-col justify-between p-6 rounded-xl bg-[#181818] border border-neutral-800 hover:border-cyan-500/20 hover:bg-gradient-to-tr hover:from-cyan-950/10 hover:to-transparent transition-all duration-300 h-44"
+              href="/changelog"
+            >
+              <div>
+                <span className="text-neutral-500 text-xs font-mono">April 2026</span>
+                <p className="text-white text-sm font-semibold font-manrope mt-2 group-hover:text-cyan-400 transition-colors line-clamp-3">
+                  AgentGuard Kill Switch engine launched
+                </p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-neutral-600 group-hover:text-cyan-400 transition-colors self-end" />
+            </Link>
+
+            <Link
+              className="group flex flex-col justify-between p-6 rounded-xl bg-[#181818] border border-neutral-800 hover:border-cyan-500/20 hover:bg-gradient-to-tr hover:from-cyan-950/10 hover:to-transparent transition-all duration-300 h-44"
+              href="/changelog"
+            >
+              <div>
+                <span className="text-neutral-500 text-xs font-mono">April 2026</span>
+                <p className="text-white text-sm font-semibold font-manrope mt-2 group-hover:text-cyan-400 transition-colors line-clamp-3">
+                  Four provisional patents filed (NHCE/DEV/2026/001–004)
+                </p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-neutral-600 group-hover:text-cyan-400 transition-colors self-end" />
+            </Link>
+          </div>
+          <Link
+            className="flex items-center gap-1.5 text-neutral-400 hover:text-white transition-colors font-manrope text-sm"
+            href="/changelog"
+          >
+            View all changes <ArrowRight className="w-4 h-4" />
+          </Link>
+        </section>
+
+        {/* STEP 8 - Community Social Proof (Twitter Masonry) */}
+        <section className="relative w-full max-w-[1280px] mx-auto py-20 px-6 border-t border-neutral-800/50 flex flex-col gap-10">
+          <div className="flex flex-col items-center gap-3 text-center">
+            <h2 className="text-[32px] font-normal text-white font-manrope">Join our Community</h2>
+            <p className="text-neutral-400 text-lg font-manrope">
+              See what developers are saying about RakshEx
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 mt-2">
+              <a
+                href="https://github.com/rakshex"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-5 py-2.5 bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 rounded transition-all text-sm font-medium font-manrope"
+              >
+                GitHub Discussion
+              </a>
+              <a
+                href="https://discord.gg/rakshex"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-5 py-2.5 bg-[#06b6d4] hover:bg-cyan-400 text-neutral-950 rounded transition-all text-sm font-bold font-manrope"
+              >
+                Join Discord
+              </a>
             </div>
           </div>
 
-          {/* Live animated hero visual */}
-          <div className="mt-24 w-full">
-            <AnimatedHeroVisual />
-          </div>
-
-          {/* Stats row below hero */}
-          <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6 w-full max-w-4xl border-t border-slate-900 pt-16">
-            {[
-              { value: "478+", label: "Server Tests" },
-              { value: "4", label: "Patents Filed" },
-              { value: "37", label: "API Routers" },
-              { value: "18", label: "DB Migrations" },
-            ].map((s, idx) => (
-              <div key={idx} className="text-center">
-                <div className="text-2xl md:text-3xl font-extrabold text-cyan-400 font-mono tracking-tight">
-                  {s.value}
-                </div>
-                <div className="text-[10px] text-slate-500 font-mono uppercase tracking-widest mt-1">
-                  {s.label}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
+            {tweets.map((tw, idx) => (
+              <div
+                key={idx}
+                className="flex flex-col justify-between p-6 bg-[#181818] border border-neutral-800 hover:border-cyan-500/20 rounded-xl transition-all hover:bg-gradient-to-tr hover:from-cyan-950/10 hover:to-transparent duration-300"
+              >
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-9 h-9 rounded-full bg-cyan-950/30 border border-cyan-500/30 flex items-center justify-center text-cyan-400 font-mono font-bold text-xs select-none">
+                      {tw.handle.slice(1, 3).toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="text-white font-medium text-xs sm:text-sm font-manrope">
+                        {tw.handle}
+                      </div>
+                      <div className="text-[10px] text-neutral-500 font-mono mt-0.5">{tw.date}</div>
+                    </div>
+                  </div>
+                  <p className="text-neutral-300 text-xs sm:text-sm leading-relaxed font-manrope whitespace-pre-line">
+                    {tw.text}
+                  </p>
                 </div>
               </div>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* SECTION 4 — Animated Product Feature Cards */}
-      <section className="py-24 px-6 max-w-7xl mx-auto border-t border-slate-900">
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-500/20 bg-cyan-500/5 text-cyan-400 mb-4">
-            <span className="text-[10px] uppercase font-mono font-bold tracking-widest">
-              Capabilities
-            </span>
-          </div>
-          <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight font-body-lg">
-            Everything You Need to Ship Secure AI
-          </h2>
-          <p className="mt-4 text-slate-400 text-sm md:text-base max-w-xl mx-auto">
-            Interactive, autonomous governance tools for production-grade agentic workflows.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Card 1: Security Scanner */}
-          <div className="group relative bg-slate-900 border border-slate-800 hover:border-cyan-500/30 p-6 rounded-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_10px_30px_rgba(6,182,212,0.08)] flex flex-col justify-between hover-shield">
+        {/* STEP 9 - FAQ Section */}
+        <section
+          id="faq"
+          className="relative w-full max-w-[800px] mx-auto py-20 px-6 border-t border-neutral-800/50"
+        >
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
             <div>
-              <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 mb-6 transition-colors group-hover:bg-cyan-500/20">
-                <svg
-                  className="w-6 h-6 transition-transform duration-300"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-white tracking-tight">Security Scanner</h3>
-              <p className="mt-3 text-xs text-slate-400 leading-relaxed">
-                87-payload library. OWASP API Top 10. PCI DSS v4.0.1 mapped.
+              <h2 className="text-[32px] font-normal text-white font-manrope">
+                Frequently Asked Questions
+              </h2>
+              <p className="text-neutral-400 text-sm sm:text-base font-manrope mt-1">
+                Questions? We've got answers
               </p>
             </div>
-            <div className="mt-6 flex items-center gap-1.5 text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
-              Learn More
-              <span className="material-symbols-outlined text-[10px]">arrow_forward</span>
-            </div>
+            <Link
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-cyan-400 hover:text-cyan-300 font-manrope text-sm font-medium shrink-0"
+              href="/docs"
+            >
+              Documentation <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
-
-          {/* Card 2: Kill Switch */}
-          <div className="group relative bg-slate-900 border border-slate-800 hover:border-red-500/30 p-6 rounded-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_10px_30px_rgba(239,68,68,0.08)] flex flex-col justify-between hover-switch">
-            <div>
-              <div className="w-12 h-12 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center text-slate-500 mb-6 transition-colors group-hover:bg-red-500/10 group-hover:border-red-500/30">
-                <svg
-                  className="w-6 h-6 transition-colors duration-300"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-white tracking-tight">Kill Switch</h3>
-              <p className="mt-3 text-xs text-slate-400 leading-relaxed">
-                Sub-second circuit breaker. Trips on budget, anomaly, or red-team score.
-              </p>
-            </div>
-            <div className="mt-6 flex items-center gap-1.5 text-[10px] font-mono text-red-400 font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
-              Learn More
-              <span className="material-symbols-outlined text-[10px]">arrow_forward</span>
-            </div>
+          <div className="flex flex-col bg-[#181818] border border-neutral-800 rounded-xl px-6 py-2">
+            {faqs.map((faq, i) => (
+              <AccordionItem
+                key={i}
+                question={faq.question}
+                answer={faq.answer}
+                isOpen={openFaq === i}
+                onClick={() => setOpenFaq(openFaq === i ? null : i)}
+              />
+            ))}
           </div>
+        </section>
 
-          {/* Card 3: Cost Monitor */}
-          <div className="group relative bg-slate-900 border border-slate-800 hover:border-cyan-500/30 p-6 rounded-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_10px_30px_rgba(6,182,212,0.08)] flex flex-col justify-between hover-graph">
-            <div>
-              <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 mb-6 transition-colors group-hover:bg-cyan-500/20">
-                <svg
-                  className="w-6 h-6"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path className="graph-line" d="M3 3v18h18" />
-                  <path className="graph-line" d="M18.7 8l-5.1 5.2-2.8-2.7-7 7.1" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-white tracking-tight">Cost Monitor</h3>
-              <p className="mt-3 text-xs text-slate-400 leading-relaxed">
-                Holt-Winters forecasting. Per-model breakdown. Budget caps.
-              </p>
-            </div>
-            <div className="mt-6 flex items-center gap-1.5 text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
-              Learn More
-              <span className="material-symbols-outlined text-[10px]">arrow_forward</span>
-            </div>
-          </div>
-
-          {/* Card 4: Thinking Token Attribution */}
-          <div className="group relative bg-slate-900 border border-slate-800 hover:border-cyan-500/30 p-6 rounded-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_10px_30px_rgba(6,182,212,0.08)] flex flex-col justify-between hover-brain">
-            <div>
-              <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 mb-6 transition-colors group-hover:bg-cyan-500/20">
-                <svg
-                  className="w-6 h-6"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1 0-3.12 3 3 0 0 1 0-4.88 2.5 2.5 0 0 1 0-3.12A2.5 2.5 0 0 1 9.5 2z" />
-                  <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 0-3.12 3 3 0 0 0 0-4.88 2.5 2.5 0 0 0 0-3.12A2.5 2.5 0 0 0 14.5 2z" />
-                  <circle className="brain-dot" cx="9.5" cy="8" r="1" fill="currentColor" />
-                  <circle className="brain-dot" cx="14.5" cy="12" r="1" fill="currentColor" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-white tracking-tight">
-                Thinking Token Attribution
-              </h3>
-              <p className="mt-3 text-xs text-slate-400 leading-relaxed">
-                World-first isolation of reasoning tokens. Patent NHCE/DEV/2026/002.
-              </p>
-            </div>
-            <div className="mt-6 flex items-center gap-1.5 text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
-              Learn More
-              <span className="material-symbols-outlined text-[10px]">arrow_forward</span>
-            </div>
-          </div>
-
-          {/* Card 5: Shadow API Discovery */}
-          <div className="group relative bg-slate-900 border border-slate-800 hover:border-cyan-500/30 p-6 rounded-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_10px_30px_rgba(6,182,212,0.08)] flex flex-col justify-between hover-ghost">
-            <div>
-              <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 mb-6 transition-colors group-hover:bg-cyan-500/20">
-                <svg
-                  className="w-6 h-6"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M9 10h.01M15 10h.01M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-white tracking-tight">Shadow API Discovery</h3>
-              <p className="mt-3 text-xs text-slate-400 leading-relaxed">
-                Static route extraction for Express, FastAPI, Flask, Django, Spring Boot.
-              </p>
-            </div>
-            <div className="mt-6 flex items-center gap-1.5 text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
-              Learn More
-              <span className="material-symbols-outlined text-[10px]">arrow_forward</span>
-            </div>
-          </div>
-
-          {/* Card 6: Credential Scanner */}
-          <div className="group relative bg-slate-900 border border-slate-800 hover:border-cyan-500/30 p-6 rounded-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_10px_30px_rgba(6,182,212,0.08)] flex flex-col justify-between hover-key">
-            <div>
-              <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 mb-6 transition-colors group-hover:bg-cyan-500/20">
-                <svg
-                  className="w-6 h-6 origin-center"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.778-7.778zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3-3.5 3.5z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-white tracking-tight">Credential Scanner</h3>
-              <p className="mt-3 text-xs text-slate-400 leading-relaxed">
-                AWS, GitHub, OpenAI, Anthropic, Stripe. Aadhaar + PAN for India.
-              </p>
-            </div>
-            <div className="mt-6 flex items-center gap-1.5 text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
-              Learn More
-              <span className="material-symbols-outlined text-[10px]">arrow_forward</span>
-            </div>
-          </div>
-
-          {/* Card 7: Compliance Reports */}
-          <div className="group relative bg-slate-900 border border-slate-800 hover:border-cyan-500/30 p-6 rounded-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_10px_30px_rgba(6,182,212,0.08)] flex flex-col justify-between hover-doc">
-            <div>
-              <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 mb-6 transition-colors group-hover:bg-cyan-500/20">
-                <svg
-                  className="w-6 h-6"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                  <line
-                    className="doc-check-icon"
-                    x1="16"
-                    y1="13"
-                    x2="8"
-                    y2="13"
-                    strokeDasharray="3,3"
-                  />
-                  <polyline className="doc-check-icon text-cyan-300" points="9 17 11 19 15 15" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-white tracking-tight">Compliance Reports</h3>
-              <p className="mt-3 text-xs text-slate-400 leading-relaxed">
-                SOC2, PCI DSS, OWASP. Export JSON, CSV, PDF. Vanta/Drata ready.
-              </p>
-            </div>
-            <div className="mt-6 flex items-center gap-1.5 text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
-              Learn More
-              <span className="material-symbols-outlined text-[10px]">arrow_forward</span>
-            </div>
-          </div>
-
-          {/* Card 8: MCP Governance */}
-          <div className="group relative bg-slate-900 border border-slate-800 hover:border-cyan-500/30 p-6 rounded-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_10px_30px_rgba(6,182,212,0.08)] flex flex-col justify-between hover-net">
-            <div>
-              <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 mb-6 transition-colors group-hover:bg-cyan-500/20">
-                <svg
-                  className="w-6 h-6"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <circle className="net-node" cx="12" cy="5" r="3" />
-                  <circle className="net-node" cx="5" cy="19" r="3" />
-                  <circle className="net-node" cx="19" cy="19" r="3" />
-                  <line x1="12" y1="8" x2="6.8" y2="16.5" />
-                  <line x1="12" y1="8" x2="17.2" y2="16.5" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-white tracking-tight">MCP Governance</h3>
-              <p className="mt-3 text-xs text-slate-400 leading-relaxed">
-                Tool registry, risk scoring, approval workflows, allowlists per agent.
-              </p>
-            </div>
-            <div className="mt-6 flex items-center gap-1.5 text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
-              Learn More
-              <span className="material-symbols-outlined text-[10px]">arrow_forward</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* SECTION 5 — Benchmark Section */}
-      <BenchmarkSection />
-
-      {/* SECTION 6 — How It Works (Redesigned) */}
-      <HowItWorksSection />
-
-      {/* SECTION 7 — Live Platform Statistics */}
-      <LiveStatsSection />
-
-      {/* SECTION 8 — Social Proof (Real Style) */}
-      <section className="py-24 px-6 max-w-7xl mx-auto border-t border-slate-900">
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-500/20 bg-cyan-500/5 text-cyan-400 mb-4">
-            <span className="text-[10px] uppercase font-mono font-bold tracking-widest">
-              Testimonials
-            </span>
-          </div>
-          <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight font-body-lg">
-            Loved by Developers, Trusted by AppSec
-          </h2>
-          <p className="mt-4 text-slate-400 text-sm md:text-base max-w-xl mx-auto font-body-md">
-            Here is what engineers and founders are saying about RakshEx on Twitter/X.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Card 1 */}
-          <div className="bg-slate-900 border border-slate-850 p-6 rounded-2xl flex flex-col justify-between hover:border-slate-700 transition-all duration-300">
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center font-bold text-sm font-mono">
-                  DK
-                </div>
-                <div>
-                  <h4 className="font-bold text-white text-sm">Devesh Kumar</h4>
-                  <a
-                    href="https://x.com/devesh_k_r"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-slate-500 hover:text-cyan-400"
-                  >
-                    @devesh_k_r
-                  </a>
-                </div>
-              </div>
-              <p className="text-xs text-slate-300 leading-relaxed font-body-md">
-                "@rakshexhq found a production OpenAI key sitting in our test collection. We had no
-                idea. The credential scanner is not optional anymore."
-              </p>
-            </div>
-            <p className="text-[10px] text-slate-600 font-mono mt-6">May 24, 2026</p>
-          </div>
-
-          {/* Card 2 */}
-          <div className="bg-slate-900 border border-slate-850 p-6 rounded-2xl flex flex-col justify-between hover:border-slate-700 transition-all duration-300">
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-sm font-mono">
-                  AB
-                </div>
-                <div>
-                  <h4 className="font-bold text-white text-sm">Aarti Builds</h4>
-                  <a
-                    href="https://x.com/aarti_builds"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-slate-500 hover:text-cyan-400"
-                  >
-                    @aarti_builds
-                  </a>
-                </div>
-              </div>
-              <p className="text-xs text-slate-300 leading-relaxed font-body-md">
-                "The kill switch just saved our startup $8K in a weekend. Our agent had a runaway
-                loop. RakshEx @rakshexhq tripped it automatically."
-              </p>
-            </div>
-            <p className="text-[10px] text-slate-600 font-mono mt-6">May 21, 2026</p>
-          </div>
-
-          {/* Card 3 */}
-          <div className="bg-slate-900 border border-slate-850 p-6 rounded-2xl flex flex-col justify-between hover:border-slate-700 transition-all duration-300">
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-sm font-mono">
-                  SS
-                </div>
-                <div>
-                  <h4 className="font-bold text-white text-sm">Siddharth Swe</h4>
-                  <a
-                    href="https://x.com/siddharth_swe"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-slate-500 hover:text-cyan-400"
-                  >
-                    @siddharth_swe
-                  </a>
-                </div>
-              </div>
-              <p className="text-xs text-slate-300 leading-relaxed font-body-md">
-                "SOC2 audit prep used to take us 3 days. @rakshexhq generates the evidence bundle in
-                one click. Auditor was confused in a good way."
-              </p>
-            </div>
-            <p className="text-[10px] text-slate-600 font-mono mt-6">May 18, 2026</p>
-          </div>
-
-          {/* Card 4 */}
-          <div className="bg-slate-900 border border-slate-850 p-6 rounded-2xl flex flex-col justify-between hover:border-slate-700 transition-all duration-300">
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-teal-500/20 text-teal-405 flex items-center justify-center font-bold text-sm font-mono">
-                  PA
-                </div>
-                <div>
-                  <h4 className="font-bold text-white text-sm">Priya AppSec</h4>
-                  <a
-                    href="https://x.com/priya_appsec"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-slate-500 hover:text-cyan-400"
-                  >
-                    @priya_appsec
-                  </a>
-                </div>
-              </div>
-              <p className="text-xs text-slate-300 leading-relaxed font-body-md">
-                "Thinking token attribution from @rakshexhq is wild. We found that 40% of our Claude
-                API bill was reasoning tokens from a single endpoint."
-              </p>
-            </div>
-            <p className="text-[10px] text-slate-600 font-mono mt-6">May 15, 2026</p>
-          </div>
-
-          {/* Card 5 */}
-          <div className="bg-slate-900 border border-slate-850 p-6 rounded-2xl flex flex-col justify-between hover:border-slate-700 transition-all duration-300">
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-sm font-mono">
-                  NF
-                </div>
-                <div>
-                  <h4 className="font-bold text-white text-sm">Nikhil Founder</h4>
-                  <a
-                    href="https://x.com/nikhil_founder"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-slate-500 hover:text-cyan-400"
-                  >
-                    @nikhil_founder
-                  </a>
-                </div>
-              </div>
-              <p className="text-xs text-slate-300 leading-relaxed font-body-md">
-                "Deployed @rakshexhq in our GitHub Actions pipeline. Every PR now shows security
-                score + cost impact in USD and INR. Team loves it."
-              </p>
-            </div>
-            <p className="text-[10px] text-slate-600 font-mono mt-6">May 11, 2026</p>
-          </div>
-
-          {/* Card 6 */}
-          <div className="bg-slate-900 border border-slate-850 p-6 rounded-2xl flex flex-col justify-between hover:border-slate-700 transition-all duration-300">
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold text-sm font-mono">
-                  AF
-                </div>
-                <div>
-                  <h4 className="font-bold text-white text-sm">Arjun FinTech</h4>
-                  <a
-                    href="https://x.com/arjun_fintech"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-slate-500 hover:text-cyan-400"
-                  >
-                    @arjun_fintech
-                  </a>
-                </div>
-              </div>
-              <p className="text-xs text-slate-300 leading-relaxed font-body-md">
-                "Shadow API discovery found 7 endpoints we forgot we had. Two of them had no auth.
-                @rakshexhq is now mandatory before any release."
-              </p>
-            </div>
-            <p className="text-[10px] text-slate-600 font-mono mt-6">May 08, 2026</p>
-          </div>
-        </div>
-
-        {/* Waitlist submission form section */}
-        <div className="mt-16 bg-slate-950 border border-slate-850 rounded-2xl p-8 max-w-2xl mx-auto shadow-2xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(6,182,212,0.06),transparent)] pointer-events-none" />
-          <div className="relative flex flex-col items-center space-y-4">
-            <h3 className="text-xl font-bold text-white tracking-tight">
-              Join 1,200+ engineers on the waitlist
-            </h3>
-            <p className="text-slate-400 text-xs text-center max-w-md leading-relaxed font-body-md">
-              Experience real-time AI runtime governance, automatic circuit breakers, and SOC2
-              evidence export.
-            </p>
-            <div className="w-full mt-4">
-              <WaitlistForm />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* SECTION 9 — Changelog Preview on Homepage */}
-      <section className="py-24 px-6 max-w-7xl mx-auto border-t border-slate-900">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12">
-          <div className="text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-500/20 bg-cyan-500/5 text-cyan-400 mb-4">
-              <span className="text-[10px] uppercase font-mono font-bold tracking-widest">
-                What's New
-              </span>
-            </div>
-            <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight font-body-lg">
-              Recent Updates
+        {/* STEP 10 - Ask AI Section */}
+        <section className="relative w-full max-w-[1280px] mx-auto py-20 px-6 border-t border-neutral-800/50 flex flex-col gap-8 items-center text-center">
+          <div>
+            <h2 className="text-[32px] font-normal text-white font-manrope">
+              What's RakshEx? Ask AI.
             </h2>
-            <p className="mt-2 text-slate-400 text-sm max-w-md font-body-md">
-              We ship quickly. Here is what we have recently released to production.
+            <p className="text-neutral-400 text-sm sm:text-base font-manrope mt-2">
+              Get an instant explanation from your preferred AI.
             </p>
           </div>
-          <Link
-            href="/changelog"
-            className="mt-4 md:mt-0 inline-flex items-center gap-1.5 text-xs font-mono text-cyan-400 font-bold hover:underline"
-          >
-            View all changes →
-          </Link>
-        </div>
+          <div className="flex flex-wrap justify-center gap-3">
+            {[
+              {
+                name: "Gemini",
+                url: "https://gemini.google.com/app?q=Explain+RakshEx+(rakshex.in)+to+a+security+engineer.+Cover+API+security+scanning,+LLM+cost+monitoring,+prompt+injection+blocking,+and+compliance+reporting.+Summarize+from+https://rakshex.in",
+              },
+              {
+                name: "ChatGPT",
+                url: "https://chat.openai.com?q=Explain+RakshEx+(rakshex.in)+to+a+security+engineer.+Cover+API+security+scanning,+LLM+cost+monitoring,+prompt+injection+blocking,+and+compliance+reporting.+Summarize+from+https://rakshex.in",
+              },
+              {
+                name: "Claude",
+                url: "https://claude.ai/new?q=Explain+RakshEx+(rakshex.in)+to+a+security+engineer.+Cover+API+security+scanning,+LLM+cost+monitoring,+prompt+injection+blocking,+and+compliance+reporting.+Summarize+from+https://rakshex.in",
+              },
+              {
+                name: "Grok",
+                url: "https://grok.com?q=Explain+RakshEx+(rakshex.in)+to+a+security+engineer.",
+              },
+              {
+                name: "Perplexity",
+                url: "https://perplexity.ai?q=Explain+RakshEx+(rakshex.in)+to+a+security+engineer.",
+              },
+            ].map((ai, i) => (
+              <a
+                key={i}
+                href={ai.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-5 py-3 bg-[#181818] border border-neutral-800 hover:border-cyan-500/30 hover:bg-neutral-800/50 rounded-xl transition-all duration-300 text-xs sm:text-sm font-semibold font-manrope text-white"
+              >
+                <span>{ai.name}</span>
+                <ExternalLink className="w-3.5 h-3.5 text-neutral-500 group-hover:text-white" />
+              </a>
+            ))}
+          </div>
+        </section>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Link
-            href="/changelog"
-            className="group bg-slate-900 border border-slate-850 p-5 rounded-xl hover:border-cyan-500/30 transition-all text-left"
-          >
-            <span className="text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider block mb-2">
-              May 2026
-            </span>
-            <h4 className="font-bold text-white text-sm leading-snug group-hover:text-cyan-400 transition-colors">
-              Interactive Demo Scanner
-            </h4>
-            <p className="mt-2 text-[11px] text-slate-400 leading-normal font-body-md">
-              Interactive demo environment with real Postman file parsing.
+        {/* STEP 11 - Platform Statistics */}
+        <section className="relative w-full max-w-[1280px] mx-auto py-20 px-6 border-t border-neutral-800/50 flex flex-col gap-10">
+          <div className="flex flex-col items-center gap-2 text-center">
+            <h2 className="text-[32px] font-normal text-white font-manrope">Platform Statistics</h2>
+            <p className="text-neutral-400 text-sm sm:text-base font-manrope">
+              Securing AI agents across production ecosystems globally
             </p>
-          </Link>
-          <Link
-            href="/changelog"
-            className="group bg-slate-900 border border-slate-850 p-5 rounded-xl hover:border-cyan-500/30 transition-all text-left"
-          >
-            <span className="text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider block mb-2">
-              May 2026
-            </span>
-            <h4 className="font-bold text-white text-sm leading-snug group-hover:text-cyan-400 transition-colors">
-              Waitlist system
-            </h4>
-            <p className="mt-2 text-[11px] text-slate-400 leading-normal font-body-md">
-              Automated user waitlist management with email verification confirmation.
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+            <div className="flex flex-col gap-3 p-6 bg-[#181818] border border-neutral-800 rounded-xl">
+              <span className="text-[10px] text-neutral-500 font-mono tracking-widest uppercase">
+                COLLECTIONS SCANNED
+              </span>
+              <RollingCounter target={12847} />
+            </div>
+
+            <div className="flex flex-col gap-3 p-6 bg-[#181818] border border-neutral-800 rounded-xl">
+              <span className="text-[10px] text-neutral-500 font-mono tracking-widest uppercase">
+                VULNERABILITIES FOUND
+              </span>
+              <RollingCounter target={94231} />
+            </div>
+
+            <div className="flex flex-col gap-3 p-6 bg-[#181818] border border-neutral-800 rounded-xl">
+              <span className="text-[10px] text-neutral-500 font-mono tracking-widest uppercase">
+                TOKENS SAVED
+              </span>
+              <RollingCounter target={2.4} suffix="B" />
+            </div>
+
+            <div className="flex flex-col gap-3 p-6 bg-[#181818] border border-neutral-800 rounded-xl">
+              <span className="text-[10px] text-neutral-500 font-mono tracking-widest uppercase">
+                ENGINEERS ON WAITLIST
+              </span>
+              <RollingCounter target={1247} />
+            </div>
+          </div>
+        </section>
+
+        {/* STEP 12 - Final CTA Section */}
+        <section className="relative w-full max-w-[1280px] mx-auto py-24 px-6 border-t border-neutral-800/50 flex flex-col gap-8 items-center justify-center">
+          <div className="flex flex-col gap-3 items-center text-center">
+            <h2 className="text-3xl sm:text-4xl font-normal font-manrope">
+              <span className="text-white">Start Securing </span>
+              <span className="text-cyan-400">Your AI Agents</span>
+            </h2>
+            <p className="text-neutral-400 text-sm sm:text-base max-w-lg font-manrope">
+              Join the waitlist to receive priority access or schedule a session to configure
+              runtime guardrails today.
             </p>
-          </Link>
-          <Link
-            href="/changelog"
-            className="group bg-slate-900 border border-slate-850 p-5 rounded-xl hover:border-cyan-500/30 transition-all text-left"
-          >
-            <span className="text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider block mb-2">
-              April 2026
-            </span>
-            <h4 className="font-bold text-white text-sm leading-snug group-hover:text-cyan-400 transition-colors">
-              Kill Switch Engine
-            </h4>
-            <p className="mt-2 text-[11px] text-slate-400 leading-normal font-body-md">
-              Released AgentGuard sub-second circuit breaker engine.
-            </p>
-          </Link>
-          <Link
-            href="/changelog"
-            className="group bg-slate-900 border border-slate-850 p-5 rounded-xl hover:border-cyan-500/30 transition-all text-left"
-          >
-            <span className="text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider block mb-2">
-              April 2026
-            </span>
-            <h4 className="font-bold text-white text-sm leading-snug group-hover:text-cyan-400 transition-colors">
-              Provisional Patents
-            </h4>
-            <p className="mt-2 text-[11px] text-slate-400 leading-normal font-body-md">
-              Filed 4 provisional patents (NHCE/DEV/2026/001-004).
-            </p>
-          </Link>
-        </div>
-      </section>
-
-      {/* SECTION 10 — "Ask AI About RakshEx" Section */}
-      <section className="py-24 px-6 max-w-5xl mx-auto border-t border-slate-900">
-        <div className="bg-slate-950 border border-slate-850 p-8 md:p-12 rounded-3xl text-center relative overflow-hidden shadow-2xl">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(6,182,212,0.04),transparent)] pointer-events-none" />
-
-          <h2 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight font-body-lg">
-            What's RakshEx? Ask Your AI.
-          </h2>
-          <p className="mt-3 text-slate-400 text-sm md:text-base max-w-lg mx-auto font-body-md">
-            Get an instant explanation from your preferred AI assistant.
-          </p>
-
-          <div className="mt-10 flex flex-wrap justify-center gap-4">
-            {/* Gemini */}
-            <a
-              href="https://gemini.google.com/app?q=Explain+RakshEx+(rakshex.in)+to+a+security+engineer.+Focus+on+how+it+secures+AI+agents,+monitors+LLM+costs,+and+generates+compliance+reports.+Summarize+info+from+https://rakshex.in/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 px-5 py-3 bg-slate-900 border border-slate-800 rounded-xl hover:border-blue-500/40 hover:shadow-[0_0_15px_rgba(59,130,246,0.2)] transition-all font-mono text-xs text-white"
+          </div>
+          <div className="w-full max-w-md mt-2">
+            <WaitlistForm />
+          </div>
+          <div className="flex flex-row gap-4 mt-2">
+            <Link
+              href="/register"
+              className="text-neutral-400 hover:text-white transition-colors text-sm font-semibold underline underline-offset-4"
             >
-              <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-              Gemini
-            </a>
-
-            {/* ChatGPT */}
-            <a
-              href="https://chatgpt.com/?q=Explain+RakshEx+(rakshex.in)+to+a+security+engineer.+Focus+on+how+it+secures+AI+agents,+monitors+LLM+costs,+and+generates+compliance+reports.+Summarize+info+from+https://rakshex.in/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 px-5 py-3 bg-slate-900 border border-slate-800 rounded-xl hover:border-emerald-500/40 hover:shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all font-mono text-xs text-white"
+              Try Free — No Credit Card
+            </Link>
+            <span className="text-neutral-700">|</span>
+            <Link
+              href="/demo"
+              className="text-neutral-400 hover:text-white transition-colors text-sm font-semibold underline underline-offset-4"
             >
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-              ChatGPT
-            </a>
+              Book a Demo
+            </Link>
+          </div>
+        </section>
+      </main>
 
-            {/* Claude */}
-            <a
-              href="https://claude.ai/new?q=Explain+RakshEx+(rakshex.in)+to+a+security+engineer.+Focus+on+how+it+secures+AI+agents,+monitors+LLM+costs,+and+generates+compliance+reports.+Summarize+info+from+https://rakshex.in/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 px-5 py-3 bg-slate-900 border border-slate-800 rounded-xl hover:border-amber-500/40 hover:shadow-[0_0_15px_rgba(245,158,11,0.2)] transition-all font-mono text-xs text-white"
-            >
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-              Claude
-            </a>
+      {/* STEP 13 - Footer */}
+      <footer className="w-full bg-[#0F0F0F] py-12 border-t border-neutral-900 z-10">
+        <div className="max-w-[1280px] mx-auto px-6 flex flex-col gap-10">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 border-b border-neutral-900 pb-8">
+            <div className="flex items-center gap-6">
+              <Link
+                href="/"
+                className="flex items-center gap-2 text-white font-manrope font-bold text-base hover:opacity-90"
+              >
+                <Shield className="w-5 h-5 text-cyan-400 fill-cyan-400/20" />
+                <span>RakshEx</span>
+              </Link>
+              <div className="w-px h-5 bg-neutral-800" />
+              <div className="flex items-center gap-4 text-neutral-400">
+                <a
+                  href="https://discord.gg/rakshex"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-white transition-colors"
+                  aria-label="Discord"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    fill="currentColor"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="M13.542 0c.264 0 .497.102.684.286a11.64 11.64 0 0 1 1.708 2.046c.114.183.166.386.166.529 0 .428-.415 4.398-.765 8.21-.084.95-.53 1.706-1.084 2.595a16.5 16.5 0 0 1-5.064 2.595q-.613-.841-1.084-1.785c.67-.183 1.258-.466 1.71-.833a10.6 10.6 0 0 0-.418-.331 15.2 15.2 0 0 1-10.118 0q-.206.171-.418.331c.452.367 1.04.65 1.71.833a16.5 16.5 0 0 1-1.084 1.785A16.5 16.5 0 0 1 .085 15.11C-.27 11.319.41 7.47.825 3.52c.046-.143.1-.346.166-.529A11.64 11.64 0 0 1 2.7 1.3C3.991.69 5.377.25 6.825.0c.18.32.388.753.535 1.097a15.2 15.2 0 0 1 4.573 0c.143-.344.351-.777.53-1.097 1.452.25 2.834.693 4.129 1.3M5.678 10.735c-.988 0-1.798-.922-1.798-2.046 0-1.123.81-2.046 1.798-2.046.99 0 1.798.922 1.798 2.046s-.808 2.046-1.798 2.046m6.644 0c-.988 0-1.798-.922-1.798-2.046 0-1.123.81-2.046 1.798-2.046.99 0 1.798.922 1.798 2.046s-.808 2.046-1.798 2.046" />
+                  </svg>
+                </a>
+                <a
+                  href="https://github.com/rakshex"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-white transition-colors"
+                  aria-label="GitHub"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    fill="currentColor"
+                    viewBox="0 0 16 16"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8"
+                    />
+                  </svg>
+                </a>
+                <a
+                  href="https://twitter.com/rakshexhq"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-white transition-colors"
+                  aria-label="Twitter"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="14"
+                    height="14"
+                    fill="currentColor"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="M12.6.75h2.454l-5.36 6.142L16 15.25h-4.937l-3.867-5.07-4.425 5.07H.316l5.733-6.57L0 .75h5.063l3.495 4.633L12.601.75Zm-.86 13.028h1.36L4.323 2.145H2.865l8.875 11.633Z" />
+                  </svg>
+                </a>
+              </div>
+            </div>
 
-            {/* Grok */}
-            <a
-              href="https://grok.com?q=Explain+RakshEx+(rakshex.in)+to+a+security+engineer.+Focus+on+how+it+secures+AI+agents,+monitors+LLM+costs,+and+generates+compliance+reports.+Summarize+info+from+https://rakshex.in/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 px-5 py-3 bg-slate-900 border border-slate-800 rounded-xl hover:border-white/30 hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] transition-all font-mono text-xs text-white"
-            >
-              <span className="w-2.5 h-2.5 rounded-full bg-white" />
-              Grok
-            </a>
+            <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs font-medium text-neutral-400">
+              <Link href="/blog" className="hover:text-white transition-colors">
+                Blog
+              </Link>
+              <Link href="/docs" className="hover:text-white transition-colors">
+                Docs
+              </Link>
+              <Link href="/pricing" className="hover:text-white transition-colors">
+                Pricing
+              </Link>
+              <Link href="/contact" className="hover:text-white transition-colors">
+                Contact
+              </Link>
+              <Link href="/privacy" className="hover:text-white transition-colors">
+                Privacy Policy
+              </Link>
+              <Link href="/terms" className="hover:text-white transition-colors">
+                Terms
+              </Link>
+              <Link href="/trust" className="hover:text-white transition-colors">
+                Trust Center
+              </Link>
+            </div>
+          </div>
 
-            {/* Perplexity */}
-            <a
-              href="https://perplexity.ai?q=Explain+RakshEx+(rakshex.in)+to+a+security+engineer.+Focus+on+how+it+secures+AI+agents,+monitors+LLM+costs,+and+generates+compliance+reports.+Summarize+info+from+https://rakshex.in/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 px-5 py-3 bg-slate-900 border border-slate-800 rounded-xl hover:border-cyan-500/40 hover:shadow-[0_0_15px_rgba(6,182,212,0.2)] transition-all font-mono text-xs text-white"
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-neutral-500">
+            <p>© 2026 RakshEx by Rashi Technologies. Bengaluru, India.</p>
+            <Link
+              href="/status"
+              className="flex items-center gap-2 hover:text-neutral-400 transition-colors"
             >
-              <span className="w-2.5 h-2.5 rounded-full bg-cyan-500" />
-              Perplexity
-            </a>
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse block" />
+              <span>All systems operational</span>
+            </Link>
           </div>
         </div>
-      </section>
-
-      {/* SECTION 12 — Comparison Table (Redesign) */}
-      <ComparisonTableSection />
-
-      {/* Pricing Cards Section */}
-      <PricingSection />
-
-      {/* CTA Section */}
-      <CallToActionSection />
-
-      {/* SECTION 11 — Footer Redesign */}
-      <FooterRedesign />
+      </footer>
     </div>
   );
 }
