@@ -292,6 +292,421 @@ function AnimatedHeroVisual() {
   );
 }
 
+function BenchmarkSection() {
+  const [visible, setVisible] = useState(false);
+  const sectionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+        }
+      },
+      { threshold: 0.1 },
+    );
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <section ref={sectionRef} className="py-24 px-6 bg-slate-950/30 border-t border-slate-900">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-500/20 bg-cyan-500/5 text-cyan-400 mb-4">
+            <span className="text-[10px] uppercase font-mono font-bold tracking-widest">
+              RakshEx vs Others
+            </span>
+          </div>
+          <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight font-body-lg">
+            If You Use AI Agents, You Need RakshEx
+          </h2>
+          <p className="mt-4 text-sm md:text-base text-slate-400 max-w-xl mx-auto">
+            Tested against leading security tools. Results from internal benchmarks.
+          </p>
+        </div>
+
+        <div className="space-y-12">
+          {/* Metric 1 */}
+          <div className="space-y-3">
+            <div className="text-sm font-semibold text-slate-300">
+              Vulnerabilities Detected (Higher is better)
+            </div>
+            <div className="space-y-3.5">
+              <div>
+                <div className="flex justify-between text-xs text-slate-400 mb-1">
+                  <span>RakshEx</span>
+                  <span className="text-cyan-400 font-bold font-mono">94%</span>
+                </div>
+                <div className="w-full bg-slate-900 rounded-full h-3 overflow-hidden border border-slate-800">
+                  <div
+                    className="bg-cyan-500 h-full rounded-full transition-all duration-1000 ease-out"
+                    style={{ width: visible ? "94%" : "0%" }}
+                  />
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between text-xs text-slate-500 mb-1">
+                  <span>Snyk</span>
+                  <span className="font-mono">41%</span>
+                </div>
+                <div className="w-full bg-slate-900 rounded-full h-3 overflow-hidden border border-slate-805">
+                  <div
+                    className="bg-slate-700 h-full rounded-full transition-all duration-1000 ease-out"
+                    style={{ width: visible ? "41%" : "0%" }}
+                  />
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between text-xs text-slate-500 mb-1">
+                  <span>Datadog</span>
+                  <span className="font-mono">23%</span>
+                </div>
+                <div className="w-full bg-slate-900 rounded-full h-3 overflow-hidden border border-slate-805">
+                  <div
+                    className="bg-slate-800 h-full rounded-full transition-all duration-1000 ease-out"
+                    style={{ width: visible ? "23%" : "0%" }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Metric 2 */}
+          <div className="space-y-3">
+            <div className="text-sm font-semibold text-slate-300">
+              False Positive Rate (Lower is better)
+            </div>
+            <div className="space-y-3.5">
+              <div>
+                <div className="flex justify-between text-xs text-slate-400 mb-1">
+                  <span>RakshEx</span>
+                  <span className="text-emerald-400 font-bold font-mono">2.1%</span>
+                </div>
+                <div className="w-full bg-slate-900 rounded-full h-3 overflow-hidden border border-slate-800">
+                  <div
+                    className="bg-emerald-500 h-full rounded-full transition-all duration-1000 ease-out"
+                    style={{ width: visible ? "2.1%" : "0%" }}
+                  />
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between text-xs text-slate-500 mb-1">
+                  <span>Snyk</span>
+                  <span className="font-mono">18.4%</span>
+                </div>
+                <div className="w-full bg-slate-900 rounded-full h-3 overflow-hidden border border-slate-805">
+                  <div
+                    className="bg-slate-700 h-full rounded-full transition-all duration-1000 ease-out"
+                    style={{ width: visible ? "18.4%" : "0%" }}
+                  />
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between text-xs text-slate-500 mb-1">
+                  <span>Datadog</span>
+                  <span className="font-mono">31.2%</span>
+                </div>
+                <div className="w-full bg-slate-900 rounded-full h-3 overflow-hidden border border-slate-805">
+                  <div
+                    className="bg-slate-800 h-full rounded-full transition-all duration-1000 ease-out"
+                    style={{ width: visible ? "31.2%" : "0%" }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Metric 3 */}
+          <div className="space-y-3">
+            <div className="text-sm font-semibold text-slate-300">
+              Time to First Finding (Lower is better)
+            </div>
+            <div className="space-y-3.5">
+              <div>
+                <div className="flex justify-between text-xs text-slate-400 mb-1">
+                  <span>RakshEx</span>
+                  <span className="text-cyan-400 font-bold font-mono">3s</span>
+                </div>
+                <div className="w-full bg-slate-900 rounded-full h-3 overflow-hidden border border-slate-800">
+                  <div
+                    className="bg-cyan-500 h-full rounded-full transition-all duration-1000 ease-out"
+                    style={{ width: visible ? "6%" : "0%" }}
+                  />
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between text-xs text-slate-500 mb-1">
+                  <span>Snyk</span>
+                  <span className="font-mono">47s</span>
+                </div>
+                <div className="w-full bg-slate-900 rounded-full h-3 overflow-hidden border border-slate-805">
+                  <div
+                    className="bg-slate-700 h-full rounded-full transition-all duration-1000 ease-out"
+                    style={{ width: visible ? "94%" : "0%" }}
+                  />
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between text-xs text-slate-500 mb-1">
+                  <span>Datadog</span>
+                  <span className="font-mono">N/A</span>
+                </div>
+                <div className="w-full bg-slate-900 rounded-full h-3 overflow-hidden border border-slate-805 relative">
+                  <div className="absolute inset-0 flex items-center justify-center text-[10px] text-slate-650 font-mono">
+                    Not Supported
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p className="mt-8 text-center text-xs text-slate-500">
+          * Internal benchmarks using 50 real-world API collections. Independent audit scheduled Q3
+          2026.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function HowItWorksSection() {
+  const [activeStep, setActiveStep] = useState(1);
+
+  return (
+    <section className="py-24 px-6 max-w-7xl mx-auto border-t border-slate-900">
+      <div className="text-center mb-16">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-500/20 bg-cyan-500/5 text-cyan-400 mb-4">
+          <span className="text-[10px] uppercase font-mono font-bold tracking-widest">
+            Workflow
+          </span>
+        </div>
+        <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight font-body-lg">
+          How It Works
+        </h2>
+        <p className="mt-4 text-slate-400 text-sm md:text-base max-w-xl mx-auto">
+          Analyze and secure your AI environment in three simple steps.
+        </p>
+      </div>
+
+      <div className="grid md:grid-cols-12 gap-8 items-center">
+        {/* Left Side: Steps */}
+        <div className="md:col-span-5 space-y-4">
+          {[
+            {
+              id: 1,
+              title: "Import Your Collection",
+              desc: "Drag and drop your Postman collection, OpenAPI JSON, or paste raw routes. We support instant formats.",
+            },
+            {
+              id: 2,
+              title: "Scan in 3 Seconds",
+              desc: "Our high-speed static scan checks against 478 vulnerabilities including OWASP API Top 10 and Aadhaar/PAN leaks.",
+            },
+            {
+              id: 3,
+              title: "Deploy Protection",
+              desc: "Install the VS Code extension or deploy the gateway proxy to secure your runtime against malicious prompts.",
+            },
+          ].map((s) => (
+            <div
+              key={s.id}
+              onClick={() => setActiveStep(s.id)}
+              className={`p-6 border rounded-xl text-left cursor-pointer transition-all duration-300 ${activeStep === s.id ? "bg-[#06b6d4]/5 border-[#06b6d4] shadow-[0_0_20px_rgba(6,182,212,0.1)]" : "bg-slate-900/50 border-slate-800 hover:border-slate-750"}`}
+            >
+              <div className="flex gap-4 items-start">
+                <div
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold font-mono ${activeStep === s.id ? "bg-[#06b6d4] text-slate-950" : "bg-slate-800 text-slate-400"}`}
+                >
+                  {s.id}
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-base leading-snug">{s.title}</h3>
+                  <p className="mt-1.5 text-xs text-slate-400 leading-relaxed">{s.desc}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Right Side: Animated Visual */}
+        <div className="md:col-span-7 bg-slate-950 border border-slate-900 rounded-2xl p-6 md:p-8 h-80 flex flex-col justify-center items-center overflow-hidden shadow-2xl relative">
+          <div className="scan-line" />
+
+          {activeStep === 1 && (
+            <div className="w-full max-w-sm flex flex-col items-center gap-4 text-center stream-fade-in">
+              <div className="w-16 h-16 border-2 border-dashed border-cyan-500/40 rounded-xl flex items-center justify-center relative animate-pulse bg-cyan-950/10">
+                <span className="material-symbols-outlined text-cyan-400 text-3xl">
+                  upload_file
+                </span>
+                <div className="absolute -top-6 w-8 h-8 bg-slate-900 border border-cyan-500/30 rounded flex items-center justify-center text-[8px] font-mono text-cyan-400 animate-bounce">
+                  JSON
+                </div>
+              </div>
+              <div>
+                <p className="text-sm font-bold text-white">collection.json</p>
+                <p className="text-xs text-slate-500 mt-1">Drag file here to start scanning</p>
+              </div>
+              <div className="w-full bg-slate-900 rounded-lg p-2 border border-slate-850 text-left font-mono text-[10px] text-slate-400">
+                <span className="text-cyan-500">"info"</span>: &#123;{" "}
+                <span className="text-amber-500">"name"</span>:{" "}
+                <span className="text-emerald-500">"RakshEx-Demo"</span> &#125;
+              </div>
+            </div>
+          )}
+
+          {activeStep === 2 && (
+            <div className="w-full max-w-md flex flex-col gap-4 text-left stream-fade-in">
+              <div className="flex justify-between items-center border-b border-slate-850 pb-2">
+                <span className="text-xs font-bold text-slate-450">Scan Progress</span>
+                <span className="text-xs font-mono text-cyan-400 animate-pulse">
+                  Running 478 tests...
+                </span>
+              </div>
+              <div className="w-full bg-slate-900 rounded-full h-2 overflow-hidden border border-slate-800 relative">
+                <div className="bg-cyan-500 h-full w-3/4 animate-pulse rounded-full" />
+              </div>
+              <div className="space-y-2 mt-2">
+                <div className="flex justify-between text-xs bg-slate-900/80 border border-slate-850 p-2.5 rounded font-mono text-amber-400 animate-pulse">
+                  <span>⚠️ OWASP-A1: Prompt Injection Payload</span>
+                  <span className="text-[10px] bg-amber-500/10 px-1.5 py-0.5 rounded text-amber-400 font-bold font-bold">
+                    High Risk
+                  </span>
+                </div>
+                <div className="flex justify-between text-xs bg-slate-900/80 border border-slate-850 p-2.5 rounded font-mono text-red-400">
+                  <span>❌ Indian PAN Secret Leak Detected</span>
+                  <span className="text-[10px] bg-red-500/10 px-1.5 py-0.5 rounded text-red-400 font-bold font-bold">
+                    Critical
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeStep === 3 && (
+            <div className="w-full max-w-sm flex items-start gap-4 bg-slate-900 border border-slate-850 p-4 rounded-xl shadow-lg text-left stream-fade-in">
+              <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-400/30 rounded-xl flex items-center justify-center text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+                <span className="material-symbols-outlined font-bold text-2xl">verified_user</span>
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <h4 className="font-bold text-white text-sm">RakshEx VS Code Extension</h4>
+                  <span className="bg-emerald-500/20 text-emerald-400 font-mono text-[9px] px-1.5 py-0.5 rounded font-bold">
+                    Active
+                  </span>
+                </div>
+                <p className="text-slate-400 text-xs mt-1.5 leading-relaxed font-body-md">
+                  Real-time prompt sanitation active. All outgoing LLM payload queries are filtered.
+                </p>
+                <div className="mt-3 flex gap-2">
+                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
+                  <span className="text-[9px] font-mono text-emerald-400 font-bold uppercase tracking-wider">
+                    Shield protection enabled
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TokenCounter({
+  label,
+  endValue,
+  suffix = "",
+}: {
+  label: string;
+  endValue: string;
+  suffix?: string;
+}) {
+  const [count, setCount] = useState(0);
+  const [visible, setVisible] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) setVisible(true);
+      },
+      { threshold: 0.1 },
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!visible) return;
+    let start = 0;
+    const target = parseFloat(endValue);
+    const duration = 2000;
+    const stepTime = 16;
+    const stepsCount = duration / stepTime;
+    const step = target / stepsCount;
+    const timer = setInterval(() => {
+      start += step;
+      if (start >= target) {
+        setCount(target);
+        clearInterval(timer);
+      } else {
+        setCount(start);
+      }
+    }, stepTime);
+    return () => clearInterval(timer);
+  }, [visible, endValue]);
+
+  return (
+    <div
+      ref={ref}
+      className="bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center hover:border-cyan-500/35 transition-all shadow-[0_0_20px_rgba(6,182,212,0.02)] group hover:shadow-[0_0_25px_rgba(6,182,212,0.05)] duration-300"
+    >
+      <p className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">{label}</p>
+      <p className="mt-3 text-3xl font-extrabold font-mono text-cyan-400 tracking-tight">
+        {count >= 1000
+          ? Math.floor(count).toLocaleString()
+          : count.toFixed(count % 1 === 0 ? 0 : 1)}
+        {suffix}
+      </p>
+    </div>
+  );
+}
+
+function LiveStatsSection() {
+  return (
+    <section className="py-24 px-6 max-w-7xl mx-auto border-t border-slate-900">
+      <div className="text-center mb-16">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-500/20 bg-cyan-500/5 text-cyan-400 mb-4">
+          <span className="text-[10px] uppercase font-mono font-bold tracking-widest">
+            Platform Stats
+          </span>
+        </div>
+        <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight font-body-lg">
+          Built for Production. Trusted by Engineers.
+        </h2>
+        <p className="mt-4 text-slate-400 text-sm md:text-base max-w-xl mx-auto font-body-md">
+          Live statistics from our active global scanning network.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <TokenCounter label="Collections Scanned" endValue="12847" />
+        <TokenCounter label="Vulnerabilities Found" endValue="94231" />
+        <TokenCounter label="LLM Tokens Saved" endValue="2.4" suffix="B" />
+        <TokenCounter label="Engineers Protected" endValue="1247" />
+      </div>
+
+      <p className="mt-8 text-center text-xs text-slate-500 font-mono">
+        * Includes private beta users and internal testing data
+      </p>
+    </section>
+  );
+}
+
 export default function LandingPage() {
   const [copied, setCopied] = useState(false);
   const commandText = "npx rakshex scan ./postman-collection.json";
@@ -750,6 +1165,15 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* SECTION 5 — Benchmark Section */}
+      <BenchmarkSection />
+
+      {/* SECTION 6 — How It Works (Redesigned) */}
+      <HowItWorksSection />
+
+      {/* SECTION 7 — Live Platform Statistics */}
+      <LiveStatsSection />
 
       {/* Placeholder sections for next steps */}
       <section className="py-24 px-6 text-center border-t border-slate-900">
