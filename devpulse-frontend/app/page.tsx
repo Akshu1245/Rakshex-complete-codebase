@@ -6,6 +6,7 @@ import { trpc } from "@/lib/trpc";
 import { useCountdown } from "@/lib/animations/countdown";
 import { useMegaMenu } from "@/lib/animations/megamenu";
 import { useScrollReveal } from "@/lib/animations/scroll-reveal";
+import { LogoMarquee } from "@/components/ui/LogoMarquee";
 import {
   Shield,
   Power,
@@ -941,69 +942,7 @@ export default function HomePage() {
           </div>
 
           {/* "Works perfectly with" marquee */}
-          <div className="flex flex-col xl:items-start items-center gap-5 mt-10">
-            <p className="text-xs uppercase tracking-widest text-neutral-500 font-mono">
-              Works perfectly with
-            </p>
-            <div className="relative w-full z-10">
-              <div className="absolute left-0 top-0 w-16 h-full z-10 pointer-events-none bg-gradient-to-r from-[#0F0F0F] to-transparent" />
-              <div className="absolute right-0 top-0 w-16 h-full z-10 pointer-events-none bg-gradient-to-l from-[#0F0F0F] to-transparent" />
-
-              <div className="w-full overflow-hidden">
-                <div className="flex items-center gap-12 animate-logo-scroll w-max pr-12">
-                  {/* Repeated twice for infinite loop */}
-                  {[
-                    "OpenAI",
-                    "Anthropic",
-                    "Claude Code",
-                    "GitHub",
-                    "VS Code",
-                    "Postman",
-                    "Slack",
-                    "Express",
-                    "FastAPI",
-                    "Django",
-                    "Gemini",
-                    "Mistral",
-                    "Cursor",
-                    "GitHub Actions",
-                  ].map((logo, idx) => (
-                    <div
-                      key={idx}
-                      className="shrink-0 text-neutral-400 hover:text-white font-mono text-sm tracking-wider font-bold transition-colors cursor-default select-none border border-neutral-800/80 bg-neutral-900/40 rounded-lg px-4 py-2 flex items-center gap-2"
-                    >
-                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-                      {logo}
-                    </div>
-                  ))}
-                  {[
-                    "OpenAI",
-                    "Anthropic",
-                    "Claude Code",
-                    "GitHub",
-                    "VS Code",
-                    "Postman",
-                    "Slack",
-                    "Express",
-                    "FastAPI",
-                    "Django",
-                    "Gemini",
-                    "Mistral",
-                    "Cursor",
-                    "GitHub Actions",
-                  ].map((logo, idx) => (
-                    <div
-                      key={`repeat-${idx}`}
-                      className="shrink-0 text-neutral-400 hover:text-white font-mono text-sm tracking-wider font-bold transition-colors cursor-default select-none border border-neutral-800/80 bg-neutral-900/40 rounded-lg px-4 py-2 flex items-center gap-2"
-                    >
-                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-                      {logo}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
+          <LogoMarquee />
         </div>
       </section>
 
