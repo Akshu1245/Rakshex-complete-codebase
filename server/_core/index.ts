@@ -57,9 +57,9 @@ import { getDb } from "../db";
 function buildCorsAllowlist(): string[] {
   if (ENV.isProduction) {
     return [
-      "https://devpulse.in",
-      "https://www.devpulse.in",
-      "https://app.devpulse.in",
+      "https://rakshex.in",
+      "https://www.rakshex.in",
+      "https://app.rakshex.in",
       ENV.frontendUrl,
     ].filter((v, i, arr) => v && arr.indexOf(v) === i);
   }
@@ -139,7 +139,7 @@ const SENSITIVE_KEYS = new Set([
   "access_token",
   "sessiontoken",
   "x-razorpay-signature",
-  "x-devpulse-signature-256",
+  "x-rakshex-signature-256",
   "stripe-signature",
 ]);
 
@@ -226,7 +226,7 @@ async function startServer() {
   app.use(requestIdMiddleware());
 
   // ── CORS allowlist (must run before helmet) ──────────────────────────────
-  // The Next.js dashboard (devpulse-frontend) is deployed on a different
+  // The Next.js dashboard (rakshex-frontend) is deployed on a different
   // origin from the API in most production setups, so we explicitly opt
   // in to credentialled cross-origin requests from the allowlist. Any
   // request from an origin not on the list is rejected before tRPC ever
@@ -413,10 +413,12 @@ async function startServer() {
         await db.execute("SELECT 1");
         checks.database = "ok";
       } else {
+        logger.error("[HealthCheck] database client is null");
         checks.database = "error";
         allOk = false;
       }
-    } catch {
+    } catch (err) {
+      logger.error({ err }, "[HealthCheck] database ping failed");
       checks.database = "error";
       allOk = false;
     }
@@ -648,8 +650,8 @@ async function startServer() {
         <body style="font-family: -apple-system, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #f9fafb;">
           <div style="text-align: center; padding: 40px; background: white; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
             <h1 style="color: #16a34a; margin: 0 0 16px;">✓ Unsubscribed</h1>
-            <p style="color: #374151; margin: 0;">You've been unsubscribed from all DevPulse emails.</p>
-            <a href="${process.env.APP_URL || "https://devpulse.in"}" style="display: inline-block; margin-top: 24px; color: #2563eb; text-decoration: none;">Return to DevPulse</a>
+            <p style="color: #374151; margin: 0;">You've been unsubscribed from all RakshEx emails.</p>
+            <a href="${process.env.APP_URL || "https://rakshex.in"}" style="display: inline-block; margin-top: 24px; color: #2563eb; text-decoration: none;">Return to RakshEx</a>
           </div>
         </body>
         </html>
@@ -1022,20 +1024,65 @@ async function startServer() {
 
     registerJobWorkers();
     scheduleWeeklyDigest();
-    if (process.env.DEVPULSE_REDTEAM_SCHEDULER !== "disabled") {
+    if (process.env.RAKSHEX_REDTEAM_SCHEDULER !== "disabled") {
       startRedTeamScheduler(60_000);
       logger.info("[Server] Continuous red-team scheduler started");
     }
   });
 
   // ── Graceful shutdown ──────────────────────────────────────────────────────
-  process.on("SIGTERM", () => {
-    logger.info("[Server] SIGTERM received. Shutting down gracefully");
-    server.close(() => {
-      logger.info("[Server] Closed");
+  let isShuttingDown = false;
+
+  const shutdown = async (signal: string) => {
+    if (isShuttingDown) return;
+    isShuttingDown = true;
+    logger.info({ signal }, "[Server] Graceful shutdown initiated");
+
+    const forceShutdownTimeout = setTimeout(() => {
+      logger.error("[Server] Forced shutdown triggered after 10s timeout");
+      process.exit(1);
+    }, 10000);
+
+    try {
+      // 1. Close HTTP server accepting new connections
+      await new Promise<void>((resolve) => {
+        server.close((err) => {
+          if (err) {
+            logger.error({ err }, "[Server] Error closing HTTP server");
+          } else {
+            logger.info("[Server] HTTP server closed");
+          }
+          resolve();
+        });
+      });
+
+      // 2. Close database pool
+      try {
+        const { closeDb } = await import("../db");
+        await closeDb();
+      } catch (err) {
+        logger.error({ err }, "[Server] Error closing DB pool");
+      }
+
+      // 3. Close Redis connection
+      try {
+        await redis.quit();
+        logger.info("[Cache] Redis connection closed");
+      } catch (err) {
+        logger.error({ err }, "[Cache] Error closing Redis connection");
+      }
+
+      logger.info("[Server] Graceful shutdown completed");
+      clearTimeout(forceShutdownTimeout);
       process.exit(0);
-    });
-  });
+    } catch (err) {
+      logger.error({ err }, "[Server] Error during graceful shutdown");
+      process.exit(1);
+    }
+  };
+
+  process.on("SIGTERM", () => shutdown("SIGTERM"));
+  process.on("SIGINT", () => shutdown("SIGINT"));
 }
 
 startServer().catch((err) => {

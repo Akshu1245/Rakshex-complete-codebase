@@ -1,21 +1,35 @@
-import { drizzle } from "drizzle-orm/mysql2";
-import type { MySql2Database } from "drizzle-orm/mysql2";
-import mysql from "mysql2/promise";
+import { drizzle } from "drizzle-orm/postgres-js";
+import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import { logger } from "../_core/logger";
 
-let _db: MySql2Database<Record<string, unknown>> | null = null;
+let _db: PostgresJsDatabase<Record<string, unknown>> | null = null;
+let _client: postgres.Sql | null = null;
 
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      const pool = mysql.createPool(process.env.DATABASE_URL);
-      _db = drizzle(pool);
+      _client = postgres(process.env.DATABASE_URL, {
+        max: 20,
+        connect_timeout: 5,
+      });
+      _db = drizzle(_client);
     } catch (error) {
-      logger.warn({ err: error }, "[Database] Failed to connect");
+      logger.error({ err: error }, "[Database] Failed to initialize connection");
       _db = null;
+      _client = null;
     }
   }
   return _db;
+}
+
+export async function closeDb() {
+  if (_client) {
+    await _client.end();
+    logger.info("[Database] Connection pool closed");
+    _client = null;
+    _db = null;
+  }
 }
 
 // Re-export everything from drizzle schema
