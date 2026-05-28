@@ -1,102 +1,153 @@
-import Link from "next/link";
+"use client";
 
-export const metadata = {
-  title: "Open Source — Rakshex",
-  description:
-    "Rakshex is built on open source. View our GitHub repository, contribute to the project, and explore our tech stack.",
-  alternates: { canonical: "/open-source" },
-};
+import { useState } from "react";
+import Link from "next/link";
+import { trpc } from "@/lib/trpc";
+import { useToast } from "@/components/Toast";
 
 export default function OpenSourcePage() {
+  const [email, setEmail] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { addToast } = useToast();
+
+  const joinMutation = trpc.waitlist.join.useMutation({
+    onSuccess: () => {
+      setSuccess(true);
+      setError(null);
+      addToast("success", "Successfully joined the open-source waitlist!");
+    },
+    onError: (err) => {
+      setError(err.message || "Failed to join waitlist. Please try again.");
+      addToast("error", err.message || "Subscription failed");
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+    joinMutation.mutate({
+      email,
+      plan: "Free",
+      source: "open_source_waitlist",
+    });
+  };
+
+  const attributions = [
+    { name: "Next.js", desc: "Production grade React framework for server rendering and routing.", url: "https://nextjs.org" },
+    { name: "tRPC", desc: "End-to-end typesafe APIs made simple without schemas.", url: "https://trpc.io" },
+    { name: "Drizzle ORM", desc: "Next-gen TypeScript ORM with database-first feel.", url: "https://orm.drizzle.team" },
+    { name: "Fastify / Express", desc: "High-performance web frameworks for backend API routing.", url: "https://fastify.dev" },
+    { name: "PostgreSQL & MySQL", desc: "Robust open-source relational databases.", url: "https://www.postgresql.org" },
+    { name: "Redis", desc: "In-memory caching and session rate limiting engine.", url: "https://redis.io" },
+    { name: "shadcn/ui", desc: "Beautifully designed accessible UI component primitives.", url: "https://ui.shadcn.com" },
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      <div className="text-center py-20 px-4 border-b border-gray-800">
-        <h1 className="text-4xl md:text-5xl font-bold mb-4">Built in the Open</h1>
-        <p className="text-gray-400 max-w-2xl mx-auto text-lg">
-          Transparency is a security feature. View our code, audit our practices, and contribute to
-          the future of AI governance.
-        </p>
-      </div>
+    <div className="min-h-screen bg-slate-950 text-slate-100 py-16 px-4 font-sans">
+      <div className="max-w-4xl mx-auto">
+        <header className="text-center mb-16">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-950 text-blue-400 border border-blue-900/60 mb-4">
+            🔒 Built on Open Standards
+          </span>
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">
+            Open Source Strategy
+          </h1>
+          <p className="text-slate-400 max-w-2xl mx-auto text-lg mt-3">
+            Transparency is foundational to runtime governance. Audit our tech stack, view our repositories, and participate in our open-source journey.
+          </p>
+        </header>
 
-      <div className="max-w-4xl mx-auto py-16 px-4 space-y-16">
-        {/* GitHub Stats */}
-        <div className="grid md:grid-cols-3 gap-6 text-center">
-          {[
-            { value: "478+", label: "Server Tests" },
-            { value: "37", label: "API Routers" },
-            { value: "18", label: "DB Migrations" },
-          ].map((s) => (
-            <div key={s.label} className="bg-gray-800 p-6 rounded-xl border border-gray-700">
-              <div className="text-3xl font-bold text-blue-400">{s.value}</div>
-              <div className="text-gray-400 text-sm mt-1">{s.label}</div>
-            </div>
-          ))}
-        </div>
+        {/* Planned Open Source Statement */}
+        <section className="bg-slate-900/40 border border-slate-900 rounded-2xl p-8 mb-12 text-center md:text-left md:flex md:items-center md:justify-between gap-8">
+          <div className="max-w-xl mb-6 md:mb-0">
+            <h2 className="text-2xl font-bold text-white mb-3">Planned: OWASP AI Top 10 Detection Ruleset</h2>
+            <p className="text-slate-400 text-sm leading-relaxed">
+              We are planning to open source our core signature rules and detection heuristics for the OWASP AI Top 10 security audits. This allows teams to audit prompt injection models and egress filters locally. Join the waitlist to be notified when the repository opens.
+            </p>
+          </div>
+          <div className="flex-shrink-0 w-full md:w-80">
+            {success ? (
+              <div className="bg-emerald-950/20 border border-emerald-500/30 text-emerald-300 p-4 rounded-xl text-center text-sm font-medium">
+                ✓ You're on the list! We will notify you at launch.
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-3">
+                <input
+                  type="email"
+                  required
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-slate-950/80 border border-slate-800 rounded-lg px-4 py-2 text-sm text-gray-200 focus:outline-none focus:border-blue-500 placeholder-gray-500"
+                />
+                {error && <p className="text-xs text-rose-400">{error}</p>}
+                <button
+                  type="submit"
+                  disabled={joinMutation.isLoading}
+                  className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-semibold text-sm py-2 px-4 rounded-lg transition-colors shadow-lg shadow-blue-500/20"
+                >
+                  {joinMutation.isLoading ? "Joining..." : "Join Ruleset Waitlist"}
+                </button>
+              </form>
+            )}
+          </div>
+        </section>
 
-        {/* Tech Stack */}
-        <section>
-          <h2 className="text-2xl font-bold mb-6">Tech Stack</h2>
+        {/* GitHub Contribution CTA */}
+        <section className="bg-gradient-to-br from-slate-900/60 to-slate-950 border border-slate-800/80 rounded-2xl p-8 mb-12 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div>
+            <h2 className="text-xl font-bold text-white mb-2">Contribute on GitHub</h2>
+            <p className="text-sm text-slate-400 max-w-xl">
+              Help us build the next generation of security firewalls. Star our organization, file bug reports, or check our open discussions.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-4 w-full md:w-auto">
+            <a
+              href="https://github.com/rakshex-hq/rakshex/issues"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 md:flex-none text-center px-4 py-2 border border-slate-700 hover:bg-slate-900 text-slate-200 font-semibold text-sm rounded-lg transition-colors"
+            >
+              Contribute / Issues
+            </a>
+            <a
+              href="https://github.com/rakshex-hq/rakshex"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 md:flex-none text-center px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-900 font-semibold text-sm rounded-lg transition-colors shadow-md shadow-white/5"
+            >
+              ★ Star on GitHub
+            </a>
+          </div>
+        </section>
+
+        {/* Attributions / Stack */}
+        <section className="mb-12">
+          <h2 className="text-2xl font-bold text-white mb-6">Open Source Foundations</h2>
           <div className="grid md:grid-cols-2 gap-4">
-            {[
-              { layer: "Frontend", tech: "Next.js 14, React 18, TypeScript, Tailwind CSS, tRPC" },
-              { layer: "Backend", tech: "Node.js, Express, tRPC, Drizzle ORM, Zod" },
-              { layer: "Database", tech: "MySQL 8, Redis 7, BullMQ" },
-              { layer: "AI/ML", tech: "TensorFlow.js, ONNX Runtime, Custom classifiers" },
-              { layer: "Infrastructure", tech: "Docker, Docker Compose, Kubernetes Helm charts" },
-              { layer: "Testing", tech: "Vitest, Playwright, Supertest, MSW" },
-            ].map((row) => (
-              <div key={row.layer} className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-                <span className="font-bold text-blue-400">{row.layer}:</span>{" "}
-                <span className="text-gray-300 text-sm">{row.tech}</span>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* License */}
-        <section className="bg-gray-800 p-8 rounded-xl border border-gray-700">
-          <h2 className="text-xl font-bold mb-4">License</h2>
-          <p className="text-gray-300 text-sm leading-relaxed mb-4">
-            Rakshex is open source under the <strong>MIT License</strong>. You are free to use,
-            modify, and distribute the code. Commercial use is permitted. Attribution is appreciated
-            but not required.
-          </p>
-          <p className="text-gray-400 text-sm">
-            Enterprise features (SSO, RBAC, audit logs) are available under a separate commercial
-            license. Contact us for enterprise licensing.
-          </p>
-        </section>
-
-        {/* Contributing */}
-        <section>
-          <h2 className="text-2xl font-bold mb-6">How to Contribute</h2>
-          <div className="space-y-4">
-            {[
-              "1. Fork the repository on GitHub",
-              "2. Create a feature branch: git checkout -b feature/amazing-idea",
-              "3. Make your changes with tests",
-              "4. Run the test suite: pnpm test",
-              "5. Submit a pull request with a clear description",
-            ].map((step) => (
-              <div
-                key={step}
-                className="bg-gray-800 p-4 rounded-lg border border-gray-700 text-gray-300 text-sm font-mono"
+            {attributions.map((tech) => (
+              <a
+                key={tech.name}
+                href={tech.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block bg-slate-900/30 border border-slate-900 hover:border-slate-850 hover:bg-slate-900/50 p-5 rounded-xl transition-all group"
               >
-                {step}
-              </div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-bold text-blue-400 group-hover:text-blue-300 transition-colors">{tech.name}</span>
+                  <span className="text-slate-600 text-xs">→</span>
+                </div>
+                <p className="text-slate-400 text-xs leading-relaxed">{tech.desc}</p>
+              </a>
             ))}
           </div>
         </section>
 
-        {/* CTA */}
-        <div className="text-center">
-          <Link
-            href="mailto:open-source@rakshex.in?subject=Request Source Code Access"
-            className="inline-block bg-white text-gray-900 px-8 py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors"
-          >
-            Request Code Access →
-          </Link>
-        </div>
+        {/* Mit license */}
+        <footer className="border-t border-slate-900 pt-8 text-center text-xs text-slate-500">
+          <p>© {new Date().getFullYear()} RakshEx. Built with pride under open standards and modern developer tools.</p>
+        </footer>
       </div>
     </div>
   );
