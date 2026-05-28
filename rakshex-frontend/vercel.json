@@ -5,6 +5,6 @@
   "installCommand": "npm install",
   "env": {
     "NEXT_PUBLIC_APP_URL": "https://yc7y9pq9.insforge.site",
-    "NEXT_PUBLIC_TS_API_URL": "https://rakshex-backend-r0o3.onrender.com"
+    "NEXT_PUBLIC_TS_API_URL": "https://devpulse-backend-r0o3.onrender.com"
   }
 }
