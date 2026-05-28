@@ -22,7 +22,8 @@ export default function PricingPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
-    joinMutation.mutate({ email, source: `pricing_${selectedPlan}` });
+    const capitalizedPlan = selectedPlan ? (selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)) : "Free";
+    joinMutation.mutate({ email, plan: capitalizedPlan, source: "pricing_page" });
   };
 
   return (

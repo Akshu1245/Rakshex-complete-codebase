@@ -3837,6 +3837,7 @@ function snakeCase(s: string): string {
 
 export async function addWaitlistEmail(
   email: string,
+  plan = "Free",
   source = "landing_page",
 ): Promise<{ success: boolean; alreadyExists: boolean }> {
   const db = await getDb();
@@ -3845,7 +3846,7 @@ export async function addWaitlistEmail(
     return { success: false, alreadyExists: false };
   }
   try {
-    await db.insert(waitlist).values({ email, source });
+    await db.insert(waitlist).values({ email, plan, source });
     return { success: true, alreadyExists: false };
   } catch (err: any) {
     if (err?.code === "ER_DUP_ENTRY" || err?.message?.includes("Duplicate entry")) {
@@ -3861,4 +3862,10 @@ export async function getWaitlistCount(): Promise<number> {
   if (!db) return 0;
   const rows = await db.execute(sql`SELECT COUNT(*) as count FROM waitlist`);
   return Number((rows as unknown as Array<Record<string, unknown>>)[0]?.count ?? 0);
+}
+
+export async function getAllWaitlistEntries(): Promise<Array<{ id: number; email: string; plan: string; source: string; createdAt: Date }>> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(waitlist).orderBy(desc(waitlist.createdAt));
 }

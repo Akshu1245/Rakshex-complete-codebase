@@ -670,3 +670,92 @@ export async function sendPaymentFailedEmail(opts: PaymentFailedEmailOptions): P
 
   logger.info(`[Email] Payment failed email sent to ${opts.toEmail}`);
 }
+
+export async function sendWaitlistConfirmationEmail(
+  toEmail: string,
+  plan: string,
+): Promise<void> {
+  const subject = "You're on the RakshEx waitlist 🔒";
+  const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>RakshEx Waitlist</title></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background:#0b0f19; margin:0; padding:40px 0; color: #f3f4f6;">
+  <div style="max-width:520px; margin:0 auto; background:#111827; border-radius:12px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.4); border: 1px solid #1f2937;">
+    <div style="background:linear-gradient(135deg,#3b82f6,#1d4ed8); padding:32px; text-align:center;">
+      <h1 style="color:#fff; margin:0; font-size:24px; font-weight:700; letter-spacing:-0.025em;">🔒 RakshEx AI Governance</h1>
+    </div>
+    <div style="padding:40px 32px;">
+      <h2 style="color:#60a5fa; font-size:20px; font-weight:600; margin:0 0 16px;">Welcome to the Waitlist!</h2>
+      <p style="font-size:16px; line-height:1.6; margin:0 0 24px; color: #d1d5db;">
+        Thank you for joining the RakshEx waitlist. We have recorded your interest in the <strong>${plan}</strong> plan.
+      </p>
+      <p style="font-size:16px; line-height:1.6; margin:0 0 24px; color: #d1d5db;">
+        We are granting access in rolling batches to ensure maximum stability and support for our users. You will be notified as soon as an opening becomes available for your slot.
+      </p>
+      <div style="border-top:1px solid #374151; padding-top:20px; margin-top:20px;">
+        <p style="font-size:14px; color:#9ca3af; margin:0 0 8px;">
+          Website: <a href="https://rakshex.in" style="color:#60a5fa; text-decoration:none;">rakshex.in</a>
+        </p>
+        <p style="font-size:14px; color:#9ca3af; margin:0;">
+          For direct inquiries, feel free to reach out to Akshay Kammar at <a href="mailto:akshay@rakshex.in" style="color:#60a5fa; text-decoration:none;">akshay@rakshex.in</a>.
+        </p>
+      </div>
+    </div>
+    <div style="background:#1f2937; border-top:1px solid #374151; padding:20px 32px; text-align:center;">
+      <p style="color:#9ca3af; font-size:12px; margin:0;">
+        © ${new Date().getFullYear()} RakshEx. AI Runtime Governance.
+      </p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  const config = createTransport();
+  if (!config) {
+    logger.info(`[Email] SMTP not configured. Would have sent waitlist user email to: ${toEmail}`);
+  } else {
+    try {
+      await config.transport.sendMail({
+        from: `"RakshEx" <${config.from}>`,
+        to: toEmail,
+        subject,
+        html,
+      });
+      logger.info(`[Email] Waitlist confirmation email sent to ${toEmail}`);
+    } catch (err) {
+      logger.error({ err }, `[Email] Failed to send waitlist user email to: ${toEmail}`);
+    }
+  }
+
+  // Send internal notification to akshay@rakshex.in
+  const internalSubject = `New RakshEx waitlist signup: ${toEmail} - ${plan}`;
+  const internalHtml = `
+<!DOCTYPE html>
+<html>
+<body>
+  <h2>New Waitlist Sign-up Details:</h2>
+  <ul>
+    <li><strong>Email:</strong> ${toEmail}</li>
+    <li><strong>Interested Plan:</strong> ${plan}</li>
+    <li><strong>Timestamp:</strong> ${new Date().toISOString()}</li>
+  </ul>
+</body>
+</html>`;
+
+  if (!config) {
+    logger.info(`[Email] SMTP not configured. Would have sent waitlist internal alert for: ${toEmail}`);
+  } else {
+    try {
+      await config.transport.sendMail({
+        from: `"RakshEx System" <${config.from}>`,
+        to: "akshay@rakshex.in",
+        subject: internalSubject,
+        html: internalHtml,
+      });
+      logger.info(`[Email] Waitlist internal notification sent to akshay@rakshex.in`);
+    } catch (err) {
+      logger.error({ err }, `[Email] Failed to send waitlist internal notification for ${toEmail}`);
+    }
+  }
+}

@@ -1345,6 +1345,7 @@ export const waitlist = mysqlTable(
   {
     id: int("id").autoincrement().primaryKey(),
     email: varchar("email", { length: 320 }).notNull().unique(),
+    plan: varchar("plan", { length: 64 }).default("Free").notNull(),
     source: varchar("source", { length: 64 }).default("landing_page").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     notifiedAt: timestamp("notified_at"),

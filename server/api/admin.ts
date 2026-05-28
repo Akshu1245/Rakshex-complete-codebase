@@ -10,6 +10,11 @@ export const adminRouter = router({
     return { users };
   }),
 
+  listAllWaitlist: adminProcedure.query(async () => {
+    const entries = await db.getAllWaitlistEntries();
+    return { entries };
+  }),
+
   processRefund: adminProcedure
     .input(
       z.object({
