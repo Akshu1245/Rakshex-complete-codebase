@@ -8,6 +8,34 @@ export const metadata = {
 
 const posts = [
   {
+    slug: "owasp-ai-top-10-2025",
+    title: "OWASP AI Top 10 2025: What Every API Developer Needs to Know",
+    excerpt: "LLM01–LLM10 explained, how each maps to real API vulnerabilities, and how RakshEx detects each one.",
+    date: "May 2026",
+    readTime: "8 min",
+  },
+  {
+    slug: "prompt-injection-production-attack-patterns",
+    title: "Prompt Injection in Production: 5 Real Attack Patterns and How to Stop Them",
+    excerpt: "Direct/indirect injection, tool call poisoning, jailbreaks, and context window overflows with API-level defenses.",
+    date: "May 2026",
+    readTime: "7 min",
+  },
+  {
+    slug: "reduce-llm-api-costs-60-percent",
+    title: "How to Reduce LLM API Costs by 60% Without Changing Your Model",
+    excerpt: "Learn how token waste, thinking token attribution, prompt caching, and routing save your cloud bill.",
+    date: "May 2026",
+    readTime: "6 min",
+  },
+  {
+    slug: "ai-agent-api-security-blind-spot",
+    title: "Why Your AI Agent's API is Your Biggest Security Blind Spot",
+    excerpt: "Why traditional SAST/DAST fail to secure agentic tool execution, and how runtime validation bridges the gap.",
+    date: "May 2026",
+    readTime: "7 min",
+  },
+  {
     slug: "helicone-alternative",
     title: "Best Helicone Alternative for AI Security (2026)",
     excerpt:
