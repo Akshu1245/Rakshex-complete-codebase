@@ -7,6 +7,7 @@ import { useCountdown } from "@/lib/animations/countdown";
 import { useMegaMenu } from "@/lib/animations/megamenu";
 import { useScrollReveal } from "@/lib/animations/scroll-reveal";
 import { LogoMarquee } from "@/components/ui/LogoMarquee";
+import { HeroSection } from "@/components/home/HeroSection";
 import {
   Shield,
   Power,
@@ -884,67 +885,9 @@ export default function HomePage() {
         )}
       </nav>
 
-      {/* SECTION 3 — HERO SECTION (clones portal exactly) */}
-      <section className="w-full max-w-[1280px] mx-auto pt-28 pb-20 px-6 xl:px-8" id="portal">
-        <div className="w-full flex flex-col gap-16">
-          <div className="flex flex-col xl:flex-row items-center xl:items-start justify-between gap-12">
-            {/* Hero text panel */}
-            <div className="flex flex-col items-start gap-10 w-full max-w-[680px] xl:max-w-[560px] text-left">
-              <div className="flex flex-col items-start gap-6">
-                {/* top badge */}
-                <div className="inline-flex items-center gap-3 rounded-full border border-cyan-950/60 bg-cyan-950/20 px-4 py-2 backdrop-blur-sm">
-                  <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-                  <p className="text-xs leading-none font-medium tracking-[0.02em] text-cyan-300 font-manrope">
-                    Backed by 4 Patents · Built in Bengaluru, India
-                  </p>
-                </div>
-
-                <h1 className="text-[34px] leading-[42px] sm:text-[54px] sm:leading-[64px] text-white font-manrope font-bold">
-                  <span className="block">The AI-native</span>
-                  <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-teal-400">
-                    security &amp;
-                  </span>
-                  <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-teal-400">
-                    governance platform
-                  </span>
-                </h1>
-
-                <p className="text-base sm:text-lg leading-relaxed font-normal text-neutral-400 font-manrope">
-                  Prompt injection blocking, LLM cost control, shadow API discovery, and compliance
-                  reporting — all in one platform. 478 tests. 4 patents.
-                </p>
-              </div>
-
-              {/* CLI Command Box */}
-              <div className="w-full flex justify-start">
-                <button
-                  onClick={handleCopyCommand}
-                  className="w-full max-w-[420px] sm:w-auto flex items-center justify-between gap-4 pl-5 pr-3 py-3 rounded-full bg-neutral-900 border border-neutral-800 hover:border-neutral-700 transition-all cursor-pointer group"
-                >
-                  <span className="min-w-0 flex items-center gap-2 font-mono text-xs sm:text-sm text-neutral-300">
-                    <span className="text-cyan-500 font-bold">$</span>
-                    <span className="truncate whitespace-nowrap font-mono">
-                      npx rakshex scan ./collection.json
-                    </span>
-                  </span>
-                  <span className="text-[11px] font-bold font-mono px-3.5 py-1.5 rounded-full shrink-0 bg-cyan-500 text-black flex items-center gap-1 hover:bg-cyan-400 transition-colors">
-                    {copied ? <Check className="w-3 h-3" /> : <Clipboard className="w-3 h-3" />}
-                    {copied ? "Copied" : "Copy"}
-                  </span>
-                </button>
-              </div>
-            </div>
-
-            {/* Hero Visual Card Panel */}
-            <div className="w-full max-w-[680px] flex justify-center">
-              <AnimatedHeroVisual />
-            </div>
-          </div>
-
-          {/* "Works perfectly with" marquee */}
-          <LogoMarquee />
-        </div>
-      </section>
+      {/* SECTION 3 — HERO SECTION & LOGOMARQUEE */}
+      <HeroSection />
+      <LogoMarquee />
 
       {/* SECTION 4 — PRODUCT FEATURE CARDS */}
       <section className="relative max-w-[1280px] mx-auto py-20 px-6 xl:px-8" id="features">
