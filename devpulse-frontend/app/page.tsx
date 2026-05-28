@@ -8,6 +8,7 @@ import { useMegaMenu } from "@/lib/animations/megamenu";
 import { useScrollReveal } from "@/lib/animations/scroll-reveal";
 import { LogoMarquee } from "@/components/ui/LogoMarquee";
 import { HeroSection } from "@/components/home/HeroSection";
+import { FeatureCards } from "@/components/home/FeatureCards";
 import {
   Shield,
   Power,
@@ -890,45 +891,8 @@ export default function HomePage() {
       <LogoMarquee />
 
       {/* SECTION 4 — PRODUCT FEATURE CARDS */}
-      <section className="relative max-w-[1280px] mx-auto py-20 px-6 xl:px-8" id="features">
-        <div className="w-full flex flex-col gap-12">
-          <div className="flex flex-col items-center justify-center text-center max-w-2xl mx-auto gap-3">
-            <h2 className="text-[28px] sm:text-[38px] font-manrope font-bold text-white leading-tight">
-              Everything You Need to Ship Secure AI
-            </h2>
-            <p className="text-neutral-400 font-manrope text-base sm:text-lg">
-              One platform. Every surface covered.
-            </p>
-          </div>
-
-          {/* 8 cards in 4-column grid (cloning scraped card style) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-stretch">
-            {featureCards.map((card, idx) => {
-              const Icon = card.icon;
-              return (
-                <Link
-                  key={idx}
-                  href={card.link}
-                  className={`overflow-hidden rounded-xl border border-neutral-800 bg-[#181818] p-6 hover:bg-neutral-900/30 hover:border-neutral-700 transition-all duration-300 flex flex-col justify-between group ${card.hoverClass}`}
-                >
-                  <div className="flex flex-col gap-6 h-full justify-between">
-                    <div className="w-12 h-12 bg-neutral-800 group-hover:bg-cyan-500 rounded-lg flex items-center justify-center text-neutral-400 group-hover:text-black transition-colors shrink-0">
-                      <Icon className="w-5 h-5 transition-transform group-hover:scale-110" />
-                    </div>
-                    <div className="flex flex-col items-start gap-2">
-                      <h3 className="text-base font-semibold font-manrope text-white group-hover:text-cyan-400 transition-colors">
-                        {card.title}
-                      </h3>
-                      <p className="text-neutral-400 text-xs font-normal leading-relaxed">
-                        {card.description}
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
+      <section className="relative w-full max-w-[1280px] mx-auto py-20 px-6 xl:px-8" id="features">
+        <FeatureCards />
       </section>
 
       {/* SECTION 5 — BENCHMARK SECTION (Cloned "1.6x Faster" style) */}
