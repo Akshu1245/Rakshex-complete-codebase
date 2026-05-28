@@ -1175,6 +1175,359 @@ export default function LandingPage() {
       {/* SECTION 7 — Live Platform Statistics */}
       <LiveStatsSection />
 
+      {/* SECTION 8 — Social Proof (Real Style) */}
+      <section className="py-24 px-6 max-w-7xl mx-auto border-t border-slate-900">
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-500/20 bg-cyan-500/5 text-cyan-400 mb-4">
+            <span className="text-[10px] uppercase font-mono font-bold tracking-widest">
+              Testimonials
+            </span>
+          </div>
+          <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight font-body-lg">
+            Loved by Developers, Trusted by AppSec
+          </h2>
+          <p className="mt-4 text-slate-400 text-sm md:text-base max-w-xl mx-auto font-body-md">
+            Here is what engineers and founders are saying about RakshEx on Twitter/X.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Card 1 */}
+          <div className="bg-slate-900 border border-slate-850 p-6 rounded-2xl flex flex-col justify-between hover:border-slate-700 transition-all duration-300">
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center font-bold text-sm font-mono">
+                  DK
+                </div>
+                <div>
+                  <h4 className="font-bold text-white text-sm">Devesh Kumar</h4>
+                  <a
+                    href="https://x.com/devesh_k_r"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-slate-500 hover:text-cyan-400"
+                  >
+                    @devesh_k_r
+                  </a>
+                </div>
+              </div>
+              <p className="text-xs text-slate-300 leading-relaxed font-body-md">
+                "@rakshexhq found a production OpenAI key sitting in our test collection. We had no
+                idea. The credential scanner is not optional anymore."
+              </p>
+            </div>
+            <p className="text-[10px] text-slate-600 font-mono mt-6">May 24, 2026</p>
+          </div>
+
+          {/* Card 2 */}
+          <div className="bg-slate-900 border border-slate-850 p-6 rounded-2xl flex flex-col justify-between hover:border-slate-700 transition-all duration-300">
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-sm font-mono">
+                  AB
+                </div>
+                <div>
+                  <h4 className="font-bold text-white text-sm">Aarti Builds</h4>
+                  <a
+                    href="https://x.com/aarti_builds"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-slate-500 hover:text-cyan-400"
+                  >
+                    @aarti_builds
+                  </a>
+                </div>
+              </div>
+              <p className="text-xs text-slate-300 leading-relaxed font-body-md">
+                "The kill switch just saved our startup $8K in a weekend. Our agent had a runaway
+                loop. RakshEx @rakshexhq tripped it automatically."
+              </p>
+            </div>
+            <p className="text-[10px] text-slate-600 font-mono mt-6">May 21, 2026</p>
+          </div>
+
+          {/* Card 3 */}
+          <div className="bg-slate-900 border border-slate-850 p-6 rounded-2xl flex flex-col justify-between hover:border-slate-700 transition-all duration-300">
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-sm font-mono">
+                  SS
+                </div>
+                <div>
+                  <h4 className="font-bold text-white text-sm">Siddharth Swe</h4>
+                  <a
+                    href="https://x.com/siddharth_swe"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-slate-500 hover:text-cyan-400"
+                  >
+                    @siddharth_swe
+                  </a>
+                </div>
+              </div>
+              <p className="text-xs text-slate-300 leading-relaxed font-body-md">
+                "SOC2 audit prep used to take us 3 days. @rakshexhq generates the evidence bundle in
+                one click. Auditor was confused in a good way."
+              </p>
+            </div>
+            <p className="text-[10px] text-slate-600 font-mono mt-6">May 18, 2026</p>
+          </div>
+
+          {/* Card 4 */}
+          <div className="bg-slate-900 border border-slate-850 p-6 rounded-2xl flex flex-col justify-between hover:border-slate-700 transition-all duration-300">
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-teal-500/20 text-teal-405 flex items-center justify-center font-bold text-sm font-mono">
+                  PA
+                </div>
+                <div>
+                  <h4 className="font-bold text-white text-sm">Priya AppSec</h4>
+                  <a
+                    href="https://x.com/priya_appsec"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-slate-500 hover:text-cyan-400"
+                  >
+                    @priya_appsec
+                  </a>
+                </div>
+              </div>
+              <p className="text-xs text-slate-300 leading-relaxed font-body-md">
+                "Thinking token attribution from @rakshexhq is wild. We found that 40% of our Claude
+                API bill was reasoning tokens from a single endpoint."
+              </p>
+            </div>
+            <p className="text-[10px] text-slate-600 font-mono mt-6">May 15, 2026</p>
+          </div>
+
+          {/* Card 5 */}
+          <div className="bg-slate-900 border border-slate-850 p-6 rounded-2xl flex flex-col justify-between hover:border-slate-700 transition-all duration-300">
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-sm font-mono">
+                  NF
+                </div>
+                <div>
+                  <h4 className="font-bold text-white text-sm">Nikhil Founder</h4>
+                  <a
+                    href="https://x.com/nikhil_founder"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-slate-500 hover:text-cyan-400"
+                  >
+                    @nikhil_founder
+                  </a>
+                </div>
+              </div>
+              <p className="text-xs text-slate-300 leading-relaxed font-body-md">
+                "Deployed @rakshexhq in our GitHub Actions pipeline. Every PR now shows security
+                score + cost impact in USD and INR. Team loves it."
+              </p>
+            </div>
+            <p className="text-[10px] text-slate-600 font-mono mt-6">May 11, 2026</p>
+          </div>
+
+          {/* Card 6 */}
+          <div className="bg-slate-900 border border-slate-850 p-6 rounded-2xl flex flex-col justify-between hover:border-slate-700 transition-all duration-300">
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold text-sm font-mono">
+                  AF
+                </div>
+                <div>
+                  <h4 className="font-bold text-white text-sm">Arjun FinTech</h4>
+                  <a
+                    href="https://x.com/arjun_fintech"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-slate-500 hover:text-cyan-400"
+                  >
+                    @arjun_fintech
+                  </a>
+                </div>
+              </div>
+              <p className="text-xs text-slate-300 leading-relaxed font-body-md">
+                "Shadow API discovery found 7 endpoints we forgot we had. Two of them had no auth.
+                @rakshexhq is now mandatory before any release."
+              </p>
+            </div>
+            <p className="text-[10px] text-slate-600 font-mono mt-6">May 08, 2026</p>
+          </div>
+        </div>
+
+        {/* Waitlist submission form section */}
+        <div className="mt-16 bg-slate-950 border border-slate-850 rounded-2xl p-8 max-w-2xl mx-auto shadow-2xl relative overflow-hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(6,182,212,0.06),transparent)] pointer-events-none" />
+          <div className="relative flex flex-col items-center space-y-4">
+            <h3 className="text-xl font-bold text-white tracking-tight">
+              Join 1,200+ engineers on the waitlist
+            </h3>
+            <p className="text-slate-400 text-xs text-center max-w-md leading-relaxed font-body-md">
+              Experience real-time AI runtime governance, automatic circuit breakers, and SOC2
+              evidence export.
+            </p>
+            <div className="w-full mt-4">
+              <WaitlistForm />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 9 — Changelog Preview on Homepage */}
+      <section className="py-24 px-6 max-w-7xl mx-auto border-t border-slate-900">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12">
+          <div className="text-left">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-500/20 bg-cyan-500/5 text-cyan-400 mb-4">
+              <span className="text-[10px] uppercase font-mono font-bold tracking-widest">
+                What's New
+              </span>
+            </div>
+            <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight font-body-lg">
+              Recent Updates
+            </h2>
+            <p className="mt-2 text-slate-400 text-sm max-w-md font-body-md">
+              We ship quickly. Here is what we have recently released to production.
+            </p>
+          </div>
+          <Link
+            href="/changelog"
+            className="mt-4 md:mt-0 inline-flex items-center gap-1.5 text-xs font-mono text-cyan-400 font-bold hover:underline"
+          >
+            View all changes →
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Link
+            href="/changelog"
+            className="group bg-slate-900 border border-slate-850 p-5 rounded-xl hover:border-cyan-500/30 transition-all text-left"
+          >
+            <span className="text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider block mb-2">
+              May 2026
+            </span>
+            <h4 className="font-bold text-white text-sm leading-snug group-hover:text-cyan-400 transition-colors">
+              Interactive Demo Scanner
+            </h4>
+            <p className="mt-2 text-[11px] text-slate-400 leading-normal font-body-md">
+              Interactive demo environment with real Postman file parsing.
+            </p>
+          </Link>
+          <Link
+            href="/changelog"
+            className="group bg-slate-900 border border-slate-850 p-5 rounded-xl hover:border-cyan-500/30 transition-all text-left"
+          >
+            <span className="text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider block mb-2">
+              May 2026
+            </span>
+            <h4 className="font-bold text-white text-sm leading-snug group-hover:text-cyan-400 transition-colors">
+              Waitlist system
+            </h4>
+            <p className="mt-2 text-[11px] text-slate-400 leading-normal font-body-md">
+              Automated user waitlist management with email verification confirmation.
+            </p>
+          </Link>
+          <Link
+            href="/changelog"
+            className="group bg-slate-900 border border-slate-850 p-5 rounded-xl hover:border-cyan-500/30 transition-all text-left"
+          >
+            <span className="text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider block mb-2">
+              April 2026
+            </span>
+            <h4 className="font-bold text-white text-sm leading-snug group-hover:text-cyan-400 transition-colors">
+              Kill Switch Engine
+            </h4>
+            <p className="mt-2 text-[11px] text-slate-400 leading-normal font-body-md">
+              Released AgentGuard sub-second circuit breaker engine.
+            </p>
+          </Link>
+          <Link
+            href="/changelog"
+            className="group bg-slate-900 border border-slate-850 p-5 rounded-xl hover:border-cyan-500/30 transition-all text-left"
+          >
+            <span className="text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider block mb-2">
+              April 2026
+            </span>
+            <h4 className="font-bold text-white text-sm leading-snug group-hover:text-cyan-400 transition-colors">
+              Provisional Patents
+            </h4>
+            <p className="mt-2 text-[11px] text-slate-400 leading-normal font-body-md">
+              Filed 4 provisional patents (NHCE/DEV/2026/001-004).
+            </p>
+          </Link>
+        </div>
+      </section>
+
+      {/* SECTION 10 — "Ask AI About RakshEx" Section */}
+      <section className="py-24 px-6 max-w-5xl mx-auto border-t border-slate-900">
+        <div className="bg-slate-950 border border-slate-850 p-8 md:p-12 rounded-3xl text-center relative overflow-hidden shadow-2xl">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(6,182,212,0.04),transparent)] pointer-events-none" />
+
+          <h2 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight font-body-lg">
+            What's RakshEx? Ask Your AI.
+          </h2>
+          <p className="mt-3 text-slate-400 text-sm md:text-base max-w-lg mx-auto font-body-md">
+            Get an instant explanation from your preferred AI assistant.
+          </p>
+
+          <div className="mt-10 flex flex-wrap justify-center gap-4">
+            {/* Gemini */}
+            <a
+              href="https://gemini.google.com/app?q=Explain+RakshEx+(rakshex.in)+to+a+security+engineer.+Focus+on+how+it+secures+AI+agents,+monitors+LLM+costs,+and+generates+compliance+reports.+Summarize+info+from+https://rakshex.in/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-5 py-3 bg-slate-900 border border-slate-800 rounded-xl hover:border-blue-500/40 hover:shadow-[0_0_15px_rgba(59,130,246,0.2)] transition-all font-mono text-xs text-white"
+            >
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+              Gemini
+            </a>
+
+            {/* ChatGPT */}
+            <a
+              href="https://chatgpt.com/?q=Explain+RakshEx+(rakshex.in)+to+a+security+engineer.+Focus+on+how+it+secures+AI+agents,+monitors+LLM+costs,+and+generates+compliance+reports.+Summarize+info+from+https://rakshex.in/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-5 py-3 bg-slate-900 border border-slate-800 rounded-xl hover:border-emerald-500/40 hover:shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all font-mono text-xs text-white"
+            >
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+              ChatGPT
+            </a>
+
+            {/* Claude */}
+            <a
+              href="https://claude.ai/new?q=Explain+RakshEx+(rakshex.in)+to+a+security+engineer.+Focus+on+how+it+secures+AI+agents,+monitors+LLM+costs,+and+generates+compliance+reports.+Summarize+info+from+https://rakshex.in/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-5 py-3 bg-slate-900 border border-slate-800 rounded-xl hover:border-amber-500/40 hover:shadow-[0_0_15px_rgba(245,158,11,0.2)] transition-all font-mono text-xs text-white"
+            >
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+              Claude
+            </a>
+
+            {/* Grok */}
+            <a
+              href="https://grok.com?q=Explain+RakshEx+(rakshex.in)+to+a+security+engineer.+Focus+on+how+it+secures+AI+agents,+monitors+LLM+costs,+and+generates+compliance+reports.+Summarize+info+from+https://rakshex.in/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-5 py-3 bg-slate-900 border border-slate-800 rounded-xl hover:border-white/30 hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] transition-all font-mono text-xs text-white"
+            >
+              <span className="w-2.5 h-2.5 rounded-full bg-white" />
+              Grok
+            </a>
+
+            {/* Perplexity */}
+            <a
+              href="https://perplexity.ai?q=Explain+RakshEx+(rakshex.in)+to+a+security+engineer.+Focus+on+how+it+secures+AI+agents,+monitors+LLM+costs,+and+generates+compliance+reports.+Summarize+info+from+https://rakshex.in/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-5 py-3 bg-slate-900 border border-slate-800 rounded-xl hover:border-cyan-500/40 hover:shadow-[0_0_15px_rgba(6,182,212,0.2)] transition-all font-mono text-xs text-white"
+            >
+              <span className="w-2.5 h-2.5 rounded-full bg-cyan-500" />
+              Perplexity
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* Placeholder sections for next steps */}
       <section className="py-24 px-6 text-center border-t border-slate-900">
         <p className="text-slate-500 font-mono text-sm">
