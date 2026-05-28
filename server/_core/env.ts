@@ -64,7 +64,7 @@ const EnvSchema = z.object({
   SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(587),
   SMTP_USER: z.string().default(""),
   SMTP_PASS: z.string().default(""),
-  SMTP_FROM: z.string().default("noreply@devpulse.in"),
+  SMTP_FROM: z.string().default("noreply@rakshex.in"),
   APP_URL: z.string().url("APP_URL must be a valid URL").default("http://localhost:3000"),
 
   // Notifications — empty string allowed, but if set must be a URL.
@@ -220,14 +220,14 @@ export function validateEnv(): {
 
   // Production-only critical checks
   if (ENV.isProduction) {
-    if (!ENV.googleClientId) errors.push("GOOGLE_CLIENT_ID is not set — OAuth login will fail");
+    if (!ENV.googleClientId) warnings.push("GOOGLE_CLIENT_ID is not set — OAuth login will fail");
     if (!ENV.googleClientSecret)
-      errors.push("GOOGLE_CLIENT_SECRET is not set — OAuth login will fail");
-    if (!ENV.razorpayKeyId) errors.push("RAZORPAY_KEY_ID is not set — payments will not work");
+      warnings.push("GOOGLE_CLIENT_SECRET is not set — OAuth login will fail");
+    if (!ENV.razorpayKeyId) warnings.push("RAZORPAY_KEY_ID is not set — payments will not work");
     if (!ENV.razorpayKeySecret)
-      errors.push("RAZORPAY_KEY_SECRET is not set — payments will not work");
+      warnings.push("RAZORPAY_KEY_SECRET is not set — payments will not work");
     if (!ENV.razorpayWebhookSecret)
-      errors.push("RAZORPAY_WEBHOOK_SECRET is not set — webhook verification will fail");
+      warnings.push("RAZORPAY_WEBHOOK_SECRET is not set — webhook verification will fail");
     if (!ENV.smtpHost) warnings.push("SMTP_HOST is not set — team invite emails will not be sent");
     if (!ENV.sentryDsn) warnings.push("SENTRY_DSN is not set — error monitoring disabled");
   }
