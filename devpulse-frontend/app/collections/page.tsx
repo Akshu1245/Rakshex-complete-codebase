@@ -152,7 +152,7 @@ export default function CollectionsPage() {
           const result = await createCollection.mutateAsync({
             name: p.name || `Imported ${batchFiles[i].name}`,
             format: p.format,
-            data: p.data,
+            data: p.data as Record<string, any>,
           });
 
           const credFindings =
@@ -210,7 +210,7 @@ export default function CollectionsPage() {
     }
 
     createCollection.mutate(
-      { name: uploadName, format: uploadFormat, data: parsed },
+      { name: uploadName, format: uploadFormat, data: parsed as Record<string, any> },
       {
         onSuccess: (result) => {
           const credFindings =

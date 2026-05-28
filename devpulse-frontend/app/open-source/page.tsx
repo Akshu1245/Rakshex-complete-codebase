@@ -84,10 +84,10 @@ export default function OpenSourcePage() {
                 {error && <p className="text-xs text-rose-400">{error}</p>}
                 <button
                   type="submit"
-                  disabled={joinMutation.isLoading}
+                  disabled={joinMutation.isPending}
                   className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-semibold text-sm py-2 px-4 rounded-lg transition-colors shadow-lg shadow-blue-500/20"
                 >
-                  {joinMutation.isLoading ? "Joining..." : "Join Ruleset Waitlist"}
+                  {joinMutation.isPending ? "Joining..." : "Join Ruleset Waitlist"}
                 </button>
               </form>
             )}

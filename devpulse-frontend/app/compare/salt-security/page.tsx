@@ -75,7 +75,7 @@ export default function CompareSaltSecurity() {
               />
               <button
                 type="submit"
-                disabled={joinMutation.isLoading}
+                disabled={joinMutation.isPending}
                 className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-semibold text-sm py-2 px-6 rounded-lg transition-colors shadow-lg shadow-blue-500/20"
               >
                 Notify Me

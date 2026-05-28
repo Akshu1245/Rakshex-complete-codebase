@@ -57,7 +57,7 @@ const MOCK_FINDINGS = [
   },
 ];
 
-const SEVERITY_COLOR = {
+const SEVERITY_COLOR: Record<string, string> = {
   Critical: "text-red-400 bg-red-900/20 border border-red-500/30",
   High: "text-orange-400 bg-orange-950/20 border border-orange-500/30",
   Medium: "text-yellow-400 bg-yellow-950/20 border border-yellow-500/30",
@@ -305,7 +305,7 @@ export default function DemoPage() {
   const [fileName, setFileName] = useState("");
   const [fileSize, setFileSize] = useState("");
   const [endpoints, setEndpoints] = useState(ENDPOINTS);
-  const [findings, setFindings] = useState(MOCK_FINDINGS);
+  const [findings, setFindings] = useState<any[]>(MOCK_FINDINGS);
   const [score, setScore] = useState(44);
   const [progressText, setProgressText] = useState("");
   const [isDragOver, setIsDragOver] = useState(false);

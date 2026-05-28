@@ -13,7 +13,7 @@ export default function ResearchPage() {
     createdAt: string;
     status: string;
   }
-  const scans: ResearchMemoryItem[] = scansQuery.data?.items ?? [];
+  const scans: any[] = (scansQuery.data as any) ?? [];
   const loading = scansQuery.isLoading;
 
   const runResearchMutation = trpc.research.runResearch.useMutation();

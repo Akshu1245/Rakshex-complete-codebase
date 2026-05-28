@@ -50,7 +50,7 @@ export default function RedTeamPage() {
     async function load() {
       try {
         const runs = await utils.client.runtimeGovernance.redteamRuns.query({ limit: 50 });
-        const mappedFindings = (runs.runs as RedTeamRun[])
+        const mappedFindings = (runs.runs as unknown as RedTeamRun[])
           .flatMap((r) => r.findings || [])
           .slice(0, 50);
         setFindings(mappedFindings);

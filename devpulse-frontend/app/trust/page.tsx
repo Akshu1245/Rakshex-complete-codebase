@@ -12,7 +12,7 @@ export default function TrustCenter() {
     { id: "NHCE/DEV/2026/001", name: "AI Runtime Governance Framework", desc: "Covers our core interceptor middleware, checking and blocking payloads at the API level before they reach frontier models." },
     { id: "NHCE/DEV/2026/002", name: "LLM Cost Attribution Engine", desc: "A method of parsing reasoning metadata to trace thinking tokens back to features, sessions, and individual customer keys." },
     { id: "NHCE/DEV/2026/003", name: "AgentGuard Kill Switch System", desc: "An autonomous circuit breaker system monitoring agentic tool invocation rates and locking compromised connections." },
-    { id: "NHCE/DEV/2026/054" || "NHCE/DEV/2026/004", name: "Prompt Injection Detection Engine", desc: "Classifies prompt semantics using dynamic vector mapping and heuristics to block adversarial instructions." },
+    { id: "NHCE/DEV/2026/004", name: "Prompt Injection Detection Engine", desc: "Classifies prompt semantics using dynamic vector mapping and heuristics to block adversarial instructions." },
   ];
 
   return (
