@@ -1,87 +1,109 @@
+import Link from "next/link";
+
 export const metadata = {
-  title: "Changelog — Rakshex Product Updates",
+  title: "Changelog — RakshEx Product Updates",
   description:
-    "Track every update, feature, and improvement to Rakshex. See what's new, what changed, and what's coming next.",
+    "Track every update, feature, and improvement to RakshEx. See what's new, what changed, and what's coming next.",
   alternates: { canonical: "/changelog" },
 };
 
-const ENTRIES = [
+interface ChangelogItem {
+  type: "added" | "improved" | "fixed";
+  text: string;
+}
+
+interface ChangelogEntry {
+  version: string;
+  date: string;
+  items: ChangelogItem[];
+}
+
+const ENTRIES: ChangelogEntry[] = [
   {
+    version: "v0.4.0",
     date: "May 2026",
-    version: "v1.2.0",
     items: [
-      { type: "feature", text: "14-day Pro trial for all new signups" },
-      {
-        type: "feature",
-        text: "Dunning management — retry emails and auto-downgrade after 3 failed payments",
-      },
-      {
-        type: "feature",
-        text: "Competitor import system (Helicone, Portkey, Lakera, LangSmith, CSV/JSON)",
-      },
-      { type: "feature", text: "ROI calculator for prospects" },
-      { type: "improvement", text: "Enhanced landing page with comparison table and trust badges" },
-      { type: "improvement", text: "Blog SEO posts for competitor alternatives" },
-      { type: "fix", text: "Fixed hydration mismatch on landing page JSON-LD" },
+      { type: "added", text: "Interactive demo scanner with Postman collection upload" },
+      { type: "added", text: "Waitlist system with email confirmation" },
+      { type: "fixed", text: "All navigation dead links resolved" },
+      { type: "fixed", text: "Google OAuth pointing to production endpoint" },
+      { type: "improved", text: "About page now reflects full founding team" },
     ],
   },
   {
+    version: "v0.3.0",
     date: "April 2026",
-    version: "v1.1.0",
     items: [
-      { type: "feature", text: "Razorpay integration for India payments" },
-      { type: "feature", text: "Billing portal with subscription management and invoice history" },
-      { type: "feature", text: "Kill switch autonomous circuit breaker" },
-      { type: "feature", text: "Red team scheduler with 87-payload library" },
-      { type: "improvement", text: "VS Code extension v1.0 published to marketplace" },
-      { type: "improvement", text: "GitHub Action with PR comments and severity badges" },
+      { type: "added", text: "AgentGuard kill switch engine" },
+      { type: "added", text: "Four provisional patents filed (NHCE/DEV/2026/001–004)" },
+      { type: "added", text: "VS Code extension alpha (devpulse integration)" },
+      { type: "improved", text: "Pricing page with Pro and Enterprise tiers" },
     ],
   },
   {
+    version: "v0.2.0",
     date: "March 2026",
-    version: "v1.0.0",
     items: [
-      { type: "feature", text: "Security scanner with OWASP API Top 10 mapping" },
-      { type: "feature", text: "LLM cost monitoring for 6 providers" },
-      { type: "feature", text: "Shadow API discovery for 6 frameworks" },
-      { type: "feature", text: "Compliance report export (JSON, CSV, PDF)" },
-      { type: "feature", text: "Enterprise SSO with SAML 2.0 and OIDC" },
-      { type: "feature", text: "Team workspaces with RBAC" },
+      { type: "added", text: "LLM cost intelligence dashboard" },
+      { type: "added", text: "Thinking token attribution engine" },
+      { type: "added", text: "Multi-provider support (OpenAI, Anthropic, Gemini)" },
+      { type: "improved", text: "Dashboard performance 40% faster" },
+    ],
+  },
+  {
+    version: "v0.1.0",
+    date: "February 2026",
+    items: [
+      { type: "added", text: "Initial private beta launch" },
+      { type: "added", text: "API security scanner core engine" },
+      { type: "added", text: "OWASP AI Top 10 detection rules" },
+      { type: "added", text: "Postman collection import" },
     ],
   },
 ];
 
-const BADGE: Record<string, string> = {
-  feature: "bg-green-900/50 text-green-400",
-  improvement: "bg-blue-900/50 text-blue-400",
-  fix: "bg-amber-900/50 text-amber-400",
+const BADGE_STYLE: Record<string, string> = {
+  added: "bg-emerald-950/60 text-emerald-400 border border-emerald-800/40",
+  improved: "bg-blue-950/60 text-blue-400 border border-blue-800/40",
+  fixed: "bg-amber-950/60 text-amber-400 border border-amber-800/40",
 };
 
 export default function ChangelogPage() {
   return (
-    <div className="min-h-screen bg-gray-900 text-white py-16 px-4">
+    <div className="min-h-screen bg-slate-950 text-slate-100 py-16 px-4 font-sans">
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-4xl font-bold mb-2">Changelog</h1>
-        <p className="text-gray-400 mb-12">What's new in Rakshex. Updated with every release.</p>
+        <header className="mb-16">
+          <h1 className="text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">
+            Changelog
+          </h1>
+          <p className="text-slate-400 mt-2 text-base">
+            Track product updates, early releases, and the evolution of the RakshEx AI governance framework.
+          </p>
+        </header>
 
-        <div className="space-y-12">
+        {/* Timeline Layout */}
+        <div className="relative border-l border-slate-800/80 ml-4 space-y-12">
           {ENTRIES.map((entry) => (
-            <div key={entry.version}>
-              <div className="flex items-center gap-4 mb-4">
-                <h2 className="text-xl font-bold">{entry.version}</h2>
-                <span className="text-gray-500 text-sm">{entry.date}</span>
+            <div key={entry.version} className="relative pl-8">
+              {/* Bullet node on timeline */}
+              <div className="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 border-blue-500 bg-slate-950 shadow-md shadow-blue-500/20" />
+
+              <div className="flex flex-wrap items-baseline gap-3 mb-4">
+                <span className="text-2xl font-bold text-white font-mono">{entry.version}</span>
+                <span className="text-slate-400 text-sm">{entry.date}</span>
               </div>
-              <ul className="space-y-3">
+
+              <ul className="space-y-4">
                 {entry.items.map((item, i) => (
                   <li key={i} className="flex items-start gap-3">
                     <span
-                      className={`inline-block px-2 py-0.5 rounded text-xs font-medium shrink-0 mt-0.5 ${
-                        BADGE[item.type]
+                      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wider shrink-0 mt-0.5 ${
+                        BADGE_STYLE[item.type]
                       }`}
                     >
                       {item.type}
                     </span>
-                    <span className="text-gray-300 text-sm">{item.text}</span>
+                    <span className="text-slate-300 text-sm leading-relaxed">{item.text}</span>
                   </li>
                 ))}
               </ul>
@@ -89,14 +111,26 @@ export default function ChangelogPage() {
           ))}
         </div>
 
-        <div className="mt-16 p-6 bg-gray-800 rounded-xl border border-gray-700">
-          <h3 className="font-bold mb-2">Coming Soon</h3>
-          <ul className="text-gray-400 text-sm space-y-2">
-            <li>• Stripe integration for global payments</li>
-            <li>• Slack bot for real-time alerts</li>
-            <li>• ML-based prompt injection classifier (Phase 3)</li>
-            <li>• Custom policy builder (drag-and-drop YAML)</li>
-            <li>• Dashboard analytics with export</li>
+        {/* Coming soon section */}
+        <div className="mt-16 p-8 bg-slate-900/30 border border-slate-900 rounded-2xl">
+          <h3 className="text-lg font-bold text-white mb-4">Under Development</h3>
+          <ul className="text-slate-400 text-sm space-y-3">
+            <li className="flex items-center gap-2">
+              <span className="text-blue-500 font-bold">•</span>
+              Stripe integration for global customer billing
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="text-blue-500 font-bold">•</span>
+              Slack integration for real-time security incident alerts
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="text-blue-500 font-bold">•</span>
+              Advanced machine-learning classifiers for custom model prompt evaluations
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="text-blue-500 font-bold">•</span>
+              Visual drag-and-drop rule builder to customize runtime policies
+            </li>
           </ul>
         </div>
       </div>
