@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Shield, Zap, Eye, Lock, TrendingDown, Globe, ChevronRight, Check } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { Footer } from "@/components/layout/Footer";
 
 export default function LandingPage() {
   const [email, setEmail] = useState("");
@@ -247,29 +248,7 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-8 px-4 border-t border-white/5">
-        <div className="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-500">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">🛡</span>
-            <span className="font-semibold text-slate-300">Rakshex</span>
-          </div>
-          <div className="flex gap-6">
-            <a href="#" className="hover:text-slate-300 transition-colors">
-              Security
-            </a>
-            <a href="#" className="hover:text-slate-300 transition-colors">
-              Privacy
-            </a>
-            <a href="#" className="hover:text-slate-300 transition-colors">
-              Docs
-            </a>
-            <a href="#" className="hover:text-slate-300 transition-colors">
-              GitHub
-            </a>
-          </div>
-          <div>© 2026 Rakshex Technologies</div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

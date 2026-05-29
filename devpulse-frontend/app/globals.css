@@ -790,3 +790,133 @@ body {
     opacity: 0;
   }
 }
+
+.footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 40px 80px 32px;
+  background: transparent; /* let dot grid show through */
+}
+
+.footer-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+}
+
+.footer-left {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.footer-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  text-decoration: none;
+}
+
+.footer-socials {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.footer-socials a {
+  color: rgba(255, 255, 255, 0.45);
+  transition: color 0.2s;
+  display: flex;
+}
+
+.footer-socials a:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Vertical divider between logo and socials */
+.footer-left::after {
+  content: '';
+  width: 1px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.12);
+  /* This sits between logo and socials — restructure HTML
+     to put divider as a sibling if needed */
+}
+
+.footer-nav {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.footer-nav a {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.footer-nav a:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.footer-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.footer-copy {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.footer-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.35);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.footer-status:hover {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  background: #00d4aa;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #00d4aa;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; box-shadow: 0 0 6px #00d4aa; }
+  50% { opacity: 0.7; box-shadow: 0 0 12px #00d4aa; }
+}
+
+@media (max-width: 768px) {
+  .footer {
+    padding: 32px 24px 24px;
+  }
+  .footer-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 24px;
+  }
+  .footer-nav {
+    gap: 16px;
+  }
+}
+
