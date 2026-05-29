@@ -428,3 +428,216 @@ body {
     min-height: 480px;
   }
 }
+
+.hero-diagram {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  width: 100%;
+  height: 480px;
+}
+
+/* CARD 1 — Agent — top, slightly right of center */
+.card-agent {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 280px;
+  z-index: 2;
+}
+
+/* CONNECTOR VERTICAL */
+.connector-vertical {
+  position: absolute;
+  top: 160px; /* bottom of agent card */
+  left: calc(50% - 1px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 80px;
+  z-index: 1;
+}
+
+.connector-line-solid {
+  width: 2px;
+  flex: 1;
+  background: #00d4aa;
+}
+
+.connector-arrowhead {
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 8px solid #00d4aa;
+}
+
+/* BOTTOM ROW */
+.diagram-bottom-row {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  height: 260px;
+}
+
+/* CARD 2 — RakshEx main */
+.card-main {
+  flex: 1;
+  border-color: rgba(0, 212, 170, 0.5) !important;
+  z-index: 2;
+}
+
+/* CONNECTOR HORIZONTAL (dots) */
+.connector-horizontal {
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  margin-top: 60px;
+}
+
+.connector-dots {
+  width: 60px;
+  height: 2px;
+  background-image: radial-gradient(circle, #00d4aa 1.5px, transparent 1.5px);
+  background-size: 10px 2px;
+  background-repeat: repeat-x;
+}
+
+/* Animated dot traveling along vertical connector */
+@keyframes travel-down {
+  0% { top: 0; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+.connector-vertical::after {
+  content: '';
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: #00d4aa;
+  border-radius: 50%;
+  left: -4px;
+  top: 0;
+  animation: travel-down 2s ease-in-out infinite;
+  box-shadow: 0 0 8px #00d4aa;
+}
+
+/* CARD 3 — Report */
+.card-report {
+  width: 200px;
+  z-index: 2;
+}
+
+/* ALL CARDS base style */
+.diagram-card {
+  background: rgba(20, 20, 20, 0.75);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: white;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.card-icon { color: rgba(255,255,255,0.7); }
+
+.connected-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0,212,170,0.15);
+  border: 1px solid rgba(0,212,170,0.35);
+  color: #00d4aa;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-bottom: 12px;
+}
+
+.badge-dot {
+  width: 6px;
+  height: 6px;
+  background: #00d4aa;
+  border-radius: 50%;
+}
+
+.card-desc {
+  font-size: 13px;
+  color: rgba(255,255,255,0.5);
+  line-height: 1.5;
+}
+
+.card-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  font-size: 13px;
+}
+
+.card-row:last-child { border-bottom: none; }
+.row-label { flex: 1; color: rgba(255,255,255,0.6); }
+.row-value { font-weight: 600; font-size: 13px; }
+.row-value.green { color: #00d4aa; }
+.row-value.yellow { color: #f59e0b; }
+.row-value.red { color: #ef4444; }
+
+.skeleton-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.skel-bar {
+  height: 6px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 3px;
+}
+
+.mini-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 50px;
+  margin-bottom: 12px;
+}
+
+.chart-bar {
+  width: 20px;
+  border-radius: 3px 3px 0 0;
+}
+
+.score-label {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.35);
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.score-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #00d4aa;
+  text-align: center;
+}
