@@ -32,7 +32,7 @@ const COMPETITORS = [
 
 export default function ComparisonIndex() {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 py-16 px-4 font-sans">
+    <div className="min-h-screen bg-transparent text-slate-100 py-16 px-4 font-sans">
       <div className="max-w-4xl mx-auto">
         <header className="mb-12">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-950 text-blue-400 border border-blue-900/60 mb-4">
@@ -42,7 +42,8 @@ export default function ComparisonIndex() {
             Compare RakshEx
           </h1>
           <p className="text-slate-400 mt-2 text-base">
-            Honest comparisons with traditional code scanners, observability engines, and legacy API protection tools.
+            Honest comparisons with traditional code scanners, observability engines, and legacy API
+            protection tools.
           </p>
         </header>
 
@@ -58,7 +59,10 @@ export default function ComparisonIndex() {
               </h3>
               <p className="text-slate-400 text-sm leading-relaxed mb-4">{comp.tagline}</p>
               <span className="text-xs text-blue-400 group-hover:underline font-semibold flex items-center gap-1">
-                View full comparison <span className="group-hover:translate-x-1 transition-transform inline-block">→</span>
+                View full comparison{" "}
+                <span className="group-hover:translate-x-1 transition-transform inline-block">
+                  →
+                </span>
               </span>
             </Link>
           ))}

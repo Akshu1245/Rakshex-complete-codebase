@@ -70,7 +70,7 @@ const BADGE_STYLE: Record<string, string> = {
 
 export default function ChangelogPage() {
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white pt-32 pb-16 px-6 xl:px-8 font-sans selection:bg-cyan-500 selection:text-black">
+    <div className="min-h-screen bg-transparent text-white pt-32 pb-16 px-6 xl:px-8 font-sans selection:bg-cyan-500 selection:text-black">
       <div className="max-w-3xl mx-auto">
         <header className="mb-16 pb-6 border-b border-neutral-900">
           <h1 className="text-4xl font-extrabold tracking-tight text-white font-manrope">

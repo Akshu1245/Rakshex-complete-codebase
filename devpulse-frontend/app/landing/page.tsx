@@ -75,7 +75,7 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white overflow-hidden">
+    <div className="min-h-screen bg-transparent text-white overflow-hidden">
       {/* Hero */}
       <section className="relative pt-20 pb-32 px-4">
         <div className="absolute inset-0 bg-gradient-to-b from-indigo-500/5 via-transparent to-transparent" />

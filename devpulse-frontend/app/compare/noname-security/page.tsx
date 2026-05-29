@@ -33,7 +33,7 @@ export default function CompareNonameSecurity() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 py-16 px-4 font-sans">
+    <div className="min-h-screen bg-transparent text-slate-100 py-16 px-4 font-sans">
       <div className="max-w-3xl mx-auto">
         <nav className="text-sm text-blue-400 mb-6">
           <Link href="/compare" className="hover:underline">
@@ -49,14 +49,18 @@ export default function CompareNonameSecurity() {
             RakshEx vs Noname Security — Which is Right for You?
           </h1>
           <p className="text-slate-400 text-base leading-relaxed">
-            Noname Security focuses on API discovery, posture management, and active testing configurations. RakshEx is built specifically as a runtime AI firewall and governance engine, offering active prompt injection detection, token-level cost attribution, and AgentGuard validation for tool execution.
+            Noname Security focuses on API discovery, posture management, and active testing
+            configurations. RakshEx is built specifically as a runtime AI firewall and governance
+            engine, offering active prompt injection detection, token-level cost attribution, and
+            AgentGuard validation for tool execution.
           </p>
         </header>
 
         <div className="bg-slate-900/40 border border-slate-900 rounded-2xl p-8 mb-8 text-center">
           <h2 className="text-xl font-bold text-white mb-2">Full Comparison Coming Soon</h2>
           <p className="text-slate-400 text-sm max-w-md mx-auto mb-6">
-            We are writing an in-depth feature mapping and benchmark suite for RakshEx vs Noname Security. Subscribe below to be notified when the detailed analysis launches.
+            We are writing an in-depth feature mapping and benchmark suite for RakshEx vs Noname
+            Security. Subscribe below to be notified when the detailed analysis launches.
           </p>
 
           {success ? (
@@ -64,7 +68,10 @@ export default function CompareNonameSecurity() {
               ✓ Successfully subscribed! We will notify you when this page is ready.
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+            <form
+              onSubmit={handleSubmit}
+              className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
+            >
               <input
                 type="email"
                 required
@@ -89,13 +96,18 @@ export default function CompareNonameSecurity() {
           <h3 className="font-bold text-white mb-4">Core Differentiators Overview</h3>
           <div className="space-y-3 text-sm text-slate-400">
             <p>
-              • <strong>Prompt Protection:</strong> RakshEx intercepts prompt injection payloads and redacts outgoing PII. Noname Security evaluates network posture and does not parse LLM strings.
+              • <strong>Prompt Protection:</strong> RakshEx intercepts prompt injection payloads and
+              redacts outgoing PII. Noname Security evaluates network posture and does not parse LLM
+              strings.
             </p>
             <p>
-              • <strong>LLM Telemetry:</strong> RakshEx measures token usage and cost metrics per provider. Traditional API security suites lack reasoning and token counting capabilities.
+              • <strong>LLM Telemetry:</strong> RakshEx measures token usage and cost metrics per
+              provider. Traditional API security suites lack reasoning and token counting
+              capabilities.
             </p>
             <p>
-              • <strong>Agentic Rules:</strong> RakshEx features AgentGuard to manage tool calls and prevent model drifts during autonomous execution.
+              • <strong>Agentic Rules:</strong> RakshEx features AgentGuard to manage tool calls and
+              prevent model drifts during autonomous execution.
             </p>
           </div>
         </div>

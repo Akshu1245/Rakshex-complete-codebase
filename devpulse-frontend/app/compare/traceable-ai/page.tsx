@@ -33,7 +33,7 @@ export default function CompareTraceableAI() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 py-16 px-4 font-sans">
+    <div className="min-h-screen bg-transparent text-slate-100 py-16 px-4 font-sans">
       <div className="max-w-3xl mx-auto">
         <nav className="text-sm text-blue-400 mb-6">
           <Link href="/compare" className="hover:underline">
@@ -49,14 +49,18 @@ export default function CompareTraceableAI() {
             RakshEx vs Traceable AI — Which is Right for You?
           </h1>
           <p className="text-slate-400 text-base leading-relaxed">
-            Traceable AI is a leading enterprise API security platform focusing on API discovery, threat protection, and posturing. RakshEx operates as a lightweight AI runtime governance middleware designed to intercept prompt injections, track thinking token costs, and enforce AgentGuard circuit breakers in LLM interactions.
+            Traceable AI is a leading enterprise API security platform focusing on API discovery,
+            threat protection, and posturing. RakshEx operates as a lightweight AI runtime
+            governance middleware designed to intercept prompt injections, track thinking token
+            costs, and enforce AgentGuard circuit breakers in LLM interactions.
           </p>
         </header>
 
         <div className="bg-slate-900/40 border border-slate-900 rounded-2xl p-8 mb-8 text-center">
           <h2 className="text-xl font-bold text-white mb-2">Full Comparison Coming Soon</h2>
           <p className="text-slate-400 text-sm max-w-md mx-auto mb-6">
-            We are writing an in-depth feature mapping and benchmark suite for RakshEx vs Traceable AI. Subscribe below to be notified when the detailed analysis launches.
+            We are writing an in-depth feature mapping and benchmark suite for RakshEx vs Traceable
+            AI. Subscribe below to be notified when the detailed analysis launches.
           </p>
 
           {success ? (
@@ -64,7 +68,10 @@ export default function CompareTraceableAI() {
               ✓ Successfully subscribed! We will notify you when this page is ready.
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+            <form
+              onSubmit={handleSubmit}
+              className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
+            >
               <input
                 type="email"
                 required
@@ -89,13 +96,18 @@ export default function CompareTraceableAI() {
           <h3 className="font-bold text-white mb-4">Core Differentiators Overview</h3>
           <div className="space-y-3 text-sm text-slate-400">
             <p>
-              • <strong>LLM Prompt Evaluation:</strong> RakshEx features custom classifier pipelines for real-time prompt injection detection. Traceable AI focuses on traditional API vulnerabilities (OWASP API Top 10).
+              • <strong>LLM Prompt Evaluation:</strong> RakshEx features custom classifier pipelines
+              for real-time prompt injection detection. Traceable AI focuses on traditional API
+              vulnerabilities (OWASP API Top 10).
             </p>
             <p>
-              • <strong>Cost Optimization:</strong> RakshEx attributes thinking tokens and provides budget kill switches to control LLM costs. Legacy API security products lack cost monitoring.
+              • <strong>Cost Optimization:</strong> RakshEx attributes thinking tokens and provides
+              budget kill switches to control LLM costs. Legacy API security products lack cost
+              monitoring.
             </p>
             <p>
-              • <strong>Agentic Rules:</strong> RakshEx's AgentGuard blocks destructive tool calls based on human approvals, built for modern autonomous agent structures.
+              • <strong>Agentic Rules:</strong> RakshEx's AgentGuard blocks destructive tool calls
+              based on human approvals, built for modern autonomous agent structures.
             </p>
           </div>
         </div>

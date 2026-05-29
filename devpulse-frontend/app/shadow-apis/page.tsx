@@ -60,7 +60,7 @@ export default function ShadowAPIsPage() {
   const criticalCount = shadowAPIs.filter((a) => a.riskLevel === "HIGH" && !a.isDocumented).length;
 
   return (
-    <div className="p-8 min-h-screen bg-background text-on-background">
+    <div className="p-8 min-h-screen bg-transparent text-on-background">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-end justify-between mb-8">

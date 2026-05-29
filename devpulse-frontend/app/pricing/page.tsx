@@ -29,7 +29,7 @@ export default function PricingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white pt-32 pb-16 px-6 xl:px-8 selection:bg-cyan-500 selection:text-black">
+    <div className="min-h-screen bg-transparent text-white pt-32 pb-16 px-6 xl:px-8 selection:bg-cyan-500 selection:text-black">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 pb-6 border-b border-neutral-900">
           <div>

@@ -61,7 +61,7 @@ const features = [
 
 export default function CompareLakera() {
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-8">
+    <div className="min-h-screen bg-transparent text-white p-8">
       <div className="max-w-5xl mx-auto">
         <nav className="text-sm text-gray-400 mb-6">
           <Link href="/compare" className="hover:text-blue-400">

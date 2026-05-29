@@ -33,7 +33,7 @@ export default function CompareSaltSecurity() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 py-16 px-4 font-sans">
+    <div className="min-h-screen bg-transparent text-slate-100 py-16 px-4 font-sans">
       <div className="max-w-3xl mx-auto">
         <nav className="text-sm text-blue-400 mb-6">
           <Link href="/compare" className="hover:underline">
@@ -49,14 +49,18 @@ export default function CompareSaltSecurity() {
             RakshEx vs Salt Security — Which is Right for You?
           </h1>
           <p className="text-slate-400 text-base leading-relaxed">
-            Salt Security is a pioneer in API anomaly detection, focusing on posture management and threat protection using machine learning baselines. RakshEx is a targeted AI runtime governance firewall, designed to prevent prompt injections, track LLM token spend, and regulate agentic tool calls before they run.
+            Salt Security is a pioneer in API anomaly detection, focusing on posture management and
+            threat protection using machine learning baselines. RakshEx is a targeted AI runtime
+            governance firewall, designed to prevent prompt injections, track LLM token spend, and
+            regulate agentic tool calls before they run.
           </p>
         </header>
 
         <div className="bg-slate-900/40 border border-slate-900 rounded-2xl p-8 mb-8 text-center">
           <h2 className="text-xl font-bold text-white mb-2">Full Comparison Coming Soon</h2>
           <p className="text-slate-400 text-sm max-w-md mx-auto mb-6">
-            We are writing an in-depth feature mapping and benchmark suite for RakshEx vs Salt Security. Subscribe below to be notified when the detailed analysis launches.
+            We are writing an in-depth feature mapping and benchmark suite for RakshEx vs Salt
+            Security. Subscribe below to be notified when the detailed analysis launches.
           </p>
 
           {success ? (
@@ -64,7 +68,10 @@ export default function CompareSaltSecurity() {
               ✓ Successfully subscribed! We will notify you when this page is ready.
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+            <form
+              onSubmit={handleSubmit}
+              className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
+            >
               <input
                 type="email"
                 required
@@ -89,13 +96,18 @@ export default function CompareSaltSecurity() {
           <h3 className="font-bold text-white mb-4">Core Differentiators Overview</h3>
           <div className="space-y-3 text-sm text-slate-400">
             <p>
-              • <strong>Prompt Firewalling:</strong> RakshEx dynamically inspects incoming prompts for adversarial structures. Salt Security is built to analyze traditional API payloads and does not evaluate prompt semantics.
+              • <strong>Prompt Firewalling:</strong> RakshEx dynamically inspects incoming prompts
+              for adversarial structures. Salt Security is built to analyze traditional API payloads
+              and does not evaluate prompt semantics.
             </p>
             <p>
-              • <strong>Thinking Token telemetry:</strong> RakshEx extracts reasoning metadata and allocates LLM usage spend. Legacy API protection tools have no concept of token counts or model pricing.
+              • <strong>Thinking Token telemetry:</strong> RakshEx extracts reasoning metadata and
+              allocates LLM usage spend. Legacy API protection tools have no concept of token counts
+              or model pricing.
             </p>
             <p>
-              • <strong>Interactive Approvals:</strong> RakshEx’s AgentGuard provides a human-in-the-loop validation console for security critical agent tool executions.
+              • <strong>Interactive Approvals:</strong> RakshEx’s AgentGuard provides a
+              human-in-the-loop validation console for security critical agent tool executions.
             </p>
           </div>
         </div>

@@ -16,7 +16,7 @@ export default function TokenAnalyticsPage() {
   const maxCost = byModel.length > 0 ? Math.max(...byModel.map((m) => m.costUSD)) : 1;
 
   return (
-    <div className="p-8 min-h-screen bg-background text-on-background">
+    <div className="p-8 min-h-screen bg-transparent text-on-background">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-end justify-between mb-8">

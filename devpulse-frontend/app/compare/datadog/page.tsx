@@ -62,7 +62,7 @@ const features = [
 export default function CompareDatadog() {
   return (
     <div
-      className="min-h-screen bg-background text-on-background p-8"
+      className="min-h-screen bg-transparent text-on-background p-8"
       style={{ fontFamily: "'JetBrains Mono', monospace" }}
     >
       <div className="max-w-5xl mx-auto">
