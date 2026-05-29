@@ -5,7 +5,7 @@
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
-$DEVPULSE_ROOT = "C:\Users\aksha\Downloads\DevPulse_Complete_Codebase"
+$DEVPULSE_ROOT = "C:\Users\aksha\devpulse-complete-codebase"
 $ERROR_DIR = "$DEVPULSE_ROOT\.team\errors"
 $NOTIFY_LOG = "$DEVPULSE_ROOT\.team\autonomy\notifications.log"
 

@@ -6,7 +6,7 @@ param(
     [switch]$Verbose
 )
 
-$DEVPULSE_ROOT = "C:\Users\aksha\Downloads\DevPulse_Complete_Codebase"
+$DEVPULSE_ROOT = "C:\Users\aksha\devpulse-complete-codebase"
 $HEALTH_LOG = "$DEVPULSE_ROOT\.team\autonomy\health.log"
 $ERROR_THRESHOLD = 3  # Max auto-heal attempts per issue
 

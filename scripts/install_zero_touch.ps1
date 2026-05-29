@@ -2,7 +2,7 @@
 # Run ONCE. After this, DevPulse runs itself forever.
 # No prompts. No commands. No human. Ever.
 
-$DEVPULSE_ROOT = "C:\Users\aksha\Downloads\DevPulse_Complete_Codebase"
+$DEVPULSE_ROOT = "C:\Users\aksha\devpulse-complete-codebase"
 $TASK_NAME = "DevPulse_Autonomous_Swarm"
 
 Write-Host "========================================" -ForegroundColor Cyan

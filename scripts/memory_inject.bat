@@ -16,4 +16,4 @@ echo [MEMORY] Searching for: %QUERY%
 powershell -Command "$q=$Env:QUERY; $m=Get-Content '%MEM_DIR%\memory.json' -Raw | ConvertFrom-Json; $m.decisions | Where-Object { $_.text -match $q } | ForEach-Object { Write-Host ('  [' + $_.ts + '] ' + $_.text) }"
 
 REM File search fallback
-powershell -Command "$q=$Env:QUERY; Get-ChildItem 'C:\Users\aksha\Downloads\Rakshex_Complete_Codebase' -Recurse -Include *.ts,*.tsx,*.js -Exclude node_modules,*test* 2>$null | Select-String -Pattern $q -SimpleMatch 2>$null | Select-Object -First 3 | ForEach-Object { Write-Host ('  [' + $_.Filename + ':' + $_.LineNumber + '] ' + $_.Line.Substring(0, [Math]::Min(120, $_.Line.Length))) }"
+powershell -Command "$q=$Env:QUERY; Get-ChildItem 'C:\Users\aksha\devpulse-complete-codebase' -Recurse -Include *.ts,*.tsx,*.js -Exclude node_modules,*test* 2>$null | Select-String -Pattern $q -SimpleMatch 2>$null | Select-Object -First 3 | ForEach-Object { Write-Host ('  [' + $_.Filename + ':' + $_.LineNumber + '] ' + $_.Line.Substring(0, [Math]::Min(120, $_.Line.Length))) }"

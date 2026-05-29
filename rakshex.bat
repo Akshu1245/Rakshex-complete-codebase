@@ -1,6 +1,6 @@
 @echo off
 REM Rakshex Universal CLI
-set DEV_HOME=C:\Users\aksha\Downloads\Rakshex_Complete_Codebase
+set DEV_HOME=C:\Users\aksha\devpulse-complete-codebase
 set TASK_GEN=%DEV_HOME%\scripts\task_generator.py
 
 if "%1"=="" goto :status
