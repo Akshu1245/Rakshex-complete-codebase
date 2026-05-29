@@ -9,6 +9,7 @@ import { FeatureCards } from "@/components/home/FeatureCards";
 import { BenchmarkSection } from "@/components/home/BenchmarkSection";
 import { ChangelogSection } from "@/components/home/ChangelogSection";
 import { AskAISection } from "@/components/home/AskAISection";
+import { Footer } from "@/components/layout/Footer";
 import {
   Shield,
   Power,
