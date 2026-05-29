@@ -1,9 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { HeroFlowDiagram } from "./HeroFlowDiagram";
 
 export function HeroSection() {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyCommand = () => {
+    navigator.clipboard.writeText("npx rakshex scan ./collection.json");
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <section className="hero-section relative w-full bg-transparent">
       {/* LEFT COLUMN: Content */}
@@ -53,6 +62,14 @@ export function HeroSection() {
           >
             Read the docs
           </Link>
+        </div>
+
+        {/* CLI Command Pill */}
+        <div className="hero-cli-pill">
+          <span className="cli-text">$ npx rakshex scan ./collection.json</span>
+          <button onClick={handleCopyCommand} className="cli-copy-btn">
+            {copied ? "Copied!" : "Copy"}
+          </button>
         </div>
       </div>
 

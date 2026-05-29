@@ -641,3 +641,39 @@ body {
   color: #00d4aa;
   text-align: center;
 }
+
+/* CLI command pill (Fix 4) */
+.hero-cli-pill {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 100px;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: fit-content;
+  margin-bottom: 48px;
+}
+
+.hero-cli-pill .cli-text {
+  font-family: 'Geist Mono', 'JetBrains Mono', monospace;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.hero-cli-pill .cli-copy-btn {
+  background: rgba(255, 255, 255, 0.9);
+  color: #0a0a0a;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 16px;
+  border-radius: 100px;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  transition: background-color 0.2s ease;
+}
+
+.hero-cli-pill .cli-copy-btn:hover {
+  background: #ffffff;
+}
