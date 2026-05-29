@@ -17,6 +17,7 @@ const PUBLIC_PATHS = [
   "/pricing",
   "/demo",
   "/blog",
+  "/docs",
   "/blog/helicone-alternative",
   "/blog/portkey-alternative",
   "/blog/lakera-alternative",
@@ -51,6 +52,9 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   if (isPublicPath(pathname)) {
+    if (pathname.startsWith("/docs")) {
+      return <>{children}</>;
+    }
     return (
       <>
         <PublicHeader />
