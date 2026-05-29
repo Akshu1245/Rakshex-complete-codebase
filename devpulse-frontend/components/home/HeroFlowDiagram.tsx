@@ -1,4 +1,4 @@
-"use client";
+import { AgentCard } from "./AgentCard";
 
 function ConnectorVertical() {
   return (
@@ -59,23 +59,8 @@ function ConnectorHorizontal() {
 export function HeroFlowDiagram() {
   return (
     <div className="hero-diagram">
-      {/* CARD 1 — Agent (Cursor) — top area */}
-      <div className="diagram-card card-agent">
-        <div className="card-header">
-          {/* Cursor triangle icon */}
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="card-icon">
-            <path d="M4 0l16 12-7 2-4 8z" />
-          </svg>
-          <span className="card-title">Cursor</span>
-        </div>
-        <div className="connected-badge">
-          <span className="badge-dot" />
-          RakshEx Connected
-        </div>
-        <p className="card-desc">
-          Scan my FastAPI app for security vulnerabilities and cost anomalies.
-        </p>
-      </div>
+      {/* CARD 1 — Agent — top area */}
+      <AgentCard />
 
       {/* CONNECTOR: Agent → RakshEx (solid arrow line going DOWN) */}
       <ConnectorVertical />

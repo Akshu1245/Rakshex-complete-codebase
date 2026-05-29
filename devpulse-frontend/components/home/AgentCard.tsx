@@ -1,0 +1,160 @@
+"use client";
+
+import { useState, useEffect } from "react";
+
+const agents = [
+  {
+    name: "Cursor",
+    icon: `<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+      <path d="M4 0l16 12-7 2-4 8z"/>
+    </svg>`,
+    desc: "Scan my FastAPI app for security vulnerabilities and cost anomalies.",
+  },
+  {
+    name: "Claude Code",
+    icon: `<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+      <path d="M17.304 3.541L13.766 13.38H10.23L6.696 3.541H3.541L8.651 17.5h6.698l5.11-13.959h-3.155z"/>
+    </svg>`,
+    desc: "Analyze my API routes for prompt injection and credential leaks.",
+  },
+  {
+    name: "Windsurf",
+    icon: `<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+    </svg>`,
+    desc: "Monitor LLM API costs and detect token budget anomalies in real-time.",
+  },
+  {
+    name: "GitHub Copilot",
+    icon: `<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+      <path d="M12 0C5.373 0 0 5.373 0 12c0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+    </svg>`,
+    desc: "Find security vulnerabilities in my REST API before deployment.",
+  },
+  {
+    name: "Cline",
+    icon: `<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+      <path d="M9.37 5.51A7.35 7.35 0 0 0 9.1 7.5c0 4.08 3.32 7.4 7.4 7.4.68 0 1.35-.09 1.99-.27A7.014 7.014 0 0 1 12 19c-3.86 0-7-3.14-7-7 0-2.93 1.81-5.45 4.37-6.49z"/>
+    </svg>`,
+    desc: "Detect shadow APIs and missing authentication on my endpoints.",
+  },
+  {
+    name: "VS Code",
+    icon: `<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+      <path d="M23.15 2.587L18.21.21a1.494 1.494 0 0 0-1.705.29l-9.46 8.63-4.12-3.128a.999.999 0 0 0-1.276.057L.327 7.261A1 1 0 0 0 .326 8.74L3.899 12 .326 15.26a1 1 0 0 0 .001 1.479L1.65 17.94a.999.999 0 0 0 1.276.057l4.12-3.128 9.46 8.63a1.492 1.492 0 0 0 1.704.29l4.942-2.377A1.5 1.5 0 0 0 24 20.06V3.939a1.5 1.5 0 0 0-.85-1.352zm-5.146 14.861L10.826 12l7.178-5.448v10.896z"/>
+    </svg>`,
+    desc: "Run RakshEx compliance scan and generate SOC2 evidence bundle.",
+  },
+  {
+    name: "Postman",
+    icon: `<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+      <path d="M13.527.099C6.955-.744.942 3.9.099 10.473c-.843 6.572 3.8 12.584 10.373 13.428 6.573.843 12.587-3.801 13.428-10.374C24.744 6.955 20.101.943 13.527.099zm2.471 7.485a.855.855 0 0 0-.593.25l-4.453 4.453-.307-.307-.643-.643c4.389-4.376 5.18-4.418 5.996-3.753zm-4.863 4.861l4.44-4.44a.62.62 0 1 1 .868.868l-4.247 4.624-.836-.836-.225-.216zm-3.962 3.034l.955-2.001 1.046 1.045-2.001.956zm3.361-1.11l-1.289-1.289 4.254-4.629a.58.58 0 0 1 .818.82l-3.783 5.098z"/>
+    </svg>`,
+    desc: "Upload my collection and scan all 47 endpoints for vulnerabilities.",
+  },
+  {
+    name: "OpenAI",
+    icon: `<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+      <path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.795.795 0 0 0 .392-.681v-6.737l2.02 1.168a.071.071 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494zM3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.771.771 0 0 0 .78 0l5.843-3.369v2.332a.080.080 0 0 1-.033.062L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646zM2.34 7.896a4.485 4.485 0 0 1 2.366-1.973V11.6a.766.766 0 0 0 .388.676l5.815 3.355-2.02 1.168a.076.076 0 0 1-.071 0L4.076 14.5A4.5 4.5 0 0 1 2.34 7.896zm16.597 3.855l-5.833-3.387 2.02-1.168a.076.076 0 0 1 .071 0l4.742 2.738a4.5 4.5 0 0 1-.695 8.118v-5.681a.79.79 0 0 0-.405-.62zm2.01-3.023l-.141-.085-4.774-2.782a.776.776 0 0 0-.785 0L9.409 9.23V6.897a.066.066 0 0 1 .028-.061l4.74-2.736a4.5 4.5 0 0 1 6.68 4.66zm-12.64 4.135l-2.02-1.164a.08.08 0 0 1-.038-.057V6.075a4.5 4.5 0 0 1 7.375-3.453l-.142.08L8.704 5.46a.795.795 0 0 0-.393.681zm1.097-2.365l2.602-1.5 2.607 1.5v2.999l-2.597 1.5-2.607-1.5z"/></svg>`,
+    desc: "Monitor my GPT-4 API costs and detect token budget anomalies.",
+  },
+  {
+    name: "Anthropic",
+    icon: `<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+      <path d="M17.304 3.541 13.766 13.38H10.23L6.696 3.541H3.541L8.651 17.5h6.698l5.11-13.959h-3.155zM3.541 20.459h16.918v-2.383H3.541v2.383z"/>
+    </svg>`,
+    desc: "Verify my Claude API parameters and protect reasoning tokens.",
+  },
+  {
+    name: "Gemini",
+    icon: `<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+      <path d="M11.04 0h1.92C13.92 6.912 17.088 10.08 24 11.04v1.92c-6.912.96-10.08 4.128-10.04 11.04h-1.92C11.04 17.088 7.872 13.92.96 12.96v-1.92C7.872 10.08 11.04 6.912 11.04 0z"/>
+    </svg>`,
+    desc: "Scan my Google Gemini integrations for data leaks and PII exposure.",
+  },
+  {
+    name: "Mistral",
+    icon: `<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+      <path d="M0 0h4v4H0zm6.667 0h4v4h-4zM0 6.667h4v4H0zm6.667 0h4v4h-4zm6.666 0h4v4h-4zM13.333 0h4v4h-4zM20 0h4v4h-4zm0 6.667h4v4h-4zM0 13.333h4v4H0zm6.667 0h4v4h-4zm13.333 0h4v4h-4zM0 20h4v4H0zm6.667 0h4v4h-4zm6.666 0h4v4h-4zm6.667 0h4v4h-4z"/>
+    </svg>`,
+    desc: "Analyze my Mistral models for prompt injections and security drift.",
+  },
+  {
+    name: "FastAPI",
+    icon: `<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+      <path d="M12 0C5.375 0 0 5.375 0 12c0 6.626 5.375 12.001 12 12.001 6.626 0 12.001-5.375 12.001-12C24.001 5.375 18.626 0 12 0zm-.624 21.619v-7.227H7.19L13.203 2.38v7.227h4.029L11.376 21.62z"/>
+    </svg>`,
+    desc: "Audit my FastAPI routes for hidden endpoints and auth bypasses.",
+  },
+  {
+    name: "Express",
+    icon: `<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+      <path d="M24 18.588a1.529 1.529 0 0 1-1.895-.72l-3.45-4.771-.5-.667-4.003 5.444a1.466 1.466 0 0 1-1.802.708l5.158-6.92-4.798-6.251a1.595 1.595 0 0 1 1.9.666l3.576 4.83 3.596-4.81a1.435 1.435 0 0 1 1.788-.668L21.708 7.9l-2.522 3.283a.666.666 0 0 0 0 .994l4.804 6.412zM.002 11.576l.42-2.075c1.154-4.103 5.858-5.81 9.094-3.27 1.895 1.489 2.368 3.597 2.275 5.973H1.116C.943 16.447 4.005 19.009 7.92 17.7a4.078 4.078 0 0 0 2.582-2.876c.207-.666.548-.78 1.174-.588a5.417 5.417 0 0 1-2.589 3.957 6.272 6.272 0 0 1-7.306-.933 6.575 6.575 0 0 1-1.64-3.348c-.061-.27-.127-.539-.194-.808-.003-.arbitrary-.002-.016 0 0v-.528zm1.114-.7h8.97c-.049-3.001-1.8-5.12-4.3-5.12-2.73.002-4.4 2.088-4.67 5.12z"/>
+    </svg>`,
+    desc: "Scan my Express.js routes for security vulnerabilities and OWASP Top 10.",
+  },
+  {
+    name: "Django",
+    icon: `<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+      <path d="M11.146 0h3.924v18.166c-2.013.382-3.491.535-5.096.535-4.791 0-7.288-2.166-7.288-6.32 0-4.002 2.65-6.6 6.753-6.6.637 0 1.121.05 1.707.203zm0 9.143a3.894 3.894 0 0 0-1.325-.204c-1.988 0-3.134 1.223-3.134 3.365 0 2.09 1.096 3.236 3.109 3.236.433 0 .79-.025 1.35-.102V9.142zM21.314 6.06v11.49c0 3.97-.292 5.88-1.146 7.529-.802 1.57-1.86 2.57-4.055 3.66l-3.644-1.733c2.194-1.02 3.252-1.942 3.93-3.34.714-1.42.944-3.04.944-7.326V6.06h3.97zm-4.06-5.98h3.97V4.04h-3.97V.08z"/>
+    </svg>`,
+    desc: "Check my Django endpoints for security policy drift and vulnerabilities.",
+  },
+  {
+    name: "GitHub Actions",
+    icon: `<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+      <path d="M10.984 13.836a.5.5 0 0 1-.353-.146l-3.5-3.5a.5.5 0 1 1 .706-.708l3.146 3.146 8.146-8.146a.5.5 0 0 1 .707.707l-8.5 8.5a.5.5 0 0 1-.353.146zm-3.476 6.696a.5.5 0 0 1-.353-.854l3.5-3.5a.5.5 0 0 1 .707.707l-3.5 3.5a.5.5 0 0 1-.354.147zM12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
+    </svg>`,
+    desc: "Run automated security checks on every pull request push.",
+  },
+  {
+    name: "Slack",
+    icon: `<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+      <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/>
+    </svg>`,
+    desc: "Send real-time alerts on cost anomalies and prompt injection blocks.",
+  },
+];
+
+export function AgentCard() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isVisible, setIsVisible] = useState(true);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Fade out
+      setIsVisible(false);
+      setTimeout(() => {
+        // Change agent
+        setCurrentIndex((prev) => (prev + 1) % agents.length);
+        // Fade in
+        setIsVisible(true);
+      }, 400); // 400ms for fade out, then swap
+    }, 3000); // change every 3 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const agent = agents[currentIndex];
+
+  return (
+    <div className="diagram-card card-agent">
+      <div
+        style={{
+          transition: "opacity 0.4s ease",
+          opacity: isVisible ? 1 : 0,
+        }}
+      >
+        <div className="card-header">
+          <span className="card-icon" dangerouslySetInnerHTML={{ __html: agent.icon }} />
+          <span className="card-title">{agent.name}</span>
+        </div>
+        <div className="connected-badge">
+          <span className="badge-dot" />
+          RakshEx Connected
+        </div>
+        <p className="card-desc">{agent.desc}</p>
+      </div>
+    </div>
+  );
+}
