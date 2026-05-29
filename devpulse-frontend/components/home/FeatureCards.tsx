@@ -13,7 +13,7 @@ function FeatureCard({ title, description, link, iconSvg }: FeatureCardProps) {
   return (
     <Link
       href={link}
-      className="relative group block w-full h-[320px] bg-[#0d0d0d] hover:bg-[#111111] p-10 overflow-hidden select-none transition-colors duration-200"
+      className="relative group block w-full h-[320px] bg-[#0f0f0f]/60 hover:bg-[#171717]/60 p-10 overflow-hidden select-none transition-colors duration-200"
     >
       {/* Ghost cursor on hover */}
       <div className="absolute top-5 right-5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-35">

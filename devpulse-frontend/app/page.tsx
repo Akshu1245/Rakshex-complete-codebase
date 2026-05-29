@@ -457,7 +457,7 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white overflow-x-hidden font-manrope selection:bg-cyan-500 selection:text-black">
+    <div className="min-h-screen bg-transparent text-white overflow-x-hidden font-manrope selection:bg-cyan-500 selection:text-black">
       {/* SECTION 3 — HERO SECTION & LOGOMARQUEE */}
       <HeroSection />
       <LogoMarquee />
