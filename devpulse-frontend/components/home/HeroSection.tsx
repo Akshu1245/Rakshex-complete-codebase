@@ -5,11 +5,11 @@ import { HeroFlowDiagram } from "./HeroFlowDiagram";
 
 export function HeroSection() {
   return (
-    <section className="hero-section relative w-full max-w-[1280px] mx-auto bg-transparent">
+    <section className="hero-section relative w-full bg-transparent">
       {/* LEFT COLUMN: Content */}
-      <div className="hero-left flex flex-col items-start text-left">
+      <div className="hero-left text-left">
         {/* Top Badge */}
-        <div className="inline-flex items-center gap-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-full px-4 py-1.5 mb-6">
+        <div className="hero-badge inline-flex items-center gap-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-full px-4 py-1.5">
           <svg
             viewBox="0 0 24 24"
             fill="none"
@@ -27,20 +27,20 @@ export function HeroSection() {
         </div>
 
         {/* Headline */}
-        <h1 className="font-sans text-[40px] sm:text-[54px] lg:text-[64px] font-bold leading-[1.1] tracking-normal text-left flex flex-col">
+        <h1 className="hero-headline font-sans font-bold tracking-normal text-left flex flex-col">
           <span className="text-white">The AI-native</span>
           <span className="text-[#00d4aa]">security &amp;</span>
           <span className="text-[#00d4aa]">governance platform</span>
         </h1>
 
         {/* Subtext */}
-        <p className="text-[17px] leading-[1.6] text-white/60 max-w-[480px] mt-6 font-sans">
+        <p className="hero-subtext font-sans">
           Prompt injection blocking, LLM cost control, shadow API discovery, and compliance
           reporting &mdash; all in one platform. 478 tests. 4 patents.
         </p>
 
         {/* CTA Buttons */}
-        <div className="flex flex-wrap items-center gap-4 mt-10 w-full">
+        <div className="hero-buttons flex flex-wrap items-center gap-4 w-full">
           <Link
             href="/register"
             className="px-7 py-3.5 bg-[#00d4aa] text-black font-semibold text-sm rounded-lg hover:opacity-90 transition-all text-center flex items-center justify-center gap-2"
@@ -57,7 +57,7 @@ export function HeroSection() {
       </div>
 
       {/* RIGHT COLUMN: Flow Diagram */}
-      <div className="hero-right w-full flex items-center justify-center relative overflow-visible py-4">
+      <div className="hero-right">
         <HeroFlowDiagram />
       </div>
     </section>
