@@ -24,16 +24,27 @@ export default function PartnersPage() {
   ];
 
   const whyPartnerPoints = [
-    { title: "Define the Standard", desc: "Collaborate on building robust, public heuristics for the OWASP AI Top 10 security audits." },
-    { title: "Unlock Mutual Value", desc: "Access sandbox testing, API keys, and joint marketing campaigns for integration launches." },
-    { title: "Direct Founder Access", desc: "Work closely with our product and engineering teams to shape our roadmap priorities." },
+    {
+      title: "Define the Standard",
+      desc: "Collaborate on building robust, public heuristics for the OWASP AI Top 10 security audits.",
+    },
+    {
+      title: "Unlock Mutual Value",
+      desc: "Access sandbox testing, API keys, and joint marketing campaigns for integration launches.",
+    },
+    {
+      title: "Direct Founder Access",
+      desc: "Work closely with our product and engineering teams to shape our roadmap priorities.",
+    },
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 py-16 px-4 font-sans">
+    <div className="min-h-screen bg-transparent text-slate-100 py-16 px-4 font-sans">
       <div className="max-w-4xl mx-auto">
         <nav className="text-sm text-blue-400 mb-6">
-          <Link href="/" className="hover:underline">← Back to Home</Link>
+          <Link href="/" className="hover:underline">
+            ← Back to Home
+          </Link>
         </nav>
 
         {/* Hero */}
@@ -45,13 +56,16 @@ export default function PartnersPage() {
             Partnership Program — Coming Soon
           </h1>
           <p className="text-slate-400 text-lg mt-3 max-w-2xl mx-auto">
-            We are designing programs for platform builders, consulting firms, and security researchers to advance AI runtime governance together.
+            We are designing programs for platform builders, consulting firms, and security
+            researchers to advance AI runtime governance together.
           </p>
         </header>
 
         {/* Partner Types Grid */}
         <section className="mb-16">
-          <h2 className="text-xl font-bold text-white mb-8 text-center md:text-left border-b border-slate-900 pb-3">Partnership Categories</h2>
+          <h2 className="text-xl font-bold text-white mb-8 text-center md:text-left border-b border-slate-900 pb-3">
+            Partnership Categories
+          </h2>
           <div className="grid md:grid-cols-3 gap-6">
             {partnerTypes.map((p) => (
               <div
@@ -75,11 +89,15 @@ export default function PartnersPage() {
 
         {/* Why Partner with RakshEx Section */}
         <section className="mb-16">
-          <h2 className="text-xl font-bold text-white mb-8 text-center md:text-left border-b border-slate-900 pb-3">Why Partner with RakshEx</h2>
+          <h2 className="text-xl font-bold text-white mb-8 text-center md:text-left border-b border-slate-900 pb-3">
+            Why Partner with RakshEx
+          </h2>
           <div className="grid md:grid-cols-3 gap-6">
             {whyPartnerPoints.map((point, index) => (
               <div key={index} className="p-5 border border-slate-900 rounded-xl bg-slate-950/25">
-                <span className="text-xs font-bold text-blue-400 block mb-2 font-mono">0{index + 1}.</span>
+                <span className="text-xs font-bold text-blue-400 block mb-2 font-mono">
+                  0{index + 1}.
+                </span>
                 <h4 className="font-bold text-white text-sm mb-2">{point.title}</h4>
                 <p className="text-slate-400 text-xs leading-relaxed">{point.desc}</p>
               </div>
@@ -90,7 +108,9 @@ export default function PartnersPage() {
         {/* Direct Contact Callout */}
         <div className="bg-slate-900/20 border border-slate-900 rounded-2xl p-8 text-center">
           <h2 className="text-xl font-bold text-white mb-2">Have other partnership ideas?</h2>
-          <p className="text-slate-400 text-xs mb-4">Email Akshay directly and we will set up a call within 24 hours.</p>
+          <p className="text-slate-400 text-xs mb-4">
+            Email Akshay directly and we will set up a call within 24 hours.
+          </p>
           <a
             href="mailto:akshay@rakshex.in"
             className="text-blue-400 hover:underline font-semibold text-sm"

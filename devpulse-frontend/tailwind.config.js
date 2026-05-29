@@ -13,7 +13,7 @@ module.exports = {
         "on-tertiary-container": "#006274",
         "inverse-surface": "#e5e2e1",
         "surface-base": "#0F0F0F",
-        "background": "transparent",
+        "background": "#0a0a0a",
         "surface-container-lowest": "#0e0e0e",
         "surface-container-low": "#1c1b1b",
         "secondary-container": "#03c6b2",

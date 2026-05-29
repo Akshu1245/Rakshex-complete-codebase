@@ -16,7 +16,7 @@ export const metadata = {
 
 export default function BlogPortkeyAlternative() {
   return (
-    <article className="min-h-screen bg-gray-900 text-white p-8">
+    <article className="min-h-screen bg-transparent text-white p-8">
       <div className="max-w-3xl mx-auto">
         <nav className="text-sm text-gray-400 mb-6">
           <Link href="/blog" className="hover:text-blue-400">

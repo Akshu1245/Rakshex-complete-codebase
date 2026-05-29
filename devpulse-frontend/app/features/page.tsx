@@ -137,7 +137,7 @@ const FEATURES = [
 
 export default function FeaturesPage() {
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen bg-transparent text-white">
       {/* Hero */}
       <div className="text-center py-20 px-4 border-b border-gray-800">
         <h1 className="text-4xl md:text-5xl font-bold mb-4">Every Feature You Need to Govern AI</h1>

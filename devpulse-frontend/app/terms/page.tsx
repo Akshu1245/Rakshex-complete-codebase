@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function TermsOfService() {
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-8">
+    <div className="min-h-screen bg-transparent text-white p-8">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-4xl font-bold mb-4 text-blue-400">Terms of Service</h1>
         <p className="text-gray-400 mb-8">

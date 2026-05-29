@@ -17,7 +17,7 @@ export default function ROICalculator() {
   // Real-time calculations based on requested formulas
   const results = useMemo(() => {
     // 1. Estimated monthly savings from cost optimization: (LLM spend × 30%)
-    const monthlyCostSavings = monthlySpend * 0.30;
+    const monthlyCostSavings = monthlySpend * 0.3;
     const annualCostSavings = monthlyCostSavings * 12;
 
     // 2. Estimated annual breach risk reduction value: (incident cost × 15% probability × 12)
@@ -52,14 +52,15 @@ export default function ROICalculator() {
     n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 py-16 px-4 font-sans">
+    <div className="min-h-screen bg-transparent text-slate-100 py-16 px-4 font-sans">
       <div className="max-w-5xl mx-auto">
         <header className="mb-12 text-center md:text-left">
           <h1 className="text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">
             AI Security ROI Calculator
           </h1>
           <p className="text-slate-400 mt-2 text-base max-w-2xl">
-            See how much your team can optimize LLM API usage and reduce vulnerability risk exposure with RakshEx.
+            See how much your team can optimize LLM API usage and reduce vulnerability risk exposure
+            with RakshEx.
           </p>
         </header>
 
@@ -71,7 +72,9 @@ export default function ROICalculator() {
             {/* Monthly LLM Spend */}
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label className="text-sm font-medium text-slate-400">Monthly LLM API Spend ($)</label>
+                <label className="text-sm font-medium text-slate-400">
+                  Monthly LLM API Spend ($)
+                </label>
                 <input
                   type="number"
                   value={monthlySpend}
@@ -97,7 +100,9 @@ export default function ROICalculator() {
             {/* AI Agents Running */}
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label className="text-sm font-medium text-slate-400">Number of AI Agents Running</label>
+                <label className="text-sm font-medium text-slate-400">
+                  Number of AI Agents Running
+                </label>
                 <input
                   type="number"
                   value={agentCount}
@@ -123,7 +128,9 @@ export default function ROICalculator() {
             {/* Average Incident Cost */}
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label className="text-sm font-medium text-slate-400">Avg Incident Cost if Breach Occurs ($)</label>
+                <label className="text-sm font-medium text-slate-400">
+                  Avg Incident Cost if Breach Occurs ($)
+                </label>
                 <input
                   type="number"
                   value={incidentCost}
@@ -175,7 +182,9 @@ export default function ROICalculator() {
             {/* Hours spent on audits */}
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label className="text-sm font-medium text-slate-400">Hours/Week on Manual API Audits</label>
+                <label className="text-sm font-medium text-slate-400">
+                  Hours/Week on Manual API Audits
+                </label>
                 <input
                   type="number"
                   value={manualAuditHours}
@@ -210,43 +219,62 @@ export default function ROICalculator() {
                 {results.roiMultiplier.toFixed(1)}x ROI
               </p>
               <p className="text-sm text-emerald-300">
-                Total annual savings of <strong className="text-white">{fmt(results.totalAnnualROI)}</strong>
+                Total annual savings of{" "}
+                <strong className="text-white">{fmt(results.totalAnnualROI)}</strong>
               </p>
             </div>
 
             {/* Calculations List */}
             <div className="bg-slate-900/40 border border-slate-900 rounded-2xl p-6 space-y-4">
-              <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Live Cost Savings Breakdown</h3>
-              
+              <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">
+                Live Cost Savings Breakdown
+              </h3>
+
               <div className="flex justify-between items-start border-b border-slate-900 pb-3">
                 <div>
-                  <span className="text-sm font-semibold text-white block">Cost Optimization Savings</span>
+                  <span className="text-sm font-semibold text-white block">
+                    Cost Optimization Savings
+                  </span>
                   <span className="text-xs text-slate-500">30% reduction on LLM API spend</span>
                 </div>
                 <div className="text-right">
-                  <span className="text-sm font-bold text-slate-200 font-mono">{fmt(results.monthlyCostSavings)}/mo</span>
-                  <span className="text-xs text-slate-500 block">({fmt(results.annualCostSavings)}/yr)</span>
+                  <span className="text-sm font-bold text-slate-200 font-mono">
+                    {fmt(results.monthlyCostSavings)}/mo
+                  </span>
+                  <span className="text-xs text-slate-500 block">
+                    ({fmt(results.annualCostSavings)}/yr)
+                  </span>
                 </div>
               </div>
 
               <div className="flex justify-between items-start border-b border-slate-900 pb-3">
                 <div>
-                  <span className="text-sm font-semibold text-white block">Breach Risk Reduction</span>
+                  <span className="text-sm font-semibold text-white block">
+                    Breach Risk Reduction
+                  </span>
                   <span className="text-xs text-slate-500">15% probability reduction × 12 mo</span>
                 </div>
                 <div className="text-right">
-                  <span className="text-sm font-bold text-slate-200 font-mono">{fmt(results.annualBreachRiskReduction)}/yr</span>
+                  <span className="text-sm font-bold text-slate-200 font-mono">
+                    {fmt(results.annualBreachRiskReduction)}/yr
+                  </span>
                 </div>
               </div>
 
               <div className="flex justify-between items-start pb-1">
                 <div>
-                  <span className="text-sm font-semibold text-white block">Engineering Hours Saved</span>
+                  <span className="text-sm font-semibold text-white block">
+                    Engineering Hours Saved
+                  </span>
                   <span className="text-xs text-slate-500">52 weeks × manual audit hours</span>
                 </div>
                 <div className="text-right">
-                  <span className="text-sm font-bold text-slate-200 font-mono">{results.hoursSavedPerYear} hrs/yr</span>
-                  <span className="text-xs text-slate-500 block">({fmt(results.valueOfHoursSaved)} value @ $80/hr)</span>
+                  <span className="text-sm font-bold text-slate-200 font-mono">
+                    {results.hoursSavedPerYear} hrs/yr
+                  </span>
+                  <span className="text-xs text-slate-500 block">
+                    ({fmt(results.valueOfHoursSaved)} value @ $80/hr)
+                  </span>
                 </div>
               </div>
 

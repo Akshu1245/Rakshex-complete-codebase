@@ -34,17 +34,45 @@ export default function OpenSourcePage() {
   };
 
   const attributions = [
-    { name: "Next.js", desc: "Production grade React framework for server rendering and routing.", url: "https://nextjs.org" },
-    { name: "tRPC", desc: "End-to-end typesafe APIs made simple without schemas.", url: "https://trpc.io" },
-    { name: "Drizzle ORM", desc: "Next-gen TypeScript ORM with database-first feel.", url: "https://orm.drizzle.team" },
-    { name: "Fastify / Express", desc: "High-performance web frameworks for backend API routing.", url: "https://fastify.dev" },
-    { name: "PostgreSQL & MySQL", desc: "Robust open-source relational databases.", url: "https://www.postgresql.org" },
-    { name: "Redis", desc: "In-memory caching and session rate limiting engine.", url: "https://redis.io" },
-    { name: "shadcn/ui", desc: "Beautifully designed accessible UI component primitives.", url: "https://ui.shadcn.com" },
+    {
+      name: "Next.js",
+      desc: "Production grade React framework for server rendering and routing.",
+      url: "https://nextjs.org",
+    },
+    {
+      name: "tRPC",
+      desc: "End-to-end typesafe APIs made simple without schemas.",
+      url: "https://trpc.io",
+    },
+    {
+      name: "Drizzle ORM",
+      desc: "Next-gen TypeScript ORM with database-first feel.",
+      url: "https://orm.drizzle.team",
+    },
+    {
+      name: "Fastify / Express",
+      desc: "High-performance web frameworks for backend API routing.",
+      url: "https://fastify.dev",
+    },
+    {
+      name: "PostgreSQL & MySQL",
+      desc: "Robust open-source relational databases.",
+      url: "https://www.postgresql.org",
+    },
+    {
+      name: "Redis",
+      desc: "In-memory caching and session rate limiting engine.",
+      url: "https://redis.io",
+    },
+    {
+      name: "shadcn/ui",
+      desc: "Beautifully designed accessible UI component primitives.",
+      url: "https://ui.shadcn.com",
+    },
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 py-16 px-4 font-sans">
+    <div className="min-h-screen bg-transparent text-slate-100 py-16 px-4 font-sans">
       <div className="max-w-4xl mx-auto">
         <header className="text-center mb-16">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-950 text-blue-400 border border-blue-900/60 mb-4">
@@ -54,16 +82,22 @@ export default function OpenSourcePage() {
             Open Source Strategy
           </h1>
           <p className="text-slate-400 max-w-2xl mx-auto text-lg mt-3">
-            Transparency is foundational to runtime governance. Audit our tech stack, view our repositories, and participate in our open-source journey.
+            Transparency is foundational to runtime governance. Audit our tech stack, view our
+            repositories, and participate in our open-source journey.
           </p>
         </header>
 
         {/* Planned Open Source Statement */}
         <section className="bg-slate-900/40 border border-slate-900 rounded-2xl p-8 mb-12 text-center md:text-left md:flex md:items-center md:justify-between gap-8">
           <div className="max-w-xl mb-6 md:mb-0">
-            <h2 className="text-2xl font-bold text-white mb-3">Planned: OWASP AI Top 10 Detection Ruleset</h2>
+            <h2 className="text-2xl font-bold text-white mb-3">
+              Planned: OWASP AI Top 10 Detection Ruleset
+            </h2>
             <p className="text-slate-400 text-sm leading-relaxed">
-              We are planning to open source our core signature rules and detection heuristics for the OWASP AI Top 10 security audits. This allows teams to audit prompt injection models and egress filters locally. Join the waitlist to be notified when the repository opens.
+              We are planning to open source our core signature rules and detection heuristics for
+              the OWASP AI Top 10 security audits. This allows teams to audit prompt injection
+              models and egress filters locally. Join the waitlist to be notified when the
+              repository opens.
             </p>
           </div>
           <div className="flex-shrink-0 w-full md:w-80">
@@ -99,7 +133,8 @@ export default function OpenSourcePage() {
           <div>
             <h2 className="text-xl font-bold text-white mb-2">Contribute on GitHub</h2>
             <p className="text-sm text-slate-400 max-w-xl">
-              Help us build the next generation of security firewalls. Star our organization, file bug reports, or check our open discussions.
+              Help us build the next generation of security firewalls. Star our organization, file
+              bug reports, or check our open discussions.
             </p>
           </div>
           <div className="flex flex-wrap gap-4 w-full md:w-auto">
@@ -135,7 +170,9 @@ export default function OpenSourcePage() {
                 className="block bg-slate-900/30 border border-slate-900 hover:border-slate-850 hover:bg-slate-900/50 p-5 rounded-xl transition-all group"
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-bold text-blue-400 group-hover:text-blue-300 transition-colors">{tech.name}</span>
+                  <span className="font-bold text-blue-400 group-hover:text-blue-300 transition-colors">
+                    {tech.name}
+                  </span>
                   <span className="text-slate-600 text-xs">→</span>
                 </div>
                 <p className="text-slate-400 text-xs leading-relaxed">{tech.desc}</p>
@@ -146,7 +183,10 @@ export default function OpenSourcePage() {
 
         {/* Mit license */}
         <footer className="border-t border-slate-900 pt-8 text-center text-xs text-slate-500">
-          <p>© {new Date().getFullYear()} RakshEx. Built with pride under open standards and modern developer tools.</p>
+          <p>
+            © {new Date().getFullYear()} RakshEx. Built with pride under open standards and modern
+            developer tools.
+          </p>
         </footer>
       </div>
     </div>
