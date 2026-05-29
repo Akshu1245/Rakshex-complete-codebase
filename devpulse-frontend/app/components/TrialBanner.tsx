@@ -15,7 +15,7 @@ export function TrialBanner() {
   if (!trial?.isTrial) return null;
 
   const daysLeft = trial.daysLeft;
-  const urgency = daysLeft <= 3 ? "bg-red-600" : daysLeft <= 7 ? "bg-amber-500" : "bg-blue-600";
+  const urgency = daysLeft <= 3 ? "bg-[#EF4444]" : daysLeft <= 7 ? "bg-[#FDB022]" : "bg-[#3B82F6]";
 
   return (
     <div className={`${urgency} text-white px-4 py-2 text-sm`}>

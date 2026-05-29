@@ -37,10 +37,10 @@ interface ImportResult {
 type ImportStage = "idle" | "parsing" | "scanning" | "persisting" | "done";
 
 const SEVERITY_COLORS: Record<string, string> = {
-  critical: "bg-red-900/60 border-red-500/50 text-red-300",
-  high: "bg-orange-900/60 border-orange-500/50 text-orange-300",
-  medium: "bg-yellow-900/60 border-yellow-500/50 text-yellow-300",
-  low: "bg-blue-900/60 border-blue-500/50 text-blue-300",
+  critical: "bg-[#EF4444]/15 border-[#EF4444]/30 text-[#EF4444]",
+  high: "bg-[#F59E0B]/15 border-[#F59E0B]/30 text-[#F59E0B]",
+  medium: "bg-[#FDB022]/15 border-[#FDB022]/30 text-[#FDB022]",
+  low: "bg-[#3B82F6]/15 border-[#3B82F6]/30 text-[#3B82F6]",
 };
 
 function formatBytes(bytes: number): string {
@@ -292,21 +292,21 @@ export default function CollectionsPage() {
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-blue-400">Collections</h1>
+            <h1 className="text-3xl font-bold text-[#06D6A0]">Collections</h1>
             <p className="text-gray-400 mt-1">Manage your API collections</p>
           </div>
-          <Link href="/dashboard" className="text-blue-400 hover:text-blue-300">
+          <Link href="/dashboard" className="text-[#06D6A0] hover:text-[#00F0FF] transition-colors">
             ← Dashboard
           </Link>
         </div>
 
         {error && (
-          <div className="mb-6 p-3 rounded bg-red-900/40 border border-red-500/50 text-red-300 text-sm flex items-start gap-2">
+          <div className="mb-6 p-3 rounded bg-[#EF4444]/10 border border-[#EF4444]/30 text-[#EF4444] text-sm flex items-start gap-2">
             <span className="shrink-0 mt-0.5">⚠</span>
             <span>{error}</span>
             <button
               onClick={() => setError(null)}
-              className="ml-auto text-red-400 hover:text-red-300"
+              className="ml-auto text-[#EF4444] hover:text-[#EF4444]/80"
             >
               ✕
             </button>
@@ -315,14 +315,14 @@ export default function CollectionsPage() {
 
         {/* Import progress bar */}
         {importStage !== "idle" && (
-          <div className="bg-gray-800 p-4 rounded-lg border border-gray-700 mb-6">
+          <div className="bg-[#1E293B] p-4 rounded-lg border border-[#2D3E50] mb-6">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-gray-300">{stageLabels[importStage]}</span>
               <span className="text-sm text-gray-500">{stageProgress[importStage]}%</span>
             </div>
-            <div className="w-full bg-gray-700 rounded-full h-2">
+            <div className="w-full bg-[#0A0E1A] rounded-full h-2">
               <div
-                className="bg-blue-500 h-2 rounded-full transition-all duration-500"
+                className="bg-[#06D6A0] h-2 rounded-full transition-all duration-500"
                 style={{ width: `${stageProgress[importStage]}%` }}
               />
             </div>
@@ -333,9 +333,9 @@ export default function CollectionsPage() {
                     <span
                       className={
                         i < currentImportIndex
-                          ? "text-green-400"
+                          ? "text-[#10B981]"
                           : i === currentImportIndex
-                            ? "text-blue-400"
+                            ? "text-[#06D6A0]"
                             : ""
                       }
                     >
@@ -352,13 +352,13 @@ export default function CollectionsPage() {
 
         {/* Credential findings display */}
         {credentialFindings.length > 0 && importStage === "done" && (
-          <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4 mb-6">
-            <h3 className="text-red-400 font-semibold mb-2 flex items-center gap-2">
+          <div className="bg-[#EF4444]/10 border border-[#EF4444]/30 rounded-lg p-4 mb-6">
+            <h3 className="text-[#EF4444] font-semibold mb-2 flex items-center gap-2">
               <span>🔑</span>
               {credentialFindings.length} potential credential
               {credentialFindings.length !== 1 ? "s" : ""} detected
             </h3>
-            <p className="text-red-300/70 text-xs mb-3">
+            <p className="text-[#EF4444]/70 text-xs mb-3">
               Credentials found in your imported collection. Review and rotate these immediately.
             </p>
             <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -375,7 +375,7 @@ export default function CollectionsPage() {
                   <div className="mt-1 flex gap-2 text-xs opacity-60">
                     <span className="font-mono truncate max-w-xs">{f.path}</span>
                     {f.matchPreview && (
-                      <span className="font-mono text-red-400/80">→ {f.matchPreview}</span>
+                      <span className="font-mono text-[#EF4444]/80">→ {f.matchPreview}</span>
                     )}
                   </div>
                 </div>
@@ -387,12 +387,12 @@ export default function CollectionsPage() {
         {/* Gateway scan findings (prompt injection, PII, insecure auth) */}
         {importResults.some((r) => (r.gatewayFindings?.length ?? 0) > 0) &&
           importStage === "done" && (
-            <div className="bg-orange-900/20 border border-orange-500/30 rounded-lg p-4 mb-6">
-              <h3 className="text-orange-400 font-semibold mb-2 flex items-center gap-2">
+            <div className="bg-[#F59E0B]/10 border border-[#F59E0B]/30 rounded-lg p-4 mb-6">
+              <h3 className="text-[#F59E0B] font-semibold mb-2 flex items-center gap-2">
                 <span>🛡</span>
                 LLM Gateway issues detected
               </h3>
-              <p className="text-orange-300/70 text-xs mb-3">
+              <p className="text-[#F59E0B]/70 text-xs mb-3">
                 Your API endpoints have issues that could be exploited through LLM-based attacks.
                 Review and add protections.
               </p>
@@ -403,12 +403,12 @@ export default function CollectionsPage() {
                       key={`${r.id}-${i}`}
                       className={`p-3 rounded border text-xs ${
                         f.severity === "Critical"
-                          ? "bg-red-900/40 border-red-500/40 text-red-300"
+                          ? "bg-[#EF4444]/15 border-[#EF4444]/30 text-[#EF4444]"
                           : f.severity === "High"
-                            ? "bg-orange-900/40 border-orange-500/40 text-orange-300"
+                            ? "bg-[#F59E0B]/15 border-[#F59E0B]/30 text-[#F59E0B]"
                             : f.severity === "Medium"
-                              ? "bg-yellow-900/40 border-yellow-500/40 text-yellow-300"
-                              : "bg-blue-900/40 border-blue-500/40 text-blue-300"
+                              ? "bg-[#FDB022]/15 border-[#FDB022]/30 text-[#FDB022]"
+                              : "bg-[#3B82F6]/15 border-[#3B82F6]/30 text-[#3B82F6]"
                       }`}
                     >
                       <div className="flex items-center justify-between mb-1">
@@ -422,7 +422,7 @@ export default function CollectionsPage() {
                       </div>
                       <p className="mt-1">{f.description}</p>
                       <div className="mt-2 flex items-start gap-2">
-                        <span className="shrink-0 text-green-400 text-xs">Fix:</span>
+                        <span className="shrink-0 text-[#10B981] text-xs">Fix:</span>
                         <span className="text-gray-400 text-xs">{f.remediation}</span>
                       </div>
                     </div>
@@ -434,8 +434,8 @@ export default function CollectionsPage() {
 
         {/* Import results summary */}
         {importResults.length > 0 && importStage === "done" && (
-          <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4 mb-6">
-            <h3 className="text-green-400 font-semibold flex items-center gap-2">
+          <div className="bg-[#10B981]/10 border border-[#10B981]/30 rounded-lg p-4 mb-6">
+            <h3 className="text-[#10B981] font-semibold flex items-center gap-2">
               <span>✓</span>
               {importResults.filter((r) => r.id !== "error").length} collection
               {importResults.length !== 1 ? "s" : ""} imported
@@ -443,20 +443,20 @@ export default function CollectionsPage() {
             <div className="mt-2 space-y-1">
               {importResults.map((r, i) => (
                 <div key={i} className="flex items-center gap-2 text-sm">
-                  <span className={r.id === "error" ? "text-red-400" : "text-green-400"}>
+                  <span className={r.id === "error" ? "text-[#EF4444]" : "text-[#10B981]"}>
                     {r.id === "error" ? "✕" : "✓"}
                   </span>
                   <span className="text-gray-300">{r.name}</span>
                   <span className="text-gray-500 text-xs">({r.format})</span>
                   {r.credentialFindings && r.credentialFindings.length > 0 && (
-                    <span className="text-red-400 text-xs">🔑 {r.credentialFindings.length}</span>
+                    <span className="text-[#EF4444] text-xs">🔑 {r.credentialFindings.length}</span>
                   )}
                 </div>
               ))}
             </div>
             <button
               onClick={resetImport}
-              className="mt-3 text-sm text-blue-400 hover:text-blue-300"
+              className="mt-3 text-sm text-[#06D6A0] hover:text-[#00F0FF] transition-colors"
             >
               Import more collections →
             </button>
@@ -470,7 +470,7 @@ export default function CollectionsPage() {
                 setShowUpload(true);
                 resetImport();
               }}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors"
+              className="px-4 py-2 bg-gradient-to-r from-[#06D6A0] to-[#00F0FF] text-[#0A0E1A] hover:opacity-90 rounded-lg font-semibold transition-all"
             >
               Import Collection
             </button>
@@ -478,7 +478,7 @@ export default function CollectionsPage() {
         </div>
 
         {showUpload && importStage === "idle" && (
-          <div className="bg-gray-800 p-6 rounded-lg border border-gray-700 mb-8">
+          <div className="bg-[#1E293B] p-6 rounded-lg border border-[#2D3E50] mb-8">
             <h2 className="text-xl font-semibold mb-4">Import Collection</h2>
 
             {/* Drag-and-drop zone */}
@@ -492,10 +492,10 @@ export default function CollectionsPage() {
               onDrop={handleDrop}
               className={`border-2 border-dashed rounded-lg p-8 text-center transition-all cursor-pointer ${
                 dragOver
-                  ? "border-blue-400 bg-blue-900/20"
+                  ? "border-[#06D6A0] bg-[#06D6A0]/10"
                   : batchFiles.length > 0
-                    ? "border-green-500/50 bg-green-900/10"
-                    : "border-gray-600 hover:border-blue-500"
+                    ? "border-[#10B981]/50 bg-[#10B981]/10"
+                    : "border-[#2D3E50] hover:border-[#06D6A0]"
               }`}
               onClick={() => fileInputRef.current?.click()}
             >
@@ -510,7 +510,7 @@ export default function CollectionsPage() {
               {batchFiles.length > 0 ? (
                 <div>
                   <svg
-                    className="w-10 h-10 mx-auto mb-3 text-green-400"
+                    className="w-10 h-10 mx-auto mb-3 text-[#10B981]"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -522,7 +522,7 @@ export default function CollectionsPage() {
                       d="M5 13l4 4L19 7"
                     />
                   </svg>
-                  <p className="text-green-400 font-medium">
+                  <p className="text-[#10B981] font-semibold">
                     {batchFiles.length} file{batchFiles.length !== 1 ? "s" : ""} selected
                   </p>
                   <div className="mt-3 space-y-1 max-h-32 overflow-y-auto">
@@ -538,7 +538,7 @@ export default function CollectionsPage() {
                             e.stopPropagation();
                             setBatchFiles((prev) => prev.filter((_, j) => j !== i));
                           }}
-                          className="text-red-400 hover:text-red-300 ml-2"
+                          className="text-[#EF4444] hover:text-[#EF4444]/80 ml-2"
                         >
                           ✕
                         </button>
@@ -577,11 +577,11 @@ export default function CollectionsPage() {
                 <button
                   onClick={handleBatchImport}
                   disabled={createCollection.isPending}
-                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+                  className="px-6 py-2.5 bg-gradient-to-r from-[#06D6A0] to-[#00F0FF] text-[#0A0E1A] hover:opacity-90 rounded-lg font-semibold transition-all disabled:opacity-50 flex items-center gap-2"
                 >
                   {createCollection.isPending ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#0A0E1A]"></div>
                       Importing…
                     </>
                   ) : (
@@ -592,9 +592,9 @@ export default function CollectionsPage() {
             )}
 
             <div className="flex items-center gap-3 text-gray-500 text-sm my-4">
-              <div className="flex-1 border-t border-gray-700"></div>
+              <div className="flex-1 border-t border-[#2D3E50]"></div>
               <span>or paste manually</span>
-              <div className="flex-1 border-t border-gray-700"></div>
+              <div className="flex-1 border-t border-[#2D3E50]"></div>
             </div>
 
             <div className="space-y-4">
@@ -605,7 +605,7 @@ export default function CollectionsPage() {
                   value={uploadName}
                   onChange={(e) => setUploadName(e.target.value)}
                   placeholder="My API Collection"
-                  className="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-4 py-2 rounded-lg bg-[#0A0E1A] border border-[#2D3E50] focus:ring-2 focus:ring-[#06D6A0] focus:border-[#06D6A0] outline-none"
                 />
               </div>
               <div>
@@ -613,7 +613,7 @@ export default function CollectionsPage() {
                 <select
                   value={uploadFormat}
                   onChange={(e) => setUploadFormat(e.target.value as CollectionFormat)}
-                  className="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-4 py-2 rounded-lg bg-[#0A0E1A] border border-[#2D3E50] focus:ring-2 focus:ring-[#06D6A0] focus:border-[#06D6A0] outline-none"
                 >
                   <option value="postman">Postman (auto-detect)</option>
                   <option value="openapi">OpenAPI</option>
@@ -625,14 +625,14 @@ export default function CollectionsPage() {
                   value={uploadData}
                   onChange={(e) => setUploadData(e.target.value)}
                   placeholder='{"info": {"name": "My API", "_postman_id": "..."}}'
-                  className="w-full h-40 px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none font-mono text-sm"
+                  className="w-full h-40 px-4 py-2 rounded-lg bg-[#0A0E1A] border border-[#2D3E50] focus:ring-2 focus:ring-[#06D6A0] focus:border-[#06D6A0] outline-none font-mono text-sm"
                 />
               </div>
               <div className="flex gap-4">
                 <button
                   onClick={handleSingleImport}
                   disabled={createCollection.isPending || !uploadData.trim() || !uploadName.trim()}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors disabled:opacity-50"
+                  className="px-4 py-2 bg-gradient-to-r from-[#06D6A0] to-[#00F0FF] text-[#0A0E1A] hover:opacity-90 rounded-lg font-semibold transition-all disabled:opacity-50"
                 >
                   {createCollection.isPending ? "Importing…" : "Import"}
                 </button>
@@ -641,7 +641,7 @@ export default function CollectionsPage() {
                     setShowUpload(false);
                     resetImport();
                   }}
-                  className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg font-medium transition-colors"
+                  className="px-4 py-2 bg-[#0A0E1A] border border-[#2D3E50] hover:bg-gray-800 rounded-lg font-semibold transition-colors"
                 >
                   Cancel
                 </button>
@@ -654,7 +654,7 @@ export default function CollectionsPage() {
         <div className="space-y-4">
           {isListLoading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#06D6A0]"></div>
             </div>
           ) : collections.length === 0 ? (
             <EmptyState
@@ -686,7 +686,7 @@ export default function CollectionsPage() {
             collections.map((col) => (
               <div
                 key={col.id}
-                className="bg-gray-800 p-6 rounded-lg border border-gray-700 flex justify-between items-center"
+                className="bg-[#1E293B] p-6 rounded-lg border border-[#2D3E50] flex justify-between items-center"
               >
                 <div>
                   <h3 className="text-lg font-semibold">{col.name}</h3>
@@ -700,13 +700,13 @@ export default function CollectionsPage() {
                 <div className="flex gap-2">
                   <Link
                     href={`/scanning?collection=${col.id}`}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors text-sm"
+                    className="px-4 py-2 bg-gradient-to-r from-[#06D6A0] to-[#00F0FF] text-[#0A0E1A] hover:opacity-90 rounded-lg font-semibold transition-all text-sm"
                   >
                     Scan
                   </Link>
                   <button
                     onClick={() => setDeleteConfirm(col.id)}
-                    className="px-4 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/50 rounded-lg font-medium transition-colors text-sm"
+                    className="px-4 py-2 bg-[#EF4444]/10 hover:bg-[#EF4444]/20 text-[#EF4444] border border-[#EF4444]/30 rounded-lg font-semibold transition-colors text-sm"
                   >
                     Delete
                   </button>

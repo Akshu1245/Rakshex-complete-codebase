@@ -87,7 +87,7 @@ export default function BillingPage() {
             refreshAll();
           },
           theme: {
-            color: "#3b82f6",
+            color: "#06D6A0",
           },
         };
         const rzp = new (
@@ -111,15 +111,15 @@ export default function BillingPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
-        return "text-green-400 bg-green-900/30 border-green-500";
+        return "text-[#10B981] bg-[#10B981]/15 border-[#10B981]";
       case "pending":
-        return "text-yellow-400 bg-yellow-900/30 border-yellow-500";
+        return "text-[#FDB022] bg-[#FDB022]/15 border-[#FDB022]";
       case "cancelled":
-        return "text-red-400 bg-red-900/30 border-red-500";
+        return "text-[#EF4444] bg-[#EF4444]/15 border-[#EF4444]";
       case "past_due":
-        return "text-orange-400 bg-orange-900/30 border-orange-500";
+        return "text-[#F59E0B] bg-[#F59E0B]/15 border-[#F59E0B]";
       default:
-        return "text-gray-400 bg-gray-900/30 border-gray-500";
+        return "text-[#94A3B8] bg-[#1E293B]/30 border-[#2D3E50]";
     }
   };
 
@@ -137,7 +137,7 @@ export default function BillingPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-[#06D6A0]" />
       </div>
     );
   }
@@ -146,7 +146,7 @@ export default function BillingPage() {
     <div className="text-white p-6">
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center gap-3">
-          <CreditCard className="w-6 h-6 text-blue-400" />
+          <CreditCard className="w-6 h-6 text-[#06D6A0]" />
           <h1 className="text-2xl font-bold">Billing & Subscription</h1>
         </div>
 
@@ -158,7 +158,7 @@ export default function BillingPage() {
         )}
 
         {/* Current Plan Card */}
-        <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
+        <div className="bg-[#1E293B] border border-[#2D3E50] rounded-lg p-6">
           <h2 className="text-lg font-semibold mb-4">Current Plan</h2>
 
           <div className="flex items-center justify-between">
@@ -182,7 +182,7 @@ export default function BillingPage() {
             {isPaidPlan && (
               <button
                 onClick={() => setShowCancelConfirm(true)}
-                className="px-4 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/50 rounded-lg transition-colors"
+                className="px-4 py-2 bg-[#EF4444]/10 hover:bg-[#EF4444]/20 text-[#EF4444] border border-[#EF4444]/30 rounded-lg transition-colors"
               >
                 Cancel Subscription
               </button>
@@ -195,15 +195,15 @@ export default function BillingPage() {
           {plans.map((plan) => (
             <div
               key={plan.id}
-              className={`bg-gray-800 border rounded-lg p-6 ${
+              className={`bg-[#1E293B] border rounded-lg p-6 ${
                 subscription?.plan === plan.id
-                  ? "border-blue-500 ring-1 ring-blue-500"
-                  : "border-gray-700"
+                  ? "border-[#06D6A0] ring-1 ring-[#06D6A0]"
+                  : "border-[#2D3E50]"
               }`}
             >
               <div className="flex items-center gap-2 mb-4">
-                {plan.id === "pro" && <Zap className="w-5 h-5 text-blue-400" />}
-                {plan.id === "enterprise" && <Crown className="w-5 h-5 text-amber-400" />}
+                {plan.id === "pro" && <Zap className="w-5 h-5 text-[#06D6A0]" />}
+                {plan.id === "enterprise" && <Crown className="w-5 h-5 text-[#FDB022]" />}
                 <h3 className="font-semibold">{plan.name}</h3>
               </div>
 
@@ -220,7 +220,7 @@ export default function BillingPage() {
               <ul className="space-y-2 mb-6">
                 {plan.features.slice(0, 4).map((feature, idx) => (
                   <li key={idx} className="flex items-start gap-2 text-sm text-gray-300">
-                    <Check className="w-4 h-4 text-green-400 mt-0.5 shrink-0" />
+                    <Check className="w-4 h-4 text-[#10B981] mt-0.5 shrink-0" />
                     {feature}
                   </li>
                 ))}
@@ -229,14 +229,14 @@ export default function BillingPage() {
               {subscription?.plan === plan.id ? (
                 <button
                   disabled
-                  className="w-full py-2 bg-gray-700 text-gray-400 rounded-lg cursor-not-allowed"
+                  className="w-full py-2 bg-[#0A0E1A] text-gray-400 rounded-lg cursor-not-allowed border border-[#2D3E50]"
                 >
                   Current Plan
                 </button>
               ) : plan.id === "free" ? (
                 <button
                   disabled={subscription?.plan === "free"}
-                  className="w-full py-2 bg-gray-700 text-gray-400 rounded-lg cursor-not-allowed"
+                  className="w-full py-2 bg-[#0A0E1A] text-gray-400 rounded-lg cursor-not-allowed border border-[#2D3E50]"
                 >
                   {subscription?.plan === "free" ? "Current Plan" : "Downgrade"}
                 </button>
@@ -244,10 +244,10 @@ export default function BillingPage() {
                 <button
                   onClick={() => handleUpgrade(plan.id)}
                   disabled={isProcessing}
-                  className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors disabled:opacity-50"
+                  className="w-full py-2 bg-gradient-to-r from-[#06D6A0] to-[#00F0FF] text-[#0A0E1A] font-semibold rounded-lg hover:opacity-90 transition-all disabled:opacity-50"
                 >
                   {isProcessing ? (
-                    <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                    <Loader2 className="w-4 h-4 animate-spin mx-auto text-[#0A0E1A]" />
                   ) : subscription?.plan === "free" ? (
                     "Upgrade"
                   ) : (
@@ -260,7 +260,7 @@ export default function BillingPage() {
         </div>
 
         {/* Invoice History */}
-        <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
+        <div className="bg-[#1E293B] border border-[#2D3E50] rounded-lg p-6">
           <h2 className="text-lg font-semibold mb-4">Invoice History</h2>
 
           {invoices.length === 0 ? (
@@ -274,7 +274,7 @@ export default function BillingPage() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="text-left text-gray-400 text-sm border-b border-gray-700">
+                  <tr className="text-left text-gray-400 text-sm border-b border-[#2D3E50]">
                     <th className="pb-3">Date</th>
                     <th className="pb-3">Description</th>
                     <th className="pb-3">Amount</th>
@@ -284,7 +284,10 @@ export default function BillingPage() {
                 </thead>
                 <tbody>
                   {invoices.map((invoice) => (
-                    <tr key={invoice.id} className="border-b border-gray-700/50">
+                    <tr
+                      key={invoice.id}
+                      className="border-b border-[#2D3E50]/50 hover:bg-[#06D6A0]/5 transition-colors"
+                    >
                       <td className="py-4 text-sm">
                         {format(new Date(invoice.createdAt), "MMM d, yyyy")}
                       </td>
@@ -309,7 +312,7 @@ export default function BillingPage() {
                             href={`https://dashboard.razorpay.com/receipts/${invoice.receipt}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-blue-400 hover:text-blue-300 text-sm"
+                            className="flex items-center gap-1 text-[#06D6A0] hover:text-[#00F0FF] text-sm"
                           >
                             <Download className="w-4 h-4" />
                             Download
@@ -329,14 +332,14 @@ export default function BillingPage() {
         {/* Cancel Confirmation Modal */}
         {showCancelConfirm && (
           <div
-            className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50"
             onClick={(e) => {
               if (e.target === e.currentTarget) setShowCancelConfirm(false);
             }}
           >
-            <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 max-w-md w-full">
+            <div className="bg-[#1E293B] border border-[#2D3E50] rounded-lg p-6 max-w-md w-full shadow-2xl">
               <div className="flex items-center gap-3 mb-4">
-                <AlertCircle className="w-6 h-6 text-red-400" />
+                <AlertCircle className="w-6 h-6 text-[#EF4444]" />
                 <h3 className="text-lg font-semibold">Cancel Subscription?</h3>
               </div>
 
@@ -349,7 +352,7 @@ export default function BillingPage() {
                 <button
                   onClick={() => handleCancel(true)}
                   disabled={isProcessing}
-                  className="flex-1 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors disabled:opacity-50"
+                  className="flex-1 py-2 bg-[#EF4444] hover:bg-[#EF4444]/90 text-white font-semibold rounded-lg transition-colors disabled:opacity-50"
                 >
                   {isProcessing ? (
                     <Loader2 className="w-4 h-4 animate-spin mx-auto" />
@@ -360,7 +363,7 @@ export default function BillingPage() {
                 <button
                   onClick={() => handleCancel(false)}
                   disabled={isProcessing}
-                  className="flex-1 py-2 bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 border border-amber-500/50 rounded-lg transition-colors disabled:opacity-50"
+                  className="flex-1 py-2 bg-[#FDB022]/10 hover:bg-[#FDB022]/20 text-[#FDB022] border border-[#FDB022]/30 rounded-lg transition-colors disabled:opacity-50"
                 >
                   {isProcessing ? (
                     <Loader2 className="w-4 h-4 animate-spin mx-auto" />
@@ -371,7 +374,7 @@ export default function BillingPage() {
                 <button
                   onClick={() => setShowCancelConfirm(false)}
                   disabled={isProcessing}
-                  className="flex-1 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg transition-colors"
+                  className="flex-1 py-2 bg-[#0A0E1A] hover:bg-gray-800 text-gray-300 border border-[#2D3E50] rounded-lg transition-colors"
                 >
                   <X className="w-4 h-4 mx-auto" />
                 </button>

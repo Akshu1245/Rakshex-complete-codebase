@@ -71,7 +71,7 @@ export default function PaywallModal({
             window.location.reload();
           },
           prefill: {},
-          theme: { color: "#6366f1" },
+          theme: { color: "#06D6A0" },
         };
         const rzp = new win.Razorpay(options);
         rzp.open();
@@ -93,12 +93,12 @@ export default function PaywallModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 max-w-lg w-full shadow-2xl">
+      <div className="bg-[#1E293B] border border-[#2D3E50] rounded-xl p-6 max-w-lg w-full shadow-2xl">
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-600/20 rounded-lg">
-              <Zap className="w-5 h-5 text-indigo-400" />
+            <div className="p-2 bg-[#06D6A0]/20 rounded-lg">
+              <Zap className="w-5 h-5 text-[#06D6A0]" />
             </div>
             <h2 className="text-xl font-bold">{title}</h2>
           </div>
@@ -114,16 +114,16 @@ export default function PaywallModal({
         <p className="text-gray-300 mb-6">{description}</p>
 
         {requiredFeature && (
-          <div className="flex items-center gap-2 p-3 bg-amber-900/20 border border-amber-500/30 rounded-lg mb-6">
-            <AlertCircle className="w-4 h-4 text-amber-400" />
-            <span className="text-sm text-amber-300">
+          <div className="flex items-center gap-2 p-3 bg-[#FDB022]/10 border border-[#FDB022]/30 rounded-lg mb-6">
+            <AlertCircle className="w-4 h-4 text-[#FDB022]" />
+            <span className="text-sm text-[#FDB022]">
               Required: {requiredPlan === "enterprise" ? "Enterprise" : "Pro"} plan or higher
             </span>
           </div>
         )}
 
         {error && (
-          <div className="flex items-center gap-2 p-3 bg-red-900/20 border border-red-500/30 rounded-lg mb-6 text-red-400 text-sm">
+          <div className="flex items-center gap-2 p-3 bg-[#EF4444]/10 border border-[#EF4444]/30 rounded-lg mb-6 text-[#EF4444] text-sm">
             <AlertCircle className="w-4 h-4" />
             {error}
           </div>
@@ -133,7 +133,7 @@ export default function PaywallModal({
         <div className="space-y-3 mb-6">
           {plans.length === 0 ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-indigo-400" />
+              <Loader2 className="w-6 h-6 animate-spin text-[#06D6A0]" />
             </div>
           ) : (
             plans
@@ -150,19 +150,19 @@ export default function PaywallModal({
                     key={plan.id}
                     className={`relative border rounded-lg p-4 transition-all ${
                       isCurrent
-                        ? "border-green-500/50 bg-green-900/10"
+                        ? "border-[#10B981]/50 bg-[#10B981]/10"
                         : isRecommended
-                          ? "border-indigo-500 bg-indigo-900/20 ring-1 ring-indigo-500"
-                          : "border-gray-800 bg-gray-900/50"
+                          ? "border-[#06D6A0] bg-[#1E293B] ring-1 ring-[#06D6A0]"
+                          : "border-[#2D3E50] bg-[#1E293B]/50"
                     }`}
                   >
                     {isRecommended && !isCurrent && (
-                      <span className="absolute -top-2 right-4 px-2 py-0.5 bg-indigo-600 text-xs font-medium rounded">
+                      <span className="absolute -top-2 right-4 px-2 py-0.5 bg-[#06D6A0] text-xs font-semibold rounded text-[#0A0E1A]">
                         Recommended
                       </span>
                     )}
                     {isCurrent && (
-                      <span className="absolute -top-2 right-4 px-2 py-0.5 bg-green-600 text-xs font-medium rounded flex items-center gap-1">
+                      <span className="absolute -top-2 right-4 px-2 py-0.5 bg-[#10B981] text-xs font-semibold rounded flex items-center gap-1 text-[#0A0E1A]">
                         <Check className="w-3 h-3" />
                         Current
                       </span>
@@ -171,9 +171,9 @@ export default function PaywallModal({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         {plan.id === "pro" ? (
-                          <Zap className="w-5 h-5 text-indigo-400" />
+                          <Zap className="w-5 h-5 text-[#06D6A0]" />
                         ) : (
-                          <Crown className="w-5 h-5 text-amber-400" />
+                          <Crown className="w-5 h-5 text-[#FDB022]" />
                         )}
                         <div>
                           <h3 className="font-semibold">{plan.name}</h3>
@@ -188,12 +188,12 @@ export default function PaywallModal({
                       </div>
 
                       {isCurrent ? (
-                        <span className="text-sm text-green-400">Active</span>
+                        <span className="text-sm text-[#10B981]">Active</span>
                       ) : isHigher || plan.id === requiredPlan ? (
                         <button
                           onClick={() => handleUpgrade(plan.id)}
                           disabled={isLoading}
-                          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                          className="px-4 py-2 bg-gradient-to-r from-[#06D6A0] to-[#00F0FF] hover:opacity-90 text-[#0A0E1A] text-sm font-semibold rounded-lg transition-all disabled:opacity-50"
                         >
                           {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Upgrade"}
                         </button>
@@ -206,7 +206,7 @@ export default function PaywallModal({
                     <ul className="mt-3 space-y-1">
                       {plan.features.slice(0, 3).map((feature, idx) => (
                         <li key={idx} className="flex items-start gap-2 text-sm text-gray-400">
-                          <Check className="w-3.5 h-3.5 text-green-400 mt-0.5 shrink-0" />
+                          <Check className="w-3.5 h-3.5 text-[#10B981] mt-0.5 shrink-0" />
                           {feature}
                         </li>
                       ))}
@@ -218,7 +218,7 @@ export default function PaywallModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-4 border-t border-gray-800">
+        <div className="flex items-center justify-between pt-4 border-t border-[#2D3E50]">
           <p className="text-xs text-gray-500">Secure payment via Razorpay. Cancel anytime.</p>
           <button
             onClick={onClose}

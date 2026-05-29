@@ -79,13 +79,13 @@ export default function RedTeamPage() {
   const severityColor = (s: string) => {
     switch (s) {
       case "Critical":
-        return "text-red-400 bg-red-900/30 border-red-700/40";
+        return "text-[#EF4444] bg-[#EF4444]/15 border-[#EF4444]/30";
       case "High":
-        return "text-orange-400 bg-orange-900/30 border-orange-700/40";
+        return "text-[#F59E0B] bg-[#F59E0B]/15 border-[#F59E0B]/30";
       case "Medium":
-        return "text-yellow-400 bg-yellow-900/30 border-yellow-700/40";
+        return "text-[#FDB022] bg-[#FDB022]/15 border-[#FDB022]/30";
       default:
-        return "text-gray-400 bg-gray-800/50 border-gray-600/30";
+        return "text-[#94A3B8] bg-[#1E293B]/50 border-[#2D3E50]/30";
     }
   };
 
@@ -100,20 +100,20 @@ export default function RedTeamPage() {
         </div>
         <button
           onClick={runNow}
-          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-500 font-medium"
+          className="px-4 py-2 bg-[#EF4444] text-white rounded-lg hover:bg-[#EF4444]/90 font-semibold transition-all"
         >
           Run Now
         </button>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 bg-gray-800/50 rounded-lg p-1 w-fit">
+      <div className="flex gap-1 mb-6 bg-[#1E293B]/50 rounded-lg p-1 w-fit border border-[#2D3E50]">
         {(["trends", "findings", "schedule"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              activeTab === tab ? "bg-gray-700 text-white" : "text-gray-400 hover:text-gray-200"
+            className={`px-4 py-2 rounded-md text-sm font-semibold transition-all ${
+              activeTab === tab ? "bg-[#06D6A0] text-[#0A0E1A]" : "text-gray-400 hover:text-white"
             }`}
           >
             {tab === "trends" ? "Score Trends" : tab === "findings" ? "Findings" : "Schedule"}
@@ -160,10 +160,10 @@ export default function RedTeamPage() {
           </div>
 
           {/* Chart */}
-          <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
+          <div className="bg-[#1E293B]/50 border border-[#2D3E50] rounded-lg p-6">
             <h2 className="text-lg font-semibold text-white mb-4">Resilience Trend (30 days)</h2>
             {loading ? (
-              <div className="h-80 bg-gray-900/50 rounded-lg animate-pulse" />
+              <div className="h-80 bg-[#0A0E1A] rounded-lg animate-pulse border border-[#2D3E50]" />
             ) : trendData.length === 0 ? (
               <div className="h-80 flex items-center justify-center text-gray-400">
                 No trend data available. Run your first red-team test.
@@ -172,13 +172,13 @@ export default function RedTeamPage() {
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={trendData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#2D3E50" />
                     <XAxis dataKey="date" stroke="#9CA3AF" tick={{ fontSize: 12 }} />
                     <YAxis domain={[0, 100]} stroke="#9CA3AF" tick={{ fontSize: 12 }} />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: "#1F2937",
-                        border: "1px solid #374151",
+                        backgroundColor: "#0A0E1A",
+                        border: "1px solid #2D3E50",
                         borderRadius: "8px",
                       }}
                       labelStyle={{ color: "#E5E7EB" }}
@@ -188,7 +188,7 @@ export default function RedTeamPage() {
                       type="monotone"
                       dataKey="overall"
                       name="Overall"
-                      stroke="#60A5FA"
+                      stroke="#06D6A0"
                       strokeWidth={2}
                       dot={false}
                     />
@@ -196,7 +196,7 @@ export default function RedTeamPage() {
                       type="monotone"
                       dataKey="injection"
                       name="Injection"
-                      stroke="#F87171"
+                      stroke="#EF4444"
                       strokeWidth={2}
                       dot={false}
                     />
@@ -204,7 +204,7 @@ export default function RedTeamPage() {
                       type="monotone"
                       dataKey="leakage"
                       name="Leakage"
-                      stroke="#FBBF24"
+                      stroke="#FDB022"
                       strokeWidth={2}
                       dot={false}
                     />
@@ -212,7 +212,7 @@ export default function RedTeamPage() {
                       type="monotone"
                       dataKey="jailbreak"
                       name="Jailbreak"
-                      stroke="#A78BFA"
+                      stroke="#00F0FF"
                       strokeWidth={2}
                       dot={false}
                     />
@@ -220,7 +220,7 @@ export default function RedTeamPage() {
                       type="monotone"
                       dataKey="toxicity"
                       name="Toxicity"
-                      stroke="#34D399"
+                      stroke="#10B981"
                       strokeWidth={2}
                       dot={false}
                     />
@@ -234,7 +234,7 @@ export default function RedTeamPage() {
 
       {/* Findings Tab */}
       {activeTab === "findings" && (
-        <div className="bg-gray-800/50 border border-gray-700 rounded-lg overflow-hidden">
+        <div className="bg-[#1E293B]/50 border border-[#2D3E50] rounded-lg overflow-hidden">
           {loading ? (
             <div className="p-6 space-y-4">
               <SkeletonRow />
@@ -247,7 +247,7 @@ export default function RedTeamPage() {
             </div>
           ) : (
             <table className="w-full text-left text-sm">
-              <thead className="bg-gray-700/30 text-gray-300">
+              <thead className="bg-[#0A0E1A] text-gray-300">
                 <tr>
                   <th className="px-4 py-3 font-medium">Severity</th>
                   <th className="px-4 py-3 font-medium">Category</th>
@@ -256,9 +256,9 @@ export default function RedTeamPage() {
                   <th className="px-4 py-3 font-medium">Date</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-700/30">
+              <tbody className="divide-y divide-[#2D3E50]/30">
                 {findings.map((f) => (
-                  <tr key={f.id} className="hover:bg-gray-700/20">
+                  <tr key={f.id} className="hover:bg-[#06D6A0]/10 transition-colors">
                     <td className="px-4 py-3">
                       <span
                         className={`inline-block px-2 py-1 rounded text-xs font-medium border ${severityColor(f.severity)}`}
@@ -282,7 +282,7 @@ export default function RedTeamPage() {
 
       {/* Schedule Tab */}
       {activeTab === "schedule" && (
-        <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
+        <div className="bg-[#1E293B]/50 border border-[#2D3E50] rounded-lg p-6">
           <SchedulePanel />
         </div>
       )}
@@ -292,11 +292,11 @@ export default function RedTeamPage() {
 
 function ScoreCard({ label, score, previous }: { label: string; score: number; previous: number }) {
   const delta = score - previous;
-  const deltaColor = delta >= 0 ? "text-green-400" : "text-red-400";
+  const deltaColor = delta >= 0 ? "text-[#10B981]" : "text-[#EF4444]";
   const deltaIcon = delta >= 0 ? "↑" : "↓";
 
   return (
-    <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4">
+    <div className="bg-[#1E293B]/50 border border-[#2D3E50] rounded-lg p-4">
       <div className="text-gray-400 text-sm">{label}</div>
       <div className="text-2xl font-bold text-white mt-1">{score.toFixed(1)}</div>
       <div className={`text-xs mt-1 ${deltaColor}`}>
@@ -330,10 +330,10 @@ function SchedulePanel() {
         <label className="text-white font-medium">Auto-run enabled</label>
         <button
           onClick={() => setEnabled(!enabled)}
-          className={`w-12 h-6 rounded-full transition-colors ${enabled ? "bg-blue-600" : "bg-gray-600"}`}
+          className={`w-12 h-6 rounded-full transition-colors relative flex items-center ${enabled ? "bg-[#06D6A0]" : "bg-gray-600 border border-[#2D3E50]"}`}
         >
           <div
-            className={`w-5 h-5 bg-white rounded-full transition-transform ${enabled ? "translate-x-6" : "translate-x-0.5"}`}
+            className={`w-5 h-5 rounded-full transition-all ${enabled ? "translate-x-[26px] bg-[#0A0E1A]" : "translate-x-0.5 bg-white"}`}
           />
         </button>
       </div>
@@ -343,7 +343,7 @@ function SchedulePanel() {
         <input
           value={cron}
           onChange={(e) => setCron(e.target.value)}
-          className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-gray-200 font-mono text-sm"
+          className="w-full bg-[#0A0E1A] border border-[#2D3E50] rounded-lg px-3 py-2 text-gray-200 focus:ring-1 focus:ring-[#06D6A0] outline-none font-mono text-sm"
           placeholder="0 2 * * 1"
         />
         <p className="text-gray-500 text-xs mt-1">e.g. 0 2 * * 1 = Every Monday at 2 AM</p>
@@ -351,7 +351,7 @@ function SchedulePanel() {
 
       <button
         onClick={saveSchedule}
-        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500"
+        className="px-4 py-2 bg-gradient-to-r from-[#06D6A0] to-[#00F0FF] text-[#0A0E1A] font-semibold rounded-lg hover:opacity-90 transition-all"
       >
         Save Schedule
       </button>
