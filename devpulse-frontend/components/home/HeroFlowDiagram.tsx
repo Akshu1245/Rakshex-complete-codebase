@@ -3,6 +3,57 @@
 import { useEffect, useState } from "react";
 
 export function HeroFlowDiagram() {
+  const [scanStep, setScanStep] = useState(0);
+  const [findings, setFindings] = useState<string[]>([]);
+  const [securityScore, setSecurityScore] = useState(100);
+
+  useEffect(() => {
+    const steps = [
+      { text: "> rakshex scan ./api.json", delay: 1200 },
+      { text: "✓ 23 endpoints scanned", delay: 800 },
+      { text: "⚠ 2 credentials detected", delay: 800, finding: "Credential Leak", score: 98 },
+      { text: "🔒 1 prompt injection blocked", delay: 800, finding: "Prompt Injection", score: 95 },
+      { text: "💰 $47.3 cost anomaly flagged", delay: 800, finding: "Cost Anomaly", score: 94 },
+    ];
+
+    let currentStep = 0;
+    let timer: NodeJS.Timeout;
+
+    const runScan = () => {
+      if (currentStep < steps.length) {
+        const step = steps[currentStep];
+        setScanStep(currentStep + 1);
+        if (step.finding) {
+          setFindings((prev) => [...prev, step.finding!]);
+        }
+        if (step.score) {
+          setSecurityScore(step.score);
+        }
+        currentStep++;
+        timer = setTimeout(runScan, step.delay);
+      } else {
+        timer = setTimeout(() => {
+          setFindings([]);
+          setSecurityScore(100);
+          currentStep = 0;
+          setScanStep(0);
+          runScan();
+        }, 5000);
+      }
+    };
+
+    runScan();
+    return () => clearTimeout(timer);
+  }, []);
+
+  const terminalLines = [
+    "> rakshex scan ./api.json",
+    "✓ 23 endpoints scanned",
+    "⚠ 2 credentials detected",
+    "🔒 1 prompt injection blocked",
+    "💰 $47.3 cost anomaly flagged",
+  ];
+
   return (
     <div className="relative w-full max-w-[600px] h-[520px] flex flex-col items-center justify-between select-none">
       {/* Floating animations definitions */}
@@ -44,50 +95,44 @@ export function HeroFlowDiagram() {
         .animate-float-3 {
           animation: float-c3 4s ease-in-out infinite 1s;
         }
-
-        @keyframes flow-down {
-          0% {
-            top: 0%;
-            opacity: 0;
-          }
-          10% {
-            opacity: 1;
-          }
-          90% {
-            opacity: 1;
-          }
-          100% {
-            top: 100%;
-            opacity: 0;
-          }
-        }
-        @keyframes flow-right {
-          0% {
-            left: 0%;
-            opacity: 0;
-          }
-          10% {
-            opacity: 1;
-          }
-          90% {
-            opacity: 1;
-          }
-          100% {
-            left: 100%;
-            opacity: 0;
-          }
-        }
-
-        .animate-flow-down {
-          animation: flow-down 2s linear infinite;
-        }
-        .animate-flow-right {
-          animation: flow-right 2s linear infinite;
-        }
       `}</style>
 
-      {/* CARD 1 — Top Left Agent Card */}
-      <div className="absolute top-[20px] left-[5%] z-20 w-[280px] bg-[#141414] border border-[#2a2a2a] rounded-xl p-4 shadow-2xl animate-float-1">
+      {/* CONNECTOR LINES (Card 1 → Card 2 → Card 3) */}
+      <svg className="absolute inset-0 w-full h-full pointer-events-none z-10">
+        {/* Line 1 (stepped path from Cursor (bottom center at (300, 150)) to RakshEx (top center at (155, 260))) */}
+        <path
+          d="M 300 150 L 300 205 L 155 205 L 155 260"
+          fill="none"
+          stroke="rgba(0, 212, 170, 0.3)"
+          strokeWidth="2"
+          strokeDasharray="6,6"
+        />
+        {/* Line 2 (straight line from RakshEx (right center at (295, 365)) to Security Report (left center at (335, 365))) */}
+        <path
+          d="M 295 365 L 335 365"
+          fill="none"
+          stroke="rgba(0, 212, 170, 0.3)"
+          strokeWidth="2"
+          strokeDasharray="6,6"
+        />
+
+        {/* Animated flowing dot for Line 1 */}
+        <circle r="4" fill="#00d4aa" style={{ filter: "drop-shadow(0 0 4px #00d4aa)" }}>
+          <animateMotion
+            dur="3s"
+            repeatCount="indefinite"
+            path="M 300 150 L 300 205 L 155 205 L 155 260"
+          />
+        </circle>
+
+        {/* Animated flowing dot for Line 2 */}
+        <circle r="4" fill="#00d4aa" style={{ filter: "drop-shadow(0 0 4px #00d4aa)" }}>
+          <animateMotion dur="2s" repeatCount="indefinite" path="M 295 365 L 335 365" />
+        </circle>
+      </svg>
+
+      {/* CARD 1 — Top Center Agent Card */}
+      <div className="absolute top-[20px] left-[calc(50%-140px)] z-20 w-[280px] bg-[#141414] border border-[#2a2a2a] rounded-xl p-4 shadow-2xl animate-float-1">
         <div className="flex items-center gap-2 mb-3">
           <div className="w-5 h-5 flex items-center justify-center text-white">
             {/* Cursor Logo */}
@@ -108,14 +153,8 @@ export function HeroFlowDiagram() {
         </p>
       </div>
 
-      {/* CONNECTOR LINE (Card 1 → Card 2) */}
-      <div className="absolute top-[170px] left-[25%] w-[2px] h-[100px] border-l-2 border-dashed border-[rgba(0,212,170,0.3)] z-10">
-        {/* Animated flowing dot */}
-        <div className="absolute left-[-3.5px] w-2.5 h-2.5 rounded-full bg-[#00d4aa] shadow-[0_0_8px_#00d4aa] animate-flow-down" />
-      </div>
-
-      {/* CARD 2 — Center RakshEx Platform Card */}
-      <div className="absolute top-[260px] left-[5%] z-20 w-[300px] bg-[#141414] border border-[rgba(0,212,170,0.4)] rounded-xl p-5 shadow-[0_0_20px_rgba(0,212,170,0.08)] animate-float-2">
+      {/* CARD 2 — Below Left RakshEx Platform Card */}
+      <div className="absolute top-[260px] left-[2.5%] z-20 w-[280px] bg-[#141414] border border-[rgba(0,212,170,0.4)] rounded-xl p-5 shadow-[0_0_20px_rgba(0,212,170,0.08)] animate-float-2">
         <div className="flex items-center gap-2 mb-4 border-b border-white/5 pb-3">
           <div className="w-5 h-5 flex items-center justify-center text-[#00d4aa]">
             {/* Shield Icon */}
@@ -173,14 +212,8 @@ export function HeroFlowDiagram() {
         </div>
       </div>
 
-      {/* CONNECTOR LINE (Card 2 → Card 3) */}
-      <div className="absolute top-[345px] left-[320px] w-[90px] h-[2px] border-t-2 border-dashed border-[rgba(0,212,170,0.3)] z-10">
-        {/* Animated flowing dot */}
-        <div className="absolute top-[-3.5px] w-2.5 h-2.5 rounded-full bg-[#00d4aa] shadow-[0_0_8px_#00d4aa] animate-flow-right" />
-      </div>
-
-      {/* CARD 3 — Right Result Card */}
-      <div className="absolute top-[280px] right-[5%] z-20 w-[220px] bg-[#141414] border border-[#2a2a2a] rounded-xl p-4 shadow-2xl animate-float-3">
+      {/* CARD 3 — Below Right Result Card */}
+      <div className="absolute top-[260px] right-[2.5%] z-20 w-[250px] bg-[#141414] border border-[#2a2a2a] rounded-xl p-4 shadow-2xl animate-float-3">
         <div className="flex items-center gap-2 mb-3 pb-2 border-b border-white/5">
           <div className="w-4 h-4 flex items-center justify-center text-neutral-400">
             {/* Monitor Icon */}

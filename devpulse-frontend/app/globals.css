@@ -354,8 +354,24 @@ body::before {
     transform: translateX(0);
   }
   100% {
-    transform: translateX(-50%); /* -50% because list is doubled */
+    transform: translateX(-50%);
   }
 }
 
+/* Hero Section Layout Customization */
+.hero-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  min-height: 100vh;
+  padding: 80px 80px;
+  gap: 60px;
+}
 
+@media (max-width: 768px) {
+  .hero-section {
+    grid-template-columns: 1fr;
+    padding: 40px 24px;
+    min-height: auto;
+  }
+}
