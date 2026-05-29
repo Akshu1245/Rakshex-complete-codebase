@@ -35,34 +35,34 @@ export function PublicHeader() {
   return (
     <div className="fixed top-0 left-0 right-0 w-full z-50 flex flex-col">
       {/* SECTION 1 — sticky announcement bar */}
-      <div className="w-full bg-[#0f172a] border-b border-neutral-800/80 backdrop-blur-md">
+      <div className="w-full bg-[#1A1F2E] border-b border-[#14B8A6]">
         <Link className="block" href="/changelog">
           <div className="mx-auto flex h-10 w-full max-w-[1280px] items-center justify-between px-6">
-            <p className="min-w-0 truncate text-left text-xs font-medium text-neutral-200 sm:text-sm">
+            <p className="min-w-0 truncate text-left text-xs font-medium text-white sm:text-sm">
               🔒 RakshEx Launch Week — India's First AI Runtime Governance Platform →
             </p>
             {mounted && !isZero && (
               <span
                 aria-label="Launch countdown"
-                className="flex shrink-0 flex-row items-center gap-1.5 text-xs text-neutral-400"
+                className="flex shrink-0 flex-row items-center gap-1.5 text-xs text-[#9CA3AF]"
               >
-                <span className="hidden md:inline mr-1 text-[11px] uppercase tracking-wider text-neutral-500">
+                <span className="hidden md:inline mr-1 text-[11px] uppercase tracking-wider text-[#9CA3AF]">
                   Launch in:
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="rounded bg-neutral-800/60 border border-neutral-700/50 px-1 py-0.5 font-bold font-mono text-teal-accent">
+                  <span className="rounded bg-[#0F1419] border border-[#14B8A6] px-1.5 py-0.5 font-bold font-mono text-[#14B8A6]">
                     {timeLeft.days}d
                   </span>
                   <span>:</span>
-                  <span className="rounded bg-neutral-800/60 border border-neutral-700/50 px-1 py-0.5 font-bold font-mono text-teal-accent">
+                  <span className="rounded bg-[#0F1419] border border-[#14B8A6] px-1.5 py-0.5 font-bold font-mono text-[#14B8A6]">
                     {timeLeft.hours}h
                   </span>
                   <span>:</span>
-                  <span className="rounded bg-neutral-800/60 border border-neutral-700/50 px-1 py-0.5 font-bold font-mono text-teal-accent">
+                  <span className="rounded bg-[#0F1419] border border-[#14B8A6] px-1.5 py-0.5 font-bold font-mono text-[#14B8A6]">
                     {timeLeft.minutes}m
                   </span>
                   <span>:</span>
-                  <span className="rounded bg-neutral-800/60 border border-neutral-700/50 px-1 py-0.5 font-bold font-mono text-teal-accent">
+                  <span className="rounded bg-[#0F1419] border border-[#14B8A6] px-1.5 py-0.5 font-bold font-mono text-[#14B8A6]">
                     {timeLeft.seconds}s
                   </span>
                 </span>
@@ -74,14 +74,14 @@ export function PublicHeader() {
 
       {/* SECTION 2 — Navbar Redesign (Mega Menu) */}
       <nav
-        className="bg-[#0F0F0F]/95 backdrop-blur-md w-full border-b border-neutral-900"
+        className="bg-[#0F1419] w-full border-b border-[#1A1F2E]"
         onMouseLeave={handleMouseLeave}
       >
         <div className="flex justify-between items-center max-w-[1280px] mx-auto px-6 h-14">
           <div className="flex items-center gap-10">
             <Link className="flex items-center gap-2 no-underline shrink-0" href="/">
               <div className="flex items-center gap-2">
-                <Shield className="w-6 h-6 text-teal-accent" />
+                <Shield className="w-6 h-6 text-white" />
                 <span className="text-xl font-bold font-manrope tracking-tight text-white">
                   RakshEx
                 </span>
@@ -92,16 +92,14 @@ export function PublicHeader() {
             <div className="hidden lg:flex gap-8 items-center ml-10">
               {/* Products Mega Dropdown */}
               <div className="relative py-4" onMouseEnter={() => handleMouseEnter("products")}>
-                <div className="flex items-center gap-1 text-white text-sm font-medium opacity-90 hover:opacity-100 cursor-pointer select-none">
+                <div className="flex items-center gap-1 text-white text-sm font-medium hover:text-[#14B8A6] cursor-pointer select-none transition-colors">
                   Products
-                  <ChevronDown
-                    className={`w-3.5 h-3.5 transition-transform duration-200 ${activeMenu === "products" ? "rotate-180" : ""}`}
-                  />
+                  <ChevronDown className="w-3.5 h-3.5 transition-transform duration-200" />
                 </div>
                 <div
                   className={`absolute top-full left-[-100px] pt-2 transition-all duration-200 ${activeMenu === "products" ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-2"}`}
                 >
-                  <div className="bg-neutral-900 border border-neutral-850 rounded-xl overflow-hidden shadow-2xl w-[640px] p-6 grid grid-cols-2 gap-6">
+                  <div className="bg-[#1A1F2E] border border-[#14B8A6]/20 rounded-xl overflow-hidden shadow-2xl w-[640px] p-6 grid grid-cols-2 gap-6">
                     {/* Column 1 */}
                     <div className="space-y-4">
                       <Link
@@ -109,14 +107,14 @@ export function PublicHeader() {
                         href="/features#security-scanner"
                         onClick={forceClose}
                       >
-                        <div className="w-10 h-10 bg-neutral-800 group-hover:bg-teal-accent rounded-lg flex items-center justify-center text-neutral-400 group-hover:text-black transition-colors shrink-0">
+                        <div className="w-10 h-10 bg-[#0F1419] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
                           <Shield className="w-5 h-5" />
                         </div>
                         <div>
                           <p className="text-white text-xs font-semibold group-hover:text-teal-accent transition-colors">
                             Security Scanner
                           </p>
-                          <p className="text-neutral-500 text-[11px] leading-relaxed mt-0.5">
+                          <p className="text-slate-400 text-[11px] leading-relaxed mt-0.5">
                             87-payload injection library, OWASP Top 10
                           </p>
                         </div>
@@ -126,14 +124,14 @@ export function PublicHeader() {
                         href="/features#kill-switch"
                         onClick={forceClose}
                       >
-                        <div className="w-10 h-10 bg-neutral-800 group-hover:bg-teal-accent rounded-lg flex items-center justify-center text-neutral-400 group-hover:text-black transition-colors shrink-0">
+                        <div className="w-10 h-10 bg-[#0F1419] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
                           <Power className="w-5 h-5" />
                         </div>
                         <div>
                           <p className="text-white text-xs font-semibold group-hover:text-teal-accent transition-colors">
                             AgentGuard Kill Switch
                           </p>
-                          <p className="text-neutral-500 text-[11px] leading-relaxed mt-0.5">
+                          <p className="text-slate-400 text-[11px] leading-relaxed mt-0.5">
                             Autonomous circuit breaker, sub-second
                           </p>
                         </div>
@@ -143,14 +141,14 @@ export function PublicHeader() {
                         href="/features#shadow-api"
                         onClick={forceClose}
                       >
-                        <div className="w-10 h-10 bg-neutral-800 group-hover:bg-teal-accent rounded-lg flex items-center justify-center text-neutral-400 group-hover:text-black transition-colors shrink-0">
+                        <div className="w-10 h-10 bg-[#0F1419] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
                           <Ghost className="w-5 h-5" />
                         </div>
                         <div>
                           <p className="text-white text-xs font-semibold group-hover:text-teal-accent transition-colors">
                             Shadow API Discovery
                           </p>
-                          <p className="text-neutral-500 text-[11px] leading-relaxed mt-0.5">
+                          <p className="text-slate-400 text-[11px] leading-relaxed mt-0.5">
                             Find undocumented endpoints instantly
                           </p>
                         </div>
@@ -160,14 +158,14 @@ export function PublicHeader() {
                         href="/features#credentials"
                         onClick={forceClose}
                       >
-                        <div className="w-10 h-10 bg-neutral-800 group-hover:bg-teal-accent rounded-lg flex items-center justify-center text-neutral-400 group-hover:text-black transition-colors shrink-0">
+                        <div className="w-10 h-10 bg-[#0F1419] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
                           <Key className="w-5 h-5" />
                         </div>
                         <div>
                           <p className="text-white text-xs font-semibold group-hover:text-teal-accent transition-colors">
                             Credential Scanner
                           </p>
-                          <p className="text-neutral-500 text-[11px] leading-relaxed mt-0.5">
+                          <p className="text-slate-400 text-[11px] leading-relaxed mt-0.5">
                             AWS, GitHub, Aadhaar, PAN detection
                           </p>
                         </div>
@@ -180,14 +178,14 @@ export function PublicHeader() {
                         href="/features#cost-monitor"
                         onClick={forceClose}
                       >
-                        <div className="w-10 h-10 bg-neutral-800 group-hover:bg-teal-accent rounded-lg flex items-center justify-center text-neutral-400 group-hover:text-black transition-colors shrink-0">
+                        <div className="w-10 h-10 bg-[#0F1419] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
                           <BarChart className="w-5 h-5" />
                         </div>
                         <div>
                           <p className="text-white text-xs font-semibold group-hover:text-teal-accent transition-colors">
                             Cost Monitor
                           </p>
-                          <p className="text-neutral-500 text-[11px] leading-relaxed mt-0.5">
+                          <p className="text-slate-400 text-[11px] leading-relaxed mt-0.5">
                             Holt-Winters forecasting, anomaly detection
                           </p>
                         </div>
@@ -197,14 +195,14 @@ export function PublicHeader() {
                         href="/features#thinking-tokens"
                         onClick={forceClose}
                       >
-                        <div className="w-10 h-10 bg-neutral-800 group-hover:bg-teal-accent rounded-lg flex items-center justify-center text-neutral-400 group-hover:text-black transition-colors shrink-0">
+                        <div className="w-10 h-10 bg-[#0F1419] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
                           <Brain className="w-5 h-5" />
                         </div>
                         <div>
                           <p className="text-white text-xs font-semibold group-hover:text-teal-accent transition-colors">
                             Thinking Token Attribution
                           </p>
-                          <p className="text-neutral-500 text-[11px] leading-relaxed mt-0.5">
+                          <p className="text-slate-400 text-[11px] leading-relaxed mt-0.5">
                             World-first reasoning token isolation
                           </p>
                         </div>
@@ -214,14 +212,14 @@ export function PublicHeader() {
                         href="/features#compliance"
                         onClick={forceClose}
                       >
-                        <div className="w-10 h-10 bg-neutral-800 group-hover:bg-teal-accent rounded-lg flex items-center justify-center text-neutral-400 group-hover:text-black transition-colors shrink-0">
+                        <div className="w-10 h-10 bg-[#0F1419] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
                           <FileText className="w-5 h-5" />
                         </div>
                         <div>
                           <p className="text-white text-xs font-semibold group-hover:text-teal-accent transition-colors">
                             Compliance Reports
                           </p>
-                          <p className="text-neutral-500 text-[11px] leading-relaxed mt-0.5">
+                          <p className="text-slate-400 text-[11px] leading-relaxed mt-0.5">
                             SOC2, PCI DSS, OWASP. One-click PDF
                           </p>
                         </div>
@@ -231,14 +229,14 @@ export function PublicHeader() {
                         href="/features#mcp"
                         onClick={forceClose}
                       >
-                        <div className="w-10 h-10 bg-neutral-800 group-hover:bg-teal-accent rounded-lg flex items-center justify-center text-neutral-400 group-hover:text-black transition-colors shrink-0">
+                        <div className="w-10 h-10 bg-[#0F1419] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
                           <Network className="w-5 h-5" />
                         </div>
                         <div>
                           <p className="text-white text-xs font-semibold group-hover:text-teal-accent transition-colors">
                             MCP Governance
                           </p>
-                          <p className="text-neutral-500 text-[11px] leading-relaxed mt-0.5">
+                          <p className="text-slate-400 text-[11px] leading-relaxed mt-0.5">
                             Tool registry, risk scoring, allowlists
                           </p>
                         </div>
@@ -250,39 +248,37 @@ export function PublicHeader() {
 
               {/* Compare Dropdown */}
               <div className="relative py-4" onMouseEnter={() => handleMouseEnter("compare")}>
-                <div className="flex items-center gap-1 text-white text-sm font-medium opacity-90 hover:opacity-100 cursor-pointer select-none">
+                <div className="flex items-center gap-1 text-white text-sm font-medium hover:text-[#14B8A6] cursor-pointer select-none transition-colors">
                   Compare
-                  <ChevronDown
-                    className={`w-3.5 h-3.5 transition-transform duration-200 ${activeMenu === "compare" ? "rotate-180" : ""}`}
-                  />
+                  <ChevronDown className="w-3.5 h-3.5 transition-transform duration-200" />
                 </div>
                 <div
                   className={`absolute top-full left-0 pt-2 transition-all duration-200 ${activeMenu === "compare" ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-2"}`}
                 >
-                  <div className="bg-neutral-900 border border-neutral-850 rounded-xl overflow-hidden shadow-2xl w-56 p-4 flex flex-col gap-1.5 text-left">
+                  <div className="bg-[#1A1F2E] border border-[#14B8A6]/20 rounded-xl overflow-hidden shadow-2xl w-56 p-4 flex flex-col gap-1.5 text-left">
                     <Link
-                      className="text-neutral-400 hover:text-teal-accent text-xs py-1.5 transition-colors border-b border-neutral-800 pb-2"
+                      className="text-[#9CA3AF] hover:text-[#14B8A6] text-xs py-1.5 transition-colors border-b border-[#1A1F2E] pb-2"
                       href="/compare/rakshex-vs-snyk"
                       onClick={forceClose}
                     >
                       RakshEx vs Snyk →
                     </Link>
                     <Link
-                      className="text-neutral-400 hover:text-teal-accent text-xs py-1.5 transition-colors border-b border-neutral-800 pb-2"
+                      className="text-[#9CA3AF] hover:text-[#14B8A6] text-xs py-1.5 transition-colors border-b border-[#1A1F2E] pb-2"
                       href="/compare/rakshex-vs-datadog"
                       onClick={forceClose}
                     >
                       RakshEx vs Datadog →
                     </Link>
                     <Link
-                      className="text-neutral-400 hover:text-teal-accent text-xs py-1.5 transition-colors border-b border-neutral-800 pb-2"
+                      className="text-[#9CA3AF] hover:text-[#14B8A6] text-xs py-1.5 transition-colors border-b border-[#1A1F2E] pb-2"
                       href="/compare/rakshex-vs-traceable"
                       onClick={forceClose}
                     >
                       RakshEx vs Traceable AI →
                     </Link>
                     <Link
-                      className="text-neutral-400 hover:text-teal-accent text-xs py-1.5 transition-colors"
+                      className="text-[#9CA3AF] hover:text-[#14B8A6] text-xs py-1.5 transition-colors"
                       href="/compare/rakshex-vs-salt"
                       onClick={forceClose}
                     >
@@ -294,46 +290,44 @@ export function PublicHeader() {
 
               {/* Resources Dropdown */}
               <div className="relative py-4" onMouseEnter={() => handleMouseEnter("resources")}>
-                <div className="flex items-center gap-1 text-white text-sm font-medium opacity-90 hover:opacity-100 cursor-pointer select-none">
+                <div className="flex items-center gap-1 text-white text-sm font-medium hover:text-[#14B8A6] cursor-pointer select-none transition-colors">
                   Resources
-                  <ChevronDown
-                    className={`w-3.5 h-3.5 transition-transform duration-200 ${activeMenu === "resources" ? "rotate-180" : ""}`}
-                  />
+                  <ChevronDown className="w-3.5 h-3.5 transition-transform duration-200" />
                 </div>
                 <div
                   className={`absolute top-full left-0 pt-2 transition-all duration-200 ${activeMenu === "resources" ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-2"}`}
                 >
-                  <div className="bg-neutral-900 border border-neutral-850 rounded-xl overflow-hidden shadow-2xl w-48 p-4 flex flex-col gap-1.5 text-left">
+                  <div className="bg-[#1A1F2E] border border-[#14B8A6]/20 rounded-xl overflow-hidden shadow-2xl w-48 p-4 flex flex-col gap-1.5 text-left">
                     <Link
-                      className="text-neutral-400 hover:text-teal-accent text-xs py-1 transition-colors"
+                      className="text-[#9CA3AF] hover:text-[#14B8A6] text-xs py-1 transition-colors"
                       href="/blog"
                       onClick={forceClose}
                     >
                       Blog
                     </Link>
                     <Link
-                      className="text-neutral-400 hover:text-teal-accent text-xs py-1 transition-colors"
+                      className="text-[#9CA3AF] hover:text-[#14B8A6] text-xs py-1 transition-colors"
                       href="/docs"
                       onClick={forceClose}
                     >
                       Docs
                     </Link>
                     <Link
-                      className="text-neutral-400 hover:text-teal-accent text-xs py-1 transition-colors"
+                      className="text-[#9CA3AF] hover:text-[#14B8A6] text-xs py-1 transition-colors"
                       href="/changelog"
                       onClick={forceClose}
                     >
                       Changelog
                     </Link>
                     <Link
-                      className="text-neutral-400 hover:text-teal-accent text-xs py-1 transition-colors"
+                      className="text-[#9CA3AF] hover:text-[#14B8A6] text-xs py-1 transition-colors"
                       href="/roi-calculator"
                       onClick={forceClose}
                     >
                       ROI Calculator
                     </Link>
                     <Link
-                      className="text-neutral-400 hover:text-teal-accent text-xs py-1 transition-colors"
+                      className="text-[#9CA3AF] hover:text-[#14B8A6] text-xs py-1 transition-colors"
                       href="/faq"
                       onClick={forceClose}
                     >
@@ -348,16 +342,16 @@ export function PublicHeader() {
           {/* Right Actions */}
           <div className="flex gap-4 items-center">
             <Link
-              className="text-neutral-400 hover:text-white transition-colors text-sm font-medium hidden md:inline"
+              className="text-white hover:text-[#14B8A6] bg-transparent transition-colors text-sm font-medium hidden md:inline"
               href="/login"
             >
               Sign In
             </Link>
             <Link
-              className="bg-teal-accent hover:bg-[#0D9488] text-white font-semibold text-xs font-mono uppercase tracking-wider px-4 py-2 rounded transition-all"
+              className="bg-[#14B8A6] hover:bg-[#0D9488] active:bg-[#0A7F6F] text-white font-semibold text-sm font-sans px-4 py-2 rounded-[6px] transition-all duration-200"
               href="/register"
             >
-              Start Free
+              START FREE
             </Link>
             <button
               className="lg:hidden text-white"
@@ -371,7 +365,7 @@ export function PublicHeader() {
 
         {/* Mobile Navigation Menu */}
         {mobileMenuOpen && (
-          <div className="lg:hidden bg-neutral-950 border-t border-neutral-900 px-6 py-6 space-y-6 animate-fadeIn">
+          <div className="lg:hidden bg-[#0F1419] border-t border-[#1A1F2E] px-6 py-6 space-y-6 animate-fadeIn">
             <div className="space-y-3">
               <p className="text-[10px] text-neutral-500 font-mono tracking-widest uppercase">
                 Products
@@ -435,7 +429,7 @@ export function PublicHeader() {
                 </Link>
               </div>
             </div>
-            <div className="space-y-3 border-t border-neutral-900 pt-4">
+            <div className="space-y-3 border-t border-[#1A1F2E] pt-4">
               <p className="text-[10px] text-neutral-500 font-mono tracking-widest uppercase">
                 Compare
               </p>
@@ -463,7 +457,7 @@ export function PublicHeader() {
                 </Link>
               </div>
             </div>
-            <div className="space-y-3 border-t border-neutral-900 pt-4">
+            <div className="space-y-3 border-t border-[#1A1F2E] pt-4">
               <p className="text-[10px] text-neutral-500 font-mono tracking-widest uppercase">
                 Resources
               </p>
@@ -498,16 +492,16 @@ export function PublicHeader() {
                 </Link>
               </div>
             </div>
-            <div className="border-t border-neutral-900 pt-4 flex gap-4">
+            <div className="border-t border-[#1A1F2E] pt-4 flex gap-4">
               <Link
-                className="flex-1 text-center bg-neutral-900 text-white border border-neutral-800 py-2.5 rounded font-medium text-sm"
+                className="flex-1 text-center bg-transparent hover:text-[#14B8A6] text-white border border-[#1A1F2E] py-2.5 rounded font-medium text-sm transition-colors duration-200"
                 href="/login"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Sign In
               </Link>
               <Link
-                className="flex-1 text-center bg-teal-accent text-white hover:bg-[#0D9488] py-2.5 rounded font-bold text-sm"
+                className="flex-1 text-center bg-[#14B8A6] text-white hover:bg-[#0D9488] active:bg-[#0A7F6F] py-2.5 rounded font-bold text-sm transition-all duration-200"
                 href="/register"
                 onClick={() => setMobileMenuOpen(false)}
               >

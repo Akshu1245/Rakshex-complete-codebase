@@ -35,7 +35,6 @@ const ENTRIES: ChangelogEntry[] = [
     date: "April 2026",
     items: [
       { type: "added", text: "AgentGuard kill switch engine" },
-      { type: "added", text: "Four provisional patents filed (NHCE/DEV/2026/001–004)" },
       { type: "added", text: "VS Code extension alpha (devpulse integration)" },
       { type: "improved", text: "Pricing page with Pro and Enterprise tiers" },
     ],

@@ -171,25 +171,6 @@ export default function SecurityWhitepaper() {
           </ol>
         </section>
 
-        <section className="mb-10">
-          <h2 className="text-2xl font-bold mb-4">7. Intellectual Property</h2>
-          <p className="text-gray-300 leading-relaxed">
-            Rakshex holds 4 provisional patents filed at NHCE (NHCE/DEV/2026/001–004) covering:
-          </p>
-          <ul className="space-y-2 text-gray-300 mt-3">
-            <li>Unified Risk Score Engine — combined security severity + cost anomaly scoring</li>
-            <li>
-              Thinking Token Attribution — first-in-world isolation of reasoning tokens via
-              differential computation
-            </li>
-            <li>
-              Shadow API Workspace Scanner — zero-dependency static route extraction for 6
-              frameworks
-            </li>
-            <li>Autonomous Kill-Switch — circuit breaker with configurable trip conditions</li>
-          </ul>
-        </section>
-
         <div className="mt-12 pt-8 border-t border-gray-700">
           <p className="text-gray-500 text-sm">
             For questions about this whitepaper, contact{" "}

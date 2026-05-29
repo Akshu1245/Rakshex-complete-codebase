@@ -3,34 +3,11 @@ import Link from "next/link";
 export const metadata = {
   title: "Trust Center — RakshEx Security & Compliance",
   description:
-    "RakshEx trust center: security architecture, data handling, patents, encryption standards, and incident response disclosures.",
+    "RakshEx trust center: security architecture, data handling, encryption standards, and incident response disclosures.",
   alternates: { canonical: "/trust" },
 };
 
 export default function TrustCenter() {
-  const patents = [
-    {
-      id: "NHCE/DEV/2026/001",
-      name: "AI Runtime Governance Framework",
-      desc: "Covers our core interceptor middleware, checking and blocking payloads at the API level before they reach frontier models.",
-    },
-    {
-      id: "NHCE/DEV/2026/002",
-      name: "LLM Cost Attribution Engine",
-      desc: "A method of parsing reasoning metadata to trace thinking tokens back to features, sessions, and individual customer keys.",
-    },
-    {
-      id: "NHCE/DEV/2026/003",
-      name: "AgentGuard Kill Switch System",
-      desc: "An autonomous circuit breaker system monitoring agentic tool invocation rates and locking compromised connections.",
-    },
-    {
-      id: "NHCE/DEV/2026/004",
-      name: "Prompt Injection Detection Engine",
-      desc: "Classifies prompt semantics using dynamic vector mapping and heuristics to block adversarial instructions.",
-    },
-  ];
-
   return (
     <div className="min-h-screen bg-transparent text-slate-100 py-16 px-4 font-sans">
       <div className="max-w-4xl mx-auto">
@@ -181,32 +158,7 @@ export default function TrustCenter() {
             </div>
           </section>
 
-          {/* Section 4: Patents */}
-          <section className="bg-slate-900/30 border border-slate-900 rounded-2xl p-8">
-            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-              <span className="text-blue-400">04.</span> Provisional Patents
-            </h2>
-            <p className="text-slate-400 text-sm mb-6 leading-relaxed">
-              RakshEx’s underlying technologies are backed by four provisional patents filed in
-              2026:
-            </p>
-            <div className="grid md:grid-cols-2 gap-4">
-              {patents.map((pat) => (
-                <div
-                  key={pat.id}
-                  className="p-5 border border-slate-850 rounded-xl bg-slate-950/20"
-                >
-                  <span className="text-xs font-mono text-blue-400 bg-blue-950/40 px-2 py-0.5 rounded border border-blue-900/40">
-                    {pat.id}
-                  </span>
-                  <h4 className="font-bold text-white text-sm mt-3">{pat.name}</h4>
-                  <p className="text-slate-400 text-xs mt-1 leading-relaxed">{pat.desc}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Section 5: Disclosures & Contact */}
+          {/* Section 4: Disclosures & Contact */}
           <section className="bg-slate-900/40 border border-slate-900 rounded-2xl p-8 text-center">
             <h2 className="text-xl font-bold text-white mb-2">Report a Vulnerability</h2>
             <p className="text-sm text-slate-400 max-w-xl mx-auto mb-6">
@@ -224,10 +176,7 @@ export default function TrustCenter() {
         </div>
 
         <footer className="mt-16 border-t border-slate-900 pt-8 text-center text-xs text-slate-500">
-          <p>
-            © {new Date().getFullYear()} RakshEx. All rights reserved. SOC 2, ISO 27001, and patents
-            pending.
-          </p>
+          <p>© {new Date().getFullYear()} RakshEx. All rights reserved. SOC 2 and ISO 27001.</p>
         </footer>
       </div>
     </div>

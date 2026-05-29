@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { HeroFlowDiagram } from "./HeroFlowDiagram";
+import { TerminalDemo } from "./TerminalDemo";
 import { LogoMarquee } from "../ui/LogoMarquee";
 
 export function HeroSection() {
@@ -16,63 +16,50 @@ export function HeroSection() {
   };
 
   return (
-    <section className="hero-section relative w-full bg-transparent">
-      <div className="hero-grid">
+    <section className="hero-section relative w-full bg-[#0F1419] overflow-hidden">
+      {/* Subtle professional radial glow behind contents */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-20%,rgba(20,184,166,0.08),transparent_70%)] pointer-events-none z-0" />
+
+      <div className="hero-grid relative z-10">
         {/* LEFT COLUMN: Content */}
         <div className="hero-left text-left">
-          {/* Top Badge */}
-          <div className="hero-badge inline-flex items-center gap-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-full px-4 py-1.5">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="w-4 h-4 text-white"
-            >
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-            </svg>
-            <span className="font-sans font-medium text-xs sm:text-sm text-white">
-              4 Patents Filed &middot; Built in India
-            </span>
-          </div>
-
           {/* Headline */}
-          <h1 className="hero-headline font-sora font-extrabold tracking-[-0.02em] text-left flex flex-col text-5xl md:text-[72px] leading-[1.1] mb-6">
+          <h1 className="hero-headline font-sans font-bold tracking-[-0.02em] text-left flex flex-col text-[40px] sm:text-[48px] md:text-[56px] leading-[1.1] mb-6">
             <span className="text-white">The AI-native</span>
-            <span className="text-teal-accent">security &amp;</span>
-            <span className="text-teal-accent">governance platform</span>
+            <span className="text-[#14B8A6]">security &amp;</span>
+            <span className="text-[#14B8A6]">governance platform</span>
           </h1>
 
           {/* Subtext */}
-          <p className="hero-subtext font-inter text-lg max-w-[800px] text-slate-400 mb-10 leading-[1.6]">
+          <p className="hero-subtext font-sans text-lg max-w-[480px] text-[#9CA3AF] mb-10 leading-[1.6] font-medium">
             Prompt injection blocking, LLM cost control, shadow API discovery, and compliance
-            reporting &mdash; all in one platform. 478 tests. 4 patents.
+            reporting &mdash; all in one platform. 478 tests.
           </p>
 
           {/* CTA Buttons */}
           <div className="hero-buttons flex flex-wrap items-center gap-4 w-full mb-12">
             <Link
               href="/register"
-              className="px-7 py-3.5 bg-gradient-to-r from-teal-accent to-electric-cyan text-[#0A0E1A] font-sora font-semibold text-sm rounded-lg hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(6,214,160,0.3)] active:scale-[0.98] transition-all duration-200 ease-out text-center flex items-center justify-center gap-2 transform"
+              className="px-6 py-3 bg-[#14B8A6] text-white font-sans font-semibold text-sm rounded-[6px] hover:bg-[#0D9488] active:bg-[#0A7F6F] hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_4px_12px_rgba(20,184,166,0.2)] transition-all duration-200 text-center flex items-center justify-center gap-2 transform"
             >
               Start your project &rarr;
             </Link>
             <Link
               href="/docs"
-              className="px-7 py-3.5 bg-transparent border-2 border-teal-accent text-teal-accent font-sora font-semibold text-sm rounded-lg hover:bg-teal-accent/10 hover:border-electric-cyan hover:text-electric-cyan active:bg-teal-accent/20 active:border-electric-cyan transition-all duration-200 text-center flex items-center justify-center"
+              className="px-6 py-3 bg-transparent border-2 border-[#14B8A6] text-white font-sans font-semibold text-sm rounded-[6px] hover:bg-[#14B8A6]/10 hover:border-[#0D9488] active:bg-[#14B8A6]/20 hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_4px_12px_rgba(20,184,166,0.1)] transition-all duration-200 text-center flex items-center justify-center transform"
             >
               Read the docs
             </Link>
           </div>
 
           {/* CLI Command Pill */}
-          <div className="hero-cli-pill bg-[#0A0E1A] border border-[#2D3E50]">
-            <span className="cli-text text-teal-accent">$ npx rakshex scan ./collection.json</span>
+          <div className="hero-cli-pill bg-[#1A1F2E] border border-[#14B8A6]/25 rounded-full px-5 py-2.5 flex items-center gap-4 w-fit mb-12">
+            <span className="cli-text text-[#14B8A6] font-mono text-sm">
+              $ npx rakshex scan ./collection.json
+            </span>
             <button
               onClick={handleCopyCommand}
-              className="cli-copy-btn text-teal-accent hover:text-[#0D9488] font-semibold transition-colors"
+              className="cli-copy-btn bg-white hover:bg-neutral-100 text-[#0F1419] font-sans font-bold text-xs px-4 py-1.5 rounded-full cursor-pointer transition-colors"
             >
               {copied ? "Copied!" : "Copy"}
             </button>
@@ -85,9 +72,9 @@ export function HeroSection() {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: Flow Diagram */}
-        <div className="hero-right">
-          <HeroFlowDiagram />
+        {/* RIGHT COLUMN: Terminal Demo */}
+        <div className="hero-right flex items-center justify-center">
+          <TerminalDemo />
         </div>
       </div>
 

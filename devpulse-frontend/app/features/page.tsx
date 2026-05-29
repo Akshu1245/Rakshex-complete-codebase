@@ -54,7 +54,7 @@ const FEATURES = [
       },
       {
         title: "Thinking Token Attribution",
-        desc: "First-in-world isolation of reasoning tokens (o1, o3, Claude). Patent NHCE/DEV/2026/002. Exact cost per reasoning step.",
+        desc: "First-in-world isolation of reasoning tokens (o1, o3, Claude). Exact cost per reasoning step.",
       },
     ],
   },

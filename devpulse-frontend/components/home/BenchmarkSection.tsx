@@ -62,20 +62,20 @@ export function BenchmarkSection() {
         </div>
 
         {/* Comparison Table */}
-        <div className="w-full overflow-x-auto rounded-xl border border-[#2D3E50] shadow-lg bg-[#0A0E1A]">
+        <div className="w-full overflow-x-auto rounded-lg border border-[#1A1F2E] shadow-md bg-[#0F1419]">
           <table className="w-full border-collapse text-left min-w-[700px]">
             <thead>
-              <tr className="bg-[#0E1318] border-b border-[#2D3E50]">
-                <th className="p-5 text-sm font-semibold uppercase tracking-wider text-slate-400">
+              <tr className="bg-[#14B8A6]">
+                <th className="p-5 text-sm font-semibold uppercase tracking-wider text-white">
                   Metric
                 </th>
-                <th className="p-5 text-sm font-semibold uppercase tracking-wider text-teal-accent border-l-[6px] border-teal-accent bg-slate-dark/40">
+                <th className="p-5 text-sm font-semibold uppercase tracking-wider text-white bg-[#0D9488]/30">
                   RakshEx
                 </th>
-                <th className="p-5 text-sm font-semibold uppercase tracking-wider text-slate-400">
+                <th className="p-5 text-sm font-semibold uppercase tracking-wider text-white">
                   Snyk
                 </th>
-                <th className="p-5 text-sm font-semibold uppercase tracking-wider text-slate-400">
+                <th className="p-5 text-sm font-semibold uppercase tracking-wider text-white">
                   Datadog
                 </th>
               </tr>
@@ -84,19 +84,19 @@ export function BenchmarkSection() {
               {metrics.map((m, idx) => (
                 <tr
                   key={idx}
-                  className="border-b border-[#2D3E50]/40 transition-colors duration-200 hover:bg-teal-accent/10 group"
+                  className={`border-b border-[#1A1F2E] transition-colors duration-150 hover:bg-[#252D3D] ${
+                    idx % 2 === 0 ? "bg-[#1A1F2E]" : "bg-[#0F1419]"
+                  }`}
                 >
                   <td className="p-5 font-sans">
-                    <div className="font-semibold text-white group-hover:text-teal-accent transition-colors">
-                      {m.metric}
-                    </div>
-                    <div className="text-xs text-slate-500 mt-1">{m.desc}</div>
+                    <div className="font-semibold text-white">{m.metric}</div>
+                    <div className="text-xs text-[#9CA3AF] mt-1">{m.desc}</div>
                   </td>
-                  <td className="p-5 font-sans font-bold text-teal-accent border-l-[6px] border-teal-accent bg-slate-dark/40">
+                  <td className="p-5 font-sans font-bold text-[#14B8A6] bg-[#14B8A6]/5">
                     {m.rakshex}
                   </td>
-                  <td className="p-5 font-sans text-slate-400">{m.snyk}</td>
-                  <td className="p-5 font-sans text-slate-400">{m.datadog}</td>
+                  <td className="p-5 font-sans text-[#9CA3AF]">{m.snyk}</td>
+                  <td className="p-5 font-sans text-[#9CA3AF]">{m.datadog}</td>
                 </tr>
               ))}
             </tbody>

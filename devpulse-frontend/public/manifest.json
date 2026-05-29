@@ -1,7 +1,7 @@
 {
   "name": "Rakshex — API Security & LLM Cost Intelligence",
   "short_name": "Rakshex",
-  "description": "API Security & LLM Cost Intelligence. Built in India. Protected by 4 Patents. OWASP scanning, prompt injection blocking, and LLM cost attribution.",
+  "description": "API Security & LLM Cost Intelligence. OWASP scanning, prompt injection blocking, and LLM cost attribution.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",

@@ -9,6 +9,7 @@ import { FeatureCards } from "@/components/home/FeatureCards";
 import { BenchmarkSection } from "@/components/home/BenchmarkSection";
 import { ChangelogSection } from "@/components/home/ChangelogSection";
 import { AskAISection } from "@/components/home/AskAISection";
+import { TestimonialsSection } from "@/components/home/TestimonialsSection";
 import { Footer } from "@/components/layout/Footer";
 import {
   Shield,
@@ -103,14 +104,14 @@ function StatsCard({ label, targetValue }: { label: string; targetValue: string 
   return (
     <article
       ref={containerRef}
-      className="PlatformStatsShowcase_card__DyDV_ border border-[#2D3E50] hover:border-teal-accent bg-slate-dark/30 hover:bg-slate-dark/50 rounded-xl p-6 transition-all duration-300 transform hover:-translate-y-1 flex flex-col items-center gap-2 before:content-none"
+      className="w-full bg-[#1A1F2E] border border-[#14B8A6]/10 hover:border-[#14B8A6]/35 rounded-lg p-6 flex flex-col items-center gap-2 transition-all duration-200 select-none hover:shadow-[0_2px_8px_rgba(20,184,166,0.05)] text-center"
     >
-      <p className="PlatformStatsShowcase_label__dAs7X !text-slate-400 font-sans text-xs tracking-wider uppercase font-semibold">
+      <p className="text-[#9CA3AF] font-sans text-xs tracking-wider uppercase font-semibold">
         {label}
       </p>
       <div
         aria-label={targetValue}
-        className="PlatformStatsShowcase_value__ypr4_ !text-teal-accent font-sans font-extrabold text-3xl md:text-4xl"
+        className="text-[#14B8A6] font-sans font-extrabold text-3xl md:text-4xl"
       >
         {targetValue.split("").map((char, idx) => (
           <RollingDigit key={idx} char={char} trigger={inView} />
@@ -143,7 +144,7 @@ function WaitlistForm() {
 
   if (success) {
     return (
-      <div className="p-4 bg-teal-accent/10 border border-teal-accent/30 rounded-lg text-teal-accent text-sm font-mono text-center">
+      <div className="p-4 bg-[#14B8A6]/10 border border-[#14B8A6]/30 rounded-[6px] text-[#14B8A6] text-sm font-mono text-center">
         ✓ You have been added to the waitlist!
       </div>
     );
@@ -158,13 +159,13 @@ function WaitlistForm() {
           placeholder="Enter your work email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="flex-1 px-4 py-3 bg-white text-[#0A0E1A] placeholder-[#94A3B8] rounded-lg focus:outline-none focus:shadow-[0_0_0_3px_rgba(6,214,160,0.2)] text-sm font-sans transition-all duration-200"
+          className="flex-1 px-4 py-3 bg-[#1A1F2E] border border-[#14B8A6] hover:border-[#0D9488] focus:border-2 focus:border-[#14B8A6] focus:outline-none text-white placeholder-[#6B7280] rounded-[6px] text-sm font-sans transition-all duration-150"
           disabled={joinMutation.isPending}
         />
         <button
           type="submit"
           disabled={joinMutation.isPending}
-          className="bg-[#0A0E1A] hover:bg-[#1E293B] text-white hover:scale-[1.02] active:scale-[0.98] font-bold px-6 py-3 text-xs tracking-wider uppercase font-sans rounded-lg disabled:opacity-50 transition-all duration-200 shrink-0 transform"
+          className="bg-[#14B8A6] hover:bg-[#0D9488] active:bg-[#0A7F6F] text-white hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_4px_12px_rgba(20,184,166,0.2)] font-semibold px-6 py-3 text-sm tracking-wide font-sans rounded-[6px] disabled:opacity-50 transition-all duration-200 shrink-0 transform"
         >
           {joinMutation.isPending ? "Joining..." : "Get Access"}
         </button>
@@ -347,7 +348,7 @@ export default function HomePage() {
     },
     {
       title: "Thinking Tokens",
-      description: "World-first reasoning isolation. Patent filed.",
+      description: "World-first reasoning isolation.",
       link: "/features#thinking-tokens",
       icon: Brain,
       hoverClass: "hover-brain-pulse text-teal-accent",
@@ -464,30 +465,30 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-transparent text-white overflow-x-hidden font-inter selection:bg-teal-accent selection:text-black">
-      {/* SECTION 3 — HERO SECTION & LOGOMARQUEE */}
+    <div className="min-h-screen bg-[#0F1419] text-white overflow-x-hidden font-sans selection:bg-[#14B8A6] selection:text-black">
+      {/* SECTION 3 & 4 — HERO SECTION & LOGOMARQUEE */}
       <HeroSection />
 
-      {/* SECTION 4 — PRODUCT FEATURE CARDS */}
+      {/* SECTION 5 — PRODUCT FEATURE CARDS */}
       <section className="relative w-full max-w-[1280px] mx-auto py-20 px-6 xl:px-8" id="features">
         <FeatureCards />
       </section>
 
-      {/* SECTION 5 — BENCHMARK SECTION (Cloned "1.6x Faster" style) */}
+      {/* SECTION 6 — COMPARISON TABLE */}
       <BenchmarkSection />
 
-      {/* SECTION 6 — FRAMEWORKS MARQUEE (logo support) */}
+      {/* SECTION 7 — FRAMEWORK SUPPORT */}
       <section
-        className="relative w-full max-w-[1280px] mx-auto py-16 px-6"
+        className="relative w-full max-w-[1280px] mx-auto py-16 px-6 bg-[#0F1419]"
         id="supporting-frameworks"
       >
         <div className="flex flex-col items-center gap-6">
-          <p className="text-sm font-semibold uppercase tracking-wider text-neutral-500 font-mono">
+          <p className="text-xs font-semibold uppercase tracking-wider text-[#9CA3AF] font-mono">
             Secures Any Framework
           </p>
           <div className="relative w-full z-10 overflow-hidden">
-            <div className="absolute left-0 top-0 w-16 h-full z-10 pointer-events-none bg-gradient-to-r from-[#0F0F0F] to-transparent" />
-            <div className="absolute right-0 top-0 w-16 h-full z-10 pointer-events-none bg-gradient-to-l from-[#0F0F0F] to-transparent" />
+            <div className="absolute left-0 top-0 w-16 h-full z-10 pointer-events-none bg-gradient-to-r from-[#0F1419] to-transparent" />
+            <div className="absolute right-0 top-0 w-16 h-full z-10 pointer-events-none bg-gradient-to-l from-[#0F1419] to-transparent" />
 
             <div className="flex items-center gap-12 animate-logo-scroll w-max pr-12">
               {[
@@ -506,7 +507,7 @@ export default function HomePage() {
               ].map((f, i) => (
                 <div
                   key={i}
-                  className="text-neutral-400 hover:text-white font-mono text-sm tracking-wide font-medium transition-colors bg-neutral-900/60 border border-neutral-800 rounded-lg px-4 py-2 shrink-0 select-none"
+                  className="text-[#9CA3AF] hover:text-white font-mono text-sm tracking-wide font-medium transition-colors bg-[#1A1F2E] border border-[#14B8A6]/20 rounded-[6px] px-4 py-2 shrink-0 select-none"
                 >
                   {f}
                 </div>
@@ -527,7 +528,7 @@ export default function HomePage() {
               ].map((f, i) => (
                 <div
                   key={`repeat-${i}`}
-                  className="text-neutral-400 hover:text-white font-mono text-sm tracking-wide font-medium transition-colors bg-neutral-900/60 border border-neutral-800 rounded-lg px-4 py-2 shrink-0 select-none"
+                  className="text-[#9CA3AF] hover:text-white font-mono text-sm tracking-wide font-medium transition-colors bg-[#1A1F2E] border border-[#14B8A6]/20 rounded-[6px] px-4 py-2 shrink-0 select-none"
                 >
                   {f}
                 </div>
@@ -537,13 +538,13 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* SECTION 7 — CHANGELOG PREVIEW */}
+      {/* SECTION 8 — TIMELINE/CHANGELOG */}
       <ChangelogSection />
 
-      {/* SECTION 8 — COMMUNITY SOCIAL PROOF (Twitter Card Masonry) */}
-      <section className="w-full max-w-[1280px] mx-auto py-20 px-6 xl:px-8 flex flex-col items-center gap-12">
+      {/* SECTION 9 — COMMUNITY SECTION */}
+      <section className="w-full max-w-[1280px] mx-auto py-16 px-6 xl:px-8 flex flex-col items-center gap-6 bg-[#0F1419]">
         <div className="flex flex-col items-center gap-4 text-center">
-          <h2 className="text-3xl sm:text-4xl font-extrabold font-sans text-white leading-tight tracking-[-0.02em]">
+          <h2 className="text-3xl sm:text-[36px] font-bold font-sans text-white leading-tight tracking-[-0.02em]">
             Join our Community
           </h2>
           <div className="flex gap-4">
@@ -551,7 +552,7 @@ export default function HomePage() {
               href="https://github.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-transparent hover:bg-teal-accent/10 text-teal-accent border-2 border-teal-accent text-xs font-mono tracking-wider px-5 py-2.5 rounded-lg font-semibold transition-all duration-200"
+              className="bg-transparent hover:bg-[#14B8A6]/10 text-white border-2 border-[#14B8A6] text-xs font-mono tracking-wider px-5 py-2.5 rounded-[6px] font-semibold hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_4px_12px_rgba(20,184,166,0.1)] transition-all duration-200 transform"
             >
               GitHub Discussions
             </a>
@@ -559,92 +560,55 @@ export default function HomePage() {
               href="https://discord.gg"
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-teal-accent hover:bg-[#0D9488] text-white hover:scale-[1.02] active:scale-[0.98] text-xs font-mono tracking-wider px-5 py-2.5 rounded-lg font-bold transition-all duration-200 transform"
+              className="bg-[#14B8A6] hover:bg-[#0D9488] text-white hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_4px_12px_rgba(20,184,166,0.2)] text-xs font-mono tracking-wider px-5 py-2.5 rounded-[6px] font-bold transition-all duration-200 transform"
             >
               Join Discord
             </a>
           </div>
         </div>
-
-        {/* Masonry Tweets layout */}
-        <div className="columns-1 md:columns-2 xl:columns-3 gap-4 w-full max-w-6xl mx-auto space-y-4">
-          {tweets.map((tw, idx) => (
-            <div
-              key={idx}
-              className="break-inside-avoid bg-slate-dark/30 border border-[#2D3E50] rounded-xl p-5 hover:border-teal-accent transition-all duration-300 flex flex-col gap-4 group"
-            >
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-slate-dark/80 border border-[#2D3E50] flex items-center justify-center text-teal-accent font-mono font-bold text-xs uppercase">
-                    {tw.handle.charAt(1)}
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-white leading-none hover:text-teal-accent transition-colors">
-                      {tw.handle}
-                    </p>
-                    <p className="text-[10px] text-slate-400 font-mono mt-0.5">{tw.date}</p>
-                  </div>
-                </div>
-                <span className="text-slate-400 group-hover:text-teal-accent transition-colors">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                  </svg>
-                </span>
-              </div>
-              <p className="text-xs sm:text-sm text-slate-300 whitespace-pre-line text-left leading-relaxed font-sans">
-                {tw.text}
-              </p>
-              {/* Star Rating badges */}
-              <div className="flex gap-0.5 text-amber-gold mt-1 text-xs select-none">
-                <span>★</span>
-                <span>★</span>
-                <span>★</span>
-                <span>★</span>
-                <span>★</span>
-              </div>
-            </div>
-          ))}
-        </div>
       </section>
 
-      {/* SECTION 9 — FAQ SECTION */}
-      <section className="w-full max-w-[1280px] mx-auto py-20 px-6 xl:px-8" id="faq">
+      {/* SECTION 10 — TESTIMONIALS */}
+      <TestimonialsSection />
+
+      {/* SECTION 11 — FAQ SECTION */}
+      <section className="w-full max-w-[1280px] mx-auto py-20 px-6 xl:px-8 bg-[#0F1419]" id="faq">
         <div className="flex flex-col lg:flex-row gap-12 max-w-5xl mx-auto items-start">
           {/* FAQ sidebar */}
           <div className="lg:w-1/3 flex flex-col gap-4 text-left">
-            <h2 className="text-3xl sm:text-[36px] font-extrabold text-white font-sans leading-tight tracking-[-0.02em]">
+            <h2 className="text-3xl sm:text-[36px] font-bold text-white font-sans leading-tight tracking-[-0.02em]">
               Frequently Asked Questions
             </h2>
-            <p className="text-slate-400 text-sm sm:text-base leading-relaxed">
+            <p className="text-[#9CA3AF] text-sm sm:text-base leading-relaxed">
               Questions? We've got answers. If you don't find what you need, feel free to read our
               docs.
             </p>
             <Link
-              className="inline-flex items-center gap-1.5 text-teal-accent hover:text-[#0D9488] text-sm font-semibold transition-all mt-2"
+              className="inline-flex items-center gap-1.5 text-[#14B8A6] hover:text-[#0D9488] text-sm font-semibold transition-all mt-2"
               href="/docs"
             >
               or check out our Documentation
-              <ArrowRight className="w-4 h-4 animate-pulse" />
+              <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
 
           {/* Accordions */}
-          <div className="w-full lg:w-2/3 rounded-xl bg-slate-dark/30 border border-[#2D3E50] divide-y divide-[#2D3E50] shadow-lg">
+          <div className="w-full lg:w-2/3 rounded-lg bg-[#1A1F2E] border border-[#14B8A6]/20 divide-y divide-[#1A1F2E]/80 shadow-md">
             {faqs.map((faq, idx) => (
-              <div key={idx} className="border-b border-[#2D3E50] last:border-b-0">
+              <div key={idx} className="border-b border-[#1A1F2E]/80 last:border-b-0">
                 <h3 className="flex">
                   <button
                     onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                    className={`flex flex-1 items-center justify-between p-6 text-sm sm:text-base font-bold font-sans text-white transition-all hover:text-teal-accent cursor-pointer text-left gap-4 ${openFaq === idx ? "text-teal-accent" : ""}`}
+                    className={`flex flex-1 items-center justify-between p-6 text-sm sm:text-base font-semibold font-sans text-white transition-all hover:text-[#14B8A6] cursor-pointer text-left gap-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#14B8A6] focus-visible:ring-offset-2 rounded ${openFaq === idx ? "text-[#14B8A6]" : ""}`}
                   >
                     <span>{faq.question}</span>
                     <ChevronRight
-                      className={`h-5 w-5 shrink-0 transition-transform duration-300 ${openFaq === idx ? "rotate-90 text-teal-accent" : "text-slate-400"}`}
+                      className={`h-5 w-5 shrink-0 transition-transform duration-300 ${openFaq === idx ? "rotate-90 text-[#14B8A6]" : "text-[#9CA3AF]"}`}
                     />
                   </button>
                 </h3>
                 <div
-                  className={`overflow-hidden transition-all duration-300 ease-in-out text-slate-400 text-xs sm:text-sm leading-relaxed px-6 ${openFaq === idx ? "max-h-[300px] pb-6" : "max-h-0"}`}
+                  className={`overflow-hidden transition-all duration-300 ease-in-out text-[#9CA3AF] text-xs sm:text-sm leading-relaxed px-6 ${openFaq === idx ? "max-h-[300px] pb-6" : "max-h-0"}`}
                 >
                   <p className="text-left whitespace-pre-line">{faq.answer}</p>
                 </div>
@@ -654,13 +618,13 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* SECTION 10 — ASK AI SECTION */}
+      {/* SECTION 11A — ASK AI SECTION */}
       <AskAISection />
 
-      {/* SECTION 11 — PLATFORM STATISTICS */}
-      <section className="PlatformStatsShowcase_section__FNJKE">
+      {/* SECTION 11B — PLATFORM STATISTICS */}
+      <section className="py-20 px-6 xl:px-8 max-w-[1280px] mx-auto bg-[#0F1419]">
         <h2 className="sr-only">Platform statistics</h2>
-        <div className="PlatformStatsShowcase_grid__AIRBY">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatsCard label="COLLECTIONS SCANNED" targetValue="12,847" />
           <StatsCard label="VULNERABILITIES FOUND" targetValue="94,231" />
           <StatsCard label="TOKENS SAVED" targetValue="2.4B" />
@@ -669,12 +633,15 @@ export default function HomePage() {
       </section>
 
       {/* SECTION 12 — FINAL CTA SECTION */}
-      <section className="w-full max-w-[1280px] mx-auto px-6 py-24 text-center" id="cta">
-        <div className="max-w-xl mx-auto flex flex-col items-center gap-8 bg-gradient-to-r from-amber-gold to-teal-accent p-8 sm:p-12 rounded-3xl shadow-lg relative overflow-hidden group transition-all duration-500">
-          <h2 className="text-3xl sm:text-[40px] font-extrabold font-sora text-[#0A0E1A] leading-[1.2] tracking-[-0.02em]">
+      <section
+        className="w-full max-w-[1280px] mx-auto px-6 py-24 text-center bg-[#0F1419]"
+        id="cta"
+      >
+        <div className="max-w-xl mx-auto flex flex-col items-center gap-8 bg-[#1A1F2E] border border-[#14B8A6]/20 p-8 sm:p-12 rounded-2xl shadow-md relative overflow-hidden group transition-all duration-300">
+          <h2 className="text-3xl sm:text-[36px] font-bold font-sans text-white leading-[1.2] tracking-[-0.02em]">
             Ready to Secure Your AI Stack?
           </h2>
-          <p className="text-[#0A0E1A]/80 text-base leading-relaxed max-w-[480px] font-inter">
+          <p className="text-[#9CA3AF] text-base leading-relaxed max-w-[480px] font-sans">
             Join 500+ developers already using RakshEx
           </p>
 
@@ -682,12 +649,12 @@ export default function HomePage() {
             <WaitlistForm />
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 w-full justify-center items-center mt-2 border-t border-[#0A0E1A]/10 pt-6 z-10">
+          <div className="flex flex-col sm:flex-row gap-4 w-full justify-center items-center mt-2 border-t border-[#1A1F2E] pt-6 z-10">
             <Link
               href="/register"
-              className="text-[#0A0E1A] hover:text-[#1E293B] font-bold text-xs uppercase tracking-wider font-sora underline underline-offset-4 transition-colors"
+              className="text-[#14B8A6] hover:text-[#0D9488] font-semibold text-sm font-sans underline underline-offset-4 transition-colors"
             >
-              Try Free — No Credit Card
+              Try Free &mdash; No Credit Card Required
             </Link>
           </div>
         </div>

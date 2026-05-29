@@ -57,7 +57,7 @@ export function AskAISection() {
   return (
     <section
       id="deeplink"
-      className="w-full max-w-[1280px] mx-auto px-6 py-24 border-b border-neutral-900 select-none bg-transparent"
+      className="w-full max-w-[1280px] mx-auto px-6 py-24 border-b border-[#1A1F2E] select-none bg-transparent"
     >
       <div className="flex flex-col items-center justify-center gap-8">
         <h2 className="text-[32px] leading-[1.2] font-normal text-center font-manrope text-white">

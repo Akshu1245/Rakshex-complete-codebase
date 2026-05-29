@@ -2,8 +2,5 @@
   "framework": "nextjs",
   "buildCommand": "pnpm install && pnpm run build",
   "outputDirectory": ".next",
-  "installCommand": "pnpm install",
-  "env": {
-    "NEXT_PUBLIC_APP_URL": "https://app.rakshex.in"
-  }
+  "installCommand": "pnpm install"
 }

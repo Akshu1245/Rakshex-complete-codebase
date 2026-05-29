@@ -1,108 +1,92 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Calendar, Zap, Mail, ShieldAlert, Award } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 export function ChangelogSection() {
   const entries = [
     {
-      date: "May 2026",
+      date: "MAY 2026",
       title: "Interactive Demo Scanner",
       description:
         "Launch of our real-time Postman and OpenAPI collection parser. Scan, score, and analyze endpoints directly from the sandbox interface.",
       link: "/changelog#demo-scanner",
-      icon: Zap,
     },
     {
-      date: "May 2026",
+      date: "MAY 2026",
       title: "Waitlist Confirmation System",
       description:
         "Secure, transactional waitlist flow deployed to track over 500+ private beta requests. Built-in email verification and instant access tokens.",
       link: "/changelog#waitlist",
-      icon: Mail,
     },
     {
-      date: "April 2026",
+      date: "APRIL 2026",
       title: "AgentGuard Kill Switch Engine",
       description:
         "A sub-second autonomous API circuit breaker. Monitors tool execution frequency, spending thresholds, and locks compromised agents.",
       link: "/changelog#kill-switch",
-      icon: ShieldAlert,
-    },
-    {
-      date: "April 2026",
-      title: "Four Provisional Patents Filed",
-      description:
-        "Patents successfully filed (NHCE/DEV/2026/001-004) covering reasoning token isolation, runtime firewalls, and adaptive cost models.",
-      link: "/changelog#patents",
-      icon: Award,
     },
   ];
 
   return (
-    <section className="relative max-w-[900px] mx-auto flex flex-col gap-12 items-stretch justify-center py-24 px-6 select-none bg-transparent">
-      {/* Section Header */}
-      <div className="flex flex-col gap-3 items-center text-center">
-        <span className="text-xs font-bold text-teal-accent uppercase tracking-widest bg-teal-accent/10 px-3 py-1 rounded-full border border-teal-accent/20">
-          Timeline
-        </span>
-        <h2 className="text-4xl md:text-5xl font-extrabold tracking-[-0.01em] text-white mt-2">
-          What's New
-        </h2>
-        <p className="text-slate-400 font-sans text-base max-w-lg mt-1">
-          Recent releases and security milestones from the RakshEx team.
-        </p>
-      </div>
+    <section className="relative w-full max-w-[800px] mx-auto py-24 px-6 select-none bg-[#0F1419]">
+      <div className="w-full flex flex-col gap-12">
+        {/* Section Header */}
+        <div className="flex flex-col gap-3 items-center text-center mb-6">
+          <span className="text-xs font-bold text-[#14B8A6] uppercase tracking-widest bg-[#14B8A6]/10 px-3 py-1 rounded-full border border-[#14B8A6]/20">
+            Timeline
+          </span>
+          <h2 className="text-3xl md:text-[36px] font-bold tracking-[-0.01em] text-white mt-2 font-sans">
+            What's New
+          </h2>
+          <p className="text-[#9CA3AF] font-sans text-base max-w-lg mt-1">
+            Recent releases and security milestones from the RakshEx team.
+          </p>
+        </div>
 
-      {/* Changelog Vertical Stack */}
-      <div className="flex flex-col gap-6 w-full">
-        {entries.map((entry, idx) => {
-          const Icon = entry.icon;
-          return (
-            <Link
-              key={idx}
-              href={entry.link}
-              className="group flex flex-col md:flex-row gap-6 p-7 rounded-xl bg-slate-dark/20 hover:bg-slate-dark/40 border border-[#2D3E50] hover:border-teal-accent border-l-4 border-l-teal-accent transition-all duration-300 transform hover:-translate-y-1"
-            >
-              {/* Left Side: Icon */}
-              <div className="flex items-start shrink-0">
-                <div className="p-3.5 rounded-lg bg-[#0c101d] text-teal-accent transition-colors border border-[#2D3E50]">
-                  <Icon className="w-6 h-6" />
-                </div>
-              </div>
+        {/* Timeline Line Container */}
+        <div className="relative pl-8 md:pl-10 space-y-12">
+          {/* Vertical line: 2px solid #14B8A6 */}
+          <div className="absolute left-[3px] md:left-[4px] top-2 bottom-2 w-[2px] bg-[#14B8A6]" />
 
-              {/* Right Side: Content */}
-              <div className="flex-1 flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-teal-accent font-mono text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5" />
+          {entries.map((entry, idx) => (
+            <div key={idx} className="relative group text-left">
+              {/* Dot: 8px circle, teal background, white border */}
+              <div className="absolute -left-[33px] md:-left-[41px] top-1.5 w-[8px] h-[8px] rounded-full bg-[#14B8A6] border border-white group-hover:scale-150 group-hover:bg-white group-hover:border-[#14B8A6] transition-all duration-200" />
+
+              {/* Content block */}
+              <Link href={entry.link} className="block">
+                <div className="flex flex-col gap-1 group-hover:translate-x-1.5 transform transition-all duration-200">
+                  {/* Date: teal, 12px */}
+                  <span className="text-[#14B8A6] font-mono text-[12px] font-semibold tracking-wider">
                     {entry.date}
                   </span>
-                  <span className="text-teal-accent opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-200">
-                    &rarr;
-                  </span>
-                </div>
-                <h3 className="text-white text-xl font-bold font-sans group-hover:text-teal-accent transition-colors leading-tight">
-                  {entry.title}
-                </h3>
-                <p className="text-slate-400 text-sm leading-relaxed mt-1 font-sans">
-                  {entry.description}
-                </p>
-              </div>
-            </Link>
-          );
-        })}
-      </div>
 
-      {/* Footer Link */}
-      <div className="text-center mt-4">
-        <Link
-          className="inline-flex items-center gap-2 text-sm text-teal-accent hover:text-[#0D9488] transition-all font-sans font-medium"
-          href="/changelog"
-        >
-          View all changes
-          <ArrowRight className="w-4 h-4" />
-        </Link>
+                  {/* Title: White, 18px, weight 600 */}
+                  <h3 className="text-white text-[18px] font-semibold font-sans group-hover:text-[#14B8A6] transition-colors duration-150">
+                    {entry.title}
+                  </h3>
+
+                  {/* Description: Gray (#9CA3AF), 14px */}
+                  <p className="text-[#9CA3AF] text-[14px] leading-relaxed font-sans mt-1">
+                    {entry.description}
+                  </p>
+                </div>
+              </Link>
+            </div>
+          ))}
+        </div>
+
+        {/* Footer Link */}
+        <div className="text-center mt-6">
+          <Link
+            className="inline-flex items-center gap-2 text-sm text-[#14B8A6] hover:text-[#0D9488] transition-colors font-sans font-medium"
+            href="/changelog"
+          >
+            View all changes
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
       </div>
     </section>
   );

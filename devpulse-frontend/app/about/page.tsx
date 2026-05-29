@@ -3,7 +3,7 @@ import Link from "next/link";
 export const metadata = {
   title: "About — Rakshex by Rashi Technologies",
   description:
-    "Meet the team behind Rakshex. Built in Bengaluru, India with 4 patents. Our mission: make AI governance accessible to every developer.",
+    "Meet the team behind Rakshex. Our mission: make AI governance accessible to every developer.",
   alternates: { canonical: "/about" },
 };
 
@@ -41,7 +41,6 @@ export default function AboutPage() {
       <div className="max-w-5xl mx-auto py-16">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           {[
-            { value: "4", label: "Patents Filed" },
             { value: "478+", label: "Server Tests" },
             { value: "37", label: "API Routers" },
             { value: "18", label: "DB Migrations" },
@@ -67,9 +66,9 @@ export default function AboutPage() {
                 <h3 className="text-xl font-bold">Akshay Kammar</h3>
                 <p className="text-teal-accent text-sm mb-2 font-mono">Co-Founder & CEO</p>
                 <p className="text-neutral-400 text-sm leading-relaxed">
-                  Co-inventor on 4 filed patents. Previously built internal security tools and
-                  orchestration layers. Computer Science from NHCE, Bengaluru. Believes AI security
-                  should be default, not an afterthought.
+                  Previously built internal security tools and orchestration layers. Computer
+                  Science from NHCE, Bengaluru. Believes AI security should be default, not an
+                  afterthought.
                 </p>
               </div>
             </div>
@@ -84,9 +83,8 @@ export default function AboutPage() {
                 <h3 className="text-xl font-bold">Anushree</h3>
                 <p className="text-teal-accent text-sm mb-2 font-mono">Co-Founder & CTO</p>
                 <p className="text-neutral-400 text-sm leading-relaxed">
-                  Co-inventor on patents NHCE/DEV/2026/003 and NHCE/DEV/2026/004. Specialist in
-                  runtime AI model auditing and compliance systems. Computer Science from NHCE,
-                  Bengaluru.
+                  Specialist in runtime AI model auditing and compliance systems. Computer Science
+                  from NHCE, Bengaluru.
                 </p>
               </div>
             </div>
@@ -96,10 +94,10 @@ export default function AboutPage() {
 
       {/* Location */}
       <div className="max-w-4xl mx-auto py-16 text-center">
-        <h2 className="text-2xl font-bold mb-4 font-manrope">Built in India</h2>
+        <h2 className="text-2xl font-bold mb-4 font-manrope">Headquartered in Bengaluru</h2>
         <p className="text-neutral-400 max-w-xl mx-auto leading-relaxed">
-          Headquartered in Bengaluru, Karnataka — the Silicon Valley of India. Building for the
-          world from day one.
+          Based in Bengaluru, Karnataka — the Silicon Valley of India. Building for the world from
+          day one.
         </p>
       </div>
 
@@ -108,8 +106,8 @@ export default function AboutPage() {
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-2xl font-bold mb-4 font-manrope">Investor Relations</h2>
           <p className="text-neutral-400 mb-6 max-w-2xl mx-auto leading-relaxed">
-            Backed by 4 provisional patents and a growing waitlist. If you&apos;re an investor
-            interested in AI security infrastructure, reach out at akshay@rakshex.in
+            Supported by a growing waitlist of early adopters. If you&apos;re an investor interested
+            in AI security infrastructure, reach out at akshay@rakshex.in
           </p>
           <Link
             href="mailto:akshay@rakshex.in"

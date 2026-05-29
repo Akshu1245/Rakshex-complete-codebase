@@ -64,6 +64,7 @@ function buildCorsAllowlist(): string[] {
       "https://rakshex.in",
       "https://www.rakshex.in",
       "https://app.rakshex.in",
+      "https://yc7y9pq9.insforge.site",
       ENV.frontendUrl,
     ].filter((v, i, arr) => v && arr.indexOf(v) === i);
   }

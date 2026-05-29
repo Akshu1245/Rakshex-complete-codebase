@@ -5,24 +5,50 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --primary-teal: #14B8A6;
+  --primary-dark: #0D9488;
+  --bg-dark: #0F1419;
+  --bg-card: #1A1F2E;
+  --text-primary: #FFFFFF;
+  --text-secondary: #9CA3AF;
+  --text-muted: #6B7280;
+}
+
 html, body {
-  background-color: #0A0E1A;
+  background-color: var(--bg-dark);
 }
 
 body {
-  background-image: radial-gradient(
-    circle at center,
-    rgba(255, 255, 255, 0.25) 1.2px,
-    transparent 1.2px
-  );
-  background-size: 22px 22px;
+  background-image: radial-gradient(circle, rgba(20, 184, 166, 0.06) 1px, transparent 1px);
+  background-size: 50px 50px;
   min-height: 100vh;
+  animation: drift 40s linear infinite;
+}
+
+@keyframes drift {
+  0% { background-position: 0 0; }
+  100% { background-position: 50px 50px; }
 }
 
 body {
-  color: #e6e0e9;
-  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   position: relative;
+}
+
+button, a, input, select, textarea, [role="button"], .card-lift {
+  transition: background-color 200ms ease-in-out, border-color 200ms ease-in-out, color 200ms ease-in-out, box-shadow 200ms ease-in-out, transform 200ms ease-in-out;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus,
+select:focus,
+textarea:focus,
+[role="button"]:focus-visible {
+  outline: 2px solid #14B8A6 !important;
+  outline-offset: 2px !important;
 }
 
 .material-symbols-outlined {
@@ -269,7 +295,10 @@ body {
 .marquee-wrapper {
   width: 100%;
   overflow: hidden;
-  padding: 16px 0 32px 0;
+  padding: 20px 0;
+  border-top: 1px solid #1A1F2E;
+  border-bottom: 1px solid #1A1F2E;
+  background-color: #0F1419;
 }
 
 .marquee-header {

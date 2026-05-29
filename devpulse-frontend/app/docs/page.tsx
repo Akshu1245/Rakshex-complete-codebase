@@ -32,7 +32,6 @@ export default function DocsOverview() {
       <p>
         RakshEx gives your AI agents and APIs real-time security scanning, LLM cost attribution,
         prompt injection blocking, and compliance reporting — all in one platform. 478 server tests.
-        4 patents filed.
       </p>
 
       <h2 id="connect-first">Connect first</h2>

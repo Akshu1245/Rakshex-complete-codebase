@@ -19,7 +19,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://rakshex.in";
 export const metadata: Metadata = {
   title: "Rakshex — API Security & LLM Cost Intelligence",
   description:
-    "API Security & LLM Cost Intelligence. Built in India. Protected by 4 Patents. Scan APIs, detect shadow endpoints, block prompt injection, attribute LLM costs.",
+    "API Security & LLM Cost Intelligence. Scan APIs, detect shadow endpoints, block prompt injection, attribute LLM costs.",
   generator: "Rakshex",
   keywords: [
     "API security",
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Rakshex — Secure Your APIs & Control LLM Costs",
     description:
-      "Real-time OWASP API scanning, LLM cost attribution, thinking token tracking, and PCI DSS compliance. Built in India with 4 patents.",
+      "Real-time OWASP API scanning, LLM cost attribution, thinking token tracking, and PCI DSS compliance.",
     type: "website",
     siteName: "Rakshex",
     locale: "en_US",
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Rakshex — API Security & LLM Cost Intelligence",
-    description: "API Security & LLM Cost Intelligence. Built in India. Protected by 4 Patents.",
+    description: "API Security & LLM Cost Intelligence.",
     creator: "@rakshexhq",
   },
 };
@@ -73,7 +73,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@600;700&display=swap"
         />
       </head>
-      <body className={inter.className} style={{ backgroundColor: "#0A0E1A" }}>
+      <body className={inter.className} style={{ backgroundColor: "#0F1419" }}>
         <TRPCProvider>
           <AuthProvider>
             <TrialBanner />
