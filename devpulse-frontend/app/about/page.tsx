@@ -9,7 +9,7 @@ export const metadata = {
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-transparent text-white pt-32 pb-16 px-6 xl:px-8 selection:bg-cyan-500 selection:text-black">
+    <div className="min-h-screen bg-transparent text-white pt-32 pb-16 px-6 xl:px-8 selection:bg-teal-accent selection:text-black">
       {/* Hero */}
       <div className="max-w-4xl mx-auto py-12 text-center">
         <h1 className="text-4xl md:text-5xl font-bold mb-6 font-manrope">
@@ -29,7 +29,7 @@ export default function AboutPage() {
           <p className="text-neutral-300 text-lg leading-relaxed text-center">
             Make AI governance accessible to every developer, not just Fortune 500 security teams.
             We believe securing AI agents should be as easy as running{" "}
-            <code className="bg-[#141414] border border-neutral-800 px-2 py-1 rounded text-sm text-[#00d4aa]">
+            <code className="bg-[#141414] border border-neutral-800 px-2 py-1 rounded text-sm text-teal-accent">
               npm install
             </code>
             .
@@ -47,7 +47,7 @@ export default function AboutPage() {
             { value: "18", label: "DB Migrations" },
           ].map((s) => (
             <div key={s.label}>
-              <div className="text-3xl font-bold text-[#00d4aa]">{s.value}</div>
+              <div className="text-3xl font-bold text-teal-accent">{s.value}</div>
               <div className="text-neutral-400 text-sm mt-1">{s.label}</div>
             </div>
           ))}
@@ -60,12 +60,12 @@ export default function AboutPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           <div className="bg-[#141414] rounded-xl p-8 border border-neutral-850 hover:border-neutral-800 transition-all">
             <div className="flex items-start gap-6">
-              <div className="w-20 h-20 bg-gradient-to-br from-cyan-500 to-emerald-500 rounded-full flex items-center justify-center text-2xl font-bold shrink-0 text-black font-mono">
+              <div className="w-20 h-20 bg-gradient-to-br from-teal-accent to-teal-accent/80 rounded-full flex items-center justify-center text-2xl font-bold shrink-0 text-white font-mono">
                 AK
               </div>
               <div>
                 <h3 className="text-xl font-bold">Akshay Kammar</h3>
-                <p className="text-[#00d4aa] text-sm mb-2 font-mono">Co-Founder & CEO</p>
+                <p className="text-teal-accent text-sm mb-2 font-mono">Co-Founder & CEO</p>
                 <p className="text-neutral-400 text-sm leading-relaxed">
                   Co-inventor on 4 filed patents. Previously built internal security tools and
                   orchestration layers. Computer Science from NHCE, Bengaluru. Believes AI security
@@ -77,12 +77,12 @@ export default function AboutPage() {
 
           <div className="bg-[#141414] rounded-xl p-8 border border-neutral-850 hover:border-neutral-800 transition-all">
             <div className="flex items-start gap-6">
-              <div className="w-20 h-20 bg-gradient-to-br from-cyan-500 to-emerald-500 rounded-full flex items-center justify-center text-2xl font-bold shrink-0 text-black font-mono">
+              <div className="w-20 h-20 bg-gradient-to-br from-teal-accent to-teal-accent/80 rounded-full flex items-center justify-center text-2xl font-bold shrink-0 text-white font-mono">
                 AN
               </div>
               <div>
                 <h3 className="text-xl font-bold">Anushree</h3>
-                <p className="text-[#00d4aa] text-sm mb-2 font-mono">Co-Founder & CTO</p>
+                <p className="text-teal-accent text-sm mb-2 font-mono">Co-Founder & CTO</p>
                 <p className="text-neutral-400 text-sm leading-relaxed">
                   Co-inventor on patents NHCE/DEV/2026/003 and NHCE/DEV/2026/004. Specialist in
                   runtime AI model auditing and compliance systems. Computer Science from NHCE,
@@ -113,7 +113,7 @@ export default function AboutPage() {
           </p>
           <Link
             href="mailto:akshay@rakshex.in"
-            className="inline-block bg-[#00d4aa] hover:bg-[#00bda0] text-black font-bold px-6 py-3 rounded-lg transition-colors font-mono shadow-[0_0_15px_rgba(0,212,170,0.2)]"
+            className="inline-block bg-teal-accent hover:bg-[#0D9488] text-white font-bold px-6 py-3 rounded-lg transition-colors font-mono"
           >
             Contact Co-Founders →
           </Link>

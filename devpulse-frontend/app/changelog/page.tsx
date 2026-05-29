@@ -64,13 +64,13 @@ const ENTRIES: ChangelogEntry[] = [
 
 const BADGE_STYLE: Record<string, string> = {
   added: "bg-emerald-950/60 text-emerald-400 border border-emerald-800/40",
-  improved: "bg-cyan-950/60 text-cyan-400 border border-cyan-800/40",
-  fixed: "bg-amber-950/60 text-amber-400 border border-amber-800/40",
+  improved: "bg-teal-950/60 text-teal-accent border border-teal-accent/20",
+  fixed: "bg-slate-900/60 text-slate-400 border border-slate-700/40",
 };
 
 export default function ChangelogPage() {
   return (
-    <div className="min-h-screen bg-transparent text-white pt-32 pb-16 px-6 xl:px-8 font-sans selection:bg-cyan-500 selection:text-black">
+    <div className="min-h-screen bg-transparent text-white pt-32 pb-16 px-6 xl:px-8 font-sans selection:bg-teal-accent selection:text-black">
       <div className="max-w-3xl mx-auto">
         <header className="mb-16 pb-6 border-b border-neutral-900">
           <h1 className="text-4xl font-extrabold tracking-tight text-white font-manrope">
@@ -87,7 +87,7 @@ export default function ChangelogPage() {
           {ENTRIES.map((entry) => (
             <div key={entry.version} className="relative pl-8">
               {/* Bullet node on timeline */}
-              <div className="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 border-[#00d4aa] bg-[#0F0F0F] shadow-md shadow-[#00d4aa]/20" />
+              <div className="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 border-teal-accent bg-[#0F0F0F] shadow-sm" />
 
               <div className="flex flex-wrap items-baseline gap-3 mb-4">
                 <span className="text-2xl font-bold text-white font-mono">{entry.version}</span>
@@ -117,19 +117,19 @@ export default function ChangelogPage() {
           <h3 className="text-lg font-bold text-white mb-4">Under Development</h3>
           <ul className="text-neutral-400 text-sm space-y-3">
             <li className="flex items-center gap-2">
-              <span className="text-[#00d4aa] font-bold">•</span>
+              <span className="text-teal-accent font-bold">•</span>
               Stripe integration for global customer billing
             </li>
             <li className="flex items-center gap-2">
-              <span className="text-[#00d4aa] font-bold">•</span>
+              <span className="text-teal-accent font-bold">•</span>
               Slack integration for real-time security incident alerts
             </li>
             <li className="flex items-center gap-2">
-              <span className="text-[#00d4aa] font-bold">•</span>
+              <span className="text-teal-accent font-bold">•</span>
               Advanced machine-learning classifiers for custom model prompt evaluations
             </li>
             <li className="flex items-center gap-2">
-              <span className="text-[#00d4aa] font-bold">•</span>
+              <span className="text-teal-accent font-bold">•</span>
               Visual drag-and-drop rule builder to customize runtime policies
             </li>
           </ul>

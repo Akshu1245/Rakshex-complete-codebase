@@ -60,7 +60,7 @@ const INTEGRATIONS: IntegrationItem[] = [
     name: "Cohere for RakshEx",
     category: "LLM Providers",
     status: "Available",
-    icon: `<div class="w-full h-full flex items-center justify-center font-bold text-[#00d4aa] text-sm font-mono">Co</div>`,
+    icon: `<div class="w-full h-full flex items-center justify-center font-bold text-teal-accent text-sm font-mono">Co</div>`,
     description:
       "Monitor Cohere Command and Embed API usage. Cost alerts, usage anomalies, and OWASP AI mapping.",
   },
@@ -291,7 +291,7 @@ export default function IntegrationsPage() {
       : [activeCategory];
 
   return (
-    <div className="min-h-screen bg-transparent text-white pt-32 pb-16 px-6 xl:px-8 selection:bg-cyan-500 selection:text-black">
+    <div className="min-h-screen bg-transparent text-white pt-32 pb-16 px-6 xl:px-8 selection:bg-teal-accent selection:text-black">
       <div className="max-w-7xl mx-auto">
         {/* PAGE HEADER */}
         <header className="mb-12 border-b border-neutral-900 pb-8">
@@ -315,7 +315,7 @@ export default function IntegrationsPage() {
                     onClick={() => setActiveCategory(cat)}
                     className={`px-4 py-2 text-xs font-semibold rounded-full transition-all cursor-pointer ${
                       isActive
-                        ? "bg-[#00d4aa] text-black"
+                        ? "bg-teal-accent text-white"
                         : "bg-[#141414] border border-neutral-800 text-neutral-400"
                     }`}
                   >
@@ -340,7 +340,7 @@ export default function IntegrationsPage() {
                         onClick={() => setActiveCategory(cat)}
                         className={`text-left px-3 py-2 text-sm font-medium transition-all border-l-2 cursor-pointer ${
                           isActive
-                            ? "border-[#00d4aa] text-white bg-white/[0.02]"
+                            ? "border-teal-accent text-white bg-white/[0.02]"
                             : "border-transparent text-white/50 hover:text-white"
                         }`}
                       >
@@ -373,7 +373,7 @@ export default function IntegrationsPage() {
                       <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
                     </svg>
                   </div>
-                  <h3 className="text-sm font-semibold text-white mb-1.5 group-hover:text-[#00d4aa] transition-colors">
+                  <h3 className="text-sm font-semibold text-white mb-1.5 group-hover:text-teal-accent transition-colors">
                     Become a partner
                   </h3>
                   <p className="text-xs text-white/50 leading-relaxed">

@@ -56,8 +56,8 @@ export default function LandingPage() {
       icon: <TrendingDown className="w-5 h-5" />,
       title: "Cost Anomaly Detection",
       desc: "ML-powered alerts when your AI spend spikes unexpectedly.",
-      color: "from-cyan-500/20 to-blue-500/10",
-      border: "border-cyan-500/20",
+      color: "from-teal-accent/20 to-blue-500/10",
+      border: "border-teal-accent/20",
     },
     {
       icon: <Globe className="w-5 h-5" />,

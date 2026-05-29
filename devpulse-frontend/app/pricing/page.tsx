@@ -29,7 +29,7 @@ export default function PricingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-transparent text-white pt-32 pb-16 px-6 xl:px-8 selection:bg-cyan-500 selection:text-black">
+    <div className="min-h-screen bg-transparent text-white pt-32 pb-16 px-6 xl:px-8 selection:bg-teal-accent selection:text-black">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 pb-6 border-b border-neutral-900">
           <div>
@@ -77,8 +77,8 @@ export default function PricingPage() {
             </Link>
           </div>
 
-          <div className="bg-[#141414] p-8 rounded-xl border border-[#00d4aa]/50 relative flex flex-col justify-between shadow-[0_0_20px_rgba(0,212,170,0.06)]">
-            <div className="absolute top-4 right-4 text-[#00d4aa] text-[10px] font-bold font-mono tracking-wider uppercase bg-[#00d4aa]/10 border border-[#00d4aa]/20 rounded-full px-2 py-0.5">
+          <div className="bg-[#141414] p-8 rounded-xl border border-teal-accent/50 relative flex flex-col justify-between">
+            <div className="absolute top-4 right-4 text-teal-accent text-[10px] font-bold font-mono tracking-wider uppercase bg-teal-accent/10 border border-teal-accent/20 rounded-full px-2 py-0.5">
               POPULAR
             </div>
             <div>
@@ -91,37 +91,37 @@ export default function PricingPage() {
               </div>
               <ul className="space-y-3 mb-8 text-neutral-300 text-sm">
                 <li className="flex items-center gap-2">
-                  <span className="text-[#00d4aa]">✓</span> Up to 10,000 LLM calls/day
+                  <span className="text-teal-accent">✓</span> Up to 10,000 LLM calls/day
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-[#00d4aa]">✓</span> Unlimited Collections + Swagger scans
+                  <span className="text-teal-accent">✓</span> Unlimited Collections + Swagger scans
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-[#00d4aa]">✓</span> Advanced Security Scanning
+                  <span className="text-teal-accent">✓</span> Advanced Security Scanning
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-[#00d4aa]">✓</span> Shadow API & Spec-Drift Detection
+                  <span className="text-teal-accent">✓</span> Shadow API & Spec-Drift Detection
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-[#00d4aa]">✓</span> Kill Switch & Budget Caps
+                  <span className="text-teal-accent">✓</span> Kill Switch & Budget Caps
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-[#00d4aa]">✓</span> PII Redaction at Gateway
+                  <span className="text-teal-accent">✓</span> PII Redaction at Gateway
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-[#00d4aa]">✓</span> Token Analytics & Cost Forecasting
+                  <span className="text-teal-accent">✓</span> Token Analytics & Cost Forecasting
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-[#00d4aa]">✓</span> Compliance Reports (OWASP Top 10)
+                  <span className="text-teal-accent">✓</span> Compliance Reports (OWASP Top 10)
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-[#00d4aa]">✓</span> Team Collaboration (5 members)
+                  <span className="text-teal-accent">✓</span> Team Collaboration (5 members)
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-[#00d4aa]">✓</span> 85+ Prompt Injection Payload Library
+                  <span className="text-teal-accent">✓</span> 85+ Prompt Injection Payload Library
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-[#00d4aa]">✓</span> Email Support, 1-Business-Day SLA
+                  <span className="text-teal-accent">✓</span> Email Support, 1-Business-Day SLA
                 </li>
               </ul>
             </div>
@@ -132,7 +132,7 @@ export default function PricingPage() {
                 setSuccess(false);
                 setError(null);
               }}
-              className="block w-full py-3 bg-[#00d4aa] hover:bg-[#00bda0] text-black font-bold rounded-lg transition-colors text-center font-mono mt-auto shadow-[0_0_15px_rgba(0,212,170,0.15)]"
+              className="block w-full py-3 bg-teal-accent hover:bg-[#0D9488] text-white font-bold rounded-lg transition-colors text-center font-mono mt-auto"
             >
               Join Pro Waitlist
             </button>
@@ -206,7 +206,7 @@ export default function PricingPage() {
 
             {!success ? (
               <form onSubmit={handleSubmit} className="space-y-4">
-                <h3 className="text-xl font-bold capitalize font-mono text-[#00d4aa]">
+                <h3 className="text-xl font-bold capitalize font-mono text-teal-accent">
                   Join {selectedPlan} Waitlist
                 </h3>
                 <p className="text-sm text-neutral-400">
@@ -230,7 +230,7 @@ export default function PricingPage() {
                     placeholder="name@company.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 bg-[#0F0F0F] border border-neutral-800 rounded-lg focus:outline-none focus:border-cyan-500 text-white transition-colors font-mono"
+                    className="w-full px-4 py-3 bg-[#0F0F0F] border border-neutral-800 rounded-lg focus:outline-none focus:border-teal-accent text-white transition-colors font-mono"
                     disabled={joinMutation.isPending}
                   />
                 </div>
@@ -238,10 +238,10 @@ export default function PricingPage() {
                 <button
                   type="submit"
                   disabled={joinMutation.isPending}
-                  className="w-full py-3 bg-[#00d4aa] hover:bg-[#00bda0] disabled:opacity-50 text-black font-bold rounded-lg transition-colors flex items-center justify-center gap-2 font-mono"
+                  className="w-full py-3 bg-teal-accent hover:bg-[#0D9488] disabled:opacity-50 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2 font-mono"
                 >
                   {joinMutation.isPending ? (
-                    <span className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                    <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
                     "Submit Request"
                   )}
