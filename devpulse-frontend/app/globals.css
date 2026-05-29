@@ -276,12 +276,27 @@ body::before {
   padding: 16px 0 32px 0;
 }
 
+.marquee-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-left: 4px;
+}
+
 .marquee-label {
   font-size: 13px;
   color: rgba(255, 255, 255, 0.45);
-  margin-bottom: 16px;
-  padding-left: 4px;
+  white-space: nowrap;
   letter-spacing: 0.01em;
+}
+
+.marquee-active-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #00d4aa;
+  transition: opacity 0.3s ease;
+  min-width: 120px;
 }
 
 .marquee-outer {
@@ -310,16 +325,15 @@ body::before {
   align-items: center;
   width: max-content;
   animation: marquee-scroll 35s linear infinite;
-  gap: 0;
+  gap: 56px;
 }
 
 .marquee-item {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 0 40px;
   white-space: nowrap;
-  opacity: 0.7;
+  opacity: 0.85;
 }
 
 .marquee-item:hover {
@@ -327,8 +341,8 @@ body::before {
 }
 
 .marquee-icon {
-  width: 18px;
-  height: 18px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -336,16 +350,16 @@ body::before {
 }
 
 .marquee-icon svg {
-  width: 18px;
-  height: 18px;
-  fill: rgba(255, 255, 255, 0.8);
-  color: rgba(255, 255, 255, 0.8);
+  width: 24px;
+  height: 24px;
+  fill: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .marquee-name {
-  font-size: 14px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.75);
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
   letter-spacing: 0.01em;
 }
 
