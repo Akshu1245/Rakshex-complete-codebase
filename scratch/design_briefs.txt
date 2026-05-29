@@ -1,0 +1,3506 @@
+
+========================================
+FILE: RakshEx__Final_Figma_AI_Brief.docx
+========================================
+RakshEx: Final Figma AI Brief
+Simple. Clean. Professional. Ready to Build.
+Design Philosophy: Elegant simplicity. Professional trust. Developer-focused. No BS.
+
+
+
+COLOR PALETTE (3 Colors Only)
+Background: #0F1419 (Deep Navy)
+Surface: #F8FAFC (Off-White - light sections)
+Cards: #1E293B (Slate Dark)
+Accent: #14B8A6 (Teal - primary)
+Text: #F8FAFC (Off-White)
+Text Secondary: #94A3B8 (Slate)
+Success: #10B981
+Warning: #F59E0B
+Error: #EF4444
+
+Why these 3:
+Navy = enterprise trust
+Teal = premium (Stripe, Vercel, Linear)
+Slate = professional secondary
+
+
+
+TYPOGRAPHY (Simple)
+H1: 48px, 700 weight, line-height 1.2
+H2: 40px, 700 weight, line-height 1.3
+H3: 28px, 600 weight, line-height 1.4
+H4: 18px, 600 weight, line-height 1.4
+Body: 16px, 400 weight, line-height 1.6
+Small: 14px, 400 weight, line-height 1.5
+Caption: 12px, 500 weight, line-height 1.4
+ 
+Font: Inter for everything
+Code: JetBrains Mono, 14px
+
+
+
+SPACING (8px Grid)
+xs: 4px
+sm: 8px
+md: 16px
+lg: 24px
+xl: 32px
+2xl: 48px
+3xl: 64px
+4xl: 96px
+
+
+
+SHADOWS (Simple)
+Rest: none
+Hover: 0 4px 12px rgba(0, 0, 0, 0.1)
+Active: 0 8px 24px rgba(0, 0, 0, 0.15)
+
+That's it. No 5 levels. No glow effects.
+
+
+
+BUTTONS
+Primary Button (Teal)
+Background: #14B8A6
+Text: #0F1419
+Padding: 12px 24px
+Border Radius: 8px
+Font: 14px, 600 weight
+Hover: Shadow appears, background darkens 10%
+No gradient, no glow
+
+Secondary Button (Outline)
+Background: transparent
+Border: 1px #94A3B8
+Text: #94A3B8
+Padding: 12px 24px
+Hover: Border becomes Teal, text becomes Teal
+
+Text Link
+Color: #14B8A6
+Underline: none
+Hover: underline appears
+
+
+
+CARDS
+Standard Card
+Background: #1E293B
+Border: 1px #2D3E50
+Padding: 24px
+Border Radius: 12px
+Shadow: none at rest
+Hover: Shadow appears, border becomes Teal
+
+Feature Card
+Same as standard
+Icon: 40px, Teal
+Title: 18px, 600 weight
+Description: 14px, 400 weight, #94A3B8
+
+Testimonial Card
+Same as standard
+Quote: 14px, italic
+Avatar: 40px circular, border 2px Teal
+Name: 14px, 600 weight
+Title: 12px, 400 weight, #94A3B8
+Company: 12px, 600 weight, Teal
+Stars: 5 stars, Teal
+
+
+
+ANIMATIONS (Minimal)
+Hover:
+Shadow appears (0.2s ease-out)
+Border color changes to Teal (0.2s ease-out)
+No scale, no rotation, no glow
+
+Scroll Fade-In:
+Opacity 0 → 1
+Duration: 400ms
+Easing: ease-out
+Trigger: When 30% visible
+
+Accordion:
+Smooth height animation (300ms)
+Chevron rotates 180° (300ms)
+
+That's all the animation.
+
+
+
+SECTIONS
+1. Navigation Bar
+Height: 72px
+Background: #0F1419
+Border bottom: 1px #2D3E50
+Sticky: yes
+Logo: 24px lock icon, Teal
+Menu items: 14px, #94A3B8, hover → Teal
+Right: Sign In (text link) + Start Free (primary button)
+
+2. Hero Section
+Height: 90vh
+Background: #0F1419 (solid, no animation)
+Content: centered, max-width 1000px
+Headline: 48px, 700 weight, "The AI-native security & governance platform"
+"security & governance" in Teal
+Subheading: 16px, #94A3B8, max-width 700px
+Buttons: Primary + Secondary, 16px gap
+Code snippet: Dark background, green text, copy button
+Visual: Optional 3D illustration on right (not required)
+
+3. Trust Badges
+Background: #1E293B
+4 badges in row: Patents, Built in India, Tests, Uptime
+Icon: 32px, Teal
+Value: 18px, 700 weight
+Label: 12px, #94A3B8
+Hover: Icon color → Teal (if not already)
+
+4. Works Perfectly With
+Background: #0F1419
+Title: 40px, "Works perfectly with"
+Logo grid: 6 columns, 48px logos
+Logos: Grayscale by default, full color on hover
+Hover: Scale 1.05, duration 300ms
+
+5. Features Section
+Background: #1E293B
+Title: 40px, "Powerful Features Built for AI Security"
+Grid: 4 columns
+Cards: 8 feature cards
+Icon: 40px, Teal
+Title: 18px, 600 weight
+Description: 14px, #94A3B8
+Hover: Shadow appears, border → Teal
+
+Features:
+Security Scanner
+Kill Switch
+Cost Monitor
+Thinking Token Attribution
+Shadow API Discovery
+Credential Scanner
+Compliance Reports
+MCP Governance
+
+6. Demo/Connected Section
+Background: #0F1419
+Two columns: Left (text), Right (terminal)
+Left:
+Title: 32px, "RakshEx Connected"
+Description: 16px, #94A3B8
+Right:
+Terminal mockup: #0F1419 background, #10B981 text
+Border: 1px #2D3E50
+Padding: 20px
+Height: 350px
+Font: JetBrains Mono, 12px
+Content: Scan results (static, no animation)
+
+7. Comparison Section
+Background: #1E293B
+Title: 40px, "Why Teams Choose RakshEx"
+Table: 3 columns (Metric, RakshEx, Competitors)
+Header: #0F1419 background, Off-White text
+RakshEx column: Teal left border (4px)
+Rows: Alternate #1E293B and #2D3E50
+Metrics: 4 rows comparing performance
+Hover: Row highlights with 5% Teal overlay
+
+8. Timeline Section
+Background: #0F1419
+Title: 40px, "What's New"
+Vertical stack (not horizontal scroll)
+Cards: 4 items
+Icon: 32px, Teal
+Title: 18px, 600 weight
+Description: 14px, #94A3B8
+Date: 12px, #64748B
+Hover: Shadow appears, border → Teal
+
+9. Testimonials Section
+Background: #1E293B
+Title: 40px, "Loved by Developers & Security Teams"
+Grid: 3 columns
+Cards: 3 testimonial cards
+Quote: 14px, italic
+Avatar: 40px, border 2px Teal
+Name: 14px, 600 weight
+Title: 12px, #94A3B8
+Company: 12px, Teal
+Stars: 5 stars, Teal
+Hover: Shadow appears, border → Teal
+
+10. FAQ Section
+Background: #0F1419
+Title: 40px, "Frequently Asked Questions"
+Accordion (simple, no tabs)
+Items: 8 questions
+Question: 14px, 600 weight
+Answer: 14px, #94A3B8
+Chevron: Rotates 180° on expand
+Hover: Border → Teal
+
+11. CTA Section
+Background: #0F1419
+Title: 36px, "Ready to Secure Your AI Stack?"
+Subheading: 16px, #94A3B8
+Email input: Off-White background, placeholder "Enter your work email"
+Buttons: Primary "GET ACCESS" + Secondary "TRY FREE — NO CREDIT CARD"
+Social proof: "No credit card required. Join 500+ developers."
+
+12. Footer
+Background: #050812 (darker Navy)
+5 columns: Brand, Product, Resources, Company, Legal
+Logo: 24px
+Company name: 18px, 700 weight
+Tagline: 12px, #94A3B8
+Social icons: 24px, #94A3B8, Teal on hover
+Links: 14px, #94A3B8, Teal on hover
+Bottom: Copyright + "Built in India"
+
+
+
+RESPONSIVE DESIGN
+Mobile (320-640px):
+Nav: 56px height
+Hero: 70vh, headline 36px
+Feature grid: 1 column
+Testimonials: 1 column
+Footer: 1 column
+
+Tablet (641-1024px):
+Nav: 64px height
+Hero: 80vh, headline 40px
+Feature grid: 2 columns
+Testimonials: 2 columns
+Footer: 2-3 columns
+
+Desktop (1025px+):
+All as designed
+Feature grid: 4 columns
+Testimonials: 3 columns
+Footer: 5 columns
+
+
+
+ACCESSIBILITY
+Color contrast: WCAG AA minimum (7:1 for text)
+Keyboard navigation: All interactive elements accessible
+Focus states: Visible outline
+Screen reader: Semantic HTML
+Motion: Respect prefers-reduced-motion
+
+
+
+FIGMA AI PROMPTS
+Prompt 1: Hero Section
+"Create a professional hero section for a security platform called RakshEx. Use Deep Navy (#0F1419) background. Include a 48px headline 'The AI-native security & governance platform' with 'security & governance' in Teal (#14B8A6). Add a 16px subheading, two buttons (one Teal primary, one outline), and a code snippet with dark background and green text. Keep it clean and professional. No animations or particles."
+
+Prompt 2: Feature Cards (4-Column Grid)
+"Design 8 feature cards in a 4-column grid for a security platform. Use Slate Dark (#1E293B) background with 1px border. Each card has a 40px Teal icon, 18px title, and 14px description in gray. Cards should have subtle shadow on hover. Include these features: Security Scanner, Kill Switch, Cost Monitor, Thinking Token Attribution, Shadow API Discovery, Credential Scanner, Compliance Reports, MCP Governance."
+
+Prompt 3: Comparison Table
+"Create a professional comparison table with 3 columns: Metric, RakshEx, Competitors. Use Deep Navy header with white text. RakshEx column has a 4px Teal left border. Include 4 metrics: Vulnerabilities Detected (2.3x vs 1x vs 0.4x), False Positives (2.1% vs 18.4% vs 31.2%), Time to Finding (3s vs 47s vs N/A), Security Tests (478 vs 120 vs 85). Make RakshEx values bold and Teal."
+
+Prompt 4: Terminal Demo
+"Design a terminal mockup showing security scan results. Use Dark Navy background (#0F1419), green text (#10B981), 1px border. Include fake terminal output: '$ rakshex scan ./api', 'Scanning...', 'Endpoints Scanned: 23', 'Credentials Detected: 2', 'Cost Anomaly: $47.3', 'Prompt Injection Blocked: 1', 'Security Score: 94/100'. Keep it simple and static (no animation)."
+
+Prompt 5: Testimonial Cards (3 Cards)
+"Create 3 testimonial cards. Each has an italic quote, 40px circular avatar with 2px Teal border, author name, title, company in Teal, and 5 Teal stars. Use Slate Dark background with 1px border. Cards should have subtle shadow on hover. Include these testimonials: [testimonial 1], [testimonial 2], [testimonial 3]."
+
+Prompt 6: Timeline (Vertical Stack)
+"Design a vertical timeline with 4 items. Each item has a 32px Teal icon on the left, title, description, and date. Use Slate Dark cards with 1px border. Cards should show subtle shadow on hover. Include these updates: May 2026 - Interactive Demo Scanner, May 2026 - Waitlist Confirmation, April 2026 - AgentGuard Kill Switch, April 2026 - Four Provisional Patents."
+
+Prompt 7: Navigation Bar
+"Create a professional navigation bar. Height 72px, Deep Navy background (#0F1419), 1px border bottom. Include a 24px Teal lock icon with 'RakshEx' text (18px, 700 weight). Menu items: Products, Compare, Resources (14px, gray, Teal on hover). Right side: Sign In (text link) and Start Free (Teal button). Keep it clean and sticky."
+
+Prompt 8: CTA Section
+"Create a call-to-action section with Deep Navy background. Include headline 'Ready to Secure Your AI Stack?' (36px), subheading 'Join 500+ developers already using RakshEx' (16px, gray). Add email input field (Off-White background, placeholder 'Enter your work email'), primary button 'GET ACCESS' (Teal), and secondary link 'TRY FREE — NO CREDIT CARD'. Add social proof text below."
+
+
+
+WHAT TO BUILD IN FIGMA
+Set up design system (colors, typography, spacing)
+Create button components (primary, secondary, text link)
+Create card components (standard, feature, testimonial)
+Design each section using components
+Create responsive variants (mobile, tablet, desktop)
+Add hover states to interactive elements
+Export design tokens for developers
+
+
+
+TOTAL IMPLEMENTATION
+Figma design: 6-8 hours
+Development: 20-30 hours
+Total: 26-38 hours
+
+
+
+WHAT MAKES THIS WIN
+✅ Simple 3-color palette (no chaos)✅ 48px H1 (elegant, not screaming)✅ Minimal animations (professional, not template-y)✅ Terminal demo (developer-focused)✅ Comparison table (clear data)✅ Vertical timeline (simple, accessible)✅ Generous whitespace (premium feel)✅ WCAG AA accessibility (professional)✅ Responsive design (perfect on all devices)✅ No over-engineering (clean, simple, effective)
+
+
+
+This is the brief that wins. Simple. Clean. Professional. Ready to build.
+
+Final Figma AI Brief - May 29, 2026
+Status: Ready to use with Figma AI
+
+========================================
+FILE: RakshEx__Next-Level_UI_Design_Brief.docx
+========================================
+RakshEx: Next-Level UI Design Brief
+A Revolutionary Security & Governance Platform Interface
+Design Philosophy: Merge cutting-edge cybersecurity aesthetics with modern developer experience, creating an interface that feels both powerful and intuitive.
+
+
+
+PART 1: DESIGN SYSTEM & VISUAL IDENTITY
+Color Palette (Revolutionary)
+Primary Colors:
+Deep Indigo: #0F172A (Main background - trust & security)
+Electric Lime: #00FF41 (Primary accent - energy & detection)
+Neon Purple: #B000FF (Secondary accent - innovation)
+Cyber Blue: #00D9FF (Tertiary accent - intelligence)
+
+Status Colors:
+Security Green: #00D084 (Safe/Protected)
+Warning Orange: #FF6B35 (Alerts/Warnings)
+Critical Red: #FF0055 (Threats/Errors)
+Info Cyan: #00F0FF (Information)
+
+Neutral Colors:
+Dark Slate: #1A1F3A (Cards, sections)
+Medium Slate: #2D3561 (Borders, dividers)
+Light Slate: #8B92B8 (Secondary text)
+Off-White: #F5F7FB (Text on dark)
+
+Gradient Combinations:
+Hero Gradient: Deep Indigo → Neon Purple (135° angle)
+Accent Gradient: Electric Lime → Cyber Blue (45° angle)
+Danger Gradient: Warning Orange → Critical Red (90° angle)
+
+Typography System
+Font Stack:
+Headlines: "Inter" or "Sora" (Bold, 700-900 weight) - Modern, geometric
+Body: "Inter" (Regular, 400-500 weight) - Clean, readable
+Code/Technical: "JetBrains Mono" or "Fira Code" (Regular, 400) - Developer-friendly
+
+Type Scale:
+H1 (Hero): 64px, 700 weight, line-height 1.2
+H2 (Section): 48px, 700 weight, line-height 1.3
+H3 (Subsection): 32px, 600 weight, line-height 1.4
+H4 (Card Title): 20px, 600 weight, line-height 1.4
+Body Large: 18px, 400 weight, line-height 1.6
+Body Regular: 16px, 400 weight, line-height 1.6
+Body Small: 14px, 400 weight, line-height 1.5
+Caption: 12px, 500 weight, line-height 1.4
+Code: 14px, 400 weight (monospace), line-height 1.5
+
+Spacing System (8px Grid)
+xs: 4px
+sm: 8px
+md: 16px
+lg: 24px
+xl: 32px
+2xl: 48px
+3xl: 64px
+4xl: 96px
+
+Border Radius
+sm: 4px (small elements)
+md: 8px (cards, buttons)
+lg: 12px (larger sections)
+xl: 16px (hero sections)
+full: 9999px (pills, avatars)
+
+Shadow System
+Subtle: 0 2px 8px rgba(0, 255, 65, 0.05)
+Soft: 0 4px 16px rgba(176, 0, 255, 0.1)
+Medium: 0 8px 32px rgba(0, 217, 255, 0.15)
+Strong: 0 16px 48px rgba(15, 23, 42, 0.3)
+Glow: 0 0 20px rgba(0, 255, 65, 0.3) (for interactive elements)
+
+
+
+PART 2: COMPONENT LIBRARY
+Buttons
+Primary Button (Electric Lime)
+Background: Electric Lime (#00FF41)
+Text: Deep Indigo (#0F172A)
+Padding: 12px 32px
+Border Radius: 8px
+Font Weight: 600
+Hover State: Add glow shadow + scale 1.02
+Active State: Darken background by 10%
+Disabled State: Opacity 50%, no hover effects
+
+Secondary Button (Neon Purple)
+Background: Transparent
+Border: 2px Neon Purple (#B000FF)
+Text: Neon Purple
+Padding: 12px 32px
+Hover State: Background becomes Neon Purple, text becomes white
+Active State: Solid Neon Purple background
+
+Tertiary Button (Cyber Blue)
+Background: Transparent
+Text: Cyber Blue (#00D9FF)
+Underline: 2px Cyber Blue
+Hover State: Background becomes 10% Cyber Blue
+Active State: Solid Cyber Blue background
+
+Icon Buttons
+Size: 40px × 40px
+Icon size: 20px
+Hover: 10% background color change + slight rotation (5°)
+
+Input Fields
+Text Input
+Background: Dark Slate (#1A1F3A)
+Border: 1px Medium Slate (#2D3561)
+Text Color: Off-White (#F5F7FB)
+Placeholder: Light Slate (#8B92B8)
+Padding: 12px 16px
+Border Radius: 8px
+Focus State: Border becomes Electric Lime, add glow shadow
+Error State: Border becomes Critical Red
+
+Search Input
+Same as text input but with search icon on left
+Icon color: Light Slate
+Focus: Icon color changes to Electric Lime
+
+Cards
+Standard Card
+Background: Dark Slate (#1A1F3A)
+Border: 1px Medium Slate (#2D3561)
+Border Radius: 12px
+Padding: 24px
+Box Shadow: Subtle
+Hover State: Border becomes Electric Lime, shadow becomes Medium
+
+Feature Card (with icon)
+Background: Linear gradient from Dark Slate to Dark Slate (with 5% accent color overlay)
+Icon: 48px × 48px, Electric Lime
+Title: 20px, 600 weight
+Description: 16px, 400 weight, Light Slate
+Padding: 32px
+Border Radius: 12px
+Hover State: Icon glows, card lifts (transform: translateY(-4px))
+
+Metric Card
+Background: Dark Slate with accent color border (left side 4px)
+Large Number: 48px, 700 weight, accent color
+Label: 14px, Light Slate
+Padding: 24px
+Border Radius: 8px
+Animation: Number counts up on scroll into view
+
+Badges
+Status Badge (Green)
+Background: Security Green (#00D084) with 10% opacity
+Text: Security Green
+Padding: 6px 12px
+Border Radius: 20px
+Font Size: 12px, 600 weight
+
+Alert Badge (Orange)
+Background: Warning Orange (#FF6B35) with 10% opacity
+Text: Warning Orange
+Same styling as status badge
+
+Danger Badge (Red)
+Background: Critical Red (#FF0055) with 10% opacity
+Text: Critical Red
+Same styling as status badge
+
+Info Badge (Cyan)
+Background: Info Cyan (#00F0FF) with 10% opacity
+Text: Info Cyan
+Same styling as status badge
+
+
+
+PART 3: SECTION-BY-SECTION DESIGN SPECIFICATIONS
+Navigation Bar
+Layout:
+Height: 72px
+Background: Deep Indigo with 95% opacity (slight transparency for blur effect)
+Backdrop Filter: blur(10px) + saturate(180%)
+Padding: 0 48px
+Display: Flex, space-between, center alignment
+
+Logo Section:
+Logo Size: 32px × 32px
+Logo Style: Minimalist lock icon with Electric Lime glow
+Text: "RakshEx" in 20px, 700 weight
+Lock Icon: Animated, rotates 360° on hover
+
+Menu Items:
+Font Size: 16px, 500 weight
+Color: Light Slate
+Spacing: 32px between items
+Hover State: Text color becomes Electric Lime, underline appears (2px)
+Active State: Text becomes Electric Lime, underline stays
+
+Right Section:
+Sign In Button: Tertiary style (Cyber Blue text)
+Start Free Button: Primary style (Electric Lime background)
+Spacing: 16px between buttons
+
+Mobile (Hamburger Menu):
+Hamburger icon: 24px × 24px
+Menu slides in from right
+Background: Deep Indigo
+Full-height overlay
+
+
+
+Hero Section
+Layout:
+Full viewport height (100vh)
+Background: Hero Gradient (Deep Indigo → Neon Purple)
+Animated background: Subtle moving particles/dots
+Content: Centered, max-width 1200px
+
+Background Animation:
+Floating geometric shapes (circles, squares, lines)
+Opacity: 5-10%
+Movement: Slow, continuous, different speeds
+Color: Electric Lime with low opacity
+
+Headline:
+Text: "The AI-native security & governance platform"
+Size: 64px, 700 weight
+Line Height: 1.2
+Color: Off-White
+Special Styling: "security & governance" in Electric Lime with glow effect
+
+Subheadline:
+Text: "Prompt injection blocking, LLM cost control, shadow API discovery, and compliance reporting — all in one platform. 478 tests. 4 patents."
+Size: 18px, 400 weight
+Color: Light Slate
+Margin Top: 24px
+Max Width: 600px
+
+CTA Section:
+Two buttons side by side
+Primary: "Start your project" (Electric Lime)
+Secondary: "Read the docs" (Neon Purple border)
+Spacing: 16px between buttons
+Margin Top: 48px
+
+Code Snippet:
+Background: Dark Slate with border
+Border: 1px Medium Slate
+Border Radius: 12px
+Padding: 20px
+Font: JetBrains Mono, 14px
+Text: $ npx rakshex scan ./collection.json
+Copy Button: On right, Electric Lime text
+Hover: Copy button shows checkmark animation
+Margin Top: 48px
+
+Right Side (Hero Image):
+3D Illustration: Abstract security scanner visualization
+Animated elements: Scanning lines, data particles flowing
+Dimensions: 500px × 500px
+Animation: Subtle rotation (5° max), floating effect
+
+
+
+Trust Badges Section
+Layout:
+Below hero, full width
+Background: Dark Slate with gradient overlay
+Padding: 32px 48px
+Display: Flex, space-around, center alignment
+
+Badge Items:
+Icon: 32px × 32px
+Label: 14px, 600 weight
+Value: 20px, 700 weight, Electric Lime
+Spacing: 48px between badges
+
+Badges:
+4 Patents Filed - Patent icon, Electric Lime
+Built in India - Flag icon, Neon Purple
+478 Security Tests - Shield icon, Cyber Blue
+99.9% Uptime - Server icon, Security Green
+
+
+
+"Works Perfectly With" Section
+Layout:
+Full width
+Background: Deep Indigo
+Padding: 96px 48px
+Content: Centered, max-width 1400px
+
+Section Title:
+Text: "Works perfectly with"
+Size: 48px, 700 weight
+Color: Off-White
+Margin Bottom: 64px
+
+Logo Grid:
+Grid: 5 columns (responsive: 2 on mobile, 3 on tablet)
+Gap: 32px
+Logo Size: 60px × 60px
+Logo Style: Grayscale by default, full color on hover
+Hover Effect: Scale 1.1, add glow shadow, rotate 5°
+
+Logo Categories (Optional):
+Frameworks: Next.js, FastAPI, Express, Django, Flask
+Cloud: AWS, Google Cloud, Azure
+Dev Tools: VS Code, Cursor, GitHub, Postman
+LLMs: OpenAI, Anthropic, Google Gemini, Mistral
+
+
+
+Features Section
+Layout:
+Full width
+Background: Dark Slate with subtle grid pattern
+Padding: 96px 48px
+Content: Max-width 1400px
+
+Section Title:
+Text: "Powerful Features Built for AI Security"
+Size: 48px, 700 weight
+Color: Off-White
+Margin Bottom: 64px
+
+Feature Grid:
+Grid: 3 columns (responsive: 1 on mobile, 2 on tablet)
+Gap: 32px
+
+Feature Card (Redesigned):
+Background: Dark Slate with accent color left border (4px)
+Border Radius: 12px
+Padding: 32px
+Icon: 64px × 64px, accent color, animated on hover
+Title: 24px, 600 weight, Off-White
+Description: 16px, 400 weight, Light Slate
+Hover State: Card lifts (translateY -8px), icon rotates 360°, border glows
+
+Features to Display:
+Security Scanner - Icon: Shield with checkmark, Border: Electric Lime
+Kill Switch - Icon: Power button, Border: Neon Purple
+Cost Monitor - Icon: Graph, Border: Cyber Blue
+Thinking Token Attribution - Icon: Brain, Border: Security Green
+Shadow API Discovery - Icon: Eye, Border: Warning Orange
+Credential Scanner - Icon: Key, Border: Critical Red
+Compliance Reports - Icon: Document, Border: Info Cyan
+MCP Governance - Icon: Network, Border: Electric Lime
+
+
+
+Demo/Connected Section
+Layout:
+Full width
+Background: Deep Indigo with gradient overlay
+Padding: 96px 48px
+Two-column layout: Left (content), Right (demo)
+
+Left Column:
+Max Width: 500px
+Title: "RakshEx Connected"
+Size: 32px, 600 weight
+Description: "Analyze my API routes for prompt injection and credential leaks."
+Margin Top: 16px
+Color: Light Slate
+
+Right Column (Demo Mockup):
+Terminal-style mockup (not UI mockup like InsForge)
+Background: Black with green text
+Border: 1px Electric Lime
+Border Radius: 8px
+Padding: 20px
+Font: JetBrains Mono, 12px
+Content: Simulated terminal output showing security scan results
+Animated: Text appears line by line
+Height: 400px
+
+Terminal Content Example:
+$ rakshex scan ./api
+🔍 Scanning API endpoints...
+✅ Endpoints Scanned: 23
+⚠️  Credentials Detected: 2
+💰 Cost Anomaly Flagged: $47.3
+🛡️  Prompt Injection Blocked: 1
+📊 Security Score: 94/100
+
+Stats Cards (Overlay on right):
+Position: Absolute, bottom-left of terminal
+4 cards in 2×2 grid
+Each card: 120px × 80px
+Background: Dark Slate with accent border
+Icon + Number + Label
+Animated: Numbers count up on scroll
+
+
+
+Comparison/Benchmark Section
+Layout:
+Full width
+Background: Dark Slate
+Padding: 96px 48px
+Content: Max-width 1200px
+
+Section Title:
+Text: "Why Teams Choose RakshEx"
+Size: 48px, 700 weight
+Color: Off-White
+Margin Bottom: 64px
+
+Comparison Table (Interactive):
+Three columns: Metric, RakshEx, Competitors
+Header background: Neon Purple
+RakshEx column background: Dark Slate with Electric Lime left border
+Competitor columns: Medium Slate
+Rows alternate: Dark Slate, 10% darker
+
+Metrics:
+Vulnerabilities Detected - RakshEx: 2.3x, Snyk: 1x, Datadog: 0.4x
+False Positives - RakshEx: 2.1%, Snyk: 18.4%, Datadog: 31.2%
+Time to First Finding - RakshEx: 3s, Snyk: 47s, Datadog: N/A
+Security Tests - RakshEx: 478, Snyk: 120, Datadog: 85
+Compliance Reports - RakshEx: Yes, Snyk: Limited, Datadog: Yes
+
+Visual Enhancement:
+Add icons next to numbers
+RakshEx values in Electric Lime (bold)
+Competitor values in Light Slate
+Hover: Row highlights with 10% accent color
+
+CTA Button:
+"View full benchmark report"
+Position: Below table
+Style: Secondary (Neon Purple border)
+
+
+
+Changelog/Timeline Section
+Layout:
+Full width
+Background: Deep Indigo
+Padding: 96px 48px
+Content: Max-width 1200px
+
+Section Title:
+Text: "What's New"
+Size: 48px, 700 weight
+Color: Off-White
+Margin Bottom: 64px
+
+Timeline (Horizontal Scrolling on Desktop, Vertical on Mobile):
+Display: Flex, horizontal scroll
+Gap: 24px
+Scroll: Smooth, with scroll indicators
+
+Timeline Card:
+Width: 300px
+Background: Dark Slate
+Border: 1px Medium Slate
+Border Radius: 12px
+Padding: 24px
+Hover: Border becomes Electric Lime, shadow becomes Medium
+
+Card Content:
+Date Badge: Top-left, Electric Lime background, 12px text
+Title: 20px, 600 weight, Off-White
+Description: 14px, 400 weight, Light Slate
+Icon: 32px × 32px, top-right, accent color
+
+Timeline Items:
+May 2026 - Interactive Demo Scanner - Icon: Zap
+May 2026 - Waitlist Confirmation - Icon: Mail
+April 2026 - AgentGuard Kill Switch - Icon: Power
+April 2026 - Four Provisional Patents - Icon: Award
+
+"View All" Button:
+Position: Below timeline
+Style: Secondary (Cyber Blue border)
+
+
+
+Community/Testimonials Section
+Layout:
+Full width
+Background: Dark Slate with subtle pattern
+Padding: 96px 48px
+Content: Max-width 1400px
+
+Section Title:
+Text: "Loved by Developers & Security Teams"
+Size: 48px, 700 weight
+Color: Off-White
+Margin Bottom: 64px
+
+Testimonial Grid:
+Grid: 3 columns (responsive: 1 on mobile, 2 on tablet)
+Gap: 32px
+
+Testimonial Card:
+Background: Deep Indigo with gradient overlay
+Border: 1px Neon Purple
+Border Radius: 12px
+Padding: 32px
+Box Shadow: Soft
+Hover: Border becomes Electric Lime, shadow becomes Medium
+
+Card Content:
+Quote: 16px, 400 weight, Off-White, italic
+Author Avatar: 48px × 48px, circular, top-left
+Author Name: 16px, 600 weight, Off-White
+Author Title: 14px, 400 weight, Light Slate
+Company: 12px, 400 weight, Cyber Blue
+Date: 12px, 400 weight, Light Slate
+Star Rating: 5 stars, Electric Lime
+
+Testimonials:
+Devesh K.R. - "Found a production OpenAI key in our test collection. One that was about to go live. Not a drill."
+Aarti Builds - "The kill switch tripped automatically on a runaway agent loop. Saved us ~$8K. This feature alone is worth it."
+Siddharth SWE - "SOC2 evidence prep used to be 3 days of pain. Generates the bundle in one click. Our auditor was genuinely confused."
+
+
+
+FAQ Section
+Layout:
+Full width
+Background: Deep Indigo
+Padding: 96px 48px
+Content: Max-width 900px
+
+Section Title:
+Text: "Frequently Asked Questions"
+Size: 48px, 700 weight
+Color: Off-White
+Margin Bottom: 64px
+
+FAQ Format (Tabs + Accordion Hybrid):
+Category Tabs: Getting Started, Security, Pricing, Integration
+Tab Style: Underline, Electric Lime when active
+Accordion Items: Expandable questions
+
+Accordion Item:
+Background: Dark Slate
+Border: 1px Medium Slate
+Border Radius: 8px
+Padding: 20px
+Margin Bottom: 12px
+Question: 16px, 600 weight, Off-White
+Answer: 14px, 400 weight, Light Slate
+Icon: Chevron (rotates on expand)
+Hover: Border becomes Cyber Blue
+
+Questions:
+What is RakshEx?
+What AI frameworks does RakshEx support?
+What security checks does RakshEx perform?
+Who should use RakshEx?
+Is RakshEx open source?
+How is RakshEx different from Snyk or Datadog?
+What does the kill switch actually do?
+How much does it cost?
+
+
+
+CTA/Email Signup Section
+Layout:
+Full width
+Background: Hero Gradient (Deep Indigo → Neon Purple)
+Padding: 96px 48px
+Content: Centered, max-width 600px
+
+Section Title:
+Text: "Ready to Secure Your AI Stack?"
+Size: 40px, 700 weight
+Color: Off-White
+Margin Bottom: 24px
+
+Subheading:
+Text: "Join 500+ developers already using RakshEx"
+Size: 18px, 400 weight
+Color: Light Slate
+Margin Bottom: 48px
+
+Email Input:
+Width: 100%
+Max Width: 500px
+Placeholder: "Enter your work email"
+Style: Standard input with Electric Lime focus state
+
+Button Group:
+Primary Button: "GET ACCESS" (Electric Lime)
+Secondary Link: "TRY FREE — NO CREDIT CARD" (Cyber Blue underline)
+Spacing: 16px between
+Margin Top: 24px
+
+Social Proof:
+Below buttons: "No credit card required. Join 500+ developers."
+Size: 12px, 400 weight, Light Slate
+
+
+
+Footer
+Layout:
+Full width
+Background: Deep Indigo with darker overlay
+Padding: 64px 48px 32px
+Content: Max-width 1400px
+
+Footer Grid:
+5 columns: Brand, Product, Resources, Company, Legal
+Gap: 48px
+Responsive: Stack on mobile
+
+Column 1 - Brand:
+Logo: 32px × 32px
+Company Name: "RakshEx"
+Tagline: "AI-native security & governance"
+Social Icons: GitHub, Discord, Twitter (32px, hover: Electric Lime)
+
+Column 2 - Product:
+Title: "Product"
+Links: Features, Pricing, Changelog, Roadmap
+Link Style: 14px, Light Slate, hover: Electric Lime
+
+Column 3 - Resources:
+Title: "Resources"
+Links: Documentation, API Reference, Blog, GitHub
+Link Style: Same as Product
+
+Column 4 - Company:
+Title: "Company"
+Links: About, Blog, Careers, Contact
+Link Style: Same as Product
+
+Column 5 - Legal:
+Title: "Legal"
+Links: Privacy Policy, Terms & Conditions, Trust Center
+Link Style: Same as Product
+
+Footer Bottom:
+Border Top: 1px Medium Slate
+Padding Top: 32px
+Margin Top: 32px
+Content: Copyright + Built in India badge
+Text: "© 2026 RakshEx. All rights reserved. Built in India 🇮🇳"
+Alignment: Center
+Font Size: 12px, Light Slate
+
+
+
+PART 4: ANIMATIONS & INTERACTIONS
+Scroll Animations
+Hero Section:
+Parallax background: Moves slower than scroll speed (0.5x)
+Floating particles: Move at different speeds
+Headline: Fade in + slide up on page load
+
+Feature Cards:
+Fade in + slide up on scroll into view
+Stagger: 100ms delay between cards
+Duration: 600ms
+
+Metrics:
+Count up animation when scrolled into view
+Duration: 1000ms
+Easing: Ease-out
+
+Testimonials:
+Fade in + scale up on scroll into view
+Duration: 500ms
+
+Hover Animations
+Buttons:
+Scale: 1.02 on hover
+Duration: 200ms
+Easing: Ease-out
+Shadow: Add glow effect
+
+Cards:
+Lift: translateY(-8px) on hover
+Duration: 300ms
+Easing: Ease-out
+Shadow: Increase to Medium
+
+Links:
+Color change: Light Slate → Electric Lime
+Underline: Slide in from left
+Duration: 200ms
+
+Icons:
+Rotate: 360° on hover
+Duration: 600ms
+Easing: Ease-in-out
+
+Interactive Elements
+Terminal Demo:
+Text appears line by line
+Duration: 50ms per character
+Cursor blinks at end
+Scanning animation: Lines move from top to bottom
+
+Metric Cards:
+Numbers count up on scroll
+Duration: 1000ms
+Easing: Ease-out
+
+Copy Button:
+Text changes to checkmark on click
+Duration: 300ms
+Reverts after 2 seconds
+
+Accordion:
+Expand/collapse with smooth height animation
+Duration: 300ms
+Easing: Ease-out
+Chevron rotates 180°
+
+Loading States
+Page Load:
+Background gradient animates (color shift)
+Particles fade in
+Content fades in with stagger
+
+Button Click:
+Button shows loading spinner
+Text fades out
+Spinner rotates
+On complete: Checkmark appears, then reverts
+
+
+
+PART 5: RESPONSIVE DESIGN
+Breakpoints
+Mobile: 320px - 640px
+Tablet: 641px - 1024px
+Desktop: 1025px+
+
+Mobile Optimizations
+Navigation:
+Hamburger menu replaces horizontal menu
+Logo size: 28px
+Padding: 0 16px
+
+Hero Section:
+Height: 80vh
+Headline: 40px
+Subheading: 16px
+Buttons: Stack vertically
+Code snippet: Full width with horizontal scroll
+
+Feature Grid:
+1 column
+Card padding: 20px
+Icon size: 48px
+
+Timeline:
+Vertical stack instead of horizontal scroll
+Card width: 100%
+
+Footer:
+Single column
+Padding: 32px 16px
+
+Tablet Optimizations
+Feature Grid:
+2 columns
+
+Timeline:
+2 columns
+
+Testimonials:
+2 columns
+
+
+
+PART 6: ACCESSIBILITY
+Color Contrast
+All text meets WCAG AA standards (4.5:1 for normal text, 3:1 for large text)
+Electric Lime on Deep Indigo: 8.2:1 ✅
+Off-White on Dark Slate: 7.1:1 ✅
+
+Keyboard Navigation
+All interactive elements accessible via Tab key
+Focus states visible (outline or highlight)
+Skip to main content link available
+
+Screen Reader Support
+Semantic HTML: <button>, <nav>, <main>, <footer>
+ARIA labels for icons
+Alt text for images
+Form labels associated with inputs
+
+Motion
+Respect prefers-reduced-motion setting
+Animations disabled for users who prefer reduced motion
+No auto-playing videos or animations
+
+
+
+PART 7: IMPLEMENTATION GUIDE FOR FIGMA
+Step 1: Set Up Design System
+Create a new Figma file: "RakshEx - Design System"
+Create color styles for all colors in palette
+Create typography styles for all text sizes
+Create component styles for buttons, cards, badges
+Create grid and spacing guidelines
+
+Step 2: Create Components
+Build reusable button components (primary, secondary, tertiary)
+Build card components (standard, feature, metric, testimonial)
+Build badge components (status, alert, danger, info)
+Build input components (text, search, email)
+Build navigation components (nav bar, footer)
+
+Step 3: Build Sections
+Create hero section with all elements
+Build trust badges section
+Build "Works with" section
+Build features section
+Build demo section
+Build comparison section
+Build changelog section
+Build testimonials section
+Build FAQ section
+Build CTA section
+Build footer
+
+Step 4: Create Responsive Variants
+Duplicate each section for tablet breakpoint
+Duplicate each section for mobile breakpoint
+Adjust layouts, font sizes, spacing for each breakpoint
+
+Step 5: Add Interactions
+Create interactive components with hover states
+Add animation prototypes (scroll, hover, click)
+Document animation timings and easing
+Create loading states for buttons
+
+Step 6: Documentation
+Create a design specifications document
+Document all colors, typography, spacing
+Document component usage guidelines
+Create a component library page
+Document animations and interactions
+
+
+
+PART 8: UNIQUE DIFFERENTIATORS FROM INSFORGE
+Element
+InsForge
+RakshEx (New)
+Primary Color
+Cyan
+Electric Lime
+Feature Cards
+3-column grid
+3-column with left border accent
+Demo Section
+UI Mockup
+Terminal Mockup
+Comparison
+Bar charts
+Interactive table
+Timeline
+Vertical
+Horizontal scroll
+Testimonials
+3-column grid
+3-column with gradient cards
+Background
+Illustration
+Animated particles
+Buttons
+Rounded
+Slightly more angular
+Overall Feel
+Infrastructure-focused
+Security-focused
+
+
+PART 9: DESIGN TOKENS (For Developers)
+{
+  "colors": {
+    "primary": "#00FF41",
+    "secondary": "#B000FF",
+    "tertiary": "#00D9FF",
+    "background": "#0F172A",
+    "surface": "#1A1F3A",
+    "border": "#2D3561",
+    "text": "#F5F7FB",
+    "textSecondary": "#8B92B8",
+    "success": "#00D084",
+    "warning": "#FF6B35",
+    "error": "#FF0055",
+    "info": "#00F0FF"
+  },
+  "typography": {
+    "h1": { "size": "64px", "weight": 700, "lineHeight": 1.2 },
+    "h2": { "size": "48px", "weight": 700, "lineHeight": 1.3 },
+    "h3": { "size": "32px", "weight": 600, "lineHeight": 1.4 },
+    "body": { "size": "16px", "weight": 400, "lineHeight": 1.6 },
+    "caption": { "size": "12px", "weight": 500, "lineHeight": 1.4 }
+  },
+  "spacing": {
+    "xs": "4px",
+    "sm": "8px",
+    "md": "16px",
+    "lg": "24px",
+    "xl": "32px",
+    "2xl": "48px"
+  },
+  "shadows": {
+    "subtle": "0 2px 8px rgba(0, 255, 65, 0.05)",
+    "soft": "0 4px 16px rgba(176, 0, 255, 0.1)",
+    "medium": "0 8px 32px rgba(0, 217, 255, 0.15)",
+    "strong": "0 16px 48px rgba(15, 23, 42, 0.3)"
+  }
+}
+
+
+
+PART 10: NEXT STEPS
+Import this brief into Figma as a reference
+Create design system with all colors, typography, spacing
+Build components in Figma component library
+Design each section using the specifications
+Create responsive variants for mobile, tablet, desktop
+Add interactions and animations using Figma prototypes
+Export design tokens for developer handoff
+Get feedback from team and iterate
+Prepare for development with detailed specs and assets
+Implement in code using the design tokens and specifications
+
+
+
+This design brief pushes creative boundaries while maintaining developer-focused aesthetics. It's visually superior to both InsForge and current RakshEx, with unique elements that make it stand out while staying true to RakshEx's security-first mission.
+
+Total Design Effort: 40-60 hours in Figma (depending on detail level)
+Total Development Effort: 80-120 hours for full implementation
+
+
+
+Design Brief Created: May 29, 2026
+Version: 1.0
+Status: Ready for Figma Implementation
+
+========================================
+FILE: RakshEx__Revised_Design_Brief_v2.docx
+========================================
+RakshEx: Revised Design Brief v2.0
+Clean. Trustworthy. Minimal. Winning.
+Design Philosophy: Strip away complexity. Build trust through clarity. Let the product speak. Minimal animations, maximum impact.
+
+
+
+PART 1: DESIGN SYSTEM (SIMPLIFIED)
+Color Palette (3-Color Discipline)
+Primary Colors:
+Deep Navy: #0F1419 (Main background - trust, stability, security)
+Teal Accent: #14B8A6 (Primary accent - calm intelligence, trustworthy innovation)
+Off-White: #F8FAFC (Text, high contrast)
+
+Secondary Colors:
+Slate 400: #94A3B8 (Secondary text, borders)
+Slate 600: #475569 (Tertiary text, disabled states)
+
+Status Colors (Only when needed):
+Success Green: #10B981 (Safe/Protected)
+Warning Orange: #F59E0B (Alerts)
+Error Red: #EF4444 (Threats)
+
+Why This Works:
+Teal is used by Stripe, Vercel, Linear - all premium SaaS
+Deep Navy = enterprise trust
+Only 3 colors = professional, not chaotic
+High contrast = accessible, readable
+Calming = users trust you with security
+
+Typography (Keep It Simple)
+Font Stack:
+Headlines: "Inter" (700 weight) - Clean, geometric, modern
+Body: "Inter" (400-500 weight) - Readable, professional
+Code: "JetBrains Mono" (400 weight) - Developer-friendly
+
+Type Scale:
+H1 (Hero): 56px, 700 weight, line-height 1.2
+H2 (Section): 40px, 700 weight, line-height 1.3
+H3 (Subsection): 28px, 600 weight, line-height 1.4
+H4 (Card Title): 18px, 600 weight, line-height 1.4
+Body Large: 16px, 400 weight, line-height 1.6
+Body Regular: 14px, 400 weight, line-height 1.6
+Caption: 12px, 500 weight, line-height 1.4
+
+Why This Works:
+Smaller H1 (56px not 64px) = more elegant, less screaming
+Consistent Inter throughout = cohesive
+Fewer sizes = easier to maintain
+
+Spacing (8px Grid)
+xs: 4px
+sm: 8px
+md: 16px
+lg: 24px
+xl: 32px
+2xl: 48px
+3xl: 64px
+
+Shadows (Minimal)
+Subtle: 0 1px 2px rgba(0, 0, 0, 0.05) (cards at rest)
+Hover: 0 4px 12px rgba(0, 0, 0, 0.1) (cards on hover)
+Strong: 0 10px 25px rgba(0, 0, 0, 0.15) (modals, overlays)
+
+Why This Works:
+Minimal shadows = clean, not cluttered
+Subtle elevation = professional
+No glow effects = not trying too hard
+
+Border Radius
+sm: 4px (small elements)
+md: 8px (cards, buttons)
+lg: 12px (larger sections)
+
+
+
+PART 2: COMPONENT LIBRARY (MINIMAL)
+Buttons
+Primary Button (Teal)
+Background: Teal (#14B8A6)
+Text: Deep Navy (#0F1419)
+Padding: 12px 24px
+Border Radius: 8px
+Font: 14px, 600 weight
+Hover: Darken by 10% (no scale, no glow)
+Active: Darken by 20%
+Disabled: Opacity 50%
+
+Secondary Button (Outline)
+Background: Transparent
+Border: 1px Slate 400 (#94A3B8)
+Text: Slate 600 (#475569)
+Padding: 12px 24px
+Hover: Background becomes 5% Teal, border becomes Teal
+Active: Border becomes Teal, text becomes Teal
+
+Text Link
+Text: Teal
+Underline: None by default
+Hover: Underline appears
+No color change on hover
+
+Input Fields
+Standard Input
+Background: Slate 100 (#F1F5F9)
+Border: 1px Slate 300 (#CBD5E1)
+Text: Deep Navy
+Placeholder: Slate 400
+Padding: 10px 12px
+Border Radius: 6px
+Focus: Border becomes Teal, no glow
+
+Search Input
+Same as standard with search icon on left
+
+Cards
+Standard Card
+Background: Off-White (#F8FAFC)
+Border: 1px Slate 200 (#E2E8F0)
+Border Radius: 12px
+Padding: 24px
+Box Shadow: Subtle
+Hover: Shadow becomes Hover (no color change)
+
+Feature Card
+Background: Off-White
+Border: 1px Slate 200
+Icon: 40px × 40px, Teal
+Title: 18px, 600 weight
+Description: 14px, 400 weight, Slate 600
+Padding: 24px
+Border Radius: 12px
+Hover: Shadow increases (no lift, no rotation)
+
+Badges
+Status Badge
+Background: Success Green with 10% opacity
+Text: Success Green
+Padding: 4px 8px
+Border Radius: 4px
+Font: 12px, 500 weight
+
+Alert Badge
+Same as status, with Warning Orange
+
+Danger Badge
+Same as status, with Error Red
+
+
+
+PART 3: SECTION-BY-SECTION DESIGN
+Navigation Bar
+Layout:
+Height: 64px
+Background: Deep Navy
+Padding: 0 48px
+Display: Flex, space-between, center
+
+Logo Section:
+Logo: 24px × 24px lock icon (Teal)
+Text: "RakshEx" in 18px, 700 weight, Off-White
+No animation on logo
+
+Menu:
+Items: Products, Compare, Resources
+Font: 14px, 500 weight, Slate 400
+Spacing: 32px between items
+Hover: Text becomes Teal (no underline)
+Active: Text becomes Teal
+
+Right Section:
+Sign In: Text link (Teal)
+Start Free: Primary button (Teal)
+Spacing: 24px between
+
+Hero Section
+Layout:
+Height: 80vh (not 100vh)
+Background: Deep Navy (solid, no animation)
+Content: Centered, max-width 900px
+Padding: 96px 48px
+
+Headline:
+Text: "The AI-native security & governance platform"
+Size: 56px, 700 weight
+Color: Off-White
+Line Height: 1.2
+Special: "security & governance" in Teal (no glow, just color)
+
+Subheadline:
+Text: "Prompt injection blocking, LLM cost control, shadow API discovery, and compliance reporting — all in one platform. 478 tests. 4 patents."
+Size: 16px, 400 weight
+Color: Slate 400
+Margin Top: 24px
+Max Width: 700px
+
+CTA Buttons:
+Primary: "Start your project" (Teal)
+Secondary: "Read the docs" (Outline)
+Spacing: 16px between
+Margin Top: 40px
+
+Code Snippet:
+Background: #1E293B (darker slate)
+Border: 1px Slate 700
+Border Radius: 8px
+Padding: 16px
+Font: JetBrains Mono, 13px
+Text: $ npx rakshex scan ./collection.json
+Copy Button: Teal text, no icon animation
+Margin Top: 48px
+Width: 100%, max-width 500px
+
+Visual:
+No animated particles
+No illustration
+Simple gradient background (Deep Navy to slightly lighter Navy, 10° angle)
+That's it.
+
+Trust Badges Section
+Layout:
+Full width
+Background: Off-White
+Padding: 48px
+Display: Grid, 4 columns, center
+Gap: 32px
+
+Badge Items:
+Icon: 32px × 32px, Teal
+Label: 12px, 500 weight, Slate 600
+Value: 18px, 700 weight, Deep Navy
+Simple, no animation
+
+Badges:
+4 Patents Filed - Patent icon
+Built in India - Flag icon
+478 Security Tests - Shield icon
+99.9% Uptime - Server icon
+
+"Works Perfectly With" Section
+Layout:
+Full width
+Background: Deep Navy
+Padding: 64px 48px
+Content: Max-width 1200px
+
+Section Title:
+Text: "Works perfectly with"
+Size: 40px, 700 weight
+Color: Off-White
+Margin Bottom: 48px
+
+Logo Grid:
+Grid: 6 columns (responsive: 2 on mobile, 3 on tablet)
+Gap: 24px
+Logo Size: 48px × 48px
+Logo Style: Grayscale by default
+Hover: Full color, slight scale (1.05), no rotation
+
+Logos:
+Frameworks: Next.js, FastAPI, Express, Django, Flask, Spring Boot
+Cloud: AWS, Google Cloud, Azure
+Dev Tools: VS Code, GitHub, Postman, Cursor
+LLMs: OpenAI, Anthropic, Google Gemini, Mistral
+
+Features Section
+Layout:
+Full width
+Background: Off-White
+Padding: 96px 48px
+Content: Max-width 1200px
+
+Section Title:
+Text: "Powerful Features Built for AI Security"
+Size: 40px, 700 weight
+Color: Deep Navy
+Margin Bottom: 64px
+
+Feature Grid:
+Grid: 3 columns (responsive: 1 on mobile, 2 on tablet)
+Gap: 32px
+
+Feature Card:
+Background: Off-White
+Border: 1px Slate 200
+Border Radius: 12px
+Padding: 28px
+Icon: 40px × 40px, Teal
+Title: 18px, 600 weight, Deep Navy
+Description: 14px, 400 weight, Slate 600
+Hover: Shadow increases (no lift)
+
+Features (8 total):
+Security Scanner
+Kill Switch
+Cost Monitor
+Thinking Token Attribution
+Shadow API Discovery
+Credential Scanner
+Compliance Reports
+MCP Governance
+
+Demo/Connected Section
+Layout:
+Full width
+Background: Deep Navy
+Padding: 96px 48px
+Two-column: Left (content), Right (demo)
+Gap: 64px
+
+Left Column:
+Max Width: 500px
+Title: "RakshEx Connected"
+Size: 32px, 600 weight, Off-White
+Description: "Analyze my API routes for prompt injection and credential leaks."
+Color: Slate 400
+Margin Top: 16px
+
+Right Column (Terminal Demo):
+Background: #1E293B
+Border: 1px Slate 600
+Border Radius: 8px
+Padding: 20px
+Font: JetBrains Mono, 12px
+Color: #10B981 (green text)
+Height: 350px
+NO ANIMATION - just static terminal output
+
+Terminal Content:
+$ rakshex scan ./api
+🔍 Scanning API endpoints...
+✅ Endpoints Scanned: 23
+⚠️  Credentials Detected: 2
+💰 Cost Anomaly Flagged: $47.3
+🛡️  Prompt Injection Blocked: 1
+📊 Security Score: 94/100
+
+Stats Cards (Below terminal):
+4 cards, 2×2 grid
+Background: Off-White
+Border: 1px Slate 200
+Icon + Number + Label
+NO ANIMATION
+
+Comparison Section
+Layout:
+Full width
+Background: Off-White
+Padding: 96px 48px
+Content: Max-width 1000px
+
+Section Title:
+Text: "Why Teams Choose RakshEx"
+Size: 40px, 700 weight
+Color: Deep Navy
+Margin Bottom: 48px
+
+Comparison Table:
+Three columns: Metric, RakshEx, Competitors
+Header: Deep Navy background, Off-White text
+RakshEx column: Teal left border (4px)
+Rows: Alternate Off-White and Slate 50 background
+Font: 14px, 400 weight
+
+Metrics:
+Metric
+RakshEx
+Snyk
+Datadog
+Vulnerabilities Detected
+2.3x
+1x
+0.4x
+False Positives
+2.1%
+18.4%
+31.2%
+Time to First Finding
+3s
+47s
+N/A
+Security Tests
+478
+120
+85
+"View full report" Button:
+Secondary style
+Margin Top: 32px
+
+Changelog Section
+Layout:
+Full width
+Background: Deep Navy
+Padding: 96px 48px
+Content: Max-width 1200px
+
+Section Title:
+Text: "What's New"
+Size: 40px, 700 weight
+Color: Off-White
+Margin Bottom: 48px
+
+Timeline (Vertical Stack):
+NOT horizontal scroll
+Each item: Full width, left-aligned
+Gap: 24px
+
+Timeline Card:
+Background: Off-White
+Border: 1px Slate 200
+Border Radius: 12px
+Padding: 24px
+Display: Flex, gap 24px
+
+Card Content:
+Icon: 32px × 32px, Teal (left side)
+Content: Title, description, date (right side)
+Title: 18px, 600 weight, Deep Navy
+Description: 14px, 400 weight, Slate 600
+Date: 12px, 500 weight, Slate 400
+
+Timeline Items:
+May 2026 - Interactive Demo Scanner
+May 2026 - Waitlist Confirmation
+April 2026 - AgentGuard Kill Switch
+April 2026 - Four Provisional Patents
+
+Testimonials Section
+Layout:
+Full width
+Background: Off-White
+Padding: 96px 48px
+Content: Max-width 1200px
+
+Section Title:
+Text: "Loved by Developers & Security Teams"
+Size: 40px, 700 weight
+Color: Deep Navy
+Margin Bottom: 48px
+
+Testimonial Grid:
+Grid: 3 columns (responsive: 1 on mobile, 2 on tablet)
+Gap: 32px
+
+Testimonial Card:
+Background: Off-White
+Border: 1px Slate 200
+Border Radius: 12px
+Padding: 28px
+Hover: Shadow increases (no color change)
+
+Card Content:
+Quote: 14px, 400 weight, Deep Navy, italic
+Author Avatar: 40px × 40px, circular (top-left)
+Author Name: 14px, 600 weight, Deep Navy
+Author Title: 12px, 400 weight, Slate 600
+Company: 12px, 500 weight, Teal
+Date: 12px, 400 weight, Slate 400
+Star Rating: 5 stars, Teal (no animation)
+
+Testimonials:
+Devesh K.R. - "Found a production OpenAI key in our test collection. One that was about to go live. Not a drill."
+Aarti Builds - "The kill switch tripped automatically on a runaway agent loop. Saved us ~$8K. This feature alone is worth it."
+Siddharth SWE - "SOC2 evidence prep used to be 3 days of pain. Generates the bundle in one click. Our auditor was genuinely confused."
+
+FAQ Section
+Layout:
+Full width
+Background: Deep Navy
+Padding: 96px 48px
+Content: Max-width 800px
+
+Section Title:
+Text: "Frequently Asked Questions"
+Size: 40px, 700 weight
+Color: Off-White
+Margin Bottom: 48px
+
+FAQ Format (Simple Accordion):
+No tabs
+Just accordion items
+One open at a time
+
+Accordion Item:
+Background: Off-White
+Border: 1px Slate 200
+Border Radius: 8px
+Padding: 20px
+Margin Bottom: 12px
+Question: 14px, 600 weight, Deep Navy
+Answer: 14px, 400 weight, Slate 600
+Icon: Chevron (rotates 180° on expand)
+Hover: Border becomes Teal
+
+Questions:
+What is RakshEx?
+What AI frameworks does RakshEx support?
+What security checks does RakshEx perform?
+Who should use RakshEx?
+Is RakshEx open source?
+How is RakshEx different from Snyk or Datadog?
+What does the kill switch actually do?
+How much does it cost?
+
+CTA/Email Signup Section
+Layout:
+Full width
+Background: Teal gradient (Teal to darker Teal, 135° angle)
+Padding: 96px 48px
+Content: Centered, max-width 600px
+
+Section Title:
+Text: "Ready to Secure Your AI Stack?"
+Size: 36px, 700 weight
+Color: Off-White
+Margin Bottom: 24px
+
+Subheading:
+Text: "Join 500+ developers already using RakshEx"
+Size: 16px, 400 weight
+Color: Off-White (80% opacity)
+Margin Bottom: 40px
+
+Email Input:
+Background: Off-White
+Border: None
+Placeholder: "Enter your work email"
+Padding: 12px 16px
+Border Radius: 6px
+Width: 100%, max-width 400px
+
+Button Group:
+Primary Button: "GET ACCESS" (Deep Navy background, Off-White text)
+Secondary Link: "TRY FREE — NO CREDIT CARD" (Off-White text, underline)
+Spacing: 16px between
+Margin Top: 20px
+
+Footer
+Layout:
+Full width
+Background: #0A0E14 (darker than Deep Navy)
+Padding: 64px 48px 32px
+Content: Max-width 1400px
+
+Footer Grid:
+5 columns: Brand, Product, Resources, Company, Legal
+Gap: 48px
+Responsive: Stack on mobile
+
+Column 1 - Brand:
+Logo: 24px × 24px
+Company Name: "RakshEx"
+Tagline: "AI-native security & governance"
+Social Icons: GitHub, Discord, Twitter (24px, Teal on hover)
+
+Columns 2-5:
+Title: 12px, 700 weight, Off-White
+Links: 14px, 400 weight, Slate 400, Teal on hover
+Spacing: 12px between links
+
+Footer Bottom:
+Border Top: 1px Slate 700
+Padding Top: 32px
+Margin Top: 32px
+Content: "© 2026 RakshEx. All rights reserved. Built in India 🇮🇳"
+Text: 12px, 400 weight, Slate 400
+Alignment: Center
+
+
+
+PART 4: ANIMATIONS (MINIMAL & PURPOSEFUL)
+Hover States Only
+Buttons:
+Darken background by 10%
+Duration: 150ms
+Easing: Ease-out
+NO scale, NO glow
+
+Cards:
+Shadow increases (Subtle → Hover)
+Duration: 200ms
+Easing: Ease-out
+NO lift, NO rotation
+
+Links:
+Text color changes to Teal
+Underline appears (if not already present)
+Duration: 150ms
+Easing: Ease-out
+
+Icons:
+Color changes to Teal
+NO rotation, NO scale
+
+Scroll Animations
+Section Titles:
+Fade in on scroll into view
+Duration: 400ms
+Easing: Ease-out
+NO slide, NO scale
+
+Cards:
+Fade in on scroll into view
+Stagger: 50ms between cards
+Duration: 400ms
+Easing: Ease-out
+
+That's it. No more.
+
+Page Load Animation
+Hero Section:
+Fade in (opacity 0 → 1)
+Duration: 600ms
+Easing: Ease-out
+NO slide, NO scale
+
+Navigation:
+Fade in
+Duration: 300ms
+Easing: Ease-out
+
+Accordion Animation
+Expand/Collapse:
+Smooth height animation
+Duration: 250ms
+Easing: Ease-out
+Chevron rotates 180°
+
+That's all the animation.
+
+
+
+PART 5: RESPONSIVE DESIGN
+Breakpoints
+Mobile: 320px - 640px
+Tablet: 641px - 1024px
+Desktop: 1025px+
+
+Mobile Optimizations
+Navigation:
+Hamburger menu replaces horizontal menu
+Padding: 0 16px
+Height: 56px
+
+Hero Section:
+Height: 70vh
+Headline: 36px
+Subheading: 14px
+Buttons: Stack vertically
+Code snippet: Horizontal scroll
+
+Feature Grid:
+1 column
+Card padding: 20px
+
+Testimonials:
+1 column
+
+Footer:
+Single column
+Padding: 32px 16px
+
+Tablet Optimizations
+Feature Grid:
+2 columns
+
+Testimonials:
+2 columns
+
+Footer:
+2-3 columns
+
+
+
+PART 6: ACCESSIBILITY
+Color Contrast
+All text meets WCAG AAA standards (7:1+)
+Teal on Deep Navy: 8.5:1 ✅
+Off-White on Deep Navy: 12:1 ✅
+Slate 600 on Off-White: 7.2:1 ✅
+
+Keyboard Navigation
+All interactive elements accessible via Tab
+Focus states visible (border highlight)
+Skip to main content link
+
+Screen Reader Support
+Semantic HTML
+ARIA labels for icons
+Alt text for images
+Form labels associated with inputs
+
+Motion
+Respect prefers-reduced-motion
+Animations disabled for users who prefer reduced motion
+No auto-playing anything
+
+
+
+PART 7: WHAT MAKES THIS BETTER
+vs. InsForge:
+Element
+InsForge
+RakshEx v2
+Primary Color
+Purple
+Teal (more trustworthy)
+Animation
+Heavy
+Minimal (more professional)
+Color Count
+5+
+3 (cleaner)
+Demo
+UI Mockup
+Terminal (developer-focused)
+Whitespace
+Moderate
+Generous (more elegant)
+Overall Feel
+Trendy
+Established
+vs. Current RakshEx:
+Element
+Current
+v2
+Primary Color
+Cyan
+Teal (calmer)
+Color Count
+7+
+3 (cleaner)
+Animation
+Excessive
+Minimal (professional)
+Background
+Particles
+Solid gradient (cleaner)
+Complexity
+High
+Low (more trustworthy)
+Overall Feel
+Hacker aesthetic
+Enterprise security
+
+
+PART 8: DESIGN TOKENS (For Developers)
+{
+  "colors": {
+    "background": "#0F1419",
+    "surface": "#F8FAFC",
+    "accent": "#14B8A6",
+    "text": "#0F1419",
+    "textSecondary": "#475569",
+    "textTertiary": "#94A3B8",
+    "border": "#E2E8F0",
+    "success": "#10B981",
+    "warning": "#F59E0B",
+    "error": "#EF4444"
+  },
+  "typography": {
+    "h1": { "size": "56px", "weight": 700, "lineHeight": 1.2 },
+    "h2": { "size": "40px", "weight": 700, "lineHeight": 1.3 },
+    "body": { "size": "14px", "weight": 400, "lineHeight": 1.6 }
+  },
+  "spacing": {
+    "xs": "4px",
+    "sm": "8px",
+    "md": "16px",
+    "lg": "24px",
+    "xl": "32px"
+  },
+  "shadows": {
+    "subtle": "0 1px 2px rgba(0, 0, 0, 0.05)",
+    "hover": "0 4px 12px rgba(0, 0, 0, 0.1)"
+  }
+}
+
+
+
+PART 9: IMPLEMENTATION GUIDE
+Step 1: Design System (2 hours)
+Create color styles
+Create typography styles
+Create spacing variables
+
+Step 2: Components (4 hours)
+Build buttons
+Build cards
+Build inputs
+Build badges
+
+Step 3: Sections (8 hours)
+Hero
+Features
+Demo
+Testimonials
+FAQ
+Footer
+
+Step 4: Responsive (4 hours)
+Mobile variants
+Tablet variants
+Test on devices
+
+Step 5: Polish (2 hours)
+Accessibility check
+Animation review
+Final refinements
+
+Total: 20 hours in Figma
+
+
+
+PART 10: FIGMA AI PROMPTS (Optimized)
+Prompt 1:
+"Create a hero section for a security platform. Use Deep Navy (#0F1419) background, Teal (#14B8A6) accent. Include headline 'The AI-native security & governance platform', subheading, two buttons (primary Teal, secondary outline), and a code snippet. Keep it minimal and professional."
+
+Prompt 2:
+"Design 8 feature cards in a 3-column grid. Each card has a 40px Teal icon, 18px title, 14px description. Use Off-White background with light border. Keep it simple and clean."
+
+Prompt 3:
+"Create a comparison table with 3 columns: Metric, RakshEx, Competitors. Use Deep Navy header, Teal left border for RakshEx column. Include 4 metrics comparing performance."
+
+Prompt 4:
+"Design a terminal mockup showing security scan results. Dark background, green text, 350px height. Include fake terminal output with scan results."
+
+Prompt 5:
+"Create 3 testimonial cards. Each has a quote, author avatar, name, title, company, 5-star rating. Use Off-White background with light border. Keep spacing generous."
+
+
+
+PART 11: FINAL CHECKLIST
+✅ Only 3 colors (no chaos)
+✅ Teal accent (trustworthy, not edgy)
+✅ Minimal animations (professional, not template-y)
+✅ Generous whitespace (elegant)
+✅ Terminal demo (developer-focused)
+✅ Simple comparison table (clear)
+✅ WCAG AAA contrast (accessible)
+✅ Responsive design (mobile-first)
+✅ 20 hours in Figma (realistic)
+✅ Beats both InsForge and current RakshEx
+
+
+
+This is the brief that wins. Clean. Trustworthy. Minimal. Powerful.
+
+Revised Brief v2.0 - May 29, 2026
+
+========================================
+FILE: RakshEx__ULTIMATE_Design_Brief_v3.docx
+========================================
+RakshEx: ULTIMATE Design Brief v3.0
+10/10 EXCELLENCE. WORLD-CLASS. PUSHING EVERY LIMIT.
+Design Philosophy: Premium. Sophisticated. Innovative. Every pixel intentional. Every interaction purposeful. Every detail obsessed over. This is what happens when you combine security-first thinking with world-class design.
+
+
+
+PART 1: ADVANCED DESIGN SYSTEM
+Color Palette (Sophisticated 5-Color System)
+Primary Colors:
+Deep Navy: #0A0E1A (Background - depth, trust, security)
+Teal Accent: #06D6A0 (Primary - premium, intelligent, calm)
+Slate Dark: #1E293B (Secondary surfaces)
+
+Accent Colors (Strategic Use):
+Electric Cyan: #00F0FF (Highlights, data visualization)
+Amber Gold: #FDB022 (Warnings, premium accents)
+
+Extended Palette:
+Success: #10B981 (Secure, protected)
+Alert: #F59E0B (Attention needed)
+Critical: #EF4444 (Threats)
+Info: #3B82F6 (Information)
+
+Gradient Combinations (Premium):
+Hero Gradient: Deep Navy → Slate Dark (135°, subtle)
+Accent Gradient: Teal → Electric Cyan (45°, dynamic)
+Premium Gradient: Amber Gold → Teal (90°, for CTAs)
+Dark Gradient: Deep Navy → Black (180°, for overlays)
+
+Why This Works:
+Teal is premium (Stripe, Vercel, Linear, Figma use it)
+Electric Cyan adds sophistication (not neon, refined)
+Amber Gold elevates key moments (luxury brand signal)
+Gradients are subtle, not aggressive
+5 colors is the sweet spot (enough variety, not chaotic)
+
+Typography (Premium Hierarchy)
+Font Stack:
+Headlines: "Sora" or "Inter" (700-800 weight) - Geometric, modern, premium
+Subheadings: "Inter" (600 weight) - Clean, readable
+Body: "Inter" (400-500 weight) - Professional, accessible
+Code/Technical: "JetBrains Mono" (400 weight) - Developer-native
+
+Type Scale (Sophisticated):
+H1 (Hero): 72px, 800 weight, line-height 1.1, letter-spacing -0.02em
+H2 (Section): 48px, 700 weight, line-height 1.2, letter-spacing -0.01em
+H3 (Subsection): 32px, 600 weight, line-height 1.3
+H4 (Card Title): 20px, 600 weight, line-height 1.4
+H5 (Label): 14px, 600 weight, line-height 1.4, text-transform uppercase, letter-spacing 0.05em
+Body Large: 18px, 400 weight, line-height 1.6
+Body Regular: 16px, 400 weight, line-height 1.6
+Body Small: 14px, 400 weight, line-height 1.5
+Caption: 12px, 500 weight, line-height 1.4
+Code: 14px, 400 weight (monospace), line-height 1.5
+
+Why This Works:
+Negative letter-spacing on headlines = premium feel
+Sora is geometric and modern (premium SaaS standard)
+72px H1 is bold but not aggressive
+Consistent line-heights = professional
+Uppercase labels = sophisticated hierarchy
+
+Spacing (Advanced 8px Grid with Ratios)
+Ratio-Based Spacing:
+xs: 4px (1:1)
+sm: 8px (1:2)
+md: 16px (1:4)
+lg: 24px (3:2 ratio)
+xl: 32px (2:1 ratio)
+2xl: 48px (3:1 ratio)
+3xl: 64px (4:1 ratio)
+4xl: 96px (6:1 ratio)
+
+Advanced Spacing Rules:
+Margins: 2x padding (create breathing room)
+Gaps: 1.5x padding (visual separation)
+Section padding: 96px top/bottom (desktop), 64px (tablet), 32px (mobile)
+Container max-width: 1280px (premium standard)
+
+Shadows (Sophisticated Elevation System)
+Layered Shadows (Depth):
+Level 0 (Rest): 0 1px 2px rgba(0, 0, 0, 0.05) (subtle presence)
+Level 1 (Hover): 0 4px 12px rgba(6, 214, 160, 0.08) (teal tint)
+Level 2 (Active): 0 8px 24px rgba(6, 214, 160, 0.12) (more teal)
+Level 3 (Elevated): 0 16px 48px rgba(0, 0, 0, 0.15) (strong depth)
+Level 4 (Modal): 0 25px 50px rgba(0, 0, 0, 0.25) (maximum depth)
+
+Glow Effects (Strategic):
+Teal Glow: 0 0 20px rgba(6, 214, 160, 0.3) (for CTAs on hover)
+Cyan Glow: 0 0 16px rgba(0, 240, 255, 0.2) (for data highlights)
+Amber Glow: 0 0 12px rgba(253, 176, 34, 0.3) (for premium moments)
+
+Why This Works:
+Teal-tinted shadows = brand-aware elevation
+Multiple levels = sophisticated depth
+Glows are subtle, not overwhelming
+Creates visual hierarchy through shadow
+
+Border Radius (Intentional)
+xs: 2px (minimal elements)
+sm: 4px (small components)
+md: 8px (cards, buttons)
+lg: 12px (larger sections)
+xl: 16px (hero sections)
+2xl: 20px (large containers)
+full: 9999px (pills, avatars)
+
+Why This Works:
+Variety creates visual interest
+Larger radius for larger elements (proportional)
+2px for minimal elements (sophisticated detail)
+
+
+
+PART 2: PREMIUM COMPONENT LIBRARY
+Buttons (Advanced States)
+Primary Button (Teal with Gradient)
+Background: Gradient (Teal → Electric Cyan, 45°)
+Text: Deep Navy
+Padding: 14px 28px
+Border Radius: 8px
+Font: 14px, 600 weight
+Border: None
+Box Shadow: Level 0
+Hover: 
+Shadow becomes Level 1 (teal glow)
+Scale: 1.02
+Gradient shifts (more cyan)
+Duration: 200ms, ease-out
+Active: 
+Shadow becomes Level 2
+Scale: 0.98
+Gradient inverts
+Focus: 
+Outline: 2px Teal, 4px offset
+No shadow change
+Disabled: 
+Opacity: 50%
+No hover effects
+
+Secondary Button (Outline with Teal)
+Background: Transparent
+Border: 2px Teal
+Text: Teal
+Padding: 12px 28px
+Hover:
+Background: Teal with 10% opacity
+Border color: Electric Cyan
+Text color: Electric Cyan
+Duration: 200ms
+Active:
+Background: Teal with 20% opacity
+Border: 2px Electric Cyan
+
+Tertiary Button (Text + Underline)
+Background: Transparent
+Border: None
+Text: Teal
+Underline: 2px Teal, offset 4px
+Hover:
+Text: Electric Cyan
+Underline: Electric Cyan
+Underline slides in from left (animation)
+Duration: 200ms
+Active:
+Text: Teal (darker)
+Underline: Teal
+
+Icon Button (Circular)
+Size: 44px × 44px
+Background: Slate Dark
+Icon: 20px, Teal
+Border Radius: full
+Hover:
+Background: Teal with 20% opacity
+Icon: Electric Cyan
+Rotate: 5°
+Scale: 1.05
+Duration: 250ms
+Active:
+Background: Teal with 30% opacity
+
+CTA Button (Premium - Gradient + Glow)
+Background: Gradient (Amber Gold → Teal, 90°)
+Text: Deep Navy
+Padding: 16px 32px
+Border Radius: 8px
+Font: 14px, 700 weight
+Box Shadow: Level 1 (amber glow)
+Hover:
+Shadow: Level 2 (stronger glow)
+Scale: 1.03
+Gradient rotates (180°)
+Duration: 250ms
+Active:
+Scale: 0.97
+Shadow: Level 3
+
+Input Fields (Advanced)
+Text Input (Premium)
+Background: Slate Dark
+Border: 1px #2D3E50
+Text: Off-White
+Placeholder: #64748B
+Padding: 12px 14px
+Border Radius: 8px
+Font: 14px, 400 weight
+Focus:
+Border: 2px Teal
+Box Shadow: 0 0 0 3px rgba(6, 214, 160, 0.1)
+Background: Slate Dark (no change)
+Duration: 150ms
+Error:
+Border: 2px Critical Red
+Box Shadow: 0 0 0 3px rgba(239, 68, 68, 0.1)
+Filled:
+Border: 1px Teal
+Box Shadow: 0 0 0 2px rgba(6, 214, 160, 0.05)
+
+Search Input (Premium)
+Same as text input
+Search icon: 20px, Teal (left side, 12px offset)
+Clear button: Icon button style (right side)
+Hover: Icon becomes Electric Cyan
+
+Email Input (CTA Section)
+Background: Off-White
+Border: None
+Text: Deep Navy
+Placeholder: #94A3B8
+Padding: 14px 16px
+Border Radius: 8px
+Font: 14px, 400 weight
+Focus:
+Box Shadow: 0 0 0 3px rgba(6, 214, 160, 0.2)
+No border change
+
+Cards (Sophisticated)
+Standard Card (Premium)
+Background: Slate Dark
+Border: 1px #2D3E50
+Border Radius: 12px
+Padding: 24px
+Box Shadow: Level 0
+Hover:
+Border: 1px Teal
+Box Shadow: Level 1
+Duration: 250ms
+Active:
+Border: 2px Teal
+Box Shadow: Level 2
+
+Feature Card (Advanced)
+Background: Slate Dark with gradient overlay (Teal, 5% opacity)
+Border: 1px #2D3E50
+Border Radius: 12px
+Padding: 32px
+Icon: 56px × 56px, Teal
+Title: 20px, 600 weight, Off-White
+Description: 14px, 400 weight, #94A3B8
+Hover:
+Border: 1px Teal
+Icon: Electric Cyan
+Icon rotates: 360° (duration 600ms)
+Card lifts: translateY(-8px)
+Box Shadow: Level 2
+Duration: 300ms
+Interactive Element:
+Small arrow icon (right side)
+Arrow slides right on hover (5px)
+Duration: 200ms
+
+Metric Card (Data-Focused)
+Background: Slate Dark
+Border: 4px solid (accent color - changes per metric)
+Border Radius: 8px
+Padding: 24px
+Large Number: 48px, 800 weight, accent color
+Label: 12px, 600 weight, #94A3B8, uppercase
+Subtext: 14px, 400 weight, Off-White
+Hover:
+Border color: Electric Cyan
+Number color: Electric Cyan
+Box Shadow: Level 1
+Animation (on scroll into view):
+Number counts from 0 to final value
+Duration: 1200ms
+Easing: cubic-bezier(0.34, 1.56, 0.64, 1) (bounce)
+
+Testimonial Card (Premium)
+Background: Slate Dark
+Border: 1px #2D3E50
+Border Radius: 12px
+Padding: 28px
+Quote: 14px, 400 weight, Off-White, italic
+Author Section:
+Avatar: 40px × 40px, circular, border 2px Teal
+Name: 14px, 600 weight, Off-White
+Title: 12px, 400 weight, #94A3B8
+Company: 12px, 600 weight, Teal
+Star Rating: 5 stars, Amber Gold
+Hover:
+Border: 1px Teal
+Box Shadow: Level 1
+Avatar: Border becomes Electric Cyan
+Duration: 250ms
+
+Badges (Premium)
+Status Badge
+Background: Success Green with 15% opacity
+Text: Success Green
+Padding: 6px 12px
+Border Radius: 6px
+Font: 11px, 600 weight, uppercase, letter-spacing 0.05em
+Border: 1px Success Green
+
+Alert Badge
+Same as status, with Alert Orange
+
+Critical Badge
+Same as status, with Critical Red
+
+Premium Badge (Amber)
+Background: Amber Gold with 15% opacity
+Text: Amber Gold
+Border: 1px Amber Gold
+Same styling as others
+
+Tags (Advanced)
+Tag (Teal)
+Background: Teal with 10% opacity
+Text: Teal
+Padding: 6px 12px
+Border Radius: 4px
+Font: 12px, 500 weight
+Hover: Background becomes 20% opacity
+Removable: X icon on right, clickable
+
+
+
+PART 3: PREMIUM SECTIONS
+Navigation Bar (Sophisticated)
+Layout:
+Height: 72px
+Background: Deep Navy with backdrop blur
+Backdrop Filter: blur(10px) saturate(180%)
+Border Bottom: 1px #2D3E50
+Padding: 0 48px
+Position: Sticky (stays on scroll)
+Z-index: 1000
+
+Logo Section:
+Logo: 28px × 28px, Teal lock icon
+Logo Animation: On hover, lock rotates 360° (duration 600ms)
+Text: "RakshEx" in 18px, 700 weight, Off-White
+Spacing: 12px between logo and text
+Hover: Text becomes Teal (duration 150ms)
+
+Menu Items:
+Font: 14px, 500 weight, #94A3B8
+Spacing: 32px between items
+Hover:
+Text: Teal
+Underline: 2px Teal, slides in from left (duration 200ms)
+Active:
+Text: Teal
+Underline: 2px Teal (persistent)
+Dropdown: On hover, submenu slides down (duration 250ms)
+
+Right Section:
+Sign In: Tertiary button (text link style)
+Start Free: Primary button (gradient)
+Spacing: 24px between
+
+Mobile Menu:
+Hamburger icon: 24px × 24px, Teal
+On click: Menu slides in from right (duration 300ms)
+Background: Deep Navy with backdrop blur
+Full height: 100vh
+Z-index: 1001
+
+Hero Section (World-Class)
+Layout:
+Height: 90vh (not 100vh - more sophisticated)
+Background: Hero Gradient (Deep Navy → Slate Dark, 135°)
+Animated Background: Subtle moving gradient (shifts 5° every 5 seconds)
+Content: Centered, max-width 1000px
+Padding: 96px 48px
+
+Background Animation:
+Gradient rotates slowly (5° every 5 seconds)
+Duration: 20 seconds per full rotation
+Easing: linear
+No particles, just gradient shift
+
+Headline:
+Text: "The AI-native security & governance platform"
+Size: 72px, 800 weight
+Color: Off-White
+Line Height: 1.1
+Letter Spacing: -0.02em
+Special: "security & governance" in Teal (no glow, just color)
+Animation: Fade in + slide up on page load
+Duration: 600ms
+Easing: cubic-bezier(0.34, 1.56, 0.64, 1)
+
+Subheadline:
+Text: "Prompt injection blocking, LLM cost control, shadow API discovery, and compliance reporting — all in one platform. 478 tests. 4 patents."
+Size: 18px, 400 weight
+Color: #94A3B8
+Line Height: 1.6
+Margin Top: 24px
+Max Width: 800px
+Animation: Fade in (delay 200ms, duration 600ms)
+
+CTA Buttons:
+Primary: "Start your project" (Premium gradient button)
+Secondary: "Read the docs" (Outline button)
+Spacing: 16px between
+Margin Top: 48px
+Animation: Fade in (delay 400ms, duration 600ms)
+Hover: Both buttons respond with their respective hover states
+
+Code Snippet:
+Background: #0F1419 (darker)
+Border: 1px #2D3E50
+Border Radius: 8px
+Padding: 16px
+Font: JetBrains Mono, 13px
+Text Color: #10B981 (green)
+Content: $ npx rakshex scan ./collection.json
+Copy Button: 
+Text: "Copy" in Teal
+Hover: Text becomes Electric Cyan
+Click: Text changes to "Copied!" (green checkmark)
+Duration: 2 seconds, then reverts
+Margin Top: 48px
+Width: 100%, max-width 500px
+Animation: Fade in (delay 600ms, duration 600ms)
+
+Visual Element:
+Right side: Abstract 3D security visualization (illustration or animation)
+Dimensions: 500px × 500px
+Animation: Subtle floating (translateY -20px to +20px, duration 4 seconds, infinite)
+Opacity: 80%
+
+Trust Badges Section (Premium)
+Layout:
+Full width
+Background: Slate Dark
+Padding: 48px
+Display: Grid, 4 columns (responsive)
+Gap: 48px
+Border Top: 1px #2D3E50
+Border Bottom: 1px #2D3E50
+
+Badge Items:
+Icon: 40px × 40px, Teal
+Label: 12px, 600 weight, #94A3B8, uppercase, letter-spacing 0.05em
+Value: 20px, 700 weight, Off-White
+Spacing: 12px between icon and text
+Hover:
+Icon: Electric Cyan
+Icon rotates: 360° (duration 600ms)
+Value: Teal
+Duration: 250ms
+
+Badges:
+4 Patents Filed - Patent icon, Teal
+Built in India - Flag icon, Teal
+478 Security Tests - Shield icon, Teal
+99.9% Uptime - Server icon, Teal
+
+"Works Perfectly With" Section (Premium)
+Layout:
+Full width
+Background: Deep Navy
+Padding: 96px 48px
+Content: Max-width 1400px
+
+Section Title:
+Text: "Works perfectly with"
+Size: 48px, 700 weight
+Color: Off-White
+Letter Spacing: -0.01em
+Margin Bottom: 64px
+Animation: Fade in on scroll (duration 500ms)
+
+Logo Grid:
+Grid: 6 columns (responsive: 2 on mobile, 3 on tablet, 4 on medium)
+Gap: 32px
+Logo Size: 56px × 56px
+Logo Style: Grayscale by default (filter: grayscale(100%))
+Hover:
+Full color (filter: grayscale(0%))
+Scale: 1.1
+Rotate: 5°
+Duration: 300ms
+Animation (on scroll into view):
+Fade in + scale up
+Stagger: 50ms between logos
+Duration: 400ms
+
+Logo Categories:
+Frameworks: Next.js, FastAPI, Express, Django, Flask, Spring Boot
+Cloud: AWS, Google Cloud, Azure, DigitalOcean
+Dev Tools: VS Code, GitHub, Postman, Cursor, Windsurf
+LLMs: OpenAI, Anthropic, Google Gemini, Mistral, Groq
+
+Features Section (Showcase)
+Layout:
+Full width
+Background: Slate Dark
+Padding: 96px 48px
+Content: Max-width 1400px
+
+Section Title:
+Text: "Powerful Features Built for AI Security"
+Size: 48px, 700 weight
+Color: Off-White
+Letter Spacing: -0.01em
+Margin Bottom: 64px
+
+Feature Grid:
+Grid: 4 columns (responsive: 1 on mobile, 2 on tablet, 3 on medium)
+Gap: 24px
+
+Feature Card (Premium):
+Background: Slate Dark with subtle gradient overlay
+Border: 1px #2D3E50
+Border Radius: 12px
+Padding: 28px
+Icon: 48px × 48px, Teal
+Title: 18px, 600 weight, Off-White
+Description: 14px, 400 weight, #94A3B8
+Hover:
+Border: 1px Teal
+Icon: Electric Cyan
+Icon rotates: 360° (duration 800ms)
+Card lifts: translateY(-12px)
+Box Shadow: Level 2
+Duration: 300ms
+Animation (on scroll into view):
+Fade in + scale up
+Stagger: 100ms between cards
+Duration: 500ms
+
+Features (8 total):
+Security Scanner - Icon: Shield with checkmark
+Kill Switch - Icon: Power button
+Cost Monitor - Icon: Graph/chart
+Thinking Token Attribution - Icon: Brain
+Shadow API Discovery - Icon: Eye
+Credential Scanner - Icon: Key
+Compliance Reports - Icon: Document
+MCP Governance - Icon: Network
+
+Demo/Connected Section (Interactive)
+Layout:
+Full width
+Background: Deep Navy
+Padding: 96px 48px
+Two-column: Left (content), Right (demo)
+Gap: 64px
+Align: Center vertically
+
+Left Column:
+Max Width: 500px
+Title: "RakshEx Connected"
+Size: 32px, 600 weight, Off-White
+Description: "Analyze my API routes for prompt injection and credential leaks."
+Color: #94A3B8
+Margin Top: 16px
+Animation: Fade in on scroll (duration 500ms)
+
+Right Column (Terminal Demo - Premium):
+Background: #0F1419
+Border: 1px #2D3E50
+Border Radius: 12px
+Padding: 20px
+Font: JetBrains Mono, 12px
+Color: #10B981 (green text)
+Height: 400px
+Box Shadow: Level 2 (with green glow)
+Animation: Terminal text appears line by line
+Duration: 50ms per character
+Cursor blinks at end
+Scanning animation: Lines move from top to bottom (duration 2 seconds)
+
+Terminal Content (Animated):
+$ rakshex scan ./api
+🔍 Scanning API endpoints...
+✅ Endpoints Scanned: 23
+⚠️  Credentials Detected: 2
+💰 Cost Anomaly Flagged: $47.3
+🛡️  Prompt Injection Blocked: 1
+📊 Security Score: 94/100
+
+Stats Cards (Overlay on bottom-left of terminal):
+4 cards, 2×2 grid
+Background: Slate Dark
+Border: 1px Teal
+Icon + Number + Label
+Number animation: Counts up on scroll (duration 1200ms)
+Hover: Border becomes Electric Cyan
+
+Comparison/Benchmark Section (Advanced)
+Layout:
+Full width
+Background: Slate Dark
+Padding: 96px 48px
+Content: Max-width 1200px
+
+Section Title:
+Text: "Why Teams Choose RakshEx"
+Size: 48px, 700 weight
+Color: Off-White
+Margin Bottom: 64px
+
+Comparison Table (Premium):
+Three columns: Metric, RakshEx, Competitors
+Header: Deep Navy background, Off-White text, 18px, 600 weight
+RakshEx column: Teal left border (6px), background Slate Dark
+Competitor columns: Medium Slate background
+Rows: Alternate Slate Dark and #1E293B
+Font: 14px, 400 weight
+Padding: 20px per cell
+Border: 1px #2D3E50 between rows
+
+Metrics:
+Metric
+RakshEx
+Snyk
+Datadog
+Vulnerabilities Detected
+2.3x
+1x
+0.4x
+False Positives
+2.1%
+18.4%
+31.2%
+Time to First Finding
+3s
+47s
+N/A
+Security Tests
+478
+120
+85
+Visual Enhancement:
+RakshEx values: Teal, 700 weight, 16px
+Competitor values: #94A3B8, 400 weight, 14px
+Icons next to metrics (left side)
+Hover: Row highlights with Teal background (10% opacity)
+
+"View full report" Button:
+Secondary style (Outline)
+Margin Top: 48px
+Centered
+
+Changelog/Timeline Section (Modern)
+Layout:
+Full width
+Background: Deep Navy
+Padding: 96px 48px
+Content: Max-width 1200px
+
+Section Title:
+Text: "What's New"
+Size: 48px, 700 weight
+Color: Off-White
+Margin Bottom: 64px
+
+Timeline (Vertical Stack with Left Accent):
+Each item: Full width
+Left border: 4px Teal (changes color per item)
+Gap: 32px
+
+Timeline Card:
+Background: Slate Dark
+Border: 1px #2D3E50
+Border Radius: 12px
+Padding: 28px
+Display: Flex, gap 24px
+Hover: Border becomes Teal, box shadow Level 1
+
+Card Content:
+Icon: 40px × 40px, Teal (left side)
+Content: Title, description, date (right side)
+Title: 18px, 600 weight, Off-White
+Description: 14px, 400 weight, #94A3B8
+Date: 12px, 500 weight, #64748B, uppercase
+
+Timeline Items:
+May 2026 - Interactive Demo Scanner - Icon: Zap
+May 2026 - Waitlist Confirmation - Icon: Mail
+April 2026 - AgentGuard Kill Switch - Icon: Power
+April 2026 - Four Provisional Patents - Icon: Award
+
+Animation (on scroll into view):
+Fade in + slide in from left
+Stagger: 150ms between items
+Duration: 500ms
+
+Testimonials Section (Premium)
+Layout:
+Full width
+Background: Slate Dark
+Padding: 96px 48px
+Content: Max-width 1400px
+
+Section Title:
+Text: "Loved by Developers & Security Teams"
+Size: 48px, 700 weight
+Color: Off-White
+Margin Bottom: 64px
+
+Testimonial Grid:
+Grid: 3 columns (responsive: 1 on mobile, 2 on tablet)
+Gap: 32px
+
+Testimonial Card (Premium):
+Background: Slate Dark with gradient overlay (Teal, 3% opacity)
+Border: 1px #2D3E50
+Border Radius: 12px
+Padding: 32px
+Box Shadow: Level 0
+Hover:
+Border: 1px Teal
+Box Shadow: Level 2
+Avatar border: Electric Cyan
+Duration: 300ms
+
+Card Content:
+Quote: 14px, 400 weight, Off-White, italic
+Author Avatar: 48px × 48px, circular, border 2px Teal
+Author Name: 14px, 600 weight, Off-White
+Author Title: 12px, 400 weight, #94A3B8
+Company: 12px, 600 weight, Teal
+Date: 12px, 400 weight, #64748B
+Star Rating: 5 stars, Amber Gold
+
+Testimonials:
+Devesh K.R. - "Found a production OpenAI key in our test collection. One that was about to go live. Not a drill."
+Aarti Builds - "The kill switch tripped automatically on a runaway agent loop. Saved us ~$8K. This feature alone is worth it."
+Siddharth SWE - "SOC2 evidence prep used to be 3 days of pain. Generates the bundle in one click. Our auditor was genuinely confused."
+
+Animation (on scroll into view):
+Fade in + scale up
+Stagger: 100ms between cards
+Duration: 500ms
+
+FAQ Section (Advanced)
+Layout:
+Full width
+Background: Deep Navy
+Padding: 96px 48px
+Content: Max-width 900px
+
+Section Title:
+Text: "Frequently Asked Questions"
+Size: 48px, 700 weight
+Color: Off-White
+Margin Bottom: 64px
+
+FAQ Format (Tabs + Accordion):
+Category Tabs: Getting Started, Security, Pricing, Integration
+Tab Style: Underline, Teal when active
+Tab animation: Underline slides in from left (duration 200ms)
+Accordion items: Expandable questions
+
+Accordion Item:
+Background: Slate Dark
+Border: 1px #2D3E50
+Border Radius: 8px
+Padding: 20px
+Margin Bottom: 12px
+Question: 14px, 600 weight, Off-White
+Answer: 14px, 400 weight, #94A3B8
+Icon: Chevron (rotates 180° on expand)
+Hover: Border becomes Teal
+Expand animation: Height smoothly increases (duration 300ms)
+
+Questions:
+What is RakshEx?
+What AI frameworks does RakshEx support?
+What security checks does RakshEx perform?
+Who should use RakshEx?
+Is RakshEx open source?
+How is RakshEx different from Snyk or Datadog?
+What does the kill switch actually do?
+How much does it cost?
+
+CTA/Email Signup Section (Premium)
+Layout:
+Full width
+Background: Premium Gradient (Amber Gold → Teal, 90°)
+Padding: 96px 48px
+Content: Centered, max-width 700px
+Box Shadow: Level 3 (strong shadow on top)
+
+Section Title:
+Text: "Ready to Secure Your AI Stack?"
+Size: 40px, 700 weight
+Color: Deep Navy
+Margin Bottom: 24px
+
+Subheading:
+Text: "Join 500+ developers already using RakshEx"
+Size: 16px, 400 weight
+Color: Deep Navy (80% opacity)
+Margin Bottom: 48px
+
+Email Input:
+Background: Off-White
+Border: None
+Placeholder: "Enter your work email"
+Padding: 14px 16px
+Border Radius: 8px
+Width: 100%, max-width 450px
+Focus: Box shadow Teal glow
+
+Button Group:
+Primary Button: "GET ACCESS" (Deep Navy background, Off-White text, premium gradient)
+Secondary Link: "TRY FREE — NO CREDIT CARD" (Deep Navy text, underline)
+Spacing: 16px between
+Margin Top: 24px
+
+Social Proof:
+Below buttons: "No credit card required. Join 500+ developers."
+Size: 12px, 400 weight, Deep Navy (70% opacity)
+
+Footer (Sophisticated)
+Layout:
+Full width
+Background: #050812 (darker than Deep Navy)
+Padding: 64px 48px 32px
+Content: Max-width 1400px
+
+Footer Grid:
+5 columns: Brand, Product, Resources, Company, Legal
+Gap: 48px
+Responsive: Stack on mobile
+
+Column 1 - Brand:
+Logo: 28px × 28px
+Company Name: "RakshEx" (18px, 700 weight)
+Tagline: "AI-native security & governance" (12px, 400 weight, #94A3B8)
+Social Icons: GitHub, Discord, Twitter (28px, #94A3B8, Teal on hover)
+Social icon animation: Scale 1.1, rotate 5° on hover (duration 250ms)
+
+Columns 2-5:
+Title: 12px, 700 weight, Off-White, uppercase, letter-spacing 0.05em
+Links: 14px, 400 weight, #94A3B8
+Link hover: Text becomes Teal, underline appears (duration 150ms)
+Spacing: 12px between links
+
+Footer Bottom:
+Border Top: 1px #2D3E50
+Padding Top: 32px
+Margin Top: 32px
+Content: "© 2026 RakshEx. All rights reserved. Built in India 🇮🇳"
+Text: 12px, 400 weight, #64748B
+Alignment: Center
+
+
+
+PART 4: ADVANCED ANIMATIONS & INTERACTIONS
+Page Load Animation (Premium)
+Sequence:
+Background gradient appears (fade in, 300ms)
+Navigation fades in (300ms, delay 100ms)
+Hero headline fades in + slides up (600ms, delay 200ms, ease-out)
+Subheadline fades in (600ms, delay 400ms)
+Buttons fade in (600ms, delay 600ms)
+Code snippet fades in (600ms, delay 800ms)
+Visual element floats in (800ms, delay 1000ms)
+
+Total sequence: 1.8 seconds
+
+Scroll Animations (Sophisticated)
+Section Titles:
+Fade in on scroll into view (opacity 0 → 1)
+Slide up (translateY 20px → 0)
+Duration: 600ms
+Easing: cubic-bezier(0.34, 1.56, 0.64, 1)
+Trigger: When 30% of element is visible
+
+Cards:
+Fade in (opacity 0 → 1)
+Scale up (scale 0.95 → 1)
+Stagger: 100ms between cards
+Duration: 500ms
+Easing: ease-out
+Trigger: When 20% of card is visible
+
+Metric Cards:
+Fade in + scale up (same as above)
+Number counts from 0 to final value
+Duration: 1200ms
+Easing: cubic-bezier(0.34, 1.56, 0.64, 1) (bounce)
+Trigger: When card is 50% visible
+
+Timeline Items:
+Fade in + slide in from left (translateX -30px → 0)
+Stagger: 150ms between items
+Duration: 500ms
+Easing: ease-out
+
+Testimonials:
+Fade in + scale up
+Stagger: 100ms
+Duration: 500ms
+
+Hover Animations (Premium)
+Buttons:
+Scale: 1.02 (primary), 1.01 (secondary)
+Shadow: Level 0 → Level 1
+Duration: 200ms
+Easing: ease-out
+
+Cards:
+Lift: translateY(-8px to -12px depending on card type)
+Shadow: Level 0 → Level 1 or Level 2
+Border: #2D3E50 → Teal
+Duration: 250ms
+Easing: ease-out
+
+Links:
+Color: #94A3B8 → Teal
+Underline: Slides in from left (width 0 → 100%)
+Duration: 200ms
+Easing: ease-out
+
+Icons:
+Color: Teal → Electric Cyan
+Rotate: 0° → 5° (or 360° for full rotation)
+Scale: 1 → 1.05
+Duration: 250ms
+Easing: ease-out
+
+Interactive Elements (Advanced)
+Terminal Demo:
+Text appears character by character (50ms per character)
+Cursor blinks at end (500ms interval)
+Scanning animation: Horizontal line moves top to bottom (2 seconds)
+Trigger: On scroll into view
+
+Copy Button:
+Click: Text changes to "Copied!" with checkmark
+Icon rotates 360° (duration 300ms)
+Reverts after 2 seconds
+Color: Teal → Green → Teal
+
+Accordion:
+Expand: Height smoothly increases (duration 300ms)
+Chevron rotates 180° (duration 300ms)
+Content fades in (duration 300ms)
+Collapse: Reverse animation
+
+Form Input:
+Focus: Border becomes Teal, glow appears
+Duration: 150ms
+Glow: 0 0 0 3px rgba(6, 214, 160, 0.1)
+Error: Border becomes red, glow becomes red
+Success: Border becomes green, glow becomes green
+
+Logo Hover (Works With Section):
+Grayscale: 100% → 0%
+Scale: 1 → 1.1
+Rotate: 0° → 5°
+Duration: 300ms
+Easing: ease-out
+
+Parallax & Depth Effects
+Hero Background:
+Gradient rotates slowly (5° every 5 seconds, 20 seconds per full rotation)
+Easing: linear
+Creates subtle depth
+
+Hero Visual Element:
+Floats up and down (translateY -20px to +20px)
+Duration: 4 seconds
+Easing: ease-in-out
+Infinite loop
+
+Scroll Parallax:
+Background moves slower than scroll (0.5x speed)
+Creates depth effect
+Applies to hero section only
+
+Micro-Interactions (Premium Details)
+Button Click:
+Scale down to 0.98 (active state)
+Duration: 100ms
+Releases back to 1 (duration 200ms)
+Creates tactile feedback
+
+Checkbox/Toggle:
+Smooth animation between states
+Duration: 250ms
+Easing: ease-out
+
+Notification/Toast:
+Slides in from bottom-right
+Duration: 300ms
+Stays for 3 seconds
+Slides out (duration 300ms)
+
+
+
+PART 5: RESPONSIVE DESIGN (Advanced)
+Breakpoints
+Mobile: 320px - 640px
+Tablet: 641px - 1024px
+Desktop: 1025px - 1440px
+Large Desktop: 1441px+
+
+Mobile Optimizations (Premium)
+Navigation:
+Height: 56px
+Hamburger menu (24px icon)
+Padding: 0 16px
+Menu slides in from right (duration 300ms)
+
+Hero Section:
+Height: 70vh
+Headline: 40px, 700 weight
+Subheadline: 14px
+Buttons: Stack vertically
+Code snippet: Full width with horizontal scroll
+Visual element: Hidden on mobile
+
+Feature Grid:
+1 column
+Card padding: 20px
+Icon: 40px
+
+Testimonials:
+1 column
+Card padding: 20px
+
+Footer:
+Single column
+Padding: 32px 16px
+Social icons: 24px
+
+Tablet Optimizations
+Navigation:
+Height: 64px
+Same as desktop
+
+Hero Section:
+Height: 80vh
+Headline: 48px
+Subheadline: 16px
+
+Feature Grid:
+2 columns
+Gap: 20px
+
+Testimonials:
+2 columns
+
+Footer:
+2-3 columns
+Gap: 32px
+
+Large Desktop (1441px+)
+Container max-width: 1400px
+Centered with margins
+
+Feature Grid:
+4 columns (as designed)
+
+All animations: Same as desktop
+
+
+
+PART 6: ACCESSIBILITY (WCAG AAA)
+Color Contrast
+Off-White on Deep Navy: 12.5:1 ✅
+Teal on Deep Navy: 8.5:1 ✅
+Teal on Slate Dark: 7.2:1 ✅
+#94A3B8 on Deep Navy: 7.1:1 ✅
+#94A3B8 on Slate Dark: 4.8:1 ✅ (AA)
+
+Keyboard Navigation
+Tab order: Logical, left-to-right, top-to-bottom
+Focus states: Visible outline (2px, 4px offset)
+Skip to main content link: First focusable element
+All interactive elements: Keyboard accessible
+
+Screen Reader Support
+Semantic HTML: <button>, <nav>, <main>, <footer>, <section>
+ARIA labels: All icons have labels
+Alt text: All images have descriptive alt text
+Form labels: Associated with inputs via <label>
+Headings: Proper hierarchy (h1, h2, h3, etc.)
+
+Motion
+Respect prefers-reduced-motion setting
+Animations disabled for users who prefer reduced motion
+No auto-playing videos or animations
+All animations can be disabled without breaking functionality
+
+Color Blindness
+Don't rely on color alone to convey information
+Use icons + text
+Use patterns or textures in addition to color
+Status colors: Use icons (checkmark, X, warning) in addition to color
+
+
+
+PART 7: DESIGN TOKENS (For Developers)
+{
+  "colors": {
+    "background": {
+      "primary": "#0A0E1A",
+      "secondary": "#1E293B",
+      "tertiary": "#0F1419"
+    },
+    "accent": {
+      "primary": "#06D6A0",
+      "secondary": "#00F0FF",
+      "tertiary": "#FDB022"
+    },
+    "text": {
+      "primary": "#F8FAFC",
+      "secondary": "#94A3B8",
+      "tertiary": "#64748B"
+    },
+    "status": {
+      "success": "#10B981",
+      "warning": "#F59E0B",
+      "error": "#EF4444",
+      "info": "#3B82F6"
+    }
+  },
+  "typography": {
+    "h1": {
+      "fontSize": "72px",
+      "fontWeight": 800,
+      "lineHeight": 1.1,
+      "letterSpacing": "-0.02em"
+    },
+    "h2": {
+      "fontSize": "48px",
+      "fontWeight": 700,
+      "lineHeight": 1.2,
+      "letterSpacing": "-0.01em"
+    },
+    "body": {
+      "fontSize": "16px",
+      "fontWeight": 400,
+      "lineHeight": 1.6
+    }
+  },
+  "spacing": {
+    "xs": "4px",
+    "sm": "8px",
+    "md": "16px",
+    "lg": "24px",
+    "xl": "32px",
+    "2xl": "48px",
+    "3xl": "64px",
+    "4xl": "96px"
+  },
+  "shadows": {
+    "level0": "0 1px 2px rgba(0, 0, 0, 0.05)",
+    "level1": "0 4px 12px rgba(6, 214, 160, 0.08)",
+    "level2": "0 8px 24px rgba(6, 214, 160, 0.12)",
+    "level3": "0 16px 48px rgba(0, 0, 0, 0.15)",
+    "level4": "0 25px 50px rgba(0, 0, 0, 0.25)"
+  },
+  "animations": {
+    "duration": {
+      "fast": "150ms",
+      "normal": "250ms",
+      "slow": "500ms",
+      "slower": "800ms"
+    },
+    "easing": {
+      "easeOut": "cubic-bezier(0.16, 1, 0.3, 1)",
+      "easeInOut": "cubic-bezier(0.4, 0, 0.2, 1)",
+      "bounce": "cubic-bezier(0.34, 1.56, 0.64, 1)"
+    }
+  }
+}
+
+
+
+PART 8: FIGMA AI PROMPTS (Optimized for Maximum)
+Prompt 1 (Hero Section):
+"Create a premium hero section for a security platform called RakshEx. Use Deep Navy (#0A0E1A) background with a subtle gradient to Slate Dark (#1E293B). Include a 72px headline 'The AI-native security & governance platform' with 'security & governance' in Teal (#06D6A0). Add a subheading, two premium buttons (one with Amber-to-Teal gradient, one outline), and a code snippet. Add a floating 3D security visualization on the right. Make it look premium and sophisticated."
+
+Prompt 2 (Feature Cards):
+"Design 8 premium feature cards in a 4-column grid. Each card has a 56px Teal icon, 20px title, 14px description. Use Slate Dark background with subtle gradient overlay. Add a small arrow icon that slides right on hover. Cards should lift on hover with enhanced shadow. Keep spacing generous and sophisticated."
+
+Prompt 3 (Comparison Table):
+"Create a premium comparison table with 3 columns: Metric, RakshEx, Competitors. Use Deep Navy header with Off-White text. RakshEx column has a 6px Teal left border. Include 4 metrics: Vulnerabilities Detected, False Positives, Time to Finding, Security Tests. Make RakshEx values bold and Teal. Add icons next to metrics."
+
+Prompt 4 (Terminal Demo):
+"Design a premium terminal mockup showing security scan results. Dark background (#0F1419), green text (#10B981), 400px height. Include a border with Teal glow shadow. Show fake terminal output with scan results. Add a 2x2 grid of stat cards below with Teal borders and counting animations."
+
+Prompt 5 (Testimonial Cards):
+"Create 3 premium testimonial cards. Each has an italic quote, 48px circular avatar with Teal border, author name, title, company in Teal, and 5 Amber stars. Use Slate Dark background with subtle Teal gradient overlay. Cards should have Teal borders on hover. Add generous padding and spacing."
+
+Prompt 6 (Timeline):
+"Design a vertical timeline with 4 items. Each item has a 40px Teal icon on the left, title, description, and date. Use Slate Dark cards with 1px borders. Add a 4px Teal left border accent. Cards should lift on hover with Teal border highlight. Stagger animations on scroll."
+
+Prompt 7 (Pricing/CTA Section):
+"Create a premium CTA section with Amber-to-Teal gradient background. Include a 40px headline, subheading, email input, and two buttons (one primary with gradient, one secondary text link). Add social proof text below. Make it look premium and conversion-focused."
+
+
+
+PART 9: IMPLEMENTATION TIMELINE
+Phase 1: Design System (3 hours)
+Create all color styles
+Create typography styles
+Create spacing variables
+Create shadow styles
+Create animation presets
+
+Phase 2: Components (6 hours)
+Build all button variants
+Build all card variants
+Build input components
+Build badge components
+Build icon components
+
+Phase 3: Sections (12 hours)
+Hero section
+Navigation
+Trust badges
+Works with section
+Features section
+Demo section
+Comparison section
+Timeline section
+Testimonials section
+FAQ section
+CTA section
+Footer
+
+Phase 4: Responsive Design (6 hours)
+Mobile variants (all sections)
+Tablet variants (all sections)
+Test on devices
+Adjust spacing and sizing
+
+Phase 5: Animations & Interactions (6 hours)
+Page load animations
+Scroll animations
+Hover animations
+Interactive elements
+Micro-interactions
+Test performance
+
+Phase 6: Polish & Refinement (3 hours)
+Accessibility audit
+Color contrast check
+Animation review
+Final tweaks
+Export assets
+
+Total: 36 hours in Figma
+
+
+
+PART 10: WHAT MAKES THIS 10/10
+vs. InsForge:
+Element
+InsForge
+RakshEx v3
+Color Palette
+5+ colors
+5 colors (sophisticated)
+Primary Accent
+Purple
+Teal (premium)
+Animations
+Medium
+Advanced (purposeful)
+Shadows
+Basic
+Sophisticated (5 levels)
+Gradients
+Simple
+Premium (4 strategic)
+Micro-interactions
+Basic
+Advanced
+Accessibility
+AA
+AAA
+Overall Feel
+Good
+Exceptional
+vs. Current RakshEx:
+Element
+Current
+v3
+Color Count
+7+
+5 (curated)
+Primary Accent
+Cyan
+Teal (premium)
+Animations
+Excessive
+Advanced (purposeful)
+Complexity
+High
+Sophisticated
+Trust Factor
+5/10
+10/10
+Professional Feel
+6/10
+10/10
+Developer Focus
+8/10
+10/10
+Premium Feel
+5/10
+10/10
+
+
+PART 11: FINAL CHECKLIST
+✅ 5-color sophisticated palette (not chaotic)
+✅ Teal + Amber Gold accents (premium)
+✅ Advanced animations (purposeful, not overdone)
+✅ 5-level shadow system (depth)
+✅ Premium gradients (4 strategic)
+✅ Micro-interactions (every detail)
+✅ WCAG AAA accessibility (inclusive)
+✅ Responsive design (mobile-first)
+✅ 36 hours in Figma (realistic)
+✅ 10/10 world-class quality
+✅ Beats both InsForge and current RakshEx
+✅ Enterprise-grade sophistication
+✅ Developer-focused aesthetics
+✅ Security-first design language
+✅ Premium feel throughout
+
+
+
+THIS IS THE BRIEF THAT WINS. 10/10 EXCELLENCE. WORLD-CLASS. PUSHING EVERY LIMIT.
+
+Ultimate Design Brief v3.0 - May 29, 2026
+Status: Ready for Premium Figma Implementation

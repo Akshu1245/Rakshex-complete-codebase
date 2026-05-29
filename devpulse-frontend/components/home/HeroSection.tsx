@@ -39,38 +39,41 @@ export function HeroSection() {
           </div>
 
           {/* Headline */}
-          <h1 className="hero-headline font-sans font-bold tracking-normal text-left flex flex-col">
+          <h1 className="hero-headline font-sans font-extrabold tracking-[-0.02em] text-left flex flex-col text-5xl md:text-[72px] leading-[1.1] mb-6">
             <span className="text-white">The AI-native</span>
-            <span className="text-[#00d4aa]">security &amp;</span>
-            <span className="text-[#00d4aa]">governance platform</span>
+            <span className="text-teal-accent">security &amp;</span>
+            <span className="text-teal-accent">governance platform</span>
           </h1>
 
           {/* Subtext */}
-          <p className="hero-subtext font-sans">
+          <p className="hero-subtext font-sans text-lg max-w-[800px] text-slate-400 mb-10 leading-[1.6]">
             Prompt injection blocking, LLM cost control, shadow API discovery, and compliance
             reporting &mdash; all in one platform. 478 tests. 4 patents.
           </p>
 
           {/* CTA Buttons */}
-          <div className="hero-buttons flex flex-wrap items-center gap-4 w-full">
+          <div className="hero-buttons flex flex-wrap items-center gap-4 w-full mb-12">
             <Link
               href="/register"
-              className="px-7 py-3.5 bg-[#00d4aa] text-black font-semibold text-sm rounded-lg hover:opacity-90 transition-all text-center flex items-center justify-center gap-2"
+              className="px-7 py-3.5 bg-gradient-to-r from-teal-accent to-electric-cyan text-[#0A0E1A] font-bold text-sm rounded-lg hover:shadow-[0_0_20px_rgba(6,214,160,0.4)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-center flex items-center justify-center gap-2 transform"
             >
               Start your project &rarr;
             </Link>
             <Link
               href="/docs"
-              className="px-7 py-3.5 bg-transparent border border-white/25 text-white font-semibold text-sm rounded-lg hover:bg-white/5 transition-all text-center flex items-center justify-center"
+              className="px-7 py-3.5 bg-transparent border-2 border-teal-accent text-teal-accent font-semibold text-sm rounded-lg hover:bg-teal-accent/10 hover:text-electric-cyan hover:border-electric-cyan transition-all duration-200 text-center flex items-center justify-center"
             >
               Read the docs
             </Link>
           </div>
 
           {/* CLI Command Pill */}
-          <div className="hero-cli-pill">
-            <span className="cli-text">$ npx rakshex scan ./collection.json</span>
-            <button onClick={handleCopyCommand} className="cli-copy-btn">
+          <div className="hero-cli-pill bg-[#0F1419] border border-[#2D3E50]">
+            <span className="cli-text text-emerald-400">$ npx rakshex scan ./collection.json</span>
+            <button
+              onClick={handleCopyCommand}
+              className="cli-copy-btn text-teal-accent hover:text-electric-cyan font-semibold transition-colors"
+            >
               {copied ? "Copied!" : "Copy"}
             </button>
           </div>

@@ -13,29 +13,27 @@ function FeatureCard({ title, description, link, iconSvg }: FeatureCardProps) {
   return (
     <Link
       href={link}
-      className="relative group block w-full h-[320px] bg-[#0f0f0f]/60 hover:bg-[#171717]/60 p-10 overflow-hidden select-none transition-colors duration-200"
+      className="relative group block w-full h-[340px] bg-slate-dark/30 hover:bg-slate-dark/50 border border-[#2D3E50] hover:border-teal-accent rounded-xl p-8 overflow-hidden select-none transition-all duration-300 transform hover:-translate-y-2 hover:shadow-[0_8px_30px_rgba(6,214,160,0.15)]"
     >
-      {/* Ghost cursor on hover */}
-      <div className="absolute top-5 right-5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-35">
-        <svg width="32" height="40" viewBox="0 0 32 40" fill="none">
-          <path
-            d="M0 0L0 36L9 27L14 38L18 36L13 25L24 25Z"
-            fill="rgba(255,255,255,0.15)"
-            stroke="rgba(255,255,255,0.3)"
-            strokeWidth="1"
-          />
-        </svg>
-      </div>
+      {/* Subtle Teal Gradient Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-teal-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
       {/* Top isometric 3D wireframe icon */}
-      <div className="w-[120px] h-[120px] text-white/15 group-hover:text-white/30 transition-colors duration-200">
+      <div className="w-[80px] h-[80px] text-teal-accent/60 group-hover:text-electric-cyan transition-all duration-500 transform group-hover:rotate-[360deg] group-hover:scale-110">
         <div dangerouslySetInnerHTML={{ __html: iconSvg }} />
       </div>
 
       {/* Bottom text area */}
-      <div className="absolute bottom-10 left-10 right-10">
-        <h3 className="text-white font-sans text-xl font-semibold tracking-tight">{title}</h3>
-        <p className="text-white/50 font-sans text-sm leading-relaxed mt-3 max-w-[280px]">
+      <div className="absolute bottom-8 left-8 right-8">
+        <div className="flex items-center justify-between">
+          <h3 className="text-white font-sans text-xl font-semibold tracking-tight group-hover:text-teal-accent transition-colors">
+            {title}
+          </h3>
+          <span className="text-teal-accent transform group-hover:translate-x-1.5 transition-all duration-200 font-bold">
+            &rarr;
+          </span>
+        </div>
+        <p className="text-slate-400 font-sans text-sm leading-relaxed mt-3 max-w-[280px]">
           {description}
         </p>
       </div>
@@ -224,7 +222,7 @@ export function FeatureCards() {
   ];
 
   return (
-    <div className="w-full bg-[#1e1e1e] p-[1px] grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-[1px] items-stretch select-none">
+    <div className="w-full grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-stretch select-none">
       {cards.map((card, idx) => (
         <FeatureCard
           key={idx}

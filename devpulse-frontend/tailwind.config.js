@@ -8,6 +8,10 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        "teal-accent": "#06D6A0",
+        "electric-cyan": "#00F0FF",
+        "amber-gold": "#FDB022",
+        "slate-dark": "#1E293B",
         "on-error": "#690005",
         "surface": "#131313",
         "on-tertiary-container": "#006274",

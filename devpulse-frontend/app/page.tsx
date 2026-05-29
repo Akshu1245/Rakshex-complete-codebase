@@ -101,9 +101,17 @@ function StatsCard({ label, targetValue }: { label: string; targetValue: string 
   }, []);
 
   return (
-    <article ref={containerRef} className="PlatformStatsShowcase_card__DyDV_">
-      <p className="PlatformStatsShowcase_label__dAs7X">{label}</p>
-      <div aria-label={targetValue} className="PlatformStatsShowcase_value__ypr4_">
+    <article
+      ref={containerRef}
+      className="PlatformStatsShowcase_card__DyDV_ border border-[#2D3E50] hover:border-teal-accent bg-slate-dark/30 hover:bg-slate-dark/50 rounded-xl p-6 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(6,214,160,0.15)] flex flex-col items-center gap-2 before:content-none"
+    >
+      <p className="PlatformStatsShowcase_label__dAs7X !text-slate-400 font-sans text-xs tracking-wider uppercase font-semibold">
+        {label}
+      </p>
+      <div
+        aria-label={targetValue}
+        className="PlatformStatsShowcase_value__ypr4_ !text-teal-accent font-sans font-extrabold text-3xl md:text-4xl"
+      >
         {targetValue.split("").map((char, idx) => (
           <RollingDigit key={idx} char={char} trigger={inView} />
         ))}
@@ -150,13 +158,13 @@ function WaitlistForm() {
           placeholder="Enter your work email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="flex-1 px-4 py-3 bg-neutral-900/90 border border-neutral-700 rounded focus:outline-none focus:border-cyan-500 text-white text-sm font-mono"
+          className="flex-1 px-4 py-3 bg-[#0F1419] border border-[#2D3E50] focus:border-teal-accent focus:shadow-[0_0_15px_rgba(6,214,160,0.2)] rounded-lg focus:outline-none text-white text-sm font-sans transition-all duration-200"
           disabled={joinMutation.isPending}
         />
         <button
           type="submit"
           disabled={joinMutation.isPending}
-          className="bg-[#06b6d4] hover:bg-[#0891b2] text-black font-bold px-6 py-3 text-xs tracking-wider uppercase font-mono rounded disabled:opacity-50 transition-colors shadow-[0_0_15px_rgba(6,182,212,0.3)] shrink-0"
+          className="bg-gradient-to-r from-teal-accent to-electric-cyan text-[#0A0E1A] hover:shadow-[0_0_20px_rgba(6,214,160,0.4)] hover:scale-[1.02] active:scale-[0.98] font-bold px-6 py-3 text-xs tracking-wider uppercase font-sans rounded-lg disabled:opacity-50 transition-all duration-200 shrink-0 transform"
         >
           {joinMutation.isPending ? "Joining..." : "Get Access"}
         </button>
@@ -536,7 +544,7 @@ export default function HomePage() {
       {/* SECTION 8 — COMMUNITY SOCIAL PROOF (Twitter Card Masonry) */}
       <section className="w-full max-w-[1280px] mx-auto py-20 px-6 xl:px-8 flex flex-col items-center gap-12">
         <div className="flex flex-col items-center gap-4 text-center">
-          <h2 className="text-[28px] sm:text-[38px] font-bold font-manrope text-white leading-tight">
+          <h2 className="text-3xl sm:text-4xl font-extrabold font-sans text-white leading-tight tracking-[-0.02em]">
             Join our Community
           </h2>
           <div className="flex gap-4">
@@ -544,7 +552,7 @@ export default function HomePage() {
               href="https://github.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-neutral-900 border border-neutral-800 hover:border-neutral-700 text-white text-xs font-mono tracking-wider px-5 py-2.5 rounded font-semibold transition-all"
+              className="bg-[#0A0E1A] hover:bg-[#1E293B]/30 text-teal-accent border-2 border-teal-accent hover:border-electric-cyan hover:text-electric-cyan text-xs font-mono tracking-wider px-5 py-2.5 rounded-lg font-semibold transition-all duration-200"
             >
               GitHub Discussions
             </a>
@@ -552,7 +560,7 @@ export default function HomePage() {
               href="https://discord.gg"
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-cyan-500 hover:bg-cyan-400 text-black text-xs font-mono tracking-wider px-5 py-2.5 rounded font-bold transition-all"
+              className="bg-gradient-to-r from-teal-accent to-electric-cyan text-[#0A0E1A] hover:shadow-[0_0_20px_rgba(6,214,160,0.4)] hover:scale-[1.02] active:scale-[0.98] text-xs font-mono tracking-wider px-5 py-2.5 rounded-lg font-bold transition-all duration-200 transform"
             >
               Join Discord
             </a>
@@ -564,27 +572,37 @@ export default function HomePage() {
           {tweets.map((tw, idx) => (
             <div
               key={idx}
-              className="break-inside-avoid bg-[#181818] border border-neutral-800 rounded-xl p-5 hover:border-neutral-700 transition-colors flex flex-col gap-4"
+              className="break-inside-avoid bg-slate-dark/30 border border-[#2D3E50] rounded-xl p-5 hover:border-teal-accent hover:shadow-[0_8px_30px_rgba(6,214,160,0.15)] transition-all duration-300 flex flex-col gap-4 group"
             >
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-cyan-950 flex items-center justify-center text-cyan-400 font-mono font-bold text-xs uppercase">
+                  <div className="w-8 h-8 rounded-full bg-slate-dark/80 border border-[#2D3E50] flex items-center justify-center text-teal-accent font-mono font-bold text-xs uppercase">
                     {tw.handle.charAt(1)}
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-white leading-none">{tw.handle}</p>
-                    <p className="text-[10px] text-neutral-500 font-mono mt-0.5">{tw.date}</p>
+                    <p className="text-xs font-bold text-white leading-none hover:text-teal-accent transition-colors">
+                      {tw.handle}
+                    </p>
+                    <p className="text-[10px] text-slate-400 font-mono mt-0.5">{tw.date}</p>
                   </div>
                 </div>
-                <span className="text-neutral-500">
+                <span className="text-slate-400 group-hover:text-teal-accent transition-colors">
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                   </svg>
                 </span>
               </div>
-              <p className="text-xs sm:text-sm text-neutral-300 whitespace-pre-line text-left leading-relaxed font-manrope">
+              <p className="text-xs sm:text-sm text-slate-300 whitespace-pre-line text-left leading-relaxed font-sans">
                 {tw.text}
               </p>
+              {/* Star Rating badges */}
+              <div className="flex gap-0.5 text-amber-gold mt-1 text-xs select-none">
+                <span>★</span>
+                <span>★</span>
+                <span>★</span>
+                <span>★</span>
+                <span>★</span>
+              </div>
             </div>
           ))}
         </div>
@@ -595,15 +613,15 @@ export default function HomePage() {
         <div className="flex flex-col lg:flex-row gap-12 max-w-5xl mx-auto items-start">
           {/* FAQ sidebar */}
           <div className="lg:w-1/3 flex flex-col gap-4 text-left">
-            <h2 className="text-[28px] sm:text-[36px] font-bold text-white font-manrope leading-tight">
+            <h2 className="text-3xl sm:text-[36px] font-extrabold text-white font-sans leading-tight tracking-[-0.02em]">
               Frequently Asked Questions
             </h2>
-            <p className="text-neutral-400 text-sm sm:text-base leading-relaxed">
+            <p className="text-slate-400 text-sm sm:text-base leading-relaxed">
               Questions? We've got answers. If you don't find what you need, feel free to read our
               docs.
             </p>
             <Link
-              className="inline-flex items-center gap-1.5 text-cyan-400 hover:text-cyan-300 text-sm font-semibold transition-all mt-2"
+              className="inline-flex items-center gap-1.5 text-teal-accent hover:text-electric-cyan text-sm font-semibold transition-all mt-2"
               href="/docs"
             >
               or check out our Documentation
@@ -612,22 +630,22 @@ export default function HomePage() {
           </div>
 
           {/* Accordions */}
-          <div className="w-full lg:w-2/3 rounded-xl bg-[#181818] border border-neutral-800 divide-y divide-neutral-800 shadow-lg">
+          <div className="w-full lg:w-2/3 rounded-xl bg-slate-dark/30 border border-[#2D3E50] divide-y divide-[#2D3E50] shadow-lg">
             {faqs.map((faq, idx) => (
-              <div key={idx} className="border-b border-neutral-800 last:border-b-0">
+              <div key={idx} className="border-b border-[#2D3E50] last:border-b-0">
                 <h3 className="flex">
                   <button
                     onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                    className="flex flex-1 items-center justify-between p-6 text-sm sm:text-base font-semibold text-white transition-all hover:text-cyan-400 cursor-pointer text-left gap-4"
+                    className={`flex flex-1 items-center justify-between p-6 text-sm sm:text-base font-bold font-sans text-white transition-all hover:text-teal-accent cursor-pointer text-left gap-4 ${openFaq === idx ? "text-teal-accent" : ""}`}
                   >
                     <span>{faq.question}</span>
                     <ChevronRight
-                      className={`h-5 w-5 shrink-0 text-neutral-500 transition-transform duration-300 ${openFaq === idx ? "rotate-90 text-cyan-400" : ""}`}
+                      className={`h-5 w-5 shrink-0 transition-transform duration-300 ${openFaq === idx ? "rotate-90 text-teal-accent" : "text-slate-400"}`}
                     />
                   </button>
                 </h3>
                 <div
-                  className={`overflow-hidden transition-all duration-300 ease-in-out text-neutral-400 text-xs sm:text-sm leading-relaxed px-6 ${openFaq === idx ? "max-h-[300px] pb-6" : "max-h-0"}`}
+                  className={`overflow-hidden transition-all duration-300 ease-in-out text-slate-400 text-xs sm:text-sm leading-relaxed px-6 ${openFaq === idx ? "max-h-[300px] pb-6" : "max-h-0"}`}
                 >
                   <p className="text-left whitespace-pre-line">{faq.answer}</p>
                 </div>
@@ -653,29 +671,33 @@ export default function HomePage() {
 
       {/* SECTION 12 — FINAL CTA SECTION */}
       <section className="w-full max-w-[1280px] mx-auto px-6 py-24 text-center" id="cta">
-        <div className="max-w-xl mx-auto flex flex-col items-center gap-8 bg-gradient-to-b from-[#181818] to-neutral-950 p-8 sm:p-12 border border-neutral-800 rounded-2xl shadow-xl">
-          <h2 className="text-[28px] sm:text-[38px] font-bold font-manrope text-white leading-tight">
+        <div className="max-w-xl mx-auto flex flex-col items-center gap-8 bg-gradient-to-br from-slate-dark/30 to-black/80 border border-[#2D3E50] hover:border-teal-accent p-8 sm:p-12 rounded-3xl shadow-2xl relative overflow-hidden group transition-all duration-500">
+          {/* Subtle background glow filters */}
+          <div className="absolute -top-24 -left-24 w-48 h-48 bg-teal-accent/10 rounded-full blur-[80px] pointer-events-none group-hover:bg-teal-accent/20 transition-all duration-500" />
+          <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-amber-gold/5 rounded-full blur-[80px] pointer-events-none group-hover:bg-amber-gold/15 transition-all duration-500" />
+
+          <h2 className="text-3xl sm:text-[40px] font-extrabold font-sans text-white leading-[1.2] tracking-[-0.02em]">
             Start Securing Your AI Agents
           </h2>
-          <p className="text-neutral-400 text-sm leading-relaxed">
+          <p className="text-slate-400 text-sm leading-relaxed max-w-[480px]">
             Protect your reasoning tokens, stop prompt injections, discover shadow APIs, and export
             compliance data. Join the waitlist now.
           </p>
 
-          <div className="w-full">
+          <div className="w-full z-10">
             <WaitlistForm />
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 w-full justify-center mt-2 border-t border-neutral-900 pt-6">
+          <div className="flex flex-col sm:flex-row gap-4 w-full justify-center mt-2 border-t border-[#2D3E50] pt-6 z-10">
             <Link
               href="/register"
-              className="flex-1 text-center bg-cyan-500 hover:bg-cyan-400 text-black py-2.5 rounded font-bold text-xs uppercase tracking-wider font-mono shadow-[0_0_15px_rgba(6,182,212,0.3)]"
+              className="flex-1 text-center bg-gradient-to-r from-amber-gold to-teal-accent hover:shadow-[0_0_20px_rgba(253,176,34,0.4)] hover:scale-[1.02] active:scale-[0.98] text-[#0A0E1A] py-3 rounded-lg font-bold text-xs uppercase tracking-wider font-sans transition-all duration-200 transform"
             >
               Try Free — No Credit Card
             </Link>
             <Link
               href="/demo"
-              className="flex-1 text-center bg-neutral-900 hover:bg-neutral-850 text-white border border-neutral-800 py-2.5 rounded font-medium text-xs uppercase tracking-wider font-mono"
+              className="flex-1 text-center bg-transparent hover:bg-[#1E293B]/30 text-teal-accent border-2 border-teal-accent hover:border-electric-cyan hover:text-electric-cyan py-3 rounded-lg font-bold text-xs uppercase tracking-wider font-sans transition-all duration-200 transform"
             >
               Book a Demo
             </Link>
