@@ -1369,3 +1369,154 @@ textarea:focus,
   border-left-color: #14B8A6;
 }
 
+/* ==========================================================================
+   GLOBAL THEME OVERRIDES FOR UNIFIED VISUAL IDENTITY
+   Remaps legacy/alternative background, border, text, and button utilities
+   to the Teal (#14B8A6), Deep Navy (#0F1419), and Card (#1A1F2E) design system.
+   ========================================================================== */
+
+/* 1. Card & Panel Background Overrides */
+.bg-gray-800,
+.bg-slate-900,
+.bg-\[\#141414\],
+.bg-\[\#0A0E1A\],
+.bg-neutral-800,
+.bg-slate-950 {
+  background-color: #1A1F2E !important;
+}
+
+.bg-gray-800\/50,
+.bg-\[\#141414\]\/50,
+.bg-slate-900\/30,
+.bg-slate-950\/40,
+.bg-slate-900\/50 {
+  background-color: rgba(26, 31, 46, 0.6) !important;
+}
+
+/* 2. Border Overrides */
+.border-gray-700,
+.border-gray-800,
+.border-slate-800,
+.border-slate-900,
+.border-neutral-800,
+.border-neutral-850,
+.border-neutral-900,
+.border-\[\#2D3E50\] {
+  border-color: rgba(20, 184, 166, 0.2) !important;
+}
+
+.border-gray-700\/50,
+.border-slate-900\/50,
+.border-neutral-900\/50 {
+  border-color: rgba(20, 184, 166, 0.1) !important;
+}
+
+/* 3. Text Color & Accents Overrides */
+.text-blue-500,
+.text-blue-400,
+.text-indigo-400 {
+  color: #14B8A6 !important;
+}
+
+.text-blue-300 {
+  color: #2DD4BF !important;
+}
+
+.text-blue-600 {
+  color: #0D9488 !important;
+}
+
+/* Hover text colors */
+.hover\:text-blue-400:hover,
+.hover\:text-blue-300:hover {
+  color: #2DD4BF !important;
+}
+
+/* 4. Background Accent / Badge / Utility Overrides */
+.bg-blue-500,
+.bg-indigo-600 {
+  background-color: #14B8A6 !important;
+}
+
+.bg-blue-600 {
+  background-color: #0D9488 !important;
+}
+
+.bg-blue-900\/30,
+.bg-blue-900\/40,
+.bg-blue-950 {
+  background-color: rgba(20, 184, 166, 0.15) !important;
+}
+
+/* 5. Button Hover & Interactive Overrides */
+.hover\:bg-blue-700:hover,
+.hover\:bg-blue-500:hover,
+.hover\:bg-indigo-700:hover,
+.hover\:bg-neutral-750:hover {
+  background-color: #0D9488 !important;
+  border-color: #14B8A6 !important;
+}
+
+.hover\:border-blue-500:hover,
+.hover\:border-neutral-800:hover,
+.hover\:border-gray-400:hover {
+  border-color: #14B8A6 !important;
+}
+
+/* 6. Gradient Header Overrides (Blue/Indigo -> Teal/Dark Teal) */
+.from-blue-400 {
+  --tw-gradient-from: #14B8A6 !important;
+  --tw-gradient-to: rgba(20, 184, 166, 0) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+
+.to-indigo-400 {
+  --tw-gradient-to: #0D9488 !important;
+}
+
+/* 7. Docs Page Premium Upgrades */
+.docs-navbar {
+  background: rgba(15, 20, 25, 0.9) !important;
+  border-bottom-color: rgba(20, 184, 166, 0.15) !important;
+}
+
+.docs-tabs {
+  background: rgba(15, 20, 25, 0.8) !important;
+  border-bottom-color: rgba(20, 184, 166, 0.15) !important;
+}
+
+.docs-sidebar {
+  border-right-color: rgba(20, 184, 166, 0.15) !important;
+}
+
+.docs-article h2 {
+  border-top-color: rgba(20, 184, 166, 0.1) !important;
+}
+
+.docs-card {
+  background: #1A1F2E !important;
+  border: 1px solid rgba(20, 184, 166, 0.2) !important;
+}
+
+.docs-card:hover {
+  background: rgba(20, 184, 166, 0.05) !important;
+  border-color: #14B8A6 !important;
+}
+
+.docs-copy-btn {
+  background: rgba(20, 184, 166, 0.1) !important;
+  border-color: rgba(20, 184, 166, 0.2) !important;
+}
+
+.docs-copy-btn:hover {
+  background: rgba(20, 184, 166, 0.2) !important;
+  border-color: #14B8A6 !important;
+}
+
+/* Global Selection Styling */
+::selection {
+  background: #14B8A6 !important;
+  color: #0F1419 !important;
+}
+
+
