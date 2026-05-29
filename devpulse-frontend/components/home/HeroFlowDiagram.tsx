@@ -6,14 +6,14 @@ function ConnectorVertical() {
       style={{
         position: "absolute",
         left: "50%",
-        top: "155px", // bottom edge of Cursor card
+        top: "140px", // bottom edge of Cursor card
         transform: "translateX(-50%)",
         width: "2px",
-        height: "90px",
+        height: "76px", // 80px gap - 4px buffer
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        zIndex: 3,
+        zIndex: 1, // behind the cards
       }}
     >
       {/* Static dashed line */}

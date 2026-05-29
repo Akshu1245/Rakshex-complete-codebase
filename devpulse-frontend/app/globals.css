@@ -488,6 +488,7 @@ body {
   left: 50%;
   transform: translateX(-50%);
   width: 280px;
+  min-height: 140px;
   z-index: 2;
 }
 
@@ -501,6 +502,7 @@ body {
   align-items: center;
   height: 80px;
   z-index: 1;
+  overflow: hidden;
 }
 
 .connector-line-solid {
@@ -534,6 +536,7 @@ body {
   flex: 1;
   border-color: rgba(0, 212, 170, 0.5) !important;
   z-index: 2;
+  position: relative;
 }
 
 /* CONNECTOR HORIZONTAL (dots) */
@@ -577,6 +580,7 @@ body {
 .card-report {
   width: 200px;
   z-index: 2;
+  position: relative;
 }
 
 /* ALL CARDS base style */
