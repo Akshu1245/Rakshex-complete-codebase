@@ -719,3 +719,63 @@ body {
 .hero-cli-pill .cli-copy-btn:hover {
   background: #ffffff;
 }
+
+.traveling-dot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: #00d4aa;
+  border-radius: 50%;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  box-shadow: 0 0 10px #00d4aa, 0 0 4px #00d4aa;
+  animation: travel-down 1.8s ease-in-out infinite;
+}
+
+@keyframes travel-down {
+  0% {
+    top: 0%;
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+
+.traveling-dot-h {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: #00d4aa;
+  border-radius: 50%;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  box-shadow: 0 0 8px #00d4aa;
+  animation: travel-right 1.8s ease-in-out infinite 0.6s;
+}
+
+@keyframes travel-right {
+  0% {
+    left: 0%;
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    left: 100%;
+    opacity: 0;
+  }
+}

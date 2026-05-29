@@ -1,5 +1,61 @@
 "use client";
 
+function ConnectorVertical() {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: "50%",
+        top: "155px", // bottom edge of Cursor card
+        transform: "translateX(-50%)",
+        width: "2px",
+        height: "90px",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        zIndex: 3,
+      }}
+    >
+      {/* Static dashed line */}
+      <div
+        style={{
+          width: "2px",
+          height: "100%",
+          background:
+            "repeating-linear-gradient(to bottom, #00d4aa 0px, #00d4aa 6px, transparent 6px, transparent 12px)",
+        }}
+      />
+      {/* Animated traveling dot */}
+      <div className="traveling-dot" />
+    </div>
+  );
+}
+
+function ConnectorHorizontal() {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        position: "relative",
+        width: "50px",
+        marginTop: "55px",
+        flexShrink: 0,
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          height: "2px",
+          background:
+            "repeating-linear-gradient(to right, #00d4aa 0px, #00d4aa 4px, transparent 4px, transparent 9px)",
+        }}
+      />
+      <div className="traveling-dot-h" />
+    </div>
+  );
+}
+
 export function HeroFlowDiagram() {
   return (
     <div className="hero-diagram">
@@ -22,10 +78,7 @@ export function HeroFlowDiagram() {
       </div>
 
       {/* CONNECTOR: Agent → RakshEx (solid arrow line going DOWN) */}
-      <div className="connector-vertical">
-        <div className="connector-line-solid" />
-        <div className="connector-arrowhead" />
-      </div>
+      <ConnectorVertical />
 
       {/* BOTTOM ROW: RakshEx card + Application card */}
       <div className="diagram-bottom-row">
@@ -70,9 +123,7 @@ export function HeroFlowDiagram() {
         </div>
 
         {/* CONNECTOR: RakshEx → Application (dotted horizontal line) */}
-        <div className="connector-horizontal">
-          <div className="connector-dots" />
-        </div>
+        <ConnectorHorizontal />
 
         {/* CARD 3 — Security Report (Application card) */}
         <div className="diagram-card card-report">
