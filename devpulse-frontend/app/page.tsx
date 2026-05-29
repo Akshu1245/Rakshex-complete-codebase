@@ -9,6 +9,9 @@ import { useScrollReveal } from "@/lib/animations/scroll-reveal";
 import { LogoMarquee } from "@/components/ui/LogoMarquee";
 import { HeroSection } from "@/components/home/HeroSection";
 import { FeatureCards } from "@/components/home/FeatureCards";
+import { BenchmarkSection } from "@/components/home/BenchmarkSection";
+import { ChangelogSection } from "@/components/home/ChangelogSection";
+import { AskAISection } from "@/components/home/AskAISection";
 import {
   Shield,
   Power,
@@ -311,26 +314,6 @@ export default function HomePage() {
   const [copied, setCopied] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  // Scroll reveal references for benchmark section animations
-  const [showBenchmarkBars, setShowBenchmarkBars] = useState(false);
-  const benchmarkRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setShowBenchmarkBars(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.1 },
-    );
-    if (benchmarkRef.current) {
-      observer.observe(benchmarkRef.current);
-    }
-    return () => observer.disconnect();
-  }, []);
 
   const handleCopyCommand = () => {
     navigator.clipboard.writeText("npx rakshex scan ./collection.json");
@@ -896,199 +879,7 @@ export default function HomePage() {
       </section>
 
       {/* SECTION 5 — BENCHMARK SECTION (Cloned "1.6x Faster" style) */}
-      <section
-        className="relative w-full max-w-[1280px] mx-auto py-20 px-6 xl:px-8"
-        id="benchmark"
-        ref={benchmarkRef}
-      >
-        <div className="w-full flex flex-col items-center gap-12">
-          <div className="flex flex-col items-center gap-3 text-center max-w-2xl">
-            <h2 className="text-[28px] sm:text-[38px] font-bold font-manrope text-white leading-tight">
-              If You Use AI Agents, Secure Them with RakshEx
-            </h2>
-            <p className="text-neutral-400 font-manrope text-sm sm:text-base leading-relaxed">
-              Tested across 50 real-world agent environments. Lower latency, higher detection rates,
-              fewer errors.
-            </p>
-          </div>
-
-          <div className="w-full border border-neutral-800 rounded-xl overflow-hidden bg-[#181818] max-w-5xl mx-auto shadow-xl">
-            <div className="flex flex-col lg:flex-row divide-y lg:divide-y-0 lg:divide-x divide-neutral-800">
-              {/* Metric 1 */}
-              <div className="flex flex-col gap-10 p-8 flex-1">
-                <div className="flex flex-col">
-                  <p className="text-4xl sm:text-5xl font-inter font-bold italic text-cyan-400 select-none">
-                    2.3x More
-                  </p>
-                  <p className="text-neutral-400 font-manrope text-sm font-semibold tracking-wider uppercase mt-1">
-                    Vulnerabilities Detected
-                  </p>
-                </div>
-                <div className="flex flex-col gap-3 font-mono">
-                  {/* RakshEx Bar */}
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-xs text-neutral-400 font-mono">
-                      <span>RakshEx</span>
-                      <span className="text-cyan-400 font-bold">94%</span>
-                    </div>
-                    <div className="w-full bg-neutral-900 rounded-full h-2 overflow-hidden">
-                      <div
-                        className="bg-cyan-500 h-full rounded-full transition-all duration-1000 ease-out"
-                        style={{ width: showBenchmarkBars ? "94%" : "0%" }}
-                      />
-                    </div>
-                  </div>
-                  {/* Snyk Bar */}
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-xs text-neutral-500 font-mono">
-                      <span>Snyk</span>
-                      <span>41%</span>
-                    </div>
-                    <div className="w-full bg-neutral-900 rounded-full h-2 overflow-hidden">
-                      <div
-                        className="bg-neutral-700 h-full rounded-full transition-all duration-1000 ease-out"
-                        style={{ width: showBenchmarkBars ? "41%" : "0%" }}
-                      />
-                    </div>
-                  </div>
-                  {/* Datadog Bar */}
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-xs text-neutral-500 font-mono">
-                      <span>Datadog</span>
-                      <span>23%</span>
-                    </div>
-                    <div className="w-full bg-neutral-900 rounded-full h-2 overflow-hidden">
-                      <div
-                        className="bg-neutral-700 h-full rounded-full transition-all duration-1000 ease-out"
-                        style={{ width: showBenchmarkBars ? "23%" : "0%" }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Metric 2 */}
-              <div className="flex flex-col gap-10 p-8 flex-1">
-                <div className="flex flex-col">
-                  <p className="text-4xl sm:text-5xl font-inter font-bold italic text-cyan-400 select-none">
-                    9x Fewer
-                  </p>
-                  <p className="text-neutral-400 font-manrope text-sm font-semibold tracking-wider uppercase mt-1">
-                    False Positives
-                  </p>
-                </div>
-                <div className="flex flex-col gap-3 font-mono">
-                  {/* RakshEx Bar */}
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-xs text-neutral-400 font-mono">
-                      <span>RakshEx</span>
-                      <span className="text-cyan-400 font-bold">2.1% (Lower is Better)</span>
-                    </div>
-                    <div className="w-full bg-neutral-900 rounded-full h-2 overflow-hidden">
-                      <div
-                        className="bg-cyan-500 h-full rounded-full transition-all duration-1000 ease-out"
-                        style={{ width: showBenchmarkBars ? "2.1%" : "0%" }}
-                      />
-                    </div>
-                  </div>
-                  {/* Snyk Bar */}
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-xs text-neutral-500 font-mono">
-                      <span>Snyk</span>
-                      <span>18.4%</span>
-                    </div>
-                    <div className="w-full bg-neutral-900 rounded-full h-2 overflow-hidden">
-                      <div
-                        className="bg-neutral-700 h-full rounded-full transition-all duration-1000 ease-out"
-                        style={{ width: showBenchmarkBars ? "18.4%" : "0%" }}
-                      />
-                    </div>
-                  </div>
-                  {/* Datadog Bar */}
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-xs text-neutral-500 font-mono">
-                      <span>Datadog</span>
-                      <span>31.2%</span>
-                    </div>
-                    <div className="w-full bg-neutral-900 rounded-full h-2 overflow-hidden">
-                      <div
-                        className="bg-neutral-700 h-full rounded-full transition-all duration-1000 ease-out"
-                        style={{ width: showBenchmarkBars ? "31.2%" : "0%" }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Metric 3 */}
-              <div className="flex flex-col gap-10 p-8 flex-1">
-                <div className="flex flex-col">
-                  <p className="text-4xl sm:text-5xl font-inter font-bold italic text-cyan-400 select-none">
-                    15x Faster
-                  </p>
-                  <p className="text-neutral-400 font-manrope text-sm font-semibold tracking-wider uppercase mt-1">
-                    Time to First Finding
-                  </p>
-                </div>
-                <div className="flex flex-col gap-3 font-mono">
-                  {/* RakshEx Bar */}
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-xs text-neutral-400 font-mono">
-                      <span>RakshEx</span>
-                      <span className="text-cyan-400 font-bold">3 seconds</span>
-                    </div>
-                    <div className="w-full bg-neutral-900 rounded-full h-2 overflow-hidden">
-                      <div
-                        className="bg-cyan-500 h-full rounded-full transition-all duration-1000 ease-out"
-                        style={{ width: showBenchmarkBars ? "6%" : "0%" }}
-                      />
-                    </div>
-                  </div>
-                  {/* Snyk Bar */}
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-xs text-neutral-500 font-mono">
-                      <span>Snyk</span>
-                      <span>47 seconds</span>
-                    </div>
-                    <div className="w-full bg-neutral-900 rounded-full h-2 overflow-hidden">
-                      <div
-                        className="bg-neutral-700 h-full rounded-full transition-all duration-1000 ease-out"
-                        style={{ width: showBenchmarkBars ? "94%" : "0%" }}
-                      />
-                    </div>
-                  </div>
-                  {/* Datadog Bar */}
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-xs text-neutral-500 font-mono">
-                      <span>Datadog</span>
-                      <span>N/A</span>
-                    </div>
-                    <div className="w-full bg-neutral-900 rounded-full h-2 overflow-hidden">
-                      <div
-                        className="bg-neutral-700 h-full rounded-full transition-all duration-1000 ease-out"
-                        style={{ width: "0%" }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="text-center space-y-4">
-            <p className="text-xs text-neutral-500 font-mono italic">
-              * Internal benchmarks. 50 real-world API collections. Independent audit Q3 2026.
-            </p>
-            <Link
-              className="inline-flex items-center gap-1.5 text-sm text-neutral-400 hover:text-white transition-colors"
-              href="/blog/benchmark-methodology"
-            >
-              View benchmark methodology
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-      </section>
+      <BenchmarkSection />
 
       {/* SECTION 6 — FRAMEWORKS MARQUEE (logo support) */}
       <section
@@ -1152,46 +943,7 @@ export default function HomePage() {
       </section>
 
       {/* SECTION 7 — CHANGELOG PREVIEW */}
-      <section className="relative max-w-[1280px] mx-auto py-20 px-6 xl:px-8">
-        <div className="w-full flex flex-col gap-10 items-center justify-center">
-          <div className="flex flex-col items-center gap-2 text-center">
-            <h2 className="text-3xl font-bold font-manrope text-white">Changelog</h2>
-            <p className="text-neutral-400 text-sm">See what's new in RakshEx</p>
-          </div>
-
-          <div className="w-full max-w-3xl space-y-3 font-mono">
-            {[
-              { date: "May 2026", text: "Interactive Demo Scanner with real Postman parsing" },
-              { date: "May 2026", text: "Waitlist system with email confirmation" },
-              { date: "April 2026", text: "AgentGuard Kill Switch engine launched" },
-              {
-                date: "April 2026",
-                text: "Four provisional patents filed (NHCE/DEV/2026/001–004)",
-              },
-            ].map((entry, idx) => (
-              <div
-                key={idx}
-                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-neutral-900/60 border border-neutral-800/80 rounded-xl hover:border-neutral-700/80 transition-all font-mono"
-              >
-                <span className="text-cyan-400 font-bold shrink-0 text-xs sm:text-sm">
-                  {entry.date}
-                </span>
-                <span className="text-neutral-300 text-xs sm:text-sm text-left flex-1">
-                  {entry.text}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          <Link
-            className="inline-flex items-center gap-1 text-sm text-neutral-400 hover:text-white transition-all font-mono"
-            href="/changelog"
-          >
-            View all changes
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-      </section>
+      <ChangelogSection />
 
       {/* SECTION 8 — COMMUNITY SOCIAL PROOF (Twitter Card Masonry) */}
       <section className="w-full max-w-[1280px] mx-auto py-20 px-6 xl:px-8 flex flex-col items-center gap-12">
@@ -1298,67 +1050,7 @@ export default function HomePage() {
       </section>
 
       {/* SECTION 10 — ASK AI SECTION */}
-      <section
-        className="w-full max-w-[1280px] mx-auto py-20 px-6 pb-28 border-b border-neutral-900"
-        id="deeplink"
-      >
-        <div className="flex flex-col items-center justify-center gap-8 text-center max-w-xl mx-auto">
-          <div className="space-y-2">
-            <h2 className="text-2xl sm:text-3xl font-bold text-white font-manrope">
-              What's RakshEx? Ask AI.
-            </h2>
-            <p className="text-neutral-400 text-sm">
-              Get an instant explanation from your preferred AI assistant.
-            </p>
-          </div>
-
-          <div className="flex flex-row flex-wrap items-center justify-center gap-8">
-            {[
-              {
-                name: "Gemini",
-                url: "https://gemini.google.com/app?q=Explain+RakshEx+(rakshex.in)+to+a+security+engineer.+Cover+API+security+scanning,+LLM+cost+monitoring,+prompt+injection+blocking,+and+compliance+reporting.+Summarize+from+https://rakshex.in",
-                logo: "G",
-                color: "text-blue-400 hover:border-blue-500",
-              },
-              {
-                name: "ChatGPT",
-                url: "https://chat.openai.com?q=Explain+RakshEx+(rakshex.in)+to+a+security+engineer.+Cover+API+security+scanning,+LLM+cost+monitoring,+prompt+injection+blocking,+and+compliance+reporting.+Summarize+from+https://rakshex.in",
-                logo: "O",
-                color: "text-emerald-400 hover:border-emerald-500",
-              },
-              {
-                name: "Claude",
-                url: "https://claude.ai/new?q=Explain+RakshEx+(rakshex.in)+to+a+security+engineer.+Cover+API+security+scanning,+LLM+cost+monitoring,+prompt+injection+blocking,+and+compliance+reporting.+Summarize+from+https://rakshex.in",
-                logo: "C",
-                color: "text-amber-500 hover:border-amber-600",
-              },
-              {
-                name: "Grok",
-                url: "https://grok.com?q=Explain+RakshEx+(rakshex.in)+to+a+security+engineer.+Cover+API+security+scanning,+LLM+cost+monitoring,+prompt+injection+blocking,+and+compliance+reporting.+Summarize+from+https://rakshex.in",
-                logo: "X",
-                color: "text-white hover:border-white",
-              },
-              {
-                name: "Perplexity",
-                url: "https://perplexity.ai?q=Explain+RakshEx+(rakshex.in)+to+a+security+engineer.+Cover+API+security+scanning,+LLM+cost+monitoring,+prompt+injection+blocking,+and+compliance+reporting.+Summarize+from+https://rakshex.in",
-                logo: "P",
-                color: "text-cyan-400 hover:border-cyan-500",
-              },
-            ].map((ai, idx) => (
-              <a
-                key={idx}
-                href={ai.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`w-10 h-10 rounded-full border border-neutral-800 bg-[#121212] flex items-center justify-center text-sm font-mono font-bold transition-all shadow-md ${ai.color}`}
-                title={`Ask ${ai.name}`}
-              >
-                {ai.logo}
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
+      <AskAISection />
 
       {/* SECTION 11 — PLATFORM STATISTICS */}
       <section className="PlatformStatsShowcase_section__FNJKE">
