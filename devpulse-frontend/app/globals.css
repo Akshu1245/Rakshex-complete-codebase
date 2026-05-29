@@ -370,13 +370,20 @@ body {
 /* Hero Section Layout Customization */
 .hero-section {
   min-height: 100vh;
-  padding: 0 80px;
+  padding: 80px 80px 40px 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.hero-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   align-items: center;
   gap: 80px;
-  max-width: 1400px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 .hero-left {
@@ -408,6 +415,34 @@ body {
   margin-bottom: 56px;
 }
 
+.hero-marquee-label-container {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.hero-marquee-label-container .marquee-label {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.hero-marquee-label-container .marquee-active-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #00d4aa;
+}
+
+.marquee-full-width {
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  margin-top: 48px;
+}
+
 .hero-right {
   position: relative;
   height: 520px;
@@ -418,14 +453,19 @@ body {
 
 @media (max-width: 768px) {
   .hero-section {
-    grid-template-columns: 1fr;
-    padding: 40px 24px;
+    padding: 80px 24px 40px 24px;
     min-height: auto;
+  }
+  .hero-grid {
+    grid-template-columns: 1fr;
     gap: 40px;
   }
   .hero-right {
     height: auto;
     min-height: 480px;
+  }
+  .marquee-full-width {
+    margin-top: 32px;
   }
 }
 

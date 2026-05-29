@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { trpc } from "@/lib/trpc";
 import { useScrollReveal } from "@/lib/animations/scroll-reveal";
-import { LogoMarquee } from "@/components/ui/LogoMarquee";
 import { HeroSection } from "@/components/home/HeroSection";
 import { FeatureCards } from "@/components/home/FeatureCards";
 import { BenchmarkSection } from "@/components/home/BenchmarkSection";
@@ -460,7 +459,6 @@ export default function HomePage() {
     <div className="min-h-screen bg-transparent text-white overflow-x-hidden font-manrope selection:bg-cyan-500 selection:text-black">
       {/* SECTION 3 — HERO SECTION & LOGOMARQUEE */}
       <HeroSection />
-      <LogoMarquee />
 
       {/* SECTION 4 — PRODUCT FEATURE CARDS */}
       <section className="relative w-full max-w-[1280px] mx-auto py-20 px-6 xl:px-8" id="features">

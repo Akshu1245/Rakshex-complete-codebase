@@ -61,7 +61,13 @@ const logos = [
   },
 ];
 
-export function LogoMarquee() {
+export function LogoMarquee({
+  onActiveNameChange,
+  hideHeader = false,
+}: {
+  onActiveNameChange?: (name: string) => void;
+  hideHeader?: boolean;
+}) {
   const trackRef = useRef<HTMLDivElement>(null);
   const outerRef = useRef<HTMLDivElement>(null);
   const [activeName, setActiveName] = useState("OpenAI");
@@ -88,20 +94,27 @@ export function LogoMarquee() {
 
       if (closest) {
         const name = (closest as HTMLElement).dataset.name;
-        if (name) setActiveName(name);
+        if (name && name !== activeName) {
+          setActiveName(name);
+          if (onActiveNameChange) {
+            onActiveNameChange(name);
+          }
+        }
       }
       rafId = requestAnimationFrame(detect);
     };
     rafId = requestAnimationFrame(detect);
     return () => cancelAnimationFrame(rafId);
-  }, []);
+  }, [activeName, onActiveNameChange]);
 
   return (
     <div className="marquee-wrapper">
-      <div className="marquee-header max-w-[1280px] mx-auto px-6">
-        <p className="marquee-label">Works perfectly with</p>
-        <p className="marquee-active-name">{activeName}</p>
-      </div>
+      {!hideHeader && (
+        <div className="marquee-header max-w-[1280px] mx-auto px-6">
+          <p className="marquee-label">Works perfectly with</p>
+          <p className="marquee-active-name">{activeName}</p>
+        </div>
+      )}
       <div className="marquee-outer" ref={outerRef}>
         <div className="marquee-track" ref={trackRef}>
           {[...logos, ...logos].map((logo, i) => (
