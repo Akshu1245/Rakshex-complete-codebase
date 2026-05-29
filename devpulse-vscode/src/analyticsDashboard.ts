@@ -116,7 +116,7 @@ export class AnalyticsDashboard {
       metrics.pmf.verdict === "strong_pmf"
         ? "#22c55e"
         : metrics.pmf.verdict === "promising"
-          ? "#3b82f6"
+          ? "#14B8A6"
           : metrics.pmf.verdict === "needs_work"
             ? "#f59e0b"
             : "#ef4444";
@@ -139,10 +139,10 @@ export class AnalyticsDashboard {
     .subtitle { color: #888; font-size: 13px; margin-bottom: 20px; }
     .metric-card { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
     .metric-box { flex: 1; min-width: 100px; padding: 12px; background: var(--vscode-panel-background, #1e1e1e); border-radius: 8px; text-align: center; border: 1px solid var(--vscode-panel-border, #333); }
-    .metric-value { font-size: 22px; font-weight: 700; color: #2563EB; margin-bottom: 2px; }
+    .metric-value { font-size: 22px; font-weight: 700; color: #14B8A6; margin-bottom: 2px; }
     .metric-label { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
     .progress-bar { height: 6px; background: var(--vscode-panel-border, #333); border-radius: 3px; margin: 6px 0 16px; overflow: hidden; }
-    .progress-fill { height: 100%; background: linear-gradient(90deg, #2563EB, #22c55e); border-radius: 3px; transition: width 0.4s ease; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #14B8A6, #22c55e); border-radius: 3px; transition: width 0.4s ease; }
     table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
     td { border-bottom: 1px solid var(--vscode-panel-border, #333); }
     .section { margin-bottom: 20px; padding: 14px; background: var(--vscode-panel-background, #1e1e1e); border-radius: 8px; border: 1px solid var(--vscode-panel-border, #333); }
@@ -150,7 +150,7 @@ export class AnalyticsDashboard {
     .row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 13px; }
     .row:not(:last-child) { border-bottom: 1px solid var(--vscode-panel-border, #333); }
     .score-pill { padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; }
-    .tip { margin-top: 16px; padding: 12px; background: rgba(37,99,235,0.06); border-radius: 8px; font-size: 12px; color: #888; border: 1px solid rgba(37,99,235,0.15); }
+    .tip { margin-top: 16px; padding: 12px; background: rgba(20,184,166,0.06); border-radius: 8px; font-size: 12px; color: #888; border: 1px solid rgba(20,184,166,0.15); }
   </style>
 </head>
 <body>

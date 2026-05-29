@@ -88,6 +88,9 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
                 <Link href="/docs/quickstart/cli" className="sidenav-child">
                   CLI setup · Recommended
                 </Link>
+                <Link href="/docs/quickstart/vscode" className="sidenav-child">
+                  VS Code extension
+                </Link>
                 <Link href="/docs/quickstart/mcp" className="sidenav-child">
                   MCP setup
                 </Link>
@@ -95,30 +98,30 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
             </div>
 
             <div className="sidenav-group-label">Products</div>
-            <div className="sidenav-expandable">
-              Security Scanner <span>›</span>
-            </div>
-            <div className="sidenav-expandable">
-              Kill Switch <span>›</span>
-            </div>
-            <div className="sidenav-expandable">
-              Cost Monitor <span>›</span>
-            </div>
-            <div className="sidenav-expandable">
-              Thinking Tokens <span>›</span>
-            </div>
-            <div className="sidenav-expandable">
-              Shadow API <span>›</span>
-            </div>
-            <div className="sidenav-expandable">
-              Credential Scanner <span>›</span>
-            </div>
-            <div className="sidenav-expandable">
-              Compliance Reports <span>›</span>
-            </div>
-            <div className="sidenav-expandable">
-              MCP Governance <span>›</span>
-            </div>
+            <Link href="/docs/security-scanner" className="sidenav-item">
+              <span className="sidenav-icon">🔒</span> Security Scanner
+            </Link>
+            <Link href="/docs/kill-switch" className="sidenav-item">
+              <span className="sidenav-icon">⚡</span> Kill Switch
+            </Link>
+            <Link href="/docs/cost-monitor" className="sidenav-item">
+              <span className="sidenav-icon">💰</span> Cost Monitor
+            </Link>
+            <Link href="/docs/thinking-tokens" className="sidenav-item">
+              <span className="sidenav-icon">🧠</span> Thinking Tokens
+            </Link>
+            <Link href="/docs/shadow-api" className="sidenav-item">
+              <span className="sidenav-icon">👻</span> Shadow API
+            </Link>
+            <Link href="/docs/credentials" className="sidenav-item">
+              <span className="sidenav-icon">🔑</span> Credential Scanner
+            </Link>
+            <Link href="/docs/compliance" className="sidenav-item">
+              <span className="sidenav-icon">📋</span> Compliance Reports
+            </Link>
+            <Link href="/docs/mcp" className="sidenav-item">
+              <span className="sidenav-icon">🤖</span> MCP Governance
+            </Link>
           </nav>
         </aside>
 

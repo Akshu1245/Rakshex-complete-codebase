@@ -83,8 +83,8 @@ export class UninstallSurvey {
       transition: border-color 0.15s, background 0.15s;
     }
     .reason-option:hover {
-      border-color: #6366f1;
-      background: rgba(99,102,241,0.05);
+      border-color: #14B8A6;
+      background: rgba(20,184,166,0.05);
     }
     .reason-option input { margin-top: 3px; }
     .reason-label { font-size: 13px; }
@@ -123,10 +123,10 @@ export class UninstallSurvey {
       cursor: pointer;
     }
     .btn-primary {
-      background: #2563EB;
+      background: #14B8A6;
       color: white;
     }
-    .btn-primary:hover { background: #1D4ED8; }
+    .btn-primary:hover { background: #0D9488; }
     .btn-secondary {
       background: var(--vscode-button-secondaryBackground, #333);
       color: var(--vscode-button-secondaryForeground);

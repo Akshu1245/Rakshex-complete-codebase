@@ -249,7 +249,7 @@ export class WeeklyDigestCommand {
   <h1>�️ What Rakshex did for you this week</h1>
   <div class="subtitle">Value-focused security summary</div>
 
-  ${milestoneText ? `<div class="value-box" style="background:#EFF6FF;border-left-color:#3B82F6"><strong style="color:#1E40AF">${milestoneText}</strong></div>` : ""}
+  ${milestoneText ? `<div class="value-box" style="background:rgba(20,184,166,0.05);border-left-color:#14B8A6"><strong style="color:#14B8A6">${milestoneText}</strong></div>` : ""}
 
   <div class="value-box">
     <strong>${consistencyText}</strong><br/>
@@ -306,7 +306,7 @@ export class WeeklyDigestCommand {
   ${
     !onboardingComplete
       ? `
-  <div class="card" style="border-left:4px solid #8B5CF6;padding-left:16px">
+  <div class="card" style="border-left:4px solid #0D9488;padding-left:16px">
     <h3>🚀 Getting Started</h3>
     <p style="font-size:13px;margin:8px 0">Complete these steps to get the most from Rakshex:</p>
     <ul style="font-size:12px;color:#aaa;margin:6px 0;padding-left:16px;list-style:none">
@@ -334,7 +334,7 @@ export class WeeklyDigestCommand {
   ${
     hasImprovements
       ? `
-  <div class="card" style="border-left:4px solid #3B82F6;padding-left:16px">
+  <div class="card" style="border-left:4px solid #14B8A6;padding-left:16px">
     <h3>📈 Recent Improvements</h3>
     <p style="font-size:14px;margin:8px 0">${recentImprovements.join(" · ")}</p>
   </div>`

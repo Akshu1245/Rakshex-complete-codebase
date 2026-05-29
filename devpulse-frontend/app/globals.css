@@ -1381,7 +1381,8 @@ textarea:focus,
 .bg-\[\#141414\],
 .bg-\[\#0A0E1A\],
 .bg-neutral-800,
-.bg-slate-950 {
+.bg-slate-950,
+.bg-gray-700 {
   background-color: #1A1F2E !important;
 }
 
@@ -1401,6 +1402,7 @@ textarea:focus,
 .border-neutral-800,
 .border-neutral-850,
 .border-neutral-900,
+.border-gray-600,
 .border-\[\#2D3E50\] {
   border-color: rgba(20, 184, 166, 0.2) !important;
 }
@@ -1409,6 +1411,15 @@ textarea:focus,
 .border-slate-900\/50,
 .border-neutral-900\/50 {
   border-color: rgba(20, 184, 166, 0.1) !important;
+}
+
+/* 2.5 Focus States Overrides */
+.focus\:ring-blue-500:focus {
+  --tw-ring-color: #14B8A6 !important;
+  box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.2) !important;
+}
+.focus\:border-blue-500:focus {
+  border-color: #14B8A6 !important;
 }
 
 /* 3. Text Color & Accents Overrides */

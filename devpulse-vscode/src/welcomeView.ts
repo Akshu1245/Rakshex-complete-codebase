@@ -94,21 +94,21 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
       width: 56px; height: 56px;
       margin: 0 auto 12px;
       border-radius: 16px;
-      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+      background: linear-gradient(135deg, #14B8A6 0%, #0D9488 50%, #2DD4BF 100%);
       display: flex; align-items: center; justify-content: center;
       font-size: 24px;
-      box-shadow: 0 4px 20px rgba(99,102,241,0.3);
+      box-shadow: 0 4px 20px rgba(20,184,166,0.3);
       animation: pulse-glow 3s ease-in-out infinite;
     }
     @keyframes pulse-glow {
-      0%, 100% { box-shadow: 0 4px 20px rgba(99,102,241,0.3); transform: scale(1); }
-      50% { box-shadow: 0 4px 30px rgba(99,102,241,0.5); transform: scale(1.02); }
+      0%, 100% { box-shadow: 0 4px 20px rgba(20,184,166,0.3); transform: scale(1); }
+      50% { box-shadow: 0 4px 30px rgba(20,184,166,0.5); transform: scale(1.02); }
     }
     .brand {
       font-size: 20px;
       font-weight: 800;
       letter-spacing: -0.5px;
-      background: linear-gradient(90deg, #818cf8, #c084fc, #f472b6);
+      background: linear-gradient(90deg, #14B8A6, #2DD4BF, #0D9488);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -239,7 +239,7 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
       display: inline-block;
       width: 6px; height: 6px;
       border-radius: 50%;
-      background: #6366f1;
+      background: #14B8A6;
       animation: blink 2s infinite;
     }
     .progress-track {
@@ -252,7 +252,7 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
     .progress-fill {
       height: 100%;
       width: 0%;
-      background: linear-gradient(90deg, #6366f1, #8b5cf6);
+      background: linear-gradient(90deg, #14B8A6, #0D9488);
       border-radius: 2px;
       transition: width 0.6s ease;
     }
@@ -273,7 +273,7 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
       flex-shrink: 0;
     }
     .step.active .step-num {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      background: linear-gradient(135deg, #14B8A6, #0D9488);
       color: white;
     }
     .step.active {
@@ -321,8 +321,8 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
       transition: border-color 0.2s, box-shadow 0.2s;
     }
     input:focus {
-      border-color: #6366f1;
-      box-shadow: 0 0 0 2px rgba(99,102,241,0.15);
+      border-color: #14B8A6;
+      box-shadow: 0 0 0 2px rgba(20,184,166,0.15);
     }
     input::placeholder {
       color: var(--vscode-input-placeholderForeground, #6e7681);
@@ -335,7 +335,7 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
       text-align: center;
       transition: all 0.2s;
       color: #ffffff;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      background: linear-gradient(135deg, #14B8A6, #0D9488);
       margin-bottom: 8px;
       position: relative;
       overflow: hidden;
@@ -370,14 +370,14 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, #2563EB, #7C3AED);
+      background: linear-gradient(135deg, #14B8A6, #0D9488);
       font-size: 14px;
       padding: 12px 20px;
       animation: pulse-glow 3s ease-in-out infinite;
     }
     .btn-primary:hover {
       transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(37,99,235,0.4);
+      box-shadow: 0 6px 20px rgba(20,184,166,0.4);
     }
 
     .cta-section {

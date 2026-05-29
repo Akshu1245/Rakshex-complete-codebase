@@ -139,12 +139,12 @@ export class HealthCheckCommand {
     .status-banner.warn { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); color: #f59e0b; }
     table { width: 100%; border-collapse: collapse; }
     td { padding: 10px 8px; border-bottom: 1px solid var(--vscode-panel-border, #333); font-size: 13px; vertical-align: top; }
-    .tip { margin-top: 20px; padding: 12px; background: rgba(99,102,241,0.08); border-radius: 8px; font-size: 12px; color: #888; }
+    .tip { margin-top: 20px; padding: 12px; background: rgba(20,184,166,0.08); border-radius: 8px; font-size: 12px; color: #888; }
     .actions { margin-top: 20px; display: flex; gap: 10px; }
     .btn {
       flex: 1; padding: 10px; border-radius: 8px; border: none; font-size: 13px; font-weight: 600; cursor: pointer;
     }
-    .btn-primary { background: #2563EB; color: white; }
+    .btn-primary { background: #14B8A6; color: white; }
     .btn-secondary { background: var(--vscode-button-secondaryBackground, #333); color: var(--vscode-button-secondaryForeground); }
   </style>
 </head>

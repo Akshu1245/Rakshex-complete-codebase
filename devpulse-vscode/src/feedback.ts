@@ -69,12 +69,12 @@ export class FeedbackCommand {
       padding: 10px 20px;
       border-radius: 6px;
       border: none;
-      background: #2563EB;
+      background: #14B8A6;
       color: white;
       font-size: 14px;
       cursor: pointer;
     }
-    button:hover { background: #1D4ED8; }
+    button:hover { background: #0D9488; }
     .privacy { margin-top: 16px; font-size: 11px; color: #888; }
   </style>
 </head>

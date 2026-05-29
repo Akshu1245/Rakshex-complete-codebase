@@ -149,10 +149,10 @@ export class OnboardingTour {
     .hero h1 { font-size: 22px; margin-bottom: 8px; }
     .hero p { color: #888; font-size: 14px; margin: 0; }
     .progress-bar { height: 4px; background: #333; border-radius: 2px; margin-bottom: 24px; overflow: hidden; }
-    .progress-fill { height: 100%; background: #2563EB; border-radius: 2px; width: ${(completedSteps / steps.length) * 100}%; transition: width 0.3s; }
+    .progress-fill { height: 100%; background: #14B8A6; border-radius: 2px; width: ${(completedSteps / steps.length) * 100}%; transition: width 0.3s; }
     .step { display: flex; align-items: center; gap: 16px; padding: 16px; border-radius: 8px; margin-bottom: 8px; border: 1px solid var(--vscode-panel-border, #333); }
     .step.done { opacity: 0.6; border-color: #16A34A; }
-    .step.active { border-color: #2563EB; background: rgba(37,99,235,0.05); }
+    .step.active { border-color: #14B8A6; background: rgba(20,184,166,0.05); }
     .step-icon { font-size: 24px; width: 36px; text-align: center; }
     .step-content { flex: 1; }
     .step-title { font-weight: 600; font-size: 15px; }
@@ -161,14 +161,14 @@ export class OnboardingTour {
       padding: 8px 16px;
       border-radius: 6px;
       border: none;
-      background: #2563EB;
+      background: #14B8A6;
       color: white;
       font-size: 13px;
       cursor: pointer;
     }
-    .step-btn:hover { background: #1D4ED8; }
+    .step-btn:hover { background: #0D9488; }
     .step-done { color: #16A34A; font-size: 13px; font-weight: 500; }
-    .tip { margin-top: 24px; padding: 12px 16px; background: rgba(37,99,235,0.08); border-radius: 6px; font-size: 13px; color: #888; }
+    .tip { margin-top: 24px; padding: 12px 16px; background: rgba(20,184,166,0.08); border-radius: 6px; font-size: 13px; color: #888; }
   </style>
 </head>
 <body>
