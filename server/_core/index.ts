@@ -242,7 +242,13 @@ async function startServer() {
         // Same-origin requests (server-to-server, curl, mobile native
         // clients) don't send Origin — let those through.
         if (!origin) return callback(null, true);
-        if (corsAllowlist.includes(origin)) return callback(null, true);
+        if (
+          corsAllowlist.includes(origin) ||
+          origin.endsWith(".insforge.site") ||
+          origin.endsWith(".vercel.app")
+        ) {
+          return callback(null, true);
+        }
         callback(new Error(`CORS: origin ${origin} not allowed`));
       },
       credentials: true,
