@@ -24,8 +24,10 @@ export default function RegisterPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("REGISTER handleSubmit called, password length:", password.length);
     setError("");
     if (password.length < 8) {
+      console.log("Setting error because password length < 8");
       setError("Password must be at least 8 characters");
       return;
     }
@@ -43,7 +45,7 @@ export default function RegisterPage() {
           <Link href="/" className="text-3xl font-bold text-blue-500">
             Rakshex
           </Link>
-          <p className="text-gray-400 mt-2">Create your account</p>
+          <h2 className="text-gray-400 mt-2">Create your account</h2>
         </div>
 
         <div className="bg-gray-800 p-8 rounded-xl border border-gray-700 space-y-6">
@@ -62,8 +64,11 @@ export default function RegisterPage() {
           {/* Email/password form */}
           <form onSubmit={handleSubmit} className="space-y-4" data-testid="signup-form">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Full name</label>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-1">
+                Full name
+              </label>
               <input
+                id="name"
                 type="text"
                 name="name"
                 autoComplete="name"
@@ -76,8 +81,11 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
+                Email
+              </label>
               <input
+                id="email"
                 type="email"
                 name="email"
                 autoComplete="email"
@@ -90,15 +98,17 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Password</label>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
+                Password
+              </label>
               <PasswordField
+                id="password"
                 name="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="At least 8 characters"
                 autoComplete="new-password"
                 required
-                minLength={8}
               />
             </div>
 

@@ -599,8 +599,11 @@ export default function CollectionsPage() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-gray-400 mb-1">Collection Name</label>
+                <label htmlFor="collection-name" className="block text-sm text-gray-400 mb-1">
+                  Collection Name
+                </label>
                 <input
+                  id="collection-name"
                   type="text"
                   value={uploadName}
                   onChange={(e) => setUploadName(e.target.value)}
@@ -609,8 +612,11 @@ export default function CollectionsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm text-gray-400 mb-1">Format</label>
+                <label htmlFor="collection-format" className="block text-sm text-gray-400 mb-1">
+                  Format
+                </label>
                 <select
+                  id="collection-format"
                   value={uploadFormat}
                   onChange={(e) => setUploadFormat(e.target.value as CollectionFormat)}
                   className="w-full px-4 py-2 rounded-lg bg-[#0A0E1A] border border-[#2D3E50] focus:ring-2 focus:ring-[#06D6A0] focus:border-[#06D6A0] outline-none"

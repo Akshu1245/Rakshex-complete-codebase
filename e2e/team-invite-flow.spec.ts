@@ -22,7 +22,7 @@ test.describe("Critical Path 2: Team Invite Flow", () => {
     ]);
 
     // Stub tRPC responses
-    await page.route("**/api/trpc/**", async route => {
+    await page.route("**/api/trpc/**", async (route) => {
       const url = route.request().url();
       const json = (data: unknown) => ({ result: { data } });
 
@@ -35,7 +35,7 @@ test.describe("Critical Path 2: Team Invite Flow", () => {
               email: "inviter@example.com",
               name: "Inviter User",
               plan: "pro",
-            })
+            }),
           ),
           contentType: "application/json",
         });
@@ -49,7 +49,7 @@ test.describe("Critical Path 2: Team Invite Flow", () => {
               id: 1,
               email: "inviter@example.com",
               name: "Inviter User",
-            })
+            }),
           ),
           contentType: "application/json",
         });
@@ -68,7 +68,7 @@ test.describe("Critical Path 2: Team Invite Flow", () => {
                   status: "active",
                 },
               ],
-            })
+            }),
           ),
           contentType: "application/json",
         });
@@ -81,7 +81,7 @@ test.describe("Critical Path 2: Team Invite Flow", () => {
             json({
               success: true,
               memberId: "m2",
-            })
+            }),
           ),
           contentType: "application/json",
         });
@@ -92,31 +92,23 @@ test.describe("Critical Path 2: Team Invite Flow", () => {
     });
   });
 
-  test("Login → Invite team member → Verify invite sent and member appears", async ({
-    page,
-  }) => {
+  test("Login → Invite team member → Verify invite sent and member appears", async ({ page }) => {
     // Step 1: Login
     await page.goto("/login");
     await page.getByLabel(/email/i).fill("inviter@example.com");
     await page.getByLabel(/password/i).fill("password123");
-    await page
-      .getByRole("button", { name: /login|sign in/i, exact: false })
-      .click();
+    await page.getByRole("button", { name: /login|sign in/i, exact: false }).click();
 
     // With stubbed login the app should push to /dashboard
     await expect(page).toHaveURL(/.*dashboard.*/, { timeout: 10_000 });
 
     // Step 2: Navigate to team page
     await page.goto("/team");
-    await expect(
-      page.getByRole("heading", { name: /team/i })
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Team", exact: true })).toBeVisible();
 
     // Verify the invite form is present
     await expect(page.getByLabel(/email/i)).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: /send invite/i })
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: /send invite/i })).toBeVisible();
 
     // Step 3: Fill invite form and send
     await page.getByLabel(/email/i).fill("invitee@example.com");
@@ -129,9 +121,7 @@ test.describe("Critical Path 2: Team Invite Flow", () => {
     await expect(page.getByLabel(/email/i)).toHaveValue("", { timeout: 5_000 });
   });
 
-  test("team page route does not 500 when unauthenticated", async ({
-    page,
-  }) => {
+  test("team page route does not 500 when unauthenticated", async ({ page }) => {
     const response = await page.goto("/team");
     expect(response).toBeTruthy();
     expect(response!.status()).toBeLessThan(500);

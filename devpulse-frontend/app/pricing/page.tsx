@@ -9,6 +9,21 @@ export default function PricingPage() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const { data: me } = trpc.auth.me.useQuery(undefined, {
+    retry: false,
+  });
+
+  const createSubscription = trpc.payment.createSubscription.useMutation({
+    onSuccess: (data) => {
+      if (data?.shortUrl) {
+        window.location.href = data.shortUrl;
+      }
+    },
+    onError: (err) => {
+      setError(err.message || "Failed to initiate subscription");
+    },
+  });
+
   const joinMutation = trpc.waitlist.join.useMutation({
     onSuccess: () => {
       setSuccess(true);
@@ -33,10 +48,18 @@ export default function PricingPage() {
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 pb-6 border-b border-neutral-900">
           <div>
-            <h1 className="text-3xl sm:text-4xl font-bold text-white font-manrope">Pricing</h1>
+            <h1 className="text-3xl sm:text-4xl font-bold text-white font-manrope">
+              {me ? "Choose your plan" : "Pricing"}
+            </h1>
             <p className="text-neutral-400 mt-2">Choose the plan that fits your needs</p>
           </div>
         </div>
+
+        {createSubscription.error && (
+          <div className="mb-6 p-4 bg-red-950/20 border border-red-500/30 rounded-lg text-red-400 text-sm font-mono max-w-md">
+            {createSubscription.error.message}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="bg-[#141414] p-8 rounded-xl border border-neutral-850 flex flex-col justify-between hover:border-neutral-800 transition-colors">
@@ -69,12 +92,18 @@ export default function PricingPage() {
                 </li>
               </ul>
             </div>
-            <Link
-              href="/register"
-              className="block w-full py-3 bg-neutral-800 hover:bg-neutral-750 text-white rounded-lg font-medium transition-colors text-center font-mono mt-auto"
-            >
-              Get Started
-            </Link>
+            {me ? (
+              <span className="block w-full py-3 bg-neutral-800 text-neutral-400 rounded-lg font-medium text-center font-mono mt-auto border border-neutral-700">
+                Current Plan
+              </span>
+            ) : (
+              <Link
+                href="/register"
+                className="block w-full py-3 bg-neutral-800 hover:bg-neutral-750 text-white rounded-lg font-medium transition-colors text-center font-mono mt-auto"
+              >
+                Get Started
+              </Link>
+            )}
           </div>
 
           <div className="bg-[#141414] p-8 rounded-xl border border-teal-accent/50 relative flex flex-col justify-between">
@@ -125,17 +154,27 @@ export default function PricingPage() {
                 </li>
               </ul>
             </div>
-            <button
-              onClick={() => {
-                setSelectedPlan("pro");
-                setEmail("");
-                setSuccess(false);
-                setError(null);
-              }}
-              className="block w-full py-3 bg-teal-accent hover:bg-[#0D9488] text-white font-bold rounded-lg transition-colors text-center font-mono mt-auto"
-            >
-              Join Pro Waitlist
-            </button>
+            {me ? (
+              <button
+                onClick={() => createSubscription.mutate({ plan: "pro" })}
+                disabled={createSubscription.isPending}
+                className="block w-full py-3 bg-teal-accent hover:bg-[#0D9488] disabled:opacity-50 text-white font-bold rounded-lg transition-colors text-center font-mono mt-auto"
+              >
+                {createSubscription.isPending ? "Processing..." : "Upgrade to Pro"}
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  setSelectedPlan("pro");
+                  setEmail("");
+                  setSuccess(false);
+                  setError(null);
+                }}
+                className="block w-full py-3 bg-teal-accent hover:bg-[#0D9488] text-white font-bold rounded-lg transition-colors text-center font-mono mt-auto"
+              >
+                Join Pro Waitlist
+              </button>
+            )}
           </div>
 
           <div className="bg-[#141414] p-8 rounded-xl border border-neutral-850 relative flex flex-col justify-between hover:border-neutral-800 transition-colors">
@@ -179,17 +218,27 @@ export default function PricingPage() {
                 </li>
               </ul>
             </div>
-            <button
-              onClick={() => {
-                setSelectedPlan("enterprise");
-                setEmail("");
-                setSuccess(false);
-                setError(null);
-              }}
-              className="block w-full py-3 bg-neutral-800 hover:bg-neutral-750 text-white rounded-lg font-medium transition-colors text-center font-mono mt-auto"
-            >
-              Join Enterprise Waitlist
-            </button>
+            {me ? (
+              <button
+                onClick={() => createSubscription.mutate({ plan: "enterprise" })}
+                disabled={createSubscription.isPending}
+                className="block w-full py-3 bg-neutral-800 hover:bg-neutral-750 disabled:opacity-50 text-white rounded-lg font-medium transition-colors text-center font-mono mt-auto"
+              >
+                {createSubscription.isPending ? "Processing..." : "Upgrade to Enterprise"}
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  setSelectedPlan("enterprise");
+                  setEmail("");
+                  setSuccess(false);
+                  setError(null);
+                }}
+                className="block w-full py-3 bg-neutral-800 hover:bg-neutral-750 text-white rounded-lg font-medium transition-colors text-center font-mono mt-auto"
+              >
+                Join Enterprise Waitlist
+              </button>
+            )}
           </div>
         </div>
       </div>

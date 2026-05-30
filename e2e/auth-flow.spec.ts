@@ -8,37 +8,33 @@ import { test, expect } from "@playwright/test";
  * calls are stubbed so no live MySQL / Redis is required.
  */
 test.describe("Auth: email/password golden path", () => {
-  test("register form renders with email, password, and name fields", async ({
-    page,
-  }) => {
+  test.beforeEach(async ({ page }) => {
+    page.on("console", (msg) => console.log(`[BROWSER CONSOLE] ${msg.type()}: ${msg.text()}`));
+    page.on("request", (req) => console.log(`[BROWSER REQ] ${req.method()} ${req.url()}`));
+    page.on("response", (res) => console.log(`[BROWSER RES] ${res.status()} ${res.url()}`));
+  });
+
+  test("register form renders with email, password, and name fields", async ({ page }) => {
     await page.goto("/register");
 
     await expect(page.getByTestId("signup-form")).toBeVisible();
     await expect(page.getByLabel(/full name/i)).toBeVisible();
     await expect(page.getByLabel(/email/i)).toBeVisible();
     await expect(page.getByLabel(/password/i)).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: /create account/i })
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: /create account/i })).toBeVisible();
   });
 
-  test("login form renders with email, password, and remember-me", async ({
-    page,
-  }) => {
+  test("login form renders with email, password, and remember-me", async ({ page }) => {
     await page.goto("/login");
 
     await expect(page.getByTestId("login-form")).toBeVisible();
     await expect(page.getByLabel(/email/i)).toBeVisible();
     await expect(page.getByLabel(/password/i)).toBeVisible();
     await expect(page.getByRole("button", { name: /sign in/i })).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: /forgot password/i })
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: /forgot password/i })).toBeVisible();
   });
 
-  test("signup with weak password shows client-side validation error", async ({
-    page,
-  }) => {
+  test("signup with weak password shows client-side validation error", async ({ page }) => {
     await page.goto("/register");
 
     await page.getByLabel(/full name/i).fill("Ada Lovelace");
@@ -47,16 +43,14 @@ test.describe("Auth: email/password golden path", () => {
     await page.getByLabel(/password/i).fill("short12");
     await page.getByRole("button", { name: /create account/i }).click();
 
-    await expect(page.getByRole("alert")).toContainText(
-      /at least 8 characters/i
+    await expect(page.locator('[role="alert"]:not(#__next-route-announcer__)')).toContainText(
+      /at least 8 characters/i,
     );
   });
 
-  test("login with invalid credentials surfaces server error", async ({
-    page,
-  }) => {
+  test("login with invalid credentials surfaces server error", async ({ page }) => {
     // Stub the login mutation to return an authentication error
-    await page.route("**/api/trpc/auth.login**", route =>
+    await page.route("**/api/trpc/auth.login**", (route) =>
       route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -67,7 +61,7 @@ test.describe("Auth: email/password golden path", () => {
             data: { code: "UNAUTHORIZED" },
           },
         }),
-      })
+      }),
     );
 
     await page.goto("/login");
@@ -76,12 +70,14 @@ test.describe("Auth: email/password golden path", () => {
     await page.getByLabel(/password/i).fill("wrong-password-123");
     await page.getByRole("button", { name: /sign in/i }).click();
 
-    await expect(page.getByRole("alert")).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('[role="alert"]:not(#__next-route-announcer__)')).toBeVisible({
+      timeout: 10_000,
+    });
   });
 
   test("signup → dashboard redirect (stubbed backend)", async ({ page }) => {
     // Stub the signup mutation to return a successful response
-    await page.route("**/api/trpc/auth.signup**", route =>
+    await page.route("**/api/trpc/auth.signup**", (route) =>
       route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -94,11 +90,11 @@ test.describe("Auth: email/password golden path", () => {
             },
           },
         }),
-      })
+      }),
     );
 
     // Stub auth.me so the dashboard page can identify the user after redirect
-    await page.route("**/api/trpc/auth.me**", route =>
+    await page.route("**/api/trpc/auth.me**", (route) =>
       route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -112,7 +108,7 @@ test.describe("Auth: email/password golden path", () => {
             },
           },
         }),
-      })
+      }),
     );
 
     await page.goto("/register");
@@ -126,22 +122,14 @@ test.describe("Auth: email/password golden path", () => {
     await expect(page).toHaveURL(/.*dashboard.*/, { timeout: 15_000 });
   });
 
-  test("forgot-password reveals reset form and back-to-login link", async ({
-    page,
-  }) => {
+  test("forgot-password reveals reset form and back-to-login link", async ({ page }) => {
     await page.goto("/login");
 
     await page.getByRole("button", { name: /forgot password/i }).click();
 
-    await expect(
-      page.getByRole("heading", { name: /reset your password/i })
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: /reset your password/i })).toBeVisible();
     await expect(page.getByLabel(/email address/i)).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: /send reset link/i })
-    ).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: /back to login/i })
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: /send reset link/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /back to login/i })).toBeVisible();
   });
 });

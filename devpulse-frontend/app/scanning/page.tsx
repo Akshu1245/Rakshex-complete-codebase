@@ -334,7 +334,11 @@ export default function ScanningPage() {
               ))}
             </select>
 
+            <label htmlFor="scan-type" className="sr-only">
+              Scan Type
+            </label>
             <select
+              id="scan-type"
               value={scanType}
               onChange={(e) => setScanType(e.target.value as ScanType)}
               className="w-full px-4 py-3 rounded-lg bg-surface-container border border-glass focus:ring-1 focus:ring-primary focus:outline-none text-sm text-white"

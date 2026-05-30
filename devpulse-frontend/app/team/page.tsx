@@ -76,11 +76,14 @@ export default function TeamPage() {
           <h2 className="text-xl font-semibold mb-4">Invite Team Member</h2>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm text-gray-400 mb-1">Email</label>
+              <label htmlFor="invite-email" className="block text-sm text-gray-400 mb-1">
+                Email
+              </label>
               <input
+                id="invite-email"
                 type="email"
                 value={inviteEmail}
-                onChange={e => setInviteEmail(e.target.value)}
+                onChange={(e) => setInviteEmail(e.target.value)}
                 placeholder="colleague@company.com"
                 className="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none"
               />
@@ -89,7 +92,7 @@ export default function TeamPage() {
               <label className="block text-sm text-gray-400 mb-1">Role</label>
               <select
                 value={inviteRole}
-                onChange={e => setInviteRole(e.target.value as Role)}
+                onChange={(e) => setInviteRole(e.target.value as Role)}
                 className="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none"
               >
                 <option value="viewer">Viewer</option>
@@ -135,9 +138,7 @@ export default function TeamPage() {
                 >
                   <div>
                     <p className="font-semibold">{member.email}</p>
-                    {member.name && (
-                      <p className="text-sm text-gray-400">{member.name}</p>
-                    )}
+                    {member.name && <p className="text-sm text-gray-400">{member.name}</p>}
                     <div className="flex gap-4 mt-1 text-sm">
                       <span
                         className={`px-2 py-1 rounded ${

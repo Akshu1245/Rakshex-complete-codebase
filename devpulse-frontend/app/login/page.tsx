@@ -162,7 +162,7 @@ export default function LoginPage() {
             <Link href="/" className="text-3xl font-bold text-blue-500">
               Rakshex
             </Link>
-            <p className="text-gray-400 mt-2">Reset your password</p>
+            <h2 className="text-gray-400 mt-2">Reset your password</h2>
           </div>
 
           <div className="bg-gray-800 p-8 rounded-xl border border-gray-700">
@@ -201,10 +201,14 @@ export default function LoginPage() {
             ) : (
               <form onSubmit={handleForgotSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label
+                    htmlFor="forgot-email"
+                    className="block text-sm font-medium text-gray-300 mb-1"
+                  >
                     Email Address
                   </label>
                   <input
+                    id="forgot-email"
                     type="email"
                     value={forgotEmail}
                     onChange={(e) => setForgotEmail(e.target.value)}
@@ -246,7 +250,7 @@ export default function LoginPage() {
           <Link href="/" className="text-3xl font-bold text-blue-500">
             Rakshex
           </Link>
-          <p className="text-gray-400 mt-2">Sign in to your account</p>
+          <h2 className="text-gray-400 mt-2">Sign in to your account</h2>
         </div>
 
         <div className="bg-gray-800 p-8 rounded-xl border border-gray-700 space-y-6">
@@ -265,8 +269,11 @@ export default function LoginPage() {
           {/* Email/Password Form */}
           <form onSubmit={handleSubmit} className="space-y-4" data-testid="login-form">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
+                Email
+              </label>
               <input
+                id="email"
                 type="email"
                 name="email"
                 autoComplete="email"
@@ -279,8 +286,11 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Password</label>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
+                Password
+              </label>
               <PasswordField
+                id="password"
                 name="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
