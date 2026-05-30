@@ -39,14 +39,15 @@ function rewrite(content, filePath) {
 
   // 2. Add .js to bare relative imports that still lack an extension
   //    Skip if already has an extension
-  const relRe = /((?:import|export)\s+(?:[^"']*\s+from\s+)?["'])(\.\/[^"']+|\.\.\/[^"']+)(["'])/g;
-  content = content.replace(relRe, (_match, prefix, specifier, suffix) => {
+  const relRe = /((?:import|export)\s+(?:[^"']*\s+from\s+)?["'])(\.\.?(\/[^"']*)?)(["'])/g;
+  content = content.replace(relRe, (_match, prefix, specifier, _sub, suffix) => {
     if (/\.(?:js|json|mjs|cjs)$/i.test(specifier)) return _match;
 
     // Check if the relative path resolves to a directory
     const targetPath = path.resolve(fileDir, specifier);
     if (fs.existsSync(targetPath) && fs.statSync(targetPath).isDirectory()) {
-      return `${prefix}${specifier}/index.js${suffix}`;
+      const cleanSpecifier = specifier.endsWith("/") ? specifier.slice(0, -1) : specifier;
+      return `${prefix}${cleanSpecifier}/index.js${suffix}`;
     }
 
     return `${prefix}${specifier}.js${suffix}`;
