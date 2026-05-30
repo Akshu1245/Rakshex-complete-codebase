@@ -242,7 +242,7 @@ function scanEndpoints(
 
 const generatePDF = (score: number, endpoints: any[], findings: any[], fileName: string) => {
   const textLines = [
-    "RakshEx API Security Scan Report",
+    "RaksHex API Security Scan Report",
     "====================================",
     `Target File: ${fileName}`,
     `Security Score: ${score}/100`,
@@ -305,7 +305,7 @@ trailer
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `rakshex-scan-${fileName.replace(".json", "").replace(".yaml", "").replace(".yml", "")}.pdf`;
+  link.download = `RaksHex-scan-${fileName.replace(".json", "").replace(".yaml", "").replace(".yml", "")}.pdf`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

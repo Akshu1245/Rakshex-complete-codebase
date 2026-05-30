@@ -193,7 +193,7 @@ export default function LandingPage() {
               Everything you need to secure AI
             </h2>
             <p className="text-slate-400 max-w-xl mx-auto">
-              From VS Code to production, Rakshex protects your AI infrastructure end-to-end.
+              From VS Code to production, RaksHex protects your AI infrastructure end-to-end.
             </p>
           </motion.div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -228,7 +228,7 @@ export default function LandingPage() {
           >
             <h2 className="text-3xl font-bold mb-4">Ready to secure your AI?</h2>
             <p className="text-slate-400 mb-8">
-              Join 500+ developers using Rakshex to protect their AI infrastructure.
+              Join 500+ developers using RaksHex to protect their AI infrastructure.
             </p>
             <button
               onClick={() =>

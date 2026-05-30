@@ -182,7 +182,7 @@ function AnimatedHeroVisual() {
 
   useEffect(() => {
     const steps = [
-      { text: "> rakshex scan ./api.json", delay: 1200 },
+      { text: "> RaksHex scan ./api.json", delay: 1200 },
       { text: "✓ 23 endpoints scanned", delay: 800 },
       { text: "⚠ 2 credentials detected", delay: 800, finding: "Credential Leak", score: 98 },
       { text: "🔒 1 prompt injection blocked", delay: 800, finding: "Prompt Injection", score: 95 },
@@ -220,7 +220,7 @@ function AnimatedHeroVisual() {
   }, []);
 
   const terminalLines = [
-    "> rakshex scan ./api.json",
+    "> RaksHex scan ./api.json",
     "✓ 23 endpoints scanned",
     "⚠ 2 credentials detected",
     "🔒 1 prompt injection blocked",
@@ -235,7 +235,7 @@ function AnimatedHeroVisual() {
           <div className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
           <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/80" />
           <div className="w-2.5 h-2.5 rounded-full bg-green-500/80" />
-          <span className="text-[10px] text-neutral-500 ml-2">bash - rakshex scan</span>
+          <span className="text-[10px] text-neutral-500 ml-2">bash - RaksHex scan</span>
         </div>
         <div className="space-y-2 flex-1 overflow-y-auto">
           {terminalLines.slice(0, scanStep).map((line, idx) => {
@@ -319,7 +319,7 @@ export default function HomePage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const handleCopyCommand = () => {
-    navigator.clipboard.writeText("npx rakshex scan ./collection.json");
+    navigator.clipboard.writeText("npx RaksHex scan ./collection.json");
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -428,39 +428,39 @@ export default function HomePage() {
 
   const faqs = [
     {
-      question: "What is RakshEx?",
+      question: "What is RaksHex?",
       answer:
-        "RakshEx is India's first AI Runtime Governance platform. It scans API endpoints for security vulnerabilities, monitors LLM token costs, blocks prompt injection attacks, and generates compliance reports — all in one platform.",
+        "RaksHex is India's first AI Runtime Governance platform. It scans API endpoints for security vulnerabilities, monitors LLM token costs, blocks prompt injection attacks, and generates compliance reports — all in one platform.",
     },
     {
-      question: "What AI frameworks does RakshEx support?",
+      question: "What AI frameworks does RaksHex support?",
       answer:
         "OpenAI, Anthropic Claude, Google Gemini, Mistral, Cohere, AWS Bedrock, and any LLM accessed via standard API. We also support MCP tool calls.",
     },
     {
-      question: "What security checks does RakshEx perform?",
+      question: "What security checks does RaksHex perform?",
       answer:
         "87-payload prompt injection library, BOLA/IDOR detection, credential scanning (AWS, GitHub, Stripe, Aadhaar, PAN), shadow API discovery, missing auth detection, PII exposure, and OWASP AI Top 10 mapping.",
     },
     {
-      question: "Who should use RakshEx?",
+      question: "Who should use RaksHex?",
       answer:
         "Any team building with AI agents, LLMs, or AI-powered APIs who needs security visibility, cost control, and compliance evidence.",
     },
     {
-      question: "Is RakshEx open source?",
+      question: "Is RaksHex open source?",
       answer:
         "Our OWASP AI Top 10 detection ruleset is being open sourced. The core platform is commercial. Join the waitlist for early access.",
     },
     {
-      question: "How is RakshEx different from Snyk or Datadog?",
+      question: "How is RaksHex different from Snyk or Datadog?",
       answer:
-        "Snyk does code scanning. Datadog does infrastructure monitoring. Neither does prompt injection blocking, thinking token attribution, or AI-specific compliance reporting. RakshEx does all three.",
+        "Snyk does code scanning. Datadog does infrastructure monitoring. Neither does prompt injection blocking, thinking token attribution, or AI-specific compliance reporting. RaksHex does all three.",
     },
     {
       question: "What does the kill switch actually do?",
       answer:
-        "It's an autonomous circuit breaker. When your LLM spend, anomaly score, or red-team result crosses a threshold, RakshEx automatically returns 402 responses to the agent, stopping runaway cost or attacks.",
+        "It's an autonomous circuit breaker. When your LLM spend, anomaly score, or red-team result crosses a threshold, RaksHex automatically returns 402 responses to the agent, stopping runaway cost or attacks.",
     },
   ];
 
@@ -642,7 +642,7 @@ export default function HomePage() {
             Ready to Secure Your AI Stack?
           </h2>
           <p className="text-[#9CA3AF] text-base leading-relaxed max-w-[480px] font-sans">
-            Join 500+ developers already using RakshEx
+            Join 500+ developers already using RaksHex
           </p>
 
           <div className="w-full z-10">

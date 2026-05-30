@@ -428,7 +428,7 @@ export default function ShadowAPIsPage() {
               letterSpacing: "0.1em",
             }}
           >
-            RAKSHEX AI — SYSTEM ALPHA-9
+            RaksHex AI — SYSTEM ALPHA-9
           </span>
         </div>
       </div>

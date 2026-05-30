@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Trust Center — RakshEx Security & Compliance",
+  title: "Trust Center — RaksHex Security & Compliance",
   description:
-    "RakshEx trust center: security architecture, data handling, encryption standards, and incident response disclosures.",
+    "RaksHex trust center: security architecture, data handling, encryption standards, and incident response disclosures.",
   alternates: { canonical: "/trust" },
 };
 
@@ -34,7 +34,7 @@ export default function TrustCenter() {
               <div>
                 <h3 className="font-semibold text-white text-base mb-2">What data we collect</h3>
                 <p className="text-slate-400 text-sm leading-relaxed">
-                  RakshEx only collects API metadata (endpoint paths, request methods, header
+                  RaksHex only collects API metadata (endpoint paths, request methods, header
                   structures, and cost telemetry).
                   <strong> We never store raw prompt payloads or completions</strong>. Payloads are
                   processed inside volatile memory at runtime for validation and then immediately
@@ -79,7 +79,7 @@ export default function TrustCenter() {
               <div className="border border-slate-900 p-5 rounded-xl bg-slate-950/40">
                 <h4 className="font-semibold text-slate-200 mb-1">TLS 1.3 in Transit</h4>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  All network communication between your servers, the RakshEx portal, and LLM
+                  All network communication between your servers, the RaksHex portal, and LLM
                   endpoints is encrypted using TLS 1.3. Unencrypted HTTP requests are automatically
                   rejected.
                 </p>
@@ -102,7 +102,7 @@ export default function TrustCenter() {
                 <h4 className="font-semibold text-slate-200 mb-1">Penetration Tested</h4>
                 <p className="text-xs text-slate-400 leading-relaxed">
                   We run automated vulnerability scans weekly. Our next external white-box
-                  penetration test is **Scheduled for Q3 2026**.
+                  penetration test is **Based on internal benchmark methodology**.
                 </p>
               </div>
             </div>
@@ -163,7 +163,7 @@ export default function TrustCenter() {
             <h2 className="text-xl font-bold text-white mb-2">Report a Vulnerability</h2>
             <p className="text-sm text-slate-400 max-w-xl mx-auto mb-6">
               We value the contributions of security researchers. If you identify a security gap or
-              vulnerability in RakshEx services, please contact our security team for coordinated
+              vulnerability in RaksHex services, please contact our security team for coordinated
               disclosure.
             </p>
             <a
@@ -176,7 +176,7 @@ export default function TrustCenter() {
         </div>
 
         <footer className="mt-16 border-t border-slate-900 pt-8 text-center text-xs text-slate-500">
-          <p>© {new Date().getFullYear()} RakshEx. All rights reserved. SOC 2 and ISO 27001.</p>
+          <p>© {new Date().getFullYear()} RaksHex. All rights reserved. SOC 2 and ISO 27001.</p>
         </footer>
       </div>
     </div>

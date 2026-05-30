@@ -64,7 +64,7 @@ export default function OnboardingPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-blue-400">Onboarding</h1>
-            <p className="text-gray-400 mt-1">Get started with Rakshex in 5 steps</p>
+            <p className="text-gray-400 mt-1">Get started with RaksHex in 5 steps</p>
           </div>
           <Link href="/dashboard" className="text-blue-400 hover:text-blue-300">
             &larr; Dashboard

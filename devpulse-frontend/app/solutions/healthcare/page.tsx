@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "HIPAA-Ready AI Governance for Healthcare — RakshEx",
+  title: "HIPAA-Ready AI Governance for Healthcare — RaksHex",
   description:
-    "RakshEx secures patient health information (PHI) inside AI context windows, ensuring HIPAA compliance and auditing diagnostic model hallucinations.",
+    "RaksHex secures patient health information (PHI) inside AI context windows, ensuring HIPAA compliance and auditing diagnostic model hallucinations.",
   alternates: { canonical: "/solutions/healthcare" },
 };
 
@@ -11,15 +11,15 @@ export default function HealthcareSolutionPage() {
   const painPoints = [
     {
       title: "PHI inside LLM contexts",
-      desc: "Patient names, insurance credentials, and medical conditions must never be stored on provider logs or public models. RakshEx redacts PHI data in real time.",
+      desc: "Patient names, insurance credentials, and medical conditions must never be stored on provider logs or public models. RaksHex redacts PHI data in real time.",
     },
     {
       title: "HIPAA Audit Trails",
-      desc: "Healthcare providers must maintain complete, immutable audit logs of all user queries and model outputs. RakshEx records security metadata to verify compliance.",
+      desc: "Healthcare providers must maintain complete, immutable audit logs of all user queries and model outputs. RaksHex records security metadata to verify compliance.",
     },
     {
       title: "Model Hallucination Risks",
-      desc: "Non-deterministic AI outputs can yield wrong medical suggestions or wrong dosages. RakshEx flags anomalies and provides output boundaries.",
+      desc: "Non-deterministic AI outputs can yield wrong medical suggestions or wrong dosages. RaksHex flags anomalies and provides output boundaries.",
     },
   ];
 
@@ -30,7 +30,7 @@ export default function HealthcareSolutionPage() {
       challenge:
         "CareHealth deployed an agent to summarize doctor-patient calls. However, doctors mentioned patient addresses and record IDs, which leaked to public API provider logs.",
       solution:
-        "CareHealth integrated RakshEx's real-time PII/PHI egress filter. All diagnostic codes, addresses, and ID patterns are automatically masked before LLM ingestion.",
+        "CareHealth integrated RaksHex's real-time PII/PHI egress filter. All diagnostic codes, addresses, and ID patterns are automatically masked before LLM ingestion.",
       result:
         "Zero patient identifiers leaked to third parties, maintaining absolute confidentiality.",
     },
@@ -40,7 +40,7 @@ export default function HealthcareSolutionPage() {
       challenge:
         "MedScout built a RAG bot to query clinical trials. To satisfy HIPAA auditors, they needed a comprehensive audit trail of who accessed which patient vectors.",
       solution:
-        "RakshEx generated end-to-end audit reports mapping queries to vector databases, resolving security metadata into reports.",
+        "RaksHex generated end-to-end audit reports mapping queries to vector databases, resolving security metadata into reports.",
       result:
         "Passed HIPAA audit with flying colors, proving 100% control over patient data access.",
     },
@@ -50,7 +50,7 @@ export default function HealthcareSolutionPage() {
       challenge:
         "RadiologyAI's reporting tool hallucinated scan conclusions, generating anomalous findings in critical patient charts.",
       solution:
-        "By routing completions through RakshEx's diagnostic validation engine, any output containing critical semantic mismatch alerts was automatically flagged for human review.",
+        "By routing completions through RaksHex's diagnostic validation engine, any output containing critical semantic mismatch alerts was automatically flagged for human review.",
       result: "99% reduction in model recommendation anomalies before doctor signoff.",
     },
   ];

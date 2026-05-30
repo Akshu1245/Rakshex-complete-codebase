@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Partner Program — RakshEx",
+  title: "Partner Program — RaksHex",
   description:
-    "Join the RakshEx partner ecosystem. Learn about Technology, Reseller, and Research partnership opportunities.",
+    "Join the RaksHex partner ecosystem. Learn about Technology, Reseller, and Research partnership opportunities.",
   alternates: { canonical: "/partners" },
 };
 
@@ -11,15 +11,15 @@ export default function PartnersPage() {
   const partnerTypes = [
     {
       title: "Technology Partners",
-      desc: "Integrate RakshEx's AI runtime firewalls and cost attribution layers directly into your developer platform, LLM gateway, or DevOps toolkit.",
+      desc: "Integrate RaksHex's AI runtime firewalls and cost attribution layers directly into your developer platform, LLM gateway, or DevOps toolkit.",
     },
     {
       title: "Reseller Partners",
-      desc: "Distribute RakshEx licenses and compliance auditing packages to your client network, backed by dedicated technical support and co-branded collateral.",
+      desc: "Distribute RaksHex licenses and compliance auditing packages to your client network, backed by dedicated technical support and co-branded collateral.",
     },
     {
       title: "Research Partners",
-      desc: "Collaborate with RakshEx to identify new prompt injection vectors and expand our open-source OWASP AI Top 10 rulesets.",
+      desc: "Collaborate with RaksHex to identify new prompt injection vectors and expand our open-source OWASP AI Top 10 rulesets.",
     },
   ];
 
@@ -87,10 +87,10 @@ export default function PartnersPage() {
           </div>
         </section>
 
-        {/* Why Partner with RakshEx Section */}
+        {/* Why Partner with RaksHex Section */}
         <section className="mb-16">
           <h2 className="text-xl font-bold text-white mb-8 text-center md:text-left border-b border-slate-900 pb-3">
-            Why Partner with RakshEx
+            Why Partner with RaksHex
           </h2>
           <div className="grid md:grid-cols-3 gap-6">
             {whyPartnerPoints.map((point, index) => (

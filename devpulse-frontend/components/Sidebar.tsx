@@ -57,10 +57,10 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
       >
         <div className="p-6">
           <Link href="/dashboard" className="flex items-center gap-3 mb-10">
-            <img src="/icon-mark-128.png" alt="RakshEx Mark" className="w-8 h-8 object-contain" />
+            <img src="/icon-mark-128.png" alt="RaksHex Mark" className="w-8 h-8 object-contain" />
             <div>
               <div className="font-headline-md text-headline-md font-bold tracking-tight text-primary leading-none">
-                RAKSHEX
+                RaksHex
               </div>
               <div className="text-[10px] uppercase tracking-[0.2em] text-on-surface-variant font-semibold mt-1">
                 Elite API Security

@@ -1,61 +1,61 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Rakshex vs Datadog — Honest Comparison",
+  title: "RaksHex vs Datadog — Honest Comparison",
   description:
-    "Datadog charges per host with no OWASP API scanning or LLM-specific features. Rakshex is per-API with built-in security, cost attribution, and PCI DSS compliance.",
+    "Datadog charges per host with no OWASP API scanning or LLM-specific features. RaksHex is per-API with built-in security, cost attribution, and PCI DSS compliance.",
 };
 
 const features = [
   {
     name: "Pricing Model",
     datadog: "Per host/container — costs explode at scale",
-    rakshex: "Per-API — predictable pricing regardless of infra",
+    RaksHex: "Per-API — predictable pricing regardless of infra",
   },
   {
     name: "OWASP API Top 10 Scanning",
     datadog: "Not available",
-    rakshex: "Full OWASP API Top 10 + custom payload library",
+    RaksHex: "Full OWASP API Top 10 + custom payload library",
   },
   {
     name: "LLM Cost Attribution",
     datadog: "Basic metrics only, no per-model breakdown",
-    rakshex: "Per-model, per-agent, thinking token attribution",
+    RaksHex: "Per-model, per-agent, thinking token attribution",
   },
   {
     name: "Prompt Injection Detection",
     datadog: "Not available",
-    rakshex: "50+ payload patterns, real-time blocking",
+    RaksHex: "50+ payload patterns, real-time blocking",
   },
   {
     name: "Shadow API Detection",
     datadog: "Not available",
-    rakshex: "Static route extraction + runtime discovery",
+    RaksHex: "Static route extraction + runtime discovery",
   },
   {
     name: "Kill Switch / Budget Cap",
     datadog: "Alerts only — no hard stops",
-    rakshex: "Hard stop on budget, anomaly, or red-team score",
+    RaksHex: "Hard stop on budget, anomaly, or red-team score",
   },
   {
     name: "PCI DSS v4.0.1 Compliance",
     datadog: "Partial log collection only",
-    rakshex: "Full PCI DSS v4.0.1 mapped findings + reports",
+    RaksHex: "Full PCI DSS v4.0.1 mapped findings + reports",
   },
   {
     name: "PII Redaction",
     datadog: "Manual scrubbing rules only",
-    rakshex: "Real-time auto-redaction in request/response",
+    RaksHex: "Real-time auto-redaction in request/response",
   },
   {
     name: "VS Code Extension",
     datadog: "Not available",
-    rakshex: "In-editor scanning + inline security warnings",
+    RaksHex: "In-editor scanning + inline security warnings",
   },
   {
     name: "India-specific Compliance (Aadhaar/PAN)",
     datadog: "Not available",
-    rakshex: "Built-in Aadhaar & PAN detection rules",
+    RaksHex: "Built-in Aadhaar & PAN detection rules",
   },
 ];
 
@@ -76,11 +76,11 @@ export default function CompareDatadog() {
           className="mb-2"
           style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "36px", fontWeight: 700 }}
         >
-          Rakshex vs Datadog
+          RaksHex vs Datadog
         </h1>
         <p className="text-on-surface-variant mb-8" style={{ fontSize: "16px", lineHeight: 1.7 }}>
           Datadog is the gold standard for infrastructure monitoring. But it charges per host, has
-          no OWASP API scanning, and zero LLM-specific security features. Rakshex is built
+          no OWASP API scanning, and zero LLM-specific security features. RaksHex is built
           specifically for API security and AI cost intelligence — at a fraction of the cost.
         </p>
 
@@ -91,7 +91,7 @@ export default function CompareDatadog() {
                 <tr style={{ fontSize: "11px", letterSpacing: "0.1em" }}>
                   <th className="p-4 text-on-surface font-bold">FEATURE</th>
                   <th className="p-4 text-on-surface-variant w-1/3 font-bold">DATADOG</th>
-                  <th className="p-4 text-primary w-1/3 font-bold">RAKSHEX</th>
+                  <th className="p-4 text-primary w-1/3 font-bold">RaksHex</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/10">
@@ -104,7 +104,7 @@ export default function CompareDatadog() {
                       {f.datadog}
                     </td>
                     <td className="p-4 text-on-surface" style={{ fontSize: "13px" }}>
-                      {f.rakshex}
+                      {f.RaksHex}
                     </td>
                   </tr>
                 ))}
@@ -134,7 +134,7 @@ export default function CompareDatadog() {
               className="font-bold mb-3 text-primary"
               style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "18px" }}
             >
-              When to choose Rakshex
+              When to choose RaksHex
             </h3>
             <ul className="space-y-2 text-on-surface-variant" style={{ fontSize: "13px" }}>
               <li>• You need OWASP API scanning + LLM cost control in one tool</li>
@@ -152,7 +152,7 @@ export default function CompareDatadog() {
             className="inline-block px-8 py-4 bg-primary text-on-primary font-bold hover:shadow-[0_0_20px_rgba(207,188,255,0.4)] transition-all"
             style={{ fontSize: "12px", letterSpacing: "0.1em" }}
           >
-            TRY RAKSHEX FREE →
+            TRY RaksHex FREE →
           </Link>
         </div>
       </div>

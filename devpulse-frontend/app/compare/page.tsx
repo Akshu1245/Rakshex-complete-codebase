@@ -39,7 +39,7 @@ export default function ComparisonIndex() {
             ⚖️ Competitive Analysis
           </span>
           <h1 className="text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">
-            Compare RakshEx
+            Compare RaksHex
           </h1>
           <p className="text-slate-400 mt-2 text-base">
             Honest comparisons with traditional code scanners, observability engines, and legacy API
@@ -55,7 +55,7 @@ export default function ComparisonIndex() {
               className="block bg-slate-900/30 border border-slate-900 hover:border-blue-500/50 p-6 rounded-2xl transition-all group"
             >
               <h3 className="text-lg font-bold text-white mb-2 group-hover:text-blue-400 transition-colors">
-                RakshEx vs {comp.name}
+                RaksHex vs {comp.name}
               </h3>
               <p className="text-slate-400 text-sm leading-relaxed mb-4">{comp.tagline}</p>
               <span className="text-xs text-blue-400 group-hover:underline font-semibold flex items-center gap-1">

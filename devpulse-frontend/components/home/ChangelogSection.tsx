@@ -40,7 +40,7 @@ export function ChangelogSection() {
             What's New
           </h2>
           <p className="text-[#9CA3AF] font-sans text-base max-w-lg mt-1">
-            Recent releases and security milestones from the RakshEx team.
+            Recent releases and security milestones from the RaksHex team.
           </p>
         </div>
 

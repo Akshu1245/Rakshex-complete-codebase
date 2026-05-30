@@ -46,11 +46,11 @@ export default function CompareTraceableAI() {
             Comparison Stub
           </span>
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white mb-4">
-            RakshEx vs Traceable AI — Which is Right for You?
+            RaksHex vs Traceable AI — Which is Right for You?
           </h1>
           <p className="text-slate-400 text-base leading-relaxed">
             Traceable AI is a leading enterprise API security platform focusing on API discovery,
-            threat protection, and posturing. RakshEx operates as a lightweight AI runtime
+            threat protection, and posturing. RaksHex operates as a lightweight AI runtime
             governance middleware designed to intercept prompt injections, track thinking token
             costs, and enforce AgentGuard circuit breakers in LLM interactions.
           </p>
@@ -59,7 +59,7 @@ export default function CompareTraceableAI() {
         <div className="bg-slate-900/40 border border-slate-900 rounded-2xl p-8 mb-8 text-center">
           <h2 className="text-xl font-bold text-white mb-2">Full Comparison Coming Soon</h2>
           <p className="text-slate-400 text-sm max-w-md mx-auto mb-6">
-            We are writing an in-depth feature mapping and benchmark suite for RakshEx vs Traceable
+            We are writing an in-depth feature mapping and benchmark suite for RaksHex vs Traceable
             AI. Subscribe below to be notified when the detailed analysis launches.
           </p>
 
@@ -96,17 +96,17 @@ export default function CompareTraceableAI() {
           <h3 className="font-bold text-white mb-4">Core Differentiators Overview</h3>
           <div className="space-y-3 text-sm text-slate-400">
             <p>
-              • <strong>LLM Prompt Evaluation:</strong> RakshEx features custom classifier pipelines
+              • <strong>LLM Prompt Evaluation:</strong> RaksHex features custom classifier pipelines
               for real-time prompt injection detection. Traceable AI focuses on traditional API
               vulnerabilities (OWASP API Top 10).
             </p>
             <p>
-              • <strong>Cost Optimization:</strong> RakshEx attributes thinking tokens and provides
+              • <strong>Cost Optimization:</strong> RaksHex attributes thinking tokens and provides
               budget kill switches to control LLM costs. Legacy API security products lack cost
               monitoring.
             </p>
             <p>
-              • <strong>Agentic Rules:</strong> RakshEx's AgentGuard blocks destructive tool calls
+              • <strong>Agentic Rules:</strong> RaksHex's AgentGuard blocks destructive tool calls
               based on human approvals, built for modern autonomous agent structures.
             </p>
           </div>

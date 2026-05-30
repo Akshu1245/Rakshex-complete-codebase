@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Enterprise-Grade AI Runtime Governance — RakshEx",
+  title: "Enterprise-Grade AI Runtime Governance — RaksHex",
   description:
-    "RakshEx Enterprise offers single sign-on (SSO), 4-hour SLA agreements, dedicated Slack support channels, and custom rules for AI deployments at scale.",
+    "RaksHex Enterprise offers single sign-on (SSO), 4-hour SLA agreements, dedicated Slack support channels, and custom rules for AI deployments at scale.",
   alternates: { canonical: "/solutions/enterprise" },
 };
 
@@ -11,15 +11,15 @@ export default function EnterpriseSolutionPage() {
   const painPoints = [
     {
       title: "Multi-Team Agent Sprawl",
-      desc: "Corporate teams spin up dozens of autonomous agents independently, leading to unmonitored shadow APIs and fragmented security policies. RakshEx unifies visibility.",
+      desc: "Corporate teams spin up dozens of autonomous agents independently, leading to unmonitored shadow APIs and fragmented security policies. RaksHex unifies visibility.",
     },
     {
       title: "Compliance Reporting at Scale",
-      desc: "Enterprise audits require mapping all model behaviors to security frameworks like SOC 2, ISO 27001, and local guidelines. RakshEx compiles centralized evidence.",
+      desc: "Enterprise audits require mapping all model behaviors to security frameworks like SOC 2, ISO 27001, and local guidelines. RaksHex compiles centralized evidence.",
     },
     {
       title: "LLM Costs & Token Leakage",
-      desc: "Runaway reasoning loops and duplicate prompts by internal teams create massive, unchecked developer bills. RakshEx sets granular budget limits.",
+      desc: "Runaway reasoning loops and duplicate prompts by internal teams create massive, unchecked developer bills. RaksHex sets granular budget limits.",
     },
   ];
 
@@ -38,7 +38,7 @@ export default function EnterpriseSolutionPage() {
     },
     {
       title: "Self-Hosted Cloud Options",
-      desc: "Deploy RakshEx on-premise or within your private AWS/Azure/GCP clouds using our Kubernetes Helm charts and Docker containers.",
+      desc: "Deploy RaksHex on-premise or within your private AWS/Azure/GCP clouds using our Kubernetes Helm charts and Docker containers.",
     },
   ];
 

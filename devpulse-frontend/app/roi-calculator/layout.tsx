@@ -1,9 +1,9 @@
 import { ReactNode } from "react";
 
 export const metadata = {
-  title: "ROI Calculator — Rakshex",
+  title: "ROI Calculator — RaksHex",
   description:
-    "Calculate the cost of not securing your AI agents. Compare Rakshex vs doing nothing.",
+    "Calculate the cost of not securing your AI agents. Compare RaksHex vs doing nothing.",
 };
 
 export default function ROICalculatorLayout({ children }: { children: ReactNode }) {

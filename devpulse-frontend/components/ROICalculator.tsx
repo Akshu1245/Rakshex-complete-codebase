@@ -18,7 +18,7 @@ export default function ROICalculator() {
     <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-8 border border-gray-700">
       <h3 className="text-2xl font-bold mb-6 text-center">ROI Calculator</h3>
       <p className="text-gray-400 text-center mb-8 text-sm">
-        Estimate your annual savings with Rakshex
+        Estimate your annual savings with RaksHex
       </p>
 
       <div className="grid md:grid-cols-2 gap-6 mb-8">
@@ -67,7 +67,7 @@ export default function ROICalculator() {
 
       <div className="mt-6 text-center">
         <p className="text-gray-400 text-sm">
-          Rakshex Pro: $99/mo → Your ROI:{" "}
+          RaksHex Pro: $99/mo → Your ROI:{" "}
           <span className="text-green-400 font-bold">{Math.round(annualSavings / (99 * 12))}x</span>
         </p>
       </div>

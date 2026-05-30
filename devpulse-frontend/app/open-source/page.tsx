@@ -184,7 +184,7 @@ export default function OpenSourcePage() {
         {/* Mit license */}
         <footer className="border-t border-slate-900 pt-8 text-center text-xs text-slate-500">
           <p>
-            © {new Date().getFullYear()} RakshEx. Built with pride under open standards and modern
+            © {new Date().getFullYear()} RaksHex. Built with pride under open standards and modern
             developer tools.
           </p>
         </footer>

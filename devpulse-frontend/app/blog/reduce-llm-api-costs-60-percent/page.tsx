@@ -158,7 +158,7 @@ export default function BlogReduceCosts() {
           </p>
           <p>
             If you don't attribute thinking tokens to specific features, users, or API keys, you
-            won't know which part of your app is driving costs. RakshEx solves this by parsing
+            won't know which part of your app is driving costs. RaksHex solves this by parsing
             completion metadata to attribute thinking tokens separately from output tokens, enabling
             accurate billing and cost allocation.
           </p>
@@ -210,7 +210,7 @@ export default function BlogReduceCosts() {
             "autocomplete" vs. "data-enrichment").
           </p>
           <p>
-            RakshEx injects custom headers in API requests to track cost per session, feature, and
+            RaksHex injects custom headers in API requests to track cost per session, feature, and
             endpoint. You can view exactly which user query triggered an agent loop and set
             automated alerts or hard stops to cut off runaway agents.
           </p>
@@ -218,7 +218,7 @@ export default function BlogReduceCosts() {
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 my-8">
             <h3 className="text-xl font-bold text-white mb-2">Start Optimizing Your Spend</h3>
             <p className="text-sm text-slate-400 mb-4">
-              Integrate RakshEx to get real-time cost dashboards, thinking token attribution, and
+              Integrate RaksHex to get real-time cost dashboards, thinking token attribution, and
               budget alerts for your API environment. Run a scan of your API specs today.
             </p>
             <div className="flex gap-4">

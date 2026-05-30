@@ -68,7 +68,7 @@ export default function CompliancePage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `rakshex-compliance-${report.reportType}-${new Date(report.createdAt).toISOString().slice(0, 10)}.json`;
+    a.download = `RaksHex-compliance-${report.reportType}-${new Date(report.createdAt).toISOString().slice(0, 10)}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -455,7 +455,7 @@ export default function CompliancePage() {
               letterSpacing: "0.1em",
             }}
           >
-            RAKSHEX AI — SYSTEM ALPHA-9
+            RaksHex AI — SYSTEM ALPHA-9
           </span>
         </div>
       </div>

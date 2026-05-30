@@ -6,7 +6,7 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
     <div className="docs-root">
       <header className="docs-navbar">
         <Link href="/" className="docs-logo">
-          <img src="/navbar-logo.png" alt="RakshEx" className="h-6 w-auto" />
+          <img src="/navbar-logo.png" alt="RaksHex" className="h-6 w-auto" />
         </Link>
 
         <div className="docs-search">
@@ -21,7 +21,7 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
             <circle cx="11" cy="11" r="8" />
             <path d="m21 21-4.35-4.35" />
           </svg>
-          <span>Search RakshEx docs...</span>
+          <span>Search RaksHex docs...</span>
           <kbd>Ctrl K</kbd>
         </div>
 

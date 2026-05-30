@@ -83,8 +83,8 @@ export default function BillingPage() {
         const options = {
           key: result.keyId,
           subscription_id: result.subscriptionId,
-          name: "Rakshex",
-          description: `${planRecord?.name ?? "Rakshex"} Subscription`,
+          name: "RaksHex",
+          description: `${planRecord?.name ?? "RaksHex"} Subscription`,
           image: "/logo.png",
           handler: function () {
             refreshAll();
@@ -145,7 +145,7 @@ export default function BillingPage() {
           key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_SvOVoVW2Cy6jtT",
           amount: orderData.amount,
           currency: orderData.currency,
-          name: "Rakshex Standard Checkout",
+          name: "RaksHex Standard Checkout",
           description: "One-time API Security Scan Credits",
           order_id: orderId,
           image: "/logo.png",

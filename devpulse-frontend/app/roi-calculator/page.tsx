@@ -30,11 +30,11 @@ export default function ROICalculator() {
     // 4. Total annual ROI: sum of above (translating hours/monthly metrics into annual dollars)
     const totalAnnualROI = annualCostSavings + annualBreachRiskReduction + valueOfHoursSaved;
 
-    // 5. RakshEx Pro cost: $99/mo = $1,188/yr
-    const rakshexProCost = 1188;
+    // 5. RaksHex Pro cost: $99/mo = $1,188/yr
+    const RaksHexProCost = 1188;
 
     // 6. ROI multiplier: Total annual ROI / $1,188
-    const roiMultiplier = rakshexProCost > 0 ? totalAnnualROI / rakshexProCost : 0;
+    const roiMultiplier = RaksHexProCost > 0 ? totalAnnualROI / RaksHexProCost : 0;
 
     return {
       monthlyCostSavings,
@@ -43,7 +43,7 @@ export default function ROICalculator() {
       hoursSavedPerYear,
       valueOfHoursSaved,
       totalAnnualROI,
-      rakshexProCost,
+      RaksHexProCost,
       roiMultiplier,
     };
   }, [monthlySpend, incidentCost, manualAuditHours]);
@@ -60,7 +60,7 @@ export default function ROICalculator() {
           </h1>
           <p className="text-slate-400 mt-2 text-base max-w-2xl">
             See how much your team can optimize LLM API usage and reduce vulnerability risk exposure
-            with RakshEx.
+            with RaksHex.
           </p>
         </header>
 
@@ -279,7 +279,7 @@ export default function ROICalculator() {
               </div>
 
               <div className="border-t border-slate-800 pt-4 flex justify-between items-center text-slate-400 text-sm">
-                <span>RakshEx Pro Plan Cost</span>
+                <span>RaksHex Pro Plan Cost</span>
                 <span className="font-mono text-slate-300 font-semibold">$99/mo = $1,188/yr</span>
               </div>
             </div>

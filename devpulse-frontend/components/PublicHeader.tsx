@@ -39,7 +39,7 @@ export function PublicHeader() {
         <Link className="block" href="/changelog">
           <div className="mx-auto flex h-10 w-full max-w-[1280px] items-center justify-between px-6">
             <p className="min-w-0 truncate text-left text-xs font-medium text-white sm:text-sm">
-              🔒 RakshEx Launch Week — India's First AI Runtime Governance Platform →
+              🔒 RaksHex Launch Week — India's First AI Runtime Governance Platform →
             </p>
             {mounted && !isZero && (
               <span
@@ -82,8 +82,13 @@ export function PublicHeader() {
             <a href="/" className="flex items-center gap-3" style={{ textDecoration: "none" }}>
               <img
                 src="/icon-mark-128.png"
-                alt="Rakshex"
-                style={{ height: "36px", width: "36px", objectFit: "contain" }}
+                alt="RaksHex"
+                style={{
+                  height: "38px",
+                  width: "38px",
+                  objectFit: "contain",
+                  filter: "brightness(1.4) contrast(1.1)",
+                }}
               />
               <span
                 style={{
@@ -94,7 +99,7 @@ export function PublicHeader() {
                   fontFamily: "inherit",
                 }}
               >
-                Rakshex
+                RaksHex
               </span>
             </a>
 
@@ -271,28 +276,28 @@ export function PublicHeader() {
                       href="/compare/rakshex-vs-snyk"
                       onClick={forceClose}
                     >
-                      RakshEx vs Snyk →
+                      RaksHex vs Snyk →
                     </Link>
                     <Link
                       className="text-[#9CA3AF] hover:text-[#14B8A6] text-xs py-1.5 transition-colors border-b border-[#1A1F2E] pb-2"
                       href="/compare/rakshex-vs-datadog"
                       onClick={forceClose}
                     >
-                      RakshEx vs Datadog →
+                      RaksHex vs Datadog →
                     </Link>
                     <Link
                       className="text-[#9CA3AF] hover:text-[#14B8A6] text-xs py-1.5 transition-colors border-b border-[#1A1F2E] pb-2"
                       href="/compare/rakshex-vs-traceable"
                       onClick={forceClose}
                     >
-                      RakshEx vs Traceable AI →
+                      RaksHex vs Traceable AI →
                     </Link>
                     <Link
                       className="text-[#9CA3AF] hover:text-[#14B8A6] text-xs py-1.5 transition-colors"
                       href="/compare/rakshex-vs-salt"
                       onClick={forceClose}
                     >
-                      RakshEx vs Salt Security →
+                      RaksHex vs Salt Security →
                     </Link>
                   </div>
                 </div>
@@ -449,21 +454,21 @@ export function PublicHeader() {
                   href="/compare/rakshex-vs-snyk"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  RakshEx vs Snyk
+                  RaksHex vs Snyk
                 </Link>
                 <Link
                   className="text-sm text-neutral-300"
                   href="/compare/rakshex-vs-datadog"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  RakshEx vs Datadog
+                  RaksHex vs Datadog
                 </Link>
                 <Link
                   className="text-sm text-neutral-300"
                   href="/compare/rakshex-vs-traceable"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  RakshEx vs Traceable AI
+                  RaksHex vs Traceable AI
                 </Link>
               </div>
             </div>

@@ -16,7 +16,7 @@ export default function GitHubIntegrationPage() {
   const handleConnect = async () => {
     // In production, this would redirect to GitHub App install flow
     const clientId = "YOUR_GITHUB_APP_CLIENT_ID";
-    window.location.href = `https://github.com/apps/rakshex-security/installations/new`;
+    window.location.href = `https://github.com/apps/RaksHex-security/installations/new`;
   };
 
   return (
@@ -39,7 +39,7 @@ export default function GitHubIntegrationPage() {
           <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
             <h2 className="text-xl font-semibold mb-4">GitHub App Connection</h2>
             <p className="text-gray-400 mb-4">
-              Install the Rakshex GitHub App to enable automatic PR security scans. Findings are
+              Install the RaksHex GitHub App to enable automatic PR security scans. Findings are
               posted as comments on each pull request.
             </p>
             <button

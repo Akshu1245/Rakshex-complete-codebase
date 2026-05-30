@@ -74,7 +74,7 @@ const PLAYBOOKS: Playbook[] = [
       "Add the attack pattern to your custom blocklist if not already covered",
       "Review system prompt hardening — add explicit role anchoring",
       "Enable PII redaction if user inputs are flowing into prompts",
-      "Report novel attack patterns to Rakshex (helps improve the detection library)",
+      "Report novel attack patterns to RaksHex (helps improve the detection library)",
     ],
     estimatedTime: "20–45 min",
     severity: "high",

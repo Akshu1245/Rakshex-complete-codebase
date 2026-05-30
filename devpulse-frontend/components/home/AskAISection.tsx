@@ -4,7 +4,7 @@ export function AskAISection() {
   const items = [
     {
       name: "Gemini",
-      url: "https://gemini.google.com/app?q=Explain+RakshEx+(rakshex.in)+to+a+security+engineer.+Cover+API+security+scanning,+LLM+cost+monitoring,+prompt+injection+blocking,+and+compliance+reporting.+Summarize+from+https://rakshex.in",
+      url: "https://gemini.google.com/app?q=Explain+RaksHex+(rakshex.in)+to+a+security+engineer.+Cover+API+security+scanning,+LLM+cost+monitoring,+prompt+injection+blocking,+and+compliance+reporting.+Summarize+from+https://rakshex.in",
       svg: `
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8">
           <!-- Sparkle shape -->
@@ -14,7 +14,7 @@ export function AskAISection() {
     },
     {
       name: "ChatGPT",
-      url: "https://chat.openai.com?q=Explain+RakshEx+(rakshex.in)+to+a+security+engineer.+Cover+API+security+scanning,+LLM+cost+monitoring,+prompt+injection+blocking,+and+compliance+reporting.+Summarize+from+https://rakshex.in",
+      url: "https://chat.openai.com?q=Explain+RaksHex+(rakshex.in)+to+a+security+engineer.+Cover+API+security+scanning,+LLM+cost+monitoring,+prompt+injection+blocking,+and+compliance+reporting.+Summarize+from+https://rakshex.in",
       svg: `
         <svg viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8">
           <!-- OpenAI logo shape -->
@@ -24,7 +24,7 @@ export function AskAISection() {
     },
     {
       name: "Claude",
-      url: "https://claude.ai/new?q=Explain+RakshEx+(rakshex.in)+to+a+security+engineer.+Cover+API+security+scanning,+LLM+cost+monitoring,+prompt+injection+blocking,+and+compliance+reporting.+Summarize+from+https://rakshex.in",
+      url: "https://claude.ai/new?q=Explain+RaksHex+(rakshex.in)+to+a+security+engineer.+Cover+API+security+scanning,+LLM+cost+monitoring,+prompt+injection+blocking,+and+compliance+reporting.+Summarize+from+https://rakshex.in",
       svg: `
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8">
           <!-- Anthropic logo representation -->
@@ -34,7 +34,7 @@ export function AskAISection() {
     },
     {
       name: "Grok",
-      url: "https://grok.com?q=Explain+RakshEx+(rakshex.in)+to+a+security+engineer.+Cover+API+security+scanning,+LLM+cost+monitoring,+prompt+injection+blocking,+and+compliance+reporting.+Summarize+from+https://rakshex.in",
+      url: "https://grok.com?q=Explain+RaksHex+(rakshex.in)+to+a+security+engineer.+Cover+API+security+scanning,+LLM+cost+monitoring,+prompt+injection+blocking,+and+compliance+reporting.+Summarize+from+https://rakshex.in",
       svg: `
         <svg viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8">
           <!-- X / Grok logo representation -->
@@ -44,7 +44,7 @@ export function AskAISection() {
     },
     {
       name: "Perplexity",
-      url: "https://perplexity.ai?q=Explain+RakshEx+(rakshex.in)+to+a+security+engineer.+Cover+API+security+scanning,+LLM+cost+monitoring,+prompt+injection+blocking,+and+compliance+reporting.+Summarize+from+https://rakshex.in",
+      url: "https://perplexity.ai?q=Explain+RaksHex+(rakshex.in)+to+a+security+engineer.+Cover+API+security+scanning,+LLM+cost+monitoring,+prompt+injection+blocking,+and+compliance+reporting.+Summarize+from+https://rakshex.in",
       svg: `
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8">
           <!-- Star/Asterisk shape -->
@@ -61,7 +61,7 @@ export function AskAISection() {
     >
       <div className="flex flex-col items-center justify-center gap-8">
         <h2 className="text-[32px] leading-[1.2] font-normal text-center font-manrope text-white">
-          What's RakshEx? Ask AI
+          What's RaksHex? Ask AI
         </h2>
         <div className="flex flex-row flex-wrap items-center justify-center gap-10">
           {items.map((item, idx) => (

@@ -63,12 +63,12 @@ export function HeroFlowDiagram() {
       {/* CARD 1 — Agent — top area */}
       <AgentCard />
 
-      {/* CONNECTOR: Agent → RakshEx (solid arrow line going DOWN) */}
+      {/* CONNECTOR: Agent → RaksHex (solid arrow line going DOWN) */}
       <ConnectorVertical />
 
-      {/* BOTTOM ROW: RakshEx card + Application card */}
+      {/* BOTTOM ROW: RaksHex card + Application card */}
       <div className="diagram-bottom-row">
-        {/* CARD 2 — RakshEx (main card, cyan border) */}
+        {/* CARD 2 — RaksHex (main card, cyan border) */}
         <div className="diagram-card card-main">
           <div className="card-header">
             {/* Shield icon */}
@@ -82,7 +82,7 @@ export function HeroFlowDiagram() {
             >
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg>
-            <span className="card-title">RakshEx</span>
+            <span className="card-title">RaksHex</span>
           </div>
           <div className="card-rows">
             <div className="card-row">
@@ -108,7 +108,7 @@ export function HeroFlowDiagram() {
           </div>
         </div>
 
-        {/* CONNECTOR: RakshEx → Application (dotted horizontal line) */}
+        {/* CONNECTOR: RaksHex → Application (dotted horizontal line) */}
         <ConnectorHorizontal />
 
         {/* CARD 3 — Security Report (Application card) */}

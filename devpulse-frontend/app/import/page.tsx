@@ -92,7 +92,7 @@ export default function ImportPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-white">Import Data</h1>
-          <p className="text-gray-400 mt-1">Migrate from another platform to Rakshex</p>
+          <p className="text-gray-400 mt-1">Migrate from another platform to RaksHex</p>
         </div>
         <Link href="/collections" className="text-blue-400 hover:text-blue-300 text-sm">
           ← Back to Collections

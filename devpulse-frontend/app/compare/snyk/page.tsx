@@ -1,51 +1,51 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Rakshex vs Snyk — Honest Comparison",
+  title: "RaksHex vs Snyk — Honest Comparison",
   description:
-    "Snyk scans static code. Rakshex scans live API traffic. Snyk has no LLM threat coverage or cost intelligence. Compare runtime vs static security analysis.",
+    "Snyk scans static code. RaksHex scans live API traffic. Snyk has no LLM threat coverage or cost intelligence. Compare runtime vs static security analysis.",
 };
 
 const features = [
   {
     name: "Analysis Approach",
     snyk: "Static code analysis (SAST) — scans source files",
-    rakshex: "Runtime API traffic analysis — scans live requests",
+    RaksHex: "Runtime API traffic analysis — scans live requests",
   },
   {
     name: "OWASP API Top 10",
     snyk: "Partial — code patterns only, no runtime context",
-    rakshex: "Full OWASP API Top 10 on live traffic",
+    RaksHex: "Full OWASP API Top 10 on live traffic",
   },
   {
     name: "Prompt Injection Detection",
     snyk: "Not available — LLM threats not in scope",
-    rakshex: "50+ payload patterns, real-time blocking",
+    RaksHex: "50+ payload patterns, real-time blocking",
   },
   {
     name: "LLM Cost Intelligence",
     snyk: "Not available",
-    rakshex: "Per-model, per-agent cost attribution + forecasting",
+    RaksHex: "Per-model, per-agent cost attribution + forecasting",
   },
   {
     name: "Shadow API Detection",
     snyk: "Not available",
-    rakshex: "Runtime undocumented endpoint discovery",
+    RaksHex: "Runtime undocumented endpoint discovery",
   },
   {
     name: "Kill Switch",
     snyk: "Not available",
-    rakshex: "Hard stop on budget, anomaly, or red-team score",
+    RaksHex: "Hard stop on budget, anomaly, or red-team score",
   },
   {
     name: "PCI DSS v4.0.1 Compliance",
     snyk: "Code-level vulnerability mapping only",
-    rakshex: "Full PCI DSS v4.0.1 runtime compliance reports",
+    RaksHex: "Full PCI DSS v4.0.1 runtime compliance reports",
   },
   {
     name: "Agent-level Threat Detection",
     snyk: "Not available",
-    rakshex: "MCP tool governance, agent drift detection",
+    RaksHex: "MCP tool governance, agent drift detection",
   },
   {
     name: "API Collection Scanning",
@@ -55,7 +55,7 @@ const features = [
   {
     name: "Runtime PII Redaction",
     snyk: "Not available",
-    rakshex: "Real-time redaction in live API traffic",
+    RaksHex: "Real-time redaction in live API traffic",
   },
 ];
 
@@ -76,10 +76,10 @@ export default function CompareSnyk() {
           className="mb-2"
           style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "36px", fontWeight: 700 }}
         >
-          Rakshex vs Snyk
+          RaksHex vs Snyk
         </h1>
         <p className="text-on-surface-variant mb-8" style={{ fontSize: "16px", lineHeight: 1.7 }}>
-          Snyk is excellent for static code vulnerability scanning. Rakshex operates at the other
+          Snyk is excellent for static code vulnerability scanning. RaksHex operates at the other
           end of the spectrum — scanning live API traffic at runtime, detecting LLM-specific threats
           like prompt injection, and providing cost intelligence Snyk simply does not cover.
         </p>
@@ -91,7 +91,7 @@ export default function CompareSnyk() {
                 <tr style={{ fontSize: "11px", letterSpacing: "0.1em" }}>
                   <th className="p-4 text-on-surface font-bold">FEATURE</th>
                   <th className="p-4 text-on-surface-variant w-1/3 font-bold">SNYK</th>
-                  <th className="p-4 text-primary w-1/3 font-bold">RAKSHEX</th>
+                  <th className="p-4 text-primary w-1/3 font-bold">RaksHex</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/10">
@@ -104,7 +104,7 @@ export default function CompareSnyk() {
                       {f.snyk}
                     </td>
                     <td className="p-4 text-on-surface" style={{ fontSize: "13px" }}>
-                      {f.rakshex}
+                      {f.RaksHex}
                     </td>
                   </tr>
                 ))}
@@ -134,7 +134,7 @@ export default function CompareSnyk() {
               className="font-bold mb-3 text-primary"
               style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "18px" }}
             >
-              When to choose Rakshex
+              When to choose RaksHex
             </h3>
             <ul className="space-y-2 text-on-surface-variant" style={{ fontSize: "13px" }}>
               <li>• You need runtime API traffic scanning (not just SAST)</li>
@@ -152,7 +152,7 @@ export default function CompareSnyk() {
             className="inline-block px-8 py-4 bg-primary text-on-primary font-bold hover:shadow-[0_0_20px_rgba(207,188,255,0.4)] transition-all"
             style={{ fontSize: "12px", letterSpacing: "0.1em" }}
           >
-            TRY RAKSHEX FREE →
+            TRY RaksHex FREE →
           </Link>
         </div>
       </div>

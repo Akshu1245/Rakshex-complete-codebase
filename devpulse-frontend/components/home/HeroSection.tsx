@@ -10,7 +10,7 @@ export function HeroSection() {
   const [activeLogoName, setActiveLogoName] = useState("OpenAI");
 
   const handleCopyCommand = () => {
-    navigator.clipboard.writeText("npx rakshex scan ./collection.json");
+    navigator.clipboard.writeText("npx RaksHex scan ./collection.json");
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -55,7 +55,7 @@ export function HeroSection() {
           {/* CLI Command Pill */}
           <div className="hero-cli-pill bg-[#1A1F2E] border border-[#14B8A6]/25 rounded-full px-5 py-2.5 flex items-center gap-4 w-fit mb-12">
             <span className="cli-text text-[#14B8A6] font-mono text-sm">
-              $ npx rakshex scan ./collection.json
+              $ npx RaksHex scan ./collection.json
             </span>
             <button
               onClick={handleCopyCommand}

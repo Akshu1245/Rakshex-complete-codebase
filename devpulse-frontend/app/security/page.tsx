@@ -4,14 +4,14 @@ export default function SecurityWhitepaper() {
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8">
       <div className="max-w-4xl mx-auto prose prose-invert">
-        <p className="text-blue-400 text-sm font-medium mb-2">Rakshex Security</p>
+        <p className="text-blue-400 text-sm font-medium mb-2">RaksHex Security</p>
         <h1 className="text-4xl font-bold mb-4">Security Architecture Whitepaper</h1>
         <p className="text-gray-400 mb-8">Last updated: May 2026 · 15 min read</p>
 
         <section className="mb-10">
           <h2 className="text-2xl font-bold mb-4">Executive Summary</h2>
           <p className="text-gray-300 leading-relaxed">
-            Rakshex is an AI Runtime Governance Platform that provides inline security scanning,
+            RaksHex is an AI Runtime Governance Platform that provides inline security scanning,
             cost monitoring, and compliance enforcement for production LLM applications. This
             document describes our security architecture, threat model, and the controls we
             implement to protect customer data.

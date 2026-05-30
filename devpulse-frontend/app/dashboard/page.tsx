@@ -350,7 +350,7 @@ export default function Dashboard() {
                 </span>
                 <p className="font-semibold text-white">No active telemetry stream detected</p>
                 <p className="text-xs text-on-surface-variant mt-1 max-w-sm">
-                  Connect the Rakshex SDK to start streaming live AI node metrics to this dashboard.
+                  Connect the RaksHex SDK to start streaming live AI node metrics to this dashboard.
                 </p>
               </div>
             ) : (
@@ -410,7 +410,7 @@ export default function Dashboard() {
           </span>
         </div>
         <span className="font-label-mono text-[10px] text-on-surface-variant tracking-wider">
-          RAKSHEX AI SECURITY CORE • VERSION 2.1.4
+          RaksHex AI SECURITY CORE • VERSION 2.1.4
         </span>
       </footer>
     </div>

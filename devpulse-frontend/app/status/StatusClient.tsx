@@ -111,7 +111,7 @@ export default function StatusClient() {
           </h2>
           <p className="text-sm opacity-80 mt-0.5">
             {overallStatus === "operational"
-              ? "All RakshEx backend engines and governance services are running smoothly."
+              ? "All RaksHex backend engines and governance services are running smoothly."
               : overallStatus === "degraded"
                 ? "We are experiencing service degradations or connectivity issues. Our engineers are investigating."
                 : "Checking system health status..."}

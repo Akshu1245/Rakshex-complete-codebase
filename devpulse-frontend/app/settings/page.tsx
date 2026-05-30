@@ -574,7 +574,7 @@ function NotificationsTab() {
     {
       key: "promotionalEmails",
       label: "Product updates",
-      description: "Occasional emails about new Rakshex features.",
+      description: "Occasional emails about new RaksHex features.",
     },
   ];
 
@@ -583,7 +583,7 @@ function NotificationsTab() {
       <div>
         <h3 className="text-lg font-medium text-white">Email Notifications</h3>
         <p className="text-sm text-gray-400 mt-1">
-          Choose which emails you want to receive from Rakshex.
+          Choose which emails you want to receive from RaksHex.
         </p>
       </div>
 

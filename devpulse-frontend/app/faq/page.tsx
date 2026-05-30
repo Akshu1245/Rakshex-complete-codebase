@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "FAQ — RakshEx AI Governance Platform",
+  title: "FAQ — RaksHex AI Governance Platform",
   description:
-    "Frequently asked questions about RakshEx pricing, security, compliance, setup, and enterprise features.",
+    "Frequently asked questions about RaksHex pricing, security, compliance, setup, and enterprise features.",
   alternates: { canonical: "/faq" },
 };
 
@@ -22,15 +22,15 @@ const FAQS = [
   },
   {
     q: "How does the kill switch work?",
-    a: "You can configure budget thresholds, anomaly detection scores, or prompt injection blocks. When a policy is violated, RakshEx blocks further API calls to the LLM within milliseconds, preventing cost overruns and data leaks.",
+    a: "You can configure budget thresholds, anomaly detection scores, or prompt injection blocks. When a policy is violated, RaksHex blocks further API calls to the LLM within milliseconds, preventing cost overruns and data leaks.",
   },
   {
     q: "What LLM providers do you support?",
     a: "We support all major providers, including OpenAI, Anthropic, Google Gemini, Cohere, Mistral, Groq, and AWS Bedrock.",
   },
   {
-    q: "How is RakshEx different from Snyk or Datadog?",
-    a: "Snyk scans static code dependencies, and Datadog provides general APM metrics. RakshEx is built specifically for AI runtime governance—analyzing LLM inputs/outputs in real-time, detecting prompt injections, managing token budgets, and mapping anomalies to compliance clauses.",
+    q: "How is RaksHex different from Snyk or Datadog?",
+    a: "Snyk scans static code dependencies, and Datadog provides general APM metrics. RaksHex is built specifically for AI runtime governance—analyzing LLM inputs/outputs in real-time, detecting prompt injections, managing token budgets, and mapping anomalies to compliance clauses.",
   },
   {
     q: "Do you support self-hosted deployment?",
@@ -42,7 +42,7 @@ const FAQS = [
   },
   {
     q: "How does thinking token attribution work?",
-    a: "For models with reasoning tokens (like OpenAI o1/o3 or DeepSeek R1), RakshEx parses the raw API response, isolates the thinking tokens, and attributes their exact cost separately from standard output tokens.",
+    a: "For models with reasoning tokens (like OpenAI o1/o3 or DeepSeek R1), RaksHex parses the raw API response, isolates the thinking tokens, and attributes their exact cost separately from standard output tokens.",
   },
   {
     q: "Is there a free trial for Pro?",
@@ -66,7 +66,7 @@ export default function FAQPage() {
           Frequently Asked Questions
         </h1>
         <p className="text-gray-400 mb-12 font-mono text-sm">
-          Everything you need to know about RakshEx. Can't find your question?{" "}
+          Everything you need to know about RaksHex. Can't find your question?{" "}
           <Link
             href="mailto:support@rakshex.in"
             className="text-blue-400 hover:text-blue-300 underline"

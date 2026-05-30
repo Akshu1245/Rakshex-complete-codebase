@@ -5,35 +5,35 @@ export function TestimonialsSection() {
     {
       initials: "DR",
       author: "Devesh R.",
-      title: "CTO, Fintech Corp",
+      title: "CTO, Fintech Startup, Bengaluru",
       quote:
-        "RakshEx discovered a live production API credential in our codebase during staging scan. Incredibly fast.",
+        "RaksHex discovered a live production API credential in our codebase during staging scan. Incredibly fast.",
     },
     {
       initials: "AK",
       author: "Aarti K.",
-      title: "AppSec Director, DevScale",
+      title: "AppSec Director, AI Infrastructure Team",
       quote:
         "The runtime kill switch stopped an infinite LLM agent loop that would have cost us thousands. Lifesaver.",
     },
     {
       initials: "SS",
       author: "Siddharth S.",
-      title: "Security Architect, PaySafe",
+      title: "Security Architect, Payments Platform, India",
       quote:
         "SOC2 compliance readiness package built in one click. Our auditor was extremely impressed by the evidence.",
     },
     {
       initials: "PP",
       author: "Priya P.",
-      title: "Lead Developer, NeoBank",
+      title: "Lead Developer, Digital Banking Team",
       quote:
         "We isolated 45% of our monthly model invoice down to reasoning token overhead. Brilliant attribution tool.",
     },
     {
       initials: "NG",
       author: "Nikhil G.",
-      title: "Founder, SaaSify",
+      title: "Founder, SaaS Startup, India",
       quote:
         "Integrating the scanner into our GitHub actions pipeline took 3 minutes. High quality security checks.",
     },

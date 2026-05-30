@@ -71,7 +71,7 @@ export default function ScanningPage() {
       {
         time: new Date().toLocaleTimeString(),
         type: "info",
-        msg: "Initializing Rakshex Scanner Core...",
+        msg: "Initializing RaksHex Scanner Core...",
       },
       {
         time: new Date().toLocaleTimeString(),
@@ -158,7 +158,7 @@ export default function ScanningPage() {
       } else if (cmd === "scan") {
         handleScan();
       } else if (cmd === "version") {
-        addTerminalLog("success", "Rakshex Security Scan Core v2.1.4-beta");
+        addTerminalLog("success", "RaksHex Security Scan Core v2.1.4-beta");
       } else if (cmd === "status") {
         addTerminalLog(
           "info",
@@ -215,7 +215,7 @@ export default function ScanningPage() {
                     >
                       Production API
                     </div>
-                    <div className="text-[12px] text-on-surface-variant">api.rakshex-cloud.net</div>
+                    <div className="text-[12px] text-on-surface-variant">api.RaksHex-cloud.net</div>
                   </div>
                   <span
                     className={`material-symbols-outlined ${targetEnv === "production" ? "text-primary" : "text-on-surface-variant"}`}
@@ -239,7 +239,7 @@ export default function ScanningPage() {
                       Staging Node
                     </div>
                     <div className="text-[12px] text-on-surface-variant">
-                      stg-us-east.rakshex.dev
+                      stg-us-east.RaksHex.dev
                     </div>
                   </div>
                   <span

@@ -231,7 +231,7 @@ export default function BlogAgentSecurity() {
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 my-8">
             <h3 className="text-xl font-bold text-white mb-2">Secure Your AI Agents</h3>
             <p className="text-sm text-slate-400 mb-4">
-              RakshEx provides complete runtime governance for AI agents, offering prompt injection
+              RaksHex provides complete runtime governance for AI agents, offering prompt injection
               detection, automated tool parameter validation, and human approval gateways. Start
               scanning your APIs now.
             </p>

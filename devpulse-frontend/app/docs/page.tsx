@@ -30,13 +30,13 @@ export default function DocsOverview() {
       </div>
 
       <p>
-        RakshEx gives your AI agents and APIs real-time security scanning, LLM cost attribution,
+        RaksHex gives your AI agents and APIs real-time security scanning, LLM cost attribution,
         prompt injection blocking, and compliance reporting — all in one platform. 478 server tests.
       </p>
 
       <h2 id="connect-first">Connect first</h2>
       <p>
-        Required setup. Pick one path to link your environment to RakshEx before you start building.
+        Required setup. Pick one path to link your environment to RaksHex before you start building.
         Start with the CLI for a universal terminal-based setup; add the VS Code extension if you
         prefer in-editor visibility.
       </p>
@@ -45,12 +45,12 @@ export default function DocsOverview() {
         <Link href="/docs/quickstart/cli" className="docs-card">
           <div className="docs-card-icon">›_</div>
           <div className="docs-card-title">Connect via CLI</div>
-          <p>npx rakshex scan ./collection.json — works in any terminal.</p>
+          <p>npx RaksHex scan ./collection.json — works in any terminal.</p>
         </Link>
         <Link href="/docs/quickstart/vscode" className="docs-card">
           <div className="docs-card-icon">⚡</div>
           <div className="docs-card-title">Connect via VS Code</div>
-          <p>Install the RakshEx extension for inline scanning and cost alerts.</p>
+          <p>Install the RaksHex extension for inline scanning and cost alerts.</p>
         </Link>
       </div>
 

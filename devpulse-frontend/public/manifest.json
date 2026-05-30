@@ -1,6 +1,6 @@
 {
-  "name": "Rakshex — API Security & LLM Cost Intelligence",
-  "short_name": "Rakshex",
+  "name": "RaksHex — API Security & LLM Cost Intelligence",
+  "short_name": "RaksHex",
   "description": "API Security & LLM Cost Intelligence. OWASP scanning, prompt injection blocking, and LLM cost attribution.",
   "start_url": "/",
   "display": "standalone",

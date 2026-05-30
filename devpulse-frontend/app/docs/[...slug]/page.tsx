@@ -15,12 +15,12 @@ export async function generateMetadata({ params }: PageProps) {
 
   if (!page) {
     return {
-      title: "Doc Page Not Found — RakshEx Docs",
+      title: "Doc Page Not Found — RaksHex Docs",
     };
   }
 
   return {
-    title: `${page.title} — RakshEx Docs`,
+    title: `${page.title} — RaksHex Docs`,
     description: page.lead,
     alternates: { canonical: `/docs/${path}` },
   };
@@ -66,7 +66,7 @@ export default function DocSubPage({ params }: PageProps) {
           ← Back to overview
         </Link>
         <Link href="/register" className="docs-cta">
-          Try RakshEx Free
+          Try RaksHex Free
         </Link>
       </div>
     </article>

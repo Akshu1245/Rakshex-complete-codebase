@@ -103,7 +103,7 @@ export default function AuditLogPage() {
               </span>
             }
             title="No audit events yet"
-            description="User actions and security events appear here automatically as your team uses Rakshex."
+            description="User actions and security events appear here automatically as your team uses RaksHex."
           />
         ) : (
           <>

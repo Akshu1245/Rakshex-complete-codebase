@@ -17,10 +17,10 @@ const inter = Inter({ subsets: ["latin"] });
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://rakshex.in";
 
 export const metadata: Metadata = {
-  title: "Rakshex — API Security & LLM Cost Intelligence",
+  title: "RaksHex — API Security & LLM Cost Intelligence",
   description:
     "API Security & LLM Cost Intelligence. Scan APIs, detect shadow endpoints, block prompt injection, attribute LLM costs.",
-  generator: "Rakshex",
+  generator: "RaksHex",
   keywords: [
     "API security",
     "LLM cost monitoring",
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     "LLM runtime security",
     "AI agent protection",
     "OWASP API Top 10",
-    "Rakshex",
+    "RaksHex",
   ],
   metadataBase: new URL(SITE_URL),
   alternates: { canonical: "/" },
@@ -45,24 +45,24 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
   },
   openGraph: {
-    title: "Rakshex — Secure Your APIs & Control LLM Costs",
+    title: "RaksHex — Secure Your APIs & Control LLM Costs",
     description:
       "Real-time OWASP API scanning, LLM cost attribution, thinking token tracking, and PCI DSS compliance.",
     type: "website",
-    siteName: "Rakshex",
+    siteName: "RaksHex",
     locale: "en_US",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Rakshex — API Security & LLM Cost Intelligence",
+        alt: "RaksHex — API Security & LLM Cost Intelligence",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Rakshex — API Security & LLM Cost Intelligence",
+    title: "RaksHex — API Security & LLM Cost Intelligence",
     description: "API Security & LLM Cost Intelligence.",
     creator: "@rakshexhq",
     images: ["/og-image.png"],
@@ -101,10 +101,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta property="og:image:type" content="image/png" />
-        <meta property="og:image:alt" content="Rakshex — AI Runtime Governance Platform" />
+        <meta property="og:image:alt" content="RaksHex — AI Runtime Governance Platform" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:image" content="https://rakshex.in/og-image.png" />
-        <meta name="twitter:image:alt" content="Rakshex — AI Runtime Governance Platform" />
+        <meta name="twitter:image:alt" content="RaksHex — AI Runtime Governance Platform" />
       </head>
       <body className={inter.className} style={{ backgroundColor: "#0a0a0a" }}>
         <TRPCProvider>

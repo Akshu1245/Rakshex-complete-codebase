@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "About — Rakshex by Rashi Technologies",
+  title: "About — RaksHex by Rashi Technologies",
   description:
-    "Meet the team behind Rakshex. Our mission: make AI governance accessible to every developer.",
+    "Meet the team behind RaksHex. Our mission: make AI governance accessible to every developer.",
   alternates: { canonical: "/about" },
 };
 
@@ -16,7 +16,7 @@ export default function AboutPage() {
           Built by Developers, for Developers
         </h1>
         <p className="text-neutral-400 text-lg max-w-2xl mx-auto leading-relaxed">
-          Rakshex was born from a simple observation: every company shipping AI to production has
+          RaksHex was born from a simple observation: every company shipping AI to production has
           three invisible risks — security holes, runaway costs, and compliance gaps. We built the
           platform we wished existed.
         </p>

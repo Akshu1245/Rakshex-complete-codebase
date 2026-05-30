@@ -1,61 +1,61 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Rakshex vs Lakera Guard — Honest Comparison",
+  title: "RaksHex vs Lakera Guard — Honest Comparison",
   description:
-    "Lakera Guard is the leader in prompt injection defense. Rakshex adds API security, compliance, and cost governance. Side-by-side comparison.",
+    "Lakera Guard is the leader in prompt injection defense. RaksHex adds API security, compliance, and cost governance. Side-by-side comparison.",
 };
 
 const features = [
   {
     name: "Prompt Injection Defense",
     lakera: "Industry-leading (research-backed)",
-    rakshex: "Built-in engine with 50+ patterns + heuristic layers",
+    RaksHex: "Built-in engine with 50+ patterns + heuristic layers",
   },
   {
     name: "PII Detection & Redaction",
     lakera: "Available",
-    rakshex: "Available + compliance-grade audit trail",
+    RaksHex: "Available + compliance-grade audit trail",
   },
   {
     name: "API Security Scanning",
     lakera: "Not available",
-    rakshex: "Postman / OpenAPI collection scanner",
+    RaksHex: "Postman / OpenAPI collection scanner",
   },
   {
     name: "Shadow API Detection",
     lakera: "Not available",
-    rakshex: "Automatic undocumented endpoint discovery",
+    RaksHex: "Automatic undocumented endpoint discovery",
   },
   {
     name: "Kill Switch / Budget Cap",
     lakera: "Not available",
-    rakshex: "Hard stop + Slack/Email/Webhook alerts",
+    RaksHex: "Hard stop + Slack/Email/Webhook alerts",
   },
   {
     name: "Compliance Reporting",
     lakera: "Not available",
-    rakshex: "PCI DSS, OWASP, SOC 2 mapped findings",
+    RaksHex: "PCI DSS, OWASP, SOC 2 mapped findings",
   },
   {
     name: "LLM Cost Monitoring",
     lakera: "Not available",
-    rakshex: "Per-request cost tracking + anomaly detection",
+    RaksHex: "Per-request cost tracking + anomaly detection",
   },
   {
     name: "VS Code Extension",
     lakera: "Not available",
-    rakshex: "In-editor scanning + real-time warnings",
+    RaksHex: "In-editor scanning + real-time warnings",
   },
   {
     name: "GitHub App / CI Gate",
     lakera: "Not available",
-    rakshex: "PR-level security gate with auto-fix",
+    RaksHex: "PR-level security gate with auto-fix",
   },
   {
     name: "Self-hosted Option",
     lakera: "Enterprise only",
-    rakshex: "Docker Compose (all tiers)",
+    RaksHex: "Docker Compose (all tiers)",
   },
 ];
 
@@ -69,9 +69,9 @@ export default function CompareLakera() {
           </Link>
         </nav>
 
-        <h1 className="text-4xl font-bold mb-2">Rakshex vs Lakera Guard</h1>
+        <h1 className="text-4xl font-bold mb-2">RaksHex vs Lakera Guard</h1>
         <p className="text-xl text-gray-400 mb-8">
-          Lakera Guard is the most advanced prompt injection defense on the market. Rakshex covers
+          Lakera Guard is the most advanced prompt injection defense on the market. RaksHex covers
           prompt injection <em>plus</em> API security, compliance, and cost governance.
         </p>
 
@@ -81,7 +81,7 @@ export default function CompareLakera() {
               <tr>
                 <th className="p-4 text-white">Feature</th>
                 <th className="p-4 text-gray-300 w-1/3">Lakera Guard</th>
-                <th className="p-4 text-blue-300 w-1/3">Rakshex</th>
+                <th className="p-4 text-blue-300 w-1/3">RaksHex</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-700">
@@ -89,7 +89,7 @@ export default function CompareLakera() {
                 <tr key={i} className="hover:bg-gray-700/30 transition-colors">
                   <td className="p-4 font-medium">{f.name}</td>
                   <td className="p-4 text-gray-400">{f.lakera}</td>
-                  <td className="p-4 text-gray-200">{f.rakshex}</td>
+                  <td className="p-4 text-gray-200">{f.RaksHex}</td>
                 </tr>
               ))}
             </tbody>
@@ -108,7 +108,7 @@ export default function CompareLakera() {
           </div>
 
           <div className="bg-gray-800/50 border border-blue-500/30 rounded-xl p-6">
-            <h3 className="text-xl font-bold mb-3 text-blue-400">When to choose Rakshex</h3>
+            <h3 className="text-xl font-bold mb-3 text-blue-400">When to choose RaksHex</h3>
             <ul className="list-disc list-inside text-gray-300 space-y-2">
               <li>You need prompt injection + API security + compliance in one tool</li>
               <li>You want self-hosted with Indian data residency</li>
@@ -124,7 +124,7 @@ export default function CompareLakera() {
             href="/demo"
             className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors"
           >
-            Try Rakshex Free →
+            Try RaksHex Free →
           </Link>
         </div>
       </div>

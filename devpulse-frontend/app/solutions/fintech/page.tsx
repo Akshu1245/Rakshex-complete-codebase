@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "AI Security for Fintech APIs — RakshEx",
+  title: "AI Security for Fintech APIs — RaksHex",
   description:
-    "RakshEx secures financial services AI applications, ensuring PCI-DSS compliance, real-time fraud prevention, and thinking token cost governance.",
+    "RaksHex secures financial services AI applications, ensuring PCI-DSS compliance, real-time fraud prevention, and thinking token cost governance.",
   alternates: { canonical: "/solutions/fintech" },
 };
 
@@ -11,15 +11,15 @@ export default function FintechSolutionPage() {
   const painPoints = [
     {
       title: "PCI-DSS Compliance",
-      desc: "Regulated financial platforms must ensure cardholder data (CHD) and sensitive authentication data (SAD) never leaks to external LLM provider environments. RakshEx redacts sensitive info at the API level.",
+      desc: "Regulated financial platforms must ensure cardholder data (CHD) and sensitive authentication data (SAD) never leaks to external LLM provider environments. RaksHex redacts sensitive info at the API level.",
     },
     {
       title: "Real-time Fraud Detection in AI Agents",
-      desc: "Autonomous financial agents can be manipulated via prompt injection to transfer funds or override transaction thresholds. RakshEx monitors tool parameters in real time.",
+      desc: "Autonomous financial agents can be manipulated via prompt injection to transfer funds or override transaction thresholds. RaksHex monitors tool parameters in real time.",
     },
     {
       title: "LLM Cost Attribution at Scale",
-      desc: "High-volume transactional LLM calls create massive cloud spend. RakshEx tracks cost attribution per feature, model, and user session.",
+      desc: "High-volume transactional LLM calls create massive cloud spend. RaksHex tracks cost attribution per feature, model, and user session.",
     },
   ];
 
@@ -30,7 +30,7 @@ export default function FintechSolutionPage() {
       challenge:
         "PayWise deployed a customer support agent with access to user account APIs. Attackers attempted direct prompt injections to execute unauthorized transfers.",
       solution:
-        "By routing LLM calls through RakshEx runtime firewalls, PayWise immediately blocked 99.8% of prompt injection strings and put high-value transfers behind AgentGuard approvals.",
+        "By routing LLM calls through RaksHex runtime firewalls, PayWise immediately blocked 99.8% of prompt injection strings and put high-value transfers behind AgentGuard approvals.",
       result:
         "Zero transaction fraud incidents since integration, and full compliance audit log retention.",
     },
@@ -40,7 +40,7 @@ export default function FintechSolutionPage() {
       challenge:
         "InsuTech's underwriting agent queried a vector store containing patient bank details and PAN data, risking leakage to public models.",
       solution:
-        "RakshEx deployed an egress filter redacting Aadhaar, PAN, and bank accounts in real time before data reached external model gateways.",
+        "RaksHex deployed an egress filter redacting Aadhaar, PAN, and bank accounts in real time before data reached external model gateways.",
       result: "100% compliance with India DPDP Act and zero leakage of customer PII.",
     },
     {
@@ -49,7 +49,7 @@ export default function FintechSolutionPage() {
       challenge:
         "TradeFlow's financial advisor agent ran recursive loops that bloated token spend by $12,000 in a single week.",
       solution:
-        "TradeFlow configured RakshEx's cost attribution engine to trace thinking tokens and automatically shut down runaway loops using a budget kill switch.",
+        "TradeFlow configured RaksHex's cost attribution engine to trace thinking tokens and automatically shut down runaway loops using a budget kill switch.",
       result: "Reduced LLM API costs by 64% within the first month of deployment.",
     },
   ];

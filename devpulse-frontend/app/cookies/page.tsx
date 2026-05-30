@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Cookie Policy — Rakshex",
-  description: "How Rakshex uses cookies and tracking technologies.",
+  title: "Cookie Policy — RaksHex",
+  description: "How RaksHex uses cookies and tracking technologies.",
 };
 
 export default function CookiePolicy() {
@@ -85,7 +85,7 @@ export default function CookiePolicy() {
               essential cookies may prevent you from signing in or using core features.
             </p>
             <p className="mt-2">
-              When you first visit Rakshex, we show a cookie consent banner. You can change your
+              When you first visit RaksHex, we show a cookie consent banner. You can change your
               preferences at any time by clicking the cookie icon in the footer.
             </p>
           </section>

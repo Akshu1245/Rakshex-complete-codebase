@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Changelog — RakshEx Product Updates",
+  title: "Changelog — RaksHex Product Updates",
   description:
-    "Track every update, feature, and improvement to RakshEx. See what's new, what changed, and what's coming next.",
+    "Track every update, feature, and improvement to RaksHex. See what's new, what changed, and what's coming next.",
   alternates: { canonical: "/changelog" },
 };
 
@@ -76,7 +76,7 @@ export default function ChangelogPage() {
             Changelog
           </h1>
           <p className="text-neutral-400 mt-2 text-base">
-            Track product updates, early releases, and the evolution of the RakshEx AI governance
+            Track product updates, early releases, and the evolution of the RaksHex AI governance
             framework.
           </p>
         </header>

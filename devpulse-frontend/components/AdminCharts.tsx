@@ -12,7 +12,7 @@ interface User {
 
 /**
  * Inline SVG signup chart. Deliberately dependency-free — Recharts isn't
- * installed in rakshex-frontend and we don't want to expand the bundle
+ * installed in RaksHex-frontend and we don't want to expand the bundle
  * just to render ~30 bars. Computes counts client-side from the existing
  * admin users list, so no new backend endpoint is required.
  */

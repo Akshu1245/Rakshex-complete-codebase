@@ -3,8 +3,8 @@ import Link from "next/link";
 export const metadata = {
   title: "OWASP AI Top 10 2025: What Every API Developer Needs to Know",
   description:
-    "An in-depth guide on the OWASP Top 10 for LLM Applications (2025), how they map to API vulnerabilities, and how RakshEx automates detection.",
-  keywords: ["OWASP AI Top 10", "LLM security", "API security", "RakshEx", "LLM vulnerabilities"],
+    "An in-depth guide on the OWASP Top 10 for LLM Applications (2025), how they map to API vulnerabilities, and how RaksHex automates detection.",
+  keywords: ["OWASP AI Top 10", "LLM security", "API security", "RaksHex", "LLM vulnerabilities"],
   alternates: { canonical: "/blog/owasp-ai-top-10-2025" },
   openGraph: {
     title: "OWASP AI Top 10 2025: API Security Guide",
@@ -120,7 +120,7 @@ export default function BlogOwaspAiTop10() {
           <p>
             In this guide, we will break down all ten vulnerabilities from the OWASP AI Top 10 (2025
             updates), analyze how each maps directly to real-world API architecture, and showcase
-            how RakshEx automates detection at runtime and build time.
+            how RaksHex automates detection at runtime and build time.
           </p>
 
           <hr className="border-slate-800 my-8" />
@@ -140,7 +140,7 @@ export default function BlogOwaspAiTop10() {
             agent has access to tool calls, it will invoke that API endpoint.
           </p>
           <p>
-            <strong>How RakshEx Detects It:</strong> RakshEx scans API collections to identify
+            <strong>How RaksHex Detects It:</strong> RaksHex scans API collections to identify
             inputs fed directly into downstream prompt engines. Our runtime engine inspects incoming
             request streams, using specialized classification heuristics to block adversarial
             prompts before they reach your OpenAI, Anthropic, or Gemini endpoints.
@@ -158,9 +158,9 @@ export default function BlogOwaspAiTop10() {
             it directly on PostgreSQL, you have an AI-driven SQL injection.
           </p>
           <p>
-            <strong>How RakshEx Detects It:</strong> RakshEx validates schema conformance of
+            <strong>How RaksHex Detects It:</strong> RaksHex validates schema conformance of
             model-generated tool calls at runtime. If the output deviates from defined parameters or
-            matches high-risk execution signatures, RakshEx blocks the action.
+            matches high-risk execution signatures, RaksHex blocks the action.
           </p>
 
           <h2 className="text-2xl font-bold text-white mt-8">LLM03: Training Data Poisoning</h2>
@@ -174,7 +174,7 @@ export default function BlogOwaspAiTop10() {
             documents poison the context window.
           </p>
           <p>
-            <strong>How RakshEx Detects It:</strong> RakshEx scans ingestion API endpoints for
+            <strong>How RaksHex Detects It:</strong> RaksHex scans ingestion API endpoints for
             anomalies, checking incoming text payloads for structural patterns commonly used to
             vector-poison databases.
           </p>
@@ -192,7 +192,7 @@ export default function BlogOwaspAiTop10() {
             recursive agent loops that exhaust tokens.
           </p>
           <p>
-            <strong>How RakshEx Detects It:</strong> RakshEx measures input size and enforces
+            <strong>How RaksHex Detects It:</strong> RaksHex measures input size and enforces
             token-rate and recursion limits on LLM API keys directly within our runtime gateway,
             preventing model denial of service.
           </p>
@@ -209,7 +209,7 @@ export default function BlogOwaspAiTop10() {
             environment credentials or run unauthenticated endpoints.
           </p>
           <p>
-            <strong>How RakshEx Detects It:</strong> RakshEx performs static dependency checks and
+            <strong>How RaksHex Detects It:</strong> RaksHex performs static dependency checks and
             discovers shadow/undocumented outbound connections.
           </p>
 
@@ -224,7 +224,7 @@ export default function BlogOwaspAiTop10() {
             without checking permissions.
           </p>
           <p>
-            <strong>How RakshEx Detects It:</strong> Our real-time data egress filter parses the
+            <strong>How RaksHex Detects It:</strong> Our real-time data egress filter parses the
             model response to redact PII (SSNs, Phone Numbers, Credit Cards) and API secrets before
             they exit the API gateway.
           </p>
@@ -241,7 +241,7 @@ export default function BlogOwaspAiTop10() {
             model is tricked into calling this tool for a system file, the backend executes it.
           </p>
           <p>
-            <strong>How RakshEx Detects It:</strong> RakshEx implements policy rules limiting which
+            <strong>How RaksHex Detects It:</strong> RaksHex implements policy rules limiting which
             parameters LLM tools can execute.
           </p>
 
@@ -255,7 +255,7 @@ export default function BlogOwaspAiTop10() {
             GitHub or Stripe.
           </p>
           <p>
-            <strong>How RakshEx Detects It:</strong> RakshEx AgentGuard requires human-in-the-loop
+            <strong>How RaksHex Detects It:</strong> RaksHex AgentGuard requires human-in-the-loop
             approvals for destructive operations (e.g. `delete`, `refund`, `write`) detected in
             model tool execution paths.
           </p>
@@ -269,7 +269,7 @@ export default function BlogOwaspAiTop10() {
             <strong>API Mapping:</strong> Auto-executing generated code or code translations.
           </p>
           <p>
-            <strong>How RakshEx Detects It:</strong> RakshEx logs all hallucination events and
+            <strong>How RaksHex Detects It:</strong> RaksHex logs all hallucination events and
             measures model output variability over time.
           </p>
 
@@ -283,7 +283,7 @@ export default function BlogOwaspAiTop10() {
             the model's knowledge or extracting system prompts through prompt injection.
           </p>
           <p>
-            <strong>How RakshEx Detects It:</strong> RakshEx limits request volumes per token,
+            <strong>How RaksHex Detects It:</strong> RaksHex limits request volumes per token,
             detects extraction queries, and blocks system prompt leakage.
           </p>
 
@@ -291,7 +291,7 @@ export default function BlogOwaspAiTop10() {
             <h3 className="text-xl font-bold text-white mb-2">Secure Your APIs in Minutes</h3>
             <p className="text-sm text-slate-400 mb-4">
               Don't wait for a compliance audit or security breach. Upload your Postman JSON
-              collection to RakshEx to identify OWASP AI Top 10 vulnerabilities instantly.
+              collection to RaksHex to identify OWASP AI Top 10 vulnerabilities instantly.
             </p>
             <div className="flex gap-4">
               <Link

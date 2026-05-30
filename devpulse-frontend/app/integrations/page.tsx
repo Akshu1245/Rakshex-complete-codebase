@@ -25,31 +25,31 @@ const CATEGORIES = [
 const INTEGRATIONS: IntegrationItem[] = [
   // LLM Providers
   {
-    name: "OpenAI for RakshEx",
+    name: "OpenAI for RaksHex",
     category: "LLM Providers",
     status: "Available",
     icon: `<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.795.795 0 0 0 .392-.681v-6.737l2.02 1.168a.071.071 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494zM3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.771.771 0 0 0 .78 0l5.843-3.369v2.332a.080.080 0 0 1-.033.062L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646zM2.34 7.896a4.485 4.485 0 0 1 2.366-1.973V11.6a.766.766 0 0 0 .388.676l5.815 3.355-2.02 1.168a.076.076 0 0 1-.071 0L4.076 14.5A4.5 4.5 0 0 1 2.34 7.896zm16.597 3.855l-5.833-3.387 2.02-1.168a.076.076 0 0 1 .071 0l4.742 2.738a4.5 4.5 0 0 1-.695 8.118v-5.681a.79.79 0 0 0-.405-.62zm2.01-3.023l-.141-.085-4.774-2.782a.776.776 0 0 0-.785 0L9.409 9.23V6.897a.066.066 0 0 1 .028-.061l4.74-2.736a4.5 4.5 0 0 1 6.68 4.66zm-12.64 4.135l-2.02-1.164a.08.08 0 0 1-.038-.057V6.075a4.5 4.5 0 0 1 7.375-3.453l-.142.08L8.704 5.46a.795.795 0 0 0-.393.681zm1.097-2.365l2.602-1.5 2.607 1.5v2.999l-2.597 1.5-2.607-1.5z"/></svg>`,
     description:
-      "Connect OpenAI GPT-4, o1, and o3 models to RakshEx. Full cost attribution, token tracking, and anomaly detection.",
+      "Connect OpenAI GPT-4, o1, and o3 models to RaksHex. Full cost attribution, token tracking, and anomaly detection.",
   },
   {
-    name: "Anthropic Claude for RakshEx",
+    name: "Anthropic Claude for RaksHex",
     category: "LLM Providers",
     status: "Available",
     icon: `<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M17.304 3.541 13.766 13.38H10.23L6.696 3.541H3.541L8.651 17.5h6.698l5.11-13.959h-3.155zM3.541 20.459h16.918v-2.383H3.541v2.383z"/></svg>`,
     description:
-      "Monitor Claude API usage, isolate thinking tokens, and block prompt injection with RakshEx runtime governance.",
+      "Monitor Claude API usage, isolate thinking tokens, and block prompt injection with RaksHex runtime governance.",
   },
   {
-    name: "Google Gemini for RakshEx",
+    name: "Google Gemini for RaksHex",
     category: "LLM Providers",
     status: "Available",
     icon: `<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M11.04 0h1.92C13.92 6.912 17.088 10.08 24 11.04v1.92c-6.912.96-10.08 4.128-10.04 11.04h-1.92C11.04 17.088 7.872 13.92.96 12.96v-1.92C7.872 10.08 11.04 6.912 11.04 0z"/></svg>`,
     description:
-      "Track Gemini API costs per model tier, detect anomalies, and enforce budget caps via the RakshEx kill switch.",
+      "Track Gemini API costs per model tier, detect anomalies, and enforce budget caps via the RaksHex kill switch.",
   },
   {
-    name: "Mistral AI for RakshEx",
+    name: "Mistral AI for RaksHex",
     category: "LLM Providers",
     status: "Available",
     icon: `<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M0 0h4v4H0zm6.667 0h4v4h-4zM0 6.667h4v4H0zm6.667 0h4v4h-4zm6.666 0h4v4h-4zM13.333 0h4v4h-4zM20 0h4v4h-4zm0 6.667h4v4h-4zM0 13.333h4v4H0zm6.667 0h4v4h-4zm13.333 0h4v4h-4zM0 20h4v4H0zm6.667 0h4v4h-4zm6.666 0h4v4h-4zm6.667 0h4v4h-4z"/></svg>`,
@@ -57,7 +57,7 @@ const INTEGRATIONS: IntegrationItem[] = [
       "Full Mistral API observability. Per-endpoint cost breakdown, rate limit detection, and compliance reporting.",
   },
   {
-    name: "Cohere for RakshEx",
+    name: "Cohere for RaksHex",
     category: "LLM Providers",
     status: "Available",
     icon: `<div class="w-full h-full flex items-center justify-center font-bold text-teal-accent text-sm font-mono">Co</div>`,
@@ -65,7 +65,7 @@ const INTEGRATIONS: IntegrationItem[] = [
       "Monitor Cohere Command and Embed API usage. Cost alerts, usage anomalies, and OWASP AI mapping.",
   },
   {
-    name: "AWS Bedrock for RakshEx",
+    name: "AWS Bedrock for RaksHex",
     category: "LLM Providers",
     status: "Available",
     icon: `<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>`,
@@ -88,7 +88,7 @@ const INTEGRATIONS: IntegrationItem[] = [
     status: "Available",
     icon: `<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M24 18.588a1.529 1.529 0 0 1-1.895-.72l-3.45-4.771-.5-.667-4.003 5.444a1.466 1.466 0 0 1-1.802.708l5.158-6.92-4.798-6.251a1.595 1.595 0 0 1 1.9.666l3.576 4.83 3.596-4.81a1.435 1.435 0 0 1 1.788-.668L21.708 7.9l-2.522 3.283a.666.666 0 0 0 0 .994l4.804 6.412zM.002 11.576l.42-2.075c1.154-4.103 5.858-5.81 9.094-3.27 1.895 1.489 2.368 3.597 2.275 5.973H1.116C.943 16.447 4.005 19.009 7.92 17.7a4.078 4.078 0 0 0 2.582-2.876c.207-.666.548-.78 1.174-.588a5.417 5.417 0 0 1-2.589 3.957 6.272 6.272 0 0 1-7.306-.933 6.575 6.575 0 0 1-1.64-3.348c-.061-.27-.127-.539-.194-.808-.003-.arbitrary-.002-.016 0 0v-.528zm1.114-.7h8.97c-.049-3.001-1.8-5.12-4.3-5.12-2.73.002-4.4 2.088-4.67 5.12z"/></svg>`,
     description:
-      "Scan Express routes for auth gaps, inject RakshEx middleware, and monitor LLM calls in Node.js apps.",
+      "Scan Express routes for auth gaps, inject RaksHex middleware, and monitor LLM calls in Node.js apps.",
   },
   {
     name: "Django REST Integration",
@@ -125,12 +125,12 @@ const INTEGRATIONS: IntegrationItem[] = [
 
   // CI/CD
   {
-    name: "GitHub Actions for RakshEx",
+    name: "GitHub Actions for RaksHex",
     category: "CI/CD",
     status: "Available",
     icon: `<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M10.984 13.836a.5.5 0 0 1-.353-.146l-3.5-3.5a.5.5 0 1 1 .706-.708l3.146 3.146 8.146-8.146a.5.5 0 0 1 .707.707l-8.5 8.5a.5.5 0 0 1-.353.146zm-3.476 6.696a.5.5 0 0 1-.353-.854l3.5-3.5a.5.5 0 0 1 .707.707l-3.5 3.5a.5.5 0 0 1-.354.147zM12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>`,
     description:
-      "Run RakshEx scans on every PR. Security score, cost delta, and vulnerability count as PR comments.",
+      "Run RaksHex scans on every PR. Security score, cost delta, and vulnerability count as PR comments.",
   },
   {
     name: "GitLab CI Integration",
@@ -154,14 +154,15 @@ const INTEGRATIONS: IntegrationItem[] = [
     status: "Available",
     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>`,
     description:
-      "CircleCI orb for RakshEx. One-line addition to your config.yml for full API security scanning.",
+      "CircleCI orb for RaksHex. One-line addition to your config.yml for full API security scanning.",
   },
   {
     name: "Jenkins Integration",
     category: "CI/CD",
     status: "Coming Soon",
     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
-    description: "Jenkins pipeline plugin for RakshEx scanning. ETA Q3 2026.",
+    description:
+      "Jenkins pipeline plugin for RaksHex scanning. Based on internal benchmark methodology.",
   },
 
   // Monitoring
@@ -171,7 +172,7 @@ const INTEGRATIONS: IntegrationItem[] = [
     status: "Available",
     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>`,
     description:
-      "Send RakshEx security events and cost anomalies to your Datadog dashboard as custom metrics.",
+      "Send RaksHex security events and cost anomalies to your Datadog dashboard as custom metrics.",
   },
   {
     name: "Grafana Integration",
@@ -179,14 +180,14 @@ const INTEGRATIONS: IntegrationItem[] = [
     status: "Available",
     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5"><path d="M3 3v18h18M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg>`,
     description:
-      "Grafana dashboard template for RakshEx. Visualize security scores, cost trends, and findings over time.",
+      "Grafana dashboard template for RaksHex. Visualize security scores, cost trends, and findings over time.",
   },
   {
     name: "Prometheus Integration",
     category: "Monitoring",
     status: "Coming Soon",
     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>`,
-    description: "Export RakshEx metrics to Prometheus. ETA Q3 2026.",
+    description: "Export RaksHex metrics to Prometheus. Based on internal benchmark methodology.",
   },
 
   // Security
@@ -196,7 +197,7 @@ const INTEGRATIONS: IntegrationItem[] = [
     status: "Available",
     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
     description:
-      "Combine Snyk SAST with RakshEx runtime governance. Code + API security in one unified pipeline.",
+      "Combine Snyk SAST with RaksHex runtime governance. Code + API security in one unified pipeline.",
   },
   {
     name: "OWASP ZAP Integration",
@@ -204,7 +205,7 @@ const INTEGRATIONS: IntegrationItem[] = [
     status: "Available",
     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`,
     description:
-      "Complement DAST scanning with RakshEx LLM-specific checks not covered by traditional scanners.",
+      "Complement DAST scanning with RaksHex LLM-specific checks not covered by traditional scanners.",
   },
   {
     name: "Vanta Integration",
@@ -212,7 +213,7 @@ const INTEGRATIONS: IntegrationItem[] = [
     status: "Available",
     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>`,
     description:
-      "Feed RakshEx compliance reports directly into Vanta for automated SOC2 evidence collection.",
+      "Feed RaksHex compliance reports directly into Vanta for automated SOC2 evidence collection.",
   },
   {
     name: "Drata Integration",
@@ -220,7 +221,7 @@ const INTEGRATIONS: IntegrationItem[] = [
     status: "Available",
     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><path d="M9 12l2 2 4-4"/></svg>`,
     description:
-      "Sync RakshEx compliance data to Drata. Auto-populate security controls with real scan evidence.",
+      "Sync RaksHex compliance data to Drata. Auto-populate security controls with real scan evidence.",
   },
 
   // Communication
@@ -238,7 +239,7 @@ const INTEGRATIONS: IntegrationItem[] = [
     status: "Available",
     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
     description:
-      "Teams webhook integration. Get RakshEx alerts and weekly security digests in your channels.",
+      "Teams webhook integration. Get RaksHex alerts and weekly security digests in your channels.",
   },
   {
     name: "PagerDuty Integration",
@@ -246,7 +247,7 @@ const INTEGRATIONS: IntegrationItem[] = [
     status: "Available",
     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 4v16M2 10h20M2 14h20"/></svg>`,
     description:
-      "Escalate critical RakshEx findings to PagerDuty. On-call alerts for P0 security events.",
+      "Escalate critical RaksHex findings to PagerDuty. On-call alerts for P0 security events.",
   },
 
   // Identity & Auth
@@ -256,7 +257,7 @@ const INTEGRATIONS: IntegrationItem[] = [
     status: "Available",
     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
     description:
-      "Validate JWT tokens from Auth0 in RakshEx middleware. SSO and enterprise authentication support.",
+      "Validate JWT tokens from Auth0 in RaksHex middleware. SSO and enterprise authentication support.",
   },
   {
     name: "Clerk Integration",
@@ -272,7 +273,7 @@ const INTEGRATIONS: IntegrationItem[] = [
     status: "Available",
     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>`,
     description:
-      "Enterprise SSO via WorkOS. SCIM directory sync and organization-level access control for RakshEx.",
+      "Enterprise SSO via WorkOS. SCIM directory sync and organization-level access control for RaksHex.",
   },
 ];
 
@@ -298,7 +299,7 @@ export default function IntegrationsPage() {
           <h1 className="text-[40px] font-bold text-white font-manrope tracking-tight mb-3">
             Find an Integration
           </h1>
-          <p className="text-base text-white/50 font-sans">Use your favorite tools with RakshEx.</p>
+          <p className="text-base text-white/50 font-sans">Use your favorite tools with RaksHex.</p>
         </header>
 
         {/* TWO-COLUMN LAYOUT */}

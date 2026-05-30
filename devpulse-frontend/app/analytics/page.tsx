@@ -64,7 +64,7 @@ export default function AnalyticsPage() {
                   compact
                   icon={<span>📊</span>}
                   title="No API calls yet"
-                  description="Wire up the Rakshex SDK or VS Code extension so we can stream token usage into this view."
+                  description="Wire up the RaksHex SDK or VS Code extension so we can stream token usage into this view."
                 />
               ) : (
                 tokenAnalytics.usage.map((entry, i) => (

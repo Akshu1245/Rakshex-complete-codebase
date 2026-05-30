@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Features — Rakshex AI Runtime Governance",
+  title: "Features — RaksHex AI Runtime Governance",
   description:
-    "Complete feature breakdown of Rakshex: AI security scanning, LLM cost monitoring, compliance automation, shadow API detection, kill switch, and enterprise SSO.",
+    "Complete feature breakdown of RaksHex: AI security scanning, LLM cost monitoring, compliance automation, shadow API detection, kill switch, and enterprise SSO.",
   alternates: { canonical: "/features" },
 };
 
@@ -104,7 +104,7 @@ const FEATURES = [
       },
       {
         title: "Express.js Middleware",
-        desc: `app.use(rakshex.middleware()) — automatic route discovery, secret scanning, and cost attribution.`,
+        desc: `app.use(RaksHex.middleware()) — automatic route discovery, secret scanning, and cost attribution.`,
       },
     ],
   },

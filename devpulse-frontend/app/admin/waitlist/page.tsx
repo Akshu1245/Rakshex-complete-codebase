@@ -93,7 +93,7 @@ export default function AdminWaitlistPage() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `rakshex_waitlist_${new Date().toISOString().split("T")[0]}.csv`);
+    link.setAttribute("download", `RaksHex_waitlist_${new Date().toISOString().split("T")[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -106,7 +106,9 @@ export default function AdminWaitlistPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
             <div className="flex items-center gap-2 text-sm text-blue-400 mb-2">
-              <Link href="/admin" className="hover:underline">Admin Dashboard</Link>
+              <Link href="/admin" className="hover:underline">
+                Admin Dashboard
+              </Link>
               <span>/</span>
               <span className="text-gray-400">Waitlist Management</span>
             </div>
@@ -195,16 +197,28 @@ export default function AdminWaitlistPage() {
             <table className="min-w-full divide-y divide-slate-800">
               <thead className="bg-slate-900/80">
                 <tr>
-                  <th scope="col" className="px-6 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider"
+                  >
                     Email Address
                   </th>
-                  <th scope="col" className="px-6 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider"
+                  >
                     Interested Plan
                   </th>
-                  <th scope="col" className="px-6 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider"
+                  >
                     Signup Date
                   </th>
-                  <th scope="col" className="px-6 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider"
+                  >
                     Source Page
                   </th>
                 </tr>
@@ -232,7 +246,9 @@ export default function AdminWaitlistPage() {
                         {e.email}
                       </td>
                       <td className="whitespace-nowrap px-6 py-4 text-sm">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${PLAN_BADGE[e.plan] ?? PLAN_BADGE.Free}`}>
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${PLAN_BADGE[e.plan] ?? PLAN_BADGE.Free}`}
+                        >
                           {e.plan}
                         </span>
                       </td>
@@ -272,15 +288,21 @@ export default function AdminWaitlistPage() {
               <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm text-gray-400">
-                    Showing <span className="font-medium text-gray-200">{(page - 1) * PAGE_SIZE + 1}</span> to{" "}
+                    Showing{" "}
+                    <span className="font-medium text-gray-200">{(page - 1) * PAGE_SIZE + 1}</span>{" "}
+                    to{" "}
                     <span className="font-medium text-gray-200">
                       {Math.min(filteredEntries.length, page * PAGE_SIZE)}
                     </span>{" "}
-                    of <span className="font-medium text-gray-200">{filteredEntries.length}</span> results
+                    of <span className="font-medium text-gray-200">{filteredEntries.length}</span>{" "}
+                    results
                   </p>
                 </div>
                 <div>
-                  <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                  <nav
+                    className="isolate inline-flex -space-x-px rounded-md shadow-sm"
+                    aria-label="Pagination"
+                  >
                     <button
                       disabled={page === 1}
                       onClick={() => setPage(1)}

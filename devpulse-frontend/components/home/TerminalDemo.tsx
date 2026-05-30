@@ -9,7 +9,7 @@ export function TerminalDemo() {
 
   useEffect(() => {
     const steps = [
-      { text: "> rakshex scan ./api.json", delay: 1200 },
+      { text: "> RaksHex scan ./api.json", delay: 1200 },
       { text: "✓ 23 endpoints scanned", delay: 800 },
       { text: "⚠ 2 credentials detected", delay: 800, finding: "Credential Leak", score: 98 },
       { text: "🔒 1 prompt injection blocked", delay: 800, finding: "Prompt Injection", score: 95 },
@@ -47,7 +47,7 @@ export function TerminalDemo() {
   }, []);
 
   const terminalLines = [
-    "> rakshex scan ./api.json",
+    "> RaksHex scan ./api.json",
     "✓ 23 endpoints scanned",
     "⚠ 2 credentials detected",
     "🔒 1 prompt injection blocked",
@@ -63,7 +63,7 @@ export function TerminalDemo() {
           <div className="w-2.5 h-2.5 rounded-full bg-[#14B8A6]/60" />
           <div className="w-2.5 h-2.5 rounded-full bg-[#14B8A6]" />
           <span className="text-[10px] text-[#9CA3AF] ml-2 font-sans font-medium">
-            bash - rakshex scan
+            bash - RaksHex scan
           </span>
         </div>
         <div className="space-y-2 flex-1 overflow-y-auto">

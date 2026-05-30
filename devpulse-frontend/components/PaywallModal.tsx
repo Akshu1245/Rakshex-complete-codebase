@@ -63,7 +63,7 @@ export default function PaywallModal({
         const options: RazorpayOptions = {
           key: subData.keyId,
           subscription_id: subData.subscriptionId,
-          name: "Rakshex",
+          name: "RaksHex",
           description: "Subscription",
           image: "/logo.png",
           handler: () => {

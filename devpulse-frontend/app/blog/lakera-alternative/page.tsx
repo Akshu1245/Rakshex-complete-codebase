@@ -1,12 +1,12 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Best Lakera Alternative for Complete AI Security (2026) — Rakshex",
+  title: "Best Lakera Alternative for Complete AI Security (2026) — RaksHex",
   description:
-    "Lakera Guard is the leader in prompt injection defense. Rakshex covers prompt injection plus API security, compliance, and cost governance. Full comparison.",
+    "Lakera Guard is the leader in prompt injection defense. RaksHex covers prompt injection plus API security, compliance, and cost governance. Full comparison.",
   keywords: [
     "Lakera alternative",
-    "Lakera vs Rakshex",
+    "Lakera vs RaksHex",
     "prompt injection protection",
     "AI security platform",
     "LLM security",
@@ -35,7 +35,7 @@ export default function BlogLakeraAlternative() {
           <p className="text-xl text-gray-200">
             Lakera Guard is the most advanced prompt injection defense available. If your only
             concern is stopping adversarial prompts, Lakera is the best choice. But prompt injection
-            is one of many attack surfaces. This post explains what Rakshex adds beyond Lakera's
+            is one of many attack surfaces. This post explains what RaksHex adds beyond Lakera's
             scope.
           </p>
 
@@ -61,14 +61,14 @@ export default function BlogLakeraAlternative() {
             <li>Self-hosting — full data sovereignty without enterprise contract</li>
           </ul>
 
-          <h2 className="text-2xl font-bold text-white mt-8">Rakshex vs Lakera: Security Stack</h2>
+          <h2 className="text-2xl font-bold text-white mt-8">RaksHex vs Lakera: Security Stack</h2>
           <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden my-4">
             <table className="w-full text-left text-sm">
               <thead className="bg-gray-700/50">
                 <tr>
                   <th className="p-3">Capability</th>
                   <th className="p-3 text-center">Lakera</th>
-                  <th className="p-3 text-center text-blue-300">Rakshex</th>
+                  <th className="p-3 text-center text-blue-300">RaksHex</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-700">
@@ -99,9 +99,9 @@ export default function BlogLakeraAlternative() {
 
           <h2 className="text-2xl font-bold text-white mt-8">The Cost of Specialist Tools</h2>
           <p>
-            Lakera charges per request. Rakshex charges a flat monthly fee. If you process 1M
+            Lakera charges per request. RaksHex charges a flat monthly fee. If you process 1M
             requests/month at Lakera's rate (~$0.001/request), that is $1,000/month for prompt
-            injection defense alone. Rakshex Pro is $99/month for prompt injection + API security +
+            injection defense alone. RaksHex Pro is $99/month for prompt injection + API security +
             cost monitoring + compliance.
           </p>
 
@@ -112,7 +112,7 @@ export default function BlogLakeraAlternative() {
             <li>You already have separate API security, cost, and compliance tools</li>
           </ul>
 
-          <h2 className="text-2xl font-bold text-white mt-8">When to Choose Rakshex</h2>
+          <h2 className="text-2xl font-bold text-white mt-8">When to Choose RaksHex</h2>
           <ul className="list-disc list-inside space-y-2">
             <li>You want prompt injection defense + API security in one platform</li>
             <li>You need cost governance and a real kill switch</li>
@@ -123,20 +123,20 @@ export default function BlogLakeraAlternative() {
 
           <h2 className="text-2xl font-bold text-white mt-8">The Verdict</h2>
           <p>
-            Lakera is the best prompt injection specialist. Rakshex is the best complete AI security
+            Lakera is the best prompt injection specialist. RaksHex is the best complete AI security
             platform. If you only need prompt injection defense and nothing else, Lakera wins. If
-            you need a unified security + governance stack, Rakshex covers everything Lakera does
+            you need a unified security + governance stack, RaksHex covers everything Lakera does
             plus the gaps it leaves open.
           </p>
         </div>
 
         <div className="mt-10 p-6 bg-blue-900/20 border border-blue-500/30 rounded-xl text-center">
-          <p className="text-blue-300 mb-4">See how Rakshex covers what Lakera does not.</p>
+          <p className="text-blue-300 mb-4">See how RaksHex covers what Lakera does not.</p>
           <Link
             href="/demo"
             className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors"
           >
-            Try Rakshex Free →
+            Try RaksHex Free →
           </Link>
         </div>
       </div>

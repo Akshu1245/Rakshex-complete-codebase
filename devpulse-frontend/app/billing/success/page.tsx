@@ -39,7 +39,7 @@ export default function BillingSuccessPage() {
             </div>
             <h1 className="text-2xl font-bold">Payment successful</h1>
             <p className="text-gray-400 mt-2">
-              Welcome to Rakshex{" "}
+              Welcome to RaksHex{" "}
               <span className="capitalize font-semibold text-blue-300">{current?.plan}</span>. Your
               new plan is active — scans, collections, and team-member limits have been lifted.
             </p>

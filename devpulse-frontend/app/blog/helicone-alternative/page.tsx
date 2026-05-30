@@ -1,12 +1,12 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Best Helicone Alternative for AI Security (2026) — Rakshex",
+  title: "Best Helicone Alternative for AI Security (2026) — RaksHex",
   description:
-    "Helicone is great for observability but lacks security. Rakshex adds prompt injection detection, API scanning, compliance, and cost governance. Full comparison.",
+    "Helicone is great for observability but lacks security. RaksHex adds prompt injection detection, API scanning, compliance, and cost governance. Full comparison.",
   keywords: [
     "Helicone alternative",
-    "Helicone vs Rakshex",
+    "Helicone vs RaksHex",
     "AI security platform",
     "LLM observability",
     "prompt injection detection",
@@ -35,7 +35,7 @@ export default function BlogHeliconeAlternative() {
           <p className="text-xl text-gray-200">
             Helicone is the gold standard for LLM observability. But if you are shipping AI to
             production, observability is only one-third of what you need. This post explains why
-            teams are adding Rakshex alongside — or replacing — Helicone for security, compliance,
+            teams are adding RaksHex alongside — or replacing — Helicone for security, compliance,
             and cost governance.
           </p>
 
@@ -65,14 +65,14 @@ export default function BlogHeliconeAlternative() {
             <li>Compliance auditors asking for PCI DSS mappings</li>
           </ul>
 
-          <h2 className="text-2xl font-bold text-white mt-8">Rakshex vs Helicone: Feature Map</h2>
+          <h2 className="text-2xl font-bold text-white mt-8">RaksHex vs Helicone: Feature Map</h2>
           <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden my-4">
             <table className="w-full text-left text-sm">
               <thead className="bg-gray-700/50">
                 <tr>
                   <th className="p-3">Capability</th>
                   <th className="p-3 text-center">Helicone</th>
-                  <th className="p-3 text-center text-blue-300">Rakshex</th>
+                  <th className="p-3 text-center text-blue-300">RaksHex</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-700">
@@ -103,29 +103,29 @@ export default function BlogHeliconeAlternative() {
 
           <h2 className="text-2xl font-bold text-white mt-8">Migration Path</h2>
           <p>
-            You do not have to abandon Helicone immediately. Many teams run Rakshex alongside
+            You do not have to abandon Helicone immediately. Many teams run RaksHex alongside
             Helicone for 30 days, then migrate fully once they see the security findings Helicone
             never surfaced.
           </p>
           <ol className="list-decimal list-inside space-y-2">
             <li>Export your Helicone logs via API</li>
-            <li>Import into Rakshex (5-minute guided process)</li>
+            <li>Import into RaksHex (5-minute guided process)</li>
             <li>Run your first security scan on existing collections</li>
             <li>Enable the kill switch with a monthly budget</li>
-            <li>Redirect traffic through Rakshex SDK or gateway</li>
+            <li>Redirect traffic through RaksHex SDK or gateway</li>
           </ol>
 
           <h2 className="text-2xl font-bold text-white mt-8">Pricing Reality Check</h2>
           <p>
-            Helicone is free up to 10K requests/month, then $0.001 per request. Rakshex Pro is
+            Helicone is free up to 10K requests/month, then $0.001 per request. RaksHex Pro is
             $99/month flat for unlimited scans and unlimited requests. If you process more than
-            ~100K requests/month, Rakshex is cheaper. If you need security, there is no comparison.
+            ~100K requests/month, RaksHex is cheaper. If you need security, there is no comparison.
           </p>
 
           <h2 className="text-2xl font-bold text-white mt-8">The Verdict</h2>
           <p>
             If you only need observability, Helicone is the better choice. If you need observability
-            <em>plus</em> security, compliance, and cost governance, Rakshex is the only platform
+            <em>plus</em> security, compliance, and cost governance, RaksHex is the only platform
             that covers all three without stitching together 4+ tools.
           </p>
         </div>
@@ -136,7 +136,7 @@ export default function BlogHeliconeAlternative() {
             href="/demo"
             className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors"
           >
-            Try Rakshex Free →
+            Try RaksHex Free →
           </Link>
         </div>
       </div>

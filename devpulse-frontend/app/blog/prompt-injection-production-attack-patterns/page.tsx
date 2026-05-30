@@ -244,7 +244,7 @@ export default function BlogPromptInjection() {
             </li>
             <li>
               <strong>AgentGuard Kill Switch:</strong> Put sensitive operations (e.g. refunds,
-              deletes) behind an approval queue using RakshEx's AgentGuard. If a tool call targets a
+              deletes) behind an approval queue using RaksHex's AgentGuard. If a tool call targets a
               protected operation, hold it until a human clicks approve.
             </li>
             <li>
@@ -256,7 +256,7 @@ export default function BlogPromptInjection() {
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 my-8">
             <h3 className="text-xl font-bold text-white mb-2">Deploy Runtime Protection Today</h3>
             <p className="text-sm text-slate-400 mb-4">
-              RakshEx's AgentGuard provides a real-time firewall for your LLM APIs, blocking prompt
+              RaksHex's AgentGuard provides a real-time firewall for your LLM APIs, blocking prompt
               injections and enforcing human-in-the-loop limits. Try our scanner now to test your
               susceptibility.
             </p>

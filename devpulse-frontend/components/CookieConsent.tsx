@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-const COOKIE_KEY = "rakshex.cookieConsent.v1";
+const COOKIE_KEY = "RaksHex.cookieConsent.v1";
 
 type ConsentChoice = "accepted" | "rejected" | null;
 
 /**
- * Cookie-consent banner with accept/reject options. Because Rakshex only sets
+ * Cookie-consent banner with accept/reject options. Because RaksHex only sets
  * first-party strictly-necessary cookies (session + CSRF), the informational
  * notice covers the ePrivacy art. 5(3) exemption. If you later add analytics
  * or marketing cookies, wire them behind the acceptance state.
@@ -49,7 +49,7 @@ export function CookieConsent() {
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="leading-relaxed">
-          Rakshex uses strictly necessary first-party cookies for authentication and security. No
+          RaksHex uses strictly necessary first-party cookies for authentication and security. No
           tracking, no advertising. See our{" "}
           <Link href="/privacy" className="text-blue-400 underline hover:text-blue-300">
             Privacy Policy

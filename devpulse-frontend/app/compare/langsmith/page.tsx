@@ -1,61 +1,61 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Rakshex vs LangSmith — Honest Comparison",
+  title: "RaksHex vs LangSmith — Honest Comparison",
   description:
-    "LangSmith is observability-only with no security scanning. Rakshex adds OWASP scanning, thinking token attribution, PCI DSS compliance, and real kill switches.",
+    "LangSmith is observability-only with no security scanning. RaksHex adds OWASP scanning, thinking token attribution, PCI DSS compliance, and real kill switches.",
 };
 
 const features = [
   {
     name: "LLM Observability",
     langsmith: "Comprehensive (traces, runs, feedback)",
-    rakshex: "Full observability + cost anomaly detection",
+    RaksHex: "Full observability + cost anomaly detection",
   },
   {
     name: "Security Scanning",
     langsmith: "Not available — observability only",
-    rakshex: "OWASP API Top 10 + prompt injection blocking",
+    RaksHex: "OWASP API Top 10 + prompt injection blocking",
   },
   {
     name: "Thinking Token Attribution",
     langsmith: "Not available",
-    rakshex: "First-in-world: isolates reasoning tokens (o1/o3/Claude)",
+    RaksHex: "First-in-world: isolates reasoning tokens (o1/o3/Claude)",
   },
   {
     name: "PCI DSS Compliance",
     langsmith: "Not available",
-    rakshex: "PCI DSS v4.0.1 mapped findings + export",
+    RaksHex: "PCI DSS v4.0.1 mapped findings + export",
   },
   {
     name: "Kill Switch / Budget Cap",
     langsmith: "Not available",
-    rakshex: "Hard stop on budget, anomaly, or red-team score",
+    RaksHex: "Hard stop on budget, anomaly, or red-team score",
   },
   {
     name: "PII Redaction",
     langsmith: "Manual masking only",
-    rakshex: "Real-time auto-redaction in request/response",
+    RaksHex: "Real-time auto-redaction in request/response",
   },
   {
     name: "Shadow API Detection",
     langsmith: "Not available",
-    rakshex: "Static + runtime undocumented endpoint discovery",
+    RaksHex: "Static + runtime undocumented endpoint discovery",
   },
   {
     name: "Cost Attribution per Agent",
     langsmith: "Per-run cost logging",
-    rakshex: "Per-agent, per-model, per-thinking-token breakdown",
+    RaksHex: "Per-agent, per-model, per-thinking-token breakdown",
   },
   {
     name: "VS Code Extension",
     langsmith: "Not available",
-    rakshex: "In-editor scanning + inline security warnings",
+    RaksHex: "In-editor scanning + inline security warnings",
   },
   {
     name: "Compliance Reports",
     langsmith: "Not available",
-    rakshex: "SOC 2, PCI DSS, OWASP — JSON/CSV/PDF export",
+    RaksHex: "SOC 2, PCI DSS, OWASP — JSON/CSV/PDF export",
   },
 ];
 
@@ -76,11 +76,11 @@ export default function CompareLangsmith() {
           className="mb-2"
           style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "36px", fontWeight: 700 }}
         >
-          Rakshex vs LangSmith
+          RaksHex vs LangSmith
         </h1>
         <p className="text-on-surface-variant mb-8" style={{ fontSize: "16px", lineHeight: 1.7 }}>
           LangSmith excels at LLM observability and debugging. But it stops there — no security
-          scanning, no compliance, no kill switch. Rakshex covers observability <em>plus</em> the
+          scanning, no compliance, no kill switch. RaksHex covers observability <em>plus</em> the
           full security and governance layer teams need once they ship AI to production.
         </p>
 
@@ -91,7 +91,7 @@ export default function CompareLangsmith() {
                 <tr style={{ fontSize: "11px", letterSpacing: "0.1em" }}>
                   <th className="p-4 text-on-surface font-bold">FEATURE</th>
                   <th className="p-4 text-on-surface-variant w-1/3 font-bold">LANGSMITH</th>
-                  <th className="p-4 text-primary w-1/3 font-bold">RAKSHEX</th>
+                  <th className="p-4 text-primary w-1/3 font-bold">RaksHex</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/10">
@@ -104,7 +104,7 @@ export default function CompareLangsmith() {
                       {f.langsmith}
                     </td>
                     <td className="p-4 text-on-surface" style={{ fontSize: "13px" }}>
-                      {f.rakshex}
+                      {f.RaksHex}
                     </td>
                   </tr>
                 ))}
@@ -134,7 +134,7 @@ export default function CompareLangsmith() {
               className="font-bold mb-3 text-primary"
               style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "18px" }}
             >
-              When to choose Rakshex
+              When to choose RaksHex
             </h3>
             <ul className="space-y-2 text-on-surface-variant" style={{ fontSize: "13px" }}>
               <li>• You need security + observability in one platform</li>
@@ -152,7 +152,7 @@ export default function CompareLangsmith() {
             className="inline-block px-8 py-4 bg-primary text-on-primary font-bold hover:shadow-[0_0_20px_rgba(207,188,255,0.4)] transition-all"
             style={{ fontSize: "12px", letterSpacing: "0.1em" }}
           >
-            TRY RAKSHEX FREE →
+            TRY RaksHex FREE →
           </Link>
         </div>
       </div>

@@ -1,9 +1,9 @@
 import StatusClient from "./StatusClient";
 
 export const metadata = {
-  title: "Status — RakshEx System Status",
+  title: "Status — RaksHex System Status",
   description:
-    "Real-time status of RakshEx runtime governance engines, scan services, and system infrastructure.",
+    "Real-time status of RaksHex runtime governance engines, scan services, and system infrastructure.",
   alternates: { canonical: "/status" },
 };
 
@@ -16,7 +16,7 @@ export default function StatusPage() {
             System Status
           </h1>
           <p className="text-slate-400 mt-2 text-base">
-            Monitor the real-time operational state of RakshEx AI runtime firewalls and scanning
+            Monitor the real-time operational state of RaksHex AI runtime firewalls and scanning
             APIs.
           </p>
         </header>

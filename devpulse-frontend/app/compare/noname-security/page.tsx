@@ -46,11 +46,11 @@ export default function CompareNonameSecurity() {
             Comparison Stub
           </span>
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white mb-4">
-            RakshEx vs Noname Security — Which is Right for You?
+            RaksHex vs Noname Security — Which is Right for You?
           </h1>
           <p className="text-slate-400 text-base leading-relaxed">
             Noname Security focuses on API discovery, posture management, and active testing
-            configurations. RakshEx is built specifically as a runtime AI firewall and governance
+            configurations. RaksHex is built specifically as a runtime AI firewall and governance
             engine, offering active prompt injection detection, token-level cost attribution, and
             AgentGuard validation for tool execution.
           </p>
@@ -59,7 +59,7 @@ export default function CompareNonameSecurity() {
         <div className="bg-slate-900/40 border border-slate-900 rounded-2xl p-8 mb-8 text-center">
           <h2 className="text-xl font-bold text-white mb-2">Full Comparison Coming Soon</h2>
           <p className="text-slate-400 text-sm max-w-md mx-auto mb-6">
-            We are writing an in-depth feature mapping and benchmark suite for RakshEx vs Noname
+            We are writing an in-depth feature mapping and benchmark suite for RaksHex vs Noname
             Security. Subscribe below to be notified when the detailed analysis launches.
           </p>
 
@@ -96,17 +96,17 @@ export default function CompareNonameSecurity() {
           <h3 className="font-bold text-white mb-4">Core Differentiators Overview</h3>
           <div className="space-y-3 text-sm text-slate-400">
             <p>
-              • <strong>Prompt Protection:</strong> RakshEx intercepts prompt injection payloads and
+              • <strong>Prompt Protection:</strong> RaksHex intercepts prompt injection payloads and
               redacts outgoing PII. Noname Security evaluates network posture and does not parse LLM
               strings.
             </p>
             <p>
-              • <strong>LLM Telemetry:</strong> RakshEx measures token usage and cost metrics per
+              • <strong>LLM Telemetry:</strong> RaksHex measures token usage and cost metrics per
               provider. Traditional API security suites lack reasoning and token counting
               capabilities.
             </p>
             <p>
-              • <strong>Agentic Rules:</strong> RakshEx features AgentGuard to manage tool calls and
+              • <strong>Agentic Rules:</strong> RaksHex features AgentGuard to manage tool calls and
               prevent model drifts during autonomous execution.
             </p>
           </div>
