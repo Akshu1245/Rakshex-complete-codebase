@@ -12,6 +12,13 @@ import { test, expect } from "@playwright/test";
  */
 test.describe("Critical Path 1: Onboarding Flow", () => {
   test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      window.localStorage.setItem(
+        "rakshex.cookieConsent.v1",
+        JSON.stringify({ choice: "accepted", at: new Date().toISOString() }),
+      );
+    });
+
     // Stub tRPC responses
     await page.route("**/api/trpc/**", async (route) => {
       const url = route.request().url();

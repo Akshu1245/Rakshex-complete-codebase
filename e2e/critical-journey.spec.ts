@@ -14,6 +14,15 @@ test.describe("Critical Journey: signup → scan → results", () => {
     password: "TestPassword123!",
   };
 
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      window.localStorage.setItem(
+        "rakshex.cookieConsent.v1",
+        JSON.stringify({ choice: "accepted", at: new Date().toISOString() }),
+      );
+    });
+  });
+
   test("full journey from signup to scan results", async ({ page }) => {
     // 1. Signup
     await page.goto("/register");

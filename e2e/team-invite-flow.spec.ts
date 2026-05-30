@@ -12,6 +12,13 @@ import { test, expect } from "@playwright/test";
  */
 test.describe("Critical Path 2: Team Invite Flow", () => {
   test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      window.localStorage.setItem(
+        "rakshex.cookieConsent.v1",
+        JSON.stringify({ choice: "accepted", at: new Date().toISOString() }),
+      );
+    });
+
     // Seed a session cookie so the app treats us as authenticated
     await page.context().addCookies([
       {

@@ -40,12 +40,32 @@ export default defineConfig({
     },
   ],
 
-  // Automatically start the Next.js dev server before running tests
-  webServer: {
-    command: "pnpm run start",
-    cwd: "./devpulse-frontend",
-    url: "http://localhost:3000",
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-  },
+  // Automatically start both the Next.js frontend and the Express backend servers before running tests
+  webServer: [
+    {
+      command: "pnpm run start",
+      cwd: "./devpulse-frontend",
+      url: "http://localhost:3000",
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000,
+      env: {
+        PORT: "3000",
+        NEXT_PUBLIC_API_URL: "http://localhost:3001",
+      },
+    },
+    {
+      command: "node dist/server/_core/index.js",
+      cwd: ".",
+      url: "http://localhost:3001/api/health",
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000,
+      env: {
+        PORT: "3001",
+        DATABASE_URL:
+          process.env.DATABASE_URL || "mysql://root:devpulse@127.0.0.1:3306/devpulse_test",
+        REDIS_URL: process.env.REDIS_URL || "redis://127.0.0.1:6379",
+        JWT_SECRET: process.env.JWT_SECRET || "test-secret-ci",
+      },
+    },
+  ],
 });

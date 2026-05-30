@@ -13,6 +13,13 @@ import { test, expect } from "@playwright/test";
  */
 test.describe("Critical Path 3: Kill Switch Flow", () => {
   test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      window.localStorage.setItem(
+        "rakshex.cookieConsent.v1",
+        JSON.stringify({ choice: "accepted", at: new Date().toISOString() }),
+      );
+    });
+
     // Seed a session cookie so the app treats us as authenticated
     await page.context().addCookies([
       {
@@ -23,7 +30,7 @@ test.describe("Critical Path 3: Kill Switch Flow", () => {
     ]);
 
     // Stub tRPC responses
-    await page.route("**/api/trpc/**", async route => {
+    await page.route("**/api/trpc/**", async (route) => {
       const url = route.request().url();
       const json = (data: unknown) => ({ result: { data } });
 
@@ -36,7 +43,7 @@ test.describe("Critical Path 3: Kill Switch Flow", () => {
               email: "test@example.com",
               name: "Test User",
               plan: "pro",
-            })
+            }),
           ),
           contentType: "application/json",
         });
@@ -50,7 +57,7 @@ test.describe("Critical Path 3: Kill Switch Flow", () => {
               id: 1,
               email: "test@example.com",
               name: "Test User",
-            })
+            }),
           ),
           contentType: "application/json",
         });
@@ -64,7 +71,7 @@ test.describe("Critical Path 3: Kill Switch Flow", () => {
               isActive: false,
               budgetLimitUSD: 500,
               currentSpendUSD: 42.5,
-            })
+            }),
           ),
           contentType: "application/json",
         });
@@ -83,7 +90,7 @@ test.describe("Critical Path 3: Kill Switch Flow", () => {
                   createdAt: new Date().toISOString(),
                 },
               ],
-            })
+            }),
           ),
           contentType: "application/json",
         });
@@ -117,25 +124,19 @@ test.describe("Critical Path 3: Kill Switch Flow", () => {
     });
   });
 
-  test("Login → Set budget limit → Trigger kill switch → Verify audit trail", async ({
-    page,
-  }) => {
+  test("Login → Set budget limit → Trigger kill switch → Verify audit trail", async ({ page }) => {
     // Step 1: Login
     await page.goto("/login");
     await page.getByLabel(/email/i).fill("test@example.com");
     await page.getByLabel(/password/i).fill("password123");
-    await page
-      .getByRole("button", { name: /login|sign in/i, exact: false })
-      .click();
+    await page.getByRole("button", { name: /login|sign in/i, exact: false }).click();
 
     // With stubbed login the app should push to /dashboard
     await expect(page).toHaveURL(/.*dashboard.*/, { timeout: 10_000 });
 
     // Step 2: Navigate to kill switch page
     await page.goto("/kill-switch");
-    await expect(
-      page.getByRole("heading", { name: /kill switch/i })
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Kill Switch", exact: true })).toBeVisible();
 
     // Verify the page shows the current inactive status
     await expect(page.getByText(/inactive/i)).toBeVisible();
@@ -156,19 +157,15 @@ test.describe("Critical Path 3: Kill Switch Flow", () => {
     await page.getByRole("button", { name: /trigger now/i }).click();
 
     // The stub returns success — the trigger textarea should clear
-    await expect(
-      page.getByPlaceholder(/describe why you are triggering/i)
-    ).toHaveValue("", { timeout: 5_000 });
+    await expect(page.getByPlaceholder(/describe why you are triggering/i)).toHaveValue("", {
+      timeout: 5_000,
+    });
 
     // Step 5: Verify the audit trail section is present
-    await expect(
-      page.getByRole("heading", { name: /audit trail/i })
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: /audit trail/i })).toBeVisible();
   });
 
-  test("kill switch route does not 500 when unauthenticated", async ({
-    page,
-  }) => {
+  test("kill switch route does not 500 when unauthenticated", async ({ page }) => {
     const response = await page.goto("/kill-switch");
     // App should either render the page or redirect to /login — both
     // are acceptable. A 500 is not.
