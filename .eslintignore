@@ -1,0 +1,12 @@
+node_modules
+dist
+build
+.next
+**/node_modules
+**/.next
+**/out
+devpulse-frontend
+devpulse-vscode
+vscode-extension
+web-demo
+backend

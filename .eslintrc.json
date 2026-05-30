@@ -20,10 +20,15 @@
     "node_modules",
     "dist",
     "build",
-    ".next",
-    "out",
     "coverage",
     "drizzle/migrations",
-    "rakshex-frontend/.eslintrc.json"
+    "**/.next",
+    "**/node_modules",
+    "**/out",
+    "devpulse-frontend",
+    "devpulse-vscode",
+    "vscode-extension",
+    "web-demo",
+    "backend"
   ]
 }
