@@ -79,8 +79,23 @@ export function PublicHeader() {
       >
         <div className="flex justify-between items-center max-w-[1280px] mx-auto px-6 h-14">
           <div className="flex items-center gap-10">
-            <a href="/" className="flex items-center">
-              <img src="/navbar-logo.png" alt="Rakshex" style={{ height: "40px", width: "auto" }} />
+            <a href="/" className="flex items-center gap-3" style={{ textDecoration: "none" }}>
+              <img
+                src="/icon-mark-128.png"
+                alt="Rakshex"
+                style={{ height: "36px", width: "36px", objectFit: "contain" }}
+              />
+              <span
+                style={{
+                  fontSize: "22px",
+                  fontWeight: "700",
+                  color: "#d4a853",
+                  letterSpacing: "0.5px",
+                  fontFamily: "inherit",
+                }}
+              >
+                Rakshex
+              </span>
             </a>
 
             {/* Desktop Navigation Links */}
