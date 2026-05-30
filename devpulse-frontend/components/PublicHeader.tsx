@@ -50,19 +50,19 @@ export function PublicHeader() {
                   Launch in:
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="rounded bg-[#0F1419] border border-[#14B8A6] px-1.5 py-0.5 font-bold font-mono text-[#14B8A6]">
+                  <span className="rounded bg-[#0a0a0a] border border-[#14B8A6] px-1.5 py-0.5 font-bold font-mono text-[#14B8A6]">
                     {timeLeft.days}d
                   </span>
                   <span>:</span>
-                  <span className="rounded bg-[#0F1419] border border-[#14B8A6] px-1.5 py-0.5 font-bold font-mono text-[#14B8A6]">
+                  <span className="rounded bg-[#0a0a0a] border border-[#14B8A6] px-1.5 py-0.5 font-bold font-mono text-[#14B8A6]">
                     {timeLeft.hours}h
                   </span>
                   <span>:</span>
-                  <span className="rounded bg-[#0F1419] border border-[#14B8A6] px-1.5 py-0.5 font-bold font-mono text-[#14B8A6]">
+                  <span className="rounded bg-[#0a0a0a] border border-[#14B8A6] px-1.5 py-0.5 font-bold font-mono text-[#14B8A6]">
                     {timeLeft.minutes}m
                   </span>
                   <span>:</span>
-                  <span className="rounded bg-[#0F1419] border border-[#14B8A6] px-1.5 py-0.5 font-bold font-mono text-[#14B8A6]">
+                  <span className="rounded bg-[#0a0a0a] border border-[#14B8A6] px-1.5 py-0.5 font-bold font-mono text-[#14B8A6]">
                     {timeLeft.seconds}s
                   </span>
                 </span>
@@ -74,7 +74,7 @@ export function PublicHeader() {
 
       {/* SECTION 2 — Navbar Redesign (Mega Menu) */}
       <nav
-        className="bg-[#0F1419]/90 backdrop-blur-md w-full border-b border-[#1A1F2E]"
+        className="bg-[#0a0a0a]/90 backdrop-blur-md w-full border-b border-[#1A1F2E]"
         onMouseLeave={handleMouseLeave}
       >
         <div className="flex justify-between items-center max-w-[1280px] mx-auto px-6 h-14">
@@ -107,7 +107,7 @@ export function PublicHeader() {
                         href="/features#security-scanner"
                         onClick={forceClose}
                       >
-                        <div className="w-10 h-10 bg-[#0F1419] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
+                        <div className="w-10 h-10 bg-[#0a0a0a] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
                           <Shield className="w-5 h-5" />
                         </div>
                         <div>
@@ -124,7 +124,7 @@ export function PublicHeader() {
                         href="/features#kill-switch"
                         onClick={forceClose}
                       >
-                        <div className="w-10 h-10 bg-[#0F1419] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
+                        <div className="w-10 h-10 bg-[#0a0a0a] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
                           <Power className="w-5 h-5" />
                         </div>
                         <div>
@@ -141,7 +141,7 @@ export function PublicHeader() {
                         href="/features#shadow-api"
                         onClick={forceClose}
                       >
-                        <div className="w-10 h-10 bg-[#0F1419] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
+                        <div className="w-10 h-10 bg-[#0a0a0a] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
                           <Ghost className="w-5 h-5" />
                         </div>
                         <div>
@@ -158,7 +158,7 @@ export function PublicHeader() {
                         href="/features#credentials"
                         onClick={forceClose}
                       >
-                        <div className="w-10 h-10 bg-[#0F1419] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
+                        <div className="w-10 h-10 bg-[#0a0a0a] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
                           <Key className="w-5 h-5" />
                         </div>
                         <div>
@@ -178,7 +178,7 @@ export function PublicHeader() {
                         href="/features#cost-monitor"
                         onClick={forceClose}
                       >
-                        <div className="w-10 h-10 bg-[#0F1419] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
+                        <div className="w-10 h-10 bg-[#0a0a0a] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
                           <BarChart className="w-5 h-5" />
                         </div>
                         <div>
@@ -195,7 +195,7 @@ export function PublicHeader() {
                         href="/features#thinking-tokens"
                         onClick={forceClose}
                       >
-                        <div className="w-10 h-10 bg-[#0F1419] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
+                        <div className="w-10 h-10 bg-[#0a0a0a] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
                           <Brain className="w-5 h-5" />
                         </div>
                         <div>
@@ -212,7 +212,7 @@ export function PublicHeader() {
                         href="/features#compliance"
                         onClick={forceClose}
                       >
-                        <div className="w-10 h-10 bg-[#0F1419] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
+                        <div className="w-10 h-10 bg-[#0a0a0a] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
                           <FileText className="w-5 h-5" />
                         </div>
                         <div>
@@ -229,7 +229,7 @@ export function PublicHeader() {
                         href="/features#mcp"
                         onClick={forceClose}
                       >
-                        <div className="w-10 h-10 bg-[#0F1419] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
+                        <div className="w-10 h-10 bg-[#0a0a0a] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
                           <Network className="w-5 h-5" />
                         </div>
                         <div>
@@ -365,7 +365,7 @@ export function PublicHeader() {
 
         {/* Mobile Navigation Menu */}
         {mobileMenuOpen && (
-          <div className="lg:hidden bg-[#0F1419] border-t border-[#1A1F2E] px-6 py-6 space-y-6 animate-fadeIn">
+          <div className="lg:hidden bg-[#0a0a0a] border-t border-[#1A1F2E] px-6 py-6 space-y-6 animate-fadeIn">
             <div className="space-y-3">
               <p className="text-[10px] text-neutral-500 font-mono tracking-widest uppercase">
                 Products

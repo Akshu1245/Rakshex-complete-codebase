@@ -38,11 +38,12 @@ echo "[migrate] Complete — duration: ${DURATION}s"
 # Verify database connectivity after migration
 echo "[migrate] Verifying database connectivity..."
 node -e "
-  const mysql = require('mysql2/promise');
+  const pg = require('pg');
   (async () => {
-    const conn = await mysql.createConnection(process.env.DATABASE_URL);
-    await conn.ping();
-    await conn.end();
+    const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
+    await client.connect();
+    await client.query('SELECT 1');
+    await client.end();
     console.log('[migrate] Database connectivity verified');
   })().catch((err) => {
     console.error('[migrate] ERROR: Could not connect after migration:', err.message);

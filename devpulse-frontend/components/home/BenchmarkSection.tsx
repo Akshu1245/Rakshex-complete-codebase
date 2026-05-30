@@ -62,7 +62,7 @@ export function BenchmarkSection() {
         </div>
 
         {/* Comparison Table */}
-        <div className="w-full overflow-x-auto rounded-lg border border-[#1A1F2E] shadow-md bg-[#0F1419]">
+        <div className="w-full overflow-x-auto rounded-lg border border-[#1A1F2E] shadow-md bg-[#0a0a0a]">
           <table className="w-full border-collapse text-left min-w-[700px]">
             <thead>
               <tr className="bg-[#14B8A6]">
@@ -85,7 +85,7 @@ export function BenchmarkSection() {
                 <tr
                   key={idx}
                   className={`border-b border-[#1A1F2E] transition-colors duration-150 hover:bg-[#252D3D] ${
-                    idx % 2 === 0 ? "bg-[#1A1F2E]" : "bg-[#0F1419]"
+                    idx % 2 === 0 ? "bg-[#1A1F2E]" : "bg-[#0a0a0a]"
                   }`}
                 >
                   <td className="p-5 font-sans">

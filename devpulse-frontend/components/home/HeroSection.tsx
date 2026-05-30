@@ -59,7 +59,7 @@ export function HeroSection() {
             </span>
             <button
               onClick={handleCopyCommand}
-              className="cli-copy-btn bg-white hover:bg-neutral-100 text-[#0F1419] font-sans font-bold text-xs px-4 py-1.5 rounded-full cursor-pointer transition-colors"
+              className="cli-copy-btn bg-white hover:bg-neutral-100 text-[#0a0a0a] font-sans font-bold text-xs px-4 py-1.5 rounded-full cursor-pointer transition-colors"
             >
               {copied ? "Copied!" : "Copy"}
             </button>

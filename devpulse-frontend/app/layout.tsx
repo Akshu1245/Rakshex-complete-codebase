@@ -73,7 +73,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@600;700&display=swap"
         />
       </head>
-      <body className={inter.className} style={{ backgroundColor: "#0F1419" }}>
+      <body className={inter.className} style={{ backgroundColor: "#0a0a0a" }}>
         <TRPCProvider>
           <AuthProvider>
             <TrialBanner />

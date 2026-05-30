@@ -487,8 +487,8 @@ export default function HomePage() {
             Secures Any Framework
           </p>
           <div className="relative w-full z-10 overflow-hidden">
-            <div className="absolute left-0 top-0 w-16 h-full z-10 pointer-events-none bg-gradient-to-r from-[#0F1419] to-transparent" />
-            <div className="absolute right-0 top-0 w-16 h-full z-10 pointer-events-none bg-gradient-to-l from-[#0F1419] to-transparent" />
+            <div className="absolute left-0 top-0 w-16 h-full z-10 pointer-events-none bg-gradient-to-r from-[#0a0a0a] to-transparent" />
+            <div className="absolute right-0 top-0 w-16 h-full z-10 pointer-events-none bg-gradient-to-l from-[#0a0a0a] to-transparent" />
 
             <div className="flex items-center gap-12 animate-logo-scroll w-max pr-12">
               {[

@@ -57,7 +57,7 @@ export function TerminalDemo() {
   return (
     <div className="w-full max-w-[580px] rounded-lg border border-[#14B8A6] bg-[#1A1F2E] flex flex-col md:flex-row p-5 gap-5 items-stretch shadow-md relative">
       {/* Left panel: VS Code terminal */}
-      <div className="flex-1 bg-[#0F1419] rounded border border-[#14B8A6]/20 p-4 font-mono text-xs text-left h-52 flex flex-col justify-between">
+      <div className="flex-1 bg-[#0a0a0a] rounded border border-[#14B8A6]/20 p-4 font-mono text-xs text-left h-52 flex flex-col justify-between">
         <div className="flex items-center gap-1.5 mb-3 border-b border-[#1A1F2E] pb-2">
           <div className="w-2.5 h-2.5 rounded-full bg-[#14B8A6]/40" />
           <div className="w-2.5 h-2.5 rounded-full bg-[#14B8A6]/60" />
@@ -86,7 +86,7 @@ export function TerminalDemo() {
       </div>
 
       {/* Right panel: findings dashboard */}
-      <div className="w-full md:w-52 bg-[#0F1419] rounded border border-[#14B8A6]/20 p-4 flex flex-col justify-between items-center text-center">
+      <div className="w-full md:w-52 bg-[#0a0a0a] rounded border border-[#14B8A6]/20 p-4 flex flex-col justify-between items-center text-center">
         <div className="w-full flex flex-col items-center gap-2">
           <span className="text-[9px] text-[#9CA3AF] uppercase tracking-widest font-sans font-semibold">
             Security Score
