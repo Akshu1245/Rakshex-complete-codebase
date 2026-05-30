@@ -689,6 +689,10 @@ async function startServer() {
   const { registerImportRoutes } = await import("../api/import");
   registerImportRoutes(app);
 
+  // ── Razorpay Payment Checkout routes ───────────────────────────────────────
+  const { registerRazorpayRoutes } = await import("./razorpay");
+  registerRazorpayRoutes(app);
+
   // ── tRPC API ───────────────────────────────────────────────────────────────
   app.use(
     "/api/trpc",

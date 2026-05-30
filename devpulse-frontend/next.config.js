@@ -76,6 +76,14 @@ const nextConfig = {
         source: "/api/health",
         destination: `${TS_BACKEND_URL}/api/health`,
       },
+      {
+        source: "/api/create-order",
+        destination: `${TS_BACKEND_URL}/api/create-order`,
+      },
+      {
+        source: "/api/verify-payment",
+        destination: `${TS_BACKEND_URL}/api/verify-payment`,
+      },
     ];
   },
   // Bundle splitting: extract vendor chunks and enable code splitting

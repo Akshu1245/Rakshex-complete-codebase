@@ -35,6 +35,9 @@ export default function BillingPage() {
 
   const [error, setError] = useState<string | null>(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [oneTimeAmount, setOneTimeAmount] = useState<number>(500);
+  const [isPayingOneTime, setIsPayingOneTime] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState<boolean>(false);
 
   const subscription = planQuery.data ?? null;
   const invoices: Invoice[] = (invoicesQuery.data?.invoices ?? []) as Invoice[];
@@ -100,6 +103,111 @@ export default function BillingPage() {
       document.body.appendChild(script);
     } catch {
       // already surfaced via onError
+    }
+  };
+
+  const handleOneTimePayment = async () => {
+    setError(null);
+    setPaymentSuccess(false);
+    setIsPayingOneTime(true);
+
+    try {
+      const amountInPaise = oneTimeAmount * 100;
+      if (amountInPaise < 100) {
+        throw new Error("Minimum amount is 100 paise (₹1)");
+      }
+
+      const orderRes = await fetch("/api/create-order", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          amount: amountInPaise,
+          currency: "INR",
+          receipt: `onetime_${Date.now()}`,
+        }),
+      });
+
+      if (!orderRes.ok) {
+        const errData = await orderRes.json();
+        throw new Error(errData.error || "Failed to create payment order");
+      }
+
+      const orderData = await orderRes.json();
+      const orderId = orderData.order_id;
+
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.async = true;
+      script.onload = () => {
+        const options = {
+          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_SvOVoVW2Cy6jtT",
+          amount: orderData.amount,
+          currency: orderData.currency,
+          name: "Rakshex Standard Checkout",
+          description: "One-time API Security Scan Credits",
+          order_id: orderId,
+          image: "/logo.png",
+          handler: async function (response: any) {
+            try {
+              setIsPayingOneTime(true);
+              const verifyRes = await fetch("/api/verify-payment", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_signature: response.razorpay_signature,
+                }),
+              });
+
+              if (!verifyRes.ok) {
+                const verifyErr = await verifyRes.json();
+                throw new Error(verifyErr.error || "Payment signature verification failed");
+              }
+
+              setPaymentSuccess(true);
+              refreshAll();
+            } catch (err: any) {
+              setError(err.message || "Failed to verify signature");
+            } finally {
+              setIsPayingOneTime(false);
+            }
+          },
+          prefill: {
+            name: "",
+            email: "",
+          },
+          theme: {
+            color: "#14B8A6",
+          },
+          modal: {
+            ondismiss: function () {
+              setIsPayingOneTime(false);
+              setError("Payment checkout cancelled by user");
+            },
+          },
+        };
+
+        const rzp = new (window as any).Razorpay(options);
+        rzp.on("payment.failed", function (response: any) {
+          setError(response.error.description || "Payment failed");
+          setIsPayingOneTime(false);
+        });
+        rzp.open();
+      };
+
+      script.onerror = () => {
+        throw new Error("Failed to load Razorpay SDK. Please check your internet connection.");
+      };
+
+      document.body.appendChild(script);
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred during checkout");
+      setIsPayingOneTime(false);
     }
   };
 
@@ -257,6 +365,72 @@ export default function BillingPage() {
               )}
             </div>
           ))}
+        </div>
+
+        {/* One-time Payment Checkout */}
+        <div className="bg-[#1E293B] border border-[#2D3E50] rounded-lg p-6 space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold">Buy Custom Scan Credits (One-time Payment)</h2>
+            <p className="text-gray-400 text-sm mt-1">
+              Need more API scans without upgrading your subscription? Buy extra credits instantly
+              using Razorpay Standard Checkout.
+            </p>
+          </div>
+
+          {paymentSuccess && (
+            <div className="flex items-center gap-2 p-4 bg-emerald-950/30 border border-emerald-500 rounded-lg text-emerald-400">
+              <Check className="w-5 h-5" />
+              Payment completed and verified successfully! Your credits are updated.
+            </div>
+          )}
+
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 max-w-md">
+            <div className="relative flex-1">
+              <span className="absolute left-3 top-2 text-gray-400 font-medium">₹</span>
+              <input
+                type="number"
+                min="1"
+                value={oneTimeAmount}
+                onChange={(e) => setOneTimeAmount(Math.max(1, parseInt(e.target.value) || 0))}
+                className="w-full pl-8 pr-3 py-2 bg-[#0A0E1A] border border-[#2D3E50] rounded-lg text-white focus:outline-none focus:border-[#14B8A6] focus:ring-1 focus:ring-[#14B8A6] placeholder-gray-600"
+                placeholder="Enter amount"
+                disabled={isPayingOneTime}
+              />
+            </div>
+            <button
+              onClick={handleOneTimePayment}
+              disabled={isPayingOneTime}
+              className="px-6 py-2 bg-gradient-to-r from-[#14B8A6] to-[#00F0FF] text-[#0A0E1A] font-semibold rounded-lg hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {isPayingOneTime ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-[#0A0E1A]" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <CreditCard className="w-4 h-4 text-[#0A0E1A]" />
+                  Pay ₹{oneTimeAmount} Now
+                </>
+              )}
+            </button>
+          </div>
+          <div className="flex gap-2">
+            {[100, 500, 1000, 2500].map((amt) => (
+              <button
+                key={amt}
+                onClick={() => setOneTimeAmount(amt)}
+                className={`px-3 py-1 text-xs border rounded-lg transition-colors ${
+                  oneTimeAmount === amt
+                    ? "border-[#14B8A6] bg-[#14B8A6]/10 text-[#14B8A6]"
+                    : "border-[#2D3E50] hover:border-gray-500 text-gray-400"
+                }`}
+                disabled={isPayingOneTime}
+              >
+                ₹{amt}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Invoice History */}
