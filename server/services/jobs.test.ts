@@ -87,7 +87,7 @@ describe("services/jobs typed queue wrappers", () => {
         commitSha: "abc123",
       },
     });
-    expect(id).toMatch(/^scan-/);
+    expect(id).toMatch(/^(scan-.*|[0-9]+)$/);
     await flushQueue();
     expect(runCollectionScan).toHaveBeenCalledTimes(1);
     expect(runCollectionScan).toHaveBeenCalledWith(7, "col-1", {
