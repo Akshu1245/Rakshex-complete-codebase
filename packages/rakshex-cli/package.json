@@ -3,8 +3,11 @@
   "version": "0.1.0",
   "type": "module",
   "bin": {
-    "rakshex": "./dist/cli.js"
+    "rakshex": "dist/cli.js"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc"
   },

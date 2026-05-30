@@ -85,19 +85,10 @@ program
       const endpointCount = endpoints.length;
 
       // Calculate security score
-      let score = 100;
-      for (const f of allFindings) {
-        if (f.severity === "Critical") {
-          score -= 20;
-        } else if (f.severity === "High") {
-          score -= 10;
-        } else if (f.severity === "Medium") {
-          score -= 5;
-        } else if (f.severity === "Low") {
-          score -= 2;
-        }
-      }
-      if (score < 0) score = 0;
+      const criticalCount = allFindings.filter((f) => f.severity === "Critical").length;
+      const highCount = allFindings.filter((f) => f.severity === "High").length;
+      const mediumCount = allFindings.filter((f) => f.severity === "Medium").length;
+      const score = Math.max(10, 100 - criticalCount * 20 - highCount * 10 - mediumCount * 5);
 
       if (isJson) {
         console.log(

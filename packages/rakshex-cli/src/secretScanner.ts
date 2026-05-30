@@ -90,6 +90,30 @@ const RULES: SecretRule[] = [
     pattern: /\b(?:sk_live|rk_live)_[A-Za-z0-9]{20,}\b/g,
   },
   {
+    id: "stripe_test_key",
+    description: "Stripe Test Secret Key",
+    severity: "high",
+    pattern: /\b(?:sk_test|rk_test)_[A-Za-z0-9_]{15,}\b/g,
+  },
+  {
+    id: "jwt_token_truncated",
+    description: "Truncated JSON Web Token",
+    severity: "high",
+    pattern: /\beyJ[A-Za-z0-9_-]{10,}\.{3,}/g,
+  },
+  {
+    id: "generic_bearer_token",
+    description: "Generic Bearer Token",
+    severity: "high",
+    pattern: /\bBearer\s+[a-zA-Z0-9_+/=._-]{20,}\b/g,
+  },
+  {
+    id: "weak_password",
+    description: "Weak or Common Password",
+    severity: "high",
+    pattern: /\b(?:password\d{3,}|admin\d{3,}|newpass)\b/gi,
+  },
+  {
     id: "private_key_block",
     description: "Private Key (RSA/EC/OpenSSH)",
     severity: "critical",

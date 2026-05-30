@@ -117,6 +117,28 @@ function safeGetPath(rawUrl: string): string | null {
   }
 }
 
+function extractPostmanEndpoints(items: any[]): Endpoint[] {
+  const endpoints: Endpoint[] = [];
+  for (const item of items) {
+    if (!item) continue;
+    if (item.request) {
+      const rawUrl = item.request.url?.raw || item.request.url || "";
+      const url = typeof rawUrl === "string" ? rawUrl : rawUrl?.raw || "";
+      endpoints.push({
+        url,
+        method: (item.request.method || "GET").toUpperCase(),
+        name: item.name || "",
+        description: item.request.description || "",
+        headers: item.request.header || [],
+      });
+    }
+    if (Array.isArray(item.item)) {
+      endpoints.push(...extractPostmanEndpoints(item.item));
+    }
+  }
+  return endpoints;
+}
+
 /**
  * Walk the collection and flatten it into a uniform endpoint list. Handles
  * both Postman (`item[].request`) and OpenAPI (`paths[path][method]`) inputs.
@@ -125,17 +147,8 @@ export function flattenCollection(collectionData: any): Endpoint[] {
   const endpoints: Endpoint[] = [];
 
   // Postman-style
-  const items: any[] = Array.isArray(collectionData?.item) ? collectionData.item : [];
-  for (const item of items) {
-    const rawUrl = item?.request?.url?.raw || item?.request?.url || "";
-    const url = typeof rawUrl === "string" ? rawUrl : rawUrl?.raw || "";
-    endpoints.push({
-      url,
-      method: (item?.request?.method || "GET").toUpperCase(),
-      name: item?.name || "",
-      description: item?.request?.description || "",
-      headers: item?.request?.header || [],
-    });
+  if (Array.isArray(collectionData?.item)) {
+    endpoints.push(...extractPostmanEndpoints(collectionData.item));
   }
 
   // OpenAPI-style
