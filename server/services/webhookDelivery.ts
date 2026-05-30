@@ -160,7 +160,7 @@ export async function deliver(
   event: WebhookEvent,
   data: Record<string, unknown>,
 ): Promise<DeliveryResult[]> {
-  let endpoints: WebhookEndpoint[] = [];
+  let endpoints: WebhookEndpoint[];
   try {
     endpoints = await db.getActiveWebhookEndpoints(userId, event);
   } catch (err) {

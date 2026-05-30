@@ -180,5 +180,6 @@ export function verifyCsrfToken(
  */
 export function sanitizeInput(input: string): string {
   if (!input) return "";
+  // eslint-disable-next-line no-control-regex
   return input.replace(/[\x00-\x1F"\x7F]/g, "").trim();
 }

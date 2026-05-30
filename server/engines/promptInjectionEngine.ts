@@ -305,6 +305,7 @@ export function layer2Heuristic(prompt: string): Layer2Signals {
   }
 
   // Zero-width characters
+  // eslint-disable-next-line no-misleading-character-class
   if (/[\u200B\u200C\u200D\uFEFF]/.test(prompt)) {
     riskScore += 20;
     signals.push("zero_width_chars");

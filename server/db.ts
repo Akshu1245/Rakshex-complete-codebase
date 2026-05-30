@@ -315,7 +315,7 @@ export async function createCollection(
   assertDb(db);
 
   const id = secureId("col");
-  let totalRequests = 0;
+  let totalRequests: number;
   if (format === "openapi") {
     totalRequests = Object.keys(data.paths || {}).length;
   } else if (format === "bruno") {

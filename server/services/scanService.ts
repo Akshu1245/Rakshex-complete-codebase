@@ -84,7 +84,7 @@ export async function runCollectionScan(
   // Generate findings. Prompt-injection scans use a dedicated payload-aware
   // scanner with a scan budget; everything else goes through the original
   // heuristic pipeline so we don't change behaviour for existing flows.
-  let findings: ReturnType<typeof generateRealFindings> = [];
+  let findings: ReturnType<typeof generateRealFindings>;
   let budget: ScanResult["budget"];
   if (options.scanType === "prompt_injection") {
     const piResult = generatePromptInjectionFindings(collection.data);

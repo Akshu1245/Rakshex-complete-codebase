@@ -296,7 +296,7 @@ export const mcpGovernanceRouter = router({
         name: string;
         description?: string;
         inputSchema: Record<string, unknown>;
-      }> = [];
+      }>;
 
       try {
         const result = await discoverMcpTools(srv.transport as McpTransport, srv.url ?? "");

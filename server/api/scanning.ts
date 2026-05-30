@@ -62,7 +62,7 @@ export const scanningRouter = router({
         // still applies (just without strict atomicity).
         const dayKey = new Date().toISOString().slice(0, 10); // YYYY-MM-DD UTC
         const counterKey = `scan_count:${ctx.user.id}:${dayKey}`;
-        let used = 0;
+        let used: number;
         let resetsAt = Date.now() + 24 * 60 * 60 * 1000;
         try {
           const pipeline = redis.multi();

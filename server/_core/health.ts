@@ -14,7 +14,7 @@ export async function getHealthStatus(): Promise<HealthStatus> {
   const uptime = process.uptime();
 
   // Check database connection
-  let dbStatus: "connected" | "disconnected" = "disconnected";
+  let dbStatus: "connected" | "disconnected";
   try {
     // Simple query to check DB connection
     await db.getUserById(1);
@@ -24,7 +24,7 @@ export async function getHealthStatus(): Promise<HealthStatus> {
   }
 
   // Check Redis connection
-  let redisStatus: "connected" | "disconnected" = "disconnected";
+  let redisStatus: "connected" | "disconnected";
   try {
     await redis.ping();
     redisStatus = "connected";
@@ -52,7 +52,6 @@ export async function getHealthStatus(): Promise<HealthStatus> {
 // Express health check handler
 export async function healthCheckHandler(req: any, res: any) {
   const health = await getHealthStatus();
-  const statusCode =
-    health.status === "ok" ? 200 : health.status === "degraded" ? 200 : 503;
+  const statusCode = health.status === "ok" ? 200 : health.status === "degraded" ? 200 : 503;
   res.status(statusCode).json(health);
 }
