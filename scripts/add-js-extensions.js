@@ -41,7 +41,7 @@ function rewrite(content, filePath) {
   //    Skip if already has an extension
   const relRe = /((?:import|export)\s+(?:[^"']*\s+from\s+)?["'])(\.\/[^"']+|\.\.\/[^"']+)(["'])/g;
   content = content.replace(relRe, (_match, prefix, specifier, suffix) => {
-    if (/\.[a-z0-9]+$/i.test(specifier)) return _match;
+    if (/\.(?:js|json|mjs|cjs)$/i.test(specifier)) return _match;
     return `${prefix}${specifier}.js${suffix}`;
   });
 
