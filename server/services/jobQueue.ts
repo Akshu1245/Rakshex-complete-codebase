@@ -152,8 +152,11 @@ export function getJobQueue(): JobQueue {
         "[JobQueue] using BullMQ backend",
       );
       return queue;
-    } catch {
-      logger.warn("[JobQueue] BullMQ failed, falling back to in-memory");
+    } catch (err) {
+      logger.warn(
+        { err: err instanceof Error ? err.message : String(err) },
+        "[JobQueue] BullMQ failed, falling back to in-memory",
+      );
     }
   }
   queue = new MemoryJobQueue();

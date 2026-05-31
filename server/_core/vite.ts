@@ -65,9 +65,10 @@ export function serveStatic(app: Express) {
       ? path.resolve(import.meta.dirname, "../..", "dist", "public")
       : path.resolve(import.meta.dirname, "public");
   if (!fs.existsSync(distPath)) {
-    logger.error(
-      `Could not find the build directory: ${distPath}, make sure to build the client first`,
+    logger.warn(
+      `[serveStatic] Build directory not found: ${distPath}. Skipping static file serving (expected for API-only deployments).`,
     );
+    return;
   }
 
   app.use(express.static(distPath));
