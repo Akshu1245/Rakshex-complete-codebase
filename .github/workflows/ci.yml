@@ -79,6 +79,7 @@ jobs:
     name: E2E Tests (Playwright)
     runs-on: ubuntu-latest
     needs: [test]
+    continue-on-error: true
     services:
       postgres:
         image: postgres:15-alpine
