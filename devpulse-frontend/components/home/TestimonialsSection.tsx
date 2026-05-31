@@ -13,23 +13,20 @@ export function TestimonialsSection() {
     if (!email) return;
     setPending(true);
     setError(null);
+    const GOOGLE_SHEET_URL =
+      "https://script.google.com/macros/s/AKfycbyIdVWuQJE6-t_0S2enUEncHRSuPYXetXr5GY3-GfGfSgYentTkkZViDhx7LxVVeEE/exec";
+
     try {
-      const res = await fetch("/api/waitlist", {
+      await fetch(GOOGLE_SHEET_URL, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email }),
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, source: "website" }),
       });
-      if (res.ok) {
-        setSuccess(true);
-        setEmail("");
-      } else {
-        const data = await res.json();
-        setError(data.error || "Failed to join. Please try again.");
-      }
+      setSuccess(true);
+      setEmail("");
     } catch (err) {
-      setError("Failed to join. Please check your network connection and try again.");
+      setError("Something went wrong. Try again.");
     } finally {
       setPending(false);
     }
