@@ -84,8 +84,8 @@ export function PublicHeader() {
                 src="/icon-mark-128.png"
                 alt="RaksHex"
                 style={{
-                  height: "38px",
-                  width: "38px",
+                  height: "48px",
+                  width: "48px",
                   objectFit: "contain",
                   filter: "brightness(1.4) contrast(1.1)",
                 }}
