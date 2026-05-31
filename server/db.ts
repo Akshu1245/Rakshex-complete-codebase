@@ -121,22 +121,38 @@ export type PaymentStatus = Payment["status"];
 export type RefundStatus = NonNullable<Payment["refundStatus"]>;
 
 let _db: NodePgDatabase<Record<string, unknown>> | null = null;
+let _dbInitPromise: Promise<NodePgDatabase<Record<string, unknown>> | null> | null = null;
 
 // Lazily create the drizzle instance so local tooling can run without a DB.
+// Uses a promise lock to prevent race conditions when multiple requests
+// hit the server simultaneously during cold start.
 export async function getDb() {
-  if (!_db && process.env.DATABASE_URL) {
-    try {
-      const pool = new Pool({
-        connectionString: process.env.DATABASE_URL,
-        max: 20,
-      });
-      _db = drizzle(pool);
-    } catch (error) {
-      logger.warn({ err: error }, "[Database] Failed to connect");
-      _db = null;
-    }
+  if (_db) return _db;
+  if (!process.env.DATABASE_URL) return null;
+
+  if (!_dbInitPromise) {
+    _dbInitPromise = (async () => {
+      try {
+        const pool = new Pool({
+          connectionString: process.env.DATABASE_URL,
+          max: 20,
+          idleTimeoutMillis: 30000,
+          connectionTimeoutMillis: 5000,
+        });
+        // Test the connection before caching
+        await pool.query("SELECT 1");
+        _db = drizzle(pool);
+        logger.info("[Database] Connection pool initialized");
+        return _db;
+      } catch (error) {
+        logger.warn({ err: error }, "[Database] Failed to connect");
+        _db = null;
+        return null;
+      }
+    })();
   }
-  return _db;
+
+  return _dbInitPromise;
 }
 
 export async function upsertUser(user: InsertUser): Promise<{ isNew: boolean }> {
