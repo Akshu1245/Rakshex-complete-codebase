@@ -84,10 +84,6 @@ const nextConfig = {
         source: "/api/verify-payment",
         destination: `${TS_BACKEND_URL}/api/verify-payment`,
       },
-      {
-        source: "/api/waitlist",
-        destination: `${TS_BACKEND_URL}/api/waitlist`,
-      },
     ];
   },
   // Bundle splitting: extract vendor chunks and enable code splitting
