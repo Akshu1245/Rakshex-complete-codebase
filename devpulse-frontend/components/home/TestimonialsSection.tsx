@@ -14,7 +14,7 @@ export function TestimonialsSection() {
     setPending(true);
     setError(null);
     const GOOGLE_SHEET_URL =
-      "https://script.google.com/macros/s/AKfycbyIdVWuQJE6-t_0S2enUEncHRSuPYXetXr5GY3-GfGfSgYentTkkZViDhx7LxVVeEE/exec";
+      "https://script.google.com/macros/s/AKfycbxmbtnE42vkdidiPstOMiegZeqTMJQNB57ybAQeXgMRPJW6Hz_436b6qzR1ik93mb4/exec";
 
     try {
       await fetch(GOOGLE_SHEET_URL, {
