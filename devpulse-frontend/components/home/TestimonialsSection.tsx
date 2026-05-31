@@ -1,27 +1,38 @@
 "use client";
 
 import { useState } from "react";
-import { trpc } from "@/lib/trpc";
 
 export function TestimonialsSection() {
   const [email, setEmail] = useState("");
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
 
-  const joinMutation = trpc.waitlist.join.useMutation({
-    onSuccess: () => {
-      setSuccess(true);
-      setError(null);
-    },
-    onError: (err) => {
-      setError(err.message || "Failed to join. Please try again.");
-    },
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
-    joinMutation.mutate({ email, source: "testimonials_waitlist" });
+    setPending(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+      if (res.ok) {
+        setSuccess(true);
+        setEmail("");
+      } else {
+        const data = await res.json();
+        setError(data.error || "Failed to join. Please try again.");
+      }
+    } catch (err) {
+      setError("Failed to join. Please check your network connection and try again.");
+    } finally {
+      setPending(false);
+    }
   };
 
   return (
@@ -39,16 +50,16 @@ export function TestimonialsSection() {
           </span>
 
           <h2 className="text-3xl sm:text-[36px] font-extrabold text-white font-sans leading-tight tracking-[-0.02em]">
-            500+ developers on the waitlist.
+            Be the first. Join the waitlist.
           </h2>
           <p className="text-[#9CA3AF] text-base sm:text-lg leading-relaxed max-w-[480px] font-sans -mt-2">
-            Be the first to get access.
+            Early access. Free forever for first 100 users.
           </p>
 
           <div className="w-full mt-4">
             {success ? (
               <div className="p-4 bg-[#14B8A6]/10 border border-[#14B8A6]/30 rounded-[6px] text-[#14B8A6] text-sm font-mono text-center">
-                ✓ You have been added to the waitlist!
+                ✓ You're on the list! We'll be in touch.
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="w-full space-y-3">
@@ -56,18 +67,18 @@ export function TestimonialsSection() {
                   <input
                     type="email"
                     required
-                    placeholder="Enter your work email"
+                    placeholder="your@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="flex-1 px-4 py-3 bg-[#0F1419] border border-[#14B8A6]/30 hover:border-[#14B8A6] focus:border-[#14B8A6] focus:outline-none text-white placeholder-[#6B7280] rounded-[6px] text-sm font-sans transition-all duration-150"
-                    disabled={joinMutation.isPending}
+                    disabled={pending}
                   />
                   <button
                     type="submit"
-                    disabled={joinMutation.isPending}
+                    disabled={pending}
                     className="bg-[#14B8A6] hover:bg-[#0D9488] active:bg-[#0A7F6F] text-white hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_4px_12px_rgba(20,184,166,0.2)] font-semibold px-6 py-3 text-sm tracking-wide font-sans rounded-[6px] disabled:opacity-50 transition-all duration-200 shrink-0 transform"
                   >
-                    {joinMutation.isPending ? "Joining..." : "Join Waitlist"}
+                    {pending ? "Joining..." : "Join Waitlist"}
                   </button>
                 </div>
                 {error && <p className="text-red-400 text-xs text-left font-mono mt-1">{error}</p>}
