@@ -441,11 +441,13 @@ async function startServer() {
       allOk = false;
     }
 
-    // Memory check
+    // Memory check — RSS vs 1GB limit (heap ratio is misleading because V8 heap grows dynamically)
     const mem = process.memoryUsage();
     const heapUsedMB = Math.round(mem.heapUsed / 1024 / 1024);
     const heapTotalMB = Math.round(mem.heapTotal / 1024 / 1024);
-    checks.memory = heapUsedMB < heapTotalMB * 0.9 ? "ok" : "error";
+    const rssMB = Math.round(mem.rss / 1024 / 1024);
+    const MEMORY_LIMIT_MB = 1024; // 1GB — reasonable for Railway hobby plan
+    checks.memory = rssMB < MEMORY_LIMIT_MB ? "ok" : "error";
     if (checks.memory === "error") allOk = false;
 
     res.status(allOk ? 200 : 503).json({

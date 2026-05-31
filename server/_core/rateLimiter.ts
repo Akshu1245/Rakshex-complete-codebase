@@ -6,18 +6,13 @@ import { logger } from "./logger";
 const INTERNAL_SERVICE_HEADER = "x-internal-service";
 
 /**
- * Returns the rate limit store — Redis-backed when REDIS_URL is available,
- * undefined (in-memory) otherwise. This is a singleton resolved at first call.
+ * Creates a fresh Redis-backed rate limit store.
+ * Each limiter MUST have its own RedisStore instance (express-rate-limit
+ * requirement). Never share a store across multiple limiters.
  */
-let _store: unknown | undefined;
-let _storeInitialized = false;
-
-async function getStore(): Promise<unknown | undefined> {
-  if (_storeInitialized) return _store;
-  _storeInitialized = true;
-
+async function createStore(prefix: string): Promise<unknown | undefined> {
   if (!process.env.REDIS_URL) {
-    logger.info("[RateLimiter] No REDIS_URL — using in-memory store");
+    logger.info(`[RateLimiter] No REDIS_URL — using in-memory store for ${prefix}`);
     return undefined;
   }
 
@@ -29,15 +24,16 @@ async function getStore(): Promise<unknown | undefined> {
       logger.warn({ err }, "[RateLimiter] Redis client error"),
     );
     await redisClient.connect();
-    _store = new RedisStore({
+    const store = new RedisStore({
       sendCommand: (...args: string[]) => redisClient.sendCommand(args),
+      prefix: `rl:${prefix}:`,
     });
-    logger.info("[RateLimiter] Using Redis-backed store");
-    return _store;
+    logger.info(`[RateLimiter] Using Redis-backed store for ${prefix}`);
+    return store;
   } catch (err) {
     logger.warn(
       { err: err instanceof Error ? err.message : err },
-      "[RateLimiter] rate-limit-redis unavailable — falling back to memory store",
+      `[RateLimiter] rate-limit-redis unavailable for ${prefix} — falling back to memory store`,
     );
     return undefined;
   }
@@ -45,16 +41,17 @@ async function getStore(): Promise<unknown | undefined> {
 
 /**
  * Creates an express-rate-limit middleware instance with:
- * - Redis backing when available
+ * - Redis backing when available (isolated per limiter)
  * - Standard IETF RateLimit headers
  * - Skip in non-production
  * - Skip for X-Internal-Service header matching INTERNAL_SERVICE_SECRET
  */
 export async function createLimiter(
-  opts: Partial<RateLimitOptions> & { windowMs: number; max: number },
+  opts: Partial<RateLimitOptions> & { windowMs: number; max: number; prefix?: string },
 ): Promise<ReturnType<typeof rateLimit>> {
-  const store = await getStore();
-  const { windowMs, max, ...rest } = opts;
+  const prefix = opts.prefix ?? "default";
+  const store = await createStore(prefix);
+  const { windowMs, max, prefix: _prefix, ...rest } = opts;
 
   return rateLimit({
     windowMs,
@@ -87,6 +84,7 @@ export async function createLimiter(
  */
 export async function createAllLimiters() {
   const globalLimiter = await createLimiter({
+    prefix: "global",
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 1000, // 1000 requests per window per IP
     message: { error: "Too many requests, please try again later." },
@@ -94,6 +92,7 @@ export async function createAllLimiters() {
   });
 
   const authLimiter = await createLimiter({
+    prefix: "auth",
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 20, // 20 auth attempts per 15 min per IP
     message: {
@@ -103,6 +102,7 @@ export async function createAllLimiters() {
   });
 
   const scanLimiter = await createLimiter({
+    prefix: "scan",
     windowMs: 60 * 60 * 1000, // 1 hour
     max: 100, // 100 scans per hour per userId
     message: { error: "Too many scan triggers, please slow down." },
@@ -114,6 +114,7 @@ export async function createAllLimiters() {
   });
 
   const apiKeyLimiter = await createLimiter({
+    prefix: "apikey",
     windowMs: 1 * 60 * 1000, // 1 minute
     max: 500, // 500 requests per minute per API key (SDK ingest)
     message: { error: "Too many API requests, please slow down." },

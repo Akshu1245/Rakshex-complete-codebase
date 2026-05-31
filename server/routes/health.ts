@@ -43,6 +43,11 @@ healthRouter.get("/health", async (_req: Request, res: Response) => {
   });
 });
 
+healthRouter.get("/robots.txt", (_req: Request, res: Response) => {
+  res.type("text/plain");
+  res.send("User-agent: *\nDisallow: /\n");
+});
+
 healthRouter.get("/health/ready", async (_req: Request, res: Response) => {
   let dbStatus: "ok" | "error" = "ok";
   let redisStatus: "ok" | "error" = "ok";
