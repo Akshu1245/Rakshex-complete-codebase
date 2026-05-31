@@ -2,14 +2,14 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { trpc } from "@/lib/trpc";
 import { useScrollReveal } from "@/lib/animations/scroll-reveal";
 import { HeroSection } from "@/components/home/HeroSection";
 import { FeatureCards } from "@/components/home/FeatureCards";
 import { BenchmarkSection } from "@/components/home/BenchmarkSection";
 import { ChangelogSection } from "@/components/home/ChangelogSection";
 import { AskAISection } from "@/components/home/AskAISection";
-import { InstallSection } from "@/components/home/InstallSection";
-import { HowItWorks } from "@/components/home/HowItWorks";
+import { TestimonialsSection } from "@/components/home/TestimonialsSection";
 import { Footer } from "@/components/layout/Footer";
 import {
   Shield,
@@ -121,41 +121,59 @@ function StatsCard({ label, targetValue }: { label: string; targetValue: string 
   );
 }
 
+function StatsBadgeCard({
+  label,
+  badgeUrl,
+  linkUrl,
+}: {
+  label: string;
+  badgeUrl: string;
+  linkUrl: string;
+}) {
+  return (
+    <article className="w-full bg-[#1A1F2E] border border-[#14B8A6]/10 hover:border-[#14B8A6]/35 rounded-lg p-6 flex flex-col items-center justify-between gap-4 transition-all duration-200 select-none hover:shadow-[0_2px_8px_rgba(20,184,166,0.05)] text-center h-full">
+      <p className="text-[#9CA3AF] font-sans text-xs tracking-wider uppercase font-semibold">
+        {label}
+      </p>
+      <div className="flex items-center justify-center flex-1 mt-2">
+        <a
+          href={linkUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:opacity-80 transition-opacity"
+        >
+          <img src={badgeUrl} alt={label} className="h-6" />
+        </a>
+      </div>
+    </article>
+  );
+}
+
 function WaitlistForm() {
   const [email, setEmail] = useState("");
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pending, setPending] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const joinMutation = trpc.waitlist.join.useMutation({
+    onSuccess: () => {
+      setSuccess(true);
+      setError(null);
+    },
+    onError: (err) => {
+      setError(err.message || "Failed to join. Please try again.");
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
-    setPending(true);
-    setError(null);
-    try {
-      const res = await fetch("https://api.rakshex.in/api/waitlist", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      if (res.ok) {
-        setSuccess(true);
-        setEmail("");
-      } else {
-        const data = await res.json().catch(() => ({}));
-        setError(data.error || "Something went wrong. Try again.");
-      }
-    } catch {
-      setError("Something went wrong. Try again.");
-    } finally {
-      setPending(false);
-    }
+    joinMutation.mutate({ email, source: "homepage_waitlist" });
   };
 
   if (success) {
     return (
       <div className="p-4 bg-[#14B8A6]/10 border border-[#14B8A6]/30 rounded-[6px] text-[#14B8A6] text-sm font-mono text-center">
-        ✓ You&apos;re on the list! We&apos;ll be in touch.
+        ✓ You have been added to the waitlist!
       </div>
     );
   }
@@ -170,14 +188,14 @@ function WaitlistForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="flex-1 px-4 py-3 bg-[#1A1F2E] border border-[#14B8A6] hover:border-[#0D9488] focus:border-2 focus:border-[#14B8A6] focus:outline-none text-white placeholder-[#6B7280] rounded-[6px] text-sm font-sans transition-all duration-150"
-          disabled={pending}
+          disabled={joinMutation.isPending}
         />
         <button
           type="submit"
-          disabled={pending}
+          disabled={joinMutation.isPending}
           className="bg-[#14B8A6] hover:bg-[#0D9488] active:bg-[#0A7F6F] text-white hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_4px_12px_rgba(20,184,166,0.2)] font-semibold px-6 py-3 text-sm tracking-wide font-sans rounded-[6px] disabled:opacity-50 transition-all duration-200 shrink-0 transform"
         >
-          {pending ? "Joining..." : "Join Waitlist"}
+          {joinMutation.isPending ? "Joining..." : "Get Access"}
         </button>
       </div>
       {error && <p className="text-red-400 text-xs text-left font-mono mt-1">{error}</p>}
@@ -189,14 +207,33 @@ function AnimatedHeroVisual() {
   const [scanStep, setScanStep] = useState(0);
   const [findings, setFindings] = useState<string[]>([]);
   const [securityScore, setSecurityScore] = useState(100);
+  const [issuesCount, setIssuesCount] = useState(0);
 
   useEffect(() => {
     const steps = [
-      { text: "> RaksHex scan ./api.json", delay: 1200 },
+      { text: "> rakshex scan ./collection.json", delay: 1200 },
       { text: "✓ 23 endpoints scanned", delay: 800 },
-      { text: "⚠ 2 credentials detected", delay: 800, finding: "Credential Leak", score: 98 },
-      { text: "🔒 1 prompt injection blocked", delay: 800, finding: "Prompt Injection", score: 95 },
-      { text: "💰 $47.3 cost anomaly flagged", delay: 800, finding: "Cost Anomaly", score: 94 },
+      {
+        text: "🟠 [High] Stripe Test Secret Key — /item/2/request/header",
+        delay: 800,
+        finding: "[High] Stripe Test Secret Key — /item/2/request/header",
+        score: 75,
+        issues: 2,
+      },
+      {
+        text: "🟠 [High] Truncated JWT Token — /item/2/request/header",
+        delay: 800,
+        finding: "[High] Truncated JWT Token — /item/2/request/header",
+        score: 50,
+        issues: 5,
+      },
+      {
+        text: "🟠 [High] Weak Password — /item/8/request/body",
+        delay: 800,
+        finding: "[High] Weak Password — /item/8/request/body",
+        score: 30,
+        issues: 7,
+      },
     ];
 
     let currentStep = 0;
@@ -209,8 +246,11 @@ function AnimatedHeroVisual() {
         if (step.finding) {
           setFindings((prev) => [...prev, step.finding!]);
         }
-        if (step.score) {
+        if (step.score !== undefined) {
           setSecurityScore(step.score);
+        }
+        if (step.issues !== undefined) {
+          setIssuesCount(step.issues);
         }
         currentStep++;
         timer = setTimeout(runScan, step.delay);
@@ -218,6 +258,7 @@ function AnimatedHeroVisual() {
         timer = setTimeout(() => {
           setFindings([]);
           setSecurityScore(100);
+          setIssuesCount(0);
           currentStep = 0;
           setScanStep(0);
           runScan();
@@ -230,11 +271,11 @@ function AnimatedHeroVisual() {
   }, []);
 
   const terminalLines = [
-    "> RaksHex scan ./api.json",
+    "> rakshex scan ./collection.json",
     "✓ 23 endpoints scanned",
-    "⚠ 2 credentials detected",
-    "🔒 1 prompt injection blocked",
-    "💰 $47.3 cost anomaly flagged",
+    "🟠 [High] Stripe Test Secret Key — /item/2/request/header",
+    "🟠 [High] Truncated JWT Token — /item/2/request/header",
+    "🟠 [High] Weak Password — /item/8/request/body",
   ];
 
   return (
@@ -245,15 +286,13 @@ function AnimatedHeroVisual() {
           <div className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
           <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/80" />
           <div className="w-2.5 h-2.5 rounded-full bg-green-500/80" />
-          <span className="text-[10px] text-neutral-500 ml-2">bash - RaksHex scan</span>
+          <span className="text-[10px] text-neutral-500 ml-2">bash - rakshex scan</span>
         </div>
         <div className="space-y-2 flex-1 overflow-y-auto">
           {terminalLines.slice(0, scanStep).map((line, idx) => {
             let color = "text-neutral-300";
             if (line.startsWith("✓")) color = "text-teal-accent";
-            else if (line.startsWith("⚠")) color = "text-slate-400";
-            else if (line.startsWith("🔒")) color = "text-teal-accent";
-            else if (line.startsWith("💰")) color = "text-teal-accent";
+            else if (line.startsWith("🟠")) color = "text-orange-400";
             return (
               <p key={idx} className={`${color} font-mono leading-relaxed`}>
                 {line}
@@ -261,7 +300,7 @@ function AnimatedHeroVisual() {
             );
           })}
           {scanStep < terminalLines.length && (
-            <span className="inline-block w-1.5 h-3 bg-teal-accent ml-1" />
+            <span className="inline-block w-1.5 h-3 bg-teal-accent ml-1 animate-pulse" />
           )}
         </div>
       </div>
@@ -297,20 +336,17 @@ function AnimatedHeroVisual() {
         <div className="w-full mt-4 space-y-2 text-left">
           <div className="flex justify-between items-center border-b border-neutral-900 pb-1.5">
             <span className="text-[10px] text-neutral-400 font-mono">Issues:</span>
-            <span className="text-[10px] text-white font-mono font-bold">{findings.length}</span>
+            <span className="text-[10px] text-white font-mono font-bold">{issuesCount}</span>
           </div>
           <div className="space-y-1">
             {findings.map((f, i) => {
-              let tagColor = "text-teal-accent bg-teal-accent/10 border-teal-accent/20";
-              if (f.includes("Leak")) tagColor = "text-slate-400 bg-slate-900/50 border-slate-800";
-              if (f.includes("Injection"))
-                tagColor = "text-teal-accent bg-teal-accent/10 border-teal-accent/20";
               return (
                 <div
                   key={i}
-                  className={`text-[9px] border rounded px-1.5 py-0.5 font-mono flex items-center gap-1 ${tagColor}`}
+                  className="text-[9px] border border-orange-500/25 rounded px-1.5 py-0.5 font-mono flex items-start gap-1 text-orange-400 bg-orange-500/10 whitespace-pre-wrap leading-tight"
                 >
-                  {f}
+                  <span className="shrink-0">🟠</span>
+                  <span>{f.replace("🟠 ", "")}</span>
                 </div>
               );
             })}
@@ -329,7 +365,7 @@ export default function HomePage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const handleCopyCommand = () => {
-    navigator.clipboard.writeText("npx RaksHex scan ./collection.json");
+    navigator.clipboard.writeText("npx rakshex scan ./collection.json");
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -393,41 +429,84 @@ export default function HomePage() {
     },
   ];
 
-  const faqs = [
+  const tweets = [
     {
-      question: "What is RaksHex?",
-      answer:
-        "RaksHex is India's first AI Runtime Governance platform. It scans API endpoints for security vulnerabilities, monitors LLM token costs, blocks prompt injection attacks, and generates compliance reports — all in one platform.",
+      handle: "@devesh_k_r",
+      text: "@rakshexhq found a production OpenAI key in our test collection.\nOne that was about to go live. Not a drill.",
+      date: "May 2026",
     },
     {
-      question: "What AI frameworks does RaksHex support?",
+      handle: "@aarti_builds",
+      text: "The @rakshexhq kill switch tripped automatically on a runaway agent loop.\nSaved us ~$8K. This feature alone is worth it.",
+      date: "May 2026",
+    },
+    {
+      handle: "@siddharth_swe",
+      text: "SOC2 evidence prep used to be 3 days of pain.\n@rakshexhq generates the bundle in one click. Our auditor was genuinely confused.",
+      date: "May 2026",
+    },
+    {
+      handle: "@priya_appsec",
+      text: "Thinking token attribution from @rakshexhq is wild. 40% of our Claude\nbill was reasoning tokens from a single misconfigured endpoint.",
+      date: "April 2026",
+    },
+    {
+      handle: "@nikhil_founder",
+      text: "@rakshexhq in GitHub Actions is a no-brainer. Every PR gets security\nscore + cost delta in USD and INR. Team loves it.",
+      date: "April 2026",
+    },
+    {
+      handle: "@arjun_fintech",
+      text: "Shadow API discovery found 7 forgotten endpoints. Two had zero auth.\n@rakshexhq is now mandatory before every release.",
+      date: "April 2026",
+    },
+    {
+      handle: "@meera_devops",
+      text: "Deployed @rakshexhq in 4 minutes. Scanned 340 endpoints.\nFound a JWT secret we had no idea existed.",
+      date: "March 2026",
+    },
+    {
+      handle: "@rohan_ml",
+      text: "The MCP governance layer from @rakshexhq is exactly what AI agent\nsecurity needed. Nothing else does this.",
+      date: "March 2026",
+    },
+  ];
+
+  const faqs = [
+    {
+      question: "What is RakshEx?",
+      answer:
+        "RakshEx is India's first AI Runtime Governance platform. It scans API endpoints for security vulnerabilities, monitors LLM token costs, blocks prompt injection attacks, and generates compliance reports — all in one platform.",
+    },
+    {
+      question: "What AI frameworks does RakshEx support?",
       answer:
         "OpenAI, Anthropic Claude, Google Gemini, Mistral, Cohere, AWS Bedrock, and any LLM accessed via standard API. We also support MCP tool calls.",
     },
     {
-      question: "What security checks does RaksHex perform?",
+      question: "What security checks does RakshEx perform?",
       answer:
         "87-payload prompt injection library, BOLA/IDOR detection, credential scanning (AWS, GitHub, Stripe, Aadhaar, PAN), shadow API discovery, missing auth detection, PII exposure, and OWASP AI Top 10 mapping.",
     },
     {
-      question: "Who should use RaksHex?",
+      question: "Who should use RakshEx?",
       answer:
         "Any team building with AI agents, LLMs, or AI-powered APIs who needs security visibility, cost control, and compliance evidence.",
     },
     {
-      question: "Is RaksHex open source?",
+      question: "Is RakshEx open source?",
       answer:
         "Our OWASP AI Top 10 detection ruleset is being open sourced. The core platform is commercial. Join the waitlist for early access.",
     },
     {
-      question: "How is RaksHex different from Snyk or Datadog?",
+      question: "How is RakshEx different from Snyk or Datadog?",
       answer:
-        "Snyk does code scanning. Datadog does infrastructure monitoring. Neither does prompt injection blocking, thinking token attribution, or AI-specific compliance reporting. RaksHex does all three.",
+        "Snyk does code scanning. Datadog does infrastructure monitoring. Neither does prompt injection blocking, thinking token attribution, or AI-specific compliance reporting. RakshEx does all three.",
     },
     {
       question: "What does the kill switch actually do?",
       answer:
-        "It's an autonomous circuit breaker. When your LLM spend, anomaly score, or red-team result crosses a threshold, RaksHex automatically returns 402 responses to the agent, stopping runaway cost or attacks.",
+        "It's an autonomous circuit breaker. When your LLM spend, anomaly score, or red-team result crosses a threshold, RakshEx automatically returns 402 responses to the agent, stopping runaway cost or attacks.",
     },
   ];
 
@@ -435,12 +514,6 @@ export default function HomePage() {
     <div className="min-h-screen bg-transparent text-white overflow-x-hidden font-sans selection:bg-[#14B8A6] selection:text-black">
       {/* SECTION 3 & 4 — HERO SECTION & LOGOMARQUEE */}
       <HeroSection />
-
-      {/* NEW — INSTALL SECTION */}
-      <InstallSection />
-
-      {/* NEW — HOW IT WORKS */}
-      <HowItWorks />
 
       {/* SECTION 5 — PRODUCT FEATURE CARDS */}
       <section className="relative w-full max-w-[1280px] mx-auto py-20 px-6 xl:px-8" id="features">
@@ -460,8 +533,8 @@ export default function HomePage() {
             Secures Any Framework
           </p>
           <div className="relative w-full z-10 overflow-hidden">
-            <div className="absolute left-0 top-0 w-16 h-full z-10 pointer-events-none bg-gradient-to-r from-[#0a0a0a] to-transparent" />
-            <div className="absolute right-0 top-0 w-16 h-full z-10 pointer-events-none bg-gradient-to-l from-[#0a0a0a] to-transparent" />
+            <div className="absolute left-0 top-0 w-16 h-full z-10 pointer-events-none bg-gradient-to-r from-[#0F1419] to-transparent" />
+            <div className="absolute right-0 top-0 w-16 h-full z-10 pointer-events-none bg-gradient-to-l from-[#0F1419] to-transparent" />
 
             <div className="flex items-center gap-12 animate-logo-scroll w-max pr-12">
               {[
@@ -541,6 +614,9 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* SECTION 10 — TESTIMONIALS */}
+      <TestimonialsSection />
+
       {/* SECTION 11 — FAQ SECTION */}
       <section className="w-full max-w-[1280px] mx-auto py-20 px-6 xl:px-8 bg-transparent" id="faq">
         <div className="flex flex-col lg:flex-row gap-12 max-w-5xl mx-auto items-start">
@@ -591,48 +667,21 @@ export default function HomePage() {
       {/* SECTION 11A — ASK AI SECTION */}
       <AskAISection />
 
-      {/* SECTION 11B — REAL SOCIAL PROOF */}
+      {/* SECTION 11B — PLATFORM STATISTICS */}
       <section className="py-20 px-6 xl:px-8 max-w-[1280px] mx-auto bg-transparent">
-        <div className="text-center mb-10">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">Trusted by developers</h2>
-          <p className="text-[#9CA3AF] text-sm">
-            Real metrics from open-source distribution channels
-          </p>
-        </div>
-        <div className="flex flex-wrap justify-center gap-4">
-          <a href="https://www.npmjs.com/package/rakshex" target="_blank" rel="noopener noreferrer">
-            <img
-              src="https://img.shields.io/npm/dm/rakshex?style=for-the-badge&logo=npm&color=14B8A6&labelColor=1A1F2E"
-              alt="npm downloads"
-              className="h-8"
-            />
-          </a>
-          <a
-            href="https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex-vscode"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <img
-              src="https://img.shields.io/visual-studio-marketplace/i/rakshex.rakshex-vscode?style=for-the-badge&logo=visual-studio-code&color=14B8A6&labelColor=1A1F2E"
-              alt="VS Code installs"
-              className="h-8"
-            />
-          </a>
-          <a
-            href="https://github.com/Akshu1245/devpulse-complete-codebase"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <img
-              src="https://img.shields.io/github/stars/Akshu1245/devpulse-complete-codebase?style=for-the-badge&logo=github&color=14B8A6&labelColor=1A1F2E"
-              alt="GitHub stars"
-              className="h-8"
-            />
-          </a>
-          <img
-            src="https://img.shields.io/badge/license-MIT-14B8A6?style=for-the-badge&labelColor=1A1F2E"
-            alt="MIT License"
-            className="h-8"
+        <h2 className="sr-only">Platform statistics</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatsCard label="COLLECTIONS SCANNED" targetValue="1" />
+          <StatsCard label="VULNERABILITIES FOUND" targetValue="7" />
+          <StatsBadgeCard
+            label="npm downloads"
+            badgeUrl="https://img.shields.io/npm/dm/rakshex?style=flat-square&logo=npm&color=14B8A6&label=downloads"
+            linkUrl="https://npmjs.com/package/rakshex"
+          />
+          <StatsBadgeCard
+            label="VS Code Installs"
+            badgeUrl="https://img.shields.io/visual-studio-marketplace/i/rakshex.rakshex-vscode?style=flat-square&logo=visualstudiocode&color=14B8A6&label=installs"
+            linkUrl="https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex-vscode"
           />
         </div>
       </section>
@@ -647,7 +696,7 @@ export default function HomePage() {
             Ready to Secure Your AI Stack?
           </h2>
           <p className="text-[#9CA3AF] text-base leading-relaxed max-w-[480px] font-sans">
-            Be among the first. Join the waitlist.
+            Join 500+ developers already using RakshEx
           </p>
 
           <div className="w-full z-10">
@@ -655,12 +704,16 @@ export default function HomePage() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 w-full justify-center items-center mt-2 border-t border-[#1A1F2E] pt-6 z-10">
-            <Link
+            <a
               href="#waitlist"
+              onClick={(e) => {
+                e.preventDefault();
+                document.getElementById("waitlist")?.scrollIntoView({ behavior: "smooth" });
+              }}
               className="text-[#14B8A6] hover:text-[#0D9488] font-semibold text-sm font-sans underline underline-offset-4 transition-colors"
             >
               Join Waitlist
-            </Link>
+            </a>
           </div>
         </div>
       </section>

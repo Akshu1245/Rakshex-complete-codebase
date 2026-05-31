@@ -39,7 +39,7 @@ export function PublicHeader() {
         <Link className="block" href="/changelog">
           <div className="mx-auto flex h-10 w-full max-w-[1280px] items-center justify-between px-6">
             <p className="min-w-0 truncate text-left text-xs font-medium text-white sm:text-sm">
-              🔒 RaksHex Launch Week — India's First AI Runtime Governance Platform →
+              🔒 RakshEx Launch Week — India's First AI Runtime Governance Platform →
             </p>
             {mounted && !isZero && (
               <span
@@ -50,19 +50,19 @@ export function PublicHeader() {
                   Launch in:
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="rounded bg-[#0a0a0a] border border-[#14B8A6] px-1.5 py-0.5 font-bold font-mono text-[#14B8A6]">
+                  <span className="rounded bg-[#0F1419] border border-[#14B8A6] px-1.5 py-0.5 font-bold font-mono text-[#14B8A6]">
                     {timeLeft.days}d
                   </span>
                   <span>:</span>
-                  <span className="rounded bg-[#0a0a0a] border border-[#14B8A6] px-1.5 py-0.5 font-bold font-mono text-[#14B8A6]">
+                  <span className="rounded bg-[#0F1419] border border-[#14B8A6] px-1.5 py-0.5 font-bold font-mono text-[#14B8A6]">
                     {timeLeft.hours}h
                   </span>
                   <span>:</span>
-                  <span className="rounded bg-[#0a0a0a] border border-[#14B8A6] px-1.5 py-0.5 font-bold font-mono text-[#14B8A6]">
+                  <span className="rounded bg-[#0F1419] border border-[#14B8A6] px-1.5 py-0.5 font-bold font-mono text-[#14B8A6]">
                     {timeLeft.minutes}m
                   </span>
                   <span>:</span>
-                  <span className="rounded bg-[#0a0a0a] border border-[#14B8A6] px-1.5 py-0.5 font-bold font-mono text-[#14B8A6]">
+                  <span className="rounded bg-[#0F1419] border border-[#14B8A6] px-1.5 py-0.5 font-bold font-mono text-[#14B8A6]">
                     {timeLeft.seconds}s
                   </span>
                 </span>
@@ -74,34 +74,25 @@ export function PublicHeader() {
 
       {/* SECTION 2 — Navbar Redesign (Mega Menu) */}
       <nav
-        className="bg-[#0a0a0a]/90 backdrop-blur-md w-full border-b border-[#1A1F2E]"
+        className="bg-[#0F1419]/90 backdrop-blur-md w-full border-b border-[#1A1F2E]"
         onMouseLeave={handleMouseLeave}
       >
         <div className="flex justify-between items-center max-w-[1280px] mx-auto px-6 h-14">
           <div className="flex items-center gap-10">
-            <a href="/" className="flex items-center gap-3" style={{ textDecoration: "none" }}>
-              <img
-                src="/icon-mark-128.png"
-                alt="RaksHex"
-                style={{
-                  height: "48px",
-                  width: "48px",
-                  objectFit: "contain",
-                  filter: "brightness(1.4) contrast(1.1)",
-                }}
-              />
-              <span
-                style={{
-                  fontSize: "22px",
-                  fontWeight: "700",
-                  color: "#d4a853",
-                  letterSpacing: "0.5px",
-                  fontFamily: "inherit",
-                }}
-              >
-                RaksHex
-              </span>
-            </a>
+            <Link className="flex items-center gap-2 no-underline shrink-0" href="/">
+              <div className="flex items-center gap-2">
+                <img
+                  src="/logo192.png"
+                  alt="RaksHex"
+                  width={32}
+                  height={32}
+                  style={{ marginRight: 8 }}
+                />
+                <span className="text-xl font-bold font-manrope tracking-tight text-white">
+                  RakshEx
+                </span>
+              </div>
+            </Link>
 
             {/* Desktop Navigation Links */}
             <div className="hidden lg:flex gap-8 items-center ml-10">
@@ -122,7 +113,7 @@ export function PublicHeader() {
                         href="/features#security-scanner"
                         onClick={forceClose}
                       >
-                        <div className="w-10 h-10 bg-[#0a0a0a] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
+                        <div className="w-10 h-10 bg-[#0F1419] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
                           <Shield className="w-5 h-5" />
                         </div>
                         <div>
@@ -139,7 +130,7 @@ export function PublicHeader() {
                         href="/features#kill-switch"
                         onClick={forceClose}
                       >
-                        <div className="w-10 h-10 bg-[#0a0a0a] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
+                        <div className="w-10 h-10 bg-[#0F1419] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
                           <Power className="w-5 h-5" />
                         </div>
                         <div>
@@ -156,7 +147,7 @@ export function PublicHeader() {
                         href="/features#shadow-api"
                         onClick={forceClose}
                       >
-                        <div className="w-10 h-10 bg-[#0a0a0a] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
+                        <div className="w-10 h-10 bg-[#0F1419] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
                           <Ghost className="w-5 h-5" />
                         </div>
                         <div>
@@ -173,7 +164,7 @@ export function PublicHeader() {
                         href="/features#credentials"
                         onClick={forceClose}
                       >
-                        <div className="w-10 h-10 bg-[#0a0a0a] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
+                        <div className="w-10 h-10 bg-[#0F1419] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
                           <Key className="w-5 h-5" />
                         </div>
                         <div>
@@ -193,7 +184,7 @@ export function PublicHeader() {
                         href="/features#cost-monitor"
                         onClick={forceClose}
                       >
-                        <div className="w-10 h-10 bg-[#0a0a0a] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
+                        <div className="w-10 h-10 bg-[#0F1419] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
                           <BarChart className="w-5 h-5" />
                         </div>
                         <div>
@@ -210,7 +201,7 @@ export function PublicHeader() {
                         href="/features#thinking-tokens"
                         onClick={forceClose}
                       >
-                        <div className="w-10 h-10 bg-[#0a0a0a] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
+                        <div className="w-10 h-10 bg-[#0F1419] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
                           <Brain className="w-5 h-5" />
                         </div>
                         <div>
@@ -227,7 +218,7 @@ export function PublicHeader() {
                         href="/features#compliance"
                         onClick={forceClose}
                       >
-                        <div className="w-10 h-10 bg-[#0a0a0a] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
+                        <div className="w-10 h-10 bg-[#0F1419] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
                           <FileText className="w-5 h-5" />
                         </div>
                         <div>
@@ -244,7 +235,7 @@ export function PublicHeader() {
                         href="/features#mcp"
                         onClick={forceClose}
                       >
-                        <div className="w-10 h-10 bg-[#0a0a0a] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
+                        <div className="w-10 h-10 bg-[#0F1419] border border-[#14B8A6]/10 group-hover:border-[#14B8A6]/30 rounded-lg flex items-center justify-center text-teal-accent transition-all shrink-0">
                           <Network className="w-5 h-5" />
                         </div>
                         <div>
@@ -276,28 +267,28 @@ export function PublicHeader() {
                       href="/compare/rakshex-vs-snyk"
                       onClick={forceClose}
                     >
-                      RaksHex vs Snyk →
+                      RakshEx vs Snyk →
                     </Link>
                     <Link
                       className="text-[#9CA3AF] hover:text-[#14B8A6] text-xs py-1.5 transition-colors border-b border-[#1A1F2E] pb-2"
                       href="/compare/rakshex-vs-datadog"
                       onClick={forceClose}
                     >
-                      RaksHex vs Datadog →
+                      RakshEx vs Datadog →
                     </Link>
                     <Link
                       className="text-[#9CA3AF] hover:text-[#14B8A6] text-xs py-1.5 transition-colors border-b border-[#1A1F2E] pb-2"
                       href="/compare/rakshex-vs-traceable"
                       onClick={forceClose}
                     >
-                      RaksHex vs Traceable AI →
+                      RakshEx vs Traceable AI →
                     </Link>
                     <Link
                       className="text-[#9CA3AF] hover:text-[#14B8A6] text-xs py-1.5 transition-colors"
                       href="/compare/rakshex-vs-salt"
                       onClick={forceClose}
                     >
-                      RaksHex vs Salt Security →
+                      RakshEx vs Salt Security →
                     </Link>
                   </div>
                 </div>
@@ -351,6 +342,44 @@ export function PublicHeader() {
                   </div>
                 </div>
               </div>
+
+              {/* Install Dropdown */}
+              <div className="relative py-4" onMouseEnter={() => handleMouseEnter("install")}>
+                <div className="flex items-center gap-1 text-white text-sm font-medium hover:text-[#14B8A6] cursor-pointer select-none transition-colors">
+                  Install
+                  <ChevronDown className="w-3.5 h-3.5 transition-transform duration-200" />
+                </div>
+                <div
+                  className={`absolute top-full left-0 pt-2 transition-all duration-200 ${
+                    activeMenu === "install"
+                      ? "opacity-100 visible translate-y-0"
+                      : "opacity-0 invisible -translate-y-2"
+                  }`}
+                >
+                  <div className="bg-[#1A1F2E] border border-[#14B8A6]/20 rounded-xl overflow-hidden shadow-2xl w-48 p-4 flex flex-col gap-1.5 text-left">
+                    <a
+                      className="text-[#9CA3AF] hover:text-[#14B8A6] text-xs py-1 transition-colors flex items-center justify-between"
+                      href="https://npmjs.com/package/rakshex"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={forceClose}
+                    >
+                      <span>npm CLI</span>
+                      <span className="text-[10px] text-[#14B8A6]">→</span>
+                    </a>
+                    <a
+                      className="text-[#9CA3AF] hover:text-[#14B8A6] text-xs py-1 transition-colors flex items-center justify-between"
+                      href="https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex-vscode"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={forceClose}
+                    >
+                      <span>VS Code</span>
+                      <span className="text-[10px] text-[#14B8A6]">→</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -364,9 +393,9 @@ export function PublicHeader() {
             </Link>
             <Link
               className="bg-[#14B8A6] hover:bg-[#0D9488] active:bg-[#0A7F6F] text-white font-semibold text-sm font-sans px-4 py-2 rounded-[6px] transition-all duration-200"
-              href="/register"
+              href="/#waitlist"
             >
-              START FREE
+              Join Waitlist
             </Link>
             <button
               className="lg:hidden text-white"
@@ -380,7 +409,7 @@ export function PublicHeader() {
 
         {/* Mobile Navigation Menu */}
         {mobileMenuOpen && (
-          <div className="lg:hidden bg-[#0a0a0a] border-t border-[#1A1F2E] px-6 py-6 space-y-6 animate-fadeIn">
+          <div className="lg:hidden bg-[#0F1419] border-t border-[#1A1F2E] px-6 py-6 space-y-6 animate-fadeIn">
             <div className="space-y-3">
               <p className="text-[10px] text-neutral-500 font-mono tracking-widest uppercase">
                 Products
@@ -454,21 +483,21 @@ export function PublicHeader() {
                   href="/compare/rakshex-vs-snyk"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  RaksHex vs Snyk
+                  RakshEx vs Snyk
                 </Link>
                 <Link
                   className="text-sm text-neutral-300"
                   href="/compare/rakshex-vs-datadog"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  RaksHex vs Datadog
+                  RakshEx vs Datadog
                 </Link>
                 <Link
                   className="text-sm text-neutral-300"
                   href="/compare/rakshex-vs-traceable"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  RaksHex vs Traceable AI
+                  RakshEx vs Traceable AI
                 </Link>
               </div>
             </div>
@@ -507,6 +536,31 @@ export function PublicHeader() {
                 </Link>
               </div>
             </div>
+            <div className="space-y-3 border-t border-[#1A1F2E] pt-4">
+              <p className="text-[10px] text-neutral-500 font-mono tracking-widest uppercase">
+                Install
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <a
+                  className="text-sm text-neutral-300 hover:text-teal-accent"
+                  href="https://npmjs.com/package/rakshex"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  npm
+                </a>
+                <a
+                  className="text-sm text-neutral-300 hover:text-teal-accent"
+                  href="https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex-vscode"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  VS Code
+                </a>
+              </div>
+            </div>
             <div className="border-t border-[#1A1F2E] pt-4 flex gap-4">
               <Link
                 className="flex-1 text-center bg-transparent hover:text-[#14B8A6] text-white border border-[#1A1F2E] py-2.5 rounded font-medium text-sm transition-colors duration-200"
@@ -517,10 +571,10 @@ export function PublicHeader() {
               </Link>
               <Link
                 className="flex-1 text-center bg-[#14B8A6] text-white hover:bg-[#0D9488] active:bg-[#0A7F6F] py-2.5 rounded font-bold text-sm transition-all duration-200"
-                href="/register"
+                href="/#waitlist"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Start Free
+                Join Waitlist
               </Link>
             </div>
           </div>

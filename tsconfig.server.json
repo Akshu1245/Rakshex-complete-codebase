@@ -4,6 +4,6 @@
     "moduleResolution": "bundler",
     "module": "ESNext"
   },
-  "include": ["server/**/*.ts", "shared/**/*.ts"],
+  "include": ["server/**/*", "shared/**/*"],
   "exclude": ["node_modules", "dist"]
 }

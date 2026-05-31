@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "jetro": {
+      "type": "stdio",
+      "command": "C:\\Users\\aksha\\.jetro\\runtime\\node-win32-x64.exe",
+      "args": ["C:\\Users\\aksha\\.jetro\\mcp-server\\index.js"],
+      "env": {
+        "JET_WORKSPACE": "c:\\Users\\aksha\\Downloads\\DevPulse_Complete_Codebase",
+        "JET_API_URL": "https://api.jetro.ai",
+        "PATH": "C:\\Users\\aksha\\.jetro\\runtime;C:\\Program Files\\Microsoft\\jdk-17.0.17.10-hotspot\\bin;C:\\windows\\system32;C:\\windows;C:\\windows\\System32\\Wbem;C:\\windows\\System32\\WindowsPowerShell\\v1.0\\;C:\\windows\\System32\\OpenSSH\\;C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common;C:\\Program Files\\NVIDIA Corporation\\NVIDIA NvDLISR;C:\\Users\\Administrator\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Program Files\\HP\\OMEN-Broadcast\\Common;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Go\\bin;C:\\Program Files\\nodejs\\;C:\\Program Files\\GitHub CLI\\;C:\\Program Files\\eSpeak NG\\;C:\\Program Files\\Docker\\Docker\\resources\\bin;C:\\Users\\aksha\\AppData\\Local\\agy\\bin;C:\\Program Files\\Microsoft\\jdk-17.0.17.10-hotspot\\bin;C:\\windows\\system32;C:\\windows;C:\\windows\\System32\\Wbem;C:\\windows\\System32\\WindowsPowerShell\\v1.0\\;C:\\windows\\System32\\OpenSSH\\;C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common;C:\\Program Files\\NVIDIA Corporation\\NVIDIA NvDLISR;C:\\Users\\Administrator\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Program Files\\HP\\OMEN-Broadcast\\Common;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Go\\bin;C:\\Program Files\\nodejs\\;C:\\Program Files\\GitHub CLI\\;C:\\Program Files\\eSpeak NG\\;C:\\Program Files\\Docker\\Docker\\resources\\bin;C:\\Program Files\\HP\\HP One Agent;C:\\Users\\aksha\\AppData\\Local\\Programs\\Python\\Launcher\\;C:\\Program Files\\HP\\HP One Agent;C:\\Users\\aksha\\.local\\bin;C:\\Users\\aksha\\.local\\bin;C:\\Program Files\\HP\\HP One Agent;C:\\P;C:\\Users\\aksha\\AppData\\Local\\Programs\\Ollama;C:\\Users\\aksha\\AppData\\Local\\Programs\\Microsoft VS Code\\bin;C:\\Users\\aksha\\AppData\\Roaming\\npm;C:\\Users\\aksha\\AppData\\Local\\Programs\\Windsurf\\bin;C:\\Users\\aksha\\AppData\\Local\\Programs\\Python\\Python314;C;C:\\Users\\aksha\\AppData\\Local\\Programs\\cursor\\resources\\app\\bin;C:\\Users\\aksha\\render-cli;C:\\Users\\aksha\\AppData\\AndroidCLI;C:\\Users\\aksha\\.fly\\bin"
+      }
+    }
+  }
+}

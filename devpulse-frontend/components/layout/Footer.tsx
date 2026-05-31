@@ -8,16 +8,16 @@ export function Footer() {
       <div className="max-w-[1280px] mx-auto">
         {/* 4-Column Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12 text-left">
+          {/* Column 1: Logo & Company info */}
           <div className="flex flex-col gap-4">
             <a href="/" className="flex items-center gap-3" style={{ textDecoration: "none" }}>
               <img
-                src="/icon-mark-128.png"
+                src="/logo192.png"
                 alt="RaksHex"
                 style={{
                   height: "40px",
                   width: "40px",
                   objectFit: "contain",
-                  filter: "brightness(1.4) contrast(1.1)",
                 }}
               />
               <span
@@ -170,7 +170,7 @@ export function Footer() {
 
         {/* Bottom copyright row */}
         <div className="border-t border-[#1A1F2E] pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>
+          <div className="flex flex-col">
             <p style={{ fontSize: "13px", color: "#64748b", marginTop: "8px" }}>
               © 2026 RaksHex by Rashi Technologies, Bengaluru, India. All rights reserved.
             </p>
