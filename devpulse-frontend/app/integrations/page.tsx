@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { sanitizeHtml } from "@/lib/sanitizeHtml";
 
 interface IntegrationItem {
   name: string;
@@ -411,7 +412,7 @@ export default function IntegrationsPage() {
                                 <div className="w-10 h-10 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center shrink-0 overflow-hidden text-white">
                                   <div
                                     className="w-5 h-5 flex items-center justify-center"
-                                    dangerouslySetInnerHTML={{ __html: item.icon }}
+                                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(item.icon) }}
                                   />
                                 </div>
                                 <h3 className="text-[15px] font-semibold text-white leading-[1.3] pr-10">

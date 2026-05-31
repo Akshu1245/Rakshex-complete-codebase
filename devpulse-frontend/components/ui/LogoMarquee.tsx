@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
+import { sanitizeHtml } from "@/lib/sanitizeHtml";
 
 const logos = [
   {
@@ -119,7 +120,10 @@ export function LogoMarquee({
         <div className="marquee-track" ref={trackRef}>
           {[...logos, ...logos].map((logo, i) => (
             <div key={i} className="marquee-item" data-name={logo.name}>
-              <span className="marquee-icon" dangerouslySetInnerHTML={{ __html: logo.icon }} />
+              <span
+                className="marquee-icon"
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(logo.icon) }}
+              />
               <span className="marquee-name">{logo.name}</span>
             </div>
           ))}

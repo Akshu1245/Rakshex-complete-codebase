@@ -142,7 +142,7 @@ export default function BillingPage() {
       script.async = true;
       script.onload = () => {
         const options = {
-          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_SvOVoVW2Cy6jtT",
+          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
           amount: orderData.amount,
           currency: orderData.currency,
           name: "RaksHex Standard Checkout",

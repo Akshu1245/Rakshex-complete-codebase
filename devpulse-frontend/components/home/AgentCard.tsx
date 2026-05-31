@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { sanitizeHtml } from "@/lib/sanitizeHtml";
 
 const agents = [
   {
@@ -146,7 +147,10 @@ export function AgentCard() {
         }}
       >
         <div className="card-header">
-          <span className="card-icon" dangerouslySetInnerHTML={{ __html: agent.icon }} />
+          <span
+            className="card-icon"
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(agent.icon) }}
+          />
           <span className="card-title">{agent.name}</span>
         </div>
         <div className="connected-badge">

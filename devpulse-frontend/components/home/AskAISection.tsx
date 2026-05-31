@@ -1,5 +1,7 @@
 "use client";
 
+import { sanitizeHtml } from "@/lib/sanitizeHtml";
+
 export function AskAISection() {
   const items = [
     {
@@ -75,7 +77,7 @@ export function AskAISection() {
             >
               <div
                 className="opacity-60 group-hover:opacity-100 transition-all duration-200"
-                dangerouslySetInnerHTML={{ __html: item.svg }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(item.svg) }}
               />
             </a>
           ))}

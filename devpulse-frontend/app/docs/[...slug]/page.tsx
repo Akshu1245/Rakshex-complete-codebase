@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { sanitizeHtml } from "@/lib/sanitizeHtml";
 import { docsData } from "../docsData";
 
 interface PageProps {
@@ -59,7 +60,10 @@ export default function DocSubPage({ params }: PageProps) {
         </button>
       </div>
 
-      <div className="docs-body-content" dangerouslySetInnerHTML={{ __html: page.contentHtml }} />
+      <div
+        className="docs-body-content"
+        dangerouslySetInnerHTML={{ __html: sanitizeHtml(page.contentHtml) }}
+      />
 
       <div className="mt-12 pt-6 border-t border-glass flex items-center justify-between">
         <Link href="/docs" className="docs-link">

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { sanitizeHtml } from "@/lib/sanitizeHtml";
 
 interface FeatureCardProps {
   title: string;
@@ -17,7 +18,7 @@ function FeatureCard({ title, description, link, iconSvg }: FeatureCardProps) {
     >
       {/* Icon: Teal (#14B8A6), 32x32px */}
       <div className="w-8 h-8 text-[#14B8A6] group-hover:text-[#0D9488] mb-4 transition-colors duration-150">
-        <div dangerouslySetInnerHTML={{ __html: iconSvg }} />
+        <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(iconSvg) }} />
       </div>
 
       {/* Title */}
