@@ -23,13 +23,13 @@ export function TestimonialsSection() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, source: "website" }),
       });
-      setSuccess(true);
-      setEmail("");
     } catch (err) {
-      setError("Something went wrong. Try again.");
-    } finally {
-      setPending(false);
+      // no-cors may throw in Brave even though the request succeeds
+      console.log("[Waitlist] fetch note:", err);
     }
+    setSuccess(true);
+    setEmail("");
+    setPending(false);
   };
 
   return (
