@@ -204,6 +204,9 @@ importers:
       drizzle-kit:
         specifier: ^0.31.10
         version: 0.31.10
+      esbuild:
+        specifier: ^0.28.0
+        version: 0.28.0
       google-auth-library:
         specifier: ^10.6.2
         version: 10.6.2
