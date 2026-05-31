@@ -696,6 +696,23 @@ async function startServer() {
   const { registerRazorpayRoutes } = await import("./razorpay");
   registerRazorpayRoutes(app);
 
+  // ── Waitlist REST endpoint (frontend direct fetch) ─────────────────────────
+  app.post("/api/waitlist", async (req, res) => {
+    const { email } = req.body;
+    if (!email || typeof email !== "string" || !email.includes("@")) {
+      res.status(400).json({ error: "Valid email is required" });
+      return;
+    }
+    try {
+      const db = await import("../db");
+      const result = await db.addWaitlistEmail(email, "Free", "homepage_waitlist");
+      res.json({ success: true, alreadyExists: result.alreadyExists });
+    } catch (err) {
+      logger.error({ err }, "[Waitlist] Failed to add email");
+      res.status(500).json({ error: "Something went wrong. Try again." });
+    }
+  });
+
   // ── tRPC API ───────────────────────────────────────────────────────────────
   app.use(
     "/api/trpc",

@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { trpc } from "@/lib/trpc";
 import { useScrollReveal } from "@/lib/animations/scroll-reveal";
 import { HeroSection } from "@/components/home/HeroSection";
 import { FeatureCards } from "@/components/home/FeatureCards";
@@ -126,27 +125,37 @@ function WaitlistForm() {
   const [email, setEmail] = useState("");
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
 
-  const joinMutation = trpc.waitlist.join.useMutation({
-    onSuccess: () => {
-      setSuccess(true);
-      setError(null);
-    },
-    onError: (err) => {
-      setError(err.message || "Failed to join. Please try again.");
-    },
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
-    joinMutation.mutate({ email, source: "homepage_waitlist" });
+    setPending(true);
+    setError(null);
+    try {
+      const res = await fetch("https://api.rakshex.in/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (res.ok) {
+        setSuccess(true);
+        setEmail("");
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || "Something went wrong. Try again.");
+      }
+    } catch {
+      setError("Something went wrong. Try again.");
+    } finally {
+      setPending(false);
+    }
   };
 
   if (success) {
     return (
       <div className="p-4 bg-[#14B8A6]/10 border border-[#14B8A6]/30 rounded-[6px] text-[#14B8A6] text-sm font-mono text-center">
-        ✓ You have been added to the waitlist!
+        ✓ You&apos;re on the list! We&apos;ll be in touch.
       </div>
     );
   }
@@ -161,14 +170,14 @@ function WaitlistForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="flex-1 px-4 py-3 bg-[#1A1F2E] border border-[#14B8A6] hover:border-[#0D9488] focus:border-2 focus:border-[#14B8A6] focus:outline-none text-white placeholder-[#6B7280] rounded-[6px] text-sm font-sans transition-all duration-150"
-          disabled={joinMutation.isPending}
+          disabled={pending}
         />
         <button
           type="submit"
-          disabled={joinMutation.isPending}
+          disabled={pending}
           className="bg-[#14B8A6] hover:bg-[#0D9488] active:bg-[#0A7F6F] text-white hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_4px_12px_rgba(20,184,166,0.2)] font-semibold px-6 py-3 text-sm tracking-wide font-sans rounded-[6px] disabled:opacity-50 transition-all duration-200 shrink-0 transform"
         >
-          {joinMutation.isPending ? "Joining..." : "Get Access"}
+          {pending ? "Joining..." : "Join Waitlist"}
         </button>
       </div>
       {error && <p className="text-red-400 text-xs text-left font-mono mt-1">{error}</p>}
@@ -381,49 +390,6 @@ export default function HomePage() {
       link: "/features#mcp",
       icon: Network,
       hoverClass: "hover-connect-network text-teal-accent",
-    },
-  ];
-
-  const tweets = [
-    {
-      handle: "@devesh_k_r",
-      text: "@rakshexhq found a production OpenAI key in our test collection.\nOne that was about to go live. Not a drill.",
-      date: "May 2026",
-    },
-    {
-      handle: "@aarti_builds",
-      text: "The @rakshexhq kill switch tripped automatically on a runaway agent loop.\nSaved us ~$8K. This feature alone is worth it.",
-      date: "May 2026",
-    },
-    {
-      handle: "@siddharth_swe",
-      text: "SOC2 evidence prep used to be 3 days of pain.\n@rakshexhq generates the bundle in one click. Our auditor was genuinely confused.",
-      date: "May 2026",
-    },
-    {
-      handle: "@priya_appsec",
-      text: "Thinking token attribution from @rakshexhq is wild. 40% of our Claude\nbill was reasoning tokens from a single misconfigured endpoint.",
-      date: "April 2026",
-    },
-    {
-      handle: "@nikhil_founder",
-      text: "@rakshexhq in GitHub Actions is a no-brainer. Every PR gets security\nscore + cost delta in USD and INR. Team loves it.",
-      date: "April 2026",
-    },
-    {
-      handle: "@arjun_fintech",
-      text: "Shadow API discovery found 7 forgotten endpoints. Two had zero auth.\n@rakshexhq is now mandatory before every release.",
-      date: "April 2026",
-    },
-    {
-      handle: "@meera_devops",
-      text: "Deployed @rakshexhq in 4 minutes. Scanned 340 endpoints.\nFound a JWT secret we had no idea existed.",
-      date: "March 2026",
-    },
-    {
-      handle: "@rohan_ml",
-      text: "The MCP governance layer from @rakshexhq is exactly what AI agent\nsecurity needed. Nothing else does this.",
-      date: "March 2026",
     },
   ];
 
@@ -681,7 +647,7 @@ export default function HomePage() {
             Ready to Secure Your AI Stack?
           </h2>
           <p className="text-[#9CA3AF] text-base leading-relaxed max-w-[480px] font-sans">
-            Join 500+ developers already using RaksHex
+            Be among the first. Join the waitlist.
           </p>
 
           <div className="w-full z-10">
@@ -690,10 +656,10 @@ export default function HomePage() {
 
           <div className="flex flex-col sm:flex-row gap-4 w-full justify-center items-center mt-2 border-t border-[#1A1F2E] pt-6 z-10">
             <Link
-              href="/register"
+              href="#waitlist"
               className="text-[#14B8A6] hover:text-[#0D9488] font-semibold text-sm font-sans underline underline-offset-4 transition-colors"
             >
-              Try Free &mdash; No Credit Card Required
+              Join Waitlist
             </Link>
           </div>
         </div>

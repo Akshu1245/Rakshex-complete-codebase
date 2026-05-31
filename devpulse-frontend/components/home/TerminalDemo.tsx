@@ -6,14 +6,33 @@ export function TerminalDemo() {
   const [scanStep, setScanStep] = useState(0);
   const [findings, setFindings] = useState<string[]>([]);
   const [securityScore, setSecurityScore] = useState(100);
+  const [issuesCount, setIssuesCount] = useState(0);
 
   useEffect(() => {
     const steps = [
-      { text: "> RaksHex scan ./api.json", delay: 1200 },
+      { text: "> rakshex scan ./collection.json", delay: 1200 },
       { text: "✓ 23 endpoints scanned", delay: 800 },
-      { text: "⚠ 2 credentials detected", delay: 800, finding: "Credential Leak", score: 98 },
-      { text: "🔒 1 prompt injection blocked", delay: 800, finding: "Prompt Injection", score: 95 },
-      { text: "💰 $47.3 cost anomaly flagged", delay: 800, finding: "Cost Anomaly", score: 94 },
+      {
+        text: "🟠 [High] Stripe Test Secret Key — /item/2/request/header",
+        delay: 800,
+        finding: "Stripe Test Secret Key",
+        score: 75,
+        issues: 2,
+      },
+      {
+        text: "� [High] Truncated JWT Token — /item/2/request/header",
+        delay: 800,
+        finding: "Truncated JWT Token",
+        score: 50,
+        issues: 5,
+      },
+      {
+        text: "� [High] Weak Password Detected — /item/8/request/body",
+        delay: 800,
+        finding: "Weak Password Detected",
+        score: 30,
+        issues: 7,
+      },
     ];
 
     let currentStep = 0;
@@ -26,20 +45,16 @@ export function TerminalDemo() {
         if (step.finding) {
           setFindings((prev) => [...prev, step.finding!]);
         }
-        if (step.score) {
+        if (step.score !== undefined) {
           setSecurityScore(step.score);
+        }
+        if (step.issues !== undefined) {
+          setIssuesCount(step.issues);
         }
         currentStep++;
         timer = setTimeout(runScan, step.delay);
-      } else {
-        timer = setTimeout(() => {
-          setFindings([]);
-          setSecurityScore(100);
-          currentStep = 0;
-          setScanStep(0);
-          runScan();
-        }, 5000);
       }
+      // Animation stops at final state — no reset loop
     };
 
     runScan();
@@ -47,11 +62,11 @@ export function TerminalDemo() {
   }, []);
 
   const terminalLines = [
-    "> RaksHex scan ./api.json",
+    "> rakshex scan ./collection.json",
     "✓ 23 endpoints scanned",
-    "⚠ 2 credentials detected",
-    "🔒 1 prompt injection blocked",
-    "💰 $47.3 cost anomaly flagged",
+    "🟠 [High] Stripe Test Secret Key — /item/2/request/header",
+    "� [High] Truncated JWT Token — /item/2/request/header",
+    "� [High] Weak Password Detected — /item/8/request/body",
   ];
 
   return (
@@ -70,9 +85,7 @@ export function TerminalDemo() {
           {terminalLines.slice(0, scanStep).map((line, idx) => {
             let color = "text-[#FFFFFF]";
             if (line.startsWith("✓")) color = "text-[#14B8A6]";
-            else if (line.startsWith("⚠")) color = "text-[#9CA3AF]";
-            else if (line.startsWith("🔒")) color = "text-[#14B8A6]";
-            else if (line.startsWith("💰")) color = "text-[#14B8A6]";
+            else if (line.startsWith("🟠")) color = "text-orange-400";
             return (
               <p key={idx} className={`${color} font-mono leading-relaxed`}>
                 {line}
@@ -117,19 +130,18 @@ export function TerminalDemo() {
 
         <div className="w-full mt-4 space-y-2 text-left">
           <div className="flex justify-between items-center border-b border-[#1A1F2E] pb-1.5">
-            <span className="text-[9px] text-[#9CA3AF] font-sans font-medium">Issues:</span>
-            <span className="text-[9px] text-white font-sans font-bold">{findings.length}</span>
+            <span className="text-[9px] text-[#9CA3AF] font-sans font-medium">Issues Found:</span>
+            <span className="text-[9px] text-white font-sans font-bold">{issuesCount}</span>
           </div>
           <div className="space-y-1">
             {findings.map((f, i) => {
-              let tagColor = "text-[#14B8A6] bg-[#14B8A6]/10 border-[#14B8A6]/20";
-              if (f.includes("Leak")) tagColor = "text-[#9CA3AF] bg-[#1A1F2E] border-[#14B8A6]/10";
               return (
                 <div
                   key={i}
-                  className={`text-[8px] border rounded px-1.5 py-0.5 font-sans font-medium flex items-center gap-1 ${tagColor}`}
+                  className="text-[8px] border border-orange-500/25 rounded px-1.5 py-0.5 font-sans font-medium flex items-start gap-1 text-orange-400 bg-orange-500/10 whitespace-pre-wrap leading-tight"
                 >
-                  {f}
+                  <span className="shrink-0">🟠</span>
+                  <span>[High] {f}</span>
                 </div>
               );
             })}
