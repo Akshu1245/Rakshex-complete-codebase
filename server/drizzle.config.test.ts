@@ -9,10 +9,10 @@ describe("drizzle.config", () => {
     expect(() => readFileSync(path, "utf-8")).not.toThrow();
   });
 
-  it("config contains mysql dialect string", () => {
+  it("config contains postgresql dialect string", () => {
     const path = resolve(__dirname, "..", "drizzle.config.ts");
     const content = readFileSync(path, "utf-8");
-    expect(content).toContain("mysql");
+    expect(content).toContain("postgresql");
   });
 
   it("config contains schema path pointing to drizzle/schema.ts", () => {
