@@ -81,7 +81,13 @@ export function PublicHeader() {
           <div className="flex items-center gap-10">
             <Link className="flex items-center gap-2 no-underline shrink-0" href="/">
               <div className="flex items-center gap-2">
-                <Shield className="w-6 h-6 text-white" />
+                <img
+                  src="/logo192.png"
+                  alt="RaksHex"
+                  width={32}
+                  height={32}
+                  style={{ marginRight: 8 }}
+                />
                 <span className="text-xl font-bold font-manrope tracking-tight text-white">
                   RakshEx
                 </span>

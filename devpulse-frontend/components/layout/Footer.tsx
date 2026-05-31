@@ -12,13 +12,12 @@ export function Footer() {
           <div className="flex flex-col gap-4">
             <a href="/" className="flex items-center gap-3" style={{ textDecoration: "none" }}>
               <img
-                src="/icon-mark-128.png"
+                src="/logo192.png"
                 alt="RaksHex"
                 style={{
                   height: "40px",
                   width: "40px",
                   objectFit: "contain",
-                  filter: "brightness(1.4) contrast(1.1)",
                 }}
               />
               <span
