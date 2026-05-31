@@ -986,23 +986,6 @@ async function startServer() {
     }
   });
 
-  // ── Waitlist REST API ──────────────────────────────────────────────────────
-  app.post("/api/waitlist", express.json(), async (req, res) => {
-    try {
-      const { email } = req.body;
-      if (!email || !email.includes("@")) {
-        res.status(400).json({ error: "Invalid email address" });
-        return;
-      }
-      const db = await import("../db");
-      await db.addWaitlistEmail(email, "free", "testimonials_waitlist");
-      res.json({ status: "ok" });
-    } catch (error) {
-      logger.error({ err: error }, "[API] Waitlist signup error");
-      res.status(500).json({ error: "Failed to join waitlist" });
-    }
-  });
-
   // ── Sentry Error Handler ───────────────────────────────────────────────────
   if (ENV.sentryDsn) {
     app.use(Sentry.Handlers.errorHandler());
