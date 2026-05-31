@@ -66,6 +66,7 @@ import { agentGuardRouter } from "./api/agentGuard";
 import { waitlistRouter } from "./api/waitlist";
 import { reportsRouter } from "./api/reports";
 import { publicReportsRouter } from "./api/publicReports";
+import { authProvidersRouter } from "./api/authProviders";
 import { ensurePersonalWorkspace } from "./services/workspaceContext";
 import { logger } from "./_core/logger";
 
@@ -611,6 +612,7 @@ export const appRouter = router({
   waitlist: waitlistRouter,
   reports: reportsRouter,
   publicReports: publicReportsRouter,
+  authProviders: authProvidersRouter,
 });
 
 // Register the appRouter with the apiDocs introspector so its `spec`

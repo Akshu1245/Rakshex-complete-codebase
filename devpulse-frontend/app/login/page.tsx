@@ -20,6 +20,9 @@ export default function LoginPage() {
   const [twoFAError, setTwoFAError] = useState("");
   const router = useRouter();
 
+  const { data: providers } = trpc.authProviders.list.useQuery();
+  const googleEnabled = providers?.google ?? false;
+
   const login = trpc.auth.login.useMutation({
     onSuccess: (data) => {
       if (data?.requires2FA) {
@@ -254,17 +257,21 @@ export default function LoginPage() {
         </div>
 
         <div className="bg-gray-800 p-8 rounded-xl border border-gray-700 space-y-6">
-          {/* OAuth Login */}
-          <GoogleOAuthButton label="Sign in with Google" />
+          {/* OAuth Login — only show if configured */}
+          {googleEnabled && (
+            <>
+              <GoogleOAuthButton label="Sign in with Google" />
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-600"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gray-800 text-gray-400">Or continue with email</span>
-            </div>
-          </div>
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-600"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-gray-800 text-gray-400">Or continue with email</span>
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Email/Password Form */}
           <form onSubmit={handleSubmit} className="space-y-4" data-testid="login-form">

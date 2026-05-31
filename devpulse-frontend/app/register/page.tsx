@@ -13,6 +13,9 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
+  const { data: providers } = trpc.authProviders.list.useQuery();
+  const googleEnabled = providers?.google ?? false;
+
   const signup = trpc.auth.signup.useMutation({
     onSuccess: () => {
       router.push("/dashboard");
@@ -49,17 +52,21 @@ export default function RegisterPage() {
         </div>
 
         <div className="bg-gray-800 p-8 rounded-xl border border-gray-700 space-y-6">
-          {/* Google OAuth */}
-          <GoogleOAuthButton label="Sign up with Google" />
+          {/* Google OAuth — only show if configured */}
+          {googleEnabled && (
+            <>
+              <GoogleOAuthButton label="Sign up with Google" />
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-600"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gray-800 text-gray-400">Or sign up with email</span>
-            </div>
-          </div>
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-600"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-gray-800 text-gray-400">Or sign up with email</span>
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Email/password form */}
           <form onSubmit={handleSubmit} className="space-y-4" data-testid="signup-form">
