@@ -65,6 +65,7 @@ import { githubRouter } from "./api/github";
 import { agentGuardRouter } from "./api/agentGuard";
 import { waitlistRouter } from "./api/waitlist";
 import { reportsRouter } from "./api/reports";
+import { publicReportsRouter } from "./api/publicReports";
 import { ensurePersonalWorkspace } from "./services/workspaceContext";
 import { logger } from "./_core/logger";
 
@@ -609,6 +610,7 @@ export const appRouter = router({
   agentGuard: agentGuardRouter,
   waitlist: waitlistRouter,
   reports: reportsRouter,
+  publicReports: publicReportsRouter,
 });
 
 // Register the appRouter with the apiDocs introspector so its `spec`
