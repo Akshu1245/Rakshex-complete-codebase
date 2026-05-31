@@ -140,33 +140,50 @@ class MemoryJobQueue implements JobQueue {
 }
 
 let queue: JobQueue | null = null;
+let initPromise: Promise<void> | null = null;
 
-export function getJobQueue(): JobQueue {
-  if (queue) return queue;
-  const redisUrl = process.env.REDIS_URL ?? process.env.RAKSHEX_REDIS_URL;
-  if (redisUrl) {
-    try {
-      queue = createBullMQQueue(redisUrl);
-      logger.info(
-        { backend: "bullmq", redisUrl: redisUrl.replace(/:[^@/]*@/, ":***@") },
-        "[JobQueue] using BullMQ backend",
-      );
-      return queue;
-    } catch (err) {
-      logger.warn(
-        { err: err instanceof Error ? err.message : String(err) },
-        "[JobQueue] BullMQ failed, falling back to in-memory",
-      );
+/**
+ * Initialise the job queue (async, called once at server startup).
+ * Must be awaited before any enqueue() calls.
+ */
+export async function initJobQueue(): Promise<void> {
+  if (initPromise) return initPromise;
+  initPromise = (async () => {
+    const redisUrl = process.env.REDIS_URL ?? process.env.RAKSHEX_REDIS_URL;
+    if (redisUrl) {
+      try {
+        queue = await createBullMQQueue(redisUrl);
+        logger.info(
+          { backend: "bullmq", redisUrl: redisUrl.replace(/:[^@/]*@/, ":***@") },
+          "[JobQueue] using BullMQ backend",
+        );
+        return;
+      } catch (err) {
+        logger.warn(
+          { err: err instanceof Error ? err.message : String(err) },
+          "[JobQueue] BullMQ failed, falling back to in-memory",
+        );
+      }
     }
+    queue = new MemoryJobQueue();
+    logger.info({ backend: "memory" }, "[JobQueue] using in-memory backend");
+  })();
+  return initPromise;
+}
+
+/** Synchronous accessor — initJobQueue() must be called first at startup. */
+export function getJobQueue(): JobQueue {
+  if (!queue) {
+    // Fallback: auto-init with memory queue if startup forgot to call initJobQueue()
+    queue = new MemoryJobQueue();
+    logger.warn("[JobQueue] getJobQueue called before initJobQueue — using memory fallback");
   }
-  queue = new MemoryJobQueue();
-  logger.info({ backend: "memory" }, "[JobQueue] using in-memory backend");
   return queue;
 }
 
-function createBullMQQueue(redisUrl: string): JobQueue {
-  // Imports are runtime so the in-memory path stays tree-shake-friendly.
-  const { Queue, Worker } = require("bullmq") as typeof import("bullmq");
+async function createBullMQQueue(redisUrl: string): Promise<JobQueue> {
+  // Dynamic import for ESM compatibility (compiled output is ES modules, require() is undefined).
+  const { Queue, Worker } = await import("bullmq");
   const queues = new Map<string, import("bullmq").Queue>();
   const workers = new Map<string, import("bullmq").Worker>();
 

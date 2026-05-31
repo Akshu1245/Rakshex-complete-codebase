@@ -36,6 +36,7 @@ import { handleGitHubPush, handleGitHubPullRequest, verifyGitHubWebhook } from "
 import { scheduleWeeklyDigest } from "../jobs/weeklyDigest";
 import { startRedTeamScheduler } from "../services/redTeamScheduler";
 import { registerJobWorkers } from "../services/jobs";
+import { initJobQueue } from "../services/jobQueue";
 import {
   startSecurityEventsFlusher,
   flushSecurityEventsOnShutdown,
@@ -1025,7 +1026,7 @@ async function startServer() {
     logger.warn({ preferredPort, port }, "[Server] Preferred port busy, using fallback");
   }
 
-  server.listen(port, () => {
+  server.listen(port, async () => {
     logger.info(
       {
         port,
@@ -1037,6 +1038,7 @@ async function startServer() {
       logger.info({ healthUrl: `http://localhost:${port}/api/health` }, "[Server] Health check");
     }
 
+    await initJobQueue();
     registerJobWorkers();
     startSecurityEventsFlusher();
     scheduleWeeklyDigest();
