@@ -9,6 +9,7 @@
 
 import type { Express, Request, Response } from "express";
 import { logger } from "../_core/logger";
+import { sdk } from "../_core/sdk";
 import {
   previewImport,
   importHelicone,
@@ -71,15 +72,21 @@ export function registerImportRoutes(app: Express) {
 
   /**
    * POST /api/import/execute
-   * Body: { source, data, columnMapping?, userId }
-   * Execute the import. userId can come from session or be passed explicitly.
+   * Body: { source, data, columnMapping? }
+   * Execute the import. Requires authenticated user.
    */
   app.post("/api/import/execute", async (req: Request, res: Response) => {
     try {
+      const user = await sdk.authenticateRequest(req);
+      if (!user) {
+        res.status(401).json({ error: "Authentication required" });
+        return;
+      }
+      const userId = user.id;
+
       const source = req.body.source as ImportSource;
       const data = req.body.data;
       const columnMapping = req.body.columnMapping as ColumnMapping[] | undefined;
-      const userId = (req as any).user?.id || req.body.userId || 1;
 
       if (!source || !data) {
         res.status(400).json({ error: "source and data are required" });

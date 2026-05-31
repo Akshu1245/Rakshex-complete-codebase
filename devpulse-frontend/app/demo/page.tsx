@@ -1,770 +1,553 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useCallback } from "react";
+import {
+  Upload,
+  Shield,
+  Zap,
+  DollarSign,
+  AlertTriangle,
+  CheckCircle,
+  ChevronRight,
+  Lock,
+  FileJson,
+  ArrowRight,
+} from "lucide-react";
 
-const ENDPOINTS = [
-  { method: "GET", path: "/v1/customers" },
-  { method: "GET", path: "/v1/customers/{id}" },
-  { method: "POST", path: "/v1/customers" },
-  { method: "DELETE", path: "/v1/customers/{id}" },
-  { method: "GET", path: "/v1/charges" },
-  { method: "POST", path: "/v1/charges" },
-  { method: "GET", path: "/v1/charges/{id}" },
-  { method: "POST", path: "/v1/refunds" },
-  { method: "GET", path: "/v1/invoices" },
-  { method: "POST", path: "/v1/invoices" },
-  { method: "GET", path: "/v1/payment_intents" },
-  { method: "POST", path: "/v1/payment_intents" },
-];
-
-const METHOD_COLORS: Record<string, string> = {
-  GET: "bg-[#3B82F6]/10 text-[#3B82F6] border border-[#3B82F6]/20",
-  POST: "bg-[#10B981]/10 text-[#10B981] border border-[#10B981]/20",
-  DELETE: "bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/20",
-  PUT: "bg-[#FDB022]/10 text-[#FDB022] border border-[#FDB022]/20",
-};
-
-const MOCK_FINDINGS = [
-  {
-    id: "f1",
-    severity: "Critical" as const,
-    owasp: "API1:2023",
-    title: "Broken Object Level Authorization",
-    endpoint: "GET /v1/customers/{id}",
-    detail:
-      "Customer ID is user-supplied. No ownership check on the authenticated user's session. Any authenticated user can read any customer record.",
-    fix: "Validate that the authenticated user owns the requested customer ID before returning data.",
-  },
-  {
-    id: "f2",
-    severity: "High" as const,
-    owasp: "API3:2023",
-    title: "Excessive Data Exposure — PAN in response body",
-    endpoint: "GET /v1/charges/{id}",
-    detail:
-      "Response includes raw card.number and card.cvc fields. PCI DSS requires these to be masked or omitted entirely in API responses.",
-    fix: "Strip card.cvc from all responses. Mask card.number to last 4 digits only.",
-  },
-  {
-    id: "f3",
-    severity: "High" as const,
-    owasp: "API2:2023",
-    title: "Missing Rate Limiting on Payment Intent creation",
-    endpoint: "POST /v1/payment_intents",
-    detail:
-      "No X-RateLimit headers observed. Attackers can enumerate payment intents or perform card-testing attacks at scale.",
-    fix: "Implement per-IP and per-user rate limiting. Return 429 with Retry-After header.",
-  },
-];
-
-const SEVERITY_COLOR: Record<string, string> = {
-  Critical: "text-[#EF4444] bg-[#EF4444]/10 border border-[#EF4444]/30",
-  High: "text-[#F59E0B] bg-[#F59E0B]/10 border border-[#F59E0B]/30",
-  Medium: "text-[#FDB022] bg-[#FDB022]/10 border border-[#FDB022]/30",
-  Low: "text-[#3B82F6] bg-[#3B82F6]/10 border border-[#3B82F6]/30",
-};
-
-const TOKEN_AGENTS = [
-  { agent: "stripe-billing-agent", model: "gpt-4o", tokens: 1420, cost: 0.0142 },
-  { agent: "fraud-detection-llm", model: "claude-3-5-sonnet", tokens: 2830, cost: 0.0339 },
-  { agent: "support-copilot", model: "gpt-4o-mini", tokens: 890, cost: 0.0027 },
-  { agent: "invoice-summariser", model: "claude-3-haiku", tokens: 3100, cost: 0.0062 },
-  { agent: "chargeback-analyst", model: "gpt-4o", tokens: 1960, cost: 0.0196 },
-];
-
-function parsePostman(json: any) {
-  const list: { method: string; path: string; headers?: any[]; body?: any }[] = [];
-  function traverse(items: any[]) {
-    if (!Array.isArray(items)) return;
-    for (const item of items) {
-      if (item.request) {
-        const method = item.request.method || "GET";
-        let path = "";
-        if (typeof item.request.url === "string") {
-          path = item.request.url;
-        } else if (item.request.url && Array.isArray(item.request.url.path)) {
-          path = "/" + item.request.url.path.join("/");
-        }
-        const headers = Array.isArray(item.request.header) ? item.request.header : [];
-        const body = item.request.body;
-        list.push({ method, path: path || "/api/v1/resource", headers, body });
-      } else if (item.item) {
-        traverse(item.item);
-      }
-    }
-  }
-  if (json.item) traverse(json.item);
-  return list;
+interface Finding {
+  id: string;
+  severity: "Critical" | "High" | "Medium" | "Low";
+  title: string;
+  endpoint: string;
+  category: string;
+  remediation: string;
+  lineNumber?: number;
 }
 
-function parseYAML(text: string) {
-  const list: { method: string; path: string; headers?: any[]; body?: any }[] = [];
-  const lines = text.split("\n");
-  let currentPath = "";
-  for (const line of lines) {
-    const pathMatch = line.match(/^ {2}(\/[a-zA-Z0-9_\-/{}[\]]+):/);
-    if (pathMatch) {
-      currentPath = pathMatch[1];
-    } else if (currentPath) {
-      const methodMatch = line.match(/^ {4}(get|post|put|delete|patch|options|head):/i);
-      if (methodMatch) {
-        list.push({
-          method: methodMatch[1].toUpperCase(),
-          path: currentPath,
-          headers: [],
-        });
-      }
-    }
-  }
-  return list;
+interface CredentialLeak {
+  type: string;
+  location: string;
+  keyPreview: string;
+  severity: string;
 }
 
-function scanEndpoints(
-  parsedList: { method: string; path: string; headers?: any[]; body?: any }[],
-) {
-  const generatedFindings: any[] = [];
-  let score = 100;
-
-  parsedList.forEach((ep, index) => {
-    const epName = `${ep.method} ${ep.path}`;
-    const headers = ep.headers || [];
-    const hasAuthHeader = headers.some((h) => {
-      const name = String(h.key || h.name || "").toLowerCase();
-      return name.includes("auth") || name.includes("key") || name.includes("token");
-    });
-
-    // 1. Missing Auth Headers on state-changing requests
-    if (!hasAuthHeader && ["POST", "PUT", "DELETE", "PATCH"].includes(ep.method)) {
-      score -= 10;
-      generatedFindings.push({
-        id: `det-auth-${index}`,
-        severity: "High",
-        owasp: "API2:2023",
-        title: "Broken Authentication — Missing Authentication Header",
-        endpoint: epName,
-        detail: `The endpoint allows ${ep.method} state-changing requests without requiring an Authorization or API Key header in the request definition.`,
-        fix: "Implement authentication validation middleware. Reject requests lacking a valid JWT or API token with a 401 Unauthorized response.",
-      });
-    }
-
-    // 2. HTTP (non-HTTPS) URLs
-    if (ep.path.startsWith("http://")) {
-      score -= 15;
-      generatedFindings.push({
-        id: `det-http-${index}`,
-        severity: "Critical",
-        owasp: "API3:2023",
-        title: "Insecure Communication — Plaintext HTTP Protocol Used",
-        endpoint: epName,
-        detail:
-          "The endpoint URL is configured with plaintext http://. All communication is unencrypted, exposing data to man-in-the-middle (MITM) attacks and credential harvesting.",
-        fix: "Enforce HTTPS transport-layer security. Configure the server to redirect all HTTP requests to HTTPS, and use HSTS (HTTP Strict Transport Security) headers.",
-      });
-    }
-
-    // 3. Sensitive keywords in paths
-    const sensitiveKeywords = ["password", "token", "secret", "key", "admin"];
-    const foundKeyword = sensitiveKeywords.find((kw) => ep.path.toLowerCase().includes(kw));
-    if (foundKeyword) {
-      score -= 8;
-      generatedFindings.push({
-        id: `det-path-${index}`,
-        severity: "High",
-        owasp: "API1:2023",
-        title: `Information Exposure via Sensitive Keyword in URI Path (${foundKeyword})`,
-        endpoint: epName,
-        detail: `The URI path contains a sensitive keyword '${foundKeyword}'. Direct inclusion of administrative triggers or authentication secrets in path parameters risks exposure in server access logs and browser history.`,
-        fix: "Redesign the API routing. Move authentication credentials to headers or request bodies. Enforce strict role-based access controls (RBAC) on administrative endpoints.",
-      });
-    }
-
-    // 4. Missing rate limit headers
-    if (
-      ["POST", "DELETE"].includes(ep.method) ||
-      ep.path.includes("auth") ||
-      ep.path.includes("login") ||
-      ep.path.includes("pay")
-    ) {
-      const hasRateLimitHeader = headers.some((h) => {
-        const name = String(h.key || h.name || "").toLowerCase();
-        return name.includes("rate") || name.includes("limit");
-      });
-      if (!hasRateLimitHeader) {
-        score -= 5;
-        generatedFindings.push({
-          id: `det-rate-${index}`,
-          severity: "Medium",
-          owasp: "API4:2023",
-          title: "Lack of Resources and Rate Limiting",
-          endpoint: epName,
-          detail:
-            "The endpoint does not define rate limiting headers or parameters in the specification. An attacker could flood the endpoint to cause a denial of service (DoS) or brute-force user credentials.",
-          fix: "Configure a rate-limiting middleware (e.g. Redis rate limiter) to cap requests per minute per IP address. Return a 429 Too Many Requests response when limits are exceeded.",
-        });
-      }
-    }
-
-    // 5. GET requests with body params
-    if (ep.method === "GET" && ep.body) {
-      score -= 5;
-      generatedFindings.push({
-        id: `det-getbody-${index}`,
-        severity: "Medium",
-        owasp: "API3:2023",
-        title: "GET Request Defined with Request Body",
-        endpoint: epName,
-        detail:
-          "The GET request specification contains a defined body payload. According to RFC 7231, GET requests should not carry a request body, and many proxies/servers discard it, leading to client-server desynchronization.",
-        fix: "Refactor request payload into query string parameters or switch the method to POST.",
-      });
-    }
-  });
-
-  if (score < 10) score = 12;
-  if (score > 100) score = 100;
-
-  if (generatedFindings.length === 0) {
-    generatedFindings.push({
-      id: "det-info-default",
-      severity: "Low",
-      owasp: "API10:2023",
-      title: "Unsafe Dependency Vulnerability Scan Warning",
-      endpoint: parsedList[0] ? `${parsedList[0].method} ${parsedList[0].path}` : "GET /v1/health",
-      detail:
-        "Static analysis identified potential third-party package drift. The API specification should be continuously scanned for package security updates.",
-      fix: "Enable automated dependency scanning via Dependabot or Snyk integration.",
-    });
-    score = 98;
-  }
-
-  return { score, findings: generatedFindings };
+interface ScanResult {
+  findings: Finding[];
+  credentials: CredentialLeak[];
+  endpoints: string[];
+  riskScore: number;
+  owaspScore: number;
+  pciScore: number;
+  scanTime: number;
 }
 
-const generatePDF = (score: number, endpoints: any[], findings: any[], fileName: string) => {
-  const textLines = [
-    "RaksHex API Security Scan Report",
-    "====================================",
-    `Target File: ${fileName}`,
-    `Security Score: ${score}/100`,
-    `Endpoints Scanned: ${endpoints.length}`,
-    `Vulnerabilities Detected: ${findings.length}`,
-    "------------------------------------",
-    "DETAILED FINDINGS:",
-    "",
-  ];
-
-  findings.forEach((f, idx) => {
-    textLines.push(`[${idx + 1}] ${f.severity.toUpperCase()} - ${f.title}`);
-    textLines.push(`    OWASP Category: ${f.owasp}`);
-    textLines.push(`    Endpoint: ${f.endpoint}`);
-    textLines.push(`    Details: ${f.detail}`);
-    textLines.push(`    Remediation: ${f.fix}`);
-    textLines.push("");
-  });
-
-  let streamContent = "BT\n/F1 10 Tf\n20 TL\n72 750 Td\n";
-  textLines.forEach((line) => {
-    const escaped = line.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
-    streamContent += `(${escaped}) Tj T*\n`;
-  });
-  streamContent += "ET";
-
-  const pdfLength = streamContent.length;
-  const pdfString = `%PDF-1.4
-1 0 obj
-<< /Type /Catalog /Pages 2 0 R >>
-endobj
-2 0 obj
-<< /Type /Pages /Kids [3 0 R] /Count 1 >>
-endobj
-3 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
-endobj
-4 0 obj
-<< /Length ${pdfLength} >>
-stream
-${streamContent}
-endstream
-endobj
-5 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
-endobj
-xref
-0 6
-0000000000 65535 f 
-0000000009 00000 n 
-0000000056 00000 n 
-0000000111 00000 n 
-0000000244 00000 n 
-0000000418 00000 n 
-trailer
-<< /Size 6 /Root 1 0 R >>
-%%EOF`;
-
-  const blob = new Blob([pdfString], { type: "application/pdf" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `RaksHex-scan-${fileName.replace(".json", "").replace(".yaml", "").replace(".yml", "")}.pdf`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+const SEVERITY_CONFIG = {
+  Critical: {
+    color: "text-red-600",
+    bg: "bg-red-50",
+    border: "border-red-200",
+    icon: AlertTriangle,
+  },
+  High: {
+    color: "text-orange-600",
+    bg: "bg-orange-50",
+    border: "border-orange-200",
+    icon: AlertTriangle,
+  },
+  Medium: {
+    color: "text-yellow-600",
+    bg: "bg-yellow-50",
+    border: "border-yellow-200",
+    icon: AlertTriangle,
+  },
+  Low: {
+    color: "text-green-600",
+    bg: "bg-green-50",
+    border: "border-green-200",
+    icon: CheckCircle,
+  },
 };
 
 export default function DemoPage() {
-  const [step, setStep] = useState<"upload" | "scanning" | "results">("upload");
-  const [fileName, setFileName] = useState("");
-  const [fileSize, setFileSize] = useState("");
-  const [endpoints, setEndpoints] = useState(ENDPOINTS);
-  const [findings, setFindings] = useState<any[]>(MOCK_FINDINGS);
-  const [score, setScore] = useState(44);
-  const [progressText, setProgressText] = useState("");
-  const [isDragOver, setIsDragOver] = useState(false);
-  const [liveCost, setLiveCost] = useState(0.0766);
-  const [tick, setTick] = useState(0);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [scanning, setScanning] = useState(false);
+  const [result, setResult] = useState<ScanResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [dragActive, setDragActive] = useState(false);
 
-  useEffect(() => {
-    if (step !== "results") return;
-    const id = setInterval(() => {
-      setLiveCost((c) => parseFloat((c + Math.random() * 0.003 + 0.0005).toFixed(4)));
-      setTick((t) => t + 1);
-    }, 1400);
-    return () => clearInterval(id);
-  }, [step]);
-
-  useEffect(() => {
-    if (step !== "scanning") return;
-
-    const steps = [
-      "Parsing collection file and resolving references...",
-      "Testing 87+ prompt injection vectors against endpoints...",
-      "Auditing compliance for OWASP API Top 10...",
-      "Generating report...",
-    ];
-
-    let currentStep = 0;
-    setProgressText(steps[0]);
-
-    const interval = setInterval(() => {
-      currentStep++;
-      if (currentStep < steps.length) {
-        setProgressText(steps[currentStep]);
-      } else {
-        clearInterval(interval);
-        setStep("results");
-      }
-    }, 600);
-
-    return () => clearInterval(interval);
-  }, [step]);
-
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
-    setIsDragOver(true);
-  };
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  }, []);
 
-  const handleDragLeave = () => {
-    setIsDragOver(false);
-  };
-
-  const processFile = (file: File) => {
-    setFileName(file.name);
-    setFileSize((file.size / 1024).toFixed(1) + " KB");
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      let parsed: any[] = [];
-      const text = e.target?.result as string;
-      try {
-        if (file.name.endsWith(".json")) {
-          const json = JSON.parse(text);
-          parsed = parsePostman(json);
-        } else {
-          parsed = parseYAML(text);
-        }
-      } catch (err) {
-        try {
-          parsed = parseYAML(text);
-        } catch (yErr) {
-          console.error("Failed parsing as JSON or YAML:", yErr);
-        }
-      }
-
-      if (parsed.length > 0) {
-        setEndpoints(parsed);
-        const scanResult = scanEndpoints(parsed);
-        setScore(scanResult.score);
-        setFindings(scanResult.findings);
-      } else {
-        setEndpoints(ENDPOINTS);
-        setFindings(MOCK_FINDINGS);
-        setScore(44);
-      }
-      setStep("scanning");
-    };
-    reader.readAsText(file);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
-    setIsDragOver(false);
+    e.stopPropagation();
+    setDragActive(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      processFile(e.dataTransfer.files[0]);
+      handleFile(e.dataTransfer.files[0]);
+    }
+  }, []);
+
+  const handleFile = (file: File) => {
+    if (!file.name.endsWith(".json")) {
+      setError("Please upload a JSON file (Postman Collection v2.1)");
+      return;
+    }
+    setFile(file);
+    setError(null);
+    setResult(null);
+  };
+
+  const runScan = async () => {
+    if (!file) return;
+    setScanning(true);
+    setError(null);
+
+    try {
+      const text = await file.text();
+      const collection = JSON.parse(text);
+
+      // Client-side scan simulation (runs instantly, no backend needed for demo)
+      const scanResult = performClientScan(collection);
+      setResult(scanResult);
+    } catch (err) {
+      setError("Invalid JSON file. Please upload a valid Postman Collection.");
+    } finally {
+      setScanning(false);
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      processFile(e.target.files[0]);
-    }
+  const performClientScan = (collection: any): ScanResult => {
+    const findings: Finding[] = [];
+    const credentials: CredentialLeak[] = [];
+    const endpoints: string[] = [];
+    let scanTime = 0;
+
+    const startTime = performance.now();
+
+    // Walk the collection tree
+    const walkItems = (items: any[], path: string = "") => {
+      items?.forEach((item, idx) => {
+        const currentPath = path
+          ? `${path} > ${item.name || `Item ${idx}`}`
+          : item.name || `Item ${idx}`;
+
+        if (item.request) {
+          const req = item.request;
+          const url =
+            typeof req.url === "string"
+              ? req.url
+              : req.url?.raw || req.url?.host?.join(".") || "unknown";
+          const method = req.method || "GET";
+          const endpointId = `${method} ${url}`;
+          endpoints.push(endpointId);
+
+          // Check for HTTPS
+          if (url.startsWith("http://")) {
+            findings.push({
+              id: `find-${findings.length}`,
+              severity: "High",
+              title: "Insecure HTTP endpoint detected",
+              endpoint: endpointId,
+              category: "OWASP API2:2023 — Broken Authentication",
+              remediation: "Change URL to use HTTPS protocol",
+              lineNumber: idx,
+            });
+          }
+
+          // Check headers for security headers
+          const headers = req.header || [];
+          const headerNames = headers.map((h: any) => (h.key || "").toLowerCase());
+
+          if (!headerNames.includes("authorization") && !headerNames.includes("x-api-key")) {
+            findings.push({
+              id: `find-${findings.length}`,
+              severity: "Medium",
+              title: "Missing authentication header",
+              endpoint: endpointId,
+              category: "OWASP API2:2023 — Broken Authentication",
+              remediation: "Add Authorization or X-API-Key header",
+              lineNumber: idx,
+            });
+          }
+
+          // Scan for exposed credentials in headers, body, URL
+          const allText = JSON.stringify({ url, headers, body: req.body });
+          const secretPatterns = [
+            { regex: /sk-[a-zA-Z0-9]{48}/g, type: "OpenAI API Key" },
+            { regex: /sk-ant-[a-zA-Z0-9]{32,}/g, type: "Anthropic API Key" },
+            { regex: /AIza[0-9A-Za-z_-]{35}/g, type: "Google AI API Key" },
+            { regex: /[a-f0-9]{64}/g, type: "Possible Secret Hash" },
+            { regex: /Bearer\s+[a-zA-Z0-9._-]{20,}/g, type: "Bearer Token" },
+            { regex: /Basic\s+[A-Za-z0-9+/=]{20,}/g, type: "Basic Auth Token" },
+            { regex: /password\s*[:=]\s*["'][^"']{4,}["']/gi, type: "Hardcoded Password" },
+            { regex: /api[_-]?key\s*[:=]\s*["'][^"']{8,}["']/gi, type: "Hardcoded API Key" },
+          ];
+
+          secretPatterns.forEach(({ regex, type }) => {
+            const matches = allText.match(regex);
+            if (matches) {
+              matches.forEach((match) => {
+                const preview = match.substring(0, 12) + "..." + match.substring(match.length - 4);
+                credentials.push({
+                  type,
+                  location: currentPath,
+                  keyPreview: preview,
+                  severity: "Critical",
+                });
+                findings.push({
+                  id: `find-${findings.length}`,
+                  severity: "Critical",
+                  title: `Exposed ${type} in collection`,
+                  endpoint: endpointId,
+                  category: "OWASP API3:2023 — Broken Object Property Level Authorization",
+                  remediation: `Move ${type} to environment variables or secret manager`,
+                  lineNumber: idx,
+                });
+              });
+            }
+          });
+
+          // BOLA check — URL with user ID pattern
+          if (
+            /\{\{userId\}\}|\{userId\}|\/:userId|\/\d+/.test(url) &&
+            !headerNames.includes("authorization")
+          ) {
+            findings.push({
+              id: `find-${findings.length}`,
+              severity: "Critical",
+              title: "Potential BOLA vulnerability — user ID in URL without auth",
+              endpoint: endpointId,
+              category: "OWASP API1:2023 — Broken Object Level Authorization",
+              remediation: "Add authorization checks for user-specific resources",
+              lineNumber: idx,
+            });
+          }
+        }
+
+        if (item.item) {
+          walkItems(item.item, currentPath);
+        }
+      });
+    };
+
+    walkItems(collection.item || []);
+
+    // Deduplicate findings
+    const uniqueFindings = findings.filter(
+      (f, i, arr) => arr.findIndex((t) => t.title === f.title && t.endpoint === f.endpoint) === i,
+    );
+
+    // Deduplicate credentials
+    const uniqueCredentials = credentials.filter(
+      (c, i, arr) => arr.findIndex((t) => t.keyPreview === c.keyPreview) === i,
+    );
+
+    // Calculate risk score
+    const severityWeights = { Critical: 10, High: 7, Medium: 4, Low: 1 };
+    const rawRisk = uniqueFindings.reduce((sum, f) => sum + (severityWeights[f.severity] || 0), 0);
+    const maxRisk = uniqueFindings.length * 10 || 1;
+    const riskScore = Math.min(100, Math.round((rawRisk / maxRisk) * 100));
+
+    // Compliance scores
+    const criticalCount = uniqueFindings.filter((f) => f.severity === "Critical").length;
+    const highCount = uniqueFindings.filter((f) => f.severity === "High").length;
+    const owaspScore = Math.max(0, Math.round(100 - (criticalCount * 15 + highCount * 8)));
+    const pciScore = Math.max(0, Math.round(100 - (criticalCount * 20 + highCount * 10)));
+
+    scanTime = performance.now() - startTime;
+
+    return {
+      findings: uniqueFindings,
+      credentials: uniqueCredentials,
+      endpoints: [...new Set(endpoints)],
+      riskScore,
+      owaspScore,
+      pciScore,
+      scanTime: Math.round(scanTime),
+    };
   };
 
-  const handleUseSample = () => {
-    setFileName("stripe-v1-production.postman_collection.json");
-    setFileSize("42.8 KB");
-    setEndpoints(ENDPOINTS);
-    const scanResult = scanEndpoints(ENDPOINTS);
-    setScore(scanResult.score);
-    setFindings(scanResult.findings);
-    setStep("scanning");
-  };
+  const criticalCount = result?.findings.filter((f) => f.severity === "Critical").length || 0;
+  const highCount = result?.findings.filter((f) => f.severity === "High").length || 0;
 
   return (
-    <div
-      className="min-h-screen bg-[#0A0E1A] text-gray-100 pb-16"
-      style={{ fontFamily: "'JetBrains Mono', monospace" }}
-    >
-      {/* HEADER */}
-      <div className="border-b border-[#2D3E50] bg-[#1E293B]/50 backdrop-blur-xl px-8 py-6">
-        <div className="max-w-5xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="w-2 h-2 rounded-full bg-[#06D6A0] animate-pulse" />
-              <span className="text-[#06D6A0] text-xs tracking-widest font-bold">
-                INTERACTIVE DEMO — NO LOGIN REQUIRED
-              </span>
-            </div>
-            <h1
-              className="text-white text-2xl font-bold"
-              style={{
-                fontFamily: "'Space Grotesk', sans-serif",
-              }}
-            >
-              API Security Scanner
-            </h1>
-            <p className="text-gray-400 text-sm mt-1">
-              Upload your API spec or Postman collection to run a local simulated audit.
-            </p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white">
+      {/* Hero Section */}
+      <div className="max-w-5xl mx-auto px-6 py-16">
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 bg-purple-500/20 border border-purple-400/30 rounded-full px-4 py-2 mb-6">
+            <Zap className="w-4 h-4 text-purple-400" />
+            <span className="text-sm font-medium text-purple-300">
+              Zero setup · No signup · Instant results
+            </span>
           </div>
-          <div className="flex gap-3">
-            <a
-              href="/register"
-              className="px-5 py-2.5 bg-gradient-to-r from-[#06D6A0] to-[#00F0FF] text-[#0A0E1A] font-bold text-xs tracking-widest hover:opacity-90 transition-all font-mono rounded"
-            >
-              START FREE TRIAL →
-            </a>
-            {step === "results" && (
-              <button
-                onClick={() => setStep("upload")}
-                className="px-5 py-2.5 border border-[#2D3E50] text-gray-300 text-xs tracking-widest hover:bg-[#1E293B] transition-all font-mono rounded"
-              >
-                SCAN ANOTHER FILE
-              </button>
-            )}
-          </div>
+          <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-white via-purple-200 to-purple-400 bg-clip-text text-transparent">
+            Find API Vulnerabilities in 3 Seconds
+          </h1>
+          <p className="text-xl text-slate-300 max-w-2xl mx-auto">
+            Drop your Postman collection. We will find exposed API keys, OWASP vulnerabilities, and
+            estimate your security risk — instantly, for free, no account required.
+          </p>
         </div>
-      </div>
 
-      <div className="max-w-5xl mx-auto px-8 pt-8 space-y-8">
-        {step === "upload" && (
-          <div className="space-y-6">
-            <div
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-              className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all ${
-                isDragOver
-                  ? "border-[#06D6A0] bg-[#06D6A0]/10"
-                  : "border-[#2D3E50] hover:border-gray-700 bg-[#1E293B]/30"
-              }`}
+        {/* Upload Zone */}
+        <div className="max-w-2xl mx-auto mb-12">
+          <div
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+            className={`border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300 ${
+              dragActive
+                ? "border-purple-400 bg-purple-500/10 scale-105"
+                : "border-slate-600 bg-slate-800/50 hover:border-slate-500"
+            }`}
+          >
+            <Upload className="w-16 h-16 text-purple-400 mx-auto mb-4" />
+            <p className="text-lg font-medium mb-2">
+              {file ? file.name : "Drop your Postman Collection JSON here"}
+            </p>
+            <p className="text-sm text-slate-400 mb-4">
+              or click to browse · Supports Postman Collection v2.1
+            </p>
+            <input
+              type="file"
+              accept=".json"
+              onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+              className="hidden"
+              id="file-upload"
+            />
+            <label
+              htmlFor="file-upload"
+              className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white px-6 py-3 rounded-lg font-medium cursor-pointer transition-colors"
             >
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                accept=".json,.yaml,.yml"
-                className="hidden"
-              />
-              <div className="w-16 h-16 bg-[#0A0E1A] border border-[#2D3E50] rounded-xl flex items-center justify-center mx-auto mb-4 text-[#06D6A0] text-2xl">
-                📥
-              </div>
-              <h3 className="text-lg font-bold text-white mb-2 font-mono">
-                Drag & drop your Postman Collection or OpenAPI spec
-              </h3>
-              <p className="text-gray-400 text-sm mb-6 max-w-md mx-auto">
-                Supports Postman JSON (v2.1) and Swagger/OpenAPI YAML/JSON files. Max 10MB.
-              </p>
-              <button className="px-6 py-2.5 bg-[#1E293B] hover:bg-[#1E293B]/80 text-white text-xs tracking-wider font-mono rounded border border-[#2D3E50]">
-                SELECT FILE
-              </button>
-            </div>
+              <FileJson className="w-5 h-5" />
+              Choose File
+            </label>
+          </div>
 
-            <div className="text-center">
-              <span className="text-gray-500 text-xs font-mono">OR</span>
-              <div className="mt-4">
-                <button
-                  onClick={handleUseSample}
-                  className="text-[#06D6A0] hover:text-[#00F0FF] text-sm font-mono border-b border-[#06D6A0]/30 hover:border-[#00F0FF] transition-colors"
+          {error && (
+            <div className="mt-4 p-4 bg-red-500/20 border border-red-400/30 rounded-lg text-red-300 flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5" />
+              {error}
+            </div>
+          )}
+
+          {file && !result && (
+            <button
+              onClick={runScan}
+              disabled={scanning}
+              className="mt-6 w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white py-4 rounded-xl font-bold text-lg transition-all disabled:opacity-50 flex items-center justify-center gap-3"
+            >
+              {scanning ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Scanning {file.name}...
+                </>
+              ) : (
+                <>
+                  <Shield className="w-5 h-5" />
+                  Run Security Scan
+                </>
+              )}
+            </button>
+          )}
+        </div>
+
+        {/* Results */}
+        {result && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Score Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div
+                className={`p-6 rounded-xl border ${criticalCount > 0 ? "bg-red-500/10 border-red-400/30" : "bg-green-500/10 border-green-400/30"}`}
+              >
+                <p className="text-sm text-slate-400 mb-1">Risk Score</p>
+                <p
+                  className={`text-4xl font-bold ${criticalCount > 0 ? "text-red-400" : "text-green-400"}`}
                 >
-                  🚀 Run scan with preloaded Stripe API sample
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {step === "scanning" && (
-          <div className="bg-[#1E293B] border border-[#2D3E50] rounded-xl p-12 text-center space-y-6">
-            <div className="relative w-16 h-16 mx-auto">
-              <div className="absolute inset-0 rounded-full border-4 border-gray-800" />
-              <div className="absolute inset-0 rounded-full border-4 border-t-[#06D6A0] animate-spin" />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-white font-mono">Auditing Collection</h3>
-              <p className="text-gray-400 text-sm mt-2 font-mono animate-pulse">{progressText}</p>
-            </div>
-          </div>
-        )}
-
-        {step === "results" && (
-          <>
-            {/* Sign up to save results CTA + PDF download */}
-            <div className="bg-gradient-to-r from-[#1E293B] to-[#0A0E1A] border border-[#2D3E50] rounded-xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div>
-                <h4 className="text-white font-bold font-mono">🔒 Save your scanning history</h4>
-                <p className="text-gray-400 text-sm mt-1 font-mono">
-                  Create a free account to unlock continuous CI/CD scanning, Slack alerts, and PDF
-                  exports.
+                  {result.riskScore}/100
                 </p>
+                <p className="text-xs text-slate-500 mt-1">{result.scanTime}ms scan time</p>
               </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => generatePDF(score, endpoints, findings, fileName)}
-                  className="px-4 py-2.5 bg-[#1E293B] hover:bg-[#1E293B]/80 text-white font-bold text-xs tracking-wider uppercase font-mono rounded border border-[#2D3E50] whitespace-nowrap"
+              <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+                <p className="text-sm text-slate-400 mb-1">Endpoints</p>
+                <p className="text-4xl font-bold text-white">{result.endpoints.length}</p>
+                <p className="text-xs text-slate-500 mt-1">scanned</p>
+              </div>
+              <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+                <p className="text-sm text-slate-400 mb-1">OWASP Score</p>
+                <p
+                  className={`text-4xl font-bold ${result.owaspScore >= 80 ? "text-green-400" : result.owaspScore >= 50 ? "text-yellow-400" : "text-red-400"}`}
                 >
-                  📥 Download PDF
-                </button>
-                <a
-                  href="/register"
-                  className="px-5 py-2.5 bg-gradient-to-r from-[#06D6A0] to-[#00F0FF] text-[#0A0E1A] font-bold text-xs tracking-wider uppercase font-mono rounded whitespace-nowrap"
+                  {result.owaspScore}
+                </p>
+                <p className="text-xs text-slate-500 mt-1">/100 compliance</p>
+              </div>
+              <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+                <p className="text-sm text-slate-400 mb-1">PCI DSS</p>
+                <p
+                  className={`text-4xl font-bold ${result.pciScore >= 80 ? "text-green-400" : result.pciScore >= 50 ? "text-yellow-400" : "text-red-400"}`}
                 >
-                  SIGN UP FREE
-                </a>
+                  {result.pciScore}
+                </p>
+                <p className="text-xs text-slate-500 mt-1">/100 compliance</p>
               </div>
             </div>
 
-            {/* SECTION 1 — Collection Card */}
-            <div className="bg-[#1E293B] border border-[#2D3E50] rounded-xl p-6">
-              <p className="text-[#06D6A0] text-xs tracking-widest mb-4 font-mono uppercase">
-                COLLECTION SCANNED
-              </p>
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-[#06D6A0]/10 border border-[#06D6A0]/20 rounded-lg flex items-center justify-center text-xl">
-                    🔌
-                  </div>
+            {/* Credential Leaks - THE OH CRAP MOMENT */}
+            {result.credentials.length > 0 && (
+              <div className="bg-red-500/10 border-2 border-red-400/50 rounded-xl p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <Lock className="w-8 h-8 text-red-400" />
                   <div>
-                    <p
-                      className="text-white font-bold"
-                      style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "16px" }}
-                    >
-                      {fileName}
-                    </p>
-                    <p className="text-gray-400 text-xs mt-0.5 font-mono">
-                      Size: {fileSize} · {endpoints.length} endpoints detected
+                    <h3 className="text-xl font-bold text-red-400">
+                      🚨 {result.credentials.length} Exposed Credential
+                      {result.credentials.length > 1 ? "s" : ""} Found
+                    </h3>
+                    <p className="text-sm text-red-300">
+                      These have been sitting in your collection. Anyone with access can see them.
                     </p>
                   </div>
                 </div>
-                <div className="flex gap-6 font-mono">
-                  {[
-                    { label: "ENDPOINTS", value: endpoints.length.toString() },
-                    {
-                      label: "METHODS",
-                      value: Array.from(new Set(endpoints.map((e) => e.method))).join(" · "),
-                    },
-                    { label: "SCAN TIME", value: "347ms" },
-                  ].map((s) => (
-                    <div key={s.label}>
-                      <p className="text-gray-500 text-xs">{s.label}</p>
-                      <p className="text-gray-300 font-bold text-sm mt-0.5">{s.value}</p>
+                <div className="space-y-2">
+                  {result.credentials.map((cred, i) => (
+                    <div
+                      key={i}
+                      className="bg-slate-900/50 rounded-lg p-4 flex items-center justify-between"
+                    >
+                      <div>
+                        <p className="font-medium text-white">{cred.type}</p>
+                        <p className="text-sm text-slate-400">Location: {cred.location}</p>
+                        <p className="text-sm font-mono text-red-300 mt-1">{cred.keyPreview}</p>
+                      </div>
+                      <span className="bg-red-500/20 text-red-400 px-3 py-1 rounded-full text-sm font-medium">
+                        {cred.severity}
+                      </span>
                     </div>
                   ))}
                 </div>
               </div>
-              <div className="mt-4 flex flex-wrap gap-2 max-h-32 overflow-y-auto border border-[#2D3E50] p-3 rounded bg-[#0A0E1A]/50">
-                {endpoints.map((e, i) => (
-                  <span
-                    key={i}
-                    className={`text-xs px-2 py-1 rounded font-mono ${METHOD_COLORS[e.method] ?? "bg-gray-800 text-gray-300"}`}
-                  >
-                    {e.method} {e.path}
-                  </span>
-                ))}
-              </div>
-            </div>
+            )}
 
-            {/* SECTION 2 — Findings Summary Row */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                {
-                  label: "CRITICAL",
-                  value: findings.filter((f) => f.severity === "Critical").length.toString(),
-                  color: "text-[#EF4444]",
-                },
-                {
-                  label: "HIGH",
-                  value: findings.filter((f) => f.severity === "High").length.toString(),
-                  color: "text-[#F59E0B]",
-                },
-                {
-                  label: "MEDIUM",
-                  value: findings.filter((f) => f.severity === "Medium").length.toString(),
-                  color: "text-[#FDB022]",
-                },
-                { label: "OWASP SCORE", value: `${score}/100`, color: "text-[#06D6A0]" },
-              ].map((s) => (
-                <div key={s.label} className="bg-[#1E293B] border border-[#2D3E50] rounded-xl p-5">
-                  <p className="text-gray-500 text-xs tracking-widest mb-2 font-mono">{s.label}</p>
-                  <p
-                    className={`font-bold ${s.color}`}
-                    style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "32px" }}
-                  >
-                    {s.value}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            {/* SECTION 3 — Findings */}
-            <div>
-              <p className="text-[#06D6A0] text-xs tracking-widest mb-4 font-mono uppercase">
-                TOP FINDINGS
-              </p>
-              <div className="space-y-4">
-                {findings.map((f) => (
-                  <div key={f.id} className="bg-[#1E293B] border border-[#2D3E50] rounded-xl p-5">
-                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
-                      <div className="flex items-center gap-3">
-                        <span
-                          className={`text-xs px-2 py-1 rounded font-bold ${SEVERITY_COLOR[f.severity]}`}
-                        >
-                          {f.severity}
-                        </span>
-                        <span className="text-gray-400 text-xs font-mono">{f.owasp}</span>
-                      </div>
-                      <span className="text-gray-400 text-xs font-mono">{f.endpoint}</span>
-                    </div>
-                    <p className="text-white font-bold mb-2 font-mono">{f.title}</p>
-                    <p className="text-gray-400 text-sm mb-3 leading-relaxed">{f.detail}</p>
-                    <div className="bg-[#06D6A0]/10 border-l-2 border-[#06D6A0] px-4 py-2">
-                      <span className="text-[#06D6A0] text-xs font-bold font-mono">FIX: </span>
-                      <span className="text-gray-300 text-xs font-mono">{f.fix}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* SECTION 4 — Live Token Cost Feed */}
-            <div className="bg-[#1E293B] border border-[#2D3E50] rounded-xl p-6">
-              <div className="flex items-center justify-between mb-4">
-                <p className="text-gray-500 text-xs tracking-widest font-mono">
-                  LIVE TOKEN COST FEED
-                </p>
-                <div className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#06D6A0] animate-pulse" />
-                  <span className="text-[#06D6A0] text-xs font-mono">STREAMING</span>
-                </div>
-              </div>
-              <div className="mb-6">
-                <p className="text-gray-500 text-xs mb-1 font-mono">SESSION TOTAL</p>
-                <p
-                  className="text-[#06D6A0]"
-                  style={{
-                    fontFamily: "'Space Grotesk', sans-serif",
-                    fontSize: "40px",
-                    fontWeight: 700,
-                  }}
-                >
-                  ${liveCost.toFixed(4)}
-                </p>
-                <p className="text-gray-500 text-xs mt-1 font-mono">
-                  Tick #{tick} · updates every 1.4s
-                </p>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left font-mono" style={{ fontSize: "12px" }}>
-                  <thead className="border-b border-[#2D3E50]">
-                    <tr className="text-gray-500 text-xs tracking-widest">
-                      <th className="pb-2 pr-4">AGENT</th>
-                      <th className="pb-2 pr-4">MODEL</th>
-                      <th className="pb-2 pr-4 text-right">TOKENS</th>
-                      <th className="pb-2 text-right">COST</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#2D3E50]/50">
-                    {TOKEN_AGENTS.map((a, i) => (
-                      <tr
-                        key={i}
-                        className={i === tick % TOKEN_AGENTS.length ? "bg-[#06D6A0]/5" : ""}
+            {/* Findings List */}
+            {result.findings.length > 0 && (
+              <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                  <Shield className="w-6 h-6 text-purple-400" />
+                  Security Findings ({result.findings.length})
+                </h3>
+                <div className="space-y-3">
+                  {result.findings.map((finding) => {
+                    const config = SEVERITY_CONFIG[finding.severity];
+                    const Icon = config.icon;
+                    return (
+                      <div
+                        key={finding.id}
+                        className={`rounded-lg border p-4 ${config.bg} ${config.border}`}
                       >
-                        <td className="py-2 pr-4 text-white font-bold">{a.agent}</td>
-                        <td className="py-2 pr-4 text-gray-400">{a.model}</td>
-                        <td className="py-2 pr-4 text-right text-white">
-                          {a.tokens.toLocaleString()}
-                        </td>
-                        <td className="py-2 text-right text-[#06D6A0]">${a.cost.toFixed(4)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                        <div className="flex items-start gap-3">
+                          <Icon className={`w-5 h-5 mt-0.5 ${config.color}`} />
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className={`text-sm font-bold ${config.color}`}>
+                                {finding.severity}
+                              </span>
+                              <span className="text-slate-500">·</span>
+                              <span className="text-sm text-slate-300">{finding.category}</span>
+                            </div>
+                            <p className="font-medium text-white mb-1">{finding.title}</p>
+                            <p className="text-sm font-mono text-slate-400 mb-2">
+                              {finding.endpoint}
+                            </p>
+                            <div className="bg-slate-900/50 rounded p-3">
+                              <p className="text-sm text-slate-300">
+                                <span className="text-green-400 font-medium">Fix:</span>{" "}
+                                {finding.remediation}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
+            )}
+
+            {result.findings.length === 0 && result.credentials.length === 0 && (
+              <div className="bg-green-500/10 border border-green-400/30 rounded-xl p-8 text-center">
+                <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
+                <h3 className="text-2xl font-bold text-green-400 mb-2">All Clear!</h3>
+                <p className="text-slate-300">
+                  No vulnerabilities or exposed credentials found in this collection.
+                </p>
+              </div>
+            )}
+
+            {/* CTA to Sign Up */}
+            <div className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-400/30 rounded-xl p-8 text-center">
+              <h3 className="text-2xl font-bold mb-3">Want this in your IDE + CI/CD?</h3>
+              <p className="text-slate-300 mb-6 max-w-lg mx-auto">
+                Get real-time scans as you code, automatic PR checks, cost anomaly alerts, and team
+                dashboards — all inside VS Code.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <a
+                  href="https://rakshex.in/signup"
+                  className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white px-8 py-4 rounded-xl font-bold text-lg transition-colors"
+                >
+                  Get Rakshex Free
+                  <ArrowRight className="w-5 h-5" />
+                </a>
+                <a
+                  href="https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex"
+                  className="inline-flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-white px-8 py-4 rounded-xl font-bold text-lg transition-colors"
+                >
+                  <FileJson className="w-5 h-5" />
+                  VS Code Extension
+                </a>
+              </div>
+              <p className="text-sm text-slate-500 mt-4">
+                Free tier: 50 scans/month · No credit card required · Setup in 60 seconds
+              </p>
             </div>
-          </>
+          </div>
         )}
 
-        {/* SECTION 5 — CTA */}
-        <div className="bg-[#1E293B] border border-[#2D3E50] rounded-xl p-8 text-center">
-          <p className="text-[#06D6A0] text-xs tracking-widest mb-3 font-mono">
-            READY TO SECURE YOUR REAL APIs?
-          </p>
-          <h2
-            style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "24px", fontWeight: 700 }}
-            className="mb-3 text-white"
-          >
-            Import your Postman collection and get real results in 60 seconds
-          </h2>
-          <p className="text-gray-400 text-sm mb-6 max-w-lg mx-auto leading-relaxed">
-            Supports Postman v2.1, OpenAPI 3.x, and Bruno. Free tier includes 50 scans/month and 5
-            LLM agents. No credit card required.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center font-mono">
-            <a
-              href="/register"
-              className="px-8 py-3 bg-gradient-to-r from-[#06D6A0] to-[#00F0FF] text-[#0A0E1A] font-bold text-xs tracking-widest hover:opacity-90 transition-all rounded"
-            >
-              START FREE — SCAN MY APIS →
-            </a>
-            <a
-              href="/import"
-              className="px-8 py-3 border border-[#2D3E50] text-gray-300 text-xs tracking-widest hover:bg-[#1E293B] transition-all rounded"
-            >
-              IMPORT COLLECTION
-            </a>
+        {/* Trust Indicators */}
+        {!result && (
+          <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+            <div className="p-6">
+              <Shield className="w-10 h-10 text-purple-400 mx-auto mb-3" />
+              <h3 className="font-bold mb-2">OWASP Top 10 Scanning</h3>
+              <p className="text-sm text-slate-400">
+                Detects BOLA, broken auth, injection, and more
+              </p>
+            </div>
+            <div className="p-6">
+              <DollarSign className="w-10 h-10 text-purple-400 mx-auto mb-3" />
+              <h3 className="font-bold mb-2">LLM Cost Intelligence</h3>
+              <p className="text-sm text-slate-400">
+                Track token spend per endpoint and catch anomalies
+              </p>
+            </div>
+            <div className="p-6">
+              <Lock className="w-10 h-10 text-purple-400 mx-auto mb-3" />
+              <h3 className="font-bold mb-2">Secret Detection</h3>
+              <p className="text-sm text-slate-400">
+                Finds API keys, tokens, and passwords in collections
+              </p>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
