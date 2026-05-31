@@ -1474,3 +1474,32 @@ export const waitlist = pgTable(
 );
 export type WaitlistRow = typeof waitlist.$inferSelect;
 export type InsertWaitlistRow = typeof waitlist.$inferInsert;
+
+/**
+ * Scan Reports — shareable public scan results
+ */
+export const scanReports = pgTable(
+  "scan_reports",
+  {
+    id: varchar("id", { length: 32 }).primaryKey(),
+    score: integer("score").notNull(),
+    findings: json("findings").notNull().$type<
+      Array<{
+        title: string;
+        severity: "Critical" | "High" | "Medium" | "Low";
+        endpoint: string;
+        description?: string;
+        remediation?: string;
+      }>
+    >(),
+    filename: varchar("filename", { length: 256 }),
+    endpoints: json("endpoints").$type<string[]>(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    viewCount: integer("view_count").default(0).notNull(),
+  },
+  (table) => ({
+    createdAtIdx: index().on(table.createdAt),
+  }),
+);
+export type ScanReport = typeof scanReports.$inferSelect;
+export type InsertScanReport = typeof scanReports.$inferInsert;

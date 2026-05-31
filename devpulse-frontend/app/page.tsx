@@ -9,7 +9,8 @@ import { FeatureCards } from "@/components/home/FeatureCards";
 import { BenchmarkSection } from "@/components/home/BenchmarkSection";
 import { ChangelogSection } from "@/components/home/ChangelogSection";
 import { AskAISection } from "@/components/home/AskAISection";
-import { TestimonialsSection } from "@/components/home/TestimonialsSection";
+import { InstallSection } from "@/components/home/InstallSection";
+import { HowItWorks } from "@/components/home/HowItWorks";
 import { Footer } from "@/components/layout/Footer";
 import {
   Shield,
@@ -469,6 +470,12 @@ export default function HomePage() {
       {/* SECTION 3 & 4 — HERO SECTION & LOGOMARQUEE */}
       <HeroSection />
 
+      {/* NEW — INSTALL SECTION */}
+      <InstallSection />
+
+      {/* NEW — HOW IT WORKS */}
+      <HowItWorks />
+
       {/* SECTION 5 — PRODUCT FEATURE CARDS */}
       <section className="relative w-full max-w-[1280px] mx-auto py-20 px-6 xl:px-8" id="features">
         <FeatureCards />
@@ -568,9 +575,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* SECTION 10 — TESTIMONIALS */}
-      <TestimonialsSection />
-
       {/* SECTION 11 — FAQ SECTION */}
       <section className="w-full max-w-[1280px] mx-auto py-20 px-6 xl:px-8 bg-transparent" id="faq">
         <div className="flex flex-col lg:flex-row gap-12 max-w-5xl mx-auto items-start">
@@ -621,14 +625,49 @@ export default function HomePage() {
       {/* SECTION 11A — ASK AI SECTION */}
       <AskAISection />
 
-      {/* SECTION 11B — PLATFORM STATISTICS */}
+      {/* SECTION 11B — REAL SOCIAL PROOF */}
       <section className="py-20 px-6 xl:px-8 max-w-[1280px] mx-auto bg-transparent">
-        <h2 className="sr-only">Platform statistics</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatsCard label="COLLECTIONS SCANNED" targetValue="12,847" />
-          <StatsCard label="VULNERABILITIES FOUND" targetValue="94,231" />
-          <StatsCard label="TOKENS SAVED" targetValue="2.4B" />
-          <StatsCard label="ENGINEERS ON WAITLIST" targetValue="1,247" />
+        <div className="text-center mb-10">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">Trusted by developers</h2>
+          <p className="text-[#9CA3AF] text-sm">
+            Real metrics from open-source distribution channels
+          </p>
+        </div>
+        <div className="flex flex-wrap justify-center gap-4">
+          <a href="https://www.npmjs.com/package/rakshex" target="_blank" rel="noopener noreferrer">
+            <img
+              src="https://img.shields.io/npm/dm/rakshex?style=for-the-badge&logo=npm&color=14B8A6&labelColor=1A1F2E"
+              alt="npm downloads"
+              className="h-8"
+            />
+          </a>
+          <a
+            href="https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex-vscode"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img
+              src="https://img.shields.io/visual-studio-marketplace/i/rakshex.rakshex-vscode?style=for-the-badge&logo=visual-studio-code&color=14B8A6&labelColor=1A1F2E"
+              alt="VS Code installs"
+              className="h-8"
+            />
+          </a>
+          <a
+            href="https://github.com/Akshu1245/devpulse-complete-codebase"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img
+              src="https://img.shields.io/github/stars/Akshu1245/devpulse-complete-codebase?style=for-the-badge&logo=github&color=14B8A6&labelColor=1A1F2E"
+              alt="GitHub stars"
+              className="h-8"
+            />
+          </a>
+          <img
+            src="https://img.shields.io/badge/license-MIT-14B8A6?style=for-the-badge&labelColor=1A1F2E"
+            alt="MIT License"
+            className="h-8"
+          />
         </div>
       </section>
 
