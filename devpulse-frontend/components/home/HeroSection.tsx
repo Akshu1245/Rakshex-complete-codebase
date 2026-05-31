@@ -39,10 +39,10 @@ export function HeroSection() {
           {/* CTA Buttons */}
           <div className="hero-buttons flex flex-wrap items-center gap-4 w-full mb-12">
             <Link
-              href="/register"
+              href="#waitlist"
               className="px-6 py-3 bg-[#14B8A6] text-white font-sans font-semibold text-sm rounded-[6px] hover:bg-[#0D9488] active:bg-[#0A7F6F] hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_4px_12px_rgba(20,184,166,0.2)] transition-all duration-200 text-center flex items-center justify-center gap-2 transform"
             >
-              Start your project &rarr;
+              Join Waitlist &rarr;
             </Link>
             <Link
               href="/docs"
@@ -53,7 +53,7 @@ export function HeroSection() {
           </div>
 
           {/* CLI Command Pill */}
-          <div className="hero-cli-pill bg-[#1A1F2E] border border-[#14B8A6]/25 rounded-full px-5 py-2.5 flex items-center gap-4 w-fit mb-12">
+          <div className="hero-cli-pill bg-[#1A1F2E] border border-[#14B8A6]/25 rounded-full px-5 py-2.5 flex items-center gap-4 w-fit mb-4">
             <span className="cli-text text-[#14B8A6] font-mono text-sm">
               $ npx rakshex scan ./collection.json
             </span>
@@ -63,6 +63,34 @@ export function HeroSection() {
             >
               {copied ? "Copied!" : "Copy"}
             </button>
+          </div>
+
+          {/* npm & VS Code badges */}
+          <div className="flex flex-wrap items-center gap-3 mb-12">
+            <a
+              href="https://npmjs.com/package/rakshex"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:opacity-80 transition-opacity"
+            >
+              <img
+                src="https://img.shields.io/npm/dm/rakshex?style=flat-square&logo=npm&color=14B8A6&label=npm"
+                alt="npm downloads"
+                className="h-5"
+              />
+            </a>
+            <a
+              href="https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex-vscode"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:opacity-80 transition-opacity"
+            >
+              <img
+                src="https://img.shields.io/visual-studio-marketplace/i/rakshex.rakshex-vscode?style=flat-square&logo=visualstudiocode&color=14B8A6&label=vscode"
+                alt="VS Code installs"
+                className="h-5"
+              />
+            </a>
           </div>
 
           {/* Works perfectly with Label inside hero-left */}

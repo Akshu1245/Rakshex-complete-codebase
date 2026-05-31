@@ -121,6 +121,34 @@ function StatsCard({ label, targetValue }: { label: string; targetValue: string 
   );
 }
 
+function StatsBadgeCard({
+  label,
+  badgeUrl,
+  linkUrl,
+}: {
+  label: string;
+  badgeUrl: string;
+  linkUrl: string;
+}) {
+  return (
+    <article className="w-full bg-[#1A1F2E] border border-[#14B8A6]/10 hover:border-[#14B8A6]/35 rounded-lg p-6 flex flex-col items-center justify-between gap-4 transition-all duration-200 select-none hover:shadow-[0_2px_8px_rgba(20,184,166,0.05)] text-center h-full">
+      <p className="text-[#9CA3AF] font-sans text-xs tracking-wider uppercase font-semibold">
+        {label}
+      </p>
+      <div className="flex items-center justify-center flex-1 mt-2">
+        <a
+          href={linkUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:opacity-80 transition-opacity"
+        >
+          <img src={badgeUrl} alt={label} className="h-6" />
+        </a>
+      </div>
+    </article>
+  );
+}
+
 function WaitlistForm() {
   const [email, setEmail] = useState("");
   const [success, setSuccess] = useState(false);
@@ -179,14 +207,33 @@ function AnimatedHeroVisual() {
   const [scanStep, setScanStep] = useState(0);
   const [findings, setFindings] = useState<string[]>([]);
   const [securityScore, setSecurityScore] = useState(100);
+  const [issuesCount, setIssuesCount] = useState(0);
 
   useEffect(() => {
     const steps = [
-      { text: "> rakshex scan ./api.json", delay: 1200 },
+      { text: "> rakshex scan ./collection.json", delay: 1200 },
       { text: "✓ 23 endpoints scanned", delay: 800 },
-      { text: "⚠ 2 credentials detected", delay: 800, finding: "Credential Leak", score: 98 },
-      { text: "🔒 1 prompt injection blocked", delay: 800, finding: "Prompt Injection", score: 95 },
-      { text: "💰 $47.3 cost anomaly flagged", delay: 800, finding: "Cost Anomaly", score: 94 },
+      {
+        text: "🟠 [High] Stripe Test Secret Key — /item/2/request/header",
+        delay: 800,
+        finding: "[High] Stripe Test Secret Key — /item/2/request/header",
+        score: 75,
+        issues: 2,
+      },
+      {
+        text: "🟠 [High] Truncated JWT Token — /item/2/request/header",
+        delay: 800,
+        finding: "[High] Truncated JWT Token — /item/2/request/header",
+        score: 50,
+        issues: 5,
+      },
+      {
+        text: "🟠 [High] Weak Password — /item/8/request/body",
+        delay: 800,
+        finding: "[High] Weak Password — /item/8/request/body",
+        score: 30,
+        issues: 7,
+      },
     ];
 
     let currentStep = 0;
@@ -199,8 +246,11 @@ function AnimatedHeroVisual() {
         if (step.finding) {
           setFindings((prev) => [...prev, step.finding!]);
         }
-        if (step.score) {
+        if (step.score !== undefined) {
           setSecurityScore(step.score);
+        }
+        if (step.issues !== undefined) {
+          setIssuesCount(step.issues);
         }
         currentStep++;
         timer = setTimeout(runScan, step.delay);
@@ -208,6 +258,7 @@ function AnimatedHeroVisual() {
         timer = setTimeout(() => {
           setFindings([]);
           setSecurityScore(100);
+          setIssuesCount(0);
           currentStep = 0;
           setScanStep(0);
           runScan();
@@ -220,11 +271,11 @@ function AnimatedHeroVisual() {
   }, []);
 
   const terminalLines = [
-    "> rakshex scan ./api.json",
+    "> rakshex scan ./collection.json",
     "✓ 23 endpoints scanned",
-    "⚠ 2 credentials detected",
-    "🔒 1 prompt injection blocked",
-    "💰 $47.3 cost anomaly flagged",
+    "🟠 [High] Stripe Test Secret Key — /item/2/request/header",
+    "🟠 [High] Truncated JWT Token — /item/2/request/header",
+    "🟠 [High] Weak Password — /item/8/request/body",
   ];
 
   return (
@@ -241,9 +292,7 @@ function AnimatedHeroVisual() {
           {terminalLines.slice(0, scanStep).map((line, idx) => {
             let color = "text-neutral-300";
             if (line.startsWith("✓")) color = "text-teal-accent";
-            else if (line.startsWith("⚠")) color = "text-slate-400";
-            else if (line.startsWith("🔒")) color = "text-teal-accent";
-            else if (line.startsWith("💰")) color = "text-teal-accent";
+            else if (line.startsWith("🟠")) color = "text-orange-400";
             return (
               <p key={idx} className={`${color} font-mono leading-relaxed`}>
                 {line}
@@ -251,7 +300,7 @@ function AnimatedHeroVisual() {
             );
           })}
           {scanStep < terminalLines.length && (
-            <span className="inline-block w-1.5 h-3 bg-teal-accent ml-1" />
+            <span className="inline-block w-1.5 h-3 bg-teal-accent ml-1 animate-pulse" />
           )}
         </div>
       </div>
@@ -287,20 +336,17 @@ function AnimatedHeroVisual() {
         <div className="w-full mt-4 space-y-2 text-left">
           <div className="flex justify-between items-center border-b border-neutral-900 pb-1.5">
             <span className="text-[10px] text-neutral-400 font-mono">Issues:</span>
-            <span className="text-[10px] text-white font-mono font-bold">{findings.length}</span>
+            <span className="text-[10px] text-white font-mono font-bold">{issuesCount}</span>
           </div>
           <div className="space-y-1">
             {findings.map((f, i) => {
-              let tagColor = "text-teal-accent bg-teal-accent/10 border-teal-accent/20";
-              if (f.includes("Leak")) tagColor = "text-slate-400 bg-slate-900/50 border-slate-800";
-              if (f.includes("Injection"))
-                tagColor = "text-teal-accent bg-teal-accent/10 border-teal-accent/20";
               return (
                 <div
                   key={i}
-                  className={`text-[9px] border rounded px-1.5 py-0.5 font-mono flex items-center gap-1 ${tagColor}`}
+                  className="text-[9px] border border-orange-500/25 rounded px-1.5 py-0.5 font-mono flex items-start gap-1 text-orange-400 bg-orange-500/10 whitespace-pre-wrap leading-tight"
                 >
-                  {f}
+                  <span className="shrink-0">🟠</span>
+                  <span>{f.replace("🟠 ", "")}</span>
                 </div>
               );
             })}
@@ -625,10 +671,18 @@ export default function HomePage() {
       <section className="py-20 px-6 xl:px-8 max-w-[1280px] mx-auto bg-transparent">
         <h2 className="sr-only">Platform statistics</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatsCard label="COLLECTIONS SCANNED" targetValue="12,847" />
-          <StatsCard label="VULNERABILITIES FOUND" targetValue="94,231" />
-          <StatsCard label="TOKENS SAVED" targetValue="2.4B" />
-          <StatsCard label="ENGINEERS ON WAITLIST" targetValue="1,247" />
+          <StatsCard label="COLLECTIONS SCANNED" targetValue="1" />
+          <StatsCard label="VULNERABILITIES FOUND" targetValue="7" />
+          <StatsBadgeCard
+            label="npm downloads"
+            badgeUrl="https://img.shields.io/npm/dm/rakshex?style=flat-square&logo=npm&color=14B8A6&label=downloads"
+            linkUrl="https://npmjs.com/package/rakshex"
+          />
+          <StatsBadgeCard
+            label="VS Code Installs"
+            badgeUrl="https://img.shields.io/visual-studio-marketplace/i/rakshex.rakshex-vscode?style=flat-square&logo=visualstudiocode&color=14B8A6&label=installs"
+            linkUrl="https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex-vscode"
+          />
         </div>
       </section>
 
@@ -650,12 +704,16 @@ export default function HomePage() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 w-full justify-center items-center mt-2 border-t border-[#1A1F2E] pt-6 z-10">
-            <Link
-              href="/register"
+            <a
+              href="#waitlist"
+              onClick={(e) => {
+                e.preventDefault();
+                document.getElementById("waitlist")?.scrollIntoView({ behavior: "smooth" });
+              }}
               className="text-[#14B8A6] hover:text-[#0D9488] font-semibold text-sm font-sans underline underline-offset-4 transition-colors"
             >
-              Try Free &mdash; No Credit Card Required
-            </Link>
+              Join Waitlist
+            </a>
           </div>
         </div>
       </section>

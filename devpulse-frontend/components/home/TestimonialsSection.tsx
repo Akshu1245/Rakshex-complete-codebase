@@ -1,89 +1,79 @@
 "use client";
 
+import { useState } from "react";
+import { trpc } from "@/lib/trpc";
+
 export function TestimonialsSection() {
-  const testimonials = [
-    {
-      initials: "DR",
-      author: "Devesh R.",
-      title: "CTO, Fintech Startup, Bengaluru",
-      quote:
-        "RakshEx discovered a live production API credential in our codebase during staging scan. Incredibly fast.",
+  const [email, setEmail] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const joinMutation = trpc.waitlist.join.useMutation({
+    onSuccess: () => {
+      setSuccess(true);
+      setError(null);
     },
-    {
-      initials: "AK",
-      author: "Aarti K.",
-      title: "AppSec Director, AI Infrastructure Team",
-      quote:
-        "The runtime kill switch stopped an infinite LLM agent loop that would have cost us thousands. Lifesaver.",
+    onError: (err) => {
+      setError(err.message || "Failed to join. Please try again.");
     },
-    {
-      initials: "SS",
-      author: "Siddharth S.",
-      title: "Security Architect, Payments Platform, India",
-      quote:
-        "SOC2 compliance readiness package built in one click. Our auditor was extremely impressed by the evidence.",
-    },
-    {
-      initials: "PP",
-      author: "Priya P.",
-      title: "Lead Developer, Digital Banking Team",
-      quote:
-        "We isolated 45% of our monthly model invoice down to reasoning token overhead. Brilliant attribution tool.",
-    },
-    {
-      initials: "NG",
-      author: "Nikhil G.",
-      title: "Founder, SaaS Startup, India",
-      quote:
-        "Integrating the scanner into our GitHub actions pipeline took 3 minutes. High quality security checks.",
-    },
-  ];
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+    joinMutation.mutate({ email, source: "testimonials_waitlist" });
+  };
 
   return (
-    <section className="relative w-full max-w-[1280px] mx-auto py-20 px-6 xl:px-8 bg-transparent">
-      <div className="flex flex-col items-center gap-12">
-        {/* Section Title */}
-        <div className="flex flex-col items-center gap-3 text-center">
+    <section
+      className="relative w-full max-w-[1280px] mx-auto py-20 px-6 xl:px-8 bg-transparent"
+      id="waitlist"
+    >
+      <div className="max-w-2xl mx-auto bg-[#1A1F2E] border border-[#14B8A6]/20 p-8 sm:p-12 rounded-2xl shadow-xl text-center relative overflow-hidden group hover:border-[#14B8A6]/40 transition-all duration-300">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-[#14B8A6]/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-[#14B8A6]/5 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="flex flex-col items-center gap-6 relative z-10">
           <span className="text-xs font-bold text-[#14B8A6] uppercase tracking-widest bg-[#14B8A6]/10 px-3 py-1 rounded-full border border-[#14B8A6]/20">
-            Testimonials
+            Social Proof
           </span>
-          <h2 className="text-3xl sm:text-[36px] font-bold text-white font-sans leading-tight tracking-[-0.02em] mt-2">
-            Trusted by Engineering Leaders
+
+          <h2 className="text-3xl sm:text-[36px] font-extrabold text-white font-sans leading-tight tracking-[-0.02em]">
+            500+ developers on the waitlist.
           </h2>
-        </div>
+          <p className="text-[#9CA3AF] text-base sm:text-lg leading-relaxed max-w-[480px] font-sans -mt-2">
+            Be the first to get access.
+          </p>
 
-        {/* 5-Column Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 w-full">
-          {testimonials.map((t, idx) => (
-            <div
-              key={idx}
-              className="bg-[#1A1F2E] border-t-[3px] border-t-[#14B8A6] border-x-0 border-b-0 rounded-lg p-5 flex flex-col justify-between items-start gap-4 select-none hover:scale-[1.02] hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(20,184,166,0.15)] transform transition-all duration-200 group text-left"
-            >
-              {/* Top Section: Stars and Quote */}
-              <div className="flex flex-col gap-3">
-                {/* Stars: teal, 16px */}
-                <div className="text-[#14B8A6] text-[16px] leading-none tracking-wider">★★★★★</div>
-                {/* Quote: White, 14px, italic */}
-                <p className="text-white text-[14px] italic leading-relaxed text-left font-sans">
-                  "{t.quote}"
-                </p>
+          <div className="w-full mt-4">
+            {success ? (
+              <div className="p-4 bg-[#14B8A6]/10 border border-[#14B8A6]/30 rounded-[6px] text-[#14B8A6] text-sm font-mono text-center">
+                ✓ You have been added to the waitlist!
               </div>
-
-              {/* Bottom Section: Avatar and Author Info */}
-              <div className="flex items-center gap-3 mt-2">
-                {/* Avatar: 32x32px, teal background, white initials */}
-                <div className="w-8 h-8 shrink-0 bg-[#14B8A6] text-white font-bold flex items-center justify-center rounded-full text-xs uppercase group-hover:scale-110 transition-transform duration-150">
-                  {t.initials}
+            ) : (
+              <form onSubmit={handleSubmit} className="w-full space-y-3">
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="email"
+                    required
+                    placeholder="Enter your work email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="flex-1 px-4 py-3 bg-[#0F1419] border border-[#14B8A6]/30 hover:border-[#14B8A6] focus:border-[#14B8A6] focus:outline-none text-white placeholder-[#6B7280] rounded-[6px] text-sm font-sans transition-all duration-150"
+                    disabled={joinMutation.isPending}
+                  />
+                  <button
+                    type="submit"
+                    disabled={joinMutation.isPending}
+                    className="bg-[#14B8A6] hover:bg-[#0D9488] active:bg-[#0A7F6F] text-white hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_4px_12px_rgba(20,184,166,0.2)] font-semibold px-6 py-3 text-sm tracking-wide font-sans rounded-[6px] disabled:opacity-50 transition-all duration-200 shrink-0 transform"
+                  >
+                    {joinMutation.isPending ? "Joining..." : "Join Waitlist"}
+                  </button>
                 </div>
-                <div className="text-left leading-tight">
-                  {/* Author: White, 14px, weight 600 */}
-                  <h4 className="text-white text-[14px] font-semibold font-sans">{t.author}</h4>
-                  {/* Title: Gray (#9CA3AF), 12px */}
-                  <p className="text-[#9CA3AF] text-[12px] font-sans">{t.title}</p>
-                </div>
-              </div>
-            </div>
-          ))}
+                {error && <p className="text-red-400 text-xs text-left font-mono mt-1">{error}</p>}
+              </form>
+            )}
+          </div>
         </div>
       </div>
     </section>

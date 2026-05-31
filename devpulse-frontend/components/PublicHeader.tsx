@@ -336,6 +336,44 @@ export function PublicHeader() {
                   </div>
                 </div>
               </div>
+
+              {/* Install Dropdown */}
+              <div className="relative py-4" onMouseEnter={() => handleMouseEnter("install")}>
+                <div className="flex items-center gap-1 text-white text-sm font-medium hover:text-[#14B8A6] cursor-pointer select-none transition-colors">
+                  Install
+                  <ChevronDown className="w-3.5 h-3.5 transition-transform duration-200" />
+                </div>
+                <div
+                  className={`absolute top-full left-0 pt-2 transition-all duration-200 ${
+                    activeMenu === "install"
+                      ? "opacity-100 visible translate-y-0"
+                      : "opacity-0 invisible -translate-y-2"
+                  }`}
+                >
+                  <div className="bg-[#1A1F2E] border border-[#14B8A6]/20 rounded-xl overflow-hidden shadow-2xl w-48 p-4 flex flex-col gap-1.5 text-left">
+                    <a
+                      className="text-[#9CA3AF] hover:text-[#14B8A6] text-xs py-1 transition-colors flex items-center justify-between"
+                      href="https://npmjs.com/package/rakshex"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={forceClose}
+                    >
+                      <span>npm CLI</span>
+                      <span className="text-[10px] text-[#14B8A6]">→</span>
+                    </a>
+                    <a
+                      className="text-[#9CA3AF] hover:text-[#14B8A6] text-xs py-1 transition-colors flex items-center justify-between"
+                      href="https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex-vscode"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={forceClose}
+                    >
+                      <span>VS Code</span>
+                      <span className="text-[10px] text-[#14B8A6]">→</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -349,9 +387,9 @@ export function PublicHeader() {
             </Link>
             <Link
               className="bg-[#14B8A6] hover:bg-[#0D9488] active:bg-[#0A7F6F] text-white font-semibold text-sm font-sans px-4 py-2 rounded-[6px] transition-all duration-200"
-              href="/register"
+              href="/#waitlist"
             >
-              START FREE
+              Join Waitlist
             </Link>
             <button
               className="lg:hidden text-white"
@@ -492,6 +530,31 @@ export function PublicHeader() {
                 </Link>
               </div>
             </div>
+            <div className="space-y-3 border-t border-[#1A1F2E] pt-4">
+              <p className="text-[10px] text-neutral-500 font-mono tracking-widest uppercase">
+                Install
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <a
+                  className="text-sm text-neutral-300 hover:text-teal-accent"
+                  href="https://npmjs.com/package/rakshex"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  npm
+                </a>
+                <a
+                  className="text-sm text-neutral-300 hover:text-teal-accent"
+                  href="https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex-vscode"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  VS Code
+                </a>
+              </div>
+            </div>
             <div className="border-t border-[#1A1F2E] pt-4 flex gap-4">
               <Link
                 className="flex-1 text-center bg-transparent hover:text-[#14B8A6] text-white border border-[#1A1F2E] py-2.5 rounded font-medium text-sm transition-colors duration-200"
@@ -502,10 +565,10 @@ export function PublicHeader() {
               </Link>
               <Link
                 className="flex-1 text-center bg-[#14B8A6] text-white hover:bg-[#0D9488] active:bg-[#0A7F6F] py-2.5 rounded font-bold text-sm transition-all duration-200"
-                href="/register"
+                href="/#waitlist"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Start Free
+                Join Waitlist
               </Link>
             </div>
           </div>
