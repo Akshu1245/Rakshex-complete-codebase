@@ -1,9 +1,12 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { nanoid } from "nanoid";
+import crypto from "crypto";
+import Razorpay from "razorpay";
 import { router, protectedProcedure, publicProcedure } from "../_core/trpc";
 import * as db from "../db";
 import { logger } from "../_core/logger";
+import { ENV } from "../_core/env";
 import {
   createSubscription,
   cancelSubscription,
@@ -271,4 +274,116 @@ export const paymentsRouter = router({
       utilization,
     };
   }),
+
+  // One-time payment: create a Razorpay order
+  createOrder: protectedProcedure
+    .input(
+      z.object({
+        amount: z.number().min(100, "Minimum amount is 100 paise (₹1)"),
+        currency: z.string().default("INR"),
+        receipt: z.string().optional(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      if (!ENV.razorpayKeyId || !ENV.razorpayKeySecret) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Razorpay payment integration not configured on server",
+        });
+      }
+
+      const razorpay = new Razorpay({
+        key_id: ENV.razorpayKeyId,
+        key_secret: ENV.razorpayKeySecret,
+      });
+
+      try {
+        const order = await razorpay.orders.create({
+          amount: input.amount,
+          currency: input.currency,
+          receipt: input.receipt || `receipt_${Date.now()}_${ctx.user.id}`,
+        });
+
+        logger.info(
+          { order_id: order.id, amount: input.amount, user: ctx.user.id },
+          "[Razorpay] Order created via tRPC",
+        );
+
+        return {
+          order_id: order.id,
+          amount: order.amount,
+          currency: order.currency,
+        };
+      } catch (error: any) {
+        logger.error({ err: error }, "[Razorpay] Order creation failed via tRPC");
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error.message || "Failed to create Razorpay order",
+        });
+      }
+    }),
+
+  // One-time payment: verify payment signature
+  verifyPayment: protectedProcedure
+    .input(
+      z.object({
+        razorpay_payment_id: z.string(),
+        razorpay_order_id: z.string(),
+        razorpay_signature: z.string(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      if (!ENV.razorpayKeySecret) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Razorpay payment integration not configured on server",
+        });
+      }
+
+      const body = input.razorpay_order_id + "|" + input.razorpay_payment_id;
+      const expectedSignature = crypto
+        .createHmac("sha256", ENV.razorpayKeySecret)
+        .update(body)
+        .digest("hex");
+
+      if (expectedSignature !== input.razorpay_signature) {
+        logger.warn(
+          { order_id: input.razorpay_order_id },
+          "[Razorpay] Signature mismatch via tRPC",
+        );
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Payment verification failed (signature mismatch)",
+        });
+      }
+
+      logger.info(
+        { order_id: input.razorpay_order_id, payment_id: input.razorpay_payment_id },
+        "[Razorpay] Payment verified via tRPC",
+      );
+
+      // Fetch payment details and save to DB
+      try {
+        const razorpay = new Razorpay({
+          key_id: ENV.razorpayKeyId,
+          key_secret: ENV.razorpayKeySecret,
+        });
+        const paymentDetails = await razorpay.payments.fetch(input.razorpay_payment_id);
+
+        await db.createPayment({
+          id: nanoid(),
+          userId: ctx.user.id,
+          razorpayPaymentId: input.razorpay_payment_id,
+          razorpayOrderId: input.razorpay_order_id,
+          amount: Number(paymentDetails.amount),
+          currency: paymentDetails.currency,
+          status: "captured",
+          description: paymentDetails.description || "Razorpay Standard Web Checkout",
+        });
+      } catch (dbErr: any) {
+        logger.error({ err: dbErr }, "[Razorpay] Failed to save payment record");
+      }
+
+      return { success: true };
+    }),
 });

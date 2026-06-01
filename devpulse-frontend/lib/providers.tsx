@@ -17,7 +17,7 @@ function getBaseUrl() {
  * Read the CSRF token from the cookie set by the backend on login/signup.
  * The cookie name is "csrf-token" and the header name is "x-csrf-token".
  */
-function getCsrfTokenFromCookie(): string | undefined {
+export function getCsrfTokenFromCookie(): string | undefined {
   if (typeof document === "undefined") return undefined;
   const match = document.cookie.split("; ").find((row) => row.startsWith("csrf-token="));
   return match?.split("=")[1];

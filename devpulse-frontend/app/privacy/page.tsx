@@ -1,59 +1,102 @@
+export const metadata = {
+  title: "Privacy Policy — RaksHex",
+  description: "How RaksHex collects, uses, and protects your data.",
+  alternates: { canonical: "/privacy" },
+};
+
 export default function PrivacyPolicy() {
   return (
-    <main style={{ maxWidth: "800px", margin: "0 auto", padding: "80px 24px", color: "#e2e8f0" }}>
-      <h1 style={{ fontSize: "36px", fontWeight: "700", marginBottom: "8px", color: "#ffffff" }}>
-        Privacy Policy
-      </h1>
-      <p style={{ color: "#94a3b8", marginBottom: "40px" }}>Last updated: June 2026</p>
+    <main className="min-h-screen bg-[#0A0E1A] text-gray-300">
+      <div className="max-w-3xl mx-auto px-6 py-20">
+        <h1 className="text-4xl font-bold text-white mb-2">Privacy Policy</h1>
+        <p className="text-gray-500 mb-12">Last updated: June 2026</p>
 
-      <h2 style={{ fontSize: "20px", fontWeight: "600", color: "#d4a853", marginTop: "32px" }}>
-        1. Who We Are
-      </h2>
-      <p>
-        RaksHex is an AI Runtime Governance platform built by Rashi Technologies, Bengaluru, India.
-        Contact: akshay@rakshex.in
-      </p>
+        <section className="mb-10">
+          <h2 className="text-xl font-semibold text-[#14B8A6] mb-3">1. Who We Are</h2>
+          <p className="leading-relaxed">
+            RaksHex is an AI Runtime Governance platform built by{" "}
+            <strong className="text-white">Rashi Technologies</strong>, Bengaluru, India. Contact:{" "}
+            <a href="mailto:akshay@rakshex.in" className="text-[#14B8A6] hover:underline">
+              akshay@rakshex.in
+            </a>
+          </p>
+        </section>
 
-      <h2 style={{ fontSize: "20px", fontWeight: "600", color: "#d4a853", marginTop: "32px" }}>
-        2. What We Collect
-      </h2>
-      <p>
-        We collect your email address when you join our waitlist or request early access. We do not
-        sell your data to third parties.
-      </p>
+        <section className="mb-10">
+          <h2 className="text-xl font-semibold text-[#14B8A6] mb-3">2. What We Collect</h2>
+          <ul className="list-disc list-inside space-y-2 leading-relaxed">
+            <li>
+              <strong className="text-white">Account data:</strong> Email, name, and password
+              (hashed) when you sign up.
+            </li>
+            <li>
+              <strong className="text-white">Usage data:</strong> API scans, collections imported,
+              and feature usage for billing and product improvement.
+            </li>
+            <li>
+              <strong className="text-white">Payment data:</strong> Handled entirely by Razorpay. We
+              do not store card numbers.
+            </li>
+          </ul>
+          <p className="mt-3 leading-relaxed">
+            We <strong className="text-white">never</strong> sell your data to third parties.
+          </p>
+        </section>
 
-      <h2 style={{ fontSize: "20px", fontWeight: "600", color: "#d4a853", marginTop: "32px" }}>
-        3. How We Use It
-      </h2>
-      <p>
-        Your email is used only to send product updates, early access invitations, and security
-        notifications related to RaksHex.
-      </p>
+        <section className="mb-10">
+          <h2 className="text-xl font-semibold text-[#14B8A6] mb-3">3. How We Use Your Data</h2>
+          <ul className="list-disc list-inside space-y-2 leading-relaxed">
+            <li>Provide and maintain the RaksHex service</li>
+            <li>Send security alerts and product updates</li>
+            <li>Process payments and manage subscriptions</li>
+            <li>Improve our scanning engines and detection accuracy</li>
+          </ul>
+        </section>
 
-      <h2 style={{ fontSize: "20px", fontWeight: "600", color: "#d4a853", marginTop: "32px" }}>
-        4. Cookies
-      </h2>
-      <p>
-        We use strictly necessary first-party cookies for session management only. No tracking or
-        advertising cookies are used.
-      </p>
+        <section className="mb-10">
+          <h2 className="text-xl font-semibold text-[#14B8A6] mb-3">4. Cookies & Tracking</h2>
+          <p className="leading-relaxed">
+            We use strictly necessary first-party cookies for authentication and session management.
+            No third-party advertising or tracking cookies are used.
+          </p>
+        </section>
 
-      <h2 style={{ fontSize: "20px", fontWeight: "600", color: "#d4a853", marginTop: "32px" }}>
-        5. Your Rights
-      </h2>
-      <p>
-        You may request deletion of your data at any time by emailing akshay@rakshex.in. We will
-        respond within 7 business days.
-      </p>
+        <section className="mb-10">
+          <h2 className="text-xl font-semibold text-[#14B8A6] mb-3">
+            5. Data Retention & Deletion
+          </h2>
+          <p className="leading-relaxed">
+            You may request full deletion of your account and data at any time by emailing{" "}
+            <a href="mailto:akshay@rakshex.in" className="text-[#14B8A6] hover:underline">
+              akshay@rakshex.in
+            </a>
+            . We will process deletion requests within{" "}
+            <strong className="text-white">7 business days</strong>.
+          </p>
+        </section>
 
-      <h2 style={{ fontSize: "20px", fontWeight: "600", color: "#d4a853", marginTop: "32px" }}>
-        6. Contact
-      </h2>
-      <p>
-        Rashi Technologies, Bengaluru, Karnataka, India
-        <br />
-        Email: akshay@rakshex.in
-      </p>
+        <section className="mb-10">
+          <h2 className="text-xl font-semibold text-[#14B8A6] mb-3">6. Security</h2>
+          <p className="leading-relaxed">
+            All data is encrypted in transit (TLS 1.3) and at rest. We follow OWASP guidelines and
+            conduct regular security audits.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-xl font-semibold text-[#14B8A6] mb-3">7. Contact</h2>
+          <p className="leading-relaxed">
+            Rashi Technologies
+            <br />
+            Bengaluru, Karnataka, India
+            <br />
+            Email:{" "}
+            <a href="mailto:akshay@rakshex.in" className="text-[#14B8A6] hover:underline">
+              akshay@rakshex.in
+            </a>
+          </p>
+        </section>
+      </div>
     </main>
   );
 }

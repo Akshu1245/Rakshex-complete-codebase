@@ -10,6 +10,7 @@ import { TRPCProvider } from "@/lib/providers";
 import AppShell from "@/components/AppShell";
 import { ToastProvider } from "@/components/Toast";
 import { TrialBanner } from "@/app/components/TrialBanner";
+import { CrispChat } from "@/components/CrispChat";
 
 // Inter kept for fallback but primary fonts loaded via CSS
 const inter = Inter({ subsets: ["latin"] });
@@ -116,6 +117,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <ErrorBoundary>
                 <OfflineBanner />
                 <AppShell>{children}</AppShell>
+                <CrispChat />
               </ErrorBoundary>
               <CookieConsent />
             </ToastProvider>
