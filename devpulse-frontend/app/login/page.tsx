@@ -2,7 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { trpc } from "@/lib/trpc";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { GoogleOAuthButton } from "@/components/GoogleOAuthButton";
 import { PasswordField } from "@/components/PasswordField";
 
@@ -19,6 +19,9 @@ export default function LoginPage() {
   const [twoFACode, setTwoFACode] = useState("");
   const [twoFAError, setTwoFAError] = useState("");
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect") || "/dashboard";
+  const safeRedirect = redirect.startsWith("/") ? redirect : "/dashboard";
 
   const { data: providers } = trpc.authProviders.list.useQuery();
   const googleEnabled = providers?.google ?? false;
@@ -29,7 +32,7 @@ export default function LoginPage() {
         setRequires2FA(true);
         setTwoFAUserId(String(data.userId || ""));
       } else {
-        router.push("/dashboard");
+        router.push(safeRedirect);
       }
     },
     onError: (err: { message: string }) => {
@@ -39,7 +42,7 @@ export default function LoginPage() {
 
   const verify2FA = trpc.auth.verify2FALogin.useMutation({
     onSuccess: () => {
-      router.push("/dashboard");
+      router.push(safeRedirect);
     },
     onError: (err: { message: string }) => {
       setTwoFAError(err.message || "Invalid verification code");
