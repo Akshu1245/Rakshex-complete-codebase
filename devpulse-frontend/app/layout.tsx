@@ -109,7 +109,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="twitter:image" content="https://rakshex.in/og-image.png" />
         <meta name="twitter:image:alt" content="RaksHex — AI Runtime Governance Platform" />
       </head>
-      <body className={inter.className} style={{ backgroundColor: "#0a0a0a" }}>
+      <body className={inter.className}>
         <TRPCProvider>
           <AuthProvider>
             <TrialBanner />

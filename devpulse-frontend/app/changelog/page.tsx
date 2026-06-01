@@ -86,7 +86,7 @@ export default function ChangelogPage() {
           {ENTRIES.map((entry) => (
             <div key={entry.version} className="relative pl-8">
               {/* Bullet node on timeline */}
-              <div className="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 border-teal-accent bg-[#0F0F0F] shadow-sm" />
+              <div className="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 border-teal-accent bg-transparent shadow-sm" />
 
               <div className="flex flex-wrap items-baseline gap-3 mb-4">
                 <span className="text-2xl font-bold text-white font-mono">{entry.version}</span>
@@ -112,7 +112,7 @@ export default function ChangelogPage() {
         </div>
 
         {/* Coming soon section */}
-        <div className="mt-16 p-8 bg-[#141414] border border-neutral-850 rounded-2xl">
+        <div className="mt-16 p-8 bg-transparent border border-neutral-850 rounded-2xl">
           <h3 className="text-lg font-bold text-white mb-4">Under Development</h3>
           <ul className="text-neutral-400 text-sm space-y-3">
             <li className="flex items-center gap-2">

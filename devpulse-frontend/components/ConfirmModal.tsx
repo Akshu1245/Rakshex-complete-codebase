@@ -44,7 +44,7 @@ export function ConfirmModal({
       if (e.key !== "Tab" || !modalRef.current) return;
 
       const focusable = modalRef.current.querySelectorAll<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
       );
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
@@ -61,7 +61,7 @@ export function ConfirmModal({
         }
       }
     },
-    [onCancel]
+    [onCancel],
   );
 
   useEffect(() => {
@@ -98,12 +98,9 @@ export function ConfirmModal({
         aria-modal="true"
         aria-labelledby="confirm-modal-title"
         aria-describedby="confirm-modal-desc"
-        className="bg-gray-800 rounded-lg max-w-md w-full p-6 border border-gray-700 shadow-2xl"
+        className="bg-black/50 rounded-lg max-w-md w-full p-6 border border-gray-700 shadow-2xl"
       >
-        <h3
-          id="confirm-modal-title"
-          className="text-xl font-bold text-white mb-4"
-        >
+        <h3 id="confirm-modal-title" className="text-xl font-bold text-white mb-4">
           {title}
         </h3>
         <p id="confirm-modal-desc" className="text-sm text-gray-400 mb-6">

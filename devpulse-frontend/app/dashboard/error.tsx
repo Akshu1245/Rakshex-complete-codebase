@@ -8,7 +8,7 @@ export default function DashboardError({
   reset: () => void;
 }) {
   return (
-    <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-8">
+    <div className="min-h-screen bg-transparent flex flex-col items-center justify-center p-8">
       <div className="max-w-md w-full text-center">
         <div className="w-16 h-16 bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
           <svg
@@ -25,12 +25,8 @@ export default function DashboardError({
             />
           </svg>
         </div>
-        <h2 className="text-xl font-bold text-white mb-2">
-          Dashboard Error
-        </h2>
-        <p className="text-gray-400 mb-4">
-          Failed to load the dashboard. Please try again.
-        </p>
+        <h2 className="text-xl font-bold text-white mb-2">Dashboard Error</h2>
+        <p className="text-gray-400 mb-4">Failed to load the dashboard. Please try again.</p>
         {error?.message && (
           <p className="text-red-400 text-sm bg-red-900/20 border border-red-500/30 rounded-lg p-3 mb-6 font-mono">
             {error.message}

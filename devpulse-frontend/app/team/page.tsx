@@ -72,7 +72,7 @@ export default function TeamPage() {
           </Link>
         </div>
 
-        <div className="mb-8 bg-gray-800 p-6 rounded-lg border border-gray-700">
+        <div className="mb-8 bg-black/50 p-6 rounded-lg border border-gray-700">
           <h2 className="text-xl font-semibold mb-4">Invite Team Member</h2>
           <div className="space-y-4">
             <div>
@@ -134,7 +134,7 @@ export default function TeamPage() {
               {members.map((member) => (
                 <div
                   key={member.id}
-                  className="bg-gray-800 p-4 rounded-lg border border-gray-700 flex justify-between items-center"
+                  className="bg-black/50 p-4 rounded-lg border border-gray-700 flex justify-between items-center"
                 >
                   <div>
                     <p className="font-semibold">{member.email}</p>

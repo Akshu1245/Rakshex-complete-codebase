@@ -79,7 +79,7 @@ export function InstallSection() {
               className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
                 activeTab === tab.id
                   ? "bg-[#14B8A6] text-black"
-                  : "bg-[#1A1F2E] text-[#9CA3AF] hover:text-white border border-white/10"
+                  : "bg-transparent text-[#9CA3AF] hover:text-white border border-white/10"
               }`}
             >
               <Icon className="w-4 h-4" />
@@ -90,8 +90,8 @@ export function InstallSection() {
       </div>
 
       {/* Code Block */}
-      <div className="max-w-2xl mx-auto bg-[#0a0a0a] border border-white/10 rounded-xl overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-2 bg-[#1A1F2E] border-b border-white/10">
+      <div className="max-w-2xl mx-auto bg-black/40 border border-white/10 rounded-xl overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-2 bg-transparent border-b border-white/10">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-red-500/80" />
             <div className="w-3 h-3 rounded-full bg-yellow-500/80" />

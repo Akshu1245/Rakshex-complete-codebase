@@ -315,12 +315,12 @@ export default function CollectionsPage() {
 
         {/* Import progress bar */}
         {importStage !== "idle" && (
-          <div className="bg-[#1E293B] p-4 rounded-lg border border-[#2D3E50] mb-6">
+          <div className="bg-black/50 p-4 rounded-lg border border-[#2D3E50] mb-6">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-gray-300">{stageLabels[importStage]}</span>
               <span className="text-sm text-gray-500">{stageProgress[importStage]}%</span>
             </div>
-            <div className="w-full bg-[#0A0E1A] rounded-full h-2">
+            <div className="w-full bg-transparent rounded-full h-2">
               <div
                 className="bg-[#06D6A0] h-2 rounded-full transition-all duration-500"
                 style={{ width: `${stageProgress[importStage]}%` }}
@@ -413,7 +413,7 @@ export default function CollectionsPage() {
                     >
                       <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-mono text-xs uppercase bg-gray-800 px-1.5 py-0.5 rounded">
+                          <span className="font-mono text-xs uppercase bg-black/50 px-1.5 py-0.5 rounded">
                             {f.method}
                           </span>
                           <span className="font-mono text-xs truncate max-w-xs">{f.endpoint}</span>
@@ -478,7 +478,7 @@ export default function CollectionsPage() {
         </div>
 
         {showUpload && importStage === "idle" && (
-          <div className="bg-[#1E293B] p-6 rounded-lg border border-[#2D3E50] mb-8">
+          <div className="bg-black/50 p-6 rounded-lg border border-[#2D3E50] mb-8">
             <h2 className="text-xl font-semibold mb-4">Import Collection</h2>
 
             {/* Drag-and-drop zone */}
@@ -608,7 +608,7 @@ export default function CollectionsPage() {
                   value={uploadName}
                   onChange={(e) => setUploadName(e.target.value)}
                   placeholder="My API Collection"
-                  className="w-full px-4 py-2 rounded-lg bg-[#0A0E1A] border border-[#2D3E50] focus:ring-2 focus:ring-[#06D6A0] focus:border-[#06D6A0] outline-none"
+                  className="w-full px-4 py-2 rounded-lg bg-transparent border border-[#2D3E50] focus:ring-2 focus:ring-[#06D6A0] focus:border-[#06D6A0] outline-none"
                 />
               </div>
               <div>
@@ -619,7 +619,7 @@ export default function CollectionsPage() {
                   id="collection-format"
                   value={uploadFormat}
                   onChange={(e) => setUploadFormat(e.target.value as CollectionFormat)}
-                  className="w-full px-4 py-2 rounded-lg bg-[#0A0E1A] border border-[#2D3E50] focus:ring-2 focus:ring-[#06D6A0] focus:border-[#06D6A0] outline-none"
+                  className="w-full px-4 py-2 rounded-lg bg-transparent border border-[#2D3E50] focus:ring-2 focus:ring-[#06D6A0] focus:border-[#06D6A0] outline-none"
                 >
                   <option value="postman">Postman (auto-detect)</option>
                   <option value="openapi">OpenAPI</option>
@@ -631,7 +631,7 @@ export default function CollectionsPage() {
                   value={uploadData}
                   onChange={(e) => setUploadData(e.target.value)}
                   placeholder='{"info": {"name": "My API", "_postman_id": "..."}}'
-                  className="w-full h-40 px-4 py-2 rounded-lg bg-[#0A0E1A] border border-[#2D3E50] focus:ring-2 focus:ring-[#06D6A0] focus:border-[#06D6A0] outline-none font-mono text-sm"
+                  className="w-full h-40 px-4 py-2 rounded-lg bg-transparent border border-[#2D3E50] focus:ring-2 focus:ring-[#06D6A0] focus:border-[#06D6A0] outline-none font-mono text-sm"
                 />
               </div>
               <div className="flex gap-4">
@@ -647,7 +647,7 @@ export default function CollectionsPage() {
                     setShowUpload(false);
                     resetImport();
                   }}
-                  className="px-4 py-2 bg-[#0A0E1A] border border-[#2D3E50] hover:bg-gray-800 rounded-lg font-semibold transition-colors"
+                  className="px-4 py-2 bg-transparent border border-[#2D3E50] hover:bg-black/50 rounded-lg font-semibold transition-colors"
                 >
                   Cancel
                 </button>
@@ -692,7 +692,7 @@ export default function CollectionsPage() {
             collections.map((col) => (
               <div
                 key={col.id}
-                className="bg-[#1E293B] p-6 rounded-lg border border-[#2D3E50] flex justify-between items-center"
+                className="bg-black/50 p-6 rounded-lg border border-[#2D3E50] flex justify-between items-center"
               >
                 <div>
                   <h3 className="text-lg font-semibold">{col.name}</h3>

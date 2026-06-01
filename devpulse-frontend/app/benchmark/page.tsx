@@ -123,7 +123,7 @@ export default function BenchmarkPage() {
       </div>
 
       {/* Config panel */}
-      <div className="bg-[#1E293B] rounded-xl border border-[#2D3E50] p-6 mb-8">
+      <div className="bg-black/50 rounded-xl border border-[#2D3E50] p-6 mb-8">
         <h3 className="font-semibold text-white mb-4">Configure Benchmark</h3>
         <div className="grid md:grid-cols-2 gap-6">
           <div>
@@ -139,7 +139,7 @@ export default function BenchmarkPage() {
                       <button
                         key={model}
                         onClick={() => toggleModel(model)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${selectedModels.includes(model) ? "text-white border-transparent" : "text-gray-400 border-[#2D3E50] hover:border-gray-500 bg-[#0A0E1A]/40"}`}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${selectedModels.includes(model) ? "text-white border-transparent" : "text-gray-400 border-[#2D3E50] hover:border-gray-500 bg-transparent/40"}`}
                         style={
                           selectedModels.includes(model)
                             ? {
@@ -168,7 +168,7 @@ export default function BenchmarkPage() {
               ].map((s) => (
                 <div key={s.label} className="flex items-center justify-between">
                   <span className="text-sm text-gray-400">{s.label}</span>
-                  <span className="text-sm text-white bg-[#0A0E1A] border border-[#2D3E50] px-3 py-1 rounded">
+                  <span className="text-sm text-white bg-transparent border border-[#2D3E50] px-3 py-1 rounded">
                     {s.value}
                   </span>
                 </div>
@@ -199,7 +199,7 @@ export default function BenchmarkPage() {
 
       {/* Results */}
       <div className="grid lg:grid-cols-3 gap-6 mb-6">
-        <div className="lg:col-span-2 bg-[#1E293B] rounded-xl border border-[#2D3E50] p-5">
+        <div className="lg:col-span-2 bg-black/50 rounded-xl border border-[#2D3E50] p-5">
           <h3 className="font-semibold text-white mb-4">Latency Comparison (ms)</h3>
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={filteredResults}>
@@ -224,7 +224,7 @@ export default function BenchmarkPage() {
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-[#1E293B] rounded-xl border border-[#2D3E50] p-5">
+        <div className="bg-black/50 rounded-xl border border-[#2D3E50] p-5">
           <h3 className="font-semibold text-white mb-4">Performance Radar</h3>
           <ResponsiveContainer width="100%" height={240}>
             <RadarChart data={RADAR_DATA}>
@@ -257,7 +257,7 @@ export default function BenchmarkPage() {
       </div>
 
       {/* Leaderboard table */}
-      <div className="bg-[#1E293B] rounded-xl border border-[#2D3E50] overflow-hidden">
+      <div className="bg-black/50 rounded-xl border border-[#2D3E50] overflow-hidden">
         <div className="p-4 border-b border-[#2D3E50]">
           <h3 className="font-semibold text-white">Full Results</h3>
         </div>

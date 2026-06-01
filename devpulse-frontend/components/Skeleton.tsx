@@ -1,14 +1,10 @@
 export function Skeleton({ className = "" }: { className?: string }) {
-  return (
-    <div
-      className={`animate-pulse bg-gray-700 rounded-md ${className}`}
-    />
-  );
+  return <div className={`animate-pulse bg-gray-700 rounded-md ${className}`} />;
 }
 
 export function CardSkeleton() {
   return (
-    <div className="bg-gray-800 rounded-lg border border-gray-700 p-6">
+    <div className="bg-black/50 rounded-lg border border-gray-700 p-6">
       <Skeleton className="h-4 w-24 mb-3" />
       <Skeleton className="h-8 w-16 mb-2" />
       <Skeleton className="h-3 w-32" />
@@ -45,7 +41,7 @@ export function ListSkeleton({ rows = 5 }: { rows?: number }) {
 
 export function SkeletonCard() {
   return (
-    <div className="bg-gray-800 rounded-lg border border-gray-700 p-6">
+    <div className="bg-black/50 rounded-lg border border-gray-700 p-6">
       <Skeleton className="h-4 w-24 mb-3" />
       <Skeleton className="h-8 w-16 mb-2" />
       <Skeleton className="h-3 w-32" />

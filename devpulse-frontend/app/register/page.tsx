@@ -42,7 +42,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-transparent text-white flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="text-3xl font-bold text-blue-500">
@@ -51,7 +51,7 @@ export default function RegisterPage() {
           <h2 className="text-gray-400 mt-2">Create your account</h2>
         </div>
 
-        <div className="bg-gray-800 p-8 rounded-xl border border-gray-700 space-y-6">
+        <div className="bg-black/50 p-8 rounded-xl border border-gray-700 space-y-6">
           {/* Google OAuth — only show if configured */}
           {googleEnabled && (
             <>
@@ -62,7 +62,7 @@ export default function RegisterPage() {
                   <div className="w-full border-t border-gray-600"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-gray-800 text-gray-400">Or sign up with email</span>
+                  <span className="px-2 bg-black/50 text-gray-400">Or sign up with email</span>
                 </div>
               </div>
             </>

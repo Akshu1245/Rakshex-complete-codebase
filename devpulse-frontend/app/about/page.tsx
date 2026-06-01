@@ -23,13 +23,13 @@ export default function AboutPage() {
       </div>
 
       {/* Mission */}
-      <div className="bg-[#141414]/50 border-y border-neutral-900 py-16 my-8">
+      <div className="bg-transparent/50 border-y border-neutral-900 py-16 my-8">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-2xl font-bold mb-6 text-center font-manrope">Our Mission</h2>
           <p className="text-neutral-300 text-lg leading-relaxed text-center">
             Make AI governance accessible to every developer, not just Fortune 500 security teams.
             We believe securing AI agents should be as easy as running{" "}
-            <code className="bg-[#141414] border border-neutral-800 px-2 py-1 rounded text-sm text-teal-accent">
+            <code className="bg-transparent border border-neutral-800 px-2 py-1 rounded text-sm text-teal-accent">
               npm install
             </code>
             .
@@ -57,7 +57,7 @@ export default function AboutPage() {
       <div className="max-w-4xl mx-auto py-16">
         <h2 className="text-2xl font-bold mb-10 text-center font-manrope">Team</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          <div className="bg-[#141414] rounded-xl p-8 border border-neutral-850 hover:border-neutral-800 transition-all">
+          <div className="bg-transparent rounded-xl p-8 border border-neutral-850 hover:border-neutral-800 transition-all">
             <div className="flex items-start gap-6">
               <div className="w-20 h-20 bg-gradient-to-br from-teal-accent to-teal-accent/80 rounded-full flex items-center justify-center text-2xl font-bold shrink-0 text-white font-mono">
                 AK
@@ -74,7 +74,7 @@ export default function AboutPage() {
             </div>
           </div>
 
-          <div className="bg-[#141414] rounded-xl p-8 border border-neutral-850 hover:border-neutral-800 transition-all">
+          <div className="bg-transparent rounded-xl p-8 border border-neutral-850 hover:border-neutral-800 transition-all">
             <div className="flex items-start gap-6">
               <div className="w-20 h-20 bg-gradient-to-br from-teal-accent to-teal-accent/80 rounded-full flex items-center justify-center text-2xl font-bold shrink-0 text-white font-mono">
                 AN
@@ -102,7 +102,7 @@ export default function AboutPage() {
       </div>
 
       {/* Investors / Backing */}
-      <div className="bg-[#141414]/50 border-t border-neutral-900 py-16">
+      <div className="bg-transparent/50 border-t border-neutral-900 py-16">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-2xl font-bold mb-4 font-manrope">Investor Relations</h2>
           <p className="text-neutral-400 mb-6 max-w-2xl mx-auto leading-relaxed">

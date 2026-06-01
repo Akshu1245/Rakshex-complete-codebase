@@ -10,28 +10,28 @@ export function TerminalDemo() {
 
   useEffect(() => {
     const steps = [
-      { text: "> rakshex scan ./collection.json", delay: 1200 },
+      { text: "> rakshex scan ./api.json", delay: 1200 },
       { text: "✓ 23 endpoints scanned", delay: 800 },
       {
-        text: "🟠 [High] Stripe Test Secret Key — /item/2/request/header",
+        text: "⚠ 2 credentials detected",
         delay: 800,
-        finding: "[High] Stripe Test Secret Key — /item/2/request/header",
-        score: 75,
+        finding: "⚠ 2 credentials detected",
+        score: 98,
         issues: 2,
       },
       {
-        text: "🟠 [High] Truncated JWT Token — /item/2/request/header",
+        text: "🔒 1 prompt injection blocked",
         delay: 800,
-        finding: "[High] Truncated JWT Token — /item/2/request/header",
-        score: 50,
-        issues: 5,
+        finding: "🔒 1 prompt injection blocked",
+        score: 96,
+        issues: 3,
       },
       {
-        text: "🟠 [High] Weak Password — /item/8/request/body",
+        text: "💰 $47.3 cost anomaly flagged",
         delay: 800,
-        finding: "[High] Weak Password — /item/8/request/body",
-        score: 30,
-        issues: 7,
+        finding: "💰 $47.3 cost anomaly flagged",
+        score: 94,
+        issues: 4,
       },
     ];
 
@@ -70,18 +70,18 @@ export function TerminalDemo() {
   }, []);
 
   const terminalLines = [
-    "> rakshex scan ./collection.json",
+    "> rakshex scan ./api.json",
     "✓ 23 endpoints scanned",
-    "🟠 [High] Stripe Test Secret Key — /item/2/request/header",
-    "🟠 [High] Truncated JWT Token — /item/2/request/header",
-    "🟠 [High] Weak Password — /item/8/request/body",
+    "⚠ 2 credentials detected",
+    "🔒 1 prompt injection blocked",
+    "💰 $47.3 cost anomaly flagged",
   ];
 
   return (
-    <div className="w-full max-w-[580px] rounded-lg border border-[#14B8A6] bg-[#1A1F2E] flex flex-col md:flex-row p-5 gap-5 items-stretch shadow-md relative">
+    <div className="w-full max-w-[580px] rounded-lg border border-[#14B8A6] bg-transparent flex flex-col md:flex-row p-5 gap-5 items-stretch shadow-md relative">
       {/* Left panel: VS Code terminal */}
-      <div className="flex-1 bg-[#0F1419] rounded border border-[#14B8A6]/20 p-4 font-mono text-xs text-left h-52 flex flex-col justify-between">
-        <div className="flex items-center gap-1.5 mb-3 border-b border-[#1A1F2E] pb-2">
+      <div className="flex-1 bg-black/40 rounded border border-[#14B8A6]/20 p-4 font-mono text-xs text-left h-52 flex flex-col justify-between">
+        <div className="flex items-center gap-1.5 mb-3 border-b border-white/5 pb-2">
           <div className="w-2.5 h-2.5 rounded-full bg-[#14B8A6]/40" />
           <div className="w-2.5 h-2.5 rounded-full bg-[#14B8A6]/60" />
           <div className="w-2.5 h-2.5 rounded-full bg-[#14B8A6]" />
@@ -93,7 +93,9 @@ export function TerminalDemo() {
           {terminalLines.slice(0, scanStep).map((line, idx) => {
             let color = "text-[#FFFFFF]";
             if (line.startsWith("✓")) color = "text-[#14B8A6]";
-            else if (line.startsWith("🟠")) color = "text-orange-400";
+            else if (line.startsWith("⚠")) color = "text-orange-400";
+            else if (line.startsWith("🔒")) color = "text-red-400";
+            else if (line.startsWith("💰")) color = "text-amber-400";
             return (
               <p key={idx} className={`${color} font-mono leading-relaxed`}>
                 {line}
@@ -107,14 +109,21 @@ export function TerminalDemo() {
       </div>
 
       {/* Right panel: findings dashboard */}
-      <div className="w-full md:w-52 bg-[#0F1419] rounded border border-[#14B8A6]/20 p-4 flex flex-col justify-between items-center text-center">
+      <div className="w-full md:w-52 bg-black/40 rounded border border-[#14B8A6]/20 p-4 flex flex-col justify-between items-center text-center">
         <div className="w-full flex flex-col items-center gap-2">
           <span className="text-[9px] text-[#9CA3AF] uppercase tracking-widest font-sans font-semibold">
             Security Score
           </span>
           <div className="relative flex items-center justify-center">
             <svg className="w-20 h-20 transform -rotate-90">
-              <circle cx="40" cy="40" r="32" stroke="#1A1F2E" strokeWidth="4" fill="transparent" />
+              <circle
+                cx="40"
+                cy="40"
+                r="32"
+                stroke="rgba(255,255,255,0.1)"
+                strokeWidth="4"
+                fill="transparent"
+              />
               <circle
                 cx="40"
                 cy="40"
@@ -137,7 +146,7 @@ export function TerminalDemo() {
         </div>
 
         <div className="w-full mt-4 space-y-2 text-left">
-          <div className="flex justify-between items-center border-b border-[#1A1F2E] pb-1.5">
+          <div className="flex justify-between items-center border-b border-white/5 pb-1.5">
             <span className="text-[9px] text-[#9CA3AF] font-sans font-medium">Issues:</span>
             <span className="text-[9px] text-white font-sans font-bold">{issuesCount}</span>
           </div>

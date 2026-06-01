@@ -47,9 +47,9 @@ export function HowItWorks() {
           return (
             <div
               key={step.number}
-              className="relative bg-[#1A1F2E] border border-white/10 rounded-xl p-8 hover:border-[#14B8A6]/30 transition-all group"
+              className="relative bg-transparent border border-white/10 rounded-xl p-8 hover:border-[#14B8A6]/30 transition-all group"
             >
-              <div className="absolute -top-4 left-6 bg-[#0a0a0a] border border-white/10 rounded-lg px-3 py-1">
+              <div className="absolute -top-4 left-6 bg-black/60 border border-white/10 rounded-lg px-3 py-1">
                 <span className="text-[#14B8A6] font-mono text-sm font-bold">{step.number}</span>
               </div>
               <div className="mt-4 mb-6 w-12 h-12 rounded-lg bg-[#14B8A6]/10 flex items-center justify-center group-hover:bg-[#14B8A6]/20 transition-colors">

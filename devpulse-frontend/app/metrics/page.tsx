@@ -62,7 +62,7 @@ export default function MetricsPage() {
             Performance, cost, and reliability across all your agents
           </p>
         </div>
-        <div className="flex gap-1 bg-[#1E293B] rounded-lg p-1 border border-[#2D3E50]">
+        <div className="flex gap-1 bg-black/50 rounded-lg p-1 border border-[#2D3E50]">
           {RANGE_OPTIONS.map((r) => (
             <button
               key={r}
@@ -78,7 +78,7 @@ export default function MetricsPage() {
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {STAT_CARDS.map((s) => (
-          <div key={s.label} className="bg-[#1E293B] rounded-xl p-5 border border-[#2D3E50]">
+          <div key={s.label} className="bg-black/50 rounded-xl p-5 border border-[#2D3E50]">
             <p className="text-gray-400 text-xs uppercase tracking-wider mb-2">{s.label}</p>
             <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
             <p
@@ -93,7 +93,7 @@ export default function MetricsPage() {
       {/* Charts row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* API calls chart */}
-        <div className="lg:col-span-2 bg-[#1E293B] rounded-xl p-5 border border-[#2D3E50]">
+        <div className="lg:col-span-2 bg-black/50 rounded-xl p-5 border border-[#2D3E50]">
           <h3 className="font-semibold text-white mb-4">API Calls & Cost Over Time</h3>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={WEEKLY_DATA}>
@@ -120,7 +120,7 @@ export default function MetricsPage() {
         </div>
 
         {/* Model mix */}
-        <div className="bg-[#1E293B] rounded-xl p-5 border border-[#2D3E50]">
+        <div className="bg-black/50 rounded-xl p-5 border border-[#2D3E50]">
           <h3 className="font-semibold text-white mb-4">Model Mix</h3>
           <ResponsiveContainer width="100%" height={140}>
             <PieChart>
@@ -162,7 +162,7 @@ export default function MetricsPage() {
       {/* Charts row 2 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Latency trend */}
-        <div className="bg-[#1E293B] rounded-xl p-5 border border-[#2D3E50]">
+        <div className="bg-black/50 rounded-xl p-5 border border-[#2D3E50]">
           <h3 className="font-semibold text-white mb-4">P95 Latency (ms)</h3>
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={WEEKLY_DATA}>
@@ -189,7 +189,7 @@ export default function MetricsPage() {
         </div>
 
         {/* Error rate */}
-        <div className="bg-[#1E293B] rounded-xl p-5 border border-[#2D3E50]">
+        <div className="bg-black/50 rounded-xl p-5 border border-[#2D3E50]">
           <h3 className="font-semibold text-white mb-4">Error Count by Day</h3>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={WEEKLY_DATA}>

@@ -115,7 +115,7 @@ export default function ImportPage() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
+        <div className="bg-black/50/50 border border-gray-700 rounded-lg p-6">
           <h2 className="text-lg font-semibold text-white mb-4">1. Select Source</h2>
           <div className="space-y-2">
             {SOURCES.map((s) => (
@@ -139,13 +139,13 @@ export default function ImportPage() {
           </div>
         </div>
 
-        <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
+        <div className="bg-black/50/50 border border-gray-700 rounded-lg p-6">
           <h2 className="text-lg font-semibold text-white mb-4">2. Paste Data</h2>
           <textarea
             value={data}
             onChange={(e) => setData(e.target.value)}
             placeholder='{"collections": [...]}'
-            className="w-full h-40 bg-gray-900 border border-gray-700 rounded-lg p-3 text-gray-200 text-sm font-mono resize-none focus:outline-none focus:border-blue-500"
+            className="w-full h-40 bg-transparent border border-gray-700 rounded-lg p-3 text-gray-200 text-sm font-mono resize-none focus:outline-none focus:border-blue-500"
             disabled={!source}
           />
           <div className="flex gap-3 mt-4">
@@ -168,7 +168,7 @@ export default function ImportPage() {
       </div>
 
       {!!preview && (
-        <div className="mt-6 bg-gray-800/50 border border-gray-700 rounded-lg p-6">
+        <div className="mt-6 bg-black/50/50 border border-gray-700 rounded-lg p-6">
           <h2 className="text-lg font-semibold text-white mb-4">Preview</h2>
           <pre className="text-gray-300 text-sm overflow-x-auto">
             {JSON.stringify(preview, null, 2)}

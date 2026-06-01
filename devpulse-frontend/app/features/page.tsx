@@ -159,7 +159,7 @@ export default function FeaturesPage() {
               {section.items.map((item) => (
                 <div
                   key={item.title}
-                  className="bg-gray-800 p-6 rounded-xl border border-gray-700 hover:border-blue-500 transition-colors"
+                  className="bg-black/50 p-6 rounded-xl border border-gray-700 hover:border-blue-500 transition-colors"
                 >
                   <h3 className="font-bold text-lg mb-2">{item.title}</h3>
                   <p className="text-gray-400 text-sm leading-relaxed">{item.desc}</p>

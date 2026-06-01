@@ -24,7 +24,7 @@ function ResetPasswordForm() {
         router.push("/login");
       }, 3000);
     },
-    onError: err => {
+    onError: (err) => {
       setError(err.message);
       setIsSubmitting(false);
     },
@@ -55,8 +55,8 @@ function ResetPasswordForm() {
 
   if (!token) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900 px-4">
-        <div className="max-w-md w-full bg-gray-800 border border-gray-700 rounded-lg shadow-md p-8 text-center">
+      <div className="min-h-screen flex items-center justify-center bg-transparent px-4">
+        <div className="max-w-md w-full bg-black/50 border border-gray-700 rounded-lg shadow-md p-8 text-center">
           <div className="w-16 h-16 bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg
               className="w-8 h-8 text-red-400"
@@ -72,12 +72,9 @@ function ResetPasswordForm() {
               />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-white mb-2">
-            Invalid Reset Link
-          </h2>
+          <h2 className="text-2xl font-bold text-white mb-2">Invalid Reset Link</h2>
           <p className="text-gray-400 mb-6">
-            This password reset link is invalid or has expired. Please request a
-            new one.
+            This password reset link is invalid or has expired. Please request a new one.
           </p>
           <Link
             href="/login"
@@ -92,8 +89,8 @@ function ResetPasswordForm() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900 px-4">
-        <div className="max-w-md w-full bg-gray-800 border border-gray-700 rounded-lg shadow-md p-8 text-center">
+      <div className="min-h-screen flex items-center justify-center bg-transparent px-4">
+        <div className="max-w-md w-full bg-black/50 border border-gray-700 rounded-lg shadow-md p-8 text-center">
           <div className="w-16 h-16 bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg
               className="w-8 h-8 text-green-400"
@@ -109,12 +106,9 @@ function ResetPasswordForm() {
               />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-white mb-2">
-            Password Reset Complete
-          </h2>
+          <h2 className="text-2xl font-bold text-white mb-2">Password Reset Complete</h2>
           <p className="text-gray-400 mb-6">
-            Your password has been successfully reset. Redirecting you to
-            login...
+            Your password has been successfully reset. Redirecting you to login...
           </p>
           <Link
             href="/login"
@@ -128,12 +122,10 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900 px-4">
-      <div className="max-w-md w-full bg-gray-800 border border-gray-700 rounded-lg shadow-md p-8">
+    <div className="min-h-screen flex items-center justify-center bg-transparent px-4">
+      <div className="max-w-md w-full bg-black/50 border border-gray-700 rounded-lg shadow-md p-8">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-white">
-            Reset Your Password
-          </h1>
+          <h1 className="text-2xl font-bold text-white">Reset Your Password</h1>
           <p className="text-gray-400 mt-2">Enter your new password below</p>
         </div>
 
@@ -145,25 +137,20 @@ function ResetPasswordForm() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label
-              htmlFor="newPassword"
-              className="block text-sm font-medium text-gray-300 mb-1"
-            >
+            <label htmlFor="newPassword" className="block text-sm font-medium text-gray-300 mb-1">
               New Password
             </label>
             <PasswordField
               id="newPassword"
               name="newPassword"
               value={newPassword}
-              onChange={e => setNewPassword(e.target.value)}
+              onChange={(e) => setNewPassword(e.target.value)}
               placeholder="Enter new password"
               autoComplete="new-password"
               required
               minLength={8}
             />
-            <p className="text-xs text-gray-500 mt-1">
-              Must be at least 8 characters
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Must be at least 8 characters</p>
           </div>
 
           <div>
@@ -177,7 +164,7 @@ function ResetPasswordForm() {
               id="confirmPassword"
               name="confirmPassword"
               value={confirmPassword}
-              onChange={e => setConfirmPassword(e.target.value)}
+              onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Confirm your password"
               autoComplete="new-password"
               required
@@ -194,10 +181,7 @@ function ResetPasswordForm() {
         </form>
 
         <div className="mt-6 text-center">
-          <Link
-            href="/login"
-            className="text-sm text-blue-400 hover:text-blue-300"
-          >
+          <Link href="/login" className="text-sm text-blue-400 hover:text-blue-300">
             Back to Login
           </Link>
         </div>
@@ -210,7 +194,7 @@ export default function ResetPasswordPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="min-h-screen flex items-center justify-center bg-transparent">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
         </div>
       }

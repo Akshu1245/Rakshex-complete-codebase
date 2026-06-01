@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/Skeleton";
 
 export default function CollectionsLoading() {
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-8">
+    <div className="min-h-screen bg-transparent text-white p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header skeleton */}
         <div className="flex items-center justify-between mb-8">
@@ -14,11 +14,8 @@ export default function CollectionsLoading() {
         </div>
 
         {/* Collection list skeleton */}
-        {[1, 2, 3].map(i => (
-          <div
-            key={i}
-            className="bg-gray-800 p-6 rounded-lg border border-gray-700 mb-4"
-          >
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="bg-black/50 p-6 rounded-lg border border-gray-700 mb-4">
             <div className="flex justify-between items-center">
               <div>
                 <Skeleton className="h-5 w-40 mb-2" />

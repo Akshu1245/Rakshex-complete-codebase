@@ -1,6 +1,15 @@
 "use client";
 
-const COLORS = ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#06b6d4", "#ef4444", "#6366f1"];
+const COLORS = [
+  "#3b82f6",
+  "#8b5cf6",
+  "#ec4899",
+  "#f59e0b",
+  "#10b981",
+  "#06b6d4",
+  "#ef4444",
+  "#6366f1",
+];
 
 interface ModelMixChartProps {
   data: Array<{ provider: string; model: string; totalCost: number }>;
@@ -34,15 +43,29 @@ export default function ModelMixChart({ data }: ModelMixChartProps) {
   }
 
   return (
-    <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
+    <div className="bg-black/50 p-6 rounded-lg border border-gray-700">
       <h3 className="text-lg font-semibold mb-4">Model Mix</h3>
       <div className="flex items-start gap-6">
         <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size} className="shrink-0">
           <circle cx={cx} cy={cy} r={r} fill="none" stroke="#1f2937" strokeWidth={strokeW} />
           {slices.map((s, i) => (
-            <path key={i} d={arcPath(s.start, s.sweep)} fill="none" stroke={s.color} strokeWidth={strokeW} strokeLinecap="butt" />
+            <path
+              key={i}
+              d={arcPath(s.start, s.sweep)}
+              fill="none"
+              stroke={s.color}
+              strokeWidth={strokeW}
+              strokeLinecap="butt"
+            />
           ))}
-          <text x={cx} y={cy - 6} textAnchor="middle" fontSize="14" fontWeight="bold" fill="#f9fafb">
+          <text
+            x={cx}
+            y={cy - 6}
+            textAnchor="middle"
+            fontSize="14"
+            fontWeight="bold"
+            fill="#f9fafb"
+          >
             ${total.toFixed(0)}
           </text>
           <text x={cx} y={cy + 12} textAnchor="middle" fontSize="10" fill="#9CA3AF">
@@ -52,7 +75,10 @@ export default function ModelMixChart({ data }: ModelMixChartProps) {
         <div className="space-y-2 flex-1 min-w-0">
           {slices.map((s, i) => (
             <div key={i} className="flex items-center gap-2 text-sm">
-              <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
+              <div
+                className="w-2.5 h-2.5 rounded-full shrink-0"
+                style={{ backgroundColor: s.color }}
+              />
               <span className="text-gray-300 truncate">{s.model}</span>
               <span className="text-gray-500 ml-auto shrink-0">{(s.pct * 100).toFixed(0)}%</span>
             </div>

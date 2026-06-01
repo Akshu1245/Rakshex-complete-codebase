@@ -85,7 +85,7 @@ export default function RedTeamPage() {
       case "Medium":
         return "text-[#FDB022] bg-[#FDB022]/15 border-[#FDB022]/30";
       default:
-        return "text-[#94A3B8] bg-[#1E293B]/50 border-[#2D3E50]/30";
+        return "text-[#94A3B8] bg-black/50/50 border-[#2D3E50]/30";
     }
   };
 
@@ -107,7 +107,7 @@ export default function RedTeamPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 bg-[#1E293B]/50 rounded-lg p-1 w-fit border border-[#2D3E50]">
+      <div className="flex gap-1 mb-6 bg-black/50/50 rounded-lg p-1 w-fit border border-[#2D3E50]">
         {(["trends", "findings", "schedule"] as const).map((tab) => (
           <button
             key={tab}
@@ -160,10 +160,10 @@ export default function RedTeamPage() {
           </div>
 
           {/* Chart */}
-          <div className="bg-[#1E293B]/50 border border-[#2D3E50] rounded-lg p-6">
+          <div className="bg-black/50/50 border border-[#2D3E50] rounded-lg p-6">
             <h2 className="text-lg font-semibold text-white mb-4">Resilience Trend (30 days)</h2>
             {loading ? (
-              <div className="h-80 bg-[#0A0E1A] rounded-lg animate-pulse border border-[#2D3E50]" />
+              <div className="h-80 bg-transparent rounded-lg animate-pulse border border-[#2D3E50]" />
             ) : trendData.length === 0 ? (
               <div className="h-80 flex items-center justify-center text-gray-400">
                 No trend data available. Run your first red-team test.
@@ -234,7 +234,7 @@ export default function RedTeamPage() {
 
       {/* Findings Tab */}
       {activeTab === "findings" && (
-        <div className="bg-[#1E293B]/50 border border-[#2D3E50] rounded-lg overflow-hidden">
+        <div className="bg-black/50/50 border border-[#2D3E50] rounded-lg overflow-hidden">
           {loading ? (
             <div className="p-6 space-y-4">
               <SkeletonRow />
@@ -247,7 +247,7 @@ export default function RedTeamPage() {
             </div>
           ) : (
             <table className="w-full text-left text-sm">
-              <thead className="bg-[#0A0E1A] text-gray-300">
+              <thead className="bg-transparent text-gray-300">
                 <tr>
                   <th className="px-4 py-3 font-medium">Severity</th>
                   <th className="px-4 py-3 font-medium">Category</th>
@@ -282,7 +282,7 @@ export default function RedTeamPage() {
 
       {/* Schedule Tab */}
       {activeTab === "schedule" && (
-        <div className="bg-[#1E293B]/50 border border-[#2D3E50] rounded-lg p-6">
+        <div className="bg-black/50/50 border border-[#2D3E50] rounded-lg p-6">
           <SchedulePanel />
         </div>
       )}
@@ -296,7 +296,7 @@ function ScoreCard({ label, score, previous }: { label: string; score: number; p
   const deltaIcon = delta >= 0 ? "↑" : "↓";
 
   return (
-    <div className="bg-[#1E293B]/50 border border-[#2D3E50] rounded-lg p-4">
+    <div className="bg-black/50/50 border border-[#2D3E50] rounded-lg p-4">
       <div className="text-gray-400 text-sm">{label}</div>
       <div className="text-2xl font-bold text-white mt-1">{score.toFixed(1)}</div>
       <div className={`text-xs mt-1 ${deltaColor}`}>
@@ -333,7 +333,7 @@ function SchedulePanel() {
           className={`w-12 h-6 rounded-full transition-colors relative flex items-center ${enabled ? "bg-[#06D6A0]" : "bg-gray-600 border border-[#2D3E50]"}`}
         >
           <div
-            className={`w-5 h-5 rounded-full transition-all ${enabled ? "translate-x-[26px] bg-[#0A0E1A]" : "translate-x-0.5 bg-white"}`}
+            className={`w-5 h-5 rounded-full transition-all ${enabled ? "translate-x-[26px] bg-transparent" : "translate-x-0.5 bg-white"}`}
           />
         </button>
       </div>
@@ -343,7 +343,7 @@ function SchedulePanel() {
         <input
           value={cron}
           onChange={(e) => setCron(e.target.value)}
-          className="w-full bg-[#0A0E1A] border border-[#2D3E50] rounded-lg px-3 py-2 text-gray-200 focus:ring-1 focus:ring-[#06D6A0] outline-none font-mono text-sm"
+          className="w-full bg-transparent border border-[#2D3E50] rounded-lg px-3 py-2 text-gray-200 focus:ring-1 focus:ring-[#06D6A0] outline-none font-mono text-sm"
           placeholder="0 2 * * 1"
         />
         <p className="text-gray-500 text-xs mt-1">e.g. 0 2 * * 1 = Every Monday at 2 AM</p>

@@ -259,7 +259,7 @@ export default function BillingPage() {
       case "past_due":
         return "text-[#F59E0B] bg-[#F59E0B]/15 border-[#F59E0B]";
       default:
-        return "text-[#94A3B8] bg-[#1E293B]/30 border-[#2D3E50]";
+        return "text-[#94A3B8] bg-black/50/30 border-[#2D3E50]";
     }
   };
 
@@ -299,7 +299,7 @@ export default function BillingPage() {
 
         {/* Debug Panel */}
         {debugLog.length > 0 && (
-          <div className="p-3 bg-gray-900/80 border border-gray-700 rounded-lg text-xs font-mono">
+          <div className="p-3 bg-transparent/80 border border-gray-700 rounded-lg text-xs font-mono">
             <p className="text-gray-500 mb-1">Debug Log:</p>
             {debugLog.map((line, i) => (
               <p key={i} className="text-gray-400">
@@ -310,7 +310,7 @@ export default function BillingPage() {
         )}
 
         {/* Current Plan Card */}
-        <div className="bg-[#1E293B] border border-[#2D3E50] rounded-lg p-6">
+        <div className="bg-black/50 border border-[#2D3E50] rounded-lg p-6">
           <h2 className="text-lg font-semibold mb-4">Current Plan</h2>
 
           <div className="flex items-center justify-between">
@@ -347,7 +347,7 @@ export default function BillingPage() {
           {plans.map((plan) => (
             <div
               key={plan.id}
-              className={`bg-[#1E293B] border rounded-lg p-6 ${
+              className={`bg-black/50 border rounded-lg p-6 ${
                 subscription?.plan === plan.id
                   ? "border-[#06D6A0] ring-1 ring-[#06D6A0]"
                   : "border-[#2D3E50]"
@@ -381,14 +381,14 @@ export default function BillingPage() {
               {subscription?.plan === plan.id ? (
                 <button
                   disabled
-                  className="w-full py-2 bg-[#0A0E1A] text-gray-400 rounded-lg cursor-not-allowed border border-[#2D3E50]"
+                  className="w-full py-2 bg-transparent text-gray-400 rounded-lg cursor-not-allowed border border-[#2D3E50]"
                 >
                   Current Plan
                 </button>
               ) : plan.id === "free" ? (
                 <button
                   disabled={subscription?.plan === "free"}
-                  className="w-full py-2 bg-[#0A0E1A] text-gray-400 rounded-lg cursor-not-allowed border border-[#2D3E50]"
+                  className="w-full py-2 bg-transparent text-gray-400 rounded-lg cursor-not-allowed border border-[#2D3E50]"
                 >
                   {subscription?.plan === "free" ? "Current Plan" : "Downgrade"}
                 </button>
@@ -412,7 +412,7 @@ export default function BillingPage() {
         </div>
 
         {/* One-time Payment Checkout */}
-        <div className="bg-[#1E293B] border border-[#2D3E50] rounded-lg p-6 space-y-4">
+        <div className="bg-black/50 border border-[#2D3E50] rounded-lg p-6 space-y-4">
           <div>
             <h2 className="text-lg font-semibold">Buy Custom Scan Credits (One-time Payment)</h2>
             <p className="text-gray-400 text-sm mt-1">
@@ -436,7 +436,7 @@ export default function BillingPage() {
                 min="1"
                 value={oneTimeAmount}
                 onChange={(e) => setOneTimeAmount(Math.max(1, parseInt(e.target.value) || 0))}
-                className="w-full pl-8 pr-3 py-2 bg-[#0A0E1A] border border-[#2D3E50] rounded-lg text-white focus:outline-none focus:border-[#14B8A6] focus:ring-1 focus:ring-[#14B8A6] placeholder-gray-600"
+                className="w-full pl-8 pr-3 py-2 bg-transparent border border-[#2D3E50] rounded-lg text-white focus:outline-none focus:border-[#14B8A6] focus:ring-1 focus:ring-[#14B8A6] placeholder-gray-600"
                 placeholder="Enter amount"
                 disabled={isPayingOneTime}
               />
@@ -478,7 +478,7 @@ export default function BillingPage() {
         </div>
 
         {/* Invoice History */}
-        <div className="bg-[#1E293B] border border-[#2D3E50] rounded-lg p-6">
+        <div className="bg-black/50 border border-[#2D3E50] rounded-lg p-6">
           <h2 className="text-lg font-semibold mb-4">Invoice History</h2>
 
           {invoices.length === 0 ? (
@@ -555,7 +555,7 @@ export default function BillingPage() {
               if (e.target === e.currentTarget) setShowCancelConfirm(false);
             }}
           >
-            <div className="bg-[#1E293B] border border-[#2D3E50] rounded-lg p-6 max-w-md w-full shadow-2xl">
+            <div className="bg-black/50 border border-[#2D3E50] rounded-lg p-6 max-w-md w-full shadow-2xl">
               <div className="flex items-center gap-3 mb-4">
                 <AlertCircle className="w-6 h-6 text-[#EF4444]" />
                 <h3 className="text-lg font-semibold">Cancel Subscription?</h3>
@@ -592,7 +592,7 @@ export default function BillingPage() {
                 <button
                   onClick={() => setShowCancelConfirm(false)}
                   disabled={isProcessing}
-                  className="flex-1 py-2 bg-[#0A0E1A] hover:bg-gray-800 text-gray-300 border border-[#2D3E50] rounded-lg transition-colors"
+                  className="flex-1 py-2 bg-transparent hover:bg-black/50 text-gray-300 border border-[#2D3E50] rounded-lg transition-colors"
                 >
                   <X className="w-4 h-4 mx-auto" />
                 </button>

@@ -23,6 +23,14 @@ export function HeroSection() {
       <div className="hero-grid relative z-10">
         {/* LEFT COLUMN: Content */}
         <div className="hero-left text-left">
+          {/* Top Badge */}
+          <div className="inline-flex items-center gap-2 rounded-full border border-[#14B8A6]/30 bg-[#14B8A6]/10 px-4 py-1.5 backdrop-blur-sm w-fit mb-6">
+            <span className="w-2 h-2 rounded-full bg-[#14B8A6] animate-pulse" />
+            <p className="text-xs sm:text-sm font-semibold tracking-[0.02em] text-[#14B8A6] font-sans">
+              Backed by 4 Patents · Built in Bengaluru, India
+            </p>
+          </div>
+
           {/* Headline */}
           <h1 className="hero-headline font-sans font-bold tracking-[-0.02em] text-left flex flex-col text-[40px] sm:text-[48px] md:text-[56px] leading-[1.1] mb-6">
             <span className="text-white">The AI-native</span>
@@ -33,7 +41,7 @@ export function HeroSection() {
           {/* Subtext */}
           <p className="hero-subtext font-sans text-lg max-w-[480px] text-[#9CA3AF] mb-10 leading-[1.6] font-medium">
             Prompt injection blocking, LLM cost control, shadow API discovery, and compliance
-            reporting &mdash; all in one platform. 478 tests.
+            reporting &mdash; all in one platform. 478 tests. 4 patents.
           </p>
 
           {/* CTA Buttons */}
@@ -53,7 +61,7 @@ export function HeroSection() {
           </div>
 
           {/* CLI Command Pill */}
-          <div className="hero-cli-pill bg-[#1A1F2E] border border-[#14B8A6]/25 rounded-full px-5 py-2.5 flex items-center gap-4 w-fit mb-4">
+          <div className="hero-cli-pill bg-transparent border border-[#14B8A6]/25 rounded-full px-5 py-2.5 flex items-center gap-4 w-fit mb-4">
             <span className="cli-text text-[#14B8A6] font-mono text-sm">
               $ npx rakshex scan ./collection.json
             </span>

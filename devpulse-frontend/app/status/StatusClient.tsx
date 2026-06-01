@@ -84,7 +84,7 @@ export default function StatusClient() {
             ? "bg-[#10B981]/10 border-[#10B981]/30 text-[#10B981]"
             : overallStatus === "degraded"
               ? "bg-[#FDB022]/10 border-[#FDB022]/30 text-[#FDB022]"
-              : "bg-[#1E293B] border-[#2D3E50] text-[#94A3B8]"
+              : "bg-black/50 border-[#2D3E50] text-[#94A3B8]"
         }`}
       >
         <div className="relative flex h-4 w-4">
@@ -120,8 +120,8 @@ export default function StatusClient() {
       </div>
 
       {/* Services Table/Grid */}
-      <div className="bg-[#1E293B] border border-[#2D3E50] rounded-xl overflow-hidden shadow-xl">
-        <div className="px-6 py-4 bg-[#0A0E1A] border-b border-[#2D3E50] flex items-center justify-between">
+      <div className="bg-black/50 border border-[#2D3E50] rounded-xl overflow-hidden shadow-xl">
+        <div className="px-6 py-4 bg-transparent border-b border-[#2D3E50] flex items-center justify-between">
           <h3 className="font-bold text-white">System Component Health</h3>
           <span className="text-xs text-slate-400">Pings API health every 30s</span>
         </div>
@@ -173,7 +173,7 @@ export default function StatusClient() {
       </div>
 
       {/* Meta Checked Info */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-500 bg-[#0A0E1A]/40 p-4 border border-[#2D3E50] rounded-lg">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-500 bg-transparent/40 p-4 border border-[#2D3E50] rounded-lg">
         <div>
           <span>Last Checked: </span>
           <strong className="text-slate-400">

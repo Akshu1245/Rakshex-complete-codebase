@@ -2,7 +2,7 @@ import { Skeleton, ListSkeleton } from "@/components/Skeleton";
 
 export default function Loading() {
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-8">
+    <div className="min-h-screen bg-transparent text-white p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header skeleton */}
         <div className="flex items-center justify-between mb-8">
@@ -14,7 +14,7 @@ export default function Loading() {
         </div>
 
         {/* Invite form skeleton */}
-        <div className="bg-gray-800 p-6 rounded-lg border border-gray-700 mb-8">
+        <div className="bg-black/50 p-6 rounded-lg border border-gray-700 mb-8">
           <Skeleton className="h-6 w-48 mb-4" />
           <div className="space-y-4">
             <Skeleton className="h-10 w-full" />

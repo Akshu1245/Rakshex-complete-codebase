@@ -80,7 +80,7 @@ export default function BlogIndex() {
             <Link
               key={post.slug}
               href={`/blog/${post.slug}`}
-              className="block bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-blue-500 transition-colors group"
+              className="block bg-black/50 rounded-xl p-6 border border-gray-700 hover:border-blue-500 transition-colors group"
             >
               <div className="flex items-center gap-3 text-sm text-gray-500 mb-2">
                 <span>{post.date}</span>

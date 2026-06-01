@@ -46,7 +46,7 @@ export default function AgentLeaderboard({ data }: AgentLeaderboardProps) {
   ];
 
   return (
-    <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
+    <div className="bg-black/50 p-6 rounded-lg border border-gray-700">
       <h3 className="text-lg font-semibold mb-4">Agent Leaderboard</h3>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">

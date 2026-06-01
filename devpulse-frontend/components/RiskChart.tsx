@@ -13,9 +13,7 @@ interface RiskChartProps {
 
 export default function RiskChart({ data }: RiskChartProps) {
   const series =
-    data && data.length > 0
-      ? data
-      : Array.from({ length: 12 }, (_, i) => 40 + ((i * 7) % 50));
+    data && data.length > 0 ? data : Array.from({ length: 12 }, (_, i) => 40 + ((i * 7) % 50));
 
   const width = 600;
   const height = 200;
@@ -39,19 +37,15 @@ export default function RiskChart({ data }: RiskChartProps) {
     .map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`)
     .join(" ");
   const areaPath = points.length
-    ? `${linePath} L ${points[points.length - 1].x.toFixed(1)} ${(
-        padding.top + innerH
-      ).toFixed(1)} L ${points[0].x.toFixed(1)} ${(padding.top + innerH).toFixed(
-        1
-      )} Z`
+    ? `${linePath} L ${points[points.length - 1].x.toFixed(1)} ${(padding.top + innerH).toFixed(
+        1,
+      )} L ${points[0].x.toFixed(1)} ${(padding.top + innerH).toFixed(1)} Z`
     : "";
 
-  const gridYs = [0, 0.25, 0.5, 0.75, 1].map(
-    f => padding.top + innerH - f * innerH
-  );
+  const gridYs = [0, 0.25, 0.5, 0.75, 1].map((f) => padding.top + innerH - f * innerH);
 
   return (
-    <div className="bg-gray-800 p-6 rounded-lg border border-gray-700 mt-8">
+    <div className="bg-black/50 p-6 rounded-lg border border-gray-700 mt-8">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold">Cost Velocity (USD/Call)</h3>
         <div className="flex items-center gap-4 text-sm">
@@ -82,9 +76,7 @@ export default function RiskChart({ data }: RiskChartProps) {
           />
         ))}
         {areaPath && <path d={areaPath} fill="#3b82f6" fillOpacity={0.3} />}
-        {linePath && (
-          <path d={linePath} fill="none" stroke="#3b82f6" strokeWidth={2} />
-        )}
+        {linePath && <path d={linePath} fill="none" stroke="#3b82f6" strokeWidth={2} />}
         <text
           x={padding.left - 6}
           y={padding.top + 6}

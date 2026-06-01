@@ -80,7 +80,7 @@ export default function FAQPage() {
           {FAQS.map((faq, i) => (
             <div
               key={i}
-              className="bg-gray-800 rounded-xl p-6 border border-gray-700/50 hover:border-blue-500/30 transition-all flex flex-col justify-between"
+              className="bg-black/50 rounded-xl p-6 border border-gray-700/50 hover:border-blue-500/30 transition-all flex flex-col justify-between"
             >
               <div>
                 <h3 className="font-bold text-lg mb-3 text-blue-400">{faq.q}</h3>

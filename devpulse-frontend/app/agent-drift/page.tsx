@@ -128,7 +128,7 @@ export default function AgentDriftPage() {
         </div>
         <button
           onClick={() => setIsMonitoring(!isMonitoring)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${isMonitoring ? "bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/30" : "bg-[#1E293B] text-gray-400 border border-[#2D3E50]"}`}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${isMonitoring ? "bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/30" : "bg-black/50 text-gray-400 border border-[#2D3E50]"}`}
         >
           <Activity className={`w-4 h-4 ${isMonitoring ? "animate-pulse" : ""}`} />
           {isMonitoring ? "Monitoring Live" : "Paused"}
@@ -147,7 +147,7 @@ export default function AgentDriftPage() {
           { label: "High Severity", value: highCount, color: "text-[#F59E0B]" },
           { label: "Avg Drift Score", value: `${avgDriftScore}%`, color: "text-[#00F0FF]" },
         ].map((stat) => (
-          <div key={stat.label} className="bg-[#1E293B] rounded-xl p-5 border border-[#2D3E50]">
+          <div key={stat.label} className="bg-black/50 rounded-xl p-5 border border-[#2D3E50]">
             <p className="text-gray-400 text-xs uppercase tracking-wider mb-2">{stat.label}</p>
             <p className={`text-3xl font-bold ${stat.color}`}>{stat.value}</p>
           </div>
@@ -161,7 +161,7 @@ export default function AgentDriftPage() {
             <button
               key={f}
               onClick={() => setActiveFilter(f)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-semibold capitalize transition-all ${activeFilter === f ? "bg-[#06D6A0] text-[#0A0E1A]" : "bg-[#1E293B] text-gray-400 hover:bg-[#1E293B]/80 hover:text-white border border-[#2D3E50]"}`}
+              className={`px-3 py-1.5 rounded-lg text-sm font-semibold capitalize transition-all ${activeFilter === f ? "bg-[#06D6A0] text-[#0A0E1A]" : "bg-black/50 text-gray-400 hover:bg-black/50/80 hover:text-white border border-[#2D3E50]"}`}
             >
               {f}
             </button>
@@ -184,7 +184,7 @@ export default function AgentDriftPage() {
             <button
               key={event.id}
               onClick={() => setSelectedEvent(event)}
-              className={`w-full text-left p-4 rounded-xl border transition-all hover:border-[#06D6A0]/40 ${selectedEvent?.id === event.id ? "border-[#06D6A0]/60 bg-[#06D6A0]/5" : "border-[#2D3E50] bg-[#1E293B]/50 hover:bg-[#1E293B]"}`}
+              className={`w-full text-left p-4 rounded-xl border transition-all hover:border-[#06D6A0]/40 ${selectedEvent?.id === event.id ? "border-[#06D6A0]/60 bg-[#06D6A0]/5" : "border-[#2D3E50] bg-black/50/50 hover:bg-black/50"}`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
@@ -217,7 +217,7 @@ export default function AgentDriftPage() {
         </div>
 
         {/* Detail panel */}
-        <div className="bg-[#1E293B] rounded-xl border border-[#2D3E50] p-5 h-fit sticky top-6">
+        <div className="bg-black/50 rounded-xl border border-[#2D3E50] p-5 h-fit sticky top-6">
           {selectedEvent ? (
             <div>
               <div className="flex items-center justify-between mb-4">

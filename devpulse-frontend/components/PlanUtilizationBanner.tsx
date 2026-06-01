@@ -58,12 +58,7 @@ export default function PlanUtilizationBanner() {
         bar: "bg-yellow-400",
       };
 
-  const suggested =
-    current.plan === "free"
-      ? "Pro"
-      : current.plan === "pro"
-        ? "Enterprise"
-        : null; // Enterprise users — no higher tier to suggest
+  const suggested = current.plan === "free" ? "Pro" : current.plan === "pro" ? "Enterprise" : null; // Enterprise users — no higher tier to suggest
   const resetLabel =
     worst.window.resetsAt && worst.key === "scansPerDay"
       ? formatRelative(worst.window.resetsAt)
@@ -95,11 +90,8 @@ export default function PlanUtilizationBanner() {
       </div>
 
       <div className="flex-1 hidden sm:block">
-        <div className="h-2 rounded-full bg-gray-800 overflow-hidden">
-          <div
-            className={`h-full ${color.bar}`}
-            style={{ width: `${worst.window.pct}%` }}
-          />
+        <div className="h-2 rounded-full bg-black/50 overflow-hidden">
+          <div className={`h-full ${color.bar}`} style={{ width: `${worst.window.pct}%` }} />
         </div>
       </div>
 
@@ -111,17 +103,14 @@ export default function PlanUtilizationBanner() {
           Upgrade to {suggested} <ArrowRight className="w-3.5 h-3.5" />
         </Link>
       ) : (
-        <span className="text-xs text-gray-400 shrink-0">
-          Contact support for higher limits
-        </span>
+        <span className="text-xs text-gray-400 shrink-0">Contact support for higher limits</span>
       )}
     </div>
   );
 }
 
 function pickWorst<T extends { window: Window }>(xs: T[]): T | null {
-  const rank = (w: Window) =>
-    w.status === "critical" ? 2 : w.status === "warning" ? 1 : 0;
+  const rank = (w: Window) => (w.status === "critical" ? 2 : w.status === "warning" ? 1 : 0);
   let best: T | null = null;
   for (const x of xs) {
     if (!best || rank(x.window) > rank(best.window) || x.window.pct > best.window.pct) {

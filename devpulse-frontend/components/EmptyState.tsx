@@ -43,7 +43,7 @@ export function EmptyState({
       role="status"
       aria-live="polite"
       className={[
-        "w-full text-center rounded-lg border border-dashed border-gray-700 bg-gray-900/40",
+        "w-full text-center rounded-lg border border-dashed border-gray-700 bg-transparent/40",
         compact ? "py-8 px-6" : "py-14 px-6",
         className,
       ].join(" ")}
@@ -52,19 +52,14 @@ export function EmptyState({
         <div
           aria-hidden="true"
           className={[
-            "mx-auto mb-4 flex items-center justify-center rounded-full bg-gray-800/80 text-blue-300",
+            "mx-auto mb-4 flex items-center justify-center rounded-full bg-black/50/80 text-blue-300",
             compact ? "h-10 w-10 text-xl" : "h-14 w-14 text-2xl",
           ].join(" ")}
         >
           {icon}
         </div>
       )}
-      <h3
-        className={[
-          "font-semibold text-gray-100",
-          compact ? "text-base" : "text-lg",
-        ].join(" ")}
-      >
+      <h3 className={["font-semibold text-gray-100", compact ? "text-base" : "text-lg"].join(" ")}>
         {title}
       </h3>
       {description && (
@@ -85,11 +80,8 @@ export function EmptyState({
             const primary =
               "bg-blue-600 hover:bg-blue-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500";
             const secondary =
-              "border border-gray-700 text-gray-200 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500";
-            const cls = [
-              base,
-              action.variant === "secondary" ? secondary : primary,
-            ].join(" ");
+              "border border-gray-700 text-gray-200 hover:bg-black/50 focus:outline-none focus:ring-2 focus:ring-gray-500";
+            const cls = [base, action.variant === "secondary" ? secondary : primary].join(" ");
 
             if (action.href) {
               return (
@@ -99,12 +91,7 @@ export function EmptyState({
               );
             }
             return (
-              <button
-                key={idx}
-                type="button"
-                onClick={action.onClick}
-                className={cls}
-              >
+              <button key={idx} type="button" onClick={action.onClick} className={cls}>
                 {action.label}
               </button>
             );

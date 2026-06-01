@@ -28,7 +28,7 @@ export default function CookiePolicy() {
           <section>
             <h2 className="text-2xl font-bold text-white mb-3">2. Cookies We Use</h2>
             <table className="w-full text-left border border-gray-700 rounded-lg overflow-hidden">
-              <thead className="bg-gray-800">
+              <thead className="bg-black/50">
                 <tr>
                   <th className="p-3 text-white">Category</th>
                   <th className="p-3 text-white">Purpose</th>

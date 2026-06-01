@@ -319,7 +319,7 @@ export default function IntegrationsPage() {
                     className={`px-4 py-2 text-xs font-semibold rounded-full transition-all cursor-pointer ${
                       isActive
                         ? "bg-teal-accent text-white"
-                        : "bg-[#141414] border border-neutral-800 text-neutral-400"
+                        : "bg-transparent border border-neutral-800 text-neutral-400"
                     }`}
                   >
                     {cat}
@@ -361,7 +361,7 @@ export default function IntegrationsPage() {
                 </p>
                 <a
                   href="mailto:akshay@rakshex.in?subject=Partner Application"
-                  className="block p-5 bg-[#141414] border border-white/10 rounded-xl hover:border-white/20 transition-all group"
+                  className="block p-5 bg-transparent border border-white/10 rounded-xl hover:border-white/20 transition-all group"
                 >
                   <div className="w-10 h-10 bg-neutral-900 rounded-lg flex items-center justify-center text-white/70 mb-4 group-hover:text-white transition-colors border border-neutral-800">
                     <svg
@@ -403,7 +403,7 @@ export default function IntegrationsPage() {
                       {items.map((item) => (
                         <div
                           key={item.name}
-                          className="relative p-6 bg-[#141414] border border-white/5 rounded-xl hover:border-white/20 hover:bg-[#1a1a1a] transition-all cursor-pointer flex flex-col justify-between h-[180px]"
+                          className="relative p-6 bg-transparent border border-white/5 rounded-xl hover:border-white/20 hover:bg-[#1a1a1a] transition-all cursor-pointer flex flex-col justify-between h-[180px]"
                         >
                           <div>
                             {/* Top row */}

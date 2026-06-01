@@ -81,7 +81,7 @@ export default function OnboardingPage() {
                 <div
                   key={step.id}
                   className={`p-6 rounded-lg border ${
-                    done ? "bg-green-900/20 border-green-500" : "bg-gray-800 border-gray-700"
+                    done ? "bg-green-900/20 border-green-500" : "bg-black/50 border-gray-700"
                   }`}
                 >
                   <div className="flex items-start justify-between">

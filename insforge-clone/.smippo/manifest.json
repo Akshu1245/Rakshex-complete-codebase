@@ -1,7 +1,7 @@
 {
   "version": "0.0.1",
   "created": "2026-05-28T18:49:19.831Z",
-  "updated": "2026-05-28T18:49:52.570Z",
+  "updated": "2026-06-01T10:24:31.942Z",
   "rootUrl": "https://insforge.dev/",
   "options": {
     "depth": 0,
@@ -12,10 +12,10 @@
     }
   },
   "stats": {
-    "pagesCapt": 1,
-    "assetsCapt": 306,
-    "totalSize": 7361968,
-    "duration": 33529,
+    "pagesCapt": 2,
+    "assetsCapt": 489,
+    "totalSize": 15739807,
+    "duration": 29092,
     "errors": 0
   },
   "pages": [
@@ -25,6 +25,14 @@
       "status": 200,
       "captured": "2026-05-28T18:49:52.547Z",
       "size": 365508,
+      "title": "InsForge - The agent-native cloud infrastructure platform"
+    },
+    {
+      "url": "https://insforge.dev/",
+      "localPath": "insforge.dev\\index.html",
+      "status": 200,
+      "captured": "2026-06-01T10:24:31.856Z",
+      "size": 292593,
       "title": "InsForge - The agent-native cloud infrastructure platform"
     }
   ],
@@ -1864,6 +1872,1104 @@
       "localPath": "insforge.dev\\_next\\image-4684cf7a.html",
       "mimeType": "image/jpeg",
       "size": 20937
+    },
+    {
+      "url": "https://insforge.dev/_next/static/css/01b3b33d0b793b71.css?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\css\\01b3b33d0b793b71-71e44177.css",
+      "mimeType": "text/css; charset=utf-8",
+      "size": 49967
+    },
+    {
+      "url": "https://insforge.dev/_next/static/css/8440301760ec0619.css?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\css\\8440301760ec0619-71e44177.css",
+      "mimeType": "text/css; charset=utf-8",
+      "size": 429
+    },
+    {
+      "url": "https://insforge.dev/_next/static/css/bc3eb401fb5ba4ee.css?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\css\\bc3eb401fb5ba4ee-71e44177.css",
+      "mimeType": "text/css; charset=utf-8",
+      "size": 3469
+    },
+    {
+      "url": "https://insforge.dev/_next/static/css/355f984093efb89d.css?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\css\\355f984093efb89d-71e44177.css",
+      "mimeType": "text/css; charset=utf-8",
+      "size": 13172
+    },
+    {
+      "url": "https://insforge.dev/_next/static/css/c147d298ba784203.css?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\css\\c147d298ba784203-71e44177.css",
+      "mimeType": "text/css; charset=utf-8",
+      "size": 126678
+    },
+    {
+      "url": "https://insforge.dev/_next/static/css/362cb8713a953702.css?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\css\\362cb8713a953702-71e44177.css",
+      "mimeType": "text/css; charset=utf-8",
+      "size": 10352
+    },
+    {
+      "url": "https://insforge.dev/_next/static/css/f26c2bdaed26f6ed.css?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\css\\f26c2bdaed26f6ed-71e44177.css",
+      "mimeType": "text/css; charset=utf-8",
+      "size": 1891
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/mascot/idle/right1.svg",
+      "localPath": "insforge.dev\\assets\\landing\\mascot\\idle\\right1.svg",
+      "mimeType": "image/svg+xml",
+      "size": 3715
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/agent/full_logo/cursor.svg",
+      "localPath": "insforge.dev\\assets\\landing\\agent\\full_logo\\cursor.svg",
+      "mimeType": "image/svg+xml",
+      "size": 3892
+    },
+    {
+      "url": "https://insforge.dev/_next/static/media/3703c28dcda155b1-s.p.woff2",
+      "localPath": "insforge.dev\\_next\\static\\media\\3703c28dcda155b1-s.p.woff2",
+      "mimeType": "font/woff2",
+      "size": 36340
+    },
+    {
+      "url": "https://insforge.dev/_next/static/media/f36144f235cd456e-s.p.woff2",
+      "localPath": "insforge.dev\\_next\\static\\media\\f36144f235cd456e-s.p.woff2",
+      "mimeType": "font/woff2",
+      "size": 10112
+    },
+    {
+      "url": "https://insforge.dev/_next/static/media/e4af272ccee01ff0-s.p.woff2",
+      "localPath": "insforge.dev\\_next\\static\\media\\e4af272ccee01ff0-s.p.woff2",
+      "mimeType": "font/woff2",
+      "size": 48432
+    },
+    {
+      "url": "https://r.wdfl.co/rw.js",
+      "localPath": "r.wdfl.co\\rw.js",
+      "mimeType": "text/javascript",
+      "size": 18631
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/agent/full_logo/cursor-color.svg",
+      "localPath": "insforge.dev\\assets\\landing\\agent\\full_logo\\cursor-color.svg",
+      "mimeType": "image/svg+xml",
+      "size": 4680
+    },
+    {
+      "url": "https://insforge.dev/_next/static/media/4c9affa5bc8f420e-s.p.woff2",
+      "localPath": "insforge.dev\\_next\\static\\media\\4c9affa5bc8f420e-s.p.woff2",
+      "mimeType": "font/woff2",
+      "size": 24576
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/agent/full_logo/claude_code.svg",
+      "localPath": "insforge.dev\\assets\\landing\\agent\\full_logo\\claude_code.svg",
+      "mimeType": "image/svg+xml",
+      "size": 6334
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/agent/full_logo/claude_code-color.svg",
+      "localPath": "insforge.dev\\assets\\landing\\agent\\full_logo\\claude_code-color.svg",
+      "mimeType": "image/svg+xml",
+      "size": 6313
+    },
+    {
+      "url": "https://www.withsherpa.ai/sites/f4f8a9e5-9aab-4307-8df2-8a21e61054cd/tracker.js",
+      "localPath": "withsherpa.ai\\sites\\f4f8a9e5-9aab-4307-8df2-8a21e61054cd\\tracker.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 17711
+    },
+    {
+      "url": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap",
+      "localPath": "fonts.googleapis.com\\css2-4568ef45.html",
+      "mimeType": "text/css; charset=utf-8",
+      "size": 9884
+    },
+    {
+      "url": "https://insforge.dev/assets/logos/logo_text.svg",
+      "localPath": "insforge.dev\\assets\\logos\\logo_text.svg",
+      "mimeType": "image/svg+xml",
+      "size": 7563
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/agent/full_logo/codex-color.svg",
+      "localPath": "insforge.dev\\assets\\landing\\agent\\full_logo\\codex-color.svg",
+      "mimeType": "image/svg+xml",
+      "size": 8730
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/insforge-logo.png",
+      "localPath": "insforge.dev\\assets\\landing\\insforge-logo.png",
+      "mimeType": "image/png",
+      "size": 1516
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/agent/full_logo/copilot-color.svg",
+      "localPath": "insforge.dev\\assets\\landing\\agent\\full_logo\\copilot-color.svg",
+      "mimeType": "image/svg+xml",
+      "size": 5783
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/agent/full_logo/windsurf.svg",
+      "localPath": "insforge.dev\\assets\\landing\\agent\\full_logo\\windsurf.svg",
+      "mimeType": "image/svg+xml",
+      "size": 6530
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/agent/full_logo/cline.svg",
+      "localPath": "insforge.dev\\assets\\landing\\agent\\full_logo\\cline.svg",
+      "mimeType": "image/svg+xml",
+      "size": 4522
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/agent/full_logo/antigravity.svg",
+      "localPath": "insforge.dev\\assets\\landing\\agent\\full_logo\\antigravity.svg",
+      "mimeType": "image/svg+xml",
+      "size": 18337
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/agent/full_logo/kiro.svg",
+      "localPath": "insforge.dev\\assets\\landing\\agent\\full_logo\\kiro.svg",
+      "mimeType": "image/svg+xml",
+      "size": 7262
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/agent/full_logo/windsurf-color.svg",
+      "localPath": "insforge.dev\\assets\\landing\\agent\\full_logo\\windsurf-color.svg",
+      "mimeType": "image/svg+xml",
+      "size": 6507
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/agent/full_logo/kiro-color.svg",
+      "localPath": "insforge.dev\\assets\\landing\\agent\\full_logo\\kiro-color.svg",
+      "mimeType": "image/svg+xml",
+      "size": 7245
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/agent/full_logo/trae-color.svg",
+      "localPath": "insforge.dev\\assets\\landing\\agent\\full_logo\\trae-color.svg",
+      "mimeType": "image/svg+xml",
+      "size": 6873
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/agent/full_logo/qoder-color.svg",
+      "localPath": "insforge.dev\\assets\\landing\\agent\\full_logo\\qoder-color.svg",
+      "mimeType": "image/svg+xml",
+      "size": 23604
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/agent/full_logo/trae.svg",
+      "localPath": "insforge.dev\\assets\\landing\\agent\\full_logo\\trae.svg",
+      "mimeType": "image/svg+xml",
+      "size": 6892
+    },
+    {
+      "url": "https://insforge.dev/assets/logos/claude_code.png",
+      "localPath": "insforge.dev\\assets\\logos\\claude_code.png",
+      "mimeType": "image/png",
+      "size": 1467
+    },
+    {
+      "url": "https://insforge.dev/assets/logos/kiro_purple.svg",
+      "localPath": "insforge.dev\\assets\\logos\\kiro_purple.svg",
+      "mimeType": "image/svg+xml",
+      "size": 1866
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/agent/full_logo/qoder.svg",
+      "localPath": "insforge.dev\\assets\\landing\\agent\\full_logo\\qoder.svg",
+      "mimeType": "image/svg+xml",
+      "size": 23627
+    },
+    {
+      "url": "https://insforge.dev/assets/logos/codex.svg",
+      "localPath": "insforge.dev\\assets\\logos\\codex.svg",
+      "mimeType": "image/svg+xml",
+      "size": 3863
+    },
+    {
+      "url": "https://insforge.dev/assets/logos/cursor.svg",
+      "localPath": "insforge.dev\\assets\\logos\\cursor.svg",
+      "mimeType": "image/svg+xml",
+      "size": 1995
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/main-app-4f31a224cd122369.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\main-app-4f31a224cd122369-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 866
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/6208-dd4758d6f90c37e3.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\6208-dd4758d6f90c37e3-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 10491
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/6417-6fc6c0776ccdfe1b.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\6417-6fc6c0776ccdfe1b-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 44316
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/6421-69baf6bdcef7b002.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\6421-69baf6bdcef7b002-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 12276
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/2619-04bc32f026a0d946.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\2619-04bc32f026a0d946-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 8564
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/app/layout-2fa54441e5e509a2.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\app\\layout-2fa54441e5e509a2-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 3352
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/5239-eb77b1a7e712e567.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\5239-eb77b1a7e712e567-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 26720
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/1356-3ccb48a8d27170cf.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\1356-3ccb48a8d27170cf-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 13620
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/2610-5773b19df6879046.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\2610-5773b19df6879046-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 18564
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/9885-09d84f90d9459af2.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\9885-09d84f90d9459af2-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 55455
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/6405-b9a5447aaac60962.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\6405-b9a5447aaac60962-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 32096
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/app/(public)/layout-7d6a6fb5bdaf7aec.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\app\\(public)\\layout-7d6a6fb5bdaf7aec-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 13203
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/323-80797c517c22c816.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\323-80797c517c22c816-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 14502
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/5811-f6123254efb3db1a.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\5811-f6123254efb3db1a-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 48055
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/8318a8be-b3f0526d68111a64.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\8318a8be-b3f0526d68111a64-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 7251
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/webpack-87ff8d644a525d41.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\webpack-87ff8d644a525d41-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 5121
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/8412-26cf7a99305ea711.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\8412-26cf7a99305ea711-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 26441
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/6515-716f978ecf6a860f.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\6515-716f978ecf6a860f-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 31010
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/1255-1e55b400a0d410db.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\1255-1e55b400a0d410db-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 172860
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/9da6db1e-8fab047ff17e537c.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\9da6db1e-8fab047ff17e537c-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 171351
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/3700-aa1d129a737f816f.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\3700-aa1d129a737f816f-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 15245
+    },
+    {
+      "url": "https://insforge.dev/assets/logos/antigravity.png",
+      "localPath": "insforge.dev\\assets\\logos\\antigravity.png",
+      "mimeType": "image/png",
+      "size": 5547
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/agent/full_logo/copilot.svg",
+      "localPath": "insforge.dev\\assets\\landing\\agent\\full_logo\\copilot.svg",
+      "mimeType": "image/svg+xml",
+      "size": 5818
+    },
+    {
+      "url": "https://insforge.dev/assets/logos/trae.svg",
+      "localPath": "insforge.dev\\assets\\logos\\trae.svg",
+      "mimeType": "image/svg+xml",
+      "size": 384
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/app/(public)/page-3d298b821e303916.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\app\\(public)\\page-3d298b821e303916-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 57956
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\4bd1b696-100b9d70ed4e49c1-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 173025
+    },
+    {
+      "url": "https://insforge.dev/assets/logos/qoder.svg",
+      "localPath": "insforge.dev\\assets\\logos\\qoder.svg",
+      "mimeType": "image/svg+xml",
+      "size": 6612
+    },
+    {
+      "url": "https://insforge.dev/assets/logos/opencode.svg",
+      "localPath": "insforge.dev\\assets\\logos\\opencode.svg",
+      "mimeType": "image/svg+xml",
+      "size": 797
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/5047-41634cf88223386a.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\5047-41634cf88223386a-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 23158
+    },
+    {
+      "url": "https://insforge.dev/assets/logos/openclaw.svg",
+      "localPath": "insforge.dev\\assets\\logos\\openclaw.svg",
+      "mimeType": "image/svg+xml",
+      "size": 4615
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/agent/full_logo/cline-color.svg",
+      "localPath": "insforge.dev\\assets\\landing\\agent\\full_logo\\cline-color.svg",
+      "mimeType": "image/svg+xml",
+      "size": 4509
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/icons/features/vector.svg",
+      "localPath": "insforge.dev\\assets\\landing\\icons\\features\\vector.svg",
+      "mimeType": "image/svg+xml",
+      "size": 407
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/icons/features/realtime.svg",
+      "localPath": "insforge.dev\\assets\\landing\\icons\\features\\realtime.svg",
+      "mimeType": "image/svg+xml",
+      "size": 1771
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/icons/features/auth.svg",
+      "localPath": "insforge.dev\\assets\\landing\\icons\\features\\auth.svg",
+      "mimeType": "image/svg+xml",
+      "size": 1680
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/icons/features/model_gateway.svg",
+      "localPath": "insforge.dev\\assets\\landing\\icons\\features\\model_gateway.svg",
+      "mimeType": "image/svg+xml",
+      "size": 1320
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/icons/features/database.svg",
+      "localPath": "insforge.dev\\assets\\landing\\icons\\features\\database.svg",
+      "mimeType": "image/svg+xml",
+      "size": 2439
+    },
+    {
+      "url": "https://insforge.dev/assets/logos/cline.svg",
+      "localPath": "insforge.dev\\assets\\logos\\cline.svg",
+      "mimeType": "image/svg+xml",
+      "size": 2220
+    },
+    {
+      "url": "https://insforge.dev/assets/logos/copilot.svg",
+      "localPath": "insforge.dev\\assets\\logos\\copilot.svg",
+      "mimeType": "image/svg+xml",
+      "size": 3384
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2",
+      "localPath": "fonts.gstatic.com\\s\\inter\\v20\\UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2",
+      "mimeType": "font/woff2",
+      "size": 48256
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/features/auth.svg",
+      "localPath": "insforge.dev\\assets\\landing\\features\\auth.svg",
+      "mimeType": "image/svg+xml",
+      "size": 4248
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/icons/features/pay.svg",
+      "localPath": "insforge.dev\\assets\\landing\\icons\\features\\pay.svg",
+      "mimeType": "image/svg+xml",
+      "size": 1160
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/features/functions.svg",
+      "localPath": "insforge.dev\\assets\\landing\\features\\functions.svg",
+      "mimeType": "image/svg+xml",
+      "size": 21587
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/6359-6e8f98a369966eb4.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\6359-6e8f98a369966eb4-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 279553
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/4463-95c44f0876c7664e.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\4463-95c44f0876c7664e-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 202677
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/icons/features/graph_8.svg",
+      "localPath": "insforge.dev\\assets\\landing\\icons\\features\\graph_8.svg",
+      "mimeType": "image/svg+xml",
+      "size": 3115
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/features/realtime.svg",
+      "localPath": "insforge.dev\\assets\\landing\\features\\realtime.svg",
+      "mimeType": "image/svg+xml",
+      "size": 5293
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/features/storage.svg",
+      "localPath": "insforge.dev\\assets\\landing\\features\\storage.svg",
+      "mimeType": "image/svg+xml",
+      "size": 5653
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/logo_large.svg",
+      "localPath": "insforge.dev\\assets\\landing\\logo_large.svg",
+      "mimeType": "image/svg+xml",
+      "size": 1141
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/features/deployment.svg",
+      "localPath": "insforge.dev\\assets\\landing\\features\\deployment.svg",
+      "mimeType": "image/svg+xml",
+      "size": 13287
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/features/vector.svg",
+      "localPath": "insforge.dev\\assets\\landing\\features\\vector.svg",
+      "mimeType": "image/svg+xml",
+      "size": 870
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/features/payment.svg",
+      "localPath": "insforge.dev\\assets\\landing\\features\\payment.svg",
+      "mimeType": "image/svg+xml",
+      "size": 7745
+    },
+    {
+      "url": "https://b.insforge.dev/static/exception-autocapture.js?v=1.335.4",
+      "localPath": "b.insforge.dev\\static\\exception-autocapture-58435f68.js",
+      "mimeType": "application/javascript",
+      "size": 11840
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/c857e369-818143283dbd3500.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\c857e369-818143283dbd3500-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 307802
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/3791-3a0ccdbc2aa78e83.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\3791-3a0ccdbc2aa78e83-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 93854
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/features/messaging.svg",
+      "localPath": "insforge.dev\\assets\\landing\\features\\messaging.svg",
+      "mimeType": "image/svg+xml",
+      "size": 14865
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/features/compute.svg",
+      "localPath": "insforge.dev\\assets\\landing\\features\\compute.svg",
+      "mimeType": "image/svg+xml",
+      "size": 15213
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/agent/full_logo/codex.svg",
+      "localPath": "insforge.dev\\assets\\landing\\agent\\full_logo\\codex.svg",
+      "mimeType": "image/svg+xml",
+      "size": 8099
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/9480-ae709ad0d8582a04.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\9480-ae709ad0d8582a04-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 41469
+    },
+    {
+      "url": "https://b.insforge.dev/flags/?v=2&config=true&ip=0&_=1780309451144&ver=1.335.4&compression=base64",
+      "localPath": "b.insforge.dev\\flags\\index-4cc04042.html",
+      "mimeType": "application/json",
+      "size": 279
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/branch/claude.svg",
+      "localPath": "insforge.dev\\assets\\landing\\branch\\claude.svg",
+      "mimeType": "image/svg+xml",
+      "size": 21896
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/features/postgress.svg",
+      "localPath": "insforge.dev\\assets\\landing\\features\\postgress.svg",
+      "mimeType": "image/svg+xml",
+      "size": 6907
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/agent/full_logo/antigravity-color.svg",
+      "localPath": "insforge.dev\\assets\\landing\\agent\\full_logo\\antigravity-color.svg",
+      "mimeType": "image/svg+xml",
+      "size": 2427517
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/branch/test_failed.svg",
+      "localPath": "insforge.dev\\assets\\landing\\branch\\test_failed.svg",
+      "mimeType": "image/svg+xml",
+      "size": 914
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/branch/close_branch.svg",
+      "localPath": "insforge.dev\\assets\\landing\\branch\\close_branch.svg",
+      "mimeType": "image/svg+xml",
+      "size": 693
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/icons/features/functions.svg",
+      "localPath": "insforge.dev\\assets\\landing\\icons\\features\\functions.svg",
+      "mimeType": "image/svg+xml",
+      "size": 1178
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/branch/database_branch.svg",
+      "localPath": "insforge.dev\\assets\\landing\\branch\\database_branch.svg",
+      "mimeType": "image/svg+xml",
+      "size": 20870
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/branch/auth_branch.svg",
+      "localPath": "insforge.dev\\assets\\landing\\branch\\auth_branch.svg",
+      "mimeType": "image/svg+xml",
+      "size": 12346
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/branch/production.svg",
+      "localPath": "insforge.dev\\assets\\landing\\branch\\production.svg",
+      "mimeType": "image/svg+xml",
+      "size": 9605
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/features/model_gateway.svg",
+      "localPath": "insforge.dev\\assets\\landing\\features\\model_gateway.svg",
+      "mimeType": "image/svg+xml",
+      "size": 7861
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/branch/codex.svg",
+      "localPath": "insforge.dev\\assets\\landing\\branch\\codex.svg",
+      "mimeType": "image/svg+xml",
+      "size": 16070
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/branch/realtime_branch.svg",
+      "localPath": "insforge.dev\\assets\\landing\\branch\\realtime_branch.svg",
+      "mimeType": "image/svg+xml",
+      "size": 16426
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/branch/push_to_prod.svg",
+      "localPath": "insforge.dev\\assets\\landing\\branch\\push_to_prod.svg",
+      "mimeType": "image/svg+xml",
+      "size": 620
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/branch/test_passed.svg",
+      "localPath": "insforge.dev\\assets\\landing\\branch\\test_passed.svg",
+      "mimeType": "image/svg+xml",
+      "size": 607
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/icons/features/agent_directory.svg",
+      "localPath": "insforge.dev\\assets\\landing\\icons\\features\\agent_directory.svg",
+      "mimeType": "image/svg+xml",
+      "size": 350
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/139-7f41f6a03e57ea9b.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\139-7f41f6a03e57ea9b-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 9413
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/icons/features/storage.svg",
+      "localPath": "insforge.dev\\assets\\landing\\icons\\features\\storage.svg",
+      "mimeType": "image/svg+xml",
+      "size": 1485
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/features/cron_job.svg",
+      "localPath": "insforge.dev\\assets\\landing\\features\\cron_job.svg",
+      "mimeType": "image/svg+xml",
+      "size": 12819
+    },
+    {
+      "url": "https://b.insforge.dev/array/phc_ueV1ii62wdBTkH7E70ugyeqHIHu8dFDdjs0qq3TZhJz/config.js",
+      "localPath": "b.insforge.dev\\array\\phc_ueV1ii62wdBTkH7E70ugyeqHIHu8dFDdjs0qq3TZhJz\\config.js",
+      "mimeType": "application/javascript",
+      "size": 1249
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/5125-f64922302e738a1a.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\5125-f64922302e738a1a-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 57503
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/branch/antigravity.svg",
+      "localPath": "insforge.dev\\assets\\landing\\branch\\antigravity.svg",
+      "mimeType": "image/svg+xml",
+      "size": 2426712
+    },
+    {
+      "url": "https://insforge.dev/assets/logos/windsurf.svg",
+      "localPath": "insforge.dev\\assets\\logos\\windsurf.svg",
+      "mimeType": "image/svg+xml",
+      "size": 1651
+    },
+    {
+      "url": "https://insforge.dev/_next/image?url=%2Fassets%2Favatars%2Fgurnoor_singh.webp&w=48&q=75",
+      "localPath": "insforge.dev\\_next\\image-42c6b531.html",
+      "mimeType": "image/avif",
+      "size": 1004
+    },
+    {
+      "url": "https://insforge.dev/_next/image?url=%2Fassets%2Favatars%2Fdavidson.webp&w=48&q=75",
+      "localPath": "insforge.dev\\_next\\image-309d5bfd.html",
+      "mimeType": "image/avif",
+      "size": 779
+    },
+    {
+      "url": "https://insforge.dev/_next/image?url=%2Fassets%2Favatars%2Fprakhar_singh.webp&w=48&q=75",
+      "localPath": "insforge.dev\\_next\\image-6f6c0f8c.html",
+      "mimeType": "image/avif",
+      "size": 711
+    },
+    {
+      "url": "https://insforge.dev/_next/image?url=%2Fassets%2Favatars%2Fzach_zhong.jpg&w=48&q=75",
+      "localPath": "insforge.dev\\_next\\image-7cbd51bd.html",
+      "mimeType": "image/avif",
+      "size": 938
+    },
+    {
+      "url": "https://insforge.dev/auth/sign-up?_rsc=co63v",
+      "localPath": "insforge.dev\\auth\\sign-up-210f8bee.html",
+      "mimeType": "text/x-component",
+      "size": 10147
+    },
+    {
+      "url": "https://insforge.dev/auth/sign-in?_rsc=co63v",
+      "localPath": "insforge.dev\\auth\\sign-in-210f8bee.html",
+      "mimeType": "text/x-component",
+      "size": 11867
+    },
+    {
+      "url": "https://insforge.dev/agents?_rsc=1681w",
+      "localPath": "insforge.dev\\agents-23ea0502.html",
+      "mimeType": "text/x-component",
+      "size": 154
+    },
+    {
+      "url": "https://www.redditstatic.com/ads/pixel.js?pixel_id=a2_ixlyhrz2g9oz",
+      "localPath": "redditstatic.com\\ads\\pixel-7e024a01.js",
+      "mimeType": "application/javascript",
+      "size": 66894
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/app/auth/(main)/layout-8b2ef0d9d1d5fcd5.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\app\\auth\\(main)\\layout-8b2ef0d9d1d5fcd5-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 4823
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/app/auth/(main)/sign-up/page-231585ad7ce97798.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\app\\auth\\(main)\\sign-up\\page-231585ad7ce97798-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 5875
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/3635-09c8e025e5ebc3a3.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\3635-09c8e025e5ebc3a3-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 13029
+    },
+    {
+      "url": "https://insforge.dev/launch?_rsc=1681w",
+      "localPath": "insforge.dev\\launch-23ea0502.html",
+      "mimeType": "text/x-component",
+      "size": 163
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/mascot/idle/right2.svg",
+      "localPath": "insforge.dev\\assets\\landing\\mascot\\idle\\right2.svg",
+      "mimeType": "image/svg+xml",
+      "size": 3742
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/app/auth/(main)/sign-in/page-411b02e3bcfa80fa.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\app\\auth\\(main)\\sign-in\\page-411b02e3bcfa80fa-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 6048
+    },
+    {
+      "url": "https://pixel-config.reddit.com/pixels/a2_ixlyhrz2g9oz/config",
+      "localPath": "pixel-config.reddit.com\\pixels\\a2_ixlyhrz2g9oz\\config.html",
+      "mimeType": "application/json",
+      "size": 11
+    },
+    {
+      "url": "https://insforge.dev/auth/sign-in",
+      "localPath": "insforge.dev\\auth\\sign-in.html",
+      "mimeType": "text/x-component",
+      "size": 11867
+    },
+    {
+      "url": "https://api.github.com/repos/InsForge/InsForge",
+      "localPath": "api.github.com\\repos\\InsForge\\InsForge.html",
+      "mimeType": "application/json; charset=utf-8",
+      "size": 7147
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/mascot/walking/right3.svg",
+      "localPath": "insforge.dev\\assets\\landing\\mascot\\walking\\right3.svg",
+      "mimeType": "image/svg+xml",
+      "size": 1472
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/mascot/idle/right3.svg",
+      "localPath": "insforge.dev\\assets\\landing\\mascot\\idle\\right3.svg",
+      "mimeType": "image/svg+xml",
+      "size": 3726
+    },
+    {
+      "url": "https://alb.reddit.com/rp.gif?ts=1780309452981&id=a2_ixlyhrz2g9oz&event=PageVisit&m.value=&m.transactionId=&m.customEventName=&m.products=&m.conversionId=&uuid=04539754-fa04-42a9-8060-989a9fc8606d&aaid=&external_id=&idfa=&integration=gtm&partner=&partner_version=1.0.4&opt_out=0&sh=1920&sw=1080&v=rdt_47ad39b8&dpm=&dpcc=&dprc=",
+      "localPath": "alb.reddit.com\\rp-5c7e2404.gif",
+      "mimeType": "image/gif",
+      "size": 42
+    },
+    {
+      "url": "https://insforge.dev/customers?_rsc=1681w",
+      "localPath": "insforge.dev\\customers-23ea0502.html",
+      "mimeType": "text/x-component",
+      "size": 160
+    },
+    {
+      "url": "https://insforge.dev/alternatives/insforge-vs-supabase?_rsc=1681w",
+      "localPath": "insforge.dev\\alternatives\\insforge-vs-supabase-23ea0502.html",
+      "mimeType": "text/x-component",
+      "size": 217
+    },
+    {
+      "url": "https://sc-static.net/scevent.min.js",
+      "localPath": "sc-static.net\\scevent.min.js",
+      "mimeType": "application/javascript;charset=utf-8",
+      "size": 59263
+    },
+    {
+      "url": "https://insforge.dev/alternatives/insforge-vs-firebase?_rsc=1681w",
+      "localPath": "insforge.dev\\alternatives\\insforge-vs-firebase-23ea0502.html",
+      "mimeType": "text/x-component",
+      "size": 217
+    },
+    {
+      "url": "https://insforge.dev/alternatives/insforge-vs-hosted-postgres?_rsc=1681w",
+      "localPath": "insforge.dev\\alternatives\\insforge-vs-hosted-postgres-23ea0502.html",
+      "mimeType": "text/x-component",
+      "size": 224
+    },
+    {
+      "url": "https://insforge.dev/blog?_rsc=1681w",
+      "localPath": "insforge.dev\\blog-23ea0502.html",
+      "mimeType": "text/x-component",
+      "size": 150
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/mascot/walking/right1.svg",
+      "localPath": "insforge.dev\\assets\\landing\\mascot\\walking\\right1.svg",
+      "mimeType": "image/svg+xml",
+      "size": 1468
+    },
+    {
+      "url": "https://px.ads.linkedin.com/attribution_trigger?pid=9273588&time=1780309453168&url=https%3A%2F%2Finsforge.dev%2F&tm=gtmv2",
+      "localPath": "px.ads.linkedin.com\\attribution_trigger-6c97f925.html",
+      "mimeType": "application/json",
+      "size": 2
+    },
+    {
+      "url": "https://tags.insforge.dev/data?v=2&event=page_view&dtdc=eyJwYWdlX2xvY2F0aW9uIjoiaHR0cHM6Ly9pbnNmb3JnZS5kZXYvIiwicGFnZV9ob3N0bmFtZSI6Imluc2ZvcmdlLmRldiIsInBhZ2VfcmVmZXJyZXIiOiIiLCJwYWdlX3RpdGxlIjoiSW5zRm9yZ2UgLSBUaGUgYWdlbnQtbmF0aXZlIGNsb3VkIGluZnJhc3RydWN0dXJlIHBsYXRmb3JtIiwicGFnZV9lbmNvZGluZyI6IlVURi04IiwidGFfY29udGFpbmVyX2lkIjoiR1RNLTVMR1ZTNjlIIiwidGFfY29udGFpbmVyX3ZlcnNpb24iOiIxNSIsInRhX2ludGVncmF0aW9uX21ldGhvZCI6Imd0bV93ZWJfY29udGFpbmVyIiwic2VuZF9wYWdlX3ZpZXciOiJ0cnVlIiwiX2RjaWRfdGVtcCI6ImRjaWQuMS4xNzgwMzA5NDUyODUyLjcwNTY1NjQ0OSJ9",
+      "localPath": "tags.insforge.dev\\data-33e94abe.html",
+      "mimeType": "image/gif",
+      "size": 35
+    },
+    {
+      "url": "https://d1xcunua5ui9ke.cloudfront.net/hermes/meta.json",
+      "localPath": "d1xcunua5ui9ke.cloudfront.net\\hermes\\meta.json",
+      "mimeType": "application/json",
+      "size": 861
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/mascot/walking/right2.svg",
+      "localPath": "insforge.dev\\assets\\landing\\mascot\\walking\\right2.svg",
+      "mimeType": "image/svg+xml",
+      "size": 1330
+    },
+    {
+      "url": "https://insforge.dev/integrations?_rsc=1681w",
+      "localPath": "insforge.dev\\integrations-23ea0502.html",
+      "mimeType": "text/x-component",
+      "size": 166
+    },
+    {
+      "url": "https://insforge.dev/pricing?_rsc=1681w",
+      "localPath": "insforge.dev\\pricing-23ea0502.html",
+      "mimeType": "text/x-component",
+      "size": 156
+    },
+    {
+      "url": "https://insforge.dev/templates?_rsc=1681w",
+      "localPath": "insforge.dev\\templates-23ea0502.html",
+      "mimeType": "text/x-component",
+      "size": 160
+    },
+    {
+      "url": "https://insforge.dev/_next/image?url=https%3A%2F%2Fd1xcunua5ui9ke.cloudfront.net%2Fassets%2Fimages%2Fhermes%2Fcover.png&w=128&q=75",
+      "localPath": "insforge.dev\\_next\\image-1387289.html",
+      "mimeType": "image/avif",
+      "size": 650
+    },
+    {
+      "url": "https://tr.snapchat.com/p?pid=be8f2308-8097-4d3f-ae6e-00ea1a744adb&ev=PAGE_VIEW&intg=gtm&pids=be8f2308-8097-4d3f-ae6e-00ea1a744adb&u_c1=d3626e18-52f8-4a54-89cf-7b800a3efb39&cdid=%40-580ff76e-e6c7-4d00-9bfc-9adf8e7da577&u_sclid=449e2697-849f-4ec6-943a-7da47c38eb88&u_scsid=b9407de4-c47a-42f1-af04-2c2c8810f173&gat=AW-17933199011%2CG-HD6PS5Y66C%2CGTM-5LGVS69H&gac=f77aefdd&bg=false&bt=1d53c387&d_a=x86&d_bvs=%5B%2C%7B%22brand%22%3A%22Chromium%22%2C%22version%22%3A%22148.0.7778.96%22%7D%7B%22brand%22%3A%22HeadlessChrome%22%2C%22version%22%3A%22148.0.7778.96%22%7D%7B%22brand%22%3A%22Not%2FA)Brand%22%2C%22version%22%3A%2299.0.0.0%22%7D%5D&d_os=19.0.0&d_ot=Windows&df=true&huah=true&m_dcl=1276&m_fcps=960&m_pi=1275&m_pl=2496&m_pv=2&m_rd=4130&m_sh=1080&m_sl=4096&m_sw=1920&pl=https%3A%2F%2Finsforge.dev%2F&trackId=6b61a4df-6aff-4695-8c66-245fa365f476&ts=1780309454111&v=3.56.1-2604231811",
+      "localPath": "tr.snapchat.com\\p-7a6e1c36.html",
+      "mimeType": "image/png",
+      "size": 68
+    },
+    {
+      "url": "https://tr.snapchat.com/config/dev/be8f2308-8097-4d3f-ae6e-00ea1a744adb.js?v=3.56.1-2604231811",
+      "localPath": "tr.snapchat.com\\config\\dev\\be8f2308-8097-4d3f-ae6e-00ea1a744adb-73e25f28.js",
+      "mimeType": "application/javascript",
+      "size": 205
+    },
+    {
+      "url": "https://tr6.snapchat.com/p",
+      "localPath": "tr6.snapchat.com\\p.html",
+      "mimeType": "",
+      "size": 0
+    },
+    {
+      "url": "https://tr.snapchat.com/p",
+      "localPath": "tr.snapchat.com\\p.html",
+      "mimeType": "",
+      "size": 0
+    },
+    {
+      "url": "https://insforge.dev/_next/image?url=%2Fassets%2Favatars%2Fjaehoon_son.jpg&w=48&q=75",
+      "localPath": "insforge.dev\\_next\\image-722e7c51.html",
+      "mimeType": "image/avif",
+      "size": 923
+    },
+    {
+      "url": "https://insforge.dev/_next/image?url=%2Fassets%2Favatars%2Felijah_muraoka.jpg&w=48&q=75",
+      "localPath": "insforge.dev\\_next\\image-4f89c406.html",
+      "mimeType": "image/avif",
+      "size": 858
+    },
+    {
+      "url": "https://insforge.dev/_next/image?url=%2Fassets%2Favatars%2Fwahed_sikder.webp&w=48&q=75",
+      "localPath": "insforge.dev\\_next\\image-6b09a183.html",
+      "mimeType": "image/avif",
+      "size": 859
+    },
+    {
+      "url": "https://insforge.dev/_next/image?url=%2Fassets%2Favatars%2Fabhinav_ranish.webp&w=48&q=75",
+      "localPath": "insforge.dev\\_next\\image-732e617c.html",
+      "mimeType": "image/avif",
+      "size": 936
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/mascot/walking/left3.svg",
+      "localPath": "insforge.dev\\assets\\landing\\mascot\\walking\\left3.svg",
+      "mimeType": "image/svg+xml",
+      "size": 1622
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/mascot/walking/left1.svg",
+      "localPath": "insforge.dev\\assets\\landing\\mascot\\walking\\left1.svg",
+      "mimeType": "image/svg+xml",
+      "size": 1610
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/mascot/walking/left2.svg",
+      "localPath": "insforge.dev\\assets\\landing\\mascot\\walking\\left2.svg",
+      "mimeType": "image/svg+xml",
+      "size": 1475
+    },
+    {
+      "url": "https://track.insforge.dev/mp/track/?verbose=1&ip=1&_=1780309457700",
+      "localPath": "track.insforge.dev\\mp\\track\\index-6acb1b1b.html",
+      "mimeType": "application/json",
+      "size": 25
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/mascot/idle/left1.svg",
+      "localPath": "insforge.dev\\assets\\landing\\mascot\\idle\\left1.svg",
+      "mimeType": "image/svg+xml",
+      "size": 1475
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/mascot/idle/left2.svg",
+      "localPath": "insforge.dev\\assets\\landing\\mascot\\idle\\left2.svg",
+      "mimeType": "image/svg+xml",
+      "size": 1696
+    },
+    {
+      "url": "https://insforge.dev/assets/landing/mascot/idle/left3.svg",
+      "localPath": "insforge.dev\\assets\\landing\\mascot\\idle\\left3.svg",
+      "mimeType": "image/svg+xml",
+      "size": 1664
+    },
+    {
+      "url": "https://insforge.dev/changelogs?_rsc=1681w",
+      "localPath": "insforge.dev\\changelogs-23ea0502.html",
+      "mimeType": "text/x-component",
+      "size": 162
+    },
+    {
+      "url": "https://insforge.dev/privacy?_rsc=1681w",
+      "localPath": "insforge.dev\\privacy-23ea0502.html",
+      "mimeType": "text/x-component",
+      "size": 156
+    },
+    {
+      "url": "https://insforge.dev/terms?_rsc=1681w",
+      "localPath": "insforge.dev\\terms-23ea0502.html",
+      "mimeType": "text/x-component",
+      "size": 152
+    },
+    {
+      "url": "https://insforge.dev/contact?_rsc=1681w",
+      "localPath": "insforge.dev\\contact-23ea0502.html",
+      "mimeType": "text/x-component",
+      "size": 156
+    },
+    {
+      "url": "https://insforge.dev/_next/image?url=https%3A%2F%2Fd1xcunua5ui9ke.cloudfront.net%2Fassets%2Fimages%2Fhermes%2Fcover.png&w=256&q=75",
+      "localPath": "insforge.dev\\_next\\image-1f1badb.html",
+      "mimeType": "image/png",
+      "size": 3019
+    },
+    {
+      "url": "https://insforge.dev/_next/image?url=%2Fassets%2Favatars%2Fwahed_sikder.webp&w=96&q=75",
+      "localPath": "insforge.dev\\_next\\image-701f188a.html",
+      "mimeType": "image/jpeg",
+      "size": 1789
+    },
+    {
+      "url": "https://insforge.dev/_next/image?url=%2Fassets%2Favatars%2Fdavidson.webp&w=96&q=75",
+      "localPath": "insforge.dev\\_next\\image-2b87e4f6.html",
+      "mimeType": "image/jpeg",
+      "size": 1868
+    },
+    {
+      "url": "https://insforge.dev/favicon.ico",
+      "localPath": "insforge.dev\\favicon.ico",
+      "mimeType": "image/vnd.microsoft.icon",
+      "size": 17218
+    },
+    {
+      "url": "https://insforge.dev/_next/static/chunks/polyfills-42372ed130431b0a.js?dpl=dpl_GzM8Kasupb6W9kmnUjnJTdWPWYn2",
+      "localPath": "insforge.dev\\_next\\static\\chunks\\polyfills-42372ed130431b0a-71e44177.js",
+      "mimeType": "application/javascript; charset=utf-8",
+      "size": 112594
+    },
+    {
+      "url": "https://insforge.dev/_next/image?url=%2Fassets%2Favatars%2Fzach_zhong.jpg&w=96&q=75",
+      "localPath": "insforge.dev\\_next\\image-77a7dab6.html",
+      "mimeType": "image/jpeg",
+      "size": 950
+    },
+    {
+      "url": "https://insforge.dev/_next/image?url=%2Fassets%2Favatars%2Fprakhar_singh.webp&w=96&q=75",
+      "localPath": "insforge.dev\\_next\\image-74818693.html",
+      "mimeType": "image/jpeg",
+      "size": 1697
+    },
+    {
+      "url": "https://insforge.dev/_next/image?url=%2Fassets%2Favatars%2Felijah_muraoka.jpg&w=96&q=75",
+      "localPath": "insforge.dev\\_next\\image-4a744cff.html",
+      "mimeType": "image/jpeg",
+      "size": 885
+    },
+    {
+      "url": "https://insforge.dev/_next/image?url=%2Fassets%2Favatars%2Fjaehoon_son.jpg&w=96&q=75",
+      "localPath": "insforge.dev\\_next\\image-7743f358.html",
+      "mimeType": "image/jpeg",
+      "size": 872
+    },
+    {
+      "url": "https://insforge.dev/_next/image?url=%2Fassets%2Favatars%2Fgurnoor_singh.webp&w=96&q=75",
+      "localPath": "insforge.dev\\_next\\image-47dc2c38.html",
+      "mimeType": "image/jpeg",
+      "size": 2242
+    },
+    {
+      "url": "https://insforge.dev/_next/image?url=%2Fassets%2Favatars%2Fabhinav_ranish.webp&w=96&q=75",
+      "localPath": "insforge.dev\\_next\\image-6e18ea75.html",
+      "mimeType": "image/jpeg",
+      "size": 2113
     }
   ]
 }

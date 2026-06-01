@@ -39,24 +39,24 @@ export default function AnalyticsPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
+          <div className="bg-black/50 p-6 rounded-lg border border-gray-700">
             <h3 className="text-gray-400 text-sm uppercase tracking-wide">Total Cost (30d)</h3>
             <p className="text-4xl font-bold mt-2 text-green-400">
               ${fmtCost(tokenAnalytics?.totalCost ?? 0)}
             </p>
           </div>
-          <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
+          <div className="bg-black/50 p-6 rounded-lg border border-gray-700">
             <h3 className="text-gray-400 text-sm uppercase tracking-wide">Token Records</h3>
             <p className="text-4xl font-bold mt-2 text-blue-400">{totalApiCalls}</p>
           </div>
-          <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
+          <div className="bg-black/50 p-6 rounded-lg border border-gray-700">
             <h3 className="text-gray-400 text-sm uppercase tracking-wide">Total Findings</h3>
             <p className="text-4xl font-bold mt-2 text-purple-400">{metrics?.totalFindings ?? 0}</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
+          <div className="bg-black/50 p-6 rounded-lg border border-gray-700">
             <h2 className="text-xl font-semibold mb-4">Daily Token Usage (last 30d)</h2>
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {!tokenAnalytics || tokenAnalytics.usage.length === 0 ? (
@@ -85,7 +85,7 @@ export default function AnalyticsPage() {
             </div>
           </div>
 
-          <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
+          <div className="bg-black/50 p-6 rounded-lg border border-gray-700">
             <h2 className="text-xl font-semibold mb-4">Recent Scans</h2>
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {recentScans.length === 0 ? (

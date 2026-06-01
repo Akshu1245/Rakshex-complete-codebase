@@ -75,7 +75,7 @@ export default function CompareLakera() {
           prompt injection <em>plus</em> API security, compliance, and cost governance.
         </p>
 
-        <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden mb-12">
+        <div className="bg-black/50 rounded-xl border border-gray-700 overflow-hidden mb-12">
           <table className="w-full text-left">
             <thead className="bg-gray-700/50">
               <tr>
@@ -97,7 +97,7 @@ export default function CompareLakera() {
         </div>
 
         <div className="grid md:grid-cols-2 gap-6 mb-12">
-          <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
+          <div className="bg-black/50/50 border border-gray-700 rounded-xl p-6">
             <h3 className="text-xl font-bold mb-3 text-green-400">When to choose Lakera</h3>
             <ul className="list-disc list-inside text-gray-300 space-y-2">
               <li>Prompt injection is your only concern</li>
@@ -107,7 +107,7 @@ export default function CompareLakera() {
             </ul>
           </div>
 
-          <div className="bg-gray-800/50 border border-blue-500/30 rounded-xl p-6">
+          <div className="bg-black/50/50 border border-blue-500/30 rounded-xl p-6">
             <h3 className="text-xl font-bold mb-3 text-blue-400">When to choose RaksHex</h3>
             <ul className="list-disc list-inside text-gray-300 space-y-2">
               <li>You need prompt injection + API security + compliance in one tool</li>

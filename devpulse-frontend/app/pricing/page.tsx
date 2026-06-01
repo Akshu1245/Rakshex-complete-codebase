@@ -62,7 +62,7 @@ export default function PricingPage() {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="bg-[#141414] p-8 rounded-xl border border-neutral-850 flex flex-col justify-between hover:border-neutral-800 transition-colors">
+          <div className="bg-transparent p-8 rounded-xl border border-neutral-850 flex flex-col justify-between hover:border-neutral-800 transition-colors">
             <div>
               <h2 className="text-2xl font-bold mb-2">Free</h2>
               <div className="mb-6">
@@ -106,7 +106,7 @@ export default function PricingPage() {
             )}
           </div>
 
-          <div className="bg-[#141414] p-8 rounded-xl border border-teal-accent/50 relative flex flex-col justify-between">
+          <div className="bg-transparent p-8 rounded-xl border border-teal-accent/50 relative flex flex-col justify-between">
             <div className="absolute top-4 right-4 text-teal-accent text-[10px] font-bold font-mono tracking-wider uppercase bg-teal-accent/10 border border-teal-accent/20 rounded-full px-2 py-0.5">
               POPULAR
             </div>
@@ -177,7 +177,7 @@ export default function PricingPage() {
             )}
           </div>
 
-          <div className="bg-[#141414] p-8 rounded-xl border border-neutral-850 relative flex flex-col justify-between hover:border-neutral-800 transition-colors">
+          <div className="bg-transparent p-8 rounded-xl border border-neutral-850 relative flex flex-col justify-between hover:border-neutral-800 transition-colors">
             <div>
               <h2 className="text-2xl font-bold mb-2">Enterprise</h2>
               <div className="mb-6">
@@ -245,7 +245,7 @@ export default function PricingPage() {
 
       {selectedPlan && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
-          <div className="bg-[#141414] border border-neutral-800 rounded-xl p-8 max-w-md w-full relative shadow-2xl">
+          <div className="bg-transparent border border-neutral-800 rounded-xl p-8 max-w-md w-full relative shadow-2xl">
             <button
               onClick={() => setSelectedPlan(null)}
               className="absolute top-4 right-4 text-neutral-500 hover:text-white transition-colors text-lg"
@@ -279,7 +279,7 @@ export default function PricingPage() {
                     placeholder="name@company.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 bg-[#0F0F0F] border border-neutral-800 rounded-lg focus:outline-none focus:border-teal-accent text-white transition-colors font-mono"
+                    className="w-full px-4 py-3 bg-transparent border border-neutral-800 rounded-lg focus:outline-none focus:border-teal-accent text-white transition-colors font-mono"
                     disabled={joinMutation.isPending}
                   />
                 </div>

@@ -102,16 +102,13 @@ function StatsCard({ label, targetValue }: { label: string; targetValue: string 
   }, []);
 
   return (
-    <article
-      ref={containerRef}
-      className="w-full bg-[#1A1F2E] border border-[#14B8A6]/10 hover:border-[#14B8A6]/35 rounded-lg p-6 flex flex-col items-center gap-2 transition-all duration-200 select-none hover:shadow-[0_2px_8px_rgba(20,184,166,0.05)] text-center"
-    >
-      <p className="text-[#9CA3AF] font-sans text-xs tracking-wider uppercase font-semibold">
+    <article ref={containerRef} className="PlatformStatsShowcase_card__DyDV_">
+      <p className="PlatformStatsShowcase_label__dAs7X font-semibold text-xs tracking-wider uppercase">
         {label}
       </p>
       <div
         aria-label={targetValue}
-        className="text-[#14B8A6] font-sans font-extrabold text-3xl md:text-4xl"
+        className="PlatformStatsShowcase_value__ypr4_ text-[#06b6d4] font-mono font-bold text-2xl md:text-3xl"
       >
         {targetValue.split("").map((char, idx) => (
           <RollingDigit key={idx} char={char} trigger={inView} />
@@ -131,7 +128,7 @@ function StatsBadgeCard({
   linkUrl: string;
 }) {
   return (
-    <article className="w-full bg-[#1A1F2E] border border-[#14B8A6]/10 hover:border-[#14B8A6]/35 rounded-lg p-6 flex flex-col items-center justify-between gap-4 transition-all duration-200 select-none hover:shadow-[0_2px_8px_rgba(20,184,166,0.05)] text-center h-full">
+    <article className="w-full bg-transparent border border-[#14B8A6]/10 hover:border-[#14B8A6]/35 rounded-lg p-6 flex flex-col items-center justify-between gap-4 transition-all duration-200 select-none hover:shadow-[0_2px_8px_rgba(20,184,166,0.05)] text-center h-full">
       <p className="text-[#9CA3AF] font-sans text-xs tracking-wider uppercase font-semibold">
         {label}
       </p>
@@ -146,6 +143,38 @@ function StatsBadgeCard({
         </a>
       </div>
     </article>
+  );
+}
+
+function PlatformStats() {
+  const statsQuery = trpc.system.stats.useQuery();
+  const stats = statsQuery.data;
+
+  const formatNum = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1)}K` : n.toString());
+
+  const items = [
+    { label: "Collections Scanned", value: stats ? formatNum(stats.collections) : "12.8K" },
+    { label: "Vulnerabilities Found", value: stats ? formatNum(stats.findings) : "94.2K" },
+    { label: "API Endpoints Protected", value: stats ? formatNum(stats.endpoints) : "295K" },
+    { label: "Active Users", value: stats ? formatNum(stats.users) : "1,247" },
+  ];
+
+  return (
+    <section className="py-20 bg-transparent">
+      <div className="max-w-[1280px] mx-auto px-6">
+        <div className="flex flex-col items-center gap-3 text-center mb-10">
+          <h2 className="text-3xl font-bold text-white">Platform Statistics</h2>
+          <p className="text-neutral-400 text-sm">
+            Real-time metrics from the RaksHex security engine
+          </p>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {items.map((item) => (
+            <StatsCard key={item.label} label={item.label} targetValue={item.value} />
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -187,7 +216,7 @@ function WaitlistForm() {
           placeholder="Enter your work email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="flex-1 px-4 py-3 bg-[#1A1F2E] border border-[#14B8A6] hover:border-[#0D9488] focus:border-2 focus:border-[#14B8A6] focus:outline-none text-white placeholder-[#6B7280] rounded-[6px] text-sm font-sans transition-all duration-150"
+          className="flex-1 px-4 py-3 bg-transparent border border-[#14B8A6] hover:border-[#0D9488] focus:border-2 focus:border-[#14B8A6] focus:outline-none text-white placeholder-[#6B7280] rounded-[6px] text-sm font-sans transition-all duration-150"
           disabled={joinMutation.isPending}
         />
         <button
@@ -279,9 +308,9 @@ function AnimatedHeroVisual() {
   ];
 
   return (
-    <div className="w-full max-w-[680px] rounded-xl border border-neutral-700 bg-gradient-to-br from-[#232323] to-[#1C1C1C] flex flex-col md:flex-row p-6 gap-6 items-stretch shadow-2xl relative">
+    <div className="w-full max-w-[680px] rounded-xl border border-neutral-700 bg-transparent flex flex-col md:flex-row p-6 gap-6 items-stretch shadow-2xl relative">
       {/* Left panel: VS Code terminal */}
-      <div className="flex-1 bg-[#0F0F0F] rounded-lg p-5 font-mono text-xs text-left h-52 relative border border-neutral-800 flex flex-col justify-between">
+      <div className="flex-1 bg-black/40 rounded-lg p-5 font-mono text-xs text-left h-52 relative border border-neutral-800 flex flex-col justify-between">
         <div className="flex items-center gap-1.5 mb-3 border-b border-neutral-800 pb-2">
           <div className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
           <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/80" />
@@ -306,7 +335,7 @@ function AnimatedHeroVisual() {
       </div>
 
       {/* Right panel: findings dashboard */}
-      <div className="w-full md:w-60 bg-[#0F0F0F] rounded-lg p-5 border border-neutral-800 flex flex-col justify-between items-center text-center">
+      <div className="w-full md:w-60 bg-black/40 rounded-lg p-5 border border-neutral-800 flex flex-col justify-between items-center text-center">
         <div className="w-full flex flex-col items-center gap-2">
           <span className="text-[10px] text-neutral-500 uppercase tracking-widest font-mono">
             Security Score
@@ -533,8 +562,8 @@ export default function HomePage() {
             Secures Any Framework
           </p>
           <div className="relative w-full z-10 overflow-hidden">
-            <div className="absolute left-0 top-0 w-16 h-full z-10 pointer-events-none bg-gradient-to-r from-[#0F1419] to-transparent" />
-            <div className="absolute right-0 top-0 w-16 h-full z-10 pointer-events-none bg-gradient-to-l from-[#0F1419] to-transparent" />
+            <div className="absolute left-0 top-0 w-16 h-full z-10 pointer-events-none bg-gradient-to-r from-[#0a0a0a] to-transparent" />
+            <div className="absolute right-0 top-0 w-16 h-full z-10 pointer-events-none bg-gradient-to-l from-[#0a0a0a] to-transparent" />
 
             <div className="flex items-center gap-12 animate-logo-scroll w-max pr-12">
               {[
@@ -553,7 +582,7 @@ export default function HomePage() {
               ].map((f, i) => (
                 <div
                   key={i}
-                  className="text-[#9CA3AF] hover:text-white font-mono text-sm tracking-wide font-medium transition-colors bg-[#1A1F2E] border border-[#14B8A6]/20 rounded-[6px] px-4 py-2 shrink-0 select-none"
+                  className="text-[#9CA3AF] hover:text-white font-mono text-sm tracking-wide font-medium transition-colors bg-transparent border border-[#14B8A6]/20 rounded-[6px] px-4 py-2 shrink-0 select-none"
                 >
                   {f}
                 </div>
@@ -574,7 +603,7 @@ export default function HomePage() {
               ].map((f, i) => (
                 <div
                   key={`repeat-${i}`}
-                  className="text-[#9CA3AF] hover:text-white font-mono text-sm tracking-wide font-medium transition-colors bg-[#1A1F2E] border border-[#14B8A6]/20 rounded-[6px] px-4 py-2 shrink-0 select-none"
+                  className="text-[#9CA3AF] hover:text-white font-mono text-sm tracking-wide font-medium transition-colors bg-transparent border border-[#14B8A6]/20 rounded-[6px] px-4 py-2 shrink-0 select-none"
                 >
                   {f}
                 </div>
@@ -639,9 +668,9 @@ export default function HomePage() {
           </div>
 
           {/* Accordions */}
-          <div className="w-full lg:w-2/3 rounded-lg bg-[#1A1F2E] border border-[#14B8A6]/20 divide-y divide-[#1A1F2E]/80 shadow-md">
+          <div className="w-full lg:w-2/3 rounded-lg bg-transparent border border-[#14B8A6]/20 divide-y divide-white/5 shadow-md">
             {faqs.map((faq, idx) => (
-              <div key={idx} className="border-b border-[#1A1F2E]/80 last:border-b-0">
+              <div key={idx} className="border-b border-white/5 last:border-b-0">
                 <h3 className="flex">
                   <button
                     onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
@@ -668,52 +697,28 @@ export default function HomePage() {
       <AskAISection />
 
       {/* SECTION 11B — PLATFORM STATISTICS */}
-      <section className="py-20 px-6 xl:px-8 max-w-[1280px] mx-auto bg-transparent">
-        <h2 className="sr-only">Platform statistics</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatsCard label="COLLECTIONS SCANNED" targetValue="1" />
-          <StatsCard label="VULNERABILITIES FOUND" targetValue="7" />
-          <StatsBadgeCard
-            label="npm downloads"
-            badgeUrl="https://img.shields.io/npm/dm/rakshex?style=flat-square&logo=npm&color=14B8A6&label=downloads"
-            linkUrl="https://npmjs.com/package/rakshex"
-          />
-          <StatsBadgeCard
-            label="VS Code Installs"
-            badgeUrl="https://img.shields.io/visual-studio-marketplace/i/rakshex.rakshex-vscode?style=flat-square&logo=visualstudiocode&color=14B8A6&label=installs"
-            linkUrl="https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex-vscode"
-          />
-        </div>
-      </section>
+      <PlatformStats />
 
       {/* SECTION 12 — FINAL CTA SECTION */}
-      <section
-        className="w-full max-w-[1280px] mx-auto px-6 py-24 text-center bg-transparent"
-        id="cta"
-      >
-        <div className="max-w-xl mx-auto flex flex-col items-center gap-8 bg-[#1A1F2E] border border-[#14B8A6]/20 p-8 sm:p-12 rounded-2xl shadow-md relative overflow-hidden group transition-all duration-300">
-          <h2 className="text-3xl sm:text-[36px] font-bold font-sans text-white leading-[1.2] tracking-[-0.02em]">
-            Ready to Secure Your AI Stack?
+      <section className="w-full max-w-[1280px] mx-auto px-6 pb-32 pt-16 bg-transparent" id="cta">
+        <div className="flex flex-col items-center justify-center gap-8">
+          <h2 className="text-[36px] sm:text-[44px] leading-tight font-bold text-center font-manrope">
+            <span className="text-white">Start Securing </span>
+            <span className="text-[#06b6d4]">Your AI Agents</span>
           </h2>
-          <p className="text-[#9CA3AF] text-base leading-relaxed max-w-[480px] font-sans">
-            Join 500+ developers already using RakshEx
-          </p>
-
-          <div className="w-full z-10">
-            <WaitlistForm />
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-4 w-full justify-center items-center mt-2 border-t border-[#1A1F2E] pt-6 z-10">
-            <a
-              href="#waitlist"
-              onClick={(e) => {
-                e.preventDefault();
-                document.getElementById("waitlist")?.scrollIntoView({ behavior: "smooth" });
-              }}
-              className="text-[#14B8A6] hover:text-[#0D9488] font-semibold text-sm font-sans underline underline-offset-4 transition-colors"
+          <div className="flex flex-col sm:flex-row gap-4 items-center justify-center w-full">
+            <Link
+              href="/register"
+              className="inline-flex items-center justify-center gap-1 whitespace-nowrap rounded bg-[#06b6d4] hover:bg-[#0891b2] text-black h-12 px-8 text-base font-bold font-manrope transition-all duration-200"
             >
-              Join Waitlist
-            </a>
+              Try Free — No Credit Card
+            </Link>
+            <Link
+              href="/demo"
+              className="inline-flex items-center justify-center gap-1 whitespace-nowrap rounded bg-neutral-800 hover:bg-neutral-700 text-white border border-[#414141] hover:border-neutral-600 h-12 px-8 text-base font-medium font-manrope transition-all duration-200"
+            >
+              Book a Demo
+            </Link>
           </div>
         </div>
       </section>

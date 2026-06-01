@@ -31,7 +31,7 @@ export default function BillingSuccessPage() {
 
   return (
     <div className="text-white flex items-center justify-center p-6">
-      <div className="max-w-lg w-full rounded-xl border border-gray-800 bg-gray-900 shadow-lg p-8 text-center">
+      <div className="max-w-lg w-full rounded-xl border border-gray-800 bg-transparent shadow-lg p-8 text-center">
         {upgraded ? (
           <>
             <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
@@ -76,7 +76,7 @@ export default function BillingSuccessPage() {
           </Link>
           <Link
             href="/billing"
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md border border-gray-700 hover:bg-gray-800 text-gray-200 text-sm font-medium transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md border border-gray-700 hover:bg-black/50 text-gray-200 text-sm font-medium transition-colors"
           >
             View invoices
           </Link>

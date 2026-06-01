@@ -185,7 +185,7 @@ export default function PlaybooksPage() {
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-semibold capitalize transition-all ${filter === f ? "bg-[#06D6A0] text-[#0A0E1A]" : "bg-[#1E293B] text-gray-400 hover:bg-[#1E293B]/80 hover:text-white border border-[#2D3E50]"}`}
+            className={`px-3 py-1.5 rounded-lg text-sm font-semibold capitalize transition-all ${filter === f ? "bg-[#06D6A0] text-[#0A0E1A]" : "bg-black/50 text-gray-400 hover:bg-black/50/80 hover:text-white border border-[#2D3E50]"}`}
           >
             {f}
           </button>
@@ -197,10 +197,10 @@ export default function PlaybooksPage() {
         {filtered.map((pb) => (
           <div
             key={pb.id}
-            className="bg-[#1E293B] rounded-xl border border-[#2D3E50] overflow-hidden"
+            className="bg-black/50 rounded-xl border border-[#2D3E50] overflow-hidden"
           >
             <button
-              className="w-full text-left p-5 flex items-start justify-between gap-4 hover:bg-[#1E293B]/80 transition-colors"
+              className="w-full text-left p-5 flex items-start justify-between gap-4 hover:bg-black/50/80 transition-colors"
               onClick={() => setExpanded(expanded === pb.id ? null : pb.id)}
             >
               <div className="flex-1 min-w-0">
@@ -255,7 +255,7 @@ export default function PlaybooksPage() {
                   <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-[#06D6A0] to-[#00F0FF] text-[#0A0E1A] text-sm font-semibold hover:opacity-90 transition-all">
                     <Play className="w-4 h-4" /> Start Runbook
                   </button>
-                  <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0A0E1A] border border-[#2D3E50] text-gray-300 text-sm font-semibold hover:bg-[#1E293B]/80 transition-colors">
+                  <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-transparent border border-[#2D3E50] text-gray-300 text-sm font-semibold hover:bg-black/50/80 transition-colors">
                     <CheckCircle className="w-4 h-4" /> Mark Complete
                   </button>
                 </div>

@@ -71,7 +71,7 @@ function Collections() {
           <textarea
             data-testid="import-input"
             value={importData}
-            onChange={e => setImportData(e.target.value)}
+            onChange={(e) => setImportData(e.target.value)}
             placeholder="Paste collection JSON"
           />
           <button onClick={handleImport} data-testid="confirm-import">
@@ -81,15 +81,12 @@ function Collections() {
       )}
 
       <ul data-testid="collections-list">
-        {collections.map(c => (
+        {collections.map((c) => (
           <li key={c.id} data-testid={`collection-${c.id}`}>
             <span>{c.name}</span>
             <span>({c.format})</span>
             <span>{c.totalRequests} requests</span>
-            <button
-              onClick={() => handleDelete(c.id)}
-              data-testid={`delete-${c.id}`}
-            >
+            <button onClick={() => handleDelete(c.id)} data-testid={`delete-${c.id}`}>
               Delete
             </button>
           </li>
@@ -123,7 +120,7 @@ describe("Collections", () => {
       Promise.resolve({
         json: () => Promise.resolve({ collections: mockCollections }),
         ok: true,
-      })
+      }),
     );
   });
 
@@ -131,7 +128,7 @@ describe("Collections", () => {
     render(<Collections />);
 
     await waitFor(() => {
-      expect(screen.getByTestId("collections-list")).toBeInTheDocument();
+      expect(screen.getByTestId("collection-col1")).toBeInTheDocument();
     });
 
     expect(screen.getByTestId("collection-col1")).toHaveTextContent("API v1");
@@ -148,10 +145,7 @@ describe("Collections", () => {
 
     await user.click(screen.getByTestId("create-btn"));
 
-    expect(global.fetch).toHaveBeenCalledWith(
-      "/api/collections",
-      expect.any(Object)
-    );
+    expect(global.fetch).toHaveBeenCalledWith("/api/collections", expect.any(Object));
   });
 
   it("opens import modal", async () => {
@@ -184,7 +178,7 @@ describe("Collections", () => {
 
     expect(global.fetch).toHaveBeenCalledWith(
       "/api/collections/import",
-      expect.objectContaining({ method: "POST" })
+      expect.objectContaining({ method: "POST" }),
     );
   });
 
@@ -198,9 +192,6 @@ describe("Collections", () => {
 
     await user.click(screen.getByTestId("delete-col1"));
 
-    expect(global.fetch).toHaveBeenCalledWith(
-      "/api/collections/col1",
-      expect.any(Object)
-    );
+    expect(global.fetch).toHaveBeenCalledWith("/api/collections/col1", expect.any(Object));
   });
 });

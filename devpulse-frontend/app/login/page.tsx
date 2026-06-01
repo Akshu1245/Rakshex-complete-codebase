@@ -75,7 +75,7 @@ export default function LoginPage() {
 
   if (requires2FA) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
+      <div className="min-h-screen bg-transparent text-white flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <Link href="/" className="text-3xl font-bold text-blue-500">
@@ -84,7 +84,7 @@ export default function LoginPage() {
             <p className="text-gray-400 mt-2">Two-Factor Authentication</p>
           </div>
 
-          <div className="bg-gray-800 p-8 rounded-xl border border-gray-700 space-y-6">
+          <div className="bg-black/50 p-8 rounded-xl border border-gray-700 space-y-6">
             <div className="text-center">
               <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg
@@ -159,7 +159,7 @@ export default function LoginPage() {
 
   if (showForgot) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
+      <div className="min-h-screen bg-transparent text-white flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <Link href="/" className="text-3xl font-bold text-blue-500">
@@ -168,7 +168,7 @@ export default function LoginPage() {
             <h2 className="text-gray-400 mt-2">Reset your password</h2>
           </div>
 
-          <div className="bg-gray-800 p-8 rounded-xl border border-gray-700">
+          <div className="bg-black/50 p-8 rounded-xl border border-gray-700">
             {resetSent ? (
               <div className="text-center">
                 <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -247,7 +247,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-transparent text-white flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="text-3xl font-bold text-blue-500">
@@ -256,7 +256,7 @@ export default function LoginPage() {
           <h2 className="text-gray-400 mt-2">Sign in to your account</h2>
         </div>
 
-        <div className="bg-gray-800 p-8 rounded-xl border border-gray-700 space-y-6">
+        <div className="bg-black/50 p-8 rounded-xl border border-gray-700 space-y-6">
           {/* OAuth Login — only show if configured */}
           {googleEnabled && (
             <>
@@ -267,7 +267,7 @@ export default function LoginPage() {
                   <div className="w-full border-t border-gray-600"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-gray-800 text-gray-400">Or continue with email</span>
+                  <span className="px-2 bg-black/50 text-gray-400">Or continue with email</span>
                 </div>
               </div>
             </>

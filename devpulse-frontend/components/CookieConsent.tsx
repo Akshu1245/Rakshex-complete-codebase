@@ -45,7 +45,7 @@ export function CookieConsent() {
       role="dialog"
       aria-live="polite"
       aria-label="Cookie notice"
-      className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-2xl rounded-xl border border-gray-700 bg-gray-900/95 p-4 text-sm text-gray-200 shadow-2xl backdrop-blur"
+      className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-2xl rounded-xl border border-gray-700 bg-transparent/95 p-4 text-sm text-gray-200 shadow-2xl backdrop-blur"
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="leading-relaxed">
@@ -59,14 +59,14 @@ export function CookieConsent() {
         <div className="flex shrink-0 gap-2">
           <Link
             href="/privacy"
-            className="rounded-md border border-gray-600 px-3 py-1.5 text-xs font-medium text-gray-200 hover:bg-gray-800"
+            className="rounded-md border border-gray-600 px-3 py-1.5 text-xs font-medium text-gray-200 hover:bg-black/50"
           >
             Learn more
           </Link>
           <button
             type="button"
             onClick={() => save("rejected")}
-            className="rounded-md border border-gray-600 px-3 py-1.5 text-xs font-medium text-gray-300 hover:bg-gray-800 transition-colors"
+            className="rounded-md border border-gray-600 px-3 py-1.5 text-xs font-medium text-gray-300 hover:bg-black/50 transition-colors"
           >
             Reject optional
           </button>

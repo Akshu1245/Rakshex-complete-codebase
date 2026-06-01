@@ -5,11 +5,14 @@ interface TokenSpendChartProps {
 }
 
 export default function TokenSpendChart({ data }: TokenSpendChartProps) {
-  const series = data.length > 0 ? data : Array.from({ length: 7 }, (_, i) => ({
-    key: `Day ${i + 1}`,
-    totalCost: 0,
-    totalTokens: 0,
-  }));
+  const series =
+    data.length > 0
+      ? data
+      : Array.from({ length: 7 }, (_, i) => ({
+          key: `Day ${i + 1}`,
+          totalCost: 0,
+          totalTokens: 0,
+        }));
 
   const width = 600;
   const height = 220;
@@ -35,7 +38,7 @@ export default function TokenSpendChart({ data }: TokenSpendChartProps) {
   const totalCost = series.reduce((s, d) => s + d.totalCost, 0);
 
   return (
-    <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
+    <div className="bg-black/50 p-6 rounded-lg border border-gray-700">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold">Token Spend</h3>
         <span className="text-sm text-gray-400">${totalCost.toFixed(2)} total</span>
@@ -45,9 +48,16 @@ export default function TokenSpendChart({ data }: TokenSpendChartProps) {
           const y = pad.top + ih - f * ih;
           return (
             <g key={i}>
-              <line x1={pad.left} x2={width - pad.right} y1={y} y2={y} stroke="#374151" strokeDasharray="3 3" />
+              <line
+                x1={pad.left}
+                x2={width - pad.right}
+                y1={y}
+                y2={y}
+                stroke="#374151"
+                strokeDasharray="3 3"
+              />
               <text x={pad.left - 6} y={y + 4} textAnchor="end" fontSize="10" fill="#9CA3AF">
-                ${((maxCost * f)).toFixed(2)}
+                ${(maxCost * f).toFixed(2)}
               </text>
             </g>
           );

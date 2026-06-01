@@ -130,7 +130,7 @@ export default function AdminPage() {
           <div className="flex items-center gap-3">
             <button
               onClick={refresh}
-              className="px-3 py-2 text-sm rounded-md border border-gray-700 text-gray-200 hover:bg-gray-800 transition-colors"
+              className="px-3 py-2 text-sm rounded-md border border-gray-700 text-gray-200 hover:bg-black/50 transition-colors"
             >
               Refresh
             </button>
@@ -156,14 +156,14 @@ export default function AdminPage() {
         ) : (
           <div>
             <div className="mb-8 grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
+              <div className="bg-black/50 p-6 rounded-lg border border-gray-700">
                 <p className="text-sm text-gray-400 mb-1">Total Users</p>
                 <p className="text-3xl font-bold">{stats?.totalUsers ?? 0}</p>
                 <p className="text-xs text-gray-500 mt-2">
                   {filteredUsers.length} currently visible
                 </p>
               </div>
-              <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
+              <div className="bg-black/50 p-6 rounded-lg border border-gray-700">
                 <p className="text-sm text-gray-400 mb-1">Pro Users</p>
                 <p className="text-3xl font-bold text-blue-300">{stats?.proUsers ?? 0}</p>
                 <p className="text-xs text-gray-500 mt-2">
@@ -172,12 +172,12 @@ export default function AdminPage() {
                     : "0% conversion"}
                 </p>
               </div>
-              <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
+              <div className="bg-black/50 p-6 rounded-lg border border-gray-700">
                 <p className="text-sm text-gray-400 mb-1">Free Users</p>
                 <p className="text-3xl font-bold">{stats?.freeUsers ?? 0}</p>
                 <p className="text-xs text-gray-500 mt-2">on the free tier</p>
               </div>
-              <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
+              <div className="bg-black/50 p-6 rounded-lg border border-gray-700">
                 <p className="text-sm text-gray-400 mb-1">Active (30d)</p>
                 <p className="text-3xl font-bold text-green-400">{stats?.activeUsers30d ?? 0}</p>
                 <p className="text-xs text-gray-500 mt-2">signed in within 30 days</p>
@@ -185,11 +185,11 @@ export default function AdminPage() {
             </div>
 
             <div className="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <div className="lg:col-span-2 bg-gray-800 p-6 rounded-lg border border-gray-700">
+              <div className="lg:col-span-2 bg-black/50 p-6 rounded-lg border border-gray-700">
                 <h2 className="text-sm text-gray-400 mb-3">Signups (last 30 days)</h2>
                 <AdminSignupChart users={users} />
               </div>
-              <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
+              <div className="bg-black/50 p-6 rounded-lg border border-gray-700">
                 <h2 className="text-sm text-gray-400 mb-3">Plan mix</h2>
                 <AdminPlanMixChart users={users} />
               </div>
@@ -204,12 +204,12 @@ export default function AdminPage() {
                     value={query}
                     onChange={(e) => handleQueryChange(e.target.value)}
                     placeholder="Search email or name…"
-                    className="px-3 py-2 rounded-md bg-gray-800 border border-gray-700 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="px-3 py-2 rounded-md bg-black/50 border border-gray-700 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <select
                     value={planFilter}
                     onChange={(e) => handlePlanFilterChange(e.target.value)}
-                    className="px-3 py-2 rounded-md bg-gray-800 border border-gray-700 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="px-3 py-2 rounded-md bg-black/50 border border-gray-700 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="all">All plans</option>
                     <option value="free">Free</option>
@@ -245,7 +245,7 @@ export default function AdminPage() {
                 />
               ) : (
                 <>
-                  <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+                  <div className="bg-black/50 rounded-lg border border-gray-700 overflow-hidden">
                     <div className="overflow-x-auto">
                       <table className="w-full">
                         <thead className="bg-gray-700/60">

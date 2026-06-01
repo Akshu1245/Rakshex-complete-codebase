@@ -353,7 +353,7 @@ function SecurityTab() {
               <p className="text-sm text-gray-300 mb-2">
                 Or manually enter this secret key in your authenticator app:
               </p>
-              <div className="bg-gray-900 p-3 rounded-md border border-gray-600">
+              <div className="bg-transparent p-3 rounded-md border border-gray-600">
                 <code className="text-blue-400 text-sm font-mono break-all select-all">
                   {twoFASecret}
                 </code>
@@ -421,7 +421,7 @@ function SecurityTab() {
         {/* Disable 2FA Modal */}
         {showDisable2FA && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-gray-800 rounded-lg max-w-md w-full p-6 border border-gray-700">
+            <div className="bg-black/50 rounded-lg max-w-md w-full p-6 border border-gray-700">
               <h3 className="text-xl font-bold text-white mb-4">
                 Disable Two-Factor Authentication
               </h3>
@@ -760,7 +760,7 @@ function DangerZoneTab() {
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-gray-800 rounded-lg max-w-md w-full p-6 border border-gray-700">
+          <div className="bg-black/50 rounded-lg max-w-md w-full p-6 border border-gray-700">
             <h3 className="text-xl font-bold text-white mb-4">Delete Your Account?</h3>
             <p className="text-sm text-gray-300 mb-4">
               This action cannot be undone. All your data will be permanently removed.
@@ -837,7 +837,7 @@ function SettingsContent() {
   return (
     <div className="">
       {/* Header */}
-      <div className="bg-gray-800 border-b border-gray-700">
+      <div className="bg-black/50 border-b border-gray-700">
         <div className="max-w-6xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
@@ -878,7 +878,7 @@ function SettingsContent() {
 
           {/* Content */}
           <div className="flex-1">
-            <div className="bg-gray-800 rounded-lg border border-gray-700 p-6">
+            <div className="bg-black/50 rounded-lg border border-gray-700 p-6">
               {activeTab === "profile" && <ProfileTab />}
               {activeTab === "security" && <SecurityTab />}
               {activeTab === "notifications" && <NotificationsTab />}
@@ -896,7 +896,7 @@ export default function SettingsPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="min-h-screen flex items-center justify-center bg-transparent">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
         </div>
       }

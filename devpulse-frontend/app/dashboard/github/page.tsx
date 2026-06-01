@@ -36,7 +36,7 @@ export default function GitHubIntegrationPage() {
 
         <div className="grid grid-cols-1 gap-6">
           {/* Connect card */}
-          <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
+          <div className="bg-black/50 p-6 rounded-lg border border-gray-700">
             <h2 className="text-xl font-semibold mb-4">GitHub App Connection</h2>
             <p className="text-gray-400 mb-4">
               Install the RaksHex GitHub App to enable automatic PR security scans. Findings are
@@ -56,7 +56,7 @@ export default function GitHubIntegrationPage() {
           </div>
 
           {/* Repos list */}
-          <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
+          <div className="bg-black/50 p-6 rounded-lg border border-gray-700">
             <h2 className="text-xl font-semibold mb-4">Connected Repositories</h2>
             <div className="mb-4">
               <input

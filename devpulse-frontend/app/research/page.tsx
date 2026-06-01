@@ -38,14 +38,14 @@ export default function ResearchPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-8">
+    <div className="min-h-screen bg-transparent text-white p-8">
       <div className="max-w-5xl mx-auto">
         <h1 className="text-3xl font-bold mb-2">AI Security Research</h1>
         <p className="text-gray-400 mb-8">
           Competitive intelligence, market analysis, and threat research for AI runtime governance.
         </p>
 
-        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 mb-8">
+        <div className="bg-black/50 rounded-xl p-6 border border-gray-700 mb-8">
           <h2 className="text-lg font-bold mb-3">Generate Research Report</h2>
           <div className="flex gap-3">
             <input
@@ -69,7 +69,7 @@ export default function ResearchPage() {
         {loading ? (
           <div className="text-center py-12 text-gray-400">Loading...</div>
         ) : scans.length === 0 ? (
-          <div className="text-center py-12 bg-gray-800/50 rounded-xl border border-gray-700">
+          <div className="text-center py-12 bg-black/50/50 rounded-xl border border-gray-700">
             <p className="text-gray-400 text-lg mb-2">No competitive scans yet</p>
             <p className="text-gray-500 text-sm">
               Generate a research report above to start tracking competitors.
@@ -80,7 +80,7 @@ export default function ResearchPage() {
             {scans.slice(0, 10).map((scan: any, i: number) => (
               <div
                 key={i}
-                className="bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-blue-500 transition-colors"
+                className="bg-black/50 rounded-xl p-6 border border-gray-700 hover:border-blue-500 transition-colors"
               >
                 <div className="flex justify-between items-start mb-3">
                   <h3 className="text-lg font-bold">{scan.competitor || scan.name || "Unknown"}</h3>

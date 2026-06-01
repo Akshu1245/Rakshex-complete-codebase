@@ -62,7 +62,7 @@ export default function BlogLakeraAlternative() {
           </ul>
 
           <h2 className="text-2xl font-bold text-white mt-8">RaksHex vs Lakera: Security Stack</h2>
-          <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden my-4">
+          <div className="bg-black/50 rounded-lg border border-gray-700 overflow-hidden my-4">
             <table className="w-full text-left text-sm">
               <thead className="bg-gray-700/50">
                 <tr>

@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function SecurityWhitepaper() {
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-8">
+    <div className="min-h-screen bg-transparent text-white p-8">
       <div className="max-w-4xl mx-auto prose prose-invert">
         <p className="text-blue-400 text-sm font-medium mb-2">RaksHex Security</p>
         <h1 className="text-4xl font-bold mb-4">Security Architecture Whitepaper</h1>
@@ -50,7 +50,7 @@ export default function SecurityWhitepaper() {
                 desc: "Request fingerprinting with SHA-256. Anomaly detection on request patterns. Rate limiting per tenant.",
               },
             ].map((item, i) => (
-              <div key={i} className="bg-gray-800 p-4 rounded-lg border border-gray-700">
+              <div key={i} className="bg-black/50 p-4 rounded-lg border border-gray-700">
                 <h3 className="font-bold text-blue-400 mb-1">{item.title}</h3>
                 <p className="text-gray-400 text-sm">{item.desc}</p>
               </div>
