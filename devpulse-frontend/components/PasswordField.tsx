@@ -44,12 +44,12 @@ export const PasswordField = forwardRef<HTMLInputElement, PasswordFieldProps>(
           autoComplete={autoComplete}
           required={required}
           minLength={minLength}
-          className={`w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 ${className}`}
+          className={`w-full px-4 py-3 bg-white/[0.04] border border-white/10 rounded-lg text-white placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-[#14B8A6] focus:border-[#14B8A6]/50 pr-10 text-sm ${className}`}
         />
         <button
           type="button"
           onClick={() => setVisible((v) => !v)}
-          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 p-1"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-300 p-1"
           aria-label={visible ? "Hide" : "Show"}
           tabIndex={-1}
         >
