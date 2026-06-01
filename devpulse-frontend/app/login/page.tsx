@@ -145,9 +145,11 @@ export default function LoginPage() {
         </div>
         {/* Right Panel — Wave Dots */}
         <div className="hidden lg:flex lg:w-1/2 items-center justify-center relative overflow-hidden login-wave-bg">
+          <div className="wave-layer" />
+          <div className="login-wave-glow" />
           <div className="relative z-10 text-center">
             <h2 className="text-[42px] font-semibold text-white leading-tight">
-              Start Building <span className="text-[#14B8A6]">Real Apps</span>
+              Start <span className="text-[#14B8A6]">Securing</span>
             </h2>
           </div>
         </div>
@@ -251,9 +253,11 @@ export default function LoginPage() {
           </div>
         </div>
         <div className="hidden lg:flex lg:w-1/2 items-center justify-center relative overflow-hidden login-wave-bg">
+          <div className="wave-layer" />
+          <div className="login-wave-glow" />
           <div className="relative z-10 text-center">
             <h2 className="text-[42px] font-semibold text-white leading-tight">
-              Start Building <span className="text-[#14B8A6]">Real Apps</span>
+              Start <span className="text-[#14B8A6]">Securing</span>
             </h2>
           </div>
         </div>
@@ -413,9 +417,11 @@ export default function LoginPage() {
 
       {/* Right Panel — Wave Dot Grid */}
       <div className="hidden lg:flex lg:w-1/2 items-center justify-center relative overflow-hidden login-wave-bg">
+        <div className="wave-layer" />
+        <div className="login-wave-glow" />
         <div className="relative z-10 text-center">
           <h2 className="text-[42px] font-semibold text-white leading-tight">
-            Start Building <span className="text-[#14B8A6]">Real Apps</span>
+            Start <span className="text-[#14B8A6]">Securing</span>
           </h2>
         </div>
       </div>
