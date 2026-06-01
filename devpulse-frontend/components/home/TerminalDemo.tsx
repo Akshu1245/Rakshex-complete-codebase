@@ -152,13 +152,18 @@ export function TerminalDemo() {
           </div>
           <div className="space-y-1">
             {findings.map((f, i) => {
+              let borderBgColor = "border-orange-500/25 text-orange-400 bg-orange-500/10";
+              if (f.startsWith("🔒")) {
+                borderBgColor = "border-red-500/25 text-red-400 bg-red-500/10";
+              } else if (f.startsWith("💰")) {
+                borderBgColor = "border-amber-500/25 text-amber-400 bg-amber-500/10";
+              }
               return (
                 <div
                   key={i}
-                  className="text-[8px] border border-orange-500/25 rounded px-1.5 py-0.5 font-sans font-medium flex items-start gap-1 text-orange-400 bg-orange-500/10 whitespace-pre-wrap leading-tight"
+                  className={`text-[9px] border rounded px-1.5 py-0.5 font-mono flex items-start gap-1.5 whitespace-pre-wrap leading-tight ${borderBgColor}`}
                 >
-                  <span className="shrink-0">🟠</span>
-                  <span>{f.replace("🟠 ", "")}</span>
+                  <span>{f}</span>
                 </div>
               );
             })}
