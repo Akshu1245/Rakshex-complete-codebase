@@ -10,6 +10,10 @@ jobs:
   security:
     name: Scan API Collection
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
