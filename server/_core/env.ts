@@ -51,6 +51,8 @@ const EnvSchema = z.object({
     .default("https://auth.manus.app"),
   GOOGLE_CLIENT_ID: z.string().default(""),
   GOOGLE_CLIENT_SECRET: z.string().default(""),
+  GITHUB_CLIENT_ID: z.string().default(""),
+  GITHUB_CLIENT_SECRET: z.string().default(""),
 
   // LLM / Forge — both optional, only validated for shape if set.
   BUILT_IN_FORGE_API_URL: z.string().url().default("https://api.manus.app/forge"),
@@ -156,6 +158,8 @@ export const ENV = {
   oAuthServerUrl: parsed.OAUTH_SERVER_URL,
   googleClientId: parsed.GOOGLE_CLIENT_ID,
   googleClientSecret: parsed.GOOGLE_CLIENT_SECRET,
+  githubClientId: parsed.GITHUB_CLIENT_ID,
+  githubClientSecret: parsed.GITHUB_CLIENT_SECRET,
 
   port: parsed.PORT,
   isProduction,

@@ -7,8 +7,9 @@ import { ENV } from "../_core/env";
 
 export const authProvidersRouter = router({
   list: publicProcedure.query(() => ({
-    emailPassword: true,
+    // Sign-up/sign-in is OAuth-only (GitHub + Google).
+    emailPassword: false,
     google: Boolean(ENV.googleClientId && ENV.googleClientSecret),
-    github: Boolean(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET),
+    github: Boolean(ENV.githubClientId && ENV.githubClientSecret),
   })),
 });
