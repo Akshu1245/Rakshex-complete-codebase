@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useCountdown } from "@/lib/animations/countdown";
 import { useMegaMenu } from "@/lib/animations/megamenu";
@@ -19,7 +20,17 @@ import {
   X,
 } from "lucide-react";
 
+const HIDE_BANNER_PATHS = [
+  "/login",
+  "/register",
+  "/reset-password",
+  "/privacy",
+  "/terms",
+  "/cookies",
+];
+
 export function PublicHeader() {
+  const pathname = usePathname();
   const timeLeft = useCountdown("2026-07-01T00:00:00Z");
   const { activeMenu, handleMouseEnter, handleMouseLeave, forceClose } = useMegaMenu();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -32,45 +43,49 @@ export function PublicHeader() {
   const isZero =
     timeLeft.days === 0 && timeLeft.hours === 0 && timeLeft.minutes === 0 && timeLeft.seconds === 0;
 
+  const showBanner = !HIDE_BANNER_PATHS.some((p) => pathname === p);
+
   return (
     <div className="fixed top-0 left-0 right-0 w-full z-50 flex flex-col">
       {/* SECTION 1 — sticky announcement bar */}
-      <div className="w-full bg-transparent border-b border-[#14B8A6]">
-        <Link className="block" href="/changelog">
-          <div className="mx-auto flex h-10 w-full max-w-[1280px] items-center justify-between px-6">
-            <p className="min-w-0 truncate text-left text-xs font-medium text-white sm:text-sm">
-              🔒 RakshEx Launch Week — India's First AI Runtime Governance Platform →
-            </p>
-            {mounted && !isZero && (
-              <span
-                aria-label="Launch countdown"
-                className="flex shrink-0 flex-row items-center gap-1.5 text-xs text-[#9CA3AF]"
-              >
-                <span className="hidden md:inline mr-1 text-[11px] uppercase tracking-wider text-[#9CA3AF]">
-                  Launch in:
+      {showBanner && (
+        <div className="w-full bg-transparent border-b border-[#14B8A6]">
+          <Link className="block" href="/changelog">
+            <div className="mx-auto flex h-10 w-full max-w-[1280px] items-center justify-between px-6">
+              <p className="min-w-0 truncate text-left text-xs font-medium text-white sm:text-sm">
+                🔒 RakshEx Launch Week — India's First AI Runtime Governance Platform →
+              </p>
+              {mounted && !isZero && (
+                <span
+                  aria-label="Launch countdown"
+                  className="flex shrink-0 flex-row items-center gap-1.5 text-xs text-[#9CA3AF]"
+                >
+                  <span className="hidden md:inline mr-1 text-[11px] uppercase tracking-wider text-[#9CA3AF]">
+                    Launch in:
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="rounded bg-[#0F1419] border border-[#14B8A6] px-1.5 py-0.5 font-bold font-mono text-[#14B8A6]">
+                      {timeLeft.days}d
+                    </span>
+                    <span>:</span>
+                    <span className="rounded bg-[#0F1419] border border-[#14B8A6] px-1.5 py-0.5 font-bold font-mono text-[#14B8A6]">
+                      {timeLeft.hours}h
+                    </span>
+                    <span>:</span>
+                    <span className="rounded bg-[#0F1419] border border-[#14B8A6] px-1.5 py-0.5 font-bold font-mono text-[#14B8A6]">
+                      {timeLeft.minutes}m
+                    </span>
+                    <span>:</span>
+                    <span className="rounded bg-[#0F1419] border border-[#14B8A6] px-1.5 py-0.5 font-bold font-mono text-[#14B8A6]">
+                      {timeLeft.seconds}s
+                    </span>
+                  </span>
                 </span>
-                <span className="flex items-center gap-1">
-                  <span className="rounded bg-[#0F1419] border border-[#14B8A6] px-1.5 py-0.5 font-bold font-mono text-[#14B8A6]">
-                    {timeLeft.days}d
-                  </span>
-                  <span>:</span>
-                  <span className="rounded bg-[#0F1419] border border-[#14B8A6] px-1.5 py-0.5 font-bold font-mono text-[#14B8A6]">
-                    {timeLeft.hours}h
-                  </span>
-                  <span>:</span>
-                  <span className="rounded bg-[#0F1419] border border-[#14B8A6] px-1.5 py-0.5 font-bold font-mono text-[#14B8A6]">
-                    {timeLeft.minutes}m
-                  </span>
-                  <span>:</span>
-                  <span className="rounded bg-[#0F1419] border border-[#14B8A6] px-1.5 py-0.5 font-bold font-mono text-[#14B8A6]">
-                    {timeLeft.seconds}s
-                  </span>
-                </span>
-              </span>
-            )}
-          </div>
-        </Link>
-      </div>
+              )}
+            </div>
+          </Link>
+        </div>
+      )}
 
       {/* SECTION 2 — Navbar Redesign (Mega Menu) */}
       <nav
