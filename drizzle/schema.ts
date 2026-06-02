@@ -461,6 +461,49 @@ export type OnboardingProgress = typeof onboardingProgress.$inferSelect;
 export type InsertOnboardingProgress = typeof onboardingProgress.$inferInsert;
 
 /**
+ * In-app notifications — scan results, cost anomalies, security alerts,
+ * billing, and team events surfaced in the dashboard bell + feed.
+ */
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("userId").notNull(),
+    type: varchar("type", { length: 40 }).notNull(),
+    title: varchar("title", { length: 200 }).notNull(),
+    body: text("body").notNull(),
+    link: varchar("link", { length: 300 }),
+    read: boolean("read").default(false).notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdIdx: index().on(table.userId),
+    createdAtIdx: index().on(table.createdAt),
+  }),
+);
+
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = typeof notifications.$inferInsert;
+
+/**
+ * Feature flags — runtime on/off + percentage rollout toggles managed from
+ * the admin dashboard. Gates risky or gradual-rollout features without a deploy.
+ */
+export const featureFlags = pgTable(
+  "feature_flags",
+  {
+    key: varchar("key", { length: 80 }).primaryKey(),
+    description: varchar("description", { length: 300 }).notNull().default(""),
+    enabled: boolean("enabled").default(false).notNull(),
+    rolloutPercentage: integer("rolloutPercentage").default(0).notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+  },
+);
+
+export type FeatureFlag = typeof featureFlags.$inferSelect;
+export type InsertFeatureFlag = typeof featureFlags.$inferInsert;
+
+/**
  * Subscriptions - Razorpay subscription management
  */
 export const subscriptions = pgTable(

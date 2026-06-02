@@ -134,6 +134,12 @@ export default function AdminPage() {
             >
               Refresh
             </button>
+            <Link
+              href="/admin/flags"
+              className="px-3 py-2 text-sm rounded-md border border-gray-700 text-gray-200 hover:bg-black/50 transition-colors"
+            >
+              Feature Flags
+            </Link>
             <Link href="/dashboard" className="text-blue-400 hover:text-blue-300 text-sm">
               ← Dashboard
             </Link>

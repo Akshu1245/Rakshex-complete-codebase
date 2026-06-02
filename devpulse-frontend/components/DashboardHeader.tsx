@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/components/AuthProvider";
+import { NotificationBell } from "@/components/NotificationBell";
 
 interface DashboardHeaderProps {
   onMenuOpen: () => void;
@@ -33,9 +34,7 @@ export function DashboardHeader({ onMenuOpen }: DashboardHeaderProps) {
       {/* Right actions */}
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-4">
-          <span className="material-symbols-outlined text-on-surface-variant hover:text-primary cursor-pointer transition-colors">
-            notifications
-          </span>
+          <NotificationBell />
           <span className="material-symbols-outlined text-on-surface-variant hover:text-primary cursor-pointer transition-colors">
             help_outline
           </span>
