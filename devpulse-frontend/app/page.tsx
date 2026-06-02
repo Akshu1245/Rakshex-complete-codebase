@@ -152,11 +152,24 @@ function PlatformStats() {
 
   const formatNum = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1)}K` : n.toString());
 
+  if (!stats) {
+    return (
+      <section className="py-20 bg-transparent">
+        <div className="max-w-[1280px] mx-auto px-6 text-center">
+          <h2 className="text-3xl font-bold text-white mb-4">Platform Statistics</h2>
+          <p className="text-neutral-400 text-sm">
+            Metrics will appear here once the platform has usage data.
+          </p>
+        </div>
+      </section>
+    );
+  }
+
   const items = [
-    { label: "Collections Scanned", value: stats ? formatNum(stats.collections) : "12.8K" },
-    { label: "Vulnerabilities Found", value: stats ? formatNum(stats.findings) : "94.2K" },
-    { label: "API Endpoints Protected", value: stats ? formatNum(stats.endpoints) : "295K" },
-    { label: "Active Users", value: stats ? formatNum(stats.users) : "1,247" },
+    { label: "Collections Scanned", value: formatNum(stats.collections) },
+    { label: "Vulnerabilities Found", value: formatNum(stats.findings) },
+    { label: "API Endpoints Protected", value: formatNum(stats.endpoints) },
+    { label: "Active Users", value: formatNum(stats.users) },
   ];
 
   return (

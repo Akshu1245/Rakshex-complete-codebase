@@ -1,102 +1,134 @@
 "use client";
-import { useEffect, useState, useCallback, useRef } from "react";
+
+import { useEffect, useState, useCallback, useMemo } from "react";
+import Link from "next/link";
+import { io, Socket } from "socket.io-client";
+import { trpc } from "@/lib/trpc";
 import PlanUtilizationBanner from "../../components/PlanUtilizationBanner";
 
-function getWsUrl(): string {
-  if (process.env.NEXT_PUBLIC_WS_URL) return process.env.NEXT_PUBLIC_WS_URL;
-  if (typeof window === "undefined") return "ws://localhost:8000/ws";
+function getSocketUrl(): string {
+  if (typeof window === "undefined") return "";
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-  return `${protocol}//${window.location.host}/ws`;
+  return `${protocol}//${window.location.host}`;
 }
 
-const WS_URL = getWsUrl();
-
-interface Message {
-  type: string;
-  total_cost?: number;
-  cost?: number;
-  agent_id?: string;
-  anomaly?: boolean;
-  model?: string;
-}
-
-interface LogEntry {
+interface LiveLog {
+  id: string;
   time: string;
   agent: string;
   cost: number;
   anomaly: boolean;
   model?: string;
+  status: string;
 }
 
 export default function Dashboard() {
-  const [socket, setSocket] = useState<WebSocket | null>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
   const [connected, setConnected] = useState(false);
-  const [totalCost, setTotalCost] = useState(0);
-  const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [anomalyActive, setAnomalyActive] = useState(false);
-  const reconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [liveLogs, setLiveLogs] = useState<LiveLog[]>([]);
+  const [liveCost, setLiveCost] = useState(0);
 
-  const connect = useCallback(() => {
-    const ws = new WebSocket(WS_URL);
+  // Real tRPC data
+  const overviewQuery = trpc.analytics.overview.useQuery(undefined, {
+    refetchInterval: 15000,
+    retry: 2,
+  });
 
-    ws.onopen = () => {
+  const anomaliesQuery = trpc.analytics.anomalies.useQuery(
+    { threshold: 2 },
+    { refetchInterval: 30000, retry: 2 },
+  );
+
+  const overview = overviewQuery.data;
+  const loading = overviewQuery.isLoading;
+
+  // Socket.IO real-time
+  const connectSocket = useCallback(() => {
+    const url = getSocketUrl();
+    if (!url) return;
+
+    const s = io(url, {
+      path: "/ws",
+      transports: ["websocket", "polling"],
+      reconnection: true,
+      reconnectionDelay: 3000,
+      reconnectionAttempts: 5,
+    });
+
+    s.on("connect", () => {
       setConnected(true);
-      setSocket(ws);
-    };
+      setSocket(s);
+    });
 
-    ws.onmessage = (event) => {
-      try {
-        const msg: Message = JSON.parse(event.data);
-
-        if (msg.type === "cost_update") {
-          setTotalCost(msg.total_cost || 0);
-          const newLog: LogEntry = {
-            time: new Date().toLocaleTimeString(),
-            agent: msg.agent_id || "unknown",
-            cost: msg.cost || 0,
-            anomaly: msg.anomaly || false,
-            model: msg.model,
-          };
-          setLogs((prev) => [newLog, ...prev].slice(0, 50));
-          if (msg.anomaly) setAnomalyActive(true);
-        } else if (msg.type === "init") {
-          setTotalCost(msg.total_cost || 0);
-        } else if (msg.type === "pong") {
-          // heartbeat response
-        }
-      } catch {
-        // Message parse failure
-      }
-    };
-
-    ws.onclose = () => {
+    s.on("disconnect", () => {
       setConnected(false);
       setSocket(null);
-      reconnectRef.current = setTimeout(() => {
-        connect();
-      }, 3000);
-    };
+    });
 
-    return ws;
+    s.on("message", (msg: { type: string; data?: any }) => {
+      if (msg.type === "cost_update" && msg.data) {
+        setLiveCost((prev) => prev + (msg.data.cost || 0));
+        const newLog: LiveLog = {
+          id: `${Date.now()}_${Math.random()}`,
+          time: new Date().toLocaleTimeString(),
+          agent: msg.data.model || "live-agent",
+          cost: msg.data.cost || 0,
+          anomaly: msg.data.anomaly || false,
+          model: msg.data.model,
+          status: msg.data.anomaly ? "error" : "success",
+        };
+        setLiveLogs((prev) => [newLog, ...prev].slice(0, 50));
+      }
+    });
+
+    return s;
   }, []);
 
   useEffect(() => {
-    const ws = connect();
-    const heartbeat = setInterval(() => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: "ping" }));
-      }
-    }, 30000);
-
+    const s = connectSocket();
     return () => {
-      clearInterval(heartbeat);
-      if (reconnectRef.current) clearTimeout(reconnectRef.current);
-      ws.close();
+      s?.disconnect();
     };
-  }, [connect]);
+  }, [connectSocket]);
 
-  const activeAgents = new Set(logs.map((l) => l.agent)).size;
-  const anomalyCount = logs.filter((l) => l.anomaly).length;
+  // Merge overview events + live Socket.IO events
+  const displayLogs: LiveLog[] = useMemo(() => {
+    const base: LiveLog[] =
+      overview?.recentEvents.map((e: any) => ({
+        id: e.id,
+        time: new Date(e.timestamp).toLocaleTimeString(),
+        agent: e.agent || "unknown",
+        cost: e.cost,
+        anomaly: e.anomaly,
+        model: e.model,
+        status: e.status,
+      })) ?? [];
+
+    const merged = new Map<string, LiveLog>();
+    for (const log of base) merged.set(log.id, log);
+    for (const log of liveLogs) merged.set(log.id, log);
+
+    return Array.from(merged.values())
+      .sort((a, b) => b.time.localeCompare(a.time))
+      .slice(0, 50);
+  }, [overview?.recentEvents, liveLogs]);
+
+  const totalCost = liveCost + (overview?.todayCost || 0);
+  const activeAgents = overview?.activeAgents ?? 0;
+  const todayRequests = overview?.todayRequests ?? 0;
+  const hasAnomaly = overview?.hasAnomaly || (anomaliesQuery.data?.length ?? 0) > 0;
+  const anomalyCount = anomaliesQuery.data?.length ?? 0;
+  const threatBars = overview?.threatBars ?? new Array(12).fill(0);
+
+  const timeLabels = useMemo(() => {
+    const labels: string[] = [];
+    const now = new Date();
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getTime() - i * 2 * 60 * 60 * 1000);
+      labels.push(`${String(d.getHours()).padStart(2, "0")}:00`);
+    }
+    return labels;
+  }, []);
 
   return (
     <div className="p-6 min-h-screen bg-surface-base text-on-surface font-body-md relative overflow-x-hidden">
@@ -125,20 +157,54 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="flex gap-2">
-            <button className="px-4 py-2 bg-primary text-on-primary font-button-text font-bold rounded-lg emerald-glow hover:opacity-90 transition-all flex items-center gap-2">
+            <Link
+              href="/report"
+              className="px-4 py-2 bg-primary text-on-primary font-button-text font-bold rounded-lg emerald-glow hover:opacity-90 transition-all flex items-center gap-2"
+            >
               <span className="material-symbols-outlined text-sm">print</span>
               Generate Report
-            </button>
-            <button className="px-4 py-2 border border-glass text-on-surface hover:bg-surface-container-low font-button-text font-bold rounded-lg transition-all flex items-center gap-2">
-              <span className="material-symbols-outlined text-sm">download</span>
-              Export Data
-            </button>
+            </Link>
+            <Link
+              href="/metrics"
+              className="px-4 py-2 border border-glass text-on-surface hover:bg-surface-container-low font-button-text font-bold rounded-lg transition-all flex items-center gap-2"
+            >
+              <span className="material-symbols-outlined text-sm">insights</span>
+              Full Metrics
+            </Link>
           </div>
         </div>
 
         <PlanUtilizationBanner />
 
-        {/* Bento Hero Grid */}
+        {/* Empty state for no telemetry */}
+        {overview && overview.todayRequests === 0 && displayLogs.length === 0 && !loading && (
+          <div className="glass-card p-8 text-center border border-dashed border-glass">
+            <span className="material-symbols-outlined text-5xl text-on-surface-variant/40 mb-4">
+              radar
+            </span>
+            <h3 className="font-headline-md text-white font-bold mb-2">No Telemetry Data Yet</h3>
+            <p className="text-sm text-on-surface-variant max-w-lg mx-auto mb-4">
+              Your dashboard populates automatically once you start sending AI events through the
+              RaksHex SDK or run your first scan.
+            </p>
+            <div className="flex justify-center gap-3">
+              <Link
+                href="/scanning"
+                className="px-4 py-2 bg-primary text-on-primary rounded-lg font-bold text-sm hover:opacity-90 transition-all"
+              >
+                Run a Scan
+              </Link>
+              <Link
+                href="/docs"
+                className="px-4 py-2 border border-glass rounded-lg text-sm hover:bg-surface-container-low transition-all"
+              >
+                View SDK Docs
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Bento Hero Grid — Real Data */}
         <div className="grid grid-cols-12 gap-6">
           {/* Total Real-time Spend */}
           <div
@@ -152,46 +218,67 @@ export default function Dashboard() {
               <span className="material-symbols-outlined text-primary">payments</span>
             </div>
             <h2 className="font-headline-xl text-headline-xl text-primary font-bold">
-              ${totalCost < 0.01 && totalCost > 0 ? totalCost.toFixed(4) : totalCost.toFixed(2)}
+              $
+              {loading
+                ? "—"
+                : totalCost < 0.01 && totalCost > 0
+                  ? totalCost.toFixed(4)
+                  : totalCost.toFixed(2)}
             </h2>
             <div className="mt-4 flex items-center gap-2 text-status-success font-label-mono text-xs">
               <span className="material-symbols-outlined text-sm">trending_up</span>
-              <span>+4.2% vs last session</span>
+              <span>{overview?.todayRequests ?? 0} requests today</span>
             </div>
           </div>
 
-          {/* Active AI Nodes */}
+          {/* Active AI Agents */}
           <div
             className="col-span-12 md:col-span-4 glass-card p-6 entrance-anim"
             style={{ animationDelay: "0.2s" }}
           >
             <div className="flex justify-between items-start mb-4">
               <span className="text-on-surface-variant font-label-mono text-[11px] uppercase tracking-wider">
-                Active AI Nodes
+                Active AI Agents
               </span>
               <span className="material-symbols-outlined text-primary">hub</span>
             </div>
             <div className="flex items-end gap-3">
               <h2 className="font-headline-xl text-headline-xl text-white font-bold">
-                {activeAgents || "2,104"}
+                {loading ? "—" : activeAgents}
               </h2>
-              <span className="font-body-md text-on-surface-variant pb-2">across 12 clusters</span>
+              <span className="font-body-md text-on-surface-variant pb-2">
+                {activeAgents === 1 ? "agent" : "agents"} tracked
+              </span>
             </div>
             <div className="mt-4 flex items-center gap-2">
-              <div className="flex -space-x-2">
-                <div className="w-6 h-6 rounded-full border border-glass bg-primary/20 flex items-center justify-center text-[8px] font-bold">
-                  C1
-                </div>
-                <div className="w-6 h-6 rounded-full border border-glass bg-primary/20 flex items-center justify-center text-[8px] font-bold">
-                  C2
-                </div>
-                <div className="w-6 h-6 rounded-full border border-glass bg-primary/20 flex items-center justify-center text-[8px] font-bold">
-                  C3
-                </div>
-              </div>
-              <span className="text-xs text-on-surface-variant font-label-mono">
-                +9 more active
-              </span>
+              {activeAgents > 0 ? (
+                <>
+                  <div className="flex -space-x-2">
+                    <div className="w-6 h-6 rounded-full border border-glass bg-primary/20 flex items-center justify-center text-[8px] font-bold">
+                      A1
+                    </div>
+                    {activeAgents > 1 && (
+                      <div className="w-6 h-6 rounded-full border border-glass bg-primary/20 flex items-center justify-center text-[8px] font-bold">
+                        A2
+                      </div>
+                    )}
+                    {activeAgents > 2 && (
+                      <div className="w-6 h-6 rounded-full border border-glass bg-primary/20 flex items-center justify-center text-[8px] font-bold">
+                        A3
+                      </div>
+                    )}
+                  </div>
+                  {activeAgents > 3 && (
+                    <span className="text-xs text-on-surface-variant font-label-mono">
+                      +{activeAgents - 3} more
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span className="text-xs text-on-surface-variant font-label-mono">
+                  No active agents
+                </span>
+              )}
             </div>
           </div>
 
@@ -207,14 +294,19 @@ export default function Dashboard() {
               <span className="material-symbols-outlined text-primary">dataset</span>
             </div>
             <h2 className="font-headline-xl text-headline-xl text-white font-bold">
-              {logs.length > 0 ? (logs.length * 1.2).toFixed(1) : "45.2"}M{" "}
-              <span className="text-headline-md text-on-surface-variant">req/s</span>
+              {loading ? "—" : todayRequests.toLocaleString()}
+              <span className="text-headline-md text-on-surface-variant ml-1">reqs today</span>
             </h2>
             <div className="mt-4 w-full h-1 bg-surface-container rounded-full overflow-hidden">
-              <div className="h-full bg-primary w-3/4 shadow-[0_0_8px_#6ee7b7]"></div>
+              <div
+                className="h-full bg-primary shadow-[0_0_8px_#6ee7b7] transition-all duration-500"
+                style={{
+                  width: `${Math.min(100, todayRequests > 0 ? 15 + (todayRequests / 1000) * 85 : 0)}%`,
+                }}
+              ></div>
             </div>
             <p className="mt-2 text-xs text-on-surface-variant font-label-mono">
-              System Load: 78% Capacity
+              {overview?.todayErrors ?? 0} errors today
             </p>
           </div>
         </div>
@@ -247,81 +339,104 @@ export default function Dashboard() {
                 </button>
               </div>
             </div>
-            {/* Synthetic Threat Bars */}
+            {/* Real threat bars from telemetry */}
             <div className="flex-grow flex items-end justify-between gap-2 pt-4 min-h-[220px]">
-              {[40, 60, 45, 85, 30, 55, 75, 40, 65, 95, 50, 60].map((height, i) => (
+              {threatBars.map((height, i) => (
                 <div
                   key={i}
                   className="flex-1 bg-primary/20 rounded-t-sm relative group cursor-pointer h-full"
                 >
                   <div
-                    style={{ height: `${height}%` }}
+                    style={{ height: `${Math.max(5, height)}%` }}
                     className="absolute bottom-0 w-full bg-primary rounded-t-sm group-hover:brightness-125 transition-all shadow-[0_0_8px_rgba(110,231,183,0.3)]"
                   ></div>
                 </div>
               ))}
             </div>
             <div className="flex justify-between mt-4 text-[10px] font-label-mono text-on-surface-variant">
-              <span>00:00</span>
-              <span>04:00</span>
-              <span>08:00</span>
-              <span>12:00</span>
-              <span>16:00</span>
-              <span>20:00</span>
-              <span>23:59</span>
+              {timeLabels.map((label, i) => (
+                <span key={i}>{label}</span>
+              ))}
             </div>
           </div>
 
-          {/* Right Panel: Cluster Health Map */}
+          {/* Right Panel: Anomaly Status */}
           <div
             className="col-span-12 lg:col-span-4 glass-card flex flex-col entrance-anim overflow-hidden"
             style={{ animationDelay: "0.5s" }}
           >
             <div className="p-6 border-b border-glass">
               <h3 className="font-headline-md text-headline-md text-white font-bold">
-                Cluster Health
+                Anomaly Status
               </h3>
-              <p className="text-xs text-on-surface-variant font-label-mono">Global Node Status</p>
+              <p className="text-xs text-on-surface-variant font-label-mono">
+                {anomalyCount > 0
+                  ? `${anomalyCount} active anomaly${anomalyCount > 1 ? "ies" : "y"}`
+                  : "No anomalies detected"}
+              </p>
             </div>
-            <div
-              className="relative flex-grow bg-cover bg-center min-h-[280px]"
-              style={{
-                backgroundImage:
-                  "url('https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=600&auto=format&fit=crop')",
-              }}
-            >
-              <div className="absolute inset-0 bg-background/60 backdrop-blur-[2px]"></div>
+            <div className="relative flex-grow min-h-[280px] p-6 flex flex-col gap-3">
+              {/* Status indicators */}
+              <div className="flex items-center justify-between p-3 glass-card border border-glass">
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`w-2.5 h-2.5 rounded-full ${hasAnomaly ? "bg-status-error animate-pulse" : "bg-status-success"}`}
+                  ></span>
+                  <span className="text-sm text-white font-medium">AI Spend Monitor</span>
+                </div>
+                <span className="text-[10px] font-label-mono text-on-surface-variant">
+                  {hasAnomaly ? "THRESHOLD EXCEEDED" : "NOMINAL"}
+                </span>
+              </div>
 
-              {/* Pulsing Nodes on Map */}
-              <div className="absolute top-1/4 left-1/3 w-3 h-3 bg-primary rounded-full pulse-dot"></div>
-              <div className="absolute top-1/2 left-1/2 w-3 h-3 bg-primary rounded-full pulse-dot"></div>
-              <div className="absolute top-1/3 right-1/4 w-3 h-3 bg-status-error rounded-full animate-pulse"></div>
-              <div className="absolute bottom-1/4 left-1/4 w-3 h-3 bg-primary rounded-full pulse-dot"></div>
+              <div className="flex items-center justify-between p-3 glass-card border border-glass">
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`w-2.5 h-2.5 rounded-full ${(overview?.todayErrors ?? 0) > 0 ? "bg-status-error animate-pulse" : "bg-status-success"}`}
+                  ></span>
+                  <span className="text-sm text-white font-medium">Error Rate</span>
+                </div>
+                <span className="text-[10px] font-label-mono text-on-surface-variant">
+                  {(overview?.todayErrors ?? 0) > 0 ? `${overview?.todayErrors} TODAY` : "NOMINAL"}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between p-3 glass-card border border-glass">
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`w-2.5 h-2.5 rounded-full ${connected ? "bg-status-success" : "bg-status-warning"}`}
+                  ></span>
+                  <span className="text-sm text-white font-medium">Live Feed</span>
+                </div>
+                <span className="text-[10px] font-label-mono text-on-surface-variant">
+                  {connected ? "CONNECTED" : "POLLING MODE"}
+                </span>
+              </div>
 
               {/* Incident Overlay Box */}
-              <div className="absolute bottom-4 left-4 right-4 p-4 glass-card bg-surface/90 border border-glass">
+              <div className="mt-auto p-4 glass-card bg-surface/90 border border-glass">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-[10px] font-label-mono text-on-surface-variant">
                     Active Incident
                   </span>
                   <span
                     className={`px-2 py-0.5 text-[8px] font-bold rounded uppercase ${
-                      anomalyActive || anomalyCount > 0
+                      hasAnomaly
                         ? "bg-status-error/20 text-status-error"
                         : "bg-status-success/20 text-status-success"
                     }`}
                   >
-                    {anomalyActive || anomalyCount > 0 ? "Critical" : "Nominal"}
+                    {hasAnomaly ? "Critical" : "Nominal"}
                   </span>
                 </div>
                 <p className="text-xs font-semibold text-white">
-                  {anomalyActive || anomalyCount > 0
-                    ? "Anomaly in US-East-2 Node Cluster"
-                    : "All Node Clusters Operating Normally"}
+                  {hasAnomaly
+                    ? `${anomalyCount} anomaly${anomalyCount > 1 ? "ies" : "y"} detected in your environment`
+                    : "All systems operating normally"}
                 </p>
                 <p className="text-[10px] text-on-surface-variant mt-1">
-                  {anomalyActive || anomalyCount > 0
-                    ? "Brute force mitigation active (99.2% filtered)"
+                  {hasAnomaly
+                    ? "Review the Agent Drift page for details"
                     : "Automatic threat shield active"}
                 </p>
               </div>
@@ -342,55 +457,60 @@ export default function Dashboard() {
           </div>
 
           <div className="flex flex-col gap-2 max-h-[400px] overflow-y-auto pr-2">
-            {logs.length === 0 ? (
-              // Empty State
+            {displayLogs.length === 0 ? (
               <div className="glass-card px-6 py-12 flex flex-col items-center justify-center text-center">
                 <span className="material-symbols-outlined text-on-surface-variant/30 text-5xl mb-3">
                   sensors
                 </span>
-                <p className="font-semibold text-white">No active telemetry stream detected</p>
+                <p className="font-semibold text-white">No activity yet</p>
                 <p className="text-xs text-on-surface-variant mt-1 max-w-sm">
-                  Connect the RaksHex SDK to start streaming live AI node metrics to this dashboard.
+                  Activity will appear here once you run scans or the SDK streams AI telemetry.
                 </p>
+                <Link
+                  href="/scanning"
+                  className="mt-4 px-4 py-2 bg-primary text-on-primary rounded-lg font-bold text-sm hover:opacity-90 transition-all"
+                >
+                  Start Scanning
+                </Link>
               </div>
             ) : (
-              logs.map((log, idx) => (
+              displayLogs.map((log, idx) => (
                 <div
-                  key={idx}
+                  key={log.id}
                   className="glass-card px-6 py-4 flex items-center justify-between stream-fade-in"
                   style={{ animationDelay: `${idx * 0.05}s` }}
                 >
                   <div className="flex items-center gap-4">
                     <div className="w-8 h-8 rounded border border-glass bg-surface-container flex items-center justify-center">
                       <span
-                        className={`material-symbols-outlined text-sm ${log.anomaly ? "text-status-error" : "text-primary"}`}
+                        className={`material-symbols-outlined text-sm ${log.anomaly ? "text-status-error" : log.status === "error" ? "text-status-error" : "text-primary"}`}
                       >
-                        {log.anomaly ? "warning" : "robot_2"}
+                        {log.anomaly || log.status === "error" ? "warning" : "robot_2"}
                       </span>
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-white">
-                        {log.agent.toUpperCase()}{" "}
+                        {(log.agent || "unknown").toUpperCase()}{" "}
                         <span className="text-on-surface-variant font-normal">
-                          {log.anomaly
+                          {log.anomaly || log.status === "error"
                             ? "triggered cost threshold anomaly on"
                             : "processed request using"}
                         </span>{" "}
                         {log.model || "unknown model"}
                       </p>
                       <p className="text-[10px] font-label-mono text-on-surface-variant">
-                        Request Cost: ${log.cost.toFixed(4)} • {log.time}
+                        Cost: ${log.cost.toFixed(4)} • {log.time}
                       </p>
                     </div>
                   </div>
                   <span
                     className={`px-3 py-1 text-[10px] font-bold rounded uppercase ${
-                      log.anomaly
+                      log.anomaly || log.status === "error"
                         ? "bg-status-error/10 text-status-error border border-status-error/20"
                         : "bg-status-success/10 text-status-success border border-status-success/20"
                     }`}
                   >
-                    {log.anomaly ? "Flagged" : "Success"}
+                    {log.anomaly || log.status === "error" ? "Flagged" : "Success"}
                   </span>
                 </div>
               ))
@@ -403,14 +523,14 @@ export default function Dashboard() {
       <footer className="fixed bottom-0 left-0 md:left-64 right-0 h-10 bg-surface-container-lowest/80 backdrop-blur-lg border-t border-glass z-30 px-6 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span
-            className={`w-1.5 h-1.5 rounded-full ${connected ? "bg-status-success pulse-emerald" : "bg-status-error"}`}
+            className={`w-1.5 h-1.5 rounded-full ${connected ? "bg-status-success pulse-emerald" : "bg-status-warning"}`}
           ></span>
           <span className="font-label-mono text-[10px] text-on-surface-variant tracking-wider">
-            {connected ? "API SERVICE: OPERATIONAL" : "API SERVICE: DISCONNECTED"}
+            {connected ? "LIVE FEED: OPERATIONAL" : "LIVE FEED: POLLING MODE"}
           </span>
         </div>
         <span className="font-label-mono text-[10px] text-on-surface-variant tracking-wider">
-          RaksHex AI SECURITY CORE • VERSION 2.1.4
+          RAKSHEX AI SECURITY
         </span>
       </footer>
     </div>

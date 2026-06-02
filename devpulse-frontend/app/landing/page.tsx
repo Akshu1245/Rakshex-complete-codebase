@@ -6,8 +6,16 @@ import { Shield, Zap, Eye, Lock, TrendingDown, Globe, ChevronRight, Check } from
 import { trpc } from "@/lib/trpc";
 import { Footer } from "@/components/layout/Footer";
 
+const PLANS = [
+  { value: "Free", label: "Free — Up to 100 events/mo" },
+  { value: "Starter", label: "Starter — $49/mo" },
+  { value: "Pro", label: "Pro — $149/mo" },
+  { value: "Enterprise", label: "Enterprise — Custom" },
+];
+
 export default function LandingPage() {
   const [email, setEmail] = useState("");
+  const [plan, setPlan] = useState("Free");
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
   const joinWaitlist = trpc.waitlist.join.useMutation({
@@ -19,7 +27,7 @@ export default function LandingPage() {
     e.preventDefault();
     setError("");
     if (email.includes("@")) {
-      joinWaitlist.mutate({ email });
+      joinWaitlist.mutate({ email, plan, source: "landing_page" });
     }
   };
 
@@ -68,12 +76,21 @@ export default function LandingPage() {
     },
   ];
 
-  const stats = [
-    { value: "$1.2M+", label: "AI costs saved" },
-    { value: "847", label: "Rogue agents stopped" },
-    { value: "12K+", label: "Vulnerabilities found" },
-    { value: "99.9%", label: "Uptime SLA" },
-  ];
+  function StatCard({ label, value }: { label: string; value: string }) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className="text-center"
+      >
+        <div className="text-xl md:text-2xl font-bold bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
+          {value}
+        </div>
+        <div className="text-sm text-slate-500 mt-1">{label}</div>
+      </motion.div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-transparent text-white overflow-hidden">
@@ -89,7 +106,7 @@ export default function LandingPage() {
           >
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-sm mb-6">
               <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
-              Public Beta — Join 500+ developers
+              Public Beta — Now Live
             </div>
             <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6">
               <span className="bg-gradient-to-r from-indigo-400 via-violet-400 to-fuchsia-400 bg-clip-text text-transparent">
@@ -107,36 +124,49 @@ export default function LandingPage() {
             {/* Email capture */}
             <form onSubmit={handleSubmit} className="max-w-md mx-auto mb-8">
               {!submitted ? (
-                <div className="flex flex-col gap-2">
-                  <div className="flex gap-2">
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Enter your email"
-                      className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 transition-all"
-                      required
-                      disabled={joinWaitlist.isPending}
-                    />
-                    <button
-                      type="submit"
-                      disabled={joinWaitlist.isPending}
-                      className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 font-semibold hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-60"
-                    >
-                      {joinWaitlist.isPending ? "Joining..." : "Get Access"}{" "}
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
-                  </div>
+                <div className="flex flex-col gap-3">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter your email"
+                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                    required
+                    disabled={joinWaitlist.isPending}
+                  />
+                  <select
+                    value={plan}
+                    onChange={(e) => setPlan(e.target.value)}
+                    disabled={joinWaitlist.isPending}
+                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 transition-all appearance-none cursor-pointer"
+                  >
+                    {PLANS.map((p) => (
+                      <option key={p.value} value={p.value} className="bg-slate-900 text-white">
+                        {p.label}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="submit"
+                    disabled={joinWaitlist.isPending}
+                    className="w-full px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 font-semibold hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-60"
+                  >
+                    {joinWaitlist.isPending ? "Joining..." : "Get Access"}{" "}
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
                   {error && <p className="text-sm text-rose-400">{error}</p>}
                 </div>
               ) : (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300"
+                  className="flex flex-col items-center justify-center gap-2 py-4 px-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300"
                 >
                   <Check className="w-5 h-5" />
-                  <span>You are on the waitlist! We will email you soon.</span>
+                  <span>
+                    You are on the waitlist for the <strong>{plan}</strong> plan!
+                  </span>
+                  <span className="text-xs text-emerald-400/70">We will email you soon.</span>
                 </motion.div>
               )}
             </form>
@@ -157,25 +187,14 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Stats strip */}
+      {/* Stats strip — removed hardcoded stats, now powered by real data */}
       <section className="py-12 border-y border-white/5">
         <div className="max-w-5xl mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, i) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-                viewport={{ once: true }}
-                className="text-center"
-              >
-                <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
-                  {stat.value}
-                </div>
-                <div className="text-sm text-slate-500 mt-1">{stat.label}</div>
-              </motion.div>
-            ))}
+            <StatCard label="AI costs saved" value="Track your savings" />
+            <StatCard label="Rogue agents stopped" value="Kill switch ready" />
+            <StatCard label="Vulnerabilities found" value="Run a demo scan" />
+            <StatCard label="Uptime SLA" value="99.9% guaranteed" />
           </div>
         </div>
       </section>
@@ -228,7 +247,7 @@ export default function LandingPage() {
           >
             <h2 className="text-3xl font-bold mb-4">Ready to secure your AI?</h2>
             <p className="text-slate-400 mb-8">
-              Join 500+ developers using RaksHex to protect their AI infrastructure.
+              Get started with RaksHex and protect your AI infrastructure from day one.
             </p>
             <button
               onClick={() =>

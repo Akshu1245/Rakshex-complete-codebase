@@ -34,13 +34,16 @@ export const analyticsRouter = router({
         return ts >= new Date(input.startDate) && ts <= new Date(input.endDate);
       });
 
-      const groups: Record<string, {
-        totalTokens: number;
-        totalCost: number;
-        latencies: number[];
-        errorCount: number;
-        requestCount: number;
-      }> = {};
+      const groups: Record<
+        string,
+        {
+          totalTokens: number;
+          totalCost: number;
+          latencies: number[];
+          errorCount: number;
+          requestCount: number;
+        }
+      > = {};
 
       for (const e of filtered) {
         let key = "";
@@ -87,9 +90,8 @@ export const analyticsRouter = router({
           totalCost: Math.round(g.totalCost * 100) / 100,
           avgLatencyP50: p50,
           avgLatencyP95: p95,
-          errorRate: g.requestCount > 0
-            ? Math.round((g.errorCount / g.requestCount) * 10000) / 100
-            : 0,
+          errorRate:
+            g.requestCount > 0 ? Math.round((g.errorCount / g.requestCount) * 10000) / 100 : 0,
           requestCount: g.requestCount,
         };
       });
@@ -110,13 +112,16 @@ export const analyticsRouter = router({
         limit: 5000,
       });
 
-      const mix: Record<string, {
-        provider: string;
-        model: string;
-        requests: number;
-        totalTokens: number;
-        totalCost: number;
-      }> = {};
+      const mix: Record<
+        string,
+        {
+          provider: string;
+          model: string;
+          requests: number;
+          totalTokens: number;
+          totalCost: number;
+        }
+      > = {};
 
       for (const e of events.events) {
         if (input.startDate && new Date(e.requestTimestamp) < new Date(input.startDate)) continue;
@@ -162,15 +167,18 @@ export const analyticsRouter = router({
         limit: 5000,
       });
 
-      const agents: Record<string, {
-        agentId: string;
-        requests: number;
-        inputTokens: number;
-        outputTokens: number;
-        totalCost: number;
-        errors: number;
-        latencies: number[];
-      }> = {};
+      const agents: Record<
+        string,
+        {
+          agentId: string;
+          requests: number;
+          inputTokens: number;
+          outputTokens: number;
+          totalCost: number;
+          errors: number;
+          latencies: number[];
+        }
+      > = {};
 
       for (const e of events.events) {
         if (input.startDate && new Date(e.requestTimestamp) < new Date(input.startDate)) continue;
@@ -197,22 +205,93 @@ export const analyticsRouter = router({
       }
 
       const sorted = Object.values(agents).sort((a, b) =>
-        input.sortBy === "cost"
-          ? b.totalCost - a.totalCost
-          : b.requests - a.requests,
+        input.sortBy === "cost" ? b.totalCost - a.totalCost : b.requests - a.requests,
       );
 
       return sorted.slice(0, input.limit).map((a) => ({
         ...a,
         totalCost: Math.round(a.totalCost * 100) / 100,
-        avgLatency: a.latencies.length > 0
-          ? Math.round(a.latencies.reduce((s, l) => s + l, 0) / a.latencies.length)
-          : 0,
-        errorRate: a.requests > 0
-          ? Math.round((a.errors / a.requests) * 10000) / 100
-          : 0,
+        avgLatency:
+          a.latencies.length > 0
+            ? Math.round(a.latencies.reduce((s, l) => s + l, 0) / a.latencies.length)
+            : 0,
+        errorRate: a.requests > 0 ? Math.round((a.errors / a.requests) * 10000) / 100 : 0,
       }));
     }),
+
+  /**
+   * Dashboard overview — lightweight real-time metrics for the home screen.
+   * Returns today's spend, active agents, request count, and any active anomalies.
+   */
+  overview: protectedProcedure.query(async ({ ctx }) => {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    const events = await db.listAiEvents(ctx.user.id, { limit: 5000 });
+
+    // Filter today's events
+    const todayEvents = events.events.filter(
+      (e) => new Date(e.requestTimestamp) >= new Date(todayStart),
+    );
+
+    // Unique agents (all time)
+    const allAgents = new Set(events.events.map((e) => e.agentId).filter(Boolean));
+
+    // Today's aggregates
+    let todayCost = 0;
+    let todayRequests = 0;
+    let todayErrors = 0;
+    for (const e of todayEvents) {
+      todayCost += toNumber(e.costUsd);
+      todayRequests++;
+      if (e.status === "error") todayErrors++;
+    }
+
+    // Recent 5 events for activity feed
+    const recentEvents = events.events
+      .sort(
+        (a, b) => new Date(b.requestTimestamp).getTime() - new Date(a.requestTimestamp).getTime(),
+      )
+      .slice(0, 5)
+      .map((e) => ({
+        id: e.id,
+        agent: e.agentId || "unknown",
+        model: e.model,
+        cost: toNumber(e.costUsd),
+        status: e.status,
+        timestamp: e.requestTimestamp,
+        anomaly: toNumber(e.costUsd) > 0.5, // simple threshold
+      }));
+
+    // Hourly cost for threat chart (last 24h)
+    const hourlyCost: Record<string, number> = {};
+    const last24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    for (const e of events.events) {
+      const ts = new Date(e.requestTimestamp);
+      if (ts < last24h) continue;
+      const key = ts.toISOString().slice(0, 13); // YYYY-MM-DDTHH
+      hourlyCost[key] = (hourlyCost[key] || 0) + toNumber(e.costUsd);
+    }
+
+    const threatBars = Object.entries(hourlyCost)
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .slice(-12)
+      .map(([, cost]) => Math.min(100, Math.round(cost * 100)));
+
+    // Fill to 12 bars if sparse
+    while (threatBars.length < 12) threatBars.unshift(0);
+
+    return {
+      todayCost: Math.round(todayCost * 100) / 100,
+      todayRequests,
+      todayErrors,
+      activeAgents: allAgents.size,
+      recentEvents,
+      threatBars,
+      hasAnomaly: todayErrors > 0 || todayCost > 5,
+    };
+  }),
 
   /**
    * Simple anomaly detection: flag hours where cost exceeds 2x the
@@ -253,9 +332,7 @@ export const analyticsRouter = router({
 
         // Look back ~7 days in the same hour slots
         for (let j = Math.max(0, i - 7 * 24); j < i; j++) {
-          const sameDayHour = hours.filter(
-            (h) => h.slice(11) === hours[i].slice(11),
-          );
+          const sameDayHour = hours.filter((h) => h.slice(11) === hours[i].slice(11));
           for (const h of sameDayHour) {
             sum += hourlyCost[h] || 0;
             count++;

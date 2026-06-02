@@ -110,6 +110,7 @@ export default function DemoPage() {
     if (!file) return;
     setScanning(true);
     setError(null);
+    setResult(null);
 
     let collection: unknown;
     try {
@@ -122,7 +123,6 @@ export default function DemoPage() {
     }
 
     try {
-      // Primary path: rate-limited server-side scan (POST /api/demo/scan via tRPC).
       const res = await demoScan.mutateAsync({ collection, filename: file.name });
       setResult({
         findings: res.findings,
@@ -133,175 +133,21 @@ export default function DemoPage() {
         pciScore: res.pciScore,
         scanTime: res.scanTime,
       });
-    } catch (err) {
-      // Rate-limit / payload errors should surface to the user.
-      const message = err instanceof Error ? err.message : "";
-      if (message.toLowerCase().includes("limit") || message.toLowerCase().includes("large")) {
-        setError(message);
-        setScanning(false);
-        return;
-      }
-      // Backend unreachable — fall back to the in-browser scanner so the
-      // no-login demo always works (this is our top-of-funnel wedge).
-      try {
-        setResult(performClientScan(collection));
-      } catch {
-        setError("Could not scan this collection. Please check the file and try again.");
+    } catch (err: any) {
+      const message = err?.message || "";
+      if (
+        message.toLowerCase().includes("too_many_requests") ||
+        message.toLowerCase().includes("limit")
+      ) {
+        setError("Demo scan limit reached (15/hour). Sign up for unlimited scans.");
+      } else if (message.toLowerCase().includes("payload")) {
+        setError("Collection too large. Max size is 2MB. Sign up for larger scans.");
+      } else {
+        setError("Server error. Please try again in a moment or sign up for full access.");
       }
     } finally {
       setScanning(false);
     }
-  };
-
-  const performClientScan = (collection: any): ScanResult => {
-    const findings: Finding[] = [];
-    const credentials: CredentialLeak[] = [];
-    const endpoints: string[] = [];
-    let scanTime = 0;
-
-    const startTime = performance.now();
-
-    // Walk the collection tree
-    const walkItems = (items: any[], path: string = "") => {
-      items?.forEach((item, idx) => {
-        const currentPath = path
-          ? `${path} > ${item.name || `Item ${idx}`}`
-          : item.name || `Item ${idx}`;
-
-        if (item.request) {
-          const req = item.request;
-          const url =
-            typeof req.url === "string"
-              ? req.url
-              : req.url?.raw || req.url?.host?.join(".") || "unknown";
-          const method = req.method || "GET";
-          const endpointId = `${method} ${url}`;
-          endpoints.push(endpointId);
-
-          // Check for HTTPS
-          if (url.startsWith("http://")) {
-            findings.push({
-              id: `find-${findings.length}`,
-              severity: "High",
-              title: "Insecure HTTP endpoint detected",
-              endpoint: endpointId,
-              category: "OWASP API2:2023 — Broken Authentication",
-              remediation: "Change URL to use HTTPS protocol",
-              lineNumber: idx,
-            });
-          }
-
-          // Check headers for security headers
-          const headers = req.header || [];
-          const headerNames = headers.map((h: any) => (h.key || "").toLowerCase());
-
-          if (!headerNames.includes("authorization") && !headerNames.includes("x-api-key")) {
-            findings.push({
-              id: `find-${findings.length}`,
-              severity: "Medium",
-              title: "Missing authentication header",
-              endpoint: endpointId,
-              category: "OWASP API2:2023 — Broken Authentication",
-              remediation: "Add Authorization or X-API-Key header",
-              lineNumber: idx,
-            });
-          }
-
-          // Scan for exposed credentials in headers, body, URL
-          const allText = JSON.stringify({ url, headers, body: req.body });
-          const secretPatterns = [
-            { regex: /sk-[a-zA-Z0-9]{48}/g, type: "OpenAI API Key" },
-            { regex: /sk-ant-[a-zA-Z0-9]{32,}/g, type: "Anthropic API Key" },
-            { regex: /AIza[0-9A-Za-z_-]{35}/g, type: "Google AI API Key" },
-            { regex: /[a-f0-9]{64}/g, type: "Possible Secret Hash" },
-            { regex: /Bearer\s+[a-zA-Z0-9._-]{20,}/g, type: "Bearer Token" },
-            { regex: /Basic\s+[A-Za-z0-9+/=]{20,}/g, type: "Basic Auth Token" },
-            { regex: /password\s*[:=]\s*["'][^"']{4,}["']/gi, type: "Hardcoded Password" },
-            { regex: /api[_-]?key\s*[:=]\s*["'][^"']{8,}["']/gi, type: "Hardcoded API Key" },
-          ];
-
-          secretPatterns.forEach(({ regex, type }) => {
-            const matches = allText.match(regex);
-            if (matches) {
-              matches.forEach((match) => {
-                const preview = match.substring(0, 12) + "..." + match.substring(match.length - 4);
-                credentials.push({
-                  type,
-                  location: currentPath,
-                  keyPreview: preview,
-                  severity: "Critical",
-                });
-                findings.push({
-                  id: `find-${findings.length}`,
-                  severity: "Critical",
-                  title: `Exposed ${type} in collection`,
-                  endpoint: endpointId,
-                  category: "OWASP API3:2023 — Broken Object Property Level Authorization",
-                  remediation: `Move ${type} to environment variables or secret manager`,
-                  lineNumber: idx,
-                });
-              });
-            }
-          });
-
-          // BOLA check — URL with user ID pattern
-          if (
-            /\{\{userId\}\}|\{userId\}|\/:userId|\/\d+/.test(url) &&
-            !headerNames.includes("authorization")
-          ) {
-            findings.push({
-              id: `find-${findings.length}`,
-              severity: "Critical",
-              title: "Potential BOLA vulnerability — user ID in URL without auth",
-              endpoint: endpointId,
-              category: "OWASP API1:2023 — Broken Object Level Authorization",
-              remediation: "Add authorization checks for user-specific resources",
-              lineNumber: idx,
-            });
-          }
-        }
-
-        if (item.item) {
-          walkItems(item.item, currentPath);
-        }
-      });
-    };
-
-    walkItems(collection.item || []);
-
-    // Deduplicate findings
-    const uniqueFindings = findings.filter(
-      (f, i, arr) => arr.findIndex((t) => t.title === f.title && t.endpoint === f.endpoint) === i,
-    );
-
-    // Deduplicate credentials
-    const uniqueCredentials = credentials.filter(
-      (c, i, arr) => arr.findIndex((t) => t.keyPreview === c.keyPreview) === i,
-    );
-
-    // Calculate risk score
-    const severityWeights = { Critical: 10, High: 7, Medium: 4, Low: 1 };
-    const rawRisk = uniqueFindings.reduce((sum, f) => sum + (severityWeights[f.severity] || 0), 0);
-    const maxRisk = uniqueFindings.length * 10 || 1;
-    const riskScore = Math.min(100, Math.round((rawRisk / maxRisk) * 100));
-
-    // Compliance scores
-    const criticalCount = uniqueFindings.filter((f) => f.severity === "Critical").length;
-    const highCount = uniqueFindings.filter((f) => f.severity === "High").length;
-    const owaspScore = Math.max(0, Math.round(100 - (criticalCount * 15 + highCount * 8)));
-    const pciScore = Math.max(0, Math.round(100 - (criticalCount * 20 + highCount * 10)));
-
-    scanTime = performance.now() - startTime;
-
-    return {
-      findings: uniqueFindings,
-      credentials: uniqueCredentials,
-      endpoints: [...new Set(endpoints)],
-      riskScore,
-      owaspScore,
-      pciScore,
-      scanTime: Math.round(scanTime),
-    };
   };
 
   const criticalCount = result?.findings.filter((f) => f.severity === "Critical").length || 0;
