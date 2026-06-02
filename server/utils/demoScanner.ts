@@ -138,7 +138,8 @@ export function performDemoScan(collection: CollectionLike): DemoScanResult {
 
         if (
           /\{\{userId\}\}|\{userId\}|\/:userId|\/\d+/.test(url) &&
-          !headerNames.includes("authorization")
+          !headerNames.includes("authorization") &&
+          !headerNames.includes("x-api-key")
         ) {
           findings.push({
             id: `find-${findings.length}`,
