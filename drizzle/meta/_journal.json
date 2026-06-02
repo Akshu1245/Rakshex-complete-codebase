@@ -8,6 +8,13 @@
       "when": 1780147632445,
       "tag": "0000_curly_dark_phoenix",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1780397958664,
+      "tag": "0001_notifications_and_feature_flags",
+      "breakpoints": true
     }
   ]
 }

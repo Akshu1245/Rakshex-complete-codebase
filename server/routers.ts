@@ -65,6 +65,9 @@ import { githubRouter } from "./api/github";
 import { agentGuardRouter } from "./api/agentGuard";
 import { waitlistRouter } from "./api/waitlist";
 import { reportsRouter } from "./api/reports";
+import { notificationsRouter } from "./api/notifications";
+import { featureFlagsRouter } from "./api/featureFlags";
+import { demoRouter } from "./api/demo";
 import { publicReportsRouter } from "./api/publicReports";
 import { authProvidersRouter } from "./api/authProviders";
 import { ensurePersonalWorkspace } from "./services/workspaceContext";
@@ -611,6 +614,9 @@ export const appRouter = router({
   agentGuard: agentGuardRouter,
   waitlist: waitlistRouter,
   reports: reportsRouter,
+  notifications: notificationsRouter,
+  featureFlags: featureFlagsRouter,
+  demo: demoRouter,
   publicReports: publicReportsRouter,
   authProviders: authProvidersRouter,
 });

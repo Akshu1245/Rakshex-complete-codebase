@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -14,43 +14,101 @@ import {
   Pie,
   Cell,
 } from "recharts";
+import { trpc } from "@/lib/trpc";
+import { EmptyState } from "@/components/EmptyState";
 
 const RANGE_OPTIONS = ["7d", "30d", "90d"] as const;
 type Range = (typeof RANGE_OPTIONS)[number];
 
-const WEEKLY_DATA = [
-  { day: "Mon", calls: 980, cost: 1.24, p95: 1200, errors: 3 },
-  { day: "Tue", calls: 1200, cost: 2.11, p95: 1380, errors: 5 },
-  { day: "Wed", calls: 1050, cost: 1.78, p95: 1100, errors: 2 },
-  { day: "Thu", calls: 1400, cost: 3.2, p95: 1650, errors: 8 },
-  { day: "Fri", calls: 1680, cost: 4.5, p95: 2100, errors: 12 },
-  { day: "Sat", calls: 720, cost: 0.98, p95: 890, errors: 1 },
-  { day: "Sun", calls: 540, cost: 0.71, p95: 780, errors: 0 },
-];
+const RANGE_DAYS: Record<Range, number> = { "7d": 7, "30d": 30, "90d": 90 };
 
-const MODEL_MIX = [
-  { name: "gpt-4o-mini", value: 48, color: "#06D6A0" },
-  { name: "claude-3-haiku", value: 22, color: "#00F0FF" },
-  { name: "gemini-flash", value: 18, color: "#FDB022" },
-  { name: "gpt-4o", value: 8, color: "#10B981" },
-  { name: "claude-3-sonnet", value: 4, color: "#F59E0B" },
-];
+const MIX_COLORS = ["#06D6A0", "#00F0FF", "#FDB022", "#10B981", "#F59E0B", "#3B82F6", "#EF4444"];
 
-const STAT_CARDS = [
-  { label: "Total API Calls", value: "7,570", delta: "+12%", up: true, color: "text-[#3B82F6]" },
-  { label: "Total LLM Cost", value: "$14.52", delta: "+8%", up: true, color: "text-[#10B981]" },
-  {
-    label: "Avg Latency (P95)",
-    value: "1,443ms",
-    delta: "-5%",
-    up: false,
-    color: "text-[#00F0FF]",
-  },
-  { label: "Error Rate", value: "0.42%", delta: "-18%", up: false, color: "text-[#06D6A0]" },
-];
+function rangeToDates(range: Range): { startDate: string; endDate: string } {
+  const end = new Date();
+  const start = new Date(end.getTime() - RANGE_DAYS[range] * 24 * 60 * 60 * 1000);
+  return { startDate: start.toISOString(), endDate: end.toISOString() };
+}
 
 export default function MetricsPage() {
   const [range, setRange] = useState<Range>("7d");
+  const { startDate, endDate } = useMemo(() => rangeToDates(range), [range]);
+
+  const summaryQuery = trpc.analytics.summary.useQuery({ startDate, endDate, groupBy: "day" });
+  const modelMixQuery = trpc.analytics.modelMix.useQuery({ startDate, endDate });
+
+  const loading = summaryQuery.isLoading || modelMixQuery.isLoading;
+
+  // Time-series rows sorted ascending by day key (YYYY-MM-DD).
+  const series = useMemo(() => {
+    const rows = summaryQuery.data ?? [];
+    return [...rows]
+      .sort((a, b) => a.key.localeCompare(b.key))
+      .map((r) => ({
+        day: r.key.slice(5), // MM-DD for compact axis labels
+        calls: r.requestCount,
+        cost: r.totalCost,
+        p95: r.avgLatencyP95,
+        errorRate: r.errorRate,
+        tokens: r.totalTokens,
+      }));
+  }, [summaryQuery.data]);
+
+  const modelMix = useMemo(() => {
+    const rows = modelMixQuery.data ?? [];
+    const totalRequests = rows.reduce((sum, m) => sum + m.requests, 0);
+    if (totalRequests === 0) return [];
+    return rows.slice(0, 7).map((m, i) => ({
+      name: m.model || m.provider,
+      value: Math.round((m.requests / totalRequests) * 100),
+      color: MIX_COLORS[i % MIX_COLORS.length],
+    }));
+  }, [modelMixQuery.data]);
+
+  const stats = useMemo(() => {
+    const totalCalls = series.reduce((s, r) => s + r.calls, 0);
+    const totalCost = series.reduce((s, r) => s + r.cost, 0);
+    const totalTokens = series.reduce((s, r) => s + r.tokens, 0);
+    const withCalls = series.filter((r) => r.calls > 0);
+    const avgP95 = withCalls.length
+      ? Math.round(withCalls.reduce((s, r) => s + r.p95, 0) / withCalls.length)
+      : 0;
+    const weightedErr = totalCalls
+      ? series.reduce((s, r) => s + (r.errorRate / 100) * r.calls, 0) / totalCalls
+      : 0;
+    return {
+      totalCalls,
+      totalCost: Math.round(totalCost * 100) / 100,
+      totalTokens,
+      avgP95,
+      errorRate: Math.round(weightedErr * 10000) / 100,
+    };
+  }, [series]);
+
+  const hasData = series.some((r) => r.calls > 0);
+
+  const statCards = [
+    {
+      label: "Total API Calls",
+      value: stats.totalCalls.toLocaleString(),
+      color: "text-[#3B82F6]",
+    },
+    {
+      label: "Total LLM Cost",
+      value: `$${stats.totalCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      color: "text-[#10B981]",
+    },
+    {
+      label: "Avg Latency (P95)",
+      value: `${stats.avgP95.toLocaleString()}ms`,
+      color: "text-[#00F0FF]",
+    },
+    {
+      label: "Error Rate",
+      value: `${stats.errorRate}%`,
+      color: "text-[#06D6A0]",
+    },
+  ];
 
   return (
     <div className="text-white p-6 max-w-7xl mx-auto">
@@ -75,139 +133,160 @@ export default function MetricsPage() {
         </div>
       </div>
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {STAT_CARDS.map((s) => (
-          <div key={s.label} className="bg-black/50 rounded-xl p-5 border border-[#2D3E50]">
-            <p className="text-gray-400 text-xs uppercase tracking-wider mb-2">{s.label}</p>
-            <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
-            <p
-              className={`text-xs mt-1 font-semibold ${s.up ? "text-[#EF4444]" : "text-[#10B981]"}`}
-            >
-              {s.delta} vs last period
-            </p>
-          </div>
-        ))}
-      </div>
-
-      {/* Charts row 1 */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        {/* API calls chart */}
-        <div className="lg:col-span-2 bg-black/50 rounded-xl p-5 border border-[#2D3E50]">
-          <h3 className="font-semibold text-white mb-4">API Calls & Cost Over Time</h3>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={WEEKLY_DATA}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#2D3E50" />
-              <XAxis dataKey="day" tick={{ fill: "#9ca3af", fontSize: 12 }} />
-              <YAxis yAxisId="left" tick={{ fill: "#9ca3af", fontSize: 12 }} />
-              <YAxis yAxisId="right" orientation="right" tick={{ fill: "#9ca3af", fontSize: 12 }} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#0A0E1A",
-                  border: "1px solid #2D3E50",
-                  borderRadius: "8px",
-                }}
-              />
-              <Bar
-                yAxisId="left"
-                dataKey="calls"
-                fill="#06D6A0"
-                radius={[4, 4, 0, 0]}
-                name="API Calls"
-              />
-            </BarChart>
-          </ResponsiveContainer>
+      {loading ? (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {[0, 1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="bg-black/50 rounded-xl p-5 border border-[#2D3E50] animate-pulse h-[88px]"
+            />
+          ))}
         </div>
-
-        {/* Model mix */}
-        <div className="bg-black/50 rounded-xl p-5 border border-[#2D3E50]">
-          <h3 className="font-semibold text-white mb-4">Model Mix</h3>
-          <ResponsiveContainer width="100%" height={140}>
-            <PieChart>
-              <Pie
-                data={MODEL_MIX}
-                cx="50%"
-                cy="50%"
-                innerRadius={40}
-                outerRadius={65}
-                dataKey="value"
-              >
-                {MODEL_MIX.map((entry, i) => (
-                  <Cell key={i} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#0A0E1A",
-                  border: "1px solid #2D3E50",
-                  borderRadius: "8px",
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="space-y-1.5 mt-2">
-            {MODEL_MIX.map((m) => (
-              <div key={m.name} className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: m.color }} />
-                  <span className="text-gray-400">{m.name}</span>
-                </div>
-                <span className="text-white font-medium">{m.value}%</span>
+      ) : !hasData ? (
+        <EmptyState
+          icon="📊"
+          title="No telemetry yet"
+          description="Metrics populate automatically once your agents start sending AI telemetry events. Install the RaksHex SDK or pipe events through the gateway to see live cost, latency, and error trends here."
+          actions={[
+            { label: "View telemetry docs", href: "/docs", variant: "primary" },
+            { label: "Set up alerts", href: "/settings", variant: "secondary" },
+          ]}
+        />
+      ) : (
+        <>
+          {/* Stat cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            {statCards.map((s) => (
+              <div key={s.label} className="bg-black/50 rounded-xl p-5 border border-[#2D3E50]">
+                <p className="text-gray-400 text-xs uppercase tracking-wider mb-2">{s.label}</p>
+                <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+                <p className="text-xs mt-1 font-semibold text-gray-500">in selected range</p>
               </div>
             ))}
           </div>
-        </div>
-      </div>
 
-      {/* Charts row 2 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Latency trend */}
-        <div className="bg-black/50 rounded-xl p-5 border border-[#2D3E50]">
-          <h3 className="font-semibold text-white mb-4">P95 Latency (ms)</h3>
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={WEEKLY_DATA}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#2D3E50" />
-              <XAxis dataKey="day" tick={{ fill: "#9ca3af", fontSize: 12 }} />
-              <YAxis tick={{ fill: "#9ca3af", fontSize: 12 }} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#0A0E1A",
-                  border: "1px solid #2D3E50",
-                  borderRadius: "8px",
-                }}
-              />
-              <Line
-                type="monotone"
-                dataKey="p95"
-                stroke="#00F0FF"
-                strokeWidth={2}
-                dot={{ fill: "#00F0FF", r: 4 }}
-                name="P95 Latency"
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+          {/* Charts row 1 */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            {/* API calls chart */}
+            <div className="lg:col-span-2 bg-black/50 rounded-xl p-5 border border-[#2D3E50]">
+              <h3 className="font-semibold text-white mb-4">API Calls Over Time</h3>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={series}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#2D3E50" />
+                  <XAxis dataKey="day" tick={{ fill: "#9ca3af", fontSize: 12 }} />
+                  <YAxis tick={{ fill: "#9ca3af", fontSize: 12 }} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#0A0E1A",
+                      border: "1px solid #2D3E50",
+                      borderRadius: "8px",
+                    }}
+                  />
+                  <Bar dataKey="calls" fill="#06D6A0" radius={[4, 4, 0, 0]} name="API Calls" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
 
-        {/* Error rate */}
-        <div className="bg-black/50 rounded-xl p-5 border border-[#2D3E50]">
-          <h3 className="font-semibold text-white mb-4">Error Count by Day</h3>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={WEEKLY_DATA}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#2D3E50" />
-              <XAxis dataKey="day" tick={{ fill: "#9ca3af", fontSize: 12 }} />
-              <YAxis tick={{ fill: "#9ca3af", fontSize: 12 }} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#0A0E1A",
-                  border: "1px solid #2D3E50",
-                  borderRadius: "8px",
-                }}
-              />
-              <Bar dataKey="errors" fill="#EF4444" radius={[4, 4, 0, 0]} name="Errors" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+            {/* Model mix */}
+            <div className="bg-black/50 rounded-xl p-5 border border-[#2D3E50]">
+              <h3 className="font-semibold text-white mb-4">Model Mix</h3>
+              {modelMix.length === 0 ? (
+                <p className="text-gray-500 text-sm">No model usage in this range.</p>
+              ) : (
+                <>
+                  <ResponsiveContainer width="100%" height={140}>
+                    <PieChart>
+                      <Pie
+                        data={modelMix}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={40}
+                        outerRadius={65}
+                        dataKey="value"
+                      >
+                        {modelMix.map((entry, i) => (
+                          <Cell key={i} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#0A0E1A",
+                          border: "1px solid #2D3E50",
+                          borderRadius: "8px",
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="space-y-1.5 mt-2">
+                    {modelMix.map((m) => (
+                      <div key={m.name} className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-2 h-2 rounded-full"
+                            style={{ backgroundColor: m.color }}
+                          />
+                          <span className="text-gray-400">{m.name}</span>
+                        </div>
+                        <span className="text-white font-medium">{m.value}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Charts row 2 */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Latency trend */}
+            <div className="bg-black/50 rounded-xl p-5 border border-[#2D3E50]">
+              <h3 className="font-semibold text-white mb-4">P95 Latency (ms)</h3>
+              <ResponsiveContainer width="100%" height={200}>
+                <LineChart data={series}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#2D3E50" />
+                  <XAxis dataKey="day" tick={{ fill: "#9ca3af", fontSize: 12 }} />
+                  <YAxis tick={{ fill: "#9ca3af", fontSize: 12 }} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#0A0E1A",
+                      border: "1px solid #2D3E50",
+                      borderRadius: "8px",
+                    }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="p95"
+                    stroke="#00F0FF"
+                    strokeWidth={2}
+                    dot={{ fill: "#00F0FF", r: 4 }}
+                    name="P95 Latency"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Error rate */}
+            <div className="bg-black/50 rounded-xl p-5 border border-[#2D3E50]">
+              <h3 className="font-semibold text-white mb-4">Error Rate by Day (%)</h3>
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={series}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#2D3E50" />
+                  <XAxis dataKey="day" tick={{ fill: "#9ca3af", fontSize: 12 }} />
+                  <YAxis tick={{ fill: "#9ca3af", fontSize: 12 }} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#0A0E1A",
+                      border: "1px solid #2D3E50",
+                      borderRadius: "8px",
+                    }}
+                  />
+                  <Bar dataKey="errorRate" fill="#EF4444" radius={[4, 4, 0, 0]} name="Error Rate %" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

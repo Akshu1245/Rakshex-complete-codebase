@@ -13,6 +13,7 @@ import {
   FileJson,
   ArrowRight,
 } from "lucide-react";
+import { trpc } from "@/lib/trpc";
 
 interface Finding {
   id: string;
@@ -74,6 +75,7 @@ export default function DemoPage() {
   const [result, setResult] = useState<ScanResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const demoScan = trpc.demo.scan.useMutation();
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -109,15 +111,43 @@ export default function DemoPage() {
     setScanning(true);
     setError(null);
 
+    let collection: unknown;
     try {
       const text = await file.text();
-      const collection = JSON.parse(text);
-
-      // Client-side scan simulation (runs instantly, no backend needed for demo)
-      const scanResult = performClientScan(collection);
-      setResult(scanResult);
-    } catch (err) {
+      collection = JSON.parse(text);
+    } catch {
       setError("Invalid JSON file. Please upload a valid Postman Collection.");
+      setScanning(false);
+      return;
+    }
+
+    try {
+      // Primary path: rate-limited server-side scan (POST /api/demo/scan via tRPC).
+      const res = await demoScan.mutateAsync({ collection, filename: file.name });
+      setResult({
+        findings: res.findings,
+        credentials: res.credentials,
+        endpoints: res.endpoints,
+        riskScore: res.riskScore,
+        owaspScore: res.owaspScore,
+        pciScore: res.pciScore,
+        scanTime: res.scanTime,
+      });
+    } catch (err) {
+      // Rate-limit / payload errors should surface to the user.
+      const message = err instanceof Error ? err.message : "";
+      if (message.toLowerCase().includes("limit") || message.toLowerCase().includes("large")) {
+        setError(message);
+        setScanning(false);
+        return;
+      }
+      // Backend unreachable — fall back to the in-browser scanner so the
+      // no-login demo always works (this is our top-of-funnel wedge).
+      try {
+        setResult(performClientScan(collection));
+      } catch {
+        setError("Could not scan this collection. Please check the file and try again.");
+      }
     } finally {
       setScanning(false);
     }

@@ -11,6 +11,7 @@ import { invalidateUserCache, redis } from "../_core/cache";
 import { getPlanLimits } from "../payments";
 import { scansPerDayLimitError, shadowAPIGatedError } from "../utils/planLimits";
 import { summarizeFindings } from "../utils/findingSummarizer";
+import { createNotification } from "./notifications";
 import { INJECTION_PAYLOADS, groupPayloadsByCategory } from "../utils/promptInjectionPayloads";
 import { toNumber } from "../utils/decimal";
 
@@ -118,6 +119,14 @@ export const scanningRouter = router({
       const job = await scanQueue.add("scan", scanJobData);
 
       logger.info({ jobId: job.id, collectionId: input.collectionId }, "[Scanning] Scan enqueued");
+
+      await createNotification({
+        userId: ctx.user.id,
+        type: "scan_complete",
+        title: "Scan queued",
+        body: `Your ${input.scanType.replace("_", " ")} scan of "${collection.name}" has been queued and will begin shortly.`,
+        link: "/scans",
+      });
 
       return {
         scanId: job.id ?? "queued",

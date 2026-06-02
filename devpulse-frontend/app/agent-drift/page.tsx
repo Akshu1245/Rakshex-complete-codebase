@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useMemo, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { AlertTriangle, CheckCircle, RefreshCw, Activity, Brain, ArrowRight } from "lucide-react";
 
@@ -22,96 +22,48 @@ const DRIFT_COLORS = {
   critical: "text-[#EF4444] bg-[#EF4444]/10 border-[#EF4444]/20",
 };
 
-const MOCK_DRIFT_EVENTS: DriftEvent[] = [
-  {
-    id: "1",
-    timestamp: new Date(Date.now() - 120000).toISOString(),
-    agentName: "customer-support-bot",
-    driftType: "cost",
-    severity: "high",
-    score: 82,
-    baseline: 0.0012,
-    current: 0.0089,
-    description:
-      "Cost per call increased 7.4× from baseline — possible infinite loop or context bloat",
-  },
-  {
-    id: "2",
-    timestamp: new Date(Date.now() - 300000).toISOString(),
-    agentName: "code-review-agent",
-    driftType: "latency",
-    severity: "medium",
-    score: 61,
-    baseline: 1200,
-    current: 3800,
-    description: "P95 latency drifted from 1.2s to 3.8s over last 2 hours",
-  },
-  {
-    id: "3",
-    timestamp: new Date(Date.now() - 600000).toISOString(),
-    agentName: "data-pipeline-agent",
-    driftType: "behavior",
-    severity: "critical",
-    score: 95,
-    baseline: 0.94,
-    current: 0.31,
-    description:
-      "Output schema compliance dropped from 94% to 31% — agent may be hallucinating structured data",
-  },
-  {
-    id: "4",
-    timestamp: new Date(Date.now() - 900000).toISOString(),
-    agentName: "summarizer-v2",
-    driftType: "output",
-    severity: "low",
-    score: 23,
-    baseline: 0.87,
-    current: 0.79,
-    description: "Semantic similarity to baseline outputs slightly reduced — minor drift detected",
-  },
-];
+function severityForMagnitude(magnitude: number): DriftEvent["severity"] {
+  if (magnitude >= 4) return "critical";
+  if (magnitude >= 3) return "high";
+  if (magnitude >= 2) return "medium";
+  return "low";
+}
 
 export default function AgentDriftPage() {
-  const [events, setEvents] = useState<DriftEvent[]>(MOCK_DRIFT_EVENTS);
-  const [selectedEvent, setSelectedEvent] = useState<DriftEvent | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<string>("all");
   const [isMonitoring, setIsMonitoring] = useState(true);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  useEffect(() => {
-    if (!isMonitoring) return;
-    // Simulate new drift events in real-time
-    intervalRef.current = setInterval(() => {
-      const random = Math.random();
-      if (random > 0.7) {
-        const newEvent: DriftEvent = {
-          id: Date.now().toString(),
-          timestamp: new Date().toISOString(),
-          agentName: ["search-agent", "email-bot", "analysis-agent"][Math.floor(Math.random() * 3)],
-          driftType: ["cost", "latency", "behavior", "output"][
-            Math.floor(Math.random() * 4)
-          ] as DriftEvent["driftType"],
-          severity: random > 0.9 ? "critical" : random > 0.8 ? "high" : "medium",
-          score: Math.round(40 + Math.random() * 55),
-          baseline: parseFloat((Math.random() * 2).toFixed(4)),
-          current: parseFloat((Math.random() * 10).toFixed(4)),
-          description: "Drift detected in agent behavior pattern — review recommended",
-        };
-        setEvents((prev) => [newEvent, ...prev].slice(0, 50));
-      }
-    }, 5000);
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [isMonitoring]);
+  // Real cost-drift detection from stored AI telemetry (7-day rolling baseline).
+  const anomaliesQuery = trpc.analytics.anomalies.useQuery(
+    { threshold: 2 },
+    { refetchInterval: isMonitoring ? 15000 : false },
+  );
+
+  const events: DriftEvent[] = useMemo(() => {
+    const rows = anomaliesQuery.data ?? [];
+    return rows.map((a) => ({
+      id: a.hour,
+      timestamp: `${a.hour}:00:00.000Z`,
+      agentName: `Cost window ${a.hour.slice(5).replace("T", " ")}:00`,
+      driftType: "cost" as const,
+      severity: severityForMagnitude(a.magnitude),
+      score: Math.min(99, Math.round(a.magnitude * 20)),
+      baseline: a.rollingAvg,
+      current: a.cost,
+      description: `Spend hit $${a.cost.toFixed(2)} vs a 7-day baseline of $${a.rollingAvg.toFixed(2)} (${a.magnitude}× higher) — possible runaway loop, context bloat, or traffic spike.`,
+    }));
+  }, [anomaliesQuery.data]);
 
   const filtered =
     activeFilter === "all"
       ? events
       : events.filter((e) => e.severity === activeFilter || e.driftType === activeFilter);
+  const selectedEvent = events.find((e) => e.id === selectedId) ?? null;
   const criticalCount = events.filter((e) => e.severity === "critical").length;
   const highCount = events.filter((e) => e.severity === "high").length;
   const avgDriftScore = Math.round(events.reduce((a, e) => a + e.score, 0) / (events.length || 1));
+  const loading = anomaliesQuery.isLoading;
 
   return (
     <div className="text-white p-6 max-w-7xl mx-auto">
@@ -123,7 +75,7 @@ export default function AgentDriftPage() {
             Agent Drift Monitor
           </h1>
           <p className="text-gray-400 mt-1">
-            Detect behavioral drift, cost anomalies, and output degradation in real-time
+            Cost anomaly &amp; drift detection from your live AI telemetry
           </p>
         </div>
         <button
@@ -138,11 +90,7 @@ export default function AgentDriftPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
-          {
-            label: "Active Agents",
-            value: new Set(events.map((e) => e.agentName)).size,
-            color: "text-[#3B82F6]",
-          },
+          { label: "Anomalies (14d)", value: events.length, color: "text-[#3B82F6]" },
           { label: "Critical Drifts", value: criticalCount, color: "text-[#EF4444]" },
           { label: "High Severity", value: highCount, color: "text-[#F59E0B]" },
           { label: "Avg Drift Score", value: `${avgDriftScore}%`, color: "text-[#00F0FF]" },
@@ -156,35 +104,46 @@ export default function AgentDriftPage() {
 
       {/* Filters */}
       <div className="flex gap-2 mb-6 flex-wrap">
-        {["all", "critical", "high", "medium", "low", "cost", "latency", "behavior", "output"].map(
-          (f) => (
-            <button
-              key={f}
-              onClick={() => setActiveFilter(f)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-semibold capitalize transition-all ${activeFilter === f ? "bg-[#06D6A0] text-[#0A0E1A]" : "bg-black/50 text-gray-400 hover:bg-black/50/80 hover:text-white border border-[#2D3E50]"}`}
-            >
-              {f}
-            </button>
-          ),
-        )}
+        {["all", "critical", "high", "medium", "low", "cost"].map((f) => (
+          <button
+            key={f}
+            onClick={() => setActiveFilter(f)}
+            className={`px-3 py-1.5 rounded-lg text-sm font-semibold capitalize transition-all ${activeFilter === f ? "bg-[#06D6A0] text-[#0A0E1A]" : "bg-black/50 text-gray-400 hover:text-white border border-[#2D3E50]"}`}
+          >
+            {f}
+          </button>
+        ))}
       </div>
 
       {/* Events list + detail panel */}
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Event list */}
         <div className="lg:col-span-2 space-y-3 max-h-[600px] overflow-y-auto pr-1">
-          {filtered.length === 0 && (
+          {loading && (
+            <div className="space-y-3">
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="h-24 rounded-xl border border-[#2D3E50] bg-black/50 animate-pulse"
+                />
+              ))}
+            </div>
+          )}
+          {!loading && filtered.length === 0 && (
             <div className="text-center py-16 text-gray-500">
               <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-500/50" />
               <p className="font-medium">No drift events detected</p>
-              <p className="text-sm mt-1">Your agents are behaving normally</p>
+              <p className="text-sm mt-1">
+                Your agents are within their cost baseline. Anomalies appear here as telemetry
+                accumulates.
+              </p>
             </div>
           )}
           {filtered.map((event) => (
             <button
               key={event.id}
-              onClick={() => setSelectedEvent(event)}
-              className={`w-full text-left p-4 rounded-xl border transition-all hover:border-[#06D6A0]/40 ${selectedEvent?.id === event.id ? "border-[#06D6A0]/60 bg-[#06D6A0]/5" : "border-[#2D3E50] bg-black/50/50 hover:bg-black/50"}`}
+              onClick={() => setSelectedId(event.id)}
+              className={`w-full text-left p-4 rounded-xl border transition-all hover:border-[#06D6A0]/40 ${selectedId === event.id ? "border-[#06D6A0]/60 bg-[#06D6A0]/5" : "border-[#2D3E50] bg-black/50 hover:bg-black/70"}`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
@@ -198,7 +157,7 @@ export default function AgentDriftPage() {
                       {event.driftType}
                     </span>
                     <span className="text-xs text-gray-500 ml-auto">
-                      {new Date(event.timestamp).toLocaleTimeString()}
+                      {new Date(event.timestamp).toLocaleString()}
                     </span>
                   </div>
                   <p className="font-semibold text-white text-sm">{event.agentName}</p>
@@ -223,7 +182,7 @@ export default function AgentDriftPage() {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-bold text-white">Event Detail</h3>
                 <button
-                  onClick={() => setSelectedEvent(null)}
+                  onClick={() => setSelectedId(null)}
                   className="text-gray-500 hover:text-gray-300 text-xs"
                 >
                   ✕ close
@@ -241,11 +200,11 @@ export default function AgentDriftPage() {
               <div className="mt-4 space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-400">Baseline</span>
-                  <span className="text-[#10B981] font-mono">{selectedEvent.baseline}</span>
+                  <span className="text-[#10B981] font-mono">${selectedEvent.baseline}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-400">Current</span>
-                  <span className="text-[#EF4444] font-mono">{selectedEvent.current}</span>
+                  <span className="text-[#EF4444] font-mono">${selectedEvent.current}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-400">Drift Score</span>
@@ -277,9 +236,12 @@ export default function AgentDriftPage() {
                   ))}
                 </div>
               </div>
-              <button className="mt-4 w-full py-2 rounded-lg bg-[#EF4444]/10 border border-[#EF4444]/20 text-[#EF4444] text-sm font-semibold hover:bg-[#EF4444]/20 transition-all flex items-center justify-center gap-2">
-                <AlertTriangle className="w-4 h-4" /> Trigger Kill Switch
-              </button>
+              <a
+                href="/kill-switch"
+                className="mt-4 w-full py-2 rounded-lg bg-[#EF4444]/10 border border-[#EF4444]/20 text-[#EF4444] text-sm font-semibold hover:bg-[#EF4444]/20 transition-all flex items-center justify-center gap-2"
+              >
+                <AlertTriangle className="w-4 h-4" /> Open Kill Switch
+              </a>
             </div>
           ) : (
             <div className="text-center py-8 text-gray-500">
