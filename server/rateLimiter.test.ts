@@ -11,16 +11,18 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("ioredis", () => ({
-  default: vi.fn().mockImplementation(() => ({
-    on: vi.fn(),
-    multi: mocks.multi.mockReturnValue({
-      zremrangebyscore: mocks.zremrangebyscore,
-      zadd: mocks.zadd,
-      zcard: mocks.zcard,
-      pexpire: mocks.pexpire,
-      exec: mocks.exec,
-    }),
-  })),
+  default: vi.fn().mockImplementation(function () {
+    return {
+      on: vi.fn(),
+      multi: mocks.multi.mockReturnValue({
+        zremrangebyscore: mocks.zremrangebyscore,
+        zadd: mocks.zadd,
+        zcard: mocks.zcard,
+        pexpire: mocks.pexpire,
+        exec: mocks.exec,
+      }),
+    };
+  }),
 }));
 
 import { rateLimitSlidingWindow } from "./_core/cache";

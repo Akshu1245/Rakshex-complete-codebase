@@ -19,6 +19,7 @@ import compression from "compression";
 import multer from "multer";
 import { registerOAuthRoutes } from "./oauth";
 import { registerGoogleOAuthRoutes } from "./googleOAuth";
+import { registerGitHubOAuthRoutes } from "./githubOAuth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -677,6 +678,7 @@ async function startServer() {
   // ── OAuth routes ───────────────────────────────────────────────────────────
   registerOAuthRoutes(app);
   registerGoogleOAuthRoutes(app);
+  registerGitHubOAuthRoutes(app);
 
   // ── SSO routes (SAML + OIDC login/callback) ──────────────────────────────
   const { registerSsoRoutes } = await import("../sso/routes");

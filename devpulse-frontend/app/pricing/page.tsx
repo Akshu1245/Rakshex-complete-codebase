@@ -163,17 +163,12 @@ export default function PricingPage() {
                 {createSubscription.isPending ? "Processing..." : "Upgrade to Pro"}
               </button>
             ) : (
-              <button
-                onClick={() => {
-                  setSelectedPlan("pro");
-                  setEmail("");
-                  setSuccess(false);
-                  setError(null);
-                }}
+              <Link
+                href="/login?redirect=/pricing"
                 className="block w-full py-3 bg-teal-accent hover:bg-[#0D9488] text-white font-bold rounded-lg transition-colors text-center font-mono mt-auto"
               >
-                Join Pro Waitlist
-              </button>
+                Sign up to upgrade
+              </Link>
             )}
           </div>
 

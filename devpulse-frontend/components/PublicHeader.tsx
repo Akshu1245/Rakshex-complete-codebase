@@ -616,10 +616,10 @@ export function PublicHeader() {
               </Link>
               <Link
                 className="flex-1 text-center bg-[#14B8A6] text-white hover:bg-[#0D9488] active:bg-[#0A7F6F] py-2.5 rounded font-bold text-sm transition-all duration-200"
-                href="/#waitlist"
+                href="/register"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Join Waitlist
+                Start Free
               </Link>
             </div>
           </div>
