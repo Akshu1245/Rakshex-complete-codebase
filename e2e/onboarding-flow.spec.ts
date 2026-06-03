@@ -81,22 +81,8 @@ test.describe("Critical Path 1: Onboarding Flow", () => {
     });
   });
 
-  test("Register → Onboarding wizard (5 steps) → Complete each step", async ({ page }) => {
-    // Step 1: Register
-    await page.goto("/register");
-    await expect(page.getByRole("heading", { name: /create your account/i })).toBeVisible();
-
-    await page.getByLabel(/email/i).fill(`test-${Date.now()}@example.com`);
-    await page.getByLabel(/password/i).fill("SecurePass123!");
-    await page.getByLabel(/full name/i).fill("Test User");
-    await page.getByRole("button", { name: /create account/i }).click();
-
-    // After stubbed signup, app pushes to /dashboard
-    await expect(page).toHaveURL(/.*(onboarding|dashboard).*/, {
-      timeout: 15_000,
-    });
-
-    // Step 2: Navigate to onboarding wizard
+  test("Onboarding wizard (5 steps) → Complete each step", async ({ page }) => {
+    // Authenticated via the stubbed auth.me response (sign-in is OAuth-only).
     await page.goto("/onboarding");
     await expect(page.getByRole("heading", { name: /onboarding/i })).toBeVisible();
 
@@ -122,10 +108,9 @@ test.describe("Critical Path 1: Onboarding Flow", () => {
     await expect(page.locator('[role="alert"]:not(#__next-route-announcer__)')).not.toBeVisible();
   });
 
-  test("register page renders a usable signup form", async ({ page }) => {
+  test("register page redirects to the OAuth-only login", async ({ page }) => {
     await page.goto("/register");
-    await expect(page.getByLabel(/email/i)).toBeVisible();
-    await expect(page.getByLabel(/password/i).first()).toBeVisible();
-    await expect(page.getByRole("button", { name: /register|sign up|create/i })).toBeVisible();
+    await expect(page).toHaveURL(/\/login/);
+    await expect(page.getByRole("link", { name: /continue with github/i })).toBeVisible();
   });
 });

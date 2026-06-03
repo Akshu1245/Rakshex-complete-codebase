@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { signupViaApi, loginViaApi } from "./helpers";
 
 /**
  * Critical user journey integration test.
@@ -24,16 +25,12 @@ test.describe("Critical Journey: signup → scan → results", () => {
   });
 
   test("full journey from signup to scan results", async ({ page }) => {
-    // 1. Signup
-    await page.goto("/register");
-    await page.getByLabel(/full name/i).fill(testUser.name);
-    await page.getByLabel(/email/i).fill(testUser.email);
-    await page.getByLabel(/password/i).fill(testUser.password);
-    await page.getByRole("button", { name: /create account/i }).click();
-
-    // Should redirect to dashboard after successful signup
-    await page.waitForURL("/dashboard", { timeout: 10_000 });
-    await expect(page.getByText(/welcome/i)).toBeVisible();
+    // 1. Signup. Sign-in is OAuth-only in the UI, so we bootstrap a real
+    // backend session via the CSRF-exempt auth.signup procedure, then land
+    // on the dashboard exactly as an authenticated user would.
+    await signupViaApi(page, testUser);
+    await page.goto("/dashboard");
+    await expect(page.getByText(/welcome/i)).toBeVisible({ timeout: 10_000 });
 
     // 2. Create a collection
     await page.goto("/collections");
@@ -73,14 +70,20 @@ test.describe("Critical Journey: signup → scan → results", () => {
     await expect(page.getByText(/e2e test collection/i)).toBeVisible();
   });
 
-  test("login with existing credentials works", async ({ page }) => {
-    await page.goto("/login");
-    await page.getByLabel(/email/i).fill(testUser.email);
-    await page.getByLabel(/password/i).fill(testUser.password);
-    await page.getByRole("button", { name: /sign in/i }).click();
+  test("returning user can authenticate and reach the dashboard", async ({ page }) => {
+    const returning = {
+      name: "Returning User",
+      email: `e2e-return-${Date.now()}@rakshex.test`,
+      password: "TestPassword123!",
+    };
+    // Create the account, drop the session, then sign back in via the
+    // backend auth.login procedure to exercise the real login path.
+    await signupViaApi(page, returning);
+    await page.context().clearCookies();
+    await loginViaApi(page, returning);
 
-    await page.waitForURL("/dashboard", { timeout: 10_000 });
-    await expect(page.getByText(/welcome/i)).toBeVisible();
+    await page.goto("/dashboard");
+    await expect(page.getByText(/welcome/i)).toBeVisible({ timeout: 10_000 });
   });
 
   test("health check endpoint returns healthy status", async ({ request }) => {
