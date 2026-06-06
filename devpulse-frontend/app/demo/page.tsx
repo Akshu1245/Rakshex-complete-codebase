@@ -72,10 +72,46 @@ const SEVERITY_CONFIG = {
 export default function DemoPage() {
   const [file, setFile] = useState<File | null>(null);
   const [scanning, setScanning] = useState(false);
-  const [result, setResult] = useState<ScanResult | null>(null);
+  const [result, setResult] = useState<(ScanResult & { remaining?: number }) | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const demoScan = trpc.demo.scan.useMutation();
+
+  // Sample Postman collection containing a fake exposed key so users instantly see the "oh crap" credential finding + other issues.
+  const SAMPLE_COLLECTION = {
+    info: {
+      name: "Demo API - Contains Secrets",
+      schema: "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    },
+    item: [
+      {
+        name: "Get User Profile",
+        request: {
+          method: "GET",
+          url: { raw: "https://api.example.com/v1/users/me" },
+          header: [
+            { key: "Authorization", value: "Bearer sk-FAKE1234567890abcdefABCDEF1234567890abcdef" },
+            { key: "X-Api-Key", value: "AIzaSyFAKE_GoogleKeyForDemo1234567890AB" },
+          ],
+        },
+      },
+      {
+        name: "Create Payment",
+        request: {
+          method: "POST",
+          url: { raw: "https://api.example.com/v1/payments" },
+          body: {
+            mode: "raw",
+            raw: JSON.stringify({
+              amount: 999,
+              card: "4242-4242-4242-4242",
+              password: "supersecret123",
+            }),
+          },
+        },
+      },
+    ],
+  };
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -106,6 +142,52 @@ export default function DemoPage() {
     setResult(null);
   };
 
+  const loadSample = () => {
+    // Create a synthetic File-like object from the sample so the rest of the UI (name, re-run) keeps working.
+    const json = JSON.stringify(SAMPLE_COLLECTION, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const sampleFile = new File([blob], "demo-collection-with-secrets.json", {
+      type: "application/json",
+    });
+    setFile(sampleFile);
+    setError(null);
+    setResult(null);
+    // Immediately run the scan for one-click "wow" moment.
+    // We call the internal logic by faking the flow.
+    void (async () => {
+      setScanning(true);
+      setError(null);
+      setResult(null);
+      try {
+        const res = await demoScan.mutateAsync({
+          collection: SAMPLE_COLLECTION,
+          filename: sampleFile.name,
+        });
+        setResult({
+          findings: res.findings || [],
+          credentials: res.credentials || [],
+          endpoints: res.endpoints || [],
+          riskScore: res.riskScore ?? 0,
+          owaspScore: res.owaspScore ?? 0,
+          pciScore: res.pciScore ?? 0,
+          scanTime: res.scanTime ?? 0,
+          remaining: res.remaining,
+        });
+      } catch (err: any) {
+        const message = err?.message || "";
+        if (message.toLowerCase().includes("too_many") || message.toLowerCase().includes("limit")) {
+          setError("Demo scan limit reached (15/hour). Sign up for unlimited scans.");
+        } else {
+          setError(
+            "Sample scan failed. The live demo endpoint may be rate limited — try uploading your own small collection.",
+          );
+        }
+      } finally {
+        setScanning(false);
+      }
+    })();
+  };
+
   const runScan = async () => {
     if (!file) return;
     setScanning(true);
@@ -115,9 +197,14 @@ export default function DemoPage() {
     let collection: unknown;
     try {
       const text = await file.text();
+      if (text.length > 2_000_000) {
+        setError("File too large for demo (max ~2MB). Sign up for full scans.");
+        setScanning(false);
+        return;
+      }
       collection = JSON.parse(text);
     } catch {
-      setError("Invalid JSON file. Please upload a valid Postman Collection.");
+      setError("Invalid JSON file. Please upload a valid Postman Collection v2.1 JSON.");
       setScanning(false);
       return;
     }
@@ -125,13 +212,14 @@ export default function DemoPage() {
     try {
       const res = await demoScan.mutateAsync({ collection, filename: file.name });
       setResult({
-        findings: res.findings,
-        credentials: res.credentials,
-        endpoints: res.endpoints,
-        riskScore: res.riskScore,
-        owaspScore: res.owaspScore,
-        pciScore: res.pciScore,
-        scanTime: res.scanTime,
+        findings: res.findings || [],
+        credentials: res.credentials || [],
+        endpoints: res.endpoints || [],
+        riskScore: res.riskScore ?? 0,
+        owaspScore: res.owaspScore ?? 0,
+        pciScore: res.pciScore ?? 0,
+        scanTime: res.scanTime ?? 0,
+        remaining: res.remaining,
       });
     } catch (err: any) {
       const message = err?.message || "";
@@ -140,14 +228,45 @@ export default function DemoPage() {
         message.toLowerCase().includes("limit")
       ) {
         setError("Demo scan limit reached (15/hour). Sign up for unlimited scans.");
-      } else if (message.toLowerCase().includes("payload")) {
-        setError("Collection too large. Max size is 2MB. Sign up for larger scans.");
+      } else if (
+        message.toLowerCase().includes("payload") ||
+        message.toLowerCase().includes("large")
+      ) {
+        setError(
+          "Collection too large. Max size is 2MB for the public demo. Sign up for larger scans.",
+        );
+      } else if (message.toLowerCase().includes("network") || !message) {
+        setError("Network error talking to demo service. Check your connection or try again.");
       } else {
-        setError("Server error. Please try again in a moment or sign up for full access.");
+        setError(
+          "Server error during scan. Please try a smaller collection or sign up for full access.",
+        );
       }
     } finally {
       setScanning(false);
     }
+  };
+
+  const clearDemo = () => {
+    setFile(null);
+    setResult(null);
+    setError(null);
+  };
+
+  const copyReport = () => {
+    if (!result) return;
+    const report = {
+      scannedFile: file?.name,
+      ...result,
+      generatedAt: new Date().toISOString(),
+      note: "This is a public demo scan result. Nothing was stored server-side.",
+    };
+    navigator.clipboard.writeText(JSON.stringify(report, null, 2)).then(() => {
+      // lightweight feedback without extra state
+      const orig = document.title;
+      document.title = "Report copied!";
+      setTimeout(() => (document.title = orig), 1200);
+    });
   };
 
   const criticalCount = result?.findings.filter((f) => f.severity === "Critical").length || 0;
@@ -217,29 +336,62 @@ export default function DemoPage() {
           )}
 
           {file && !result && (
-            <button
-              onClick={runScan}
-              disabled={scanning}
-              className="mt-6 w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white py-4 rounded-xl font-bold text-lg transition-all disabled:opacity-50 flex items-center justify-center gap-3"
-            >
-              {scanning ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Scanning {file.name}...
-                </>
-              ) : (
-                <>
-                  <Shield className="w-5 h-5" />
-                  Run Security Scan
-                </>
-              )}
-            </button>
+            <div className="mt-6 space-y-3">
+              <button
+                onClick={runScan}
+                disabled={scanning}
+                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white py-4 rounded-xl font-bold text-lg transition-all disabled:opacity-50 flex items-center justify-center gap-3"
+              >
+                {scanning ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Scanning {file.name}...
+                  </>
+                ) : (
+                  <>
+                    <Shield className="w-5 h-5" />
+                    Run Security Scan
+                  </>
+                )}
+              </button>
+              <button
+                onClick={loadSample}
+                disabled={scanning}
+                className="w-full border border-purple-400/50 hover:bg-purple-500/10 text-purple-300 py-3 rounded-xl font-medium text-sm transition-colors disabled:opacity-50"
+              >
+                Or load sample collection (instantly shows exposed keys + findings)
+              </button>
+            </div>
           )}
         </div>
 
         {/* Results */}
         {result && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Remaining quota + actions */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-sm">
+              {typeof result.remaining === "number" && (
+                <div className="text-slate-400">
+                  Demo scans remaining this hour:{" "}
+                  <span className="font-mono text-purple-300">{result.remaining}</span>
+                </div>
+              )}
+              <div className="flex gap-2">
+                <button
+                  onClick={copyReport}
+                  className="px-4 py-2 rounded-lg border border-slate-600 hover:bg-slate-800 text-slate-300 text-xs font-medium flex items-center gap-1.5"
+                >
+                  Copy JSON Report
+                </button>
+                <button
+                  onClick={clearDemo}
+                  className="px-4 py-2 rounded-lg border border-slate-600 hover:bg-slate-800 text-slate-300 text-xs font-medium"
+                >
+                  Clear &amp; Try Another
+                </button>
+              </div>
+            </div>
+
             {/* Score Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div
