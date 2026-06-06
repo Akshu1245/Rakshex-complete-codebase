@@ -33,30 +33,31 @@ export function HeroSection() {
 
           {/* Headline */}
           <h1 className="hero-headline font-sans font-bold tracking-[-0.02em] text-left flex flex-col text-[40px] sm:text-[48px] md:text-[56px] leading-[1.1] mb-6">
-            <span className="text-white">The AI-native</span>
-            <span className="text-[#14B8A6]">security &amp;</span>
-            <span className="text-[#14B8A6]">governance platform</span>
+            <span className="text-white">Stop leaking API keys</span>
+            <span className="text-[#14B8A6]">&amp; burning your</span>
+            <span className="text-[#14B8A6]">AI budget</span>
           </h1>
 
           {/* Subtext */}
           <p className="hero-subtext font-sans text-lg max-w-[480px] text-[#9CA3AF] mb-10 leading-[1.6] font-medium">
-            Prompt injection blocking, LLM cost control, shadow API discovery, and compliance
-            reporting &mdash; all in one platform. 478 tests. 4 patents.
+            RaksHex scans your code and AI apps for exposed secrets, runaway LLM costs,
+            prompt-injection risks, and shadow APIs &mdash; then shows you exactly how to fix them.
+            First scan in 60 seconds. Free to start.
           </p>
 
           {/* CTA Buttons */}
           <div className="hero-buttons flex flex-wrap items-center gap-4 w-full mb-12">
             <Link
-              href="#waitlist"
+              href="/login"
               className="px-6 py-3 bg-[#14B8A6] text-white font-sans font-semibold text-sm rounded-[6px] hover:bg-[#0D9488] active:bg-[#0A7F6F] hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_4px_12px_rgba(20,184,166,0.2)] transition-all duration-200 text-center flex items-center justify-center gap-2 transform"
             >
-              Join Waitlist &rarr;
+              Scan your repo free &rarr;
             </Link>
             <Link
-              href="/docs"
+              href="/pricing"
               className="px-6 py-3 bg-transparent border-2 border-[#14B8A6] text-white font-sans font-semibold text-sm rounded-[6px] hover:bg-[#14B8A6]/10 hover:border-[#0D9488] active:bg-[#14B8A6]/20 hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_4px_12px_rgba(20,184,166,0.1)] transition-all duration-200 text-center flex items-center justify-center transform"
             >
-              Read the docs
+              See pricing
             </Link>
           </div>
 

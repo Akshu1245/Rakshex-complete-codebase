@@ -99,17 +99,8 @@ test.describe("Critical Path 2: Team Invite Flow", () => {
     });
   });
 
-  test("Login → Invite team member → Verify invite sent and member appears", async ({ page }) => {
-    // Step 1: Login
-    await page.goto("/login");
-    await page.getByLabel(/email/i).fill("inviter@example.com");
-    await page.getByLabel(/password/i).fill("password123");
-    await page.getByRole("button", { name: /login|sign in/i, exact: false }).click();
-
-    // With stubbed login the app should push to /dashboard
-    await expect(page).toHaveURL(/.*dashboard.*/, { timeout: 10_000 });
-
-    // Step 2: Navigate to team page
+  test("Invite team member → Verify invite sent and member appears", async ({ page }) => {
+    // Authenticated via the stubbed auth.me response (sign-in is OAuth-only).
     await page.goto("/team");
     await expect(page.getByRole("heading", { name: "Team", exact: true })).toBeVisible();
 

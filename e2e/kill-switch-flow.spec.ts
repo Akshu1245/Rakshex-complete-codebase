@@ -124,17 +124,8 @@ test.describe("Critical Path 3: Kill Switch Flow", () => {
     });
   });
 
-  test("Login → Set budget limit → Trigger kill switch → Verify audit trail", async ({ page }) => {
-    // Step 1: Login
-    await page.goto("/login");
-    await page.getByLabel(/email/i).fill("test@example.com");
-    await page.getByLabel(/password/i).fill("password123");
-    await page.getByRole("button", { name: /login|sign in/i, exact: false }).click();
-
-    // With stubbed login the app should push to /dashboard
-    await expect(page).toHaveURL(/.*dashboard.*/, { timeout: 10_000 });
-
-    // Step 2: Navigate to kill switch page
+  test("Set budget limit → Trigger kill switch → Verify audit trail", async ({ page }) => {
+    // Authenticated via the stubbed auth.me response (sign-in is OAuth-only).
     await page.goto("/kill-switch");
     await expect(page.getByRole("heading", { name: "Kill Switch", exact: true })).toBeVisible();
 
