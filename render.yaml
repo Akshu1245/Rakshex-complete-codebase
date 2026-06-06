@@ -1,0 +1,25 @@
+﻿services:
+- type: web
+  name: rakshex-backend
+  env: docker
+  dockerfilePath: ./Dockerfile.prod
+  healthCheckPath: /api/health
+  envVars:
+  - key: NODE_ENV
+    value: production
+  - key: DATABASE_URL
+    sync: false
+  - key: JWT_SECRET
+    sync: false
+  - key: STRIPE_SECRET_KEY
+    sync: false
+  - key: STRIPE_WEBHOOK_SECRET
+    sync: false
+  - key: RAZORPAY_KEY_ID
+    sync: false
+  - key: RAZORPAY_KEY_SECRET
+    sync: false
+  - key: REDIS_URL
+    sync: false
+  - key: APP_URL
+    sync: false
