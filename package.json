@@ -55,7 +55,7 @@
     "express": "^4.21.0",
     "express-rate-limit": "^7.1.5",
     "helmet": "^7.1.0",
-    "ioredis": "^5.4.0",
+    "ioredis": "^5.11.1",
     "jose": "^5.2.0",
     "mysql2": "^3.9.0",
     "nanoid": "^5.0.4",
