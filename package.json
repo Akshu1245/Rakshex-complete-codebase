@@ -121,7 +121,7 @@
     "google-auth-library": "^10.6.2",
     "husky": "^9.1.7",
     "jsdom": "^29.1.1",
-    "lint-staged": "^17.0.4",
+    "lint-staged": "^17.0.7",
     "multer": "^2.1.1",
     "node-cron": "^4.2.1",
     "postcss": "^8.5.15",
