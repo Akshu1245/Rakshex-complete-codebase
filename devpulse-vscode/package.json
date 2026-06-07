@@ -515,6 +515,6 @@
     "@types/vscode": "^1.85.0",
     "esbuild": "^0.28.0",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.6"
+    "vitest": "^4.1.8"
   }
 }
