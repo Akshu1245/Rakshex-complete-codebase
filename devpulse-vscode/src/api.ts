@@ -311,5 +311,5 @@ export class RakshexApi {
 export function getConfiguredBaseUrl(): string {
   return vscode.workspace
     .getConfiguration("rakshex")
-    .get<string>("apiUrl", "https://api.rakshex.in");
+    .get<string>("apiUrl", "http://localhost:8000");
 }
