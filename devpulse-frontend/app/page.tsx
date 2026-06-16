@@ -5,6 +5,7 @@ import Link from "next/link";
 import { trpc } from "@/lib/trpc";
 import { useScrollReveal } from "@/lib/animations/scroll-reveal";
 import { HeroSection } from "@/components/home/HeroSection";
+import { AntiGravity } from "@/components/home/AntiGravity";
 import { FeatureCards } from "@/components/home/FeatureCards";
 import { BenchmarkSection } from "@/components/home/BenchmarkSection";
 import { ChangelogSection } from "@/components/home/ChangelogSection";
@@ -34,15 +35,24 @@ import {
 interface RollingDigitProps {
   char: string;
   trigger: boolean;
+  antiGravity: boolean;
 }
 
-function RollingDigit({ char, trigger }: RollingDigitProps) {
+function RollingDigit({ char, trigger, antiGravity }: RollingDigitProps) {
   const isDigit = /\d/.test(char);
   const targetDigit = isDigit ? parseInt(char, 10) : 0;
   const [digit, setDigit] = useState(0);
 
   useEffect(() => {
-    if (trigger && isDigit) {
+    if (antiGravity && isDigit) {
+      const interval = setInterval(
+        () => {
+          setDigit(Math.floor(Math.random() * 10));
+        },
+        70 + Math.random() * 50,
+      );
+      return () => clearInterval(interval);
+    } else if (trigger && isDigit) {
       const t = setTimeout(() => {
         setDigit(targetDigit);
       }, 200);
@@ -50,7 +60,7 @@ function RollingDigit({ char, trigger }: RollingDigitProps) {
     } else {
       setDigit(0);
     }
-  }, [trigger, targetDigit, isDigit]);
+  }, [trigger, targetDigit, isDigit, antiGravity]);
 
   if (!isDigit) {
     return (
@@ -81,7 +91,15 @@ function RollingDigit({ char, trigger }: RollingDigitProps) {
   );
 }
 
-function StatsCard({ label, targetValue }: { label: string; targetValue: string }) {
+function StatsCard({
+  label,
+  targetValue,
+  antiGravity,
+}: {
+  label: string;
+  targetValue: string;
+  antiGravity: boolean;
+}) {
   const [inView, setInView] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -102,7 +120,7 @@ function StatsCard({ label, targetValue }: { label: string; targetValue: string 
   }, []);
 
   return (
-    <article ref={containerRef} className="PlatformStatsShowcase_card__DyDV_">
+    <article ref={containerRef} className="PlatformStatsShowcase_card__DyDV_ anti-gravity-float">
       <p className="PlatformStatsShowcase_label__dAs7X font-semibold text-xs tracking-wider uppercase">
         {label}
       </p>
@@ -111,7 +129,7 @@ function StatsCard({ label, targetValue }: { label: string; targetValue: string 
         className="PlatformStatsShowcase_value__ypr4_ text-[#06b6d4] font-mono font-bold text-2xl md:text-3xl"
       >
         {targetValue.split("").map((char, idx) => (
-          <RollingDigit key={idx} char={char} trigger={inView} />
+          <RollingDigit key={idx} char={char} trigger={inView} antiGravity={antiGravity} />
         ))}
       </div>
     </article>
@@ -128,7 +146,7 @@ function StatsBadgeCard({
   linkUrl: string;
 }) {
   return (
-    <article className="w-full bg-transparent border border-[#14B8A6]/10 hover:border-[#14B8A6]/35 rounded-lg p-6 flex flex-col items-center justify-between gap-4 transition-all duration-200 select-none hover:shadow-[0_2px_8px_rgba(20,184,166,0.05)] text-center h-full">
+    <article className="w-full bg-transparent border border-[#14B8A6]/10 hover:border-[#14B8A6]/35 rounded-lg p-6 flex flex-col items-center justify-between gap-4 transition-all duration-200 select-none hover:shadow-[0_2px_8px_rgba(20,184,166,0.05)] text-center h-full anti-gravity-float">
       <p className="text-[#9CA3AF] font-sans text-xs tracking-wider uppercase font-semibold">
         {label}
       </p>
@@ -146,7 +164,7 @@ function StatsBadgeCard({
   );
 }
 
-function PlatformStats() {
+function PlatformStats({ antiGravity }: { antiGravity: boolean }) {
   const statsQuery = trpc.system.stats.useQuery();
   const stats = statsQuery.data;
 
@@ -183,7 +201,12 @@ function PlatformStats() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {items.map((item) => (
-            <StatsCard key={item.label} label={item.label} targetValue={item.value} />
+            <StatsCard
+              key={item.label}
+              label={item.label}
+              targetValue={item.value}
+              antiGravity={antiGravity}
+            />
           ))}
         </div>
       </div>
@@ -403,6 +426,7 @@ function AnimatedHeroVisual() {
 }
 
 export default function HomePage() {
+  const [antiGravity, setAntiGravity] = useState(false);
   const [copied, setCopied] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
@@ -554,8 +578,11 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-transparent text-white overflow-x-hidden font-sans selection:bg-[#14B8A6] selection:text-black">
+      {/* Anti-Gravity Physics Canvas and HUD Console */}
+      <AntiGravity active={antiGravity} setActive={setAntiGravity} />
+
       {/* SECTION 3 & 4 — HERO SECTION & LOGOMARQUEE */}
-      <HeroSection />
+      <HeroSection antiGravity={antiGravity} setAntiGravity={setAntiGravity} />
 
       {/* SECTION 5 — PRODUCT FEATURE CARDS */}
       <section className="relative w-full max-w-[1280px] mx-auto py-20 px-6 xl:px-8" id="features">
@@ -710,7 +737,7 @@ export default function HomePage() {
       <AskAISection />
 
       {/* SECTION 11B — PLATFORM STATISTICS */}
-      <PlatformStats />
+      <PlatformStats antiGravity={antiGravity} />
 
       {/* SECTION 12 — FINAL CTA SECTION */}
       <section className="w-full max-w-[1280px] mx-auto px-6 pb-32 pt-16 bg-transparent" id="cta">

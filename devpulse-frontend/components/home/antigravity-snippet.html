@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RakshEx - Defy AI Risks with Anti-Gravity Protection</title>
+  <style>
+    :root {
+      --primary-teal: #14b8a6;
+      --bg-dark: #0a0a0a;
+      --text-white: #ffffff;
+      --text-muted: #9ca3af;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-white);
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Target floating elements */
+    .anti-gravity-float {
+      transition: transform 0.1s ease-out; /* ponytail: smooth fallback for low-spec devices */
+      will-change: transform;
+      cursor: grab;
+    }
+
+    .anti-gravity-float:active {
+      cursor: grabbing;
+    }
+
+    /* Activate Anti-Gravity Toggle Button */
+    .antigravity-toggle-btn {
+      font-family: monospace;
+      font-size: 14px;
+      padding: 10px 20px;
+      border-radius: 9999px;
+      border: 1px solid rgba(20, 184, 166, 0.3);
+      background: rgba(20, 184, 166, 0.1);
+      color: var(--primary-teal);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 10px rgba(20, 184, 166, 0.1);
+    }
+
+    .antigravity-toggle-btn.active {
+      border-color: rgba(239, 68, 68, 0.5);
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+      box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+      animation: pulse-border 2s infinite;
+    }
+
+    .antigravity-toggle-btn .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: var(--primary-teal);
+    }
+
+    .antigravity-toggle-btn.active .dot {
+      background-color: #ef4444;
+      animation: ping-dot 1s infinite alternate;
+    }
+
+    @keyframes pulse-border {
+      0%, 100% { box-shadow: 0 0 15px rgba(239, 68, 68, 0.3); }
+      50% { box-shadow: 0 0 25px rgba(239, 68, 68, 0.5); }
+    }
+
+    @keyframes ping-dot {
+      0% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(1.4); opacity: 0.6; }
+    }
+
+    /* Fixed Canvas */
+    #antigravity-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 5;
+      opacity: 0.05;
+      transition: opacity 1s ease;
+    }
+
+    #antigravity-canvas.active {
+      opacity: 0.8;
+    }
+
+    /* Floating Vulnerability Tags */
+    .vuln-tag {
+      position: fixed;
+      pointer-events: auto;
+      user-select: none;
+      z-index: 10;
+      border-radius: 6px;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      background: rgba(127, 29, 29, 0.2);
+      color: #ef4444;
+      padding: 8px 16px;
+      display: flex;
+      flex-direction: column;
+      font-family: monospace;
+      font-size: 12px;
+      box-shadow: 0 0 12px rgba(239, 68, 68, 0.2);
+      max-width: 280px;
+      transition: border-color 0.3s, background-color 0.3s, color 0.3s, box-shadow 0.3s;
+    }
+
+    .vuln-tag.scanning {
+      border-color: rgba(245, 158, 11, 0.4);
+      background: rgba(120, 53, 4, 0.2);
+      color: #f59e0b;
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.2);
+      animation: pulse-scanning 0.8s infinite alternate;
+    }
+
+    .vuln-tag.secured {
+      border-color: rgba(20, 184, 166, 0.4);
+      background: rgba(13, 148, 136, 0.2);
+      color: var(--primary-teal);
+      box-shadow: 0 0 12px rgba(20, 184, 166, 0.3);
+    }
+
+    .vuln-tag .title {
+      font-weight: bold;
+      margin-bottom: 2px;
+    }
+
+    .vuln-tag .status {
+      font-size: 9px;
+      opacity: 0.7;
+      font-family: sans-serif;
+    }
+
+    @keyframes pulse-scanning {
+      from { opacity: 0.7; }
+      to { opacity: 1; }
+    }
+
+    /* HUD Command Console */
+    .antigravity-hud {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 320px;
+      background: rgba(0, 0, 0, 0.85);
+      border: 1px solid rgba(20, 184, 166, 0.25);
+      border-radius: 8px;
+      padding: 16px;
+      font-family: monospace;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(8px);
+      z-index: 50;
+      opacity: 0;
+      transform: translateY(20px) scale(0.95);
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+    }
+
+    .antigravity-hud.active {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+
+    .hud-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-b: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+    }
+
+    .hud-header .title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .hud-header .title .indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--primary-teal);
+      box-shadow: 0 0 8px var(--primary-teal);
+    }
+
+    .hud-header .restore-btn {
+      font-family: monospace;
+      font-size: 9px;
+      font-weight: bold;
+      color: #ef4444;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 2px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .hud-header .restore-btn:hover {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: #ef4444;
+    }
+
+    .hud-stats {
+      display: grid;
+      grid-template-cols: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .hud-stats .stat-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+      padding: 8px;
+      text-align: center;
+    }
+
+    .hud-stats .stat-card .label {
+      font-size: 8px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+
+    .hud-stats .stat-card .val {
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .hud-stats .stat-card.teal .val { color: var(--primary-teal); }
+
+    .hud-logs {
+      height: 96px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+      padding: 8px;
+      font-size: 10px;
+      color: var(--text-muted);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column-reverse;
+      gap: 4px;
+      margin-bottom: 12px;
+    }
+
+    .hud-logs p {
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    .hud-logs .log-vuln { color: #ef4444; }
+    .hud-logs .log-safe { color: var(--primary-teal); }
+    .hud-logs .log-scan { color: #f59e0b; }
+    .hud-logs .log-demo { color: #d946ef; }
+
+    /* Share button */
+    .share-btn {
+      width: 100%;
+      padding: 8px;
+      background: #c084fc;
+      border: 1px solid rgba(192, 132, 252, 0.3);
+      color: #000;
+      font-weight: bold;
+      font-size: 11px;
+      text-transform: uppercase;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background 0.2s;
+    }
+
+    .share-btn:hover {
+      background: #a855f7;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Demo Content (Float Targets) -->
+  <div style="max-width: 800px; margin: 80px auto; padding: 20px; text-align: center;">
+    <div class="anti-gravity-float" style="display: inline-block; padding: 10px 20px; border: 1px solid rgba(20,184,166,0.3); border-radius: 20px; margin-bottom: 20px; background: rgba(0,0,0,0.4);">
+      🚀 Demo Security Shield
+    </div>
+    
+    <h1 class="anti-gravity-float" style="font-size: 48px; margin-bottom: 10px;">Defy AI Risks with Anti-Gravity</h1>
+    <p class="anti-gravity-float" style="color: var(--text-muted); margin-bottom: 40px;">
+      Observe feature cards and security stats lift off into orbit when protection is fully initialized.
+    </p>
+
+    <!-- Trigger Positioned Here -->
+    <div style="margin-bottom: 60px;">
+      <button id="gravity-toggle" class="antigravity-toggle-btn">
+        <span class="dot"></span>
+        <span class="text">Activate Anti-Gravity</span>
+      </button>
+    </div>
+
+    <!-- Target Feature Cards -->
+    <div style="display: grid; grid-template-cols: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 60px;">
+      <div class="anti-gravity-float" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 20px; text-align: left;">
+        <h3 style="margin-top: 0; color: var(--primary-teal);">Security Scanner</h3>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 0;">OWASP Top 10 automated checks.</p>
+      </div>
+      <div class="anti-gravity-float" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 20px; text-align: left;">
+        <h3 style="margin-top: 0; color: var(--primary-teal);">Kill Switch</h3>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 0;">Trips circuit breaker on anomaly limits.</p>
+      </div>
+      <div class="anti-gravity-float" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 20px; text-align: left;">
+        <h3 style="margin-top: 0; color: var(--primary-teal);">Thinking Tokens</h3>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 0;">Reasoning isolation for deep compliance.</p>
+      </div>
+    </div>
+
+    <!-- Target Stats Cards -->
+    <div style="display: flex; justify-content: center; gap: 40px; margin-top: 40px;">
+      <div class="anti-gravity-float" style="text-align: center;">
+        <div class="label" style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Leaks Found</div>
+        <div class="stats-counter" data-target="14" style="font-size: 32px; font-weight: bold; color: var(--primary-teal); font-family: monospace;">14</div>
+      </div>
+      <div class="anti-gravity-float" style="text-align: center;">
+        <div class="label" style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Active Shields</div>
+        <div class="stats-counter" data-target="99" style="font-size: 32px; font-weight: bold; color: var(--primary-teal); font-family: monospace;">99</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Anti-Gravity Canvas & HUD Layout -->
+  <canvas id="antigravity-canvas"></canvas>
+
+  <div id="antigravity-hud" class="antigravity-hud">
+    <div class="hud-header">
+      <div class="title">
+        <span class="indicator"></span>
+        <span>RaksHex Diagnostic HUD</span>
+      </div>
+      <button id="gravity-restore" class="restore-btn">RESTORE GRAVITY</button>
+    </div>
+    <div class="hud-stats">
+      <div class="stat-card teal">
+        <div class="label">Shield Status</div>
+        <div class="val">ACTIVE</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Safety Shutoff</div>
+        <div class="val"><span id="hud-timer">45</span>s</div>
+      </div>
+    </div>
+    <div style="background: rgba(20,184,166,0.05); border: 1px solid rgba(20,184,166,0.15); border-radius: 4px; padding: 6px; text-align: center; margin-bottom: 10px; display: flex; justify-content: space-between; font-size: 11px;">
+      <span style="color: var(--text-muted);">Security Score:</span>
+      <span style="font-weight: bold;"><span id="hud-score">78</span>/100</span>
+    </div>
+    <div id="hud-logs" class="hud-logs">
+      <p>[SYSTEM] Ready to defy gravity risks...</p>
+    </div>
+    <button id="share-orbit-btn" class="share-btn">
+      Share Orbit
+    </button>
+  </div>
+
+  <!-- Engine Script -->
+  <script>
+    // Configuration & State
+    let active = false;
+    let score = 78;
+    let timeLeft = 45;
+    const items = [];
+    const vulnerabilities = [];
+    const particles = [];
+    let lastSpawn = 0;
+    let requestID = null;
+    let countdownInterval = null;
+    let scrambleIntervals = [];
+
+    const canvas = document.getElementById('antigravity-canvas');
+    const ctx = canvas.getContext('2d');
+    const toggleBtn = document.getElementById('gravity-toggle');
+    const hud = document.getElementById('antigravity-hud');
+    const restoreBtn = document.getElementById('gravity-restore');
+    const scoreVal = document.getElementById('hud-score');
+    const logsContainer = document.getElementById('hud-logs');
+    const shareBtn = document.getElementById('share-orbit-btn');
+    const hudTimerVal = document.getElementById('hud-timer');
+
+    // Web Audio Synthesizer
+    let audioCtx = null;
+    function initAudio() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function playWhoosh() {
+      try {
+        initAudio();
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        const filter = audioCtx.createBiquadFilter();
+
+        osc.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(60, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(180, audioCtx.currentTime + 0.8);
+
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(200, audioCtx.currentTime);
+        filter.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.8);
+
+        gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.12, audioCtx.currentTime + 0.25);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8);
+
+        osc.start(); osc.stop(audioCtx.currentTime + 0.8);
+      } catch (e) {}
+    }
+
+    function playPing() {
+      try {
+        initAudio();
+        const osc1 = audioCtx.createOscillator();
+        const osc2 = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        osc1.connect(gainNode);
+        osc2.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        osc1.type = 'sine'; osc1.frequency.setValueAtTime(960, audioCtx.currentTime);
+        osc2.type = 'sine'; osc2.frequency.setValueAtTime(1440, audioCtx.currentTime);
+
+        gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+
+        osc1.start(); osc2.start();
+        osc1.stop(audioCtx.currentTime + 0.5); osc2.stop(audioCtx.currentTime + 0.5);
+      } catch (e) {}
+    }
+
+    function playScanTick() {
+      try {
+        initAudio();
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.03, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.08);
+      } catch (e) {}
+    }
+
+    // LocalStorage loader
+    if (localStorage.getItem('rakshex_antigravity') === 'true') {
+      toggleGravity(true);
+    }
+
+    // Toggle Handlers
+    toggleBtn.addEventListener('click', () => toggleGravity(!active));
+    restoreBtn.addEventListener('click', () => toggleGravity(false));
+    shareBtn.addEventListener('click', handleShare);
+
+    function addLog(msg, type = '') {
+      const p = document.createElement('p');
+      if (type) p.className = type;
+      p.textContent = msg;
+      logsContainer.insertBefore(p, logsContainer.firstChild);
+      while (logsContainer.children.length > 20) {
+        logsContainer.removeChild(logsContainer.lastChild);
+      }
+    }
+
+    function startCountdown() {
+      timeLeft = 45;
+      hudTimerVal.textContent = timeLeft;
+      countdownInterval = setInterval(() => {
+        timeLeft--;
+        hudTimerVal.textContent = timeLeft;
+        if (timeLeft <= 0) {
+          toggleGravity(false);
+          addLog('⏰ Auto-deactivated core via 45s safety shutoff.', 'log-vuln');
+        }
+      }, 1000);
+    }
+
+    function stopCountdown() {
+      if (countdownInterval) clearInterval(countdownInterval);
+      countdownInterval = null;
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && active) {
+        toggleGravity(false);
+        addLog('🛑 Pressed Escape. Gravity restored.');
+      }
+    });
+
+    function toggleGravity(nextState) {
+      active = nextState;
+      localStorage.setItem('rakshex_antigravity', active ? 'true' : 'false');
+
+      if (active) {
+        toggleBtn.classList.add('active');
+        toggleBtn.querySelector('.text').textContent = 'Deactivate Anti-Gravity';
+        canvas.classList.add('active');
+        hud.classList.add('active');
+        addLog('🚀 Suspended planetary gravity forces.', 'log-safe');
+        playWhoosh();
+        captureElements();
+        startStatsScrambling();
+        startCountdown();
+      } else {
+        toggleBtn.classList.remove('active');
+        toggleBtn.querySelector('.text').textContent = 'Activate Anti-Gravity';
+        canvas.classList.remove('active');
+        hud.classList.remove('active');
+        addLog('🔴 Releasing anti-gravity core...');
+        vulnerabilities.forEach(v => { if (v.el) v.el.remove(); });
+        vulnerabilities.length = 0;
+        score = 78;
+        scoreVal.textContent = score;
+        stopStatsScrambling();
+        stopCountdown();
+      }
+    }
+
+    function handleShare() {
+      playPing();
+      const text = `I just defied AI risks and suspended gravity on RakshEx! 🚀 Try it yourself: https://www.rakshex.in/ %23AISecurity %23AntiGravity`;
+      const url = `https://twitter.com/intent/tweet?text=${text}`;
+      window.open(url, '_blank', 'width=600,height=400');
+      addLog('✨ Share link triggered. Defy AI risks together!');
+    }
+
+    function startStatsScrambling() {
+      const counters = document.querySelectorAll('.stats-counter');
+      scrambleIntervals.forEach(clearInterval);
+      scrambleIntervals = [];
+
+      counters.forEach(counter => {
+        const interval = setInterval(() => {
+          const target = counter.getAttribute('data-target');
+          let random = '';
+          for (let i = 0; i < target.length; i++) {
+            random += Math.floor(Math.random() * 10);
+          }
+          counter.textContent = random;
+        }, 100);
+        scrambleIntervals.push(interval);
+      });
+    }
+
+    function stopStatsScrambling() {
+      scrambleIntervals.forEach(clearInterval);
+      scrambleIntervals = [];
+      const counters = document.querySelectorAll('.stats-counter');
+      counters.forEach(counter => {
+        counter.textContent = counter.getAttribute('data-target');
+      });
+    }
+
+    // Capture elements
+    function captureElements() {
+      const elements = document.querySelectorAll('.anti-gravity-float');
+      items.length = 0;
+      elements.forEach(el => {
+        const origTransition = window.getComputedStyle(el).transition;
+        el.style.transition = 'none';
+        el.style.willChange = 'transform';
+        
+        const item = {
+          el,
+          x: 0,
+          y: 0,
+          vx: (Math.random() - 0.5) * 0.5,
+          vy: -1.0 - Math.random() * 1.5,
+          r: 0,
+          vr: (Math.random() - 0.5) * 0.3,
+          origTransition
+        };
+
+        el.addEventListener('click', function onClick(e) {
+          if (!active) return;
+          e.preventDefault(); e.stopPropagation();
+          el.style.boxShadow = '0 0 25px #14B8A6';
+          setTimeout(() => el.style.boxShadow = '', 600);
+          playPing();
+          addLog(`🔬 [DEMO] Clicked node: ${el.innerText.split('\n')[0]}. Sweeping scanner...`, 'log-demo');
+          const rect = el.getBoundingClientRect();
+          spawnVulnerability(rect.left + rect.width / 2, rect.top);
+        });
+
+        // Touch drag
+        let startX = 0, startY = 0, startItemX = 0, startItemY = 0;
+        let isDragging = false, lastTime = 0;
+
+        el.addEventListener('touchstart', (e) => {
+          if (!active) return;
+          const t = e.touches[0];
+          startX = t.clientX; startY = t.clientY;
+          startItemX = item.x; startItemY = item.y;
+          item.vx = 0; item.vy = 0; item.vr = 0;
+          isDragging = true;
+          lastTime = performance.now();
+        }, { passive: true });
+
+        el.addEventListener('touchmove', (e) => {
+          if (!active || !isDragging) return;
+          const t = e.touches[0];
+          const dx = t.clientX - startX;
+          const dy = t.clientY - startY;
+          item.x = startItemX + dx;
+          item.y = startItemY + dy;
+          const now = performance.now();
+          const dt = now - lastTime;
+          if (dt > 0) {
+            item.vx = (dx / dt) * 6;
+            item.vy = (dy / dt) * 6;
+          }
+          lastTime = now;
+        }, { passive: true });
+
+        el.addEventListener('touchend', () => {
+          isDragging = false;
+          item.vr = (Math.random() - 0.5) * 1.2;
+        }, { passive: true });
+
+        items.push(item);
+      });
+    }
+
+    // Canvas Resize
+    let w, h;
+    function resize() {
+      const dpr = window.devicePixelRatio || 1;
+      w = window.innerWidth; h = window.innerHeight;
+      canvas.width = w * dpr; canvas.height = h * dpr;
+      canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+      ctx.scale(dpr, dpr);
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    // Initialize Particles
+    const colors = ['#14B8A6', '#06b6d4', '#d946ef', '#ef4444'];
+    for (let i = 0; i < 80; i++) {
+      particles.push({
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+        vx: (Math.random() - 0.5) * 0.4,
+        vy: -0.2 - Math.random() * 0.6,
+        size: Math.random() * 2 + 1,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        alpha: Math.random() * 0.5 + 0.3
+      });
+    }
+
+    const vulnNames = [
+      { name: '⚠️ Exposed Stripe Secret', type: 'key' },
+      { name: '⚠️ SQL Injection vector', type: 'injection' },
+      { name: '⚠️ Prompt Injection payload', type: 'injection' },
+      { name: '⚠️ Runaway AI spend ($54/hr)', type: 'cost' },
+      { name: '⚠️ Unauthenticated Shadow API', type: 'shadow' }
+    ];
+
+    function spawnVulnerability(initialX, initialY) {
+      const info = vulnNames[Math.floor(Math.random() * vulnNames.length)];
+      const div = document.createElement('div');
+      div.className = 'vuln-tag';
+      div.innerHTML = `<span class="title">${info.name}</span><span class="status">STATUS: THREAT</span>`;
+      document.body.appendChild(div);
+
+      const x = initialX !== undefined ? initialX : Math.random() * (w - 240) + 120;
+      const y = initialY !== undefined ? initialY : h + 50;
+
+      const v = {
+        el: div, name: info.name, x, y,
+        vx: (Math.random() - 0.5) * 0.8,
+        vy: -1.0 - Math.random() * 1.0,
+        r: (Math.random() - 0.5) * 30,
+        vr: (Math.random() - 0.5) * 0.5,
+        status: 'active', age: 0,
+        maxAge: 800 + Math.random() * 200
+      };
+      
+      vulnerabilities.push(v);
+      addLog(`⚠️ Anomaly detected: ${info.name}`, 'log-vuln');
+      playScanTick();
+    }
+
+    // Physics Loop
+    function loop(timestamp) {
+      ctx.fillStyle = 'rgba(10, 10, 10, 0.15)';
+      ctx.fillRect(0, 0, w, h);
+
+      // Grid Pattern
+      ctx.strokeStyle = 'rgba(20, 184, 166, 0.02)';
+      ctx.lineWidth = 1;
+      const gridSize = 40;
+      for (let x = 0; x < w; x += gridSize) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+      }
+      for (let y = 0; y < h; y += gridSize) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+      }
+
+      // Particles update
+      particles.forEach(p => {
+        if (active) p.vy -= 0.02;
+        else p.vy = (p.vy + 0.1) * 0.9;
+        p.x += p.vx; p.y += p.vy;
+
+        if (p.y < -10) { p.y = h + 10; p.x = Math.random() * w; }
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fillStyle = p.color; ctx.fill();
+      });
+
+      // Float Physics
+      if (active) {
+        items.forEach(item => {
+          item.vy -= 0.04; item.vx += (Math.random() - 0.5) * 0.1;
+          item.vx *= 0.97; item.vy *= 0.97;
+          item.x += item.vx; item.y += item.vy; item.r += item.vr;
+          
+          const rect = item.el.getBoundingClientRect();
+          if (rect.bottom < 0) {
+            const origTop = rect.top - item.y;
+            item.y = h - origTop + 50; item.vy = -1.0 - Math.random() * 1.5;
+          }
+          item.el.style.transform = `translate3d(${item.x}px, ${item.y}px, 0) rotate(${item.r}deg)`;
+        });
+
+        // Sweeper scan
+        if (timestamp - lastSpawn > 7000 + Math.random() * 5000) {
+          spawnVulnerability();
+          lastSpawn = timestamp;
+        }
+
+        const scanY = (timestamp / 10) % (h + 200) - 100;
+        ctx.strokeStyle = 'rgba(20, 184, 166, 0.4)';
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(0, scanY); ctx.lineTo(w, scanY); ctx.stroke();
+
+        vulnerabilities.forEach(v => {
+          v.vy -= 0.012; v.vx += (Math.random() - 0.5) * 0.12;
+          v.x += v.vx; v.y += v.vy; v.age++;
+
+          v.el.style.left = v.x + 'px';
+          v.el.style.top = v.y + 'px';
+          v.el.style.transform = `rotate(${v.r}deg)`;
+
+          // Scan detection (~10s life scan sweep)
+          if (v.status === 'active' && (Math.abs(v.y - scanY) < 18 || v.age >= 600)) {
+            v.status = 'scanning';
+            v.vy = -0.15;
+            v.el.classList.add('scanning');
+            v.el.querySelector('.status').textContent = 'STATUS: SCANNING';
+            addLog(`🔬 [SCANNER] Scanning anomaly at ${Math.round(v.x)}px...`, 'log-scan');
+            playScanTick();
+
+            setTimeout(() => {
+              if (v.status === 'scanning') {
+                v.status = 'secured';
+                v.vy = -3.0;
+                v.el.classList.remove('scanning');
+                v.el.classList.add('secured');
+                v.el.querySelector('.status').textContent = 'STATUS: SECURED';
+                addLog(`🛡️ [SECURED] Neutralised threat: ${v.name.replace('⚠️ ', '')}!`, 'log-safe');
+                playPing();
+                score = Math.min(score + 4, 99);
+                scoreVal.textContent = score;
+              }
+            }, 1800);
+          }
+        });
+
+        // Prune vulnerabilities
+        for (let i = vulnerabilities.length - 1; i >= 0; i--) {
+          const v = vulnerabilities[i];
+          if (v.y < -80 || v.age > v.maxAge) {
+            v.el.remove();
+            vulnerabilities.splice(i, 1);
+          }
+        }
+      } else {
+        const springStrength = 0.08;
+        const friction = 0.88;
+        items.forEach(item => {
+          const ax = -item.x * springStrength;
+          const ay = -item.y * springStrength;
+          const ar = -item.r * springStrength;
+          item.vx = (item.vx + ax) * friction;
+          item.vy = (item.vy + ay) * friction;
+          item.vr = (item.vr + ar) * friction;
+          item.x += item.vx; item.y += item.vy; item.r += item.vr;
+          item.el.style.transform = `translate3d(${item.x}px, ${item.y}px, 0) rotate(${item.r}deg)`;
+        });
+
+        if (items.length > 0) {
+          const finished = items.every(item => Math.abs(item.x) < 0.05 && Math.abs(item.y) < 0.05);
+          if (finished) {
+            items.forEach(item => {
+              item.el.style.transform = '';
+              item.el.style.transition = item.origTransition;
+            });
+            items.length = 0;
+            addLog('🌍 Normal gravity restored. Elements docked.');
+          }
+        }
+      }
+
+      requestID = requestAnimationFrame(loop);
+    }
+
+    requestID = requestAnimationFrame(loop);
+
+    // Easter Egg: Konami Code
+    const konami = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+    let kIndex = 0;
+    window.addEventListener('keydown', e => {
+      if (e.key === konami[kIndex]) {
+        kIndex++;
+        if (kIndex === konami.length) {
+          toggleGravity(!active);
+          kIndex = 0;
+        }
+      } else {
+        kIndex = 0;
+      }
+    });
+  </script>
+</body>
+</html>

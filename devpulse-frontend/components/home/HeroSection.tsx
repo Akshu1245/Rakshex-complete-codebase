@@ -5,7 +5,12 @@ import Link from "next/link";
 import { TerminalDemo } from "./TerminalDemo";
 import { LogoMarquee } from "../ui/LogoMarquee";
 
-export function HeroSection() {
+interface HeroSectionProps {
+  antiGravity: boolean;
+  setAntiGravity: (active: boolean) => void;
+}
+
+export function HeroSection({ antiGravity, setAntiGravity }: HeroSectionProps) {
   const [copied, setCopied] = useState(false);
   const [activeLogoName, setActiveLogoName] = useState("OpenAI");
 
@@ -24,7 +29,7 @@ export function HeroSection() {
         {/* LEFT COLUMN: Content */}
         <div className="hero-left text-left">
           {/* Top Badge */}
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#14B8A6]/30 bg-[#14B8A6]/10 px-4 py-1.5 backdrop-blur-sm w-fit mb-6">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[#14B8A6]/30 bg-[#14B8A6]/10 px-4 py-1.5 backdrop-blur-sm w-fit mb-6 anti-gravity-float">
             <span className="w-2 h-2 rounded-full bg-[#14B8A6] animate-pulse" />
             <p className="text-xs sm:text-sm font-semibold tracking-[0.02em] text-[#14B8A6] font-sans">
               Backed by 4 Patents · Built in Bengaluru, India
@@ -61,16 +66,34 @@ export function HeroSection() {
             </Link>
           </div>
 
-          {/* CLI Command Pill */}
-          <div className="hero-cli-pill bg-transparent border border-[#14B8A6]/25 rounded-full px-5 py-2.5 flex items-center gap-4 w-fit mb-4">
-            <span className="cli-text text-[#14B8A6] font-mono text-sm">
-              $ npx rakshex scan ./collection.json
-            </span>
+          {/* CLI Command & Anti-Gravity Control */}
+          <div className="flex flex-wrap items-center gap-4 mb-4">
+            {/* CLI Command Pill */}
+            <div className="hero-cli-pill bg-transparent border border-[#14B8A6]/25 rounded-full px-5 py-2.5 flex items-center gap-4 w-fit">
+              <span className="cli-text text-[#14B8A6] font-mono text-sm">
+                $ npx rakshex scan ./collection.json
+              </span>
+              <button
+                onClick={handleCopyCommand}
+                className="cli-copy-btn bg-white hover:bg-neutral-100 text-[#0a0a0a] font-sans font-bold text-xs px-4 py-1.5 rounded-full cursor-pointer transition-colors"
+              >
+                {copied ? "Copied!" : "Copy"}
+              </button>
+            </div>
+
+            {/* Anti-Gravity Toggle Button */}
             <button
-              onClick={handleCopyCommand}
-              className="cli-copy-btn bg-white hover:bg-neutral-100 text-[#0a0a0a] font-sans font-bold text-xs px-4 py-1.5 rounded-full cursor-pointer transition-colors"
+              onClick={() => setAntiGravity(!antiGravity)}
+              className={`px-5 py-2.5 font-mono text-sm rounded-full border transition-all duration-300 flex items-center gap-2 cursor-pointer ${
+                antiGravity
+                  ? "bg-red-500/10 border-red-500/50 text-red-400 hover:bg-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.3)] animate-pulse"
+                  : "bg-[#14B8A6]/10 border-[#14B8A6]/30 text-[#14B8A6] hover:bg-[#14B8A6]/20 hover:border-[#14B8A6]/50 shadow-[0_0_10px_rgba(20,184,166,0.1)]"
+              }`}
             >
-              {copied ? "Copied!" : "Copy"}
+              <span
+                className={`w-2.5 h-2.5 rounded-full ${antiGravity ? "bg-red-500 animate-ping" : "bg-[#14B8A6]"}`}
+              />
+              {antiGravity ? "Deactivate Anti-Gravity" : "Activate Anti-Gravity"}
             </button>
           </div>
 
@@ -110,7 +133,7 @@ export function HeroSection() {
         </div>
 
         {/* RIGHT COLUMN: Terminal Demo */}
-        <div className="hero-right flex items-center justify-center">
+        <div className="hero-right flex items-center justify-center anti-gravity-float">
           <TerminalDemo />
         </div>
       </div>

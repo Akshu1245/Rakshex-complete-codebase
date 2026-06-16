@@ -20,6 +20,32 @@ interface ChangelogEntry {
 
 const ENTRIES: ChangelogEntry[] = [
   {
+    version: "v0.5.0",
+    date: "June 2026",
+    items: [
+      {
+        type: "added",
+        text: "Launch Week Highlight: Zero-dependency Anti-Gravity Mode built with vanilla JS and native Web APIs",
+      },
+      {
+        type: "added",
+        text: "Interactive Web Audio API synthesised sound effects for live threat scans",
+      },
+      {
+        type: "improved",
+        text: "Stats counters digit-scrambling slot machine animation during active orbit",
+      },
+      {
+        type: "improved",
+        text: "Mobile touch physics and drag-fling momentum for floating targets",
+      },
+      {
+        type: "improved",
+        text: "HUD panel with 45s safety countdown auto-deactivation and Escape shutdown trigger",
+      },
+    ],
+  },
+  {
     version: "v0.4.0",
     date: "May 2026",
     items: [
