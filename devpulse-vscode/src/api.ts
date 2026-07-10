@@ -38,6 +38,33 @@ export interface Collection {
   isShared?: boolean;
 }
 
+export interface ControlPlaneSummary {
+  providers: number;
+  credentials: number;
+  openFindings: number;
+  subscriptions: number;
+}
+
+export interface ControlPlaneUsage {
+  totalCostUsd: number;
+  totalRequests: number;
+  totalTokens: number;
+  byUser: Array<{
+    name: string | null;
+    email: string | null;
+    requests: number;
+    tokens: number;
+    costUsd: number;
+  }>;
+  byModel: Array<{
+    provider: string;
+    model: string;
+    requests: number;
+    tokens: number;
+    costUsd: number;
+  }>;
+}
+
 export interface ValidatedUser {
   id: number;
   email: string | null;
@@ -136,6 +163,28 @@ export class RakshexApi {
    */
   async copilotAsk(question: string, context: string = "general"): Promise<{ response: string }> {
     return this.mutate<{ response: string }>("vscodeExtension.copilotAsk", { question, context });
+  }
+
+  async getControlPlaneSummary(workspaceId: number): Promise<ControlPlaneSummary> {
+    return this.query<ControlPlaneSummary>("controlPlane.summary", { workspaceId });
+  }
+
+  async getControlPlaneUsage(workspaceId: number): Promise<ControlPlaneUsage> {
+    return this.query<ControlPlaneUsage>("controlPlane.usage.summary", { workspaceId });
+  }
+
+  async getControlPlaneSubscriptions(
+    workspaceId: number,
+  ): Promise<
+    Array<{
+      provider: string;
+      plan: string;
+      seatsPurchased: number;
+      seatsUsed: number;
+      status: string;
+    }>
+  > {
+    return this.query("controlPlane.subscriptions.list", { workspaceId });
   }
 
   // --- internals ---------------------------------------------------------
@@ -294,9 +343,7 @@ export class RakshexApi {
     }
 
     const payload = parsed as
-      | { result?: { data?: unknown } }
-      | { result?: { data?: { json?: unknown } } }
-      | undefined;
+      { result?: { data?: unknown } } | { result?: { data?: { json?: unknown } } } | undefined;
 
     const data = payload?.result?.data;
     // Server uses superjson; outputs we consume here are plain JSON in the

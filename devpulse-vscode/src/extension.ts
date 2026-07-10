@@ -32,6 +32,7 @@ import { ScanCurrentFileCommand } from "./scanCurrentFile";
 import { AnalyticsDashboard } from "./analyticsDashboard";
 import { RetentionEngine } from "./retentionEngine";
 import { dismissFinding } from "./dismissFinding";
+import { ControlPlanePanel } from "./controlPlanePanel";
 
 const SECRET_API_KEY = "rakshex.apiKey";
 
@@ -46,6 +47,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const engagementTracker = new EngagementTracker(context, api);
   const retentionEngine = new RetentionEngine(context, engagementTracker);
   const statusBar = new RakshexStatusBar(api, () => engagementTracker.getScanStreak());
+  const controlPlanePanel = new ControlPlanePanel(api);
   const heartbeat = new HeartbeatService(api, () => Boolean(cachedApiKey));
 
   engagementTracker.recordOnboardingStep("installed");
@@ -434,6 +436,25 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       }
       engagementTracker.record("dashboard_opened");
       SecurityWebviewPanel.createOrShow(context.extensionUri, api, context);
+    }),
+    vscode.commands.registerCommand("rakshex.openControlPlane", async () => {
+      const workspaceId = vscode.workspace
+        .getConfiguration("rakshex")
+        .get<number>("workspaceId", 0);
+      if (!Number.isInteger(workspaceId) || workspaceId <= 0) {
+        const action = await vscode.window.showWarningMessage(
+          "Rakshex: set rakshex.workspaceId before opening workspace governance.",
+          "Open Settings",
+        );
+        if (action === "Open Settings") {
+          await vscode.commands.executeCommand(
+            "workbench.action.openSettings",
+            "rakshex.workspaceId",
+          );
+        }
+        return;
+      }
+      await controlPlanePanel.show(workspaceId);
     }),
 
     vscode.commands.registerCommand("rakshex.openSettings", () => {

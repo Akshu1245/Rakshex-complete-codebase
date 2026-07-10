@@ -132,6 +132,12 @@
         "category": "DevPulse"
       },
       {
+        "command": "rakshex.openControlPlane",
+        "title": "Rakshex: Open AI Control Plane",
+        "icon": "$(organization)",
+        "category": "Rakshex"
+      },
+      {
         "command": "rakshex.openSettings",
         "title": "DevPulse: Open Settings",
         "icon": "$(gear)",
@@ -497,6 +503,12 @@
           "type": "string",
           "default": "http://localhost:8081",
           "description": "Base URL of the DevPulse inline LLM gateway (default: http://localhost:8081 for local dev; override to e.g. https://gateway.your-company.com when self-hosted)."
+        },
+        "rakshex.workspaceId": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "description": "Workspace ID used for AI control-plane inventory, subscription seats, budgets, and governed usage. Obtain this from the Rakshex workspace settings."
         }
       }
     }
