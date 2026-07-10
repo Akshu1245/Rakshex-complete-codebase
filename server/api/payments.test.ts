@@ -14,7 +14,7 @@ vi.mock("../payments", () => ({
     customerId: `cust_${Date.now()}`,
     shortUrl: "https://razorpay.com/pay/test",
     status: "created",
-    planName: plan === "enterprise" ? "Rakshex Enterprise" : "Rakshex Pro",
+    planName: plan === "enterprise" ? "DevPulse Enterprise" : "DevPulse Pro",
     amount: plan === "enterprise" ? 499900 : 99900,
     currency: "INR",
     keyId: "rzp_test_key",
@@ -69,6 +69,7 @@ vi.mock("../db", async () => ({
   getRecentScans: vi.fn(async () => []),
   getEffectivePlan: vi.fn(async (userId: number) => "free"),
   getTrialStatus: vi.fn(async (userId: number) => ({ active: false, remainingDays: 0 })),
+  markWebhookEventProcessed: vi.fn(async () => true),
 }));
 
 function createAuthContext(userId: number = 1) {
@@ -285,6 +286,9 @@ describe("payments router", () => {
 
 describe("payments webhook security", () => {
   it("rejects webhook without signature", async () => {
+    const { verifyWebhookSignature } = await import("../payments");
+    vi.mocked(verifyWebhookSignature).mockReturnValueOnce(false);
+
     const ctx = {
       user: null,
       req: { protocol: "https", headers: {}, ip: "127.0.0.1" },
@@ -292,15 +296,56 @@ describe("payments webhook security", () => {
     } as unknown as TrpcContext;
     const caller = appRouter.createCaller(ctx);
 
-    // Webhook handler should validate signature
-    // This tests the webhook endpoint directly
+    await expect(
+      caller.payment.handleWebhook({ event: "subscription.activated", payload: {} }),
+    ).rejects.toThrow(/Invalid webhook signature/i);
   });
 
   it("rejects webhook with invalid signature", async () => {
-    // Test that invalid signatures are rejected
+    const { verifyWebhookSignature } = await import("../payments");
+    vi.mocked(verifyWebhookSignature).mockReturnValueOnce(false);
+
+    const ctx = {
+      user: null,
+      req: {
+        protocol: "https",
+        headers: { "x-razorpay-signature": "invalid_sig" },
+        ip: "127.0.0.1",
+      },
+      res: { clearCookie: vi.fn() },
+    } as unknown as TrpcContext;
+    const caller = appRouter.createCaller(ctx);
+
+    await expect(
+      caller.payment.handleWebhook({ event: "subscription.activated", payload: {} }),
+    ).rejects.toThrow(/Invalid webhook signature/i);
   });
 
   it("accepts valid webhook signature", async () => {
-    // Test that valid signatures are accepted
+    const { verifyWebhookSignature, handleWebhookEvent } = await import("../payments");
+    vi.mocked(verifyWebhookSignature).mockReturnValueOnce(true);
+    vi.mocked(handleWebhookEvent).mockReturnValueOnce({
+      event: "subscription.activated",
+      subscriptionId: "sub_test_123",
+      data: { payload: {} },
+    });
+
+    const ctx = {
+      user: null,
+      req: {
+        protocol: "https",
+        headers: { "x-razorpay-signature": "valid_sig" },
+        ip: "127.0.0.1",
+      },
+      res: { clearCookie: vi.fn() },
+    } as unknown as TrpcContext;
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.payment.handleWebhook({
+      event: "subscription.activated",
+      payload: { subscription: { entity: { id: "sub_test_123" } } },
+    });
+
+    expect(result).toEqual({ received: true });
   });
 });

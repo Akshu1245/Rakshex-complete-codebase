@@ -591,7 +591,7 @@ export async function getSubscriptionInvoices(subscriptionId: string): Promise<a
 export function verifyWebhookSignature(
   payload: string,
   signature: string,
-  secret: string = RAZORPAY_KEY_SECRET || "",
+  secret: string = ENV.razorpayWebhookSecret || "",
 ): boolean {
   if (!secret) {
     logger.error("[Razorpay] Webhook secret not configured");

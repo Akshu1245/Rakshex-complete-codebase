@@ -15,24 +15,23 @@ import { CrispChat } from "@/components/CrispChat";
 // Inter kept for fallback but primary fonts loaded via CSS
 const inter = Inter({ subsets: ["latin"] });
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://rakshex.in";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.rakshex.in";
 
 export const metadata: Metadata = {
-  title: "RaksHex — API Security & LLM Cost Intelligence",
+  title: "RakshEx | AI Control Plane for Security, Cost, and Access",
   description:
-    "API Security & LLM Cost Intelligence. Scan APIs, detect shadow endpoints, block prompt injection, attribute LLM costs.",
+    "Discover AI accounts, credentials, subscriptions, usage, risk, and policy in one control plane without retaining raw prompts by default.",
   generator: "RaksHex",
   keywords: [
-    "API security",
-    "LLM cost monitoring",
-    "prompt injection detection",
-    "shadow API detection",
-    "PCI DSS compliance",
+    "AI control plane",
     "AI governance",
-    "LLM runtime security",
-    "AI agent protection",
-    "OWASP API Top 10",
-    "RaksHex",
+    "AI credential inventory",
+    "AI subscription governance",
+    "LLM gateway policy",
+    "prompt injection detection",
+    "shadow AI discovery",
+    "AI cost controls",
+    "RakshEx",
   ],
   metadataBase: new URL(SITE_URL),
   alternates: { canonical: "/" },
@@ -48,9 +47,9 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
   },
   openGraph: {
-    title: "RaksHex — Secure Your APIs & Control LLM Costs",
+    title: "RakshEx | AI Control Plane for Security, Cost, and Access",
     description:
-      "Real-time OWASP API scanning, LLM cost attribution, thinking token tracking, and PCI DSS compliance.",
+      "Discover AI access, govern credentials and subscriptions, enforce gateway policy, and export audit evidence.",
     type: "website",
     siteName: "RaksHex",
     locale: "en_US",
@@ -59,14 +58,15 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "RaksHex — API Security & LLM Cost Intelligence",
+        alt: "RakshEx AI Control Plane",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "RaksHex — API Security & LLM Cost Intelligence",
-    description: "API Security & LLM Cost Intelligence.",
+    title: "RakshEx | AI Control Plane",
+    description:
+      "AI security, access governance, cost controls, and audit evidence in one workspace.",
     creator: "@rakshexhq",
     images: ["/og-image.png"],
   },
@@ -100,13 +100,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="manifest" href="/site.webmanifest" />
         <meta name="theme-color" content="#0d1f1a" />
         <meta name="msapplication-TileColor" content="#0d1f1a" />
-        <meta property="og:image" content="https://rakshex.in/og-image.png" />
+        <meta property="og:image" content={`${SITE_URL}/og-image.png`} />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta property="og:image:type" content="image/png" />
         <meta property="og:image:alt" content="RaksHex — AI Runtime Governance Platform" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:image" content="https://rakshex.in/og-image.png" />
+        <meta name="twitter:image" content={`${SITE_URL}/og-image.png`} />
         <meta name="twitter:image:alt" content="RaksHex — AI Runtime Governance Platform" />
       </head>
       <body className={inter.className}>

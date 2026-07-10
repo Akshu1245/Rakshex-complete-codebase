@@ -10,6 +10,7 @@ export default tseslint.config(
       "**/dist/**",
       "**/build/**",
       "**/coverage/**",
+      "vendor/**",
       "**/.next/**",
       "**/out/**",
       "devpulse-frontend/**",

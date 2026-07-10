@@ -42,7 +42,7 @@ export const paymentsRouter = router({
         plan: input.plan,
         razorpaySubscriptionId: result.subscriptionId,
         razorpayCustomerId: result.customerId,
-        status: "created",
+        status: "pending",
       });
 
       return {
@@ -140,7 +140,18 @@ export const paymentsRouter = router({
       });
     }
 
-    const event = handleWebhookEvent(input as RazorpayWebhookPayload);
+    const webhookPayload = input as RazorpayWebhookPayload;
+    const event = handleWebhookEvent(webhookPayload);
+
+    // Idempotency: deduplicate webhook events that Razorpay retries for ~24 hours
+    const eventId =
+      event.data?.payload?.payment?.entity?.id ||
+      event.data?.payload?.subscription?.entity?.id ||
+      event.event;
+    const isNew = await db.markWebhookEventProcessed("razorpay", eventId, event.event);
+    if (!isNew) {
+      return { received: true, deduplicated: true };
+    }
 
     switch (event.event) {
       case "subscription.activated":
@@ -206,7 +217,7 @@ export const paymentsRouter = router({
                 userName: user.name ?? "",
                 amount: payment.amount / 100,
                 currency: payment.currency,
-                retryUrl: `${process.env.APP_URL || "https://rakshex.in"}/billing?retry=1`,
+                retryUrl: `${process.env.APP_URL || "https://devpulse.ai"}/billing?retry=1`,
                 downgradeWarning: failureCount >= 2,
               }).catch((err: unknown) => logger.warn({ err }, "[Payments] Dunning email failed"));
             }
@@ -375,7 +386,7 @@ export const paymentsRouter = router({
           userId: ctx.user.id,
           razorpayPaymentId: input.razorpay_payment_id,
           razorpayOrderId: input.razorpay_order_id,
-          amount: Number(paymentDetails.amount),
+          amount: Number(paymentDetails.amount) / 100,
           currency: paymentDetails.currency,
           status: "captured",
           description: paymentDetails.description || "Razorpay Standard Web Checkout",

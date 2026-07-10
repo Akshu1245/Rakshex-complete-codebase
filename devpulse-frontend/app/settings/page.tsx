@@ -484,33 +484,38 @@ function SecurityTab() {
           ) : (
             sessions?.sessions.map(
               (session: {
-                id: string;
+                id?: string;
                 userAgent?: string | null;
                 ipAddress?: string | null;
-                lastActiveAt: string | Date;
-              }) => (
-                <div
-                  key={session.id}
-                  className="flex items-center justify-between p-3 bg-gray-700/50 rounded-md border border-gray-600"
-                >
-                  <div>
-                    <p className="text-sm font-medium text-white">
-                      {session.userAgent?.includes("Mobile") ? "Mobile Device" : "Desktop"}
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      {session.ipAddress || "Unknown IP"} • Last active{" "}
-                      {new Date(session.lastActiveAt).toLocaleString()}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => revokeSession.mutate({ sessionId: session.id })}
-                    disabled={revokeSession.isPending}
-                    className="text-red-400 hover:text-red-300 text-sm font-medium"
+                lastActiveAt?: string | Date;
+              }) => {
+                if (!session.id) return null;
+                return (
+                  <div
+                    key={session.id}
+                    className="flex items-center justify-between p-3 bg-gray-700/50 rounded-md border border-gray-600"
                   >
-                    Revoke
-                  </button>
-                </div>
-              ),
+                    <div>
+                      <p className="text-sm font-medium text-white">
+                        {session.userAgent?.includes("Mobile") ? "Mobile Device" : "Desktop"}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {session.ipAddress || "Unknown IP"} • Last active{" "}
+                        {session.lastActiveAt
+                          ? new Date(session.lastActiveAt).toLocaleString()
+                          : "Unknown"}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => revokeSession.mutate({ sessionId: session.id })}
+                      disabled={revokeSession.isPending}
+                      className="text-red-400 hover:text-red-300 text-sm font-medium"
+                    >
+                      Revoke
+                    </button>
+                  </div>
+                );
+              },
             )
           )}
         </div>
@@ -642,26 +647,33 @@ function AuditTab() {
         ) : (
           auditLog.logs.map(
             (log: {
-              id: string;
-              action: string;
+              id?: string;
+              action?: string;
               ipAddress?: string | null;
-              createdAt: string | Date;
-            }) => (
-              <div
-                key={log.id}
-                className="flex items-center justify-between p-3 bg-gray-700/50 rounded-md border border-gray-600 text-sm"
-              >
-                <div>
-                  <span className="font-medium text-white">
-                    {log.action.replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase())}
+              createdAt?: string | Date;
+            }) => {
+              if (!log.id) return null;
+              return (
+                <div
+                  key={log.id}
+                  className="flex items-center justify-between p-3 bg-gray-700/50 rounded-md border border-gray-600 text-sm"
+                >
+                  <div>
+                    <span className="font-medium text-white">
+                      {(log.action ?? "")
+                        .replace(/_/g, " ")
+                        .replace(/\b\w/g, (l: string) => l.toUpperCase())}
+                    </span>
+                    {log.ipAddress && (
+                      <span className="text-gray-400 ml-2">from {log.ipAddress}</span>
+                    )}
+                  </div>
+                  <span className="text-gray-400">
+                    {log.createdAt ? new Date(log.createdAt).toLocaleString() : ""}
                   </span>
-                  {log.ipAddress && (
-                    <span className="text-gray-400 ml-2">from {log.ipAddress}</span>
-                  )}
                 </div>
-                <span className="text-gray-400">{new Date(log.createdAt).toLocaleString()}</span>
-              </div>
-            ),
+              );
+            },
           )
         )}
       </div>
@@ -703,28 +715,33 @@ function DangerZoneTab() {
           ) : (
             auditLog?.logs.map(
               (log: {
-                id: string;
-                action: string;
+                id?: string;
+                action?: string;
                 ipAddress?: string | null;
-                createdAt: string | Date;
-              }) => (
-                <div
-                  key={log.id}
-                  className="flex items-center justify-between p-3 bg-gray-700/50 rounded-md border border-gray-600 text-sm"
-                >
-                  <div>
-                    <span className="font-medium text-white">
-                      {log.action
-                        .replace(/_/g, " ")
-                        .replace(/\b\w/g, (l: string) => l.toUpperCase())}
+                createdAt?: string | Date;
+              }) => {
+                if (!log.id) return null;
+                return (
+                  <div
+                    key={log.id}
+                    className="flex items-center justify-between p-3 bg-gray-700/50 rounded-md border border-gray-600 text-sm"
+                  >
+                    <div>
+                      <span className="font-medium text-white">
+                        {(log.action ?? "")
+                          .replace(/_/g, " ")
+                          .replace(/\b\w/g, (l: string) => l.toUpperCase())}
+                      </span>
+                      {log.ipAddress && (
+                        <span className="text-gray-400 ml-2">from {log.ipAddress}</span>
+                      )}
+                    </div>
+                    <span className="text-gray-400">
+                      {log.createdAt ? new Date(log.createdAt).toLocaleString() : ""}
                     </span>
-                    {log.ipAddress && (
-                      <span className="text-gray-400 ml-2">from {log.ipAddress}</span>
-                    )}
                   </div>
-                  <span className="text-gray-400">{new Date(log.createdAt).toLocaleString()}</span>
-                </div>
-              ),
+                );
+              },
             )
           )}
         </div>

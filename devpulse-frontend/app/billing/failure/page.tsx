@@ -33,8 +33,8 @@ export default function BillingFailurePage() {
             </li>
             <li>
               If you were charged but the plan didn&apos;t activate, contact{" "}
-              <a href="mailto:support@rakshex.in" className="text-blue-400 hover:underline">
-                support@rakshex.in
+              <a href="mailto:support@devpulse.ai" className="text-blue-400 hover:underline">
+                support@devpulse.ai
               </a>{" "}
               with the Razorpay Order ID from your bank statement.
             </li>
@@ -49,7 +49,7 @@ export default function BillingFailurePage() {
             <ArrowLeft className="w-4 h-4" /> Try again
           </Link>
           <a
-            href="mailto:support@rakshex.in?subject=Rakshex%20payment%20failed"
+            href="mailto:support@devpulse.ai?subject=Rakshex%20payment%20failed"
             className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md border border-gray-700 hover:bg-black/50 text-gray-200 text-sm font-medium transition-colors"
           >
             <LifeBuoy className="w-4 h-4" /> Contact support

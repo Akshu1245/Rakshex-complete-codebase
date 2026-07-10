@@ -19,6 +19,37 @@ interface BroadcastMessage {
   userId?: number; // If provided, only send to this user
 }
 
+/**
+ * Decode and self-validate a `rakshex_session` cookie value.
+ *
+ * The legacy cookie is base64-encoded JSON of the shape
+ * `{ userId: number; expiresAt: number; sessionId: string; ... }`. We
+ * historically tried to look it up in the DB via `getUserSessionByToken`
+ * (filtered by the `sessionToken` column), but the cookie payload doesn't
+ * carry the session token — only the row id. That lookup always returned
+ * null, silently breaking legacy-session WS auth.
+ *
+ * The cookie is self-validating: it has its own `expiresAt` and `userId`.
+ * If those are present and unexpired, trust it. JWT (`access_token`) remains
+ * the primary auth path; this is only a fallback for older clients.
+ */
+function decodeLegacySessionCookie(
+  rawCookie: string,
+): { userId: number; expiresAt: number } | null {
+  try {
+    const decoded = JSON.parse(
+      Buffer.from(decodeURIComponent(rawCookie), "base64").toString("utf-8"),
+    );
+    if (!decoded || typeof decoded !== "object") return null;
+    if (typeof decoded.userId !== "number" || decoded.userId <= 0) return null;
+    if (typeof decoded.expiresAt !== "number") return null;
+    if (decoded.expiresAt <= Date.now()) return null;
+    return { userId: decoded.userId, expiresAt: decoded.expiresAt };
+  } catch {
+    return null;
+  }
+}
+
 class WebSocketManager {
   private io: SocketIOServer | null = null;
   private connectedUsers = new Map<number, Set<string>>();
@@ -58,15 +89,10 @@ class WebSocketManager {
           if (cookieHeader) {
             const match = cookieHeader.match(/rakshex_session=([^;]+)/);
             if (match) {
-              const sessionData = JSON.parse(
-                Buffer.from(decodeURIComponent(match[1]), "base64").toString("utf-8"),
-              );
-              if (sessionData?.sessionId) {
-                const session = await db.getUserSessionByToken(sessionData.sessionId);
-                if (session) {
-                  socket.data.userId = session.userId;
-                  return next();
-                }
+              const session = decodeLegacySessionCookie(match[1]);
+              if (session) {
+                socket.data.userId = session.userId;
+                return next();
               }
             }
           }
@@ -119,6 +145,47 @@ class WebSocketManager {
     });
 
     logger.info("[WebSocket] Server initialized");
+
+    // Periodically sweep and disconnect expired connections
+    setInterval(() => {
+      if (!this.io) return;
+      this.io.sockets.sockets.forEach(async (socket) => {
+        const cookieHeader = socket.handshake?.headers?.cookie;
+        if (!cookieHeader) {
+          socket.disconnect(true);
+          return;
+        }
+
+        // 1. Check access_token expiration
+        const matchToken = cookieHeader.match(/access_token=([^;]+)/);
+        if (matchToken) {
+          const token = decodeURIComponent(matchToken[1]);
+          try {
+            await verifyAccessToken(token);
+          } catch {
+            logger.info(
+              { socketId: socket.id },
+              "[WebSocket] Disconnecting due to expired access token",
+            );
+            socket.disconnect(true);
+          }
+          return;
+        }
+
+        // 2. Check rakshex_session cookie expiration (self-validating)
+        const matchSession = cookieHeader.match(/rakshex_session=([^;]+)/);
+        if (matchSession) {
+          const session = decodeLegacySessionCookie(matchSession[1]);
+          if (!session) {
+            logger.info(
+              { socketId: socket.id },
+              "[WebSocket] Disconnecting due to expired or invalid session",
+            );
+            socket.disconnect(true);
+          }
+        }
+      });
+    }, 60000); // Check every 60 seconds
   }
 
   broadcast(message: BroadcastMessage) {

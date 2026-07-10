@@ -1,115 +1,75 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { trpc } from "@/lib/trpc";
-import { useToast } from "@/components/Toast";
 
 export default function CompareTraceableAI() {
-  const [email, setEmail] = useState("");
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { addToast } = useToast();
-
-  const joinMutation = trpc.waitlist.join.useMutation({
-    onSuccess: () => {
-      setSuccess(true);
-      setError(null);
-      addToast("success", "Successfully subscribed to competitor analysis updates!");
-    },
-    onError: (err) => {
-      setError(err.message || "Failed to join waitlist. Please try again.");
-    },
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
-    joinMutation.mutate({
-      email,
-      plan: "Free",
-      source: "compare_traceable_ai",
-    });
-  };
-
   return (
     <div className="min-h-screen bg-transparent text-slate-100 py-16 px-4 font-sans">
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         <nav className="text-sm text-blue-400 mb-6">
           <Link href="/compare" className="hover:underline">
-            ← Back to All Comparisons
+            ← All Comparisons
           </Link>
         </nav>
 
         <header className="mb-12">
           <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-950 text-indigo-400 border border-indigo-900/40 uppercase tracking-wider mb-3">
-            Comparison Stub
+            Head-to-Head
           </span>
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white mb-4">
-            RaksHex vs Traceable AI — Which is Right for You?
+            DevPulse vs Traceable AI
           </h1>
-          <p className="text-slate-400 text-base leading-relaxed">
-            Traceable AI is a leading enterprise API security platform focusing on API discovery,
-            threat protection, and posturing. RaksHex operates as a lightweight AI runtime
-            governance middleware designed to intercept prompt injections, track thinking token
-            costs, and enforce AgentGuard circuit breakers in LLM interactions.
+          <p className="text-slate-400 text-base leading-relaxed max-w-3xl">
+            Traceable AI excels at enterprise API discovery, traditional threat detection, and
+            security posture management. DevPulse is an AI-native runtime governance layer built for
+            prompt security, LLM cost control, agentic workflows, and deep GitHub integration.
           </p>
         </header>
 
-        <div className="bg-slate-900/40 border border-slate-900 rounded-2xl p-8 mb-8 text-center">
-          <h2 className="text-xl font-bold text-white mb-2">Full Comparison Coming Soon</h2>
-          <p className="text-slate-400 text-sm max-w-md mx-auto mb-6">
-            We are writing an in-depth feature mapping and benchmark suite for RaksHex vs Traceable
-            AI. Subscribe below to be notified when the detailed analysis launches.
-          </p>
-
-          {success ? (
-            <div className="bg-emerald-950/20 border border-emerald-500/30 text-emerald-300 p-4 rounded-xl text-sm font-medium max-w-md mx-auto">
-              ✓ Successfully subscribed! We will notify you when this page is ready.
+        <div className="grid md:grid-cols-2 gap-8 mb-10">
+          <div className="bg-zinc-900 p-6 rounded-2xl border border-zinc-800">
+            <h2 className="font-bold text-xl mb-4 text-emerald-400">DevPulse</h2>
+            <ul className="space-y-2 text-sm">
+              <li>✅ Real-time PR scanning with secret + heuristic detection + GitHub comments</li>
+              <li>
+                ✅ LLM-first: prompt injection firewall, thinking token telemetry, cost
+                kill-switches
+              </li>
+              <li>✅ AgentGuard for human-in-the-loop approval of agent tool calls</li>
+              <li>✅ Native GitHub App + VS Code integration</li>
+              <li>✅ OWASP AI Top 10 + custom runtime policies</li>
+              <li>✅ Lightweight and developer-friendly</li>
+            </ul>
+            <div className="mt-4 text-xs text-emerald-400">
+              Best for: Teams shipping heavily with LLMs, Copilot, and autonomous agents.
             </div>
-          ) : (
-            <form
-              onSubmit={handleSubmit}
-              className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
-            >
-              <input
-                type="email"
-                required
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-sm text-gray-200 focus:outline-none focus:border-blue-500 placeholder-gray-500"
-              />
-              <button
-                type="submit"
-                disabled={joinMutation.isPending}
-                className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-semibold text-sm py-2 px-6 rounded-lg transition-colors shadow-lg shadow-blue-500/20"
-              >
-                Notify Me
-              </button>
-            </form>
-          )}
-          {error && <p className="text-xs text-rose-400 mt-2">{error}</p>}
+          </div>
+
+          <div className="bg-zinc-900 p-6 rounded-2xl border border-zinc-800">
+            <h2 className="font-bold text-xl mb-4">Traceable AI</h2>
+            <ul className="space-y-2 text-sm text-slate-400">
+              <li>Strong API discovery and inventory at enterprise scale</li>
+              <li>Good traditional threat protection and posture management</li>
+              <li>Mature for classic REST/GraphQL security programs</li>
+              <li>Limited native LLM prompt evaluation or cost attribution</li>
+              <li>Less emphasis on developer workflow (PR comments, IDE, agents)</li>
+            </ul>
+            <div className="mt-4 text-xs">
+              Best for: Large enterprises needing broad API inventory and classic API security.
+            </div>
+          </div>
         </div>
 
-        <div className="border border-slate-900 rounded-2xl p-6 bg-slate-950/25">
-          <h3 className="font-bold text-white mb-4">Core Differentiators Overview</h3>
-          <div className="space-y-3 text-sm text-slate-400">
-            <p>
-              • <strong>LLM Prompt Evaluation:</strong> RaksHex features custom classifier pipelines
-              for real-time prompt injection detection. Traceable AI focuses on traditional API
-              vulnerabilities (OWASP API Top 10).
-            </p>
-            <p>
-              • <strong>Cost Optimization:</strong> RaksHex attributes thinking tokens and provides
-              budget kill switches to control LLM costs. Legacy API security products lack cost
-              monitoring.
-            </p>
-            <p>
-              • <strong>Agentic Rules:</strong> RaksHex's AgentGuard blocks destructive tool calls
-              based on human approvals, built for modern autonomous agent structures.
-            </p>
-          </div>
+        <div className="text-center">
+          <Link
+            href="/dashboard"
+            className="px-8 py-3 bg-blue-600 hover:bg-blue-500 rounded-lg font-medium"
+          >
+            Try DevPulse
+          </Link>
+          <p className="text-xs mt-3 text-slate-500">
+            Free tier includes GitHub PR scanning and LLM governance.
+          </p>
         </div>
       </div>
     </div>

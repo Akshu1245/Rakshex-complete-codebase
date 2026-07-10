@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import { redis } from "./cache";
 import * as db from "../db";
 
@@ -13,12 +14,17 @@ interface HealthStatus {
 export async function getHealthStatus(): Promise<HealthStatus> {
   const uptime = process.uptime();
 
-  // Check database connection
-  let dbStatus: "connected" | "disconnected";
+  // Check database connection. Use a real round-trip query (not
+  // getUserById) so a connection failure surfaces as "disconnected"
+  // — otherwise the health check would lie exactly when you need it
+  // most, and `getUserById` would silently hand out a fake user.
+  let dbStatus: "connected" | "disconnected" = "disconnected";
   try {
-    // Simple query to check DB connection
-    await db.getUserById(1);
-    dbStatus = "connected";
+    const driver = await db.getDb();
+    if (driver) {
+      await driver.execute(sql`SELECT 1`);
+      dbStatus = "connected";
+    }
   } catch {
     dbStatus = "disconnected";
   }

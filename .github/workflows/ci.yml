@@ -23,7 +23,7 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run check || true
+      - run: pnpm run check
       - run: pnpm run lint
 
   test:
@@ -79,7 +79,6 @@ jobs:
     name: E2E Tests (Playwright)
     runs-on: ubuntu-latest
     needs: [test]
-    continue-on-error: true
     services:
       postgres:
         image: postgres:15-alpine
@@ -120,16 +119,7 @@ jobs:
         run: |
           pnpm install --frozen-lockfile
           pnpm install --frozen-lockfile --dir devpulse-frontend
-      - name: Check for Playwright config
-        id: check_playwright
-        run: |
-          if [ -f "playwright.config.ts" ]; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
       - name: Install Playwright
-        if: steps.check_playwright.outputs.exists == 'true'
         run: pnpm exec playwright install --with-deps
       - name: Build Next.js
         working-directory: devpulse-frontend
@@ -141,7 +131,6 @@ jobs:
         env:
           DATABASE_URL: postgresql://root:devpulse@127.0.0.1:5432/devpulse_test
       - name: Run E2E tests
-        if: steps.check_playwright.outputs.exists == 'true'
         run: pnpm run test:e2e
         env:
           DATABASE_URL: postgresql://root:devpulse@127.0.0.1:5432/devpulse_test
@@ -170,7 +159,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Dependency vulnerability scan
         run: pnpm audit --audit-level moderate
-        continue-on-error: true
       - name: Run TruffleHog secret scan
         uses: trufflesecurity/trufflehog@main
         with:
@@ -307,4 +295,5 @@ jobs:
             cd /opt/devpulse &&
             docker compose -f docker-compose.prod.yml pull &&
             docker compose -f docker-compose.prod.yml up -d --remove-orphans
+          " -d --remove-orphans
           "

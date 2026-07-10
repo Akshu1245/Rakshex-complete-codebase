@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     title: "Live Demo — RaksHex API Security Scanner",
     description:
       "Drop your Postman collection and find vulnerabilities in 3 seconds. No signup required.",
-    url: "https://rakshex.in/demo",
+    url: "https://devpulse.ai/demo",
   },
 };
 

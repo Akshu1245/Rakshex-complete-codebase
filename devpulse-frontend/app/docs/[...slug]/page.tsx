@@ -5,13 +5,15 @@ import { sanitizeHtml } from "@/lib/sanitizeHtml";
 import { docsData } from "../docsData";
 
 interface PageProps {
-  params: {
+  params: Promise<{
     slug: string[];
-  };
+  }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }
 
 export async function generateMetadata({ params }: PageProps) {
-  const path = params.slug.join("/");
+  const { slug } = await params;
+  const path = slug.join("/");
   const page = docsData[path];
 
   if (!page) {
@@ -27,8 +29,9 @@ export async function generateMetadata({ params }: PageProps) {
   };
 }
 
-export default function DocSubPage({ params }: PageProps) {
-  const path = params.slug.join("/");
+export default async function DocSubPage({ params }: PageProps) {
+  const { slug } = await params;
+  const path = slug.join("/");
   const page = docsData[path];
 
   if (!page) {

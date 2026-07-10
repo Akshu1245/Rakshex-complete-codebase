@@ -102,8 +102,8 @@ export default function CookiePolicy() {
             <h2 className="text-2xl font-bold text-white mb-3">6. Contact</h2>
             <p>
               Questions about cookies? Email{" "}
-              <a href="mailto:privacy@rakshex.in" className="text-blue-400 hover:text-blue-300">
-                privacy@rakshex.in
+              <a href="mailto:privacy@devpulse.ai" className="text-blue-400 hover:text-blue-300">
+                privacy@devpulse.ai
               </a>
               .
             </p>

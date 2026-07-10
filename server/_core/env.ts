@@ -41,7 +41,7 @@ const EnvSchema = z.object({
     : z.string().default(""),
 
   // Redis (optional — falls back to in-memory caches with a warning)
-  REDIS_URL: z.string().min(1).optional(),
+  REDIS_URL: z.union([z.literal(""), z.string().min(1)]).optional(),
 
   // OAuth (Manus + Google)
   VITE_APP_ID: z.string().default(""),
@@ -66,7 +66,7 @@ const EnvSchema = z.object({
   SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(587),
   SMTP_USER: z.string().default(""),
   SMTP_PASS: z.string().default(""),
-  SMTP_FROM: z.string().default("noreply@rakshex.in"),
+  SMTP_FROM: z.string().default("noreply@devpulse.io"),
   APP_URL: z.string().url("APP_URL must be a valid URL").default("http://localhost:3000"),
 
   // Notifications — empty string allowed, but if set must be a URL.
@@ -113,6 +113,17 @@ const EnvSchema = z.object({
   // ── Research & Competitive Intelligence ───────────────────────────────
   TAVILY_API_KEY: z.string().optional(),
   FIRECRAWL_API_KEY: z.string().optional(),
+
+  // ── Rakshex Enterprise: Azure ─────────────────────────────────────────
+  AZURE_TENANT_ID: z.string().optional(),
+  AZURE_CLIENT_ID: z.string().optional(),
+  AZURE_CLIENT_SECRET: z.string().optional(),
+  AZURE_SUBSCRIPTION_ID: z.string().optional(),
+  AZURE_KEY_VAULT_URL: z.string().optional(),
+
+  // ── Rakshex Enterprise: GitHub Copilot ────────────────────────────────
+  GITHUB_ENTERPRISE_SLUG: z.string().optional(),
+  GITHUB_COPILOT_TOKEN: z.string().optional(),
 
   // ── OpenTelemetry ─────────────────────────────────────────────────────
   OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional(),
@@ -198,6 +209,17 @@ export const ENV = {
 
   tavilyApiKey: parsed.TAVILY_API_KEY ?? "",
   firecrawlApiKey: parsed.FIRECRAWL_API_KEY ?? "",
+
+  // Azure Enterprise
+  azureTenantId: parsed.AZURE_TENANT_ID ?? "",
+  azureClientId: parsed.AZURE_CLIENT_ID ?? "",
+  azureClientSecret: parsed.AZURE_CLIENT_SECRET ?? "",
+  azureSubscriptionId: parsed.AZURE_SUBSCRIPTION_ID ?? "",
+  azureKeyVaultUrl: parsed.AZURE_KEY_VAULT_URL ?? "",
+
+  // GitHub Copilot Enterprise
+  githubEnterpriseSlug: parsed.GITHUB_ENTERPRISE_SLUG ?? "",
+  githubCopilotToken: parsed.GITHUB_COPILOT_TOKEN ?? "",
 
   // OpenTelemetry
   otelExporterOtlpEndpoint: parsed.OTEL_EXPORTER_OTLP_ENDPOINT ?? "",

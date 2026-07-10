@@ -1,184 +1,107 @@
 import Link from "next/link";
+import { FileCheck2, KeyRound, ShieldCheck, Trash2 } from "lucide-react";
 
 export const metadata = {
-  title: "Trust Center — RaksHex Security & Compliance",
+  title: "Trust Center | RakshEx",
   description:
-    "RaksHex trust center: security architecture, data handling, encryption standards, and incident response disclosures.",
+    "RakshEx security architecture, data-handling commitments, and responsible disclosure process.",
   alternates: { canonical: "/trust" },
 };
 
+const commitments = [
+  {
+    icon: KeyRound,
+    title: "Credential boundaries",
+    body: "Workspace credentials are encrypted before storage. List APIs return masked metadata and fingerprints, not encrypted values or plaintext keys. Revocation actions are audited.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Prompt-minimizing design",
+    body: "Discovery ingests masked findings. Gateway policy evaluation can redact PII and records audit metadata without retaining raw prompts by default.",
+  },
+  {
+    icon: Trash2,
+    title: "Customer control",
+    body: "Workspace data is scoped by membership and can be exported or deleted through the product and support process. Retention and private-data-plane requirements are agreed for enterprise deployments.",
+  },
+  {
+    icon: FileCheck2,
+    title: "Evidence, not badges",
+    body: "RakshEx maps product controls to common frameworks and produces evidence. We do not claim a certification or independent audit until that assessment is complete and published.",
+  },
+];
+
 export default function TrustCenter() {
   return (
-    <div className="min-h-screen bg-transparent text-slate-100 py-16 px-4 font-sans">
-      <div className="max-w-4xl mx-auto">
-        <header className="text-center mb-16">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-950 text-emerald-400 border border-emerald-900/60 mb-4">
-            🛡️ Certified & Secure
-          </span>
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">
+    <main className="min-h-screen bg-transparent px-6 pb-20 pt-32 text-slate-100">
+      <div className="mx-auto max-w-5xl">
+        <header className="max-w-3xl">
+          <p className="text-sm font-semibold uppercase tracking-wide text-[#14B8A6]">
             Trust Center
+          </p>
+          <h1 className="mt-3 text-4xl font-bold tracking-tight text-white md:text-5xl">
+            Security claims you can verify.
           </h1>
-          <p className="text-slate-400 max-w-2xl mx-auto text-lg mt-3">
-            Security and privacy are the foundation of our AI runtime governance platform. Learn how
-            we handle your data, protect your keys, and secure model integrations.
+          <p className="mt-5 text-lg leading-8 text-slate-400">
+            RakshEx is built to give teams control over AI access without turning customer prompts
+            and provider keys into another source of risk.
           </p>
         </header>
 
-        <div className="space-y-12">
-          {/* Section 1: Data Handling */}
-          <section className="bg-slate-900/30 border border-slate-900 rounded-2xl p-8">
-            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-              <span className="text-blue-400">01.</span> Data Handling
-            </h2>
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="font-semibold text-white text-base mb-2">What data we collect</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">
-                  RaksHex only collects API metadata (endpoint paths, request methods, header
-                  structures, and cost telemetry).
-                  <strong> We never store raw prompt payloads or completions</strong>. Payloads are
-                  processed inside volatile memory at runtime for validation and then immediately
-                  discarded.
-                </p>
-              </div>
-              <div>
-                <h3 className="font-semibold text-white text-base mb-2">Where it is stored</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">
-                  All metrics, settings, and metadata are stored in a secure PostgreSQL/MySQL
-                  database hosted on AWS/Render. Enterprise customers can choose custom geographic
-                  locations for data residency (including India, EU, and US).
-                </p>
-              </div>
-              <div>
-                <h3 className="font-semibold text-white text-base mb-2">Retention policy</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">
-                  By default, data is retained for 30 days on our Free tier and 1 year on our Pro
-                  tier. Enterprise accounts can define custom retention policies up to 7 years with
-                  automated purging.
-                </p>
-              </div>
-              <div>
-                <h3 className="font-semibold text-white text-base mb-2">
-                  No training on customer data
-                </h3>
-                <p className="text-slate-400 text-sm leading-relaxed">
-                  We have a strict policy: **we never train our models or classification engines**
-                  on your API keys, prompts, metadata, or telemetry logs. Your data remains strictly
-                  yours.
-                </p>
-              </div>
-            </div>
-          </section>
+        <section className="mt-14 grid gap-4 md:grid-cols-2">
+          {commitments.map(({ icon: Icon, title, body }) => (
+            <article key={title} className="border border-slate-800 bg-slate-950/30 p-6">
+              <Icon className="h-6 w-6 text-[#14B8A6]" aria-hidden="true" />
+              <h2 className="mt-5 text-xl font-semibold text-white">{title}</h2>
+              <p className="mt-3 text-sm leading-6 text-slate-400">{body}</p>
+            </article>
+          ))}
+        </section>
 
-          {/* Section 2: Security Practices */}
-          <section className="bg-slate-900/30 border border-slate-900 rounded-2xl p-8">
-            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-              <span className="text-blue-400">02.</span> Security Practices
-            </h2>
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="border border-slate-900 p-5 rounded-xl bg-slate-950/40">
-                <h4 className="font-semibold text-slate-200 mb-1">TLS 1.3 in Transit</h4>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  All network communication between your servers, the RaksHex portal, and LLM
-                  endpoints is encrypted using TLS 1.3. Unencrypted HTTP requests are automatically
-                  rejected.
-                </p>
-              </div>
-              <div className="border border-slate-900 p-5 rounded-xl bg-slate-950/40">
-                <h4 className="font-semibold text-slate-200 mb-1">AES-256 at Rest</h4>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  All databases and storage volumes are encrypted using military-grade AES-256-GCM.
-                  Master encryption keys are rotated periodically.
-                </p>
-              </div>
-              <div className="border border-slate-900 p-5 rounded-xl bg-slate-950/40">
-                <h4 className="font-semibold text-slate-200 mb-1">SOC 2 Type II</h4>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Our system architecture is designed from the ground up to support SOC 2 controls.
-                  We are currently **In Progress** for our SOC 2 Type II audit.
-                </p>
-              </div>
-              <div className="border border-slate-900 p-5 rounded-xl bg-slate-950/40">
-                <h4 className="font-semibold text-slate-200 mb-1">Penetration Tested</h4>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  We run automated vulnerability scans weekly. Our next external white-box
-                  penetration test is **Based on internal benchmark methodology**.
-                </p>
-              </div>
-            </div>
-          </section>
-
-          {/* Section 3: Compliance */}
-          <section className="bg-slate-900/30 border border-slate-900 rounded-2xl p-8">
-            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-              <span className="text-blue-400">03.</span> Compliance
-            </h2>
-            <div className="space-y-4">
-              <div className="flex items-start gap-4">
-                <span className="bg-blue-950 text-blue-400 text-xs px-2.5 py-1 rounded font-bold border border-blue-900/60 uppercase">
-                  OWASP AI
-                </span>
-                <div>
-                  <h4 className="font-semibold text-white text-sm">OWASP AI Top 10 Aligned</h4>
-                  <p className="text-slate-400 text-xs mt-1 leading-relaxed">
-                    Our scanner engine maps security vulnerabilities directly to the latest OWASP
-                    Top 10 for LLM Applications guidelines, covering prompt injection, insecure
-                    output handling, and excessive agency.
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-4">
-                <span className="bg-purple-950 text-purple-400 text-xs px-2.5 py-1 rounded font-bold border border-purple-900/60 uppercase">
-                  DPDP
-                </span>
-                <div>
-                  <h4 className="font-semibold text-white text-sm">
-                    DPDP Act 2023 (India) Compliant
-                  </h4>
-                  <p className="text-slate-400 text-xs mt-1 leading-relaxed">
-                    We strictly follow India's Digital Personal Data Protection Act guidelines. We
-                    support comprehensive consent logs, user data deletion requests, and local
-                    hosting in India region nodes.
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-4">
-                <span className="bg-emerald-950 text-emerald-400 text-xs px-2.5 py-1 rounded font-bold border border-emerald-900/60 uppercase">
-                  GDPR
-                </span>
-                <div>
-                  <h4 className="font-semibold text-white text-sm">GDPR Ready</h4>
-                  <p className="text-slate-400 text-xs mt-1 leading-relaxed">
-                    We process all customer information in compliance with EU GDPR regulations. Data
-                    Processing Agreements (DPA) incorporating Standard Contractual Clauses (SCC) are
-                    available for all customers.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Section 4: Disclosures & Contact */}
-          <section className="bg-slate-900/40 border border-slate-900 rounded-2xl p-8 text-center">
-            <h2 className="text-xl font-bold text-white mb-2">Report a Vulnerability</h2>
-            <p className="text-sm text-slate-400 max-w-xl mx-auto mb-6">
-              We value the contributions of security researchers. If you identify a security gap or
-              vulnerability in RaksHex services, please contact our security team for coordinated
-              disclosure.
-            </p>
+        <section className="mt-12 border border-slate-800 bg-slate-950/30 p-7">
+          <h2 className="text-2xl font-semibold text-white">What a security review can inspect</h2>
+          <ul className="mt-5 space-y-3 text-sm leading-6 text-slate-400">
+            <li>Workspace authorization checks and tenant-isolation test coverage.</li>
+            <li>
+              Credential encryption, fingerprinting, lifecycle state, and sensitive-action audit
+              trails.
+            </li>
+            <li>
+              Prompt-retention defaults, redaction behavior, provider capability limits, and data
+              provenance labels.
+            </li>
+            <li>
+              Deployment architecture for SaaS, private relay, and self-hosted enterprise
+              environments.
+            </li>
+          </ul>
+          <div className="mt-7 flex flex-wrap gap-4">
+            <Link
+              href="/security"
+              className="border border-[#14B8A6] px-4 py-2.5 text-sm font-semibold text-[#14B8A6] hover:bg-[#14B8A6]/10"
+            >
+              Security details
+            </Link>
+            <Link
+              href="/status"
+              className="border border-slate-700 px-4 py-2.5 text-sm font-semibold text-white hover:border-slate-500"
+            >
+              Service status
+            </Link>
             <a
               href="mailto:security@rakshex.in"
-              className="inline-block bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm py-3 px-6 rounded-lg transition-colors shadow-lg shadow-blue-500/20"
+              className="border border-slate-700 px-4 py-2.5 text-sm font-semibold text-white hover:border-slate-500"
             >
-              security@rakshex.in Disclosures
+              Report a vulnerability
             </a>
-          </section>
-        </div>
+          </div>
+        </section>
 
-        <footer className="mt-16 border-t border-slate-900 pt-8 text-center text-xs text-slate-500">
-          <p>© {new Date().getFullYear()} RaksHex. All rights reserved. SOC 2 and ISO 27001.</p>
-        </footer>
+        <p className="mt-8 text-sm leading-6 text-slate-500">
+          For a DPA, security questionnaire, architecture review, or private deployment
+          requirements, contact the RakshEx team before connecting production accounts.
+        </p>
       </div>
-    </div>
+    </main>
   );
 }

@@ -13,6 +13,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: "Command Center", href: "/dashboard", icon: "dashboard", group: "main" },
+  { label: "AI Control Plane", href: "/control-plane", icon: "hub", group: "main" },
   { label: "Collections", href: "/collections", icon: "folder_open", group: "main" },
   { label: "Import", href: "/import", icon: "upload", group: "main" },
   { label: "Scanning", href: "/scanning", icon: "search", group: "security" },
@@ -23,6 +24,7 @@ const navItems: NavItem[] = [
   { label: "Agent Drift", href: "/agent-drift", icon: "psychology", group: "ai" },
   { label: "Analytics", href: "/analytics", icon: "analytics", group: "ai" },
   { label: "Token Analytics", href: "/token-analytics", icon: "toll", group: "ai" },
+  { label: "Copilot Metrics", href: "/dashboard/github-copilot", icon: "smart_toy", group: "ai" },
   { label: "Metrics", href: "/metrics", icon: "bar_chart", group: "ai" },
   { label: "Benchmark", href: "/benchmark", icon: "speed", group: "ai" },
   { label: "Team", href: "/team", icon: "group", group: "account" },
@@ -117,7 +119,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
             <span className="font-button-text text-button-text">Documentation</span>
           </Link>
           <Link
-            href="/support"
+            href="/contact"
             className="flex items-center gap-3 px-4 py-2 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors"
           >
             <span className="material-symbols-outlined text-[20px]">help</span>

@@ -2,16 +2,15 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { setConsent } from "@/lib/consent";
 
-const COOKIE_KEY = "RaksHex.cookieConsent.v1";
-
-type ConsentChoice = "accepted" | "rejected" | null;
+const COOKIE_KEY = "devpulse-cookie-consent";
 
 /**
- * Cookie-consent banner with accept/reject options. Because RaksHex only sets
+ * Cookie-consent banner with accept/reject options. Because DevPulse only sets
  * first-party strictly-necessary cookies (session + CSRF), the informational
  * notice covers the ePrivacy art. 5(3) exemption. If you later add analytics
- * or marketing cookies, wire them behind the acceptance state.
+ * or marketing cookies, they are gated behind the acceptance state.
  */
 export function CookieConsent() {
   const [visible, setVisible] = useState(false);
@@ -26,15 +25,13 @@ export function CookieConsent() {
     }
   }, []);
 
-  const save = (choice: ConsentChoice) => {
-    try {
-      window.localStorage.setItem(
-        COOKIE_KEY,
-        JSON.stringify({ choice, at: new Date().toISOString() }),
-      );
-    } catch {
-      // no-op
-    }
+  const accept = () => {
+    setConsent(true);
+    setVisible(false);
+  };
+
+  const reject = () => {
+    setConsent(false);
     setVisible(false);
   };
 
@@ -49,7 +46,7 @@ export function CookieConsent() {
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="leading-relaxed">
-          RaksHex uses strictly necessary first-party cookies for authentication and security. No
+          DevPulse uses strictly necessary first-party cookies for authentication and security. No
           tracking, no advertising. See our{" "}
           <Link href="/privacy" className="text-blue-400 underline hover:text-blue-300">
             Privacy Policy
@@ -65,14 +62,14 @@ export function CookieConsent() {
           </Link>
           <button
             type="button"
-            onClick={() => save("rejected")}
+            onClick={reject}
             className="rounded-md border border-gray-600 px-3 py-1.5 text-xs font-medium text-gray-300 hover:bg-black/50 transition-colors"
           >
             Reject optional
           </button>
           <button
             type="button"
-            onClick={() => save("accepted")}
+            onClick={accept}
             className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-500 transition-colors"
           >
             Accept

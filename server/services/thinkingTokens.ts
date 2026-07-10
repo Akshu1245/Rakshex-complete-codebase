@@ -116,6 +116,74 @@ export function estimateAnthropicThinkingTokens(response: any): {
   };
 }
 
+/**
+ * Extract Gemini thinking tokens.
+ *
+ * Gemini 2.0+ returns reasoning tokens in `usageMetadata.candidatesTokenDetails`
+ * under candidateType === "REASONING".
+ */
+export function extractGeminiThinkingTokens(response: any): {
+  reasoningTokens: number;
+  completionTokens: number;
+} {
+  const usage = response?.usageMetadata || {};
+  const candidatesTokenDetails = usage.candidatesTokenDetails || [];
+
+  let reasoningTokens = 0;
+  for (const detail of candidatesTokenDetails) {
+    if (detail.candidateType === "REASONING" || detail.candidate_type === "REASONING") {
+      reasoningTokens += detail.tokenCount || detail.token_count || 0;
+    }
+  }
+
+  // Fallback: Check if response has parts containing thought text
+  if (reasoningTokens === 0) {
+    const parts = response?.candidates?.[0]?.content?.parts || [];
+    let thoughtCharCount = 0;
+    for (const part of parts) {
+      if (part.thought === true || part.thoughtText || part.thought_text) {
+        thoughtCharCount += (part.text || part.thoughtText || part.thought_text || "").length;
+      }
+    }
+    if (thoughtCharCount > 0) {
+      const CHARS_PER_TOKEN = 2.5;
+      reasoningTokens = Math.round(thoughtCharCount / CHARS_PER_TOKEN);
+    }
+  }
+
+  const totalCompletion = usage.candidatesTokenCount || usage.candidates_token_count || 0;
+  const completionTokens = Math.max(0, totalCompletion - reasoningTokens);
+
+  return {
+    reasoningTokens: Math.max(0, reasoningTokens),
+    completionTokens,
+  };
+}
+
+/**
+ * Provider-aware dispatcher: routes a raw provider response to the right
+ * thinking-token extractor based on the model name. Returns zeros for
+ * unrecognized models so callers can fall back to usage-based extraction.
+ */
+export function extractThinkingTokensFromResponse(
+  model: string,
+  response: unknown,
+): { reasoningTokens: number; completionTokens: number } {
+  if (!response || typeof response !== "object") {
+    return { reasoningTokens: 0, completionTokens: 0 };
+  }
+  const m = (model ?? "").toLowerCase();
+  if (m.includes("claude")) {
+    const a = estimateAnthropicThinkingTokens(response);
+    return { reasoningTokens: a.thinkingTokens, completionTokens: a.completionTokens };
+  }
+  if (m.includes("gemini")) return extractGeminiThinkingTokens(response);
+  if (m.includes("gpt") || m.startsWith("o1") || m.startsWith("o3") || m.startsWith("o4")) {
+    return extractOpenAIThinkingTokens(response);
+  }
+  return { reasoningTokens: 0, completionTokens: 0 };
+}
+
 // ── Cost Calculation ───────────────────────────────────────────────────────
 
 export function calculateThinkingCost(

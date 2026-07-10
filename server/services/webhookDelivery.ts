@@ -309,3 +309,24 @@ async function deliverToEndpoint(
 export function buildSignature(body: string, secret: string): string {
   return sign(body, secret);
 }
+
+export interface WebhookRetryJob {
+  endpointId: string;
+  event: WebhookEvent;
+  payload: WebhookPayload & { _retryAttempt?: number };
+}
+
+/** Retry a failed delivery to a single endpoint (scheduled by webhook_retry queue). */
+export async function retryWebhookDelivery(job: WebhookRetryJob): Promise<void> {
+  const endpoint = await db.getWebhookEndpointById(job.endpointId);
+  if (!endpoint || !endpoint.isActive) {
+    logger.warn(
+      { endpointId: job.endpointId },
+      "[webhookDelivery] retry skipped — endpoint missing or inactive",
+    );
+    return;
+  }
+
+  const body = JSON.stringify(job.payload);
+  await deliverToEndpoint(endpoint, job.payload, body);
+}

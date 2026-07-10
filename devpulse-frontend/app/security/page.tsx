@@ -118,7 +118,7 @@ export default function SecurityWhitepaper() {
               via processed_webhook_events table.
             </li>
             <li>
-              <strong>CORS:</strong> Strict allowlist (rakshex.in, app.rakshex.in). No wildcard or
+              <strong>CORS:</strong> Strict allowlist (devpulse.ai, app.devpulse.ai). No wildcard or
               dynamic reflection.
             </li>
             <li>
@@ -174,8 +174,8 @@ export default function SecurityWhitepaper() {
         <div className="mt-12 pt-8 border-t border-gray-700">
           <p className="text-gray-500 text-sm">
             For questions about this whitepaper, contact{" "}
-            <a href="mailto:security@rakshex.in" className="text-blue-400 hover:text-blue-300">
-              security@rakshex.in
+            <a href="mailto:security@devpulse.ai" className="text-blue-400 hover:text-blue-300">
+              security@devpulse.ai
             </a>
             .
           </p>

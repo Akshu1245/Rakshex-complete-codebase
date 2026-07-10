@@ -6,47 +6,7 @@ import Sidebar from "@/components/Sidebar";
 import { PublicHeader } from "@/components/PublicHeader";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { useAuth } from "@/components/AuthProvider";
-
-const PUBLIC_PATHS = [
-  "/",
-  "/login",
-  "/register",
-  "/reset-password",
-  "/privacy",
-  "/terms",
-  "/cookies",
-  "/pricing",
-  "/demo",
-  "/blog",
-  "/docs",
-  "/blog/helicone-alternative",
-  "/blog/portkey-alternative",
-  "/blog/lakera-alternative",
-  "/compare",
-  "/compare/helicone",
-  "/compare/portkey",
-  "/compare/lakera",
-  "/compare/langsmith",
-  "/compare/datadog",
-  "/compare/snyk",
-  "/roi-calculator",
-  "/features",
-  "/about",
-  "/faq",
-  "/trust",
-  "/changelog",
-  "/integrations",
-  "/partners",
-  "/open-source",
-  "/status",
-  "/solutions/fintech",
-  "/solutions/healthcare",
-  "/solutions/enterprise",
-];
-
-function isPublicPath(pathname: string): boolean {
-  return PUBLIC_PATHS.some((p) => p === pathname || (p !== "/" && pathname.startsWith(p)));
-}
+import { isPublicPath } from "@/lib/publicRoutes";
 
 function AuthGuard({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();

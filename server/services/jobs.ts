@@ -22,13 +22,21 @@
 import { logger } from "../_core/logger";
 import { getJobQueue } from "./jobQueue";
 import { type ScanOptions, runCollectionScan } from "./scanService";
-import { deliver, type WebhookEvent } from "./webhookDelivery";
+import {
+  deliver,
+  retryWebhookDelivery,
+  type WebhookEvent,
+  type WebhookRetryJob,
+} from "./webhookDelivery";
 import { sendWeeklyDigestEmail } from "../email";
 import * as db from "../db";
 
 export const QUEUE_SCAN = "scan" as const;
 export const QUEUE_WEBHOOK_DELIVERY = "webhook-delivery" as const;
+export const QUEUE_WEBHOOK_RETRY = "webhook_retry" as const;
 export const QUEUE_WEEKLY_DIGEST = "weekly-digest" as const;
+export const QUEUE_AZURE_DISCOVERY = "azure-discovery" as const;
+export const QUEUE_COPILOT_SYNC = "copilot-sync" as const;
 
 export interface ScanJob {
   userId: number;
@@ -86,6 +94,14 @@ export function registerJobWorkers(opts?: { force?: boolean }): void {
     { concurrency: 8, maxAttempts: 5 },
   );
 
+  q.registerWorker<WebhookRetryJob>(
+    QUEUE_WEBHOOK_RETRY,
+    async (data) => {
+      await retryWebhookDelivery(data);
+    },
+    { concurrency: 4, maxAttempts: 1 },
+  );
+
   q.registerWorker<WeeklyDigestJob>(
     QUEUE_WEEKLY_DIGEST,
     async (data) => {
@@ -118,8 +134,41 @@ export function registerJobWorkers(opts?: { force?: boolean }): void {
     { concurrency: 4, maxAttempts: 3 },
   );
 
+  // ─── Rakshex Enterprise Workers ────────────────────────────────────
+  q.registerWorker(
+    QUEUE_AZURE_DISCOVERY,
+    async (data: {
+      workspaceId: number;
+      connectionId: number;
+      tenantId: string;
+      subscriptionId: string;
+    }) => {
+      const { runAzureDiscovery } = await import("./discovery/orchestrator");
+      await runAzureDiscovery(data);
+    },
+    { concurrency: 2, maxAttempts: 2 },
+  );
+
+  q.registerWorker(
+    QUEUE_COPILOT_SYNC,
+    async (data: { workspaceId: number; orgName: string; token: string }) => {
+      const { syncCopilotMetrics } = await import("./copilot/copilotMetrics");
+      await syncCopilotMetrics(data.workspaceId, data.orgName, data.token);
+    },
+    { concurrency: 2, maxAttempts: 2 },
+  );
+
   logger.info(
-    { queues: [QUEUE_SCAN, QUEUE_WEBHOOK_DELIVERY, QUEUE_WEEKLY_DIGEST] },
+    {
+      queues: [
+        QUEUE_SCAN,
+        QUEUE_WEBHOOK_DELIVERY,
+        QUEUE_WEBHOOK_RETRY,
+        QUEUE_WEEKLY_DIGEST,
+        QUEUE_AZURE_DISCOVERY,
+        QUEUE_COPILOT_SYNC,
+      ],
+    },
     "[Jobs] background workers registered",
   );
 }

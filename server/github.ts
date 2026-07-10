@@ -1,3 +1,7 @@
+// DEPRECATED: Legacy GitHub push/PR handlers.
+// New flow lives in server/api/github.ts + server/services/githubApp.ts + queues/workers/prScanWorker.ts
+// This file is kept for backward compatibility during transition.
+
 /**
  * GitHub Integration
  * Handles GitHub webhooks for push and pull request events

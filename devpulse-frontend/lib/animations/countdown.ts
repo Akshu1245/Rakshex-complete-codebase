@@ -7,7 +7,7 @@ export interface TimeLeft {
   seconds: number;
 }
 
-export function useCountdown(targetDateString: string): TimeLeft {
+export function useCountdown(targetDateString?: string): TimeLeft {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({
     days: 0,
     hours: 0,
@@ -16,7 +16,16 @@ export function useCountdown(targetDateString: string): TimeLeft {
   });
 
   useEffect(() => {
+    if (!targetDateString) {
+      setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+      return;
+    }
+
     const targetDate = new Date(targetDateString);
+    if (Number.isNaN(targetDate.getTime())) {
+      setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+      return;
+    }
 
     const updateCountdown = () => {
       const now = new Date();

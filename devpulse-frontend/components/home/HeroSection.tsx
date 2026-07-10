@@ -32,22 +32,22 @@ export function HeroSection({ antiGravity, setAntiGravity }: HeroSectionProps) {
           <div className="inline-flex items-center gap-2 rounded-full border border-[#14B8A6]/30 bg-[#14B8A6]/10 px-4 py-1.5 backdrop-blur-sm w-fit mb-6 anti-gravity-float">
             <span className="w-2 h-2 rounded-full bg-[#14B8A6] animate-pulse" />
             <p className="text-xs sm:text-sm font-semibold tracking-[0.02em] text-[#14B8A6] font-sans">
-              Backed by 4 Patents · Built in Bengaluru, India
+              Built for secure AI teams in Bengaluru, India
             </p>
           </div>
 
           {/* Headline */}
           <h1 className="hero-headline font-sans font-bold tracking-[-0.02em] text-left flex flex-col text-[40px] sm:text-[48px] md:text-[56px] leading-[1.1] mb-6">
-            <span className="text-white">Stop leaking API keys</span>
-            <span className="text-[#14B8A6]">&amp; burning your</span>
-            <span className="text-[#14B8A6]">AI budget</span>
+            <span className="text-white">Know every AI account,</span>
+            <span className="text-[#14B8A6]">key, model, cost,</span>
+            <span className="text-[#14B8A6]">and policy.</span>
           </h1>
 
           {/* Subtext */}
           <p className="hero-subtext font-sans text-lg max-w-[480px] text-[#9CA3AF] mb-10 leading-[1.6] font-medium">
-            RaksHex scans your code and AI apps for exposed secrets, runaway LLM costs,
-            prompt-injection risks, and shadow APIs &mdash; then shows you exactly how to fix them.
-            First scan in 60 seconds. Free to start.
+            RakshEx gives engineering and security teams one control plane for AI discovery,
+            credentials, subscriptions, gateway policy, cost controls, and audit evidence. Start
+            with a local scan. Keep prompts out of the inventory by default.
           </p>
 
           {/* CTA Buttons */}

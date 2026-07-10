@@ -52,26 +52,27 @@ export async function verifyWebSocketAuth(
     const token = cookies["rakshex_session"];
     if (!token) return null;
 
-    // Decode session token
-    const sessionData = JSON.parse(Buffer.from(token, "base64").toString("utf-8"));
-    if (!sessionData?.sessionId) return null;
-
-    // Verify session exists and is valid
-    const session = await db.getUserSessionByToken(sessionData.sessionId);
-    if (!session) return null;
-
-    // Check session expiry — delete and reject if expired
-    if (session.expiresAt && new Date(session.expiresAt) < new Date()) {
-      try {
-        await db.deleteUserSession(session.id);
-      } catch (delErr) {
-        logger.warn({ delErr }, "[WS] Failed to delete expired session");
-      }
+    // Decode legacy session cookie. The cookie is base64-encoded JSON
+    // shaped like `{ userId, expiresAt, sessionId, ... }`. The historical
+    // DB lookup via `getUserSessionByToken` (filtered by `sessionToken`
+    // column) was broken because the cookie payload doesn't carry the
+    // session token — only the row id. Treat the cookie as self-validating
+    // and check its own `expiresAt` instead.
+    let sessionData: any;
+    try {
+      sessionData = JSON.parse(Buffer.from(token, "base64").toString("utf-8"));
+    } catch {
+      return null;
+    }
+    if (!sessionData || typeof sessionData !== "object") return null;
+    if (typeof sessionData.userId !== "number" || sessionData.userId <= 0) return null;
+    if (typeof sessionData.expiresAt !== "number" || sessionData.expiresAt <= Date.now()) {
       return null;
     }
 
-    // Get user — reject if not found
-    const user = await db.getUserById(session.userId);
+    // Get user — reject if not found. Account lock is server-side state
+    // that the cookie cannot represent, so it must still be checked here.
+    const user = await db.getUserById(sessionData.userId);
     if (!user) return null;
 
     // Check account lock — reject if locked

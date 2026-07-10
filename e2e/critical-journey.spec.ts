@@ -98,9 +98,4 @@ test.describe("Critical Journey: signup → scan → results", () => {
     expect(body.checks.memory).toBe("ok");
     expect(body.memory.heapUsedMB).toBeGreaterThan(0);
   });
-
-  test("rate-limited MCP registration returns 429", async ({ page, request }) => {
-    // This requires auth; skip if not authenticated in E2E context
-    test.skip(true, "Requires authenticated session — run in authenticated E2E context");
-  });
 });

@@ -22,7 +22,7 @@ function isSecureRequest(req: Request) {
 /**
  * Determine if the request is cross-origin (frontend on a different domain
  * from the API). When the frontend is served from a different origin
- * (e.g. app.rakshex.in calling api.rakshex.in), we need sameSite="none"
+ * (e.g. app.devpulse.ai calling api.rakshex.in), we need sameSite="none"
  * so the browser sends the cookie cross-origin. For same-origin deployments
  * (frontend and API on the same host), "lax" is the safer default.
  */

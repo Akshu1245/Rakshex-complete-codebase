@@ -8,7 +8,7 @@ interface IntegrationItem {
   name: string;
   category: string;
   icon: string;
-  status: "Available" | "Coming Soon";
+  status: "Available" | "Available (beta)";
   description: string;
 }
 
@@ -160,7 +160,7 @@ const INTEGRATIONS: IntegrationItem[] = [
   {
     name: "Jenkins Integration",
     category: "CI/CD",
-    status: "Coming Soon",
+    status: "Available (beta)",
     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
     description:
       "Jenkins pipeline plugin for RakshEx scanning. ETA Based on internal benchmark methodology.",
@@ -186,7 +186,7 @@ const INTEGRATIONS: IntegrationItem[] = [
   {
     name: "Prometheus Integration",
     category: "Monitoring",
-    status: "Coming Soon",
+    status: "Available (beta)",
     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>`,
     description:
       "Export RakshEx metrics to Prometheus. ETA Based on internal benchmark methodology.",
@@ -360,7 +360,7 @@ export default function IntegrationsPage() {
                   Explore more
                 </p>
                 <a
-                  href="mailto:akshay@rakshex.in?subject=Partner Application"
+                  href="mailto:akshay@devpulse.ai?subject=Partner Application"
                   className="block p-5 bg-transparent border border-white/10 rounded-xl hover:border-white/20 transition-all group"
                 >
                   <div className="w-10 h-10 bg-neutral-900 rounded-lg flex items-center justify-center text-white/70 mb-4 group-hover:text-white transition-colors border border-neutral-800">
@@ -421,9 +421,9 @@ export default function IntegrationsPage() {
                               </div>
 
                               {/* Status Badge */}
-                              {item.status === "Coming Soon" && (
+                              {item.status === "Available (beta)" && (
                                 <span className="absolute top-4 right-4 bg-white/5 border border-white/15 text-white/50 text-[11px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap">
-                                  Coming Soon
+                                  Available (beta)
                                 </span>
                               )}
                             </div>

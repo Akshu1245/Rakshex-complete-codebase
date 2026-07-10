@@ -206,7 +206,6 @@ export const workspacesRouter = router({
       }
       const existing = await db.getWorkspaceMembership(inv.workspaceId, ctx.user.id);
       if (existing) {
-        // Already a member — just refresh role + delete the token.
         await db.updateWorkspaceMember(inv.workspaceId, ctx.user.id, {
           role: inv.role,
           active: true,

@@ -15,8 +15,8 @@ export default function Terms() {
           <h2 className="text-xl font-semibold text-[#14B8A6] mb-3">1. Acceptance</h2>
           <p className="leading-relaxed">
             By accessing RaksHex (
-            <a href="https://rakshex.in" className="text-[#14B8A6] hover:underline">
-              rakshex.in
+            <a href="https://devpulse.ai" className="text-[#14B8A6] hover:underline">
+              devpulse.ai
             </a>
             ), you agree to these terms. If you do not agree, do not use the platform.
           </p>
@@ -93,8 +93,8 @@ export default function Terms() {
             Bengaluru, Karnataka, India
             <br />
             Email:{" "}
-            <a href="mailto:akshay@rakshex.in" className="text-[#14B8A6] hover:underline">
-              akshay@rakshex.in
+            <a href="mailto:akshay@devpulse.ai" className="text-[#14B8A6] hover:underline">
+              akshay@devpulse.ai
             </a>
           </p>
         </section>

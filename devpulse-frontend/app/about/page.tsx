@@ -107,10 +107,10 @@ export default function AboutPage() {
           <h2 className="text-2xl font-bold mb-4 font-manrope">Investor Relations</h2>
           <p className="text-neutral-400 mb-6 max-w-2xl mx-auto leading-relaxed">
             Supported by a growing waitlist of early adopters. If you&apos;re an investor interested
-            in AI security infrastructure, reach out at akshay@rakshex.in
+            in AI security infrastructure, reach out at akshay@devpulse.ai
           </p>
           <Link
-            href="mailto:akshay@rakshex.in"
+            href="mailto:akshay@devpulse.ai"
             className="inline-block bg-teal-accent hover:bg-[#0D9488] text-white font-bold px-6 py-3 rounded-lg transition-colors font-mono"
           >
             Contact Co-Founders →

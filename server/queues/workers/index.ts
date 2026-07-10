@@ -3,6 +3,7 @@ import { startScanWorker, stopScanWorker } from "./scanWorker";
 import { startWebhookWorker, stopWebhookWorker } from "./webhookWorker";
 import { startEmailWorker, stopEmailWorker } from "./emailWorker";
 import { startTelemetryWorker, stopTelemetryWorker } from "./telemetryWorker";
+import { startPrScanWorker, stopPrScanWorker } from "./prScanWorker";
 
 const CONCURRENCY = parseInt(process.env.WORKER_CONCURRENCY ?? "3", 10) || 3;
 
@@ -14,8 +15,11 @@ if (process.env.REDIS_URL) {
   startWebhookWorker();
   startEmailWorker();
   startTelemetryWorker();
+  startPrScanWorker();
 } else {
-  logger.info("[Workers] Running in mock/offline mode — not starting BullMQ workers");
+  logger.info(
+    "[Workers] Running in mock/offline mode — not starting BullMQ workers (PR scans will use in-memory fallback if triggered)",
+  );
 }
 
 // Graceful shutdown
@@ -26,6 +30,7 @@ async function shutdown(signal: string): Promise<void> {
     stopWebhookWorker(),
     stopEmailWorker(),
     stopTelemetryWorker(),
+    stopPrScanWorker(),
   ]);
   logger.info("[Workers] All workers stopped");
   process.exit(0);

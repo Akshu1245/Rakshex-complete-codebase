@@ -47,7 +47,7 @@ export default function AuditLogPage() {
 
   /** Derive a human-readable resource label from the log entry */
   const getResourceLabel = (log: {
-    action: string;
+    action?: string;
     details?: unknown;
     ipAddress?: string | null;
   }) => {

@@ -1,3 +1,5 @@
+const path = require("path");
+
 /** @type {import('next').NextConfig} */
 const TS_BACKEND_URL =
   process.env.NEXT_PUBLIC_TS_API_URL ||
@@ -5,6 +7,9 @@ const TS_BACKEND_URL =
   "http://localhost:3000";
 
 const nextConfig = {
+  // This project sits inside a larger local workspace that has its own lock
+  // file. Pin tracing here so production builds never walk the parent tree.
+  outputFileTracingRoot: path.join(__dirname, ".."),
   // Don't advertise Next.js in response headers. Attackers can still
   // fingerprint us via HTML quirks, but no reason to make it trivial.
   poweredByHeader: false,
@@ -12,13 +17,9 @@ const nextConfig = {
   // JS significantly harder to reverse-engineer into original TS.
   productionBrowserSourceMaps: false,
   reactStrictMode: true,
-  // Ignore TypeScript errors during build for deployment
+  // Enforce TypeScript during production builds. ESLint runs as a separate CI gate.
   typescript: {
-    ignoreBuildErrors: true,
-  },
-  // Ignore ESLint errors during build for deployment
-  eslint: {
-    ignoreDuringBuilds: true,
+    ignoreBuildErrors: false,
   },
   compiler: {
     // SWC drops `console.*` calls (except console.error) from production

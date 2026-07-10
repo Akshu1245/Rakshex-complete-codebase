@@ -3,7 +3,7 @@
  *
  * Each key belongs to a workspace and has a role that determines
  * what the key can do when used for authentication. Keys are used
- * by the Rakshex SDK, VS Code extension, CLI, and CI pipelines.
+ * by the DevPulse SDK, VS Code extension, CLI, and CI pipelines.
  */
 import { z } from "zod";
 import { router, adminProcedure, protectedProcedure } from "../_core/trpc";
@@ -11,6 +11,7 @@ import { TRPCError } from "@trpc/server";
 import * as db from "../db";
 import crypto from "crypto";
 import { logger } from "../_core/logger";
+import { hashApiKey, apiKeyPrefix } from "../utils/crypto";
 
 function generateApiKey(): string {
   return `dp_${crypto.randomBytes(24).toString("hex")}`;
@@ -31,10 +32,12 @@ export const apiKeysRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       const apiKey = generateApiKey();
+      const hashed = hashApiKey(apiKey);
+      const prefix = apiKeyPrefix(apiKey);
 
-      await db.updateUserApiKey(ctx.user.id, apiKey);
+      await db.updateUserApiKey(ctx.user.id, hashed, prefix);
 
-      logger.info({ userId: ctx.user.id, keyPrefix: apiKey.slice(0, 8) }, "[ApiKeys] Key created");
+      logger.info({ userId: ctx.user.id, keyPrefix: prefix }, "[ApiKeys] Key created");
 
       return {
         apiKey,
@@ -49,16 +52,17 @@ export const apiKeysRouter = router({
    */
   list: protectedProcedure.query(async ({ ctx }) => {
     const user = await db.getUserById(ctx.user.id);
-    const key = user?.apiKey;
+    const prefix = user?.apiKeyPrefix;
+    const hasKey = Boolean(user?.apiKey);
 
-    if (!key) return { keys: [] };
+    if (!hasKey || !prefix) return { keys: [] };
 
     return {
       keys: [
         {
           id: "default",
           name: "Default",
-          keyPreview: `${key.slice(0, 8)}...${key.slice(-4)}`,
+          keyPreview: `${prefix}...****`,
           lastUsedAt: null,
           createdAt: new Date().toISOString(),
         },
@@ -72,7 +76,9 @@ export const apiKeysRouter = router({
    */
   revoke: adminProcedure.mutation(async ({ ctx }) => {
     const apiKey = generateApiKey();
-    await db.updateUserApiKey(ctx.user.id, apiKey);
+    const hashed = hashApiKey(apiKey);
+    const prefix = apiKeyPrefix(apiKey);
+    await db.updateUserApiKey(ctx.user.id, hashed, prefix);
     await db.createAuditLogEntry(ctx.user.id, "api_key_revoked", {});
 
     logger.info({ userId: ctx.user.id }, "[ApiKeys] Key rotated");

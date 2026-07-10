@@ -30,8 +30,8 @@ export default function WaitlistPage() {
           </span>
           <h1 className="text-4xl md:text-5xl font-bold mb-6 font-manrope">Join the Waitlist</h1>
           <p className="text-neutral-400 text-lg max-w-xl mx-auto leading-relaxed">
-            Be the first to get access to new features, beta programs, and exclusive early-bird
-            pricing.
+            Get product updates, private-beta availability, and a clear path to a scoped workspace
+            evaluation.
           </p>
         </div>
 
@@ -76,7 +76,7 @@ export default function WaitlistPage() {
               <button
                 type="submit"
                 disabled={joinWaitlist.isPending}
-                className="w-full py-3 rounded-lg bg-gradient-to-r from-[#14B8A6] to-[#2dd4bf] text-black font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full py-3 rounded-lg bg-[#14B8A6] text-[#07100f] font-semibold hover:bg-[#2dd4bf] transition-colors disabled:cursor-not-allowed disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {joinWaitlist.isPending ? (
                   "Joining..."
@@ -111,19 +111,9 @@ export default function WaitlistPage() {
           </div>
         )}
 
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-6 max-w-lg mx-auto mt-12">
-          {[
-            { label: "Beta Users", value: "500+" },
-            { label: "Companies", value: "120+" },
-            { label: "Countries", value: "25+" },
-          ].map((stat) => (
-            <div key={stat.label} className="text-center">
-              <p className="text-2xl font-bold text-white">{stat.value}</p>
-              <p className="text-neutral-500 text-sm">{stat.label}</p>
-            </div>
-          ))}
-        </div>
+        <p className="mt-12 text-sm text-neutral-500">
+          We store your request with the plan you selected and do not sell your contact details.
+        </p>
       </div>
     </div>
   );

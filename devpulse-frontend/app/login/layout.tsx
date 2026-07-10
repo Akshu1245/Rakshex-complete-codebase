@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Sign In — RaksHex",
     description: "Sign in to your RaksHex account.",
-    url: "https://rakshex.in/login",
+    url: "https://devpulse.ai/login",
   },
 };
 

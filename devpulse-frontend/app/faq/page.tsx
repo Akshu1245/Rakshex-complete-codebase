@@ -68,7 +68,7 @@ export default function FAQPage() {
         <p className="text-gray-400 mb-12 font-mono text-sm">
           Everything you need to know about RaksHex. Can't find your question?{" "}
           <Link
-            href="mailto:support@rakshex.in"
+            href="mailto:support@devpulse.ai"
             className="text-blue-400 hover:text-blue-300 underline"
           >
             Email us

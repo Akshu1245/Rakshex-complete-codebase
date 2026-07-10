@@ -4,6 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { trpc } from "@/lib/trpc";
 
+const SANDBOX_MODE =
+  process.env.NEXT_PUBLIC_SANDBOX_MODE === "true" || process.env.NODE_ENV !== "production";
+
 export default function GitHubIntegrationPage() {
   const [installationId, setInstallationId] = useState("");
 
@@ -14,9 +17,51 @@ export default function GitHubIntegrationPage() {
   );
 
   const handleConnect = async () => {
-    // In production, this would redirect to GitHub App install flow
-    const clientId = "YOUR_GITHUB_APP_CLIENT_ID";
-    window.location.href = `https://github.com/apps/RaksHex-security/installations/new`;
+    if (!SANDBOX_MODE) {
+      window.open("https://github.com/apps", "_blank");
+      return;
+    }
+    const sandboxId = 900001;
+    try {
+      await connectMutation.mutateAsync({
+        installationId: sandboxId,
+        accountLogin: "sandbox-org",
+        accountType: "Organization",
+      });
+      setInstallationId(String(sandboxId));
+    } catch {
+      setInstallationId(String(sandboxId));
+    }
+  };
+
+  const handleManualConnect = async () => {
+    if (!installationId) return;
+    try {
+      await connectMutation.mutateAsync({
+        installationId: Number(installationId),
+        accountLogin: "manual-connect",
+        accountType: "User",
+      });
+    } catch {}
+  };
+
+  const handleTriggerPRScan = async () => {
+    const id = Number(installationId);
+    if (!id) {
+      alert("Connect an installation or enter an ID first");
+      return;
+    }
+    try {
+      const result = await (trpc as any).github.scanPullRequest.mutate({
+        installationId: id,
+        repoFullName: "demo-org/api-service",
+        prNumber: 42,
+        headSha: "HEAD",
+      });
+      alert(`PR scan job queued successfully! (jobId: ${result?.jobId ?? "pending"})`);
+    } catch {
+      alert("Failed to queue PR scan. Check your GitHub App installation and try again.");
+    }
   };
 
   return (
@@ -26,7 +71,8 @@ export default function GitHubIntegrationPage() {
           <div>
             <h1 className="text-3xl font-bold text-blue-400">GitHub Integration</h1>
             <p className="text-gray-400 mt-1">
-              Connect repositories for automated PR security scans
+              Connect repositories for automated PR security scans. Findings are posted directly as
+              PR comments.
             </p>
           </div>
           <Link href="/dashboard" className="text-blue-400 hover:text-blue-300">
@@ -35,59 +81,116 @@ export default function GitHubIntegrationPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-6">
-          {/* Connect card */}
+          {/* Connect */}
           <div className="bg-black/50 p-6 rounded-lg border border-gray-700">
-            <h2 className="text-xl font-semibold mb-4">GitHub App Connection</h2>
+            <h2 className="text-xl font-semibold mb-4">Connect GitHub App</h2>
             <p className="text-gray-400 mb-4">
-              Install the RaksHex GitHub App to enable automatic PR security scans. Findings are
-              posted as comments on each pull request.
+              Install the DevPulse GitHub App on your organization or account to enable automatic
+              scanning on every PR.
             </p>
-            <button
-              onClick={handleConnect}
-              className="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-medium transition-colors border border-gray-600"
-            >
-              <span className="flex items-center gap-2">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
-                </svg>
+            <div className="flex gap-3 flex-wrap">
+              {SANDBOX_MODE ? (
+                <button
+                  onClick={handleConnect}
+                  className="px-6 py-3 bg-blue-600 hover:bg-blue-500 rounded-lg font-medium transition-colors flex items-center gap-2"
+                >
+                  Connect Sandbox Installation
+                </button>
+              ) : null}
+              <button
+                onClick={() => window.open("https://github.com/apps", "_blank")}
+                className="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-medium border border-gray-600"
+              >
                 Install GitHub App
-              </span>
-            </button>
+              </button>
+            </div>
+            {SANDBOX_MODE ? (
+              <p className="text-xs text-amber-500/80 mt-2">
+                Sandbox mode enabled — uses test installation for local demos only.
+              </p>
+            ) : null}
           </div>
 
-          {/* Repos list */}
+          {/* Manual ID + Repos */}
           <div className="bg-black/50 p-6 rounded-lg border border-gray-700">
             <h2 className="text-xl font-semibold mb-4">Connected Repositories</h2>
-            <div className="mb-4">
+
+            <div className="flex gap-2 mb-4">
               <input
-                type="number"
-                placeholder="Installation ID"
+                type="text"
+                placeholder="Installation ID from GitHub App settings"
                 value={installationId}
                 onChange={(e) => setInstallationId(e.target.value)}
-                className="w-full max-w-xs px-4 py-2 rounded bg-gray-700 border border-gray-600 text-white"
+                className="flex-1 max-w-xs px-4 py-2 rounded bg-gray-700 border border-gray-600 text-white"
               />
+              <button
+                onClick={handleManualConnect}
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded"
+              >
+                Link
+              </button>
+              <button
+                onClick={handleTriggerPRScan}
+                disabled={!installationId}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-gray-700 rounded"
+              >
+                Trigger Test PR Scan
+              </button>
             </div>
-            {listReposQuery.data ? (
+
+            {listReposQuery.isLoading ? (
+              <p className="text-gray-400">Loading repos...</p>
+            ) : listReposQuery.data?.repos?.length ? (
               <div className="space-y-2">
-                {listReposQuery.data.repos.map((repo: any) => (
+                {listReposQuery.data.repos.map((repo: any, idx: number) => (
                   <div
-                    key={repo.fullName}
-                    className="flex items-center justify-between p-3 bg-gray-750 rounded border border-gray-700"
+                    key={idx}
+                    className="flex items-center justify-between p-3 bg-gray-800/70 rounded border border-gray-700"
                   >
-                    <span className="text-gray-200">{repo.fullName}</span>
-                    <span
-                      className={`text-xs px-2 py-1 rounded ${repo.private ? "bg-yellow-900/50 text-yellow-400" : "bg-green-900/50 text-green-400"}`}
-                    >
-                      {repo.private ? "Private" : "Public"}
-                    </span>
+                    <div>
+                      <span className="text-gray-100 font-mono">{repo.fullName || repo}</span>
+                      {repo.defaultBranch && (
+                        <span className="text-xs ml-2 text-gray-500">({repo.defaultBranch})</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`text-xs px-2 py-1 rounded ${repo.private ? "bg-yellow-900/60 text-yellow-400" : "bg-green-900/60 text-green-400"}`}
+                      >
+                        {repo.private ? "Private" : "Public"}
+                      </span>
+                      <button
+                        onClick={() => {
+                          setInstallationId(String(installationId));
+                          handleTriggerPRScan();
+                        }}
+                        className="text-xs px-3 py-1 bg-blue-900/50 hover:bg-blue-800 rounded border border-blue-700"
+                      >
+                        Scan latest PR
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
             ) : (
               <p className="text-gray-500 text-sm">
-                Connect a GitHub App installation to see repositories here.
+                No repos yet. Click “Connect Demo Installation” or enter an installation ID above.
               </p>
             )}
+          </div>
+
+          {/* How it works */}
+          <div className="bg-black/30 p-6 rounded-lg border border-gray-800 text-sm text-gray-400">
+            <h3 className="font-semibold text-white mb-2">How PR scanning works</h3>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Install the DevPulse GitHub App (or use demo)</li>
+              <li>On PR open or new commits → webhook → queue → worker</li>
+              <li>
+                Real secret scanning (AWS, GitHub, OpenAI, private keys, JWTs…) + extra heuristics
+              </li>
+              <li>Detailed findings posted as a rich comment on the PR</li>
+              <li>Results also appear in your DevPulse dashboard</li>
+            </ul>
           </div>
         </div>
       </div>

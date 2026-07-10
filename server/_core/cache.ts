@@ -105,51 +105,51 @@ class MockRedis {
 
   multi() {
     const pipeline: any[] = [];
-    const mock = this;
+    /* eslint-disable @typescript-eslint/no-this-alias */ const self: any = this;
     const chain = {
       zremrangebyscore(key: string, min: number, max: number) {
         pipeline.push(() => {
-          let list = JSON.parse(mock.store.get(key) || "[]") as { score: number; member: string }[];
+          let list = JSON.parse(self.store.get(key) || "[]") as { score: number; member: string }[];
           list = list.filter((item) => item.score < min || item.score > max);
-          mock.store.set(key, JSON.stringify(list));
+          self.store.set(key, JSON.stringify(list));
           return 0;
         });
         return chain;
       },
       zadd(key: string, score: number, member: string) {
         pipeline.push(() => {
-          let list = JSON.parse(mock.store.get(key) || "[]") as { score: number; member: string }[];
+          let list = JSON.parse(self.store.get(key) || "[]") as { score: number; member: string }[];
           list.push({ score, member });
-          mock.store.set(key, JSON.stringify(list));
+          self.store.set(key, JSON.stringify(list));
           return 1;
         });
         return chain;
       },
       zcard(key: string) {
         pipeline.push(() => {
-          const list = JSON.parse(mock.store.get(key) || "[]") as any[];
+          const list = JSON.parse(self.store.get(key) || "[]") as any[];
           return list.length;
         });
         return chain;
       },
       pexpire(key: string, ms: number) {
         pipeline.push(() => {
-          mock.expireTimes.set(key, Date.now() + ms);
+          self.expireTimes.set(key, Date.now() + ms);
           return 1;
         });
         return chain;
       },
       incr(key: string) {
         pipeline.push(() => {
-          const val = parseInt(mock.store.get(key) || "0", 10) + 1;
-          mock.store.set(key, String(val));
+          const val = parseInt(self.store.get(key) || "0", 10) + 1;
+          self.store.set(key, String(val));
           return val;
         });
         return chain;
       },
       expire(key: string, seconds: number) {
         pipeline.push(() => {
-          mock.expireTimes.set(key, Date.now() + seconds * 1000);
+          self.expireTimes.set(key, Date.now() + seconds * 1000);
           return 1;
         });
         return chain;
@@ -171,8 +171,13 @@ class MockRedis {
   }
 }
 
+// Browser smoke tests can opt into the local implementation without changing
+// the Redis client contract that the unit suite deliberately mocks.
 const REDIS_URL =
-  process.env.REDIS_URL || (process.env.NODE_ENV === "test" ? "redis://localhost:6379" : undefined);
+  process.env.USE_IN_MEMORY_REDIS === "true"
+    ? undefined
+    : process.env.REDIS_URL ||
+      (process.env.NODE_ENV === "test" ? "redis://localhost:6379" : undefined);
 
 export const redis = REDIS_URL
   ? new Redis(REDIS_URL, {

@@ -1,19 +1,17 @@
 "use client";
 
 import { useEffect } from "react";
+import { hasChatConsent } from "@/lib/consent";
 
 /**
- * Crisp live chat widget.
- *
- * Set NEXT_PUBLIC_CRISP_WEBSITE_ID in your Vercel environment variables
- * to enable Crisp chat. If not set, the component does nothing.
- *
- * Get your Website ID from: https://app.crisp.chat/settings/website/
+ * Crisp live chat widget — only loads when user has accepted chat consent
+ * and NEXT_PUBLIC_CRISP_WEBSITE_ID is configured.
  */
 export function CrispChat() {
   useEffect(() => {
     const websiteId = process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID;
     if (!websiteId) return;
+    if (!hasChatConsent()) return;
 
     // @ts-ignore
     window.$crisp = [];
@@ -26,7 +24,9 @@ export function CrispChat() {
     document.head.appendChild(script);
 
     return () => {
-      document.head.removeChild(script);
+      if (script.parentNode) {
+        document.head.removeChild(script);
+      }
     };
   }, []);
 

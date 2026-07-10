@@ -76,6 +76,7 @@ export default function DemoPage() {
   const [error, setError] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const demoScan = trpc.demo.scan.useMutation();
+  const promptScan = trpc.demo.scanPrompt.useMutation();
 
   function performClientDemoScan(collection: any): ScanResult {
     const start = Date.now();
@@ -310,15 +311,16 @@ export default function DemoPage() {
           <div className="inline-flex items-center gap-2 bg-purple-500/20 border border-purple-400/30 rounded-full px-4 py-2 mb-6">
             <Zap className="w-4 h-4 text-purple-400" />
             <span className="text-sm font-medium text-purple-300">
-              Zero setup · No signup · Instant results
+              Zero setup · No signup · Real production engines (try /demo/judge for focused view)
             </span>
           </div>
           <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-white via-purple-200 to-purple-400 bg-clip-text text-transparent">
-            Find API Vulnerabilities in 3 Seconds
+            Try Real AI Security in 2 Seconds — No Signup
           </h1>
           <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-            Drop your Postman collection. We will find exposed API keys, OWASP vulnerabilities, and
-            estimate your security risk — instantly, for free, no account required.
+            Paste an attack prompt or upload a collection. See real prompt injection detection + PII
+            redaction powered by our production engines. estimate your security risk — instantly,
+            for free, no account required.
           </p>
         </div>
 
@@ -541,13 +543,13 @@ export default function DemoPage() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <a
-                  href="https://rakshex.in/signup"
+                  href="https://devpulse.ai/signup"
                   className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white px-8 py-4 rounded-xl font-bold text-lg transition-colors"
                 >
-                  Get Rakshex Free <ArrowRight className="w-5 h-5" />
+                  Get DevPulse Free <ArrowRight className="w-5 h-5" />
                 </a>
                 <a
-                  href="https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex"
+                  href="https://marketplace.visualstudio.com/items?itemName=DevPulse.DevPulse"
                   className="inline-flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-white px-8 py-4 rounded-xl font-bold text-lg transition-colors"
                 >
                   <FileJson className="w-5 h-5" /> VS Code Extension

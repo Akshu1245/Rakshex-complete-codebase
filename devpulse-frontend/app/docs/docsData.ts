@@ -19,7 +19,7 @@ export const docsData: Record<string, DocPage> = {
       
       <h2>Run Your First Scan</h2>
       <p>To scan an export of your Postman collection or OpenAPI JSON, use the <code>scan</code> command. You will need your project API Key which is found in <code>.insforge/project.json</code> or under your project Settings page:</p>
-      <pre><code>npx RaksHex scan ./collection.json --key ik_26f99572954998ec678ac9ecbf27031f</code></pre>
+      <pre><code>npx RaksHex scan ./collection.json --key ik_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxx</code></pre>
       
       <h2>CLI Parameters</h2>
       <table>
@@ -70,7 +70,7 @@ export const docsData: Record<string, DocPage> = {
       
       <h2>Configuration</h2>
       <p>Once installed, click the RaksHex icon in the sidebar. You will be prompted to connect your project. Retrieve your API Key from the RaksHex portal or <code>.insforge/project.json</code> and paste it in the extension settings:</p>
-      <pre><code>"RaksHex.apiKey": "ik_26f99572954998ec678ac9ecbf27031f"</code></pre>
+      <pre><code>"RaksHex.apiKey": "ik_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxx"</code></pre>
       
       <h2>Key Features</h2>
       <ul>
@@ -93,7 +93,7 @@ export const docsData: Record<string, DocPage> = {
   "mcpServers": {
     "RaksHex-mcp": {
       "command": "npx",
-      "args": ["-y", "@rakshex/mcp-server", "--key", "ik_26f99572954998ec678ac9ecbf27031f"]
+      "args": ["-y", "@rakshex/mcp-server", "--key", "ik_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxx"]
     }
   }
 }</code></pre>
@@ -276,9 +276,9 @@ app.post('/api/chat', RaksHex.middleware(), async (req, res) => {
       
       <h2>Developer Channels</h2>
       <ul>
-        <li><strong>Slack Community:</strong> Join over 1,200 developers building secure AI systems. <a href="mailto:support@rakshex.in">Email us for an invite link</a>.</li>
+        <li><strong>Slack Community:</strong> Join over 1,200 developers building secure AI systems. <a href="mailto:support@devpulse.ai">Email us for an invite link</a>.</li>
         <li><strong>GitHub:</strong> Star our SDK and CLI repositories, read code, or submit pull requests. <a href="https://github.com/rakshex-hq" target="_blank">View GitHub Organisation</a>.</li>
-        <li><strong>Support Email:</strong> For direct assistance or plan inquiries, contact <code>support@rakshex.in</code>.</li>
+        <li><strong>Support Email:</strong> For direct assistance or plan inquiries, contact <code>support@devpulse.ai</code>.</li>
       </ul>
     `,
   },
@@ -394,14 +394,14 @@ response = wrapped_client.messages.create(
       <p>Add route security checks and telemetry auditing to your FastAPI backend using our official python client package.</p>
       <h2>Integration</h2>
       <pre><code>from fastapi import FastAPI
-from rakshex.integrations.fastapi import RakshexMiddleware
+from devpulse.aitegrations.fastapi import RakshexMiddleware
 
 app = FastAPI()
 
 # Add the middleware as the first layer
 app.add_middleware(
     RaksHexMiddleware,
-    api_key="ik_26f99572954998ec678ac9ecbf27031f",
+    api_key="ik_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     exclude_paths=["/healthz", "/metrics"]
 )
 
@@ -446,7 +446,7 @@ app.post('/chat', (req, res) => {
 ]
 
 RaksHex = {
-    'API_KEY': 'ik_26f99572954998ec678ac9ecbf27031f',
+    'API_KEY': 'ik_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxx',
 }</code></pre>
     `,
   },
@@ -458,10 +458,10 @@ RaksHex = {
       <p>Monitor flask router calls and validate LLM prompt payloads at runtime.</p>
       <h2>Integration</h2>
       <pre><code>from flask import Flask
-from rakshex.integrations.flask import Rakshex
+from devpulse.aitegrations.flask import Rakshex
 
 app = Flask(__name__)
-RaksHex = RaksHex(app, api_key="ik_26f99572954998ec678ac9ecbf27031f")
+RaksHex = RaksHex(app, api_key="ik_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxx")
 
 @app.route("/chat", methods=["POST"])
 def chat():

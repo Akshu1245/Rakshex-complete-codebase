@@ -1,115 +1,59 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { trpc } from "@/lib/trpc";
-import { useToast } from "@/components/Toast";
 
-export default function CompareNonameSecurity() {
-  const [email, setEmail] = useState("");
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { addToast } = useToast();
-
-  const joinMutation = trpc.waitlist.join.useMutation({
-    onSuccess: () => {
-      setSuccess(true);
-      setError(null);
-      addToast("success", "Successfully subscribed to competitor analysis updates!");
-    },
-    onError: (err) => {
-      setError(err.message || "Failed to join waitlist. Please try again.");
-    },
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
-    joinMutation.mutate({
-      email,
-      plan: "Free",
-      source: "compare_noname_security",
-    });
-  };
-
+export default function NonameSecurityCompare() {
   return (
-    <div className="min-h-screen bg-transparent text-slate-100 py-16 px-4 font-sans">
-      <div className="max-w-3xl mx-auto">
-        <nav className="text-sm text-blue-400 mb-6">
-          <Link href="/compare" className="hover:underline">
-            ← Back to All Comparisons
-          </Link>
-        </nav>
+    <div className="min-h-screen bg-[#0a0a0a] text-white p-8">
+      <div className="max-w-5xl mx-auto">
+        <Link href="/compare" className="text-blue-400 hover:underline mb-6 block">
+          ← All Comparisons
+        </Link>
 
-        <header className="mb-12">
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-950 text-indigo-400 border border-indigo-900/40 uppercase tracking-wider mb-3">
-            Comparison Stub
-          </span>
-          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white mb-4">
-            RaksHex vs Noname Security — Which is Right for You?
-          </h1>
-          <p className="text-slate-400 text-base leading-relaxed">
-            Noname Security focuses on API discovery, posture management, and active testing
-            configurations. RaksHex is built specifically as a runtime AI firewall and governance
-            engine, offering active prompt injection detection, token-level cost attribution, and
-            AgentGuard validation for tool execution.
-          </p>
-        </header>
+        <h1 className="text-4xl font-bold mb-2">DevPulse vs Noname Security</h1>
+        <p className="text-gray-400 mb-10">
+          Real-time API security + AI governance vs traditional API discovery and posture
+          management.
+        </p>
 
-        <div className="bg-slate-900/40 border border-slate-900 rounded-2xl p-8 mb-8 text-center">
-          <h2 className="text-xl font-bold text-white mb-2">Full Comparison Coming Soon</h2>
-          <p className="text-slate-400 text-sm max-w-md mx-auto mb-6">
-            We are writing an in-depth feature mapping and benchmark suite for RaksHex vs Noname
-            Security. Subscribe below to be notified when the detailed analysis launches.
-          </p>
-
-          {success ? (
-            <div className="bg-emerald-950/20 border border-emerald-500/30 text-emerald-300 p-4 rounded-xl text-sm font-medium max-w-md mx-auto">
-              ✓ Successfully subscribed! We will notify you when this page is ready.
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800">
+            <h2 className="text-2xl font-semibold mb-4 text-blue-400">DevPulse</h2>
+            <ul className="space-y-3 text-sm">
+              <li>✅ Real-time PR scanning with secret detection + code heuristics</li>
+              <li>✅ LLM cost monitoring, kill-switch, and shadow AI detection</li>
+              <li>✅ OWASP + compliance scoring + unified risk</li>
+              <li>✅ GitHub App native PR comments</li>
+              <li>✅ VS Code extension + runtime governance</li>
+              <li>✅ Open source friendly rules + fast iteration</li>
+            </ul>
+            <div className="mt-6 text-xs text-emerald-400">
+              Best for: Modern AI-heavy engineering teams that ship fast.
             </div>
-          ) : (
-            <form
-              onSubmit={handleSubmit}
-              className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
-            >
-              <input
-                type="email"
-                required
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-sm text-gray-200 focus:outline-none focus:border-blue-500 placeholder-gray-500"
-              />
-              <button
-                type="submit"
-                disabled={joinMutation.isPending}
-                className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-semibold text-sm py-2 px-6 rounded-lg transition-colors shadow-lg shadow-blue-500/20"
-              >
-                Notify Me
-              </button>
-            </form>
-          )}
-          {error && <p className="text-xs text-rose-400 mt-2">{error}</p>}
+          </div>
+
+          <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800">
+            <h2 className="text-2xl font-semibold mb-4">Noname Security</h2>
+            <ul className="space-y-3 text-sm text-gray-400">
+              <li>Strong API discovery and inventory</li>
+              <li>Good posture management and risk scoring</li>
+              <li>Enterprise-grade for large orgs</li>
+              <li>Less emphasis on real-time PR feedback or LLM cost control</li>
+              <li>Heavier implementation for full value</li>
+            </ul>
+            <div className="mt-6 text-xs">
+              Best for: Large enterprises focused purely on API inventory.
+            </div>
+          </div>
         </div>
 
-        <div className="border border-slate-900 rounded-2xl p-6 bg-slate-950/25">
-          <h3 className="font-bold text-white mb-4">Core Differentiators Overview</h3>
-          <div className="space-y-3 text-sm text-slate-400">
-            <p>
-              • <strong>Prompt Protection:</strong> RaksHex intercepts prompt injection payloads and
-              redacts outgoing PII. Noname Security evaluates network posture and does not parse LLM
-              strings.
-            </p>
-            <p>
-              • <strong>LLM Telemetry:</strong> RaksHex measures token usage and cost metrics per
-              provider. Traditional API security suites lack reasoning and token counting
-              capabilities.
-            </p>
-            <p>
-              • <strong>Agentic Rules:</strong> RaksHex features AgentGuard to manage tool calls and
-              prevent model drifts during autonomous execution.
-            </p>
-          </div>
+        <div className="mt-10 text-center">
+          <Link
+            href="/dashboard"
+            className="px-8 py-3 bg-blue-600 hover:bg-blue-500 rounded-lg font-medium"
+          >
+            Try DevPulse Free
+          </Link>
         </div>
       </div>
     </div>

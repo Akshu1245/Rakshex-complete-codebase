@@ -30,10 +30,10 @@ export default function ContactPage() {
               <div>
                 <h3 className="font-semibold text-white mb-1">Email</h3>
                 <a
-                  href="mailto:akshay@rakshex.in"
+                  href="mailto:akshay@devpulse.ai"
                   className="text-neutral-400 hover:text-[#14B8A6] transition-colors"
                 >
-                  akshay@rakshex.in
+                  akshay@devpulse.ai
                 </a>
               </div>
             </div>
@@ -94,7 +94,7 @@ export default function ContactPage() {
           <div className="bg-black/50 rounded-2xl border border-neutral-800 p-8">
             <h2 className="text-xl font-semibold mb-6">Send a Message</h2>
             <form
-              action="mailto:akshay@rakshex.in"
+              action="mailto:akshay@devpulse.ai"
               method="post"
               encType="text/plain"
               className="space-y-5"

@@ -64,7 +64,7 @@ function buildCorsAllowlist(): string[] {
     return [
       "https://rakshex.in",
       "https://www.rakshex.in",
-      "https://app.rakshex.in",
+      "https://app.devpulse.ai",
       "https://yc7y9pq9.insforge.site",
       ENV.frontendUrl,
     ].filter((v, i, arr) => v && arr.indexOf(v) === i);
@@ -1049,14 +1049,21 @@ async function startServer() {
   });
 
   // ── Graceful shutdown ──────────────────────────────────────────────────────
-  process.on("SIGTERM", () => {
-    logger.info("[Server] SIGTERM received. Shutting down gracefully");
+  const handleShutdown = (signal: string) => {
+    logger.info(`[Server] ${signal} received. Shutting down gracefully`);
     server.close(async () => {
       logger.info("[Server] Closed");
-      await flushSecurityEventsOnShutdown();
+      try {
+        await flushSecurityEventsOnShutdown();
+      } catch (err) {
+        logger.warn({ err }, "[Server] Failed to flush events on shutdown");
+      }
       process.exit(0);
     });
-  });
+  };
+
+  process.on("SIGTERM", () => handleShutdown("SIGTERM"));
+  process.on("SIGINT", () => handleShutdown("SIGINT"));
 }
 
 startServer().catch((err) => {

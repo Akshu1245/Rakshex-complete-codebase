@@ -67,7 +67,7 @@ function createTransport() {
   const smtpPort = ENV.smtpPort;
   const smtpUser = ENV.smtpUser;
   const smtpPass = ENV.smtpPass;
-  const smtpFrom = ENV.smtpFrom || "noreply@rakshex.in";
+  const smtpFrom = ENV.smtpFrom || "noreply@devpulse.ai";
 
   if (!smtpHost || !smtpUser || !smtpPass) {
     return null; // No SMTP configured
@@ -87,7 +87,7 @@ function createTransport() {
 export async function sendTeamInviteEmail(
   opts: TeamInviteEmailOptions & { token?: string },
 ): Promise<void> {
-  const appUrl = process.env.APP_URL || "https://rakshex.in";
+  const appUrl = process.env.APP_URL || "https://devpulse.ai";
   const inviteUrl = opts.token ? `${appUrl}/invite/${opts.token}` : appUrl;
   const subject = `You've been invited to Rakshex by ${opts.inviterName}`;
 
@@ -211,7 +211,7 @@ export async function sendPasswordResetEmail(opts: PasswordResetEmailOptions): P
 }
 
 export async function sendWelcomeEmail(opts: WelcomeEmailOptions): Promise<void> {
-  const appUrl = process.env.APP_URL || "https://rakshex.in";
+  const appUrl = process.env.APP_URL || "https://devpulse.ai";
   const subject = "Welcome to Rakshex!";
 
   const html = `
@@ -640,7 +640,7 @@ export async function sendPaymentFailedEmail(opts: PaymentFailedEmailOptions): P
         Update Payment Method →
       </a>
       <p style="color:#9ca3af; font-size:12px; text-align:center; margin:0;">
-        Questions? Reply to this email or contact support@rakshex.in
+        Questions? Reply to this email or contact support@devpulse.ai
       </p>
     </div>
     <div style="background:#f9fafb; border-top:1px solid #e5e7eb; padding:20px 32px; text-align:center;">
@@ -692,10 +692,10 @@ export async function sendWaitlistConfirmationEmail(toEmail: string, plan: strin
       </p>
       <div style="border-top:1px solid #374151; padding-top:20px; margin-top:20px;">
         <p style="font-size:14px; color:#9ca3af; margin:0 0 8px;">
-          Website: <a href="https://rakshex.in" style="color:#60a5fa; text-decoration:none;">rakshex.in</a>
+          Website: <a href="https://devpulse.ai" style="color:#60a5fa; text-decoration:none;">rakshex.in</a>
         </p>
         <p style="font-size:14px; color:#9ca3af; margin:0;">
-          For direct inquiries, feel free to reach out to Akshay Kammar at <a href="mailto:akshay@rakshex.in" style="color:#60a5fa; text-decoration:none;">akshay@rakshex.in</a>.
+          For direct inquiries, feel free to reach out to Akshay Kammar at <a href="mailto:akshay@devpulse.ai" style="color:#60a5fa; text-decoration:none;">akshay@devpulse.ai</a>.
         </p>
       </div>
     </div>
@@ -725,7 +725,7 @@ export async function sendWaitlistConfirmationEmail(toEmail: string, plan: strin
     }
   }
 
-  // Send internal notification to akshay@rakshex.in
+  // Send internal notification to akshay@devpulse.ai
   const internalSubject = `New RakshEx waitlist signup: ${toEmail} - ${plan}`;
   const internalHtml = `
 <!DOCTYPE html>
@@ -748,11 +748,11 @@ export async function sendWaitlistConfirmationEmail(toEmail: string, plan: strin
     try {
       await config.transport.sendMail({
         from: `"RakshEx System" <${config.from}>`,
-        to: "akshay@rakshex.in",
+        to: "akshay@devpulse.ai",
         subject: internalSubject,
         html: internalHtml,
       });
-      logger.info(`[Email] Waitlist internal notification sent to akshay@rakshex.in`);
+      logger.info(`[Email] Waitlist internal notification sent to akshay@devpulse.ai`);
     } catch (err) {
       logger.error({ err }, `[Email] Failed to send waitlist internal notification for ${toEmail}`);
     }

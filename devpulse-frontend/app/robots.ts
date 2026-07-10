@@ -7,7 +7,7 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/admin/", "/api/", "/dashboard/", "/settings/", "/billing/"],
     },
-    sitemap: "https://rakshex.in/sitemap.xml",
-    host: "https://rakshex.in",
+    sitemap: "https://www.rakshex.in/sitemap.xml",
+    host: "https://www.rakshex.in",
   };
 }

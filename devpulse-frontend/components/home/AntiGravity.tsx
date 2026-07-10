@@ -600,7 +600,7 @@ export function AntiGravity({ active, setActive }: AntiGravityProps) {
 
   const handleShare = () => {
     playPing();
-    const text = `I just defied AI risks and suspended gravity on RakshEx! 🚀 Try the interactive security scanner yourself: https://www.rakshex.in/ %23AISecurity %23AntiGravity`;
+    const text = `I just defied AI risks and suspended gravity on RakshEx! 🚀 Try the interactive security scanner yourself: https://www.devpulse.ai/ %23AISecurity %23AntiGravity`;
     const url = `https://twitter.com/intent/tweet?text=${text}`;
     window.open(url, "_blank", "width=600,height=400");
     addLog("✨ Share link triggered. Defy AI risks together!");

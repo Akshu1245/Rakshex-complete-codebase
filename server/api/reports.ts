@@ -40,7 +40,7 @@ export const reportsRouter = router({
 
       return {
         reportId,
-        url: `https://rakshex.in/report/${reportId}`,
+        url: `https://devpulse.ai/report/${reportId}`,
       };
     }),
 

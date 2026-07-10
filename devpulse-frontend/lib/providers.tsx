@@ -55,7 +55,7 @@ export function TRPCProvider({ children }: { children: ReactNode }) {
       links: [
         httpBatchLink({
           url: `${getBaseUrl()}/api/trpc`,
-          transformer: superjson,
+          transformer: superjson as any,
           fetch(url, options) {
             const csrfToken = getCsrfTokenFromCookie();
             const headers = new Headers(options?.headers);

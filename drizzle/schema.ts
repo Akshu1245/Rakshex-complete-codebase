@@ -135,6 +135,7 @@ export const users = pgTable(
     plan: userPlanEnum("plan").default("free").notNull(),
     passwordHash: varchar("passwordHash", { length: 512 }),
     apiKey: varchar("apiKey", { length: 64 }),
+    apiKeyPrefix: varchar("apiKeyPrefix", { length: 12 }),
     scansRemaining: integer("scansRemaining").default(10).notNull(),
     onboardingCompleted: boolean("onboardingCompleted").default(false).notNull(),
     failedLoginAttempts: integer("failedLoginAttempts").default(0).notNull(),
@@ -489,16 +490,13 @@ export type InsertNotification = typeof notifications.$inferInsert;
  * Feature flags — runtime on/off + percentage rollout toggles managed from
  * the admin dashboard. Gates risky or gradual-rollout features without a deploy.
  */
-export const featureFlags = pgTable(
-  "feature_flags",
-  {
-    key: varchar("key", { length: 80 }).primaryKey(),
-    description: varchar("description", { length: 300 }).notNull().default(""),
-    enabled: boolean("enabled").default(false).notNull(),
-    rolloutPercentage: integer("rolloutPercentage").default(0).notNull(),
-    updatedAt: timestamp("updatedAt").defaultNow().notNull(),
-  },
-);
+export const featureFlags = pgTable("feature_flags", {
+  key: varchar("key", { length: 80 }).primaryKey(),
+  description: varchar("description", { length: 300 }).notNull().default(""),
+  enabled: boolean("enabled").default(false).notNull(),
+  rolloutPercentage: integer("rolloutPercentage").default(0).notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
 
 export type FeatureFlag = typeof featureFlags.$inferSelect;
 export type InsertFeatureFlag = typeof featureFlags.$inferInsert;
@@ -1546,3 +1544,6 @@ export const scanReports = pgTable(
 );
 export type ScanReport = typeof scanReports.$inferSelect;
 export type InsertScanReport = typeof scanReports.$inferInsert;
+
+// ─── Rakshex Enterprise Tables ───────────────────────────────────────────
+export * from "./schema-enterprise";

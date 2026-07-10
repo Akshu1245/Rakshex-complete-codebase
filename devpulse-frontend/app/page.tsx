@@ -542,17 +542,17 @@ export default function HomePage() {
     {
       question: "What is RakshEx?",
       answer:
-        "RakshEx is India's first AI Runtime Governance platform. It scans API endpoints for security vulnerabilities, monitors LLM token costs, blocks prompt injection attacks, and generates compliance reports — all in one platform.",
+        "RakshEx is an AI control plane for engineering, security, and finance teams. It discovers AI access, protects credentials, tracks subscriptions and usage, and enforces runtime policy without retaining raw prompts by default.",
     },
     {
       question: "What AI frameworks does RakshEx support?",
       answer:
-        "OpenAI, Anthropic Claude, Google Gemini, Mistral, Cohere, AWS Bedrock, and any LLM accessed via standard API. We also support MCP tool calls.",
+        "The inventory supports OpenAI, Anthropic, Azure OpenAI, AWS Bedrock, Google Vertex/Gemini, GitHub Copilot, Claude Teams, Cursor, self-hosted models, and OpenAI-compatible endpoints. Each provider shows whether data is connected, imported, estimated, or unavailable.",
     },
     {
       question: "What security checks does RakshEx perform?",
       answer:
-        "87-payload prompt injection library, BOLA/IDOR detection, credential scanning (AWS, GitHub, Stripe, Aadhaar, PAN), shadow API discovery, missing auth detection, PII exposure, and OWASP AI Top 10 mapping.",
+        "RakshEx scans for exposed credentials, API security weaknesses, shadow endpoints, and AI configuration risk. At runtime, it can apply provider and model policy, budget checks, PII redaction, prompt-injection signals, tool restrictions, and a kill switch.",
     },
     {
       question: "Who should use RakshEx?",
@@ -562,17 +562,17 @@ export default function HomePage() {
     {
       question: "Is RakshEx open source?",
       answer:
-        "Our OWASP AI Top 10 detection ruleset is being open sourced. The core platform is commercial. Join the waitlist for early access.",
+        "RakshEx is commercial software. The product includes a free starting path for local discovery; commercial plans add shared governance, gateway controls, audit evidence, and private deployment options.",
     },
     {
       question: "How is RakshEx different from Snyk or Datadog?",
       answer:
-        "Snyk does code scanning. Datadog does infrastructure monitoring. Neither does prompt injection blocking, thinking token attribution, or AI-specific compliance reporting. RakshEx does all three.",
+        "RakshEx complements code scanners and observability tools by connecting AI identity, entitlement, runtime policy, cost, and evidence in the same workspace.",
     },
     {
       question: "What does the kill switch actually do?",
       answer:
-        "It's an autonomous circuit breaker. When your LLM spend, anomaly score, or red-team result crosses a threshold, RakshEx automatically returns 402 responses to the agent, stopping runaway cost or attacks.",
+        "The kill switch blocks governed gateway requests when an approved policy is breached, such as a budget limit, model restriction, blocked tool, or high-risk signal. Teams can test policies in preview mode before enforcement.",
     },
   ];
 
@@ -752,6 +752,12 @@ export default function HomePage() {
               className="inline-flex items-center justify-center gap-1 whitespace-nowrap rounded bg-[#06b6d4] hover:bg-[#0891b2] text-black h-12 px-8 text-base font-bold font-manrope transition-all duration-200"
             >
               Try Free — No Credit Card
+            </Link>
+            <Link
+              href="/waitlist"
+              className="inline-flex items-center justify-center gap-1 whitespace-nowrap rounded border border-[#06b6d4]/70 hover:border-[#06b6d4] text-[#8be7f0] h-12 px-8 text-base font-semibold font-manrope transition-all duration-200"
+            >
+              Join Private Beta
             </Link>
             <Link
               href="/demo"

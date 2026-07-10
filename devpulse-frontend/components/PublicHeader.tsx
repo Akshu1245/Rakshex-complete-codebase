@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useCountdown } from "@/lib/animations/countdown";
 import { useMegaMenu } from "@/lib/animations/megamenu";
 import {
@@ -31,17 +31,13 @@ const HIDE_BANNER_PATHS = [
 
 export function PublicHeader() {
   const pathname = usePathname();
-  const timeLeft = useCountdown("2026-07-01T00:00:00Z");
+  const launchDate = process.env.NEXT_PUBLIC_LAUNCH_DATE;
+  const timeLeft = useCountdown(launchDate);
   const { activeMenu, handleMouseEnter, handleMouseLeave, forceClose } = useMegaMenu();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const isZero =
-    timeLeft.days === 0 && timeLeft.hours === 0 && timeLeft.minutes === 0 && timeLeft.seconds === 0;
+  const countdownActive =
+    Boolean(launchDate) &&
+    (timeLeft.days > 0 || timeLeft.hours > 0 || timeLeft.minutes > 0 || timeLeft.seconds > 0);
 
   const showBanner = !HIDE_BANNER_PATHS.some((p) => pathname === p);
 
@@ -53,33 +49,24 @@ export function PublicHeader() {
           <Link className="block" href="/changelog">
             <div className="mx-auto flex h-10 w-full max-w-[1280px] items-center justify-between px-6">
               <p className="min-w-0 truncate text-left text-xs font-medium text-white sm:text-sm">
-                🔒 RakshEx Launch Week — India's First AI Runtime Governance Platform →
+                {countdownActive
+                  ? "RakshEx private beta opens soon."
+                  : "RakshEx AI Control Plane is available for hands-on evaluation."}
               </p>
-              {mounted && !isZero && (
+              {countdownActive ? (
                 <span
-                  aria-label="Launch countdown"
-                  className="flex shrink-0 flex-row items-center gap-1.5 text-xs text-[#9CA3AF]"
+                  className="hidden shrink-0 items-center gap-1 text-xs text-[#9CA3AF] sm:flex"
+                  aria-label="Private beta countdown"
                 >
-                  <span className="hidden md:inline mr-1 text-[11px] uppercase tracking-wider text-[#9CA3AF]">
-                    Launch in:
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span className="rounded bg-[#0F1419] border border-[#14B8A6] px-1.5 py-0.5 font-bold font-mono text-[#14B8A6]">
-                      {timeLeft.days}d
-                    </span>
-                    <span>:</span>
-                    <span className="rounded bg-[#0F1419] border border-[#14B8A6] px-1.5 py-0.5 font-bold font-mono text-[#14B8A6]">
-                      {timeLeft.hours}h
-                    </span>
-                    <span>:</span>
-                    <span className="rounded bg-[#0F1419] border border-[#14B8A6] px-1.5 py-0.5 font-bold font-mono text-[#14B8A6]">
-                      {timeLeft.minutes}m
-                    </span>
-                    <span>:</span>
-                    <span className="rounded bg-[#0F1419] border border-[#14B8A6] px-1.5 py-0.5 font-bold font-mono text-[#14B8A6]">
-                      {timeLeft.seconds}s
-                    </span>
-                  </span>
+                  <span>{timeLeft.days}d</span>
+                  <span>:</span>
+                  <span>{timeLeft.hours}h</span>
+                  <span>:</span>
+                  <span>{timeLeft.minutes}m</span>
+                </span>
+              ) : (
+                <span className="hidden shrink-0 text-xs text-[#9CA3AF] sm:inline">
+                  Review the release notes
                 </span>
               )}
             </div>

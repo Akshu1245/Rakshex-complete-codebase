@@ -10,7 +10,10 @@ class MockQueue {
   constructor(public name: string) {}
 
   async add(name: string, data: any, opts?: any): Promise<any> {
-    const id = data.scanId || `job_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const id =
+      data.scanId ||
+      data.prNumber ||
+      `job_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const job = {
       id,
       name,
@@ -21,9 +24,9 @@ class MockQueue {
     };
     this.jobs.set(id, job);
 
-    logger.info({ jobId: id, queueName: this.name }, "[MockQueue] Job added");
+    logger.info({ jobId: id, queueName: this.name, jobName: name }, "[MockQueue] Job added");
 
-    if (this.name === "scan") {
+    if (name === "scan" || this.name === "scan") {
       setTimeout(async () => {
         try {
           const { runCollectionScan } = await import("../services/scanService");
@@ -40,8 +43,8 @@ class MockQueue {
               scanId: result.scanId,
               collectionId: data.collectionId,
               findingsCount: result.totalFindings,
-              criticalCount: result.findings.filter((f) => f.severity === "Critical").length,
-              highCount: result.findings.filter((f) => f.severity === "High").length,
+              criticalCount: result.findings.filter((f: any) => f.severity === "Critical").length,
+              highCount: result.findings.filter((f: any) => f.severity === "High").length,
             });
           } catch (err) {
             logger.warn({ err }, "[MockQueue] WebSocket broadcast failed");
@@ -50,6 +53,19 @@ class MockQueue {
           logger.error({ err }, "[MockQueue] Failed to execute mock scan");
         }
       }, 500);
+    }
+
+    if (name === "pr-scan" || this.name === "pr-scan") {
+      setTimeout(async () => {
+        try {
+          const { processPrScanJob } = await import("./workers/prScanWorker");
+          logger.info({ id, data }, "[MockQueue] Running mock pr-scan job (simulated)");
+          const mockJob = { data, id } as any;
+          await processPrScanJob(mockJob);
+        } catch (err) {
+          logger.error({ err }, "[MockQueue] Failed to execute mock pr-scan");
+        }
+      }, 300);
     }
 
     return job;
@@ -113,7 +129,9 @@ export const telemetryQueue = REDIS_URL
   : (new MockQueue("telemetry") as unknown as Queue);
 
 logger.info(
-  REDIS_URL ? "[Queues] BullMQ queues initialized" : "[Queues] Mock in-memory queues initialized",
+  REDIS_URL
+    ? "[Queues] BullMQ queues initialized"
+    : "[Queues] Mock in-memory queues initialized (including pr-scan support)",
 );
 
 export async function closeQueues(): Promise<void> {

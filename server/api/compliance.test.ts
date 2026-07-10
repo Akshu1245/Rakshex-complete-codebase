@@ -412,19 +412,19 @@ describe("Compliance Router", () => {
         reportType: report.reportType,
         complianceScore: score,
         pdfBase64: Buffer.from("content").toString("base64"),
-        filename: `rakshex-compliance-report-${new Date().toISOString().split("T")[0]}.pdf`,
+        filename: `DevPulse-compliance-report-${new Date().toISOString().split("T")[0]}.pdf`,
         exportDate: new Date().toISOString(),
       };
 
-      expect(exportResponse.filename).toContain("rakshex-compliance-report-");
+      expect(exportResponse.filename).toContain("DevPulse-compliance-report-");
       expect(exportResponse.exportDate).toBeTruthy();
     });
 
     it("should generate correct filename with date", () => {
       const today = new Date().toISOString().split("T")[0];
-      const filename = `rakshex-compliance-report-${today}.pdf`;
+      const filename = `DevPulse-compliance-report-${today}.pdf`;
 
-      expect(filename).toMatch(/^rakshex-compliance-report-.*\.pdf$/);
+      expect(filename).toMatch(/^DevPulse-compliance-report-.*\.pdf$/);
       expect(filename).toContain(today);
     });
   });

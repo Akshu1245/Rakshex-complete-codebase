@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
+import * as YAML from "yaml";
 import type { RakshexApi } from "./api";
 
 interface PostmanCredential {
@@ -43,7 +44,7 @@ export class PostmanImportCommand {
       canSelectFolders: false,
       canSelectMany: false,
       filters: {
-        "Postman Collections": ["json"],
+        "API Collections / Specs (JSON, YAML)": ["json", "yaml", "yml"],
         "All Files": ["*"],
       },
       openLabel: "Import & Scan",
@@ -60,10 +61,14 @@ export class PostmanImportCommand {
     let collection: any;
     try {
       const content = fs.readFileSync(filePath, "utf-8");
-      collection = JSON.parse(content);
+      if (fileName.endsWith(".yaml") || fileName.endsWith(".yml")) {
+        collection = YAML.parse(content);
+      } else {
+        collection = JSON.parse(content);
+      }
     } catch (err) {
       vscode.window.showErrorMessage(
-        `Rakshex: Could not read Postman collection — ${err instanceof Error ? err.message : String(err)}`,
+        `Rakshex: Could not read collection — ${err instanceof Error ? err.message : String(err)}`,
       );
       return;
     }

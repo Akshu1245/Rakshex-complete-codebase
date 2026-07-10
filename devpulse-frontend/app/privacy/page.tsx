@@ -16,8 +16,8 @@ export default function PrivacyPolicy() {
           <p className="leading-relaxed">
             RaksHex is an AI Runtime Governance platform built by{" "}
             <strong className="text-white">Rashi Technologies</strong>, Bengaluru, India. Contact:{" "}
-            <a href="mailto:akshay@rakshex.in" className="text-[#14B8A6] hover:underline">
-              akshay@rakshex.in
+            <a href="mailto:akshay@devpulse.ai" className="text-[#14B8A6] hover:underline">
+              akshay@devpulse.ai
             </a>
           </p>
         </section>
@@ -67,8 +67,8 @@ export default function PrivacyPolicy() {
           </h2>
           <p className="leading-relaxed">
             You may request full deletion of your account and data at any time by emailing{" "}
-            <a href="mailto:akshay@rakshex.in" className="text-[#14B8A6] hover:underline">
-              akshay@rakshex.in
+            <a href="mailto:akshay@devpulse.ai" className="text-[#14B8A6] hover:underline">
+              akshay@devpulse.ai
             </a>
             . We will process deletion requests within{" "}
             <strong className="text-white">7 business days</strong>.
@@ -91,8 +91,8 @@ export default function PrivacyPolicy() {
             Bengaluru, Karnataka, India
             <br />
             Email:{" "}
-            <a href="mailto:akshay@rakshex.in" className="text-[#14B8A6] hover:underline">
-              akshay@rakshex.in
+            <a href="mailto:akshay@devpulse.ai" className="text-[#14B8A6] hover:underline">
+              akshay@devpulse.ai
             </a>
           </p>
         </section>

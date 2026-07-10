@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Create Account — RaksHex",
     description: "Start securing your AI agents for free. No credit card required.",
-    url: "https://rakshex.in/register",
+    url: "https://devpulse.ai/register",
   },
 };
 

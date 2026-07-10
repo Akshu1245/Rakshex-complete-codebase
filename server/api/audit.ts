@@ -135,7 +135,7 @@ export const auditRouter = router({
         );
         exportBody = [headers.join(","), ...rows].join("\n");
         contentType = "text/csv";
-        filename = `rakshex-audit-${dateStr}.csv`;
+        filename = `DevPulse-audit-${dateStr}.csv`;
       } else {
         exportBody = filtered
           .map((e) =>
@@ -151,7 +151,7 @@ export const auditRouter = router({
           )
           .join("\n");
         contentType = "application/x-jsonlines";
-        filename = `rakshex-audit-${dateStr}.jsonl`;
+        filename = `DevPulse-audit-${dateStr}.jsonl`;
       }
 
       logger.info(

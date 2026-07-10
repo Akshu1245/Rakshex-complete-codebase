@@ -5,18 +5,18 @@ services:
     image: postgres:15-alpine
     restart: always
     environment:
-      POSTGRES_USER: rakshex
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme_in_production}
-      POSTGRES_DB: rakshex_db
+      POSTGRES_USER: devpulse
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?err}
+      POSTGRES_DB: devpulse_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U rakshex -d rakshex_db"]
+      test: ["CMD-SHELL", "pg_isready -U devpulse -d devpulse_db"]
       interval: 5s
       timeout: 5s
       retries: 10
     networks:
-      - rakshex-network
+      - devpulse-network
 
   redis:
     image: redis:7-alpine
@@ -30,116 +30,72 @@ services:
       timeout: 3s
       retries: 5
     networks:
-      - rakshex-network
+      - devpulse-network
 
   app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
     restart: always
-    command: node dist/index.js
+    command: node dist/server/_core/index.js
     ports:
       - "3000:3000"
     environment:
-      # ── Server ──────────────────────────────────────────────────
       NODE_ENV: production
       PORT: 3000
       APP_URL: ${APP_URL}
-
-      # ── Database ─────────────────────────────────────────────────
-      DATABASE_URL: postgresql://rakshex:${POSTGRES_PASSWORD:-changeme_in_production}@db:5432/rakshex_db
-
-      # ── Redis Cache ───────────────────────────────────────────────────────
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3001}
+      DATABASE_URL: postgresql://devpulse:${POSTGRES_PASSWORD:?err}@db:5432/devpulse_db
       REDIS_URL: redis://redis:6379
-
-      # ── Auth (JWT) ───────────────────────────────────────────────
       JWT_SECRET: ${JWT_SECRET}
-
-      # ── Manus OAuth (optional) ───────────────────────────────────
+      RAKSHEX_VAULT_KEY: ${RAKSHEX_VAULT_KEY:-}
       VITE_APP_ID: ${VITE_APP_ID:-}
       OAUTH_SERVER_URL: ${OAUTH_SERVER_URL:-https://auth.manus.app}
       OWNER_OPEN_ID: ${OWNER_OPEN_ID:-}
-
-      # ── Google OAuth ─────────────────────────────────────────────
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
-
-      # ── MiniMax M2.7 (Primary LLM Brain) ─────────────────────────
       MINIMAX_API_KEY: ${MINIMAX_API_KEY:-}
       MINIMAX_API_URL: ${MINIMAX_API_URL:-https://api.minimax.io/v1}
-
-      # ── Forge API (Fallback LLM) ──────────────────────────────────
       BUILT_IN_FORGE_API_URL: ${BUILT_IN_FORGE_API_URL:-https://api.manus.app/forge}
       BUILT_IN_FORGE_API_KEY: ${BUILT_IN_FORGE_API_KEY:-}
-
-      # ── Email (SMTP) ─────────────────────────────────────────────
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
-      SMTP_FROM: ${SMTP_FROM:-noreply@rakshex.in}
-
-      # ── Notifications ─────────────────────────────────────────────
+      SMTP_FROM: ${SMTP_FROM:-noreply@devpulse.io}
       SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:-}
-
-      # ── Error Monitoring ─────────────────────────────────────────────
       SENTRY_DSN: ${SENTRY_DSN:-}
+      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
+      RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET:-}
+      GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET:-}
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
     networks:
-      - rakshex-network
+      - devpulse-network
 
-  # ── Next.js Frontend (Rakshex Command Center) ────────────────────────
   frontend:
     build:
-      context: ./rakshex-frontend
+      context: ./devpulse-frontend
       dockerfile: Dockerfile
     restart: always
     ports:
       - "3001:3000"
     environment:
-      NEXT_PUBLIC_API_URL: http://app:3000
+      NEXT_PUBLIC_TS_API_URL: http://app:3000
       NEXT_PUBLIC_WS_URL: ws://app:3000/ws
     depends_on:
       - app
     networks:
-      - rakshex-network
-
-  # ── Backup Service (Cron) ─────────────────────────────────────────────
-  backup:
-    image: amazon/aws-cli:latest
-    restart: unless-stopped
-    volumes:
-      - ./scripts:/scripts
-      - /backups:/backups
-    environment:
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-      AWS_DEFAULT_REGION: ${AWS_REGION:-us-east-1}
-      S3_BACKUP_BUCKET: ${S3_BACKUP_BUCKET:-rakshex-backups}
-      DB_HOST: db
-      DB_NAME: rakshex_db
-      DB_USER: rakshex
-      DB_PASSWORD: ${POSTGRES_PASSWORD:-changeme_in_production}
-    command: >
-      sh -c "
-        yum install -y postgresql gzip &&
-        echo '0 2 * * * /scripts/backup.sh daily' | crontab - &&
-        echo '0 3 1 * * /scripts/backup.sh monthly' | crontab - &&
-        crond -f
-      "
-    depends_on:
-      - db
-    networks:
-      - rakshex-network
+      - devpulse-network
 
 volumes:
   postgres_data:
   redis_data:
 
 networks:
-  rakshex-network:
+  devpulse-network:
     driver: bridge

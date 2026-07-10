@@ -1,5 +1,5 @@
 /**
- * Import API — Migrate from competitors to Rakshex.
+ * Import API — Migrate from competitors to DevPulse.
  *
  * Endpoints:
  *   POST /api/import/preview   — Preview import data before committing
@@ -29,8 +29,14 @@ export function registerImportRoutes(app: Express) {
    * Body: { source, data, columnMapping? }
    * Preview what will be imported without committing.
    */
-  app.post("/api/import/preview", (req: Request, res: Response) => {
+  app.post("/api/import/preview", async (req: Request, res: Response) => {
     try {
+      const user = await sdk.authenticateRequest(req);
+      if (!user) {
+        res.status(401).json({ error: "Authentication required" });
+        return;
+      }
+
       const source = req.body.source as ImportSource;
       const data = req.body.data;
       const columnMapping = req.body.columnMapping as ColumnMapping[] | undefined;
@@ -147,8 +153,13 @@ export function registerImportRoutes(app: Express) {
    */
   app.get("/api/import/history", async (req: Request, res: Response) => {
     try {
-      const userId = parseInt(req.query.userId as string, 10) || (req as any).user?.id || 1;
-      const history = await getImportHistory(userId);
+      const user = await sdk.authenticateRequest(req);
+      if (!user) {
+        res.status(401).json({ error: "Authentication required" });
+        return;
+      }
+
+      const history = await getImportHistory(user.id);
 
       res.json({ imports: history });
     } catch (err) {

@@ -38,7 +38,7 @@ cd rakshex-complete-codebase
 # 2. Install dependencies
 pnpm install
 
-# 3. Start infrastructure (MySQL + Redis)
+# 3. Start infrastructure (PostgreSQL + Redis)
 docker compose up -d
 
 # 4. Copy environment

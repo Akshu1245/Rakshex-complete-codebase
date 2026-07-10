@@ -11,6 +11,8 @@ import { router, publicProcedure } from "../_core/trpc";
 import { redis } from "../_core/cache";
 import { logger } from "../_core/logger";
 import { performDemoScan } from "../utils/demoScanner";
+import { detectSync } from "../engines/promptInjectionEngine";
+import { detectPII } from "../engines/piiDetector";
 
 const MAX_DEMO_SCANS_PER_HOUR = 15;
 const WINDOW_SECONDS = 60 * 60;
@@ -84,5 +86,55 @@ export const demoRouter = router({
         "[demo.scan] completed",
       );
       return { ...result, remaining: Math.max(0, MAX_DEMO_SCANS_PER_HOUR - used) };
+      return { ...result, remaining: Math.max(0, MAX_DEMO_SCANS_PER_HOUR - used) };
+    }),
+
+  /**
+   * Public prompt injection + PII demo.
+   * This is the killer feature for competitions — shows real AI-powered security live.
+   */
+  scanPrompt: publicProcedure
+    .input(z.object({ prompt: z.string().min(1).max(8000) }))
+    .mutation(async ({ input, ctx }) => {
+      const ip = ctx.req?.ip;
+      const key = clientKey(ip);
+
+      let used: number;
+      try {
+        const pipeline = redis.multi();
+        pipeline.incr(key);
+        pipeline.expire(key, WINDOW_SECONDS);
+        const results = await pipeline.exec();
+        const incr = results?.[0]?.[1];
+        used = typeof incr === "number" ? incr : fallbackIncr(key);
+      } catch {
+        used = fallbackIncr(key);
+      }
+
+      if (used > MAX_DEMO_SCANS_PER_HOUR) {
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: `Demo limit reached. Sign up for unlimited scans.`,
+        });
+      }
+
+      const injection = detectSync(input.prompt);
+      const pii = detectPII(input.prompt);
+
+      const riskScore = Math.min(
+        100,
+        Math.round(
+          injection.confidence * 55 +
+            (pii.hasPII ? pii.count * 14 : 0) +
+            (injection.threatLevel === "critical" ? 30 : injection.threatLevel === "high" ? 18 : 0),
+        ),
+      );
+
+      return {
+        injection,
+        pii,
+        riskScore: Math.max(8, Math.min(100, riskScore)),
+        remaining: Math.max(0, MAX_DEMO_SCANS_PER_HOUR - used),
+      };
     }),
 });

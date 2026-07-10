@@ -111,6 +111,10 @@ import {
 import { logger } from "./_core/logger";
 import { toNumber } from "./utils/decimal";
 import { sendWelcomeEmail } from "./email";
+import {
+  calculateThinkingCost,
+  extractThinkingTokensFromResponse,
+} from "./services/thinkingTokens";
 
 // Re-derive the mysqlEnum literal unions from the Drizzle schema so
 // callers don't have to pass `string` and trigger an `as any` cast.
@@ -153,6 +157,29 @@ export async function getDb() {
   }
 
   return _dbInitPromise;
+}
+
+/**
+ * Execute a callback within a database transaction.
+ *
+ * NOTE: Existing db functions (createWorkspace, addWorkspaceMember, etc.)
+ * call getDb() internally, so they create a NEW transaction context. To
+ * properly wrap multi-step writes in a single transaction, refactor those
+ * functions to accept an optional tx parameter (or use this wrapper for
+ * inline drizzle operations).
+ *
+ * Usage:
+ *   await db.transaction(async (tx) => {
+ *     await tx.insert(workspaces).values({...});
+ *     await tx.insert(workspaceMembers).values({...});
+ *   });
+ */
+export async function transaction<T>(
+  fn: (tx: ReturnType<typeof drizzle> extends infer D ? D : never) => Promise<T>,
+): Promise<T> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available — cannot start transaction");
+  return db.transaction(fn as any) as Promise<T>;
 }
 
 export async function upsertUser(user: InsertUser): Promise<{ isNew: boolean }> {
@@ -309,15 +336,11 @@ export async function getUserById(id: number) {
 
   const db = await getDb();
   if (!db) {
-    return {
-      id: 1,
-      email: "demo@rakshex.in",
-      name: "Demo User",
-      plan: "pro",
-      scansRemaining: 10,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    } as any;
+    // SECURITY: never return a fake "demo" user on DB outage — that would
+    // let any unauthenticated request run as a real user once the DB
+    // briefly hiccups. Health checks must surface the outage instead.
+    logger.warn("[Database] Cannot get user: database not available");
+    return undefined;
   }
 
   const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
@@ -566,14 +589,13 @@ export async function deleteCollection(id: string) {
   const db = await getDb();
   assertDb(db);
 
-  // Cascade delete all orphaned analytical data
-  await db.delete(findings).where(eq(findings.collectionId, id));
-  await db.delete(shadowAPIs).where(eq(shadowAPIs.collectionId, id));
-  await db.delete(scans).where(eq(scans.collectionId, id));
-  await db.delete(complianceReports).where(eq(complianceReports.collectionId, id));
-
-  // Finally, delete the collection itself
-  await db.delete(collections).where(eq(collections.id, id));
+  await db.transaction(async (tx) => {
+    await tx.delete(findings).where(eq(findings.collectionId, id));
+    await tx.delete(shadowAPIs).where(eq(shadowAPIs.collectionId, id));
+    await tx.delete(scans).where(eq(scans.collectionId, id));
+    await tx.delete(complianceReports).where(eq(complianceReports.collectionId, id));
+    await tx.delete(collections).where(eq(collections.id, id));
+  });
 }
 
 // ============================================================================
@@ -2023,71 +2045,50 @@ export async function deleteUserAccount(
   const db = await getDb();
   assertDb(db);
 
-  try {
-    // Delete in order respecting foreign key relationships
-    // 1. Delete audit logs
-    await db.delete(auditLog).where(eq(auditLog.userId, userId));
+  return db
+    .transaction(async (tx) => {
+      // Delete in order respecting foreign key relationships
+      await tx.delete(auditLog).where(eq(auditLog.userId, userId));
+      await tx.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, userId));
+      await tx.delete(userSessions).where(eq(userSessions.userId, userId));
+      await tx.delete(emailPreferences).where(eq(emailPreferences.userId, userId));
+      await tx.delete(tokenUsage).where(eq(tokenUsage.userId, userId));
+      await tx.delete(killSwitchEvents).where(eq(killSwitchEvents.userId, userId));
+      await tx.delete(killSwitchSettings).where(eq(killSwitchSettings.userId, userId));
 
-    // 2. Delete password reset tokens
-    await db.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, userId));
+      await tx
+        .delete(teamMembers)
+        .where(and(eq(teamMembers.userId, userId), sql`${teamMembers.memberUserId} IS NULL`));
+      await tx.delete(teamMembers).where(eq(teamMembers.memberUserId, userId));
 
-    // 3. Delete user sessions
-    await db.delete(userSessions).where(eq(userSessions.userId, userId));
+      await tx.delete(onboardingProgress).where(eq(onboardingProgress.userId, userId));
+      await tx.delete(complianceReports).where(eq(complianceReports.userId, userId));
 
-    // 4. Delete email preferences
-    await db.delete(emailPreferences).where(eq(emailPreferences.userId, userId));
+      const userScans = await tx
+        .select({ id: scans.id })
+        .from(scans)
+        .where(eq(scans.userId, userId));
+      const scanIds = userScans.map((s) => s.id);
+      if (scanIds.length > 0) {
+        await tx.delete(findings).where(sql`${findings.scanId} IN (${scanIds.join(",")})`);
+        await tx.delete(shadowAPIs).where(sql`${shadowAPIs.scanId} IN (${scanIds.join(",")})`);
+      }
 
-    // 5. Delete token usage
-    await db.delete(tokenUsage).where(eq(tokenUsage.userId, userId));
+      await tx.delete(scans).where(eq(scans.userId, userId));
+      await tx.delete(collections).where(eq(collections.userId, userId));
+      await tx.delete(subscriptions).where(eq(subscriptions.userId, userId));
+      await tx.delete(payments).where(eq(payments.userId, userId));
+      await tx.delete(users).where(eq(users.id, userId));
 
-    // 6. Delete kill switch events and settings
-    await db.delete(killSwitchEvents).where(eq(killSwitchEvents.userId, userId));
-    await db.delete(killSwitchSettings).where(eq(killSwitchSettings.userId, userId));
-
-    // 7. Delete team memberships (both as owner and member)
-    await db.delete(teamMembers).where(
-      and(
-        eq(teamMembers.userId, userId),
-        sql`${teamMembers.memberUserId} IS NULL`, // Only delete where they are the owner
-      ),
-    );
-    await db.delete(teamMembers).where(eq(teamMembers.memberUserId, userId));
-
-    // 8. Delete onboarding progress
-    await db.delete(onboardingProgress).where(eq(onboardingProgress.userId, userId));
-
-    // 9. Delete compliance reports
-    await db.delete(complianceReports).where(eq(complianceReports.userId, userId));
-
-    // 10. Delete findings (need to get scan IDs first)
-    const userScans = await db.select({ id: scans.id }).from(scans).where(eq(scans.userId, userId));
-    const scanIds = userScans.map((s) => s.id);
-    if (scanIds.length > 0) {
-      await db.delete(findings).where(sql`${findings.scanId} IN (${scanIds.join(",")})`);
-      await db.delete(shadowAPIs).where(sql`${shadowAPIs.scanId} IN (${scanIds.join(",")})`);
-    }
-
-    // 11. Delete scans
-    await db.delete(scans).where(eq(scans.userId, userId));
-
-    // 12. Delete collections
-    await db.delete(collections).where(eq(collections.userId, userId));
-
-    // 13. Delete subscriptions and payments
-    await db.delete(subscriptions).where(eq(subscriptions.userId, userId));
-    await db.delete(payments).where(eq(payments.userId, userId));
-
-    // 14. Finally delete the user
-    await db.delete(users).where(eq(users.id, userId));
-
-    return {
-      deleted: true,
-      message: "Account and all associated data deleted successfully",
-    };
-  } catch (error) {
-    logger.error({ err: error }, "[Database] Account deletion failed");
-    throw error;
-  }
+      return {
+        deleted: true,
+        message: "Account and all associated data deleted successfully",
+      };
+    })
+    .catch((error) => {
+      logger.error({ err: error }, "[Database] Account deletion failed");
+      throw error;
+    });
 }
 
 // ============================================================================
@@ -2287,27 +2288,42 @@ export const createPayment = createOrUpdatePayment;
 export async function getUserByApiKey(apiKey: string) {
   const db = await getDb();
   if (!db) {
-    if (apiKey === "dp_dev_key" || apiKey === "dp_demo_key" || apiKey.startsWith("dp_")) {
-      return {
-        id: 1,
-        email: "demo@rakshex.in",
-        name: "Demo User",
-        plan: "pro",
-        apiKey: apiKey,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      } as any;
-    }
+    logger.warn("[Database] Cannot validate API key: database not available");
     return undefined;
   }
-  const result = await db.select().from(users).where(eq(users.apiKey, apiKey)).limit(1);
-  return result.length > 0 ? result[0] : undefined;
+
+  const { hashApiKey, verifyApiKeyHash } = await import("./utils/crypto");
+  const hashed = hashApiKey(apiKey);
+
+  // Primary lookup: hashed-at-rest keys
+  let result = await db.select().from(users).where(eq(users.apiKey, hashed)).limit(1);
+  if (result.length > 0) return result[0];
+
+  // Legacy fallback: plaintext keys stored before migration (dp_ prefix)
+  if (apiKey.startsWith("dp_")) {
+    result = await db.select().from(users).where(eq(users.apiKey, apiKey)).limit(1);
+    if (result.length > 0) {
+      const user = result[0]!;
+      if (verifyApiKeyHash(apiKey, user.apiKey ?? "") || user.apiKey === apiKey) {
+        return user;
+      }
+    }
+  }
+
+  return undefined;
 }
 
-export async function updateUserApiKey(userId: number, apiKey: string) {
+export async function updateUserApiKey(userId: number, apiKeyHash: string, apiKeyPrefix?: string) {
   const db = await getDb();
   assertDb(db);
-  await db.update(users).set({ apiKey, updatedAt: new Date() }).where(eq(users.id, userId));
+  await db
+    .update(users)
+    .set({
+      apiKey: apiKeyHash,
+      ...(apiKeyPrefix ? { apiKeyPrefix } : {}),
+      updatedAt: new Date(),
+    })
+    .where(eq(users.id, userId));
 }
 
 export async function updateUser(
@@ -2524,9 +2540,9 @@ export async function markWebhookEventProcessed(
     });
     return true;
   } catch (err: unknown) {
-    // MySQL duplicate-key error — already processed.
+    // PostgreSQL unique-violation error — already processed.
     const code = (err as { code?: string } | null)?.code;
-    if (code === "ER_DUP_ENTRY") {
+    if (code === "23505") {
       return false;
     }
     throw err;
@@ -2614,7 +2630,10 @@ interface GatewayAuditPayload {
     prompt_tokens?: number;
     completion_tokens?: number;
     total_tokens?: number;
+    reasoning_tokens?: number;
+    thinking_tokens?: number;
   };
+  rawResponse?: unknown;
   promptFingerprint?: string;
   startedAt?: number;
   endedAt?: number;
@@ -2652,9 +2671,30 @@ export async function recordGatewayAudit(payload: GatewayAuditPayload): Promise<
   if (!Number.isFinite(userId) || userId <= 0) return;
   const promptTokens = payload.usage?.prompt_tokens ?? 0;
   const completionTokens = payload.usage?.completion_tokens ?? 0;
-  const totalTokens = payload.usage?.total_tokens ?? promptTokens + completionTokens;
+
+  // Extract thinking tokens: prefer usage metadata, then provider-specific
+  // response extractor when the raw response is available.
+  let thinkingTokens =
+    payload.usage?.reasoning_tokens ??
+    payload.usage?.thinking_tokens ??
+    (payload.usage as any)?.completion_tokens_details?.reasoning_tokens ??
+    0;
+
   const model = payload.model ?? "unknown";
-  const cost = estimateCostUsd(model, promptTokens, completionTokens);
+
+  if (thinkingTokens === 0 && payload.rawResponse) {
+    const { reasoningTokens } = extractThinkingTokensFromResponse(model, payload.rawResponse);
+    if (reasoningTokens > 0) thinkingTokens = reasoningTokens;
+  }
+
+  const totalTokens = payload.usage?.total_tokens ?? promptTokens + completionTokens;
+
+  // Calculate cost using thinking tokens breakdown
+  // Adjust generation completion tokens (excluding thinking tokens)
+  const adjustedCompletion = Math.max(0, completionTokens - thinkingTokens);
+  const breakdown = calculateThinkingCost(model, promptTokens, adjustedCompletion, thinkingTokens);
+  const cost = breakdown.totalCost;
+
   const latencyMs =
     payload.startedAt && payload.endedAt ? Math.max(0, payload.endedAt - payload.startedAt) : null;
   const row: InsertGatewayAuditRow = {
@@ -2680,7 +2720,8 @@ export async function recordGatewayAudit(payload: GatewayAuditPayload): Promise<
       userId,
       model,
       promptTokens,
-      completionTokens,
+      completionTokens: adjustedCompletion,
+      thinkingTokens,
       totalTokens,
       costUSD: cost.toFixed(6),
     });

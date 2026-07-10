@@ -137,9 +137,9 @@ export default function ChangelogPage() {
           ))}
         </div>
 
-        {/* Coming soon section */}
+        {/*  */}
         <div className="mt-16 p-8 bg-transparent border border-neutral-850 rounded-2xl">
-          <h3 className="text-lg font-bold text-white mb-4">Under Development</h3>
+          <h3 className="text-lg font-bold text-white mb-4">Roadmap (Coming in next releases)</h3>
           <ul className="text-neutral-400 text-sm space-y-3">
             <li className="flex items-center gap-2">
               <span className="text-teal-accent font-bold">•</span>
