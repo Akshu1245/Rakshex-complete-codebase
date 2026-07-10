@@ -49,7 +49,7 @@ export class SecurityWebviewPanel {
         } else if (msg.type === "runScan") {
           vscode.commands.executeCommand("rakshex.runScan");
         } else if (msg.type === "testPrompt") {
-          vscode.commands.executeCommand("rakshex.testPrompt");
+          vscode.commands.executeCommand("rakshex.testPromptThroughGateway");
         } else if (msg.type === "openDashboard") {
           vscode.commands.executeCommand("rakshex.openDashboard");
         } else if (msg.type === "setCompactMode") {
