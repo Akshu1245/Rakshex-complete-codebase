@@ -1,6 +1,6 @@
 {
   "name": "DevPulse-vscode",
-  "displayName": "DevPulse",
+  "displayName": "Rakshex",
   "description": "Stop AI agents from burning your API budget. Find leaked keys, hidden costs, and security risks in VS Code â€” first scan in 60 seconds.",
   "version": "0.2.1",
   "publisher": "DevPulse",
@@ -8,11 +8,11 @@
   "icon": "resources/icon.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/DevPulse/rakshex.git",
-    "directory": "DevPulse-vscode"
+    "url": "https://github.com/Akshu1245/Rakshex-complete-codebase.git",
+    "directory": "devpulse-vscode"
   },
   "bugs": {
-    "url": "https://github.com/DevPulse/DevPulse/issues"
+    "url": "https://github.com/Akshu1245/Rakshex-complete-codebase/issues"
   },
   "homepage": "https://rakshex.in",
   "galleryBanner": {
@@ -51,7 +51,7 @@
     "api scanning",
     "secret detection",
     "prompt injection",
-    "DevPulse"
+    "Rakshex"
   ],
   "main": "./dist/extension.js",
   "activationEvents": [
@@ -61,75 +61,75 @@
     "commands": [
       {
         "command": "rakshex.authenticate",
-        "title": "DevPulse: Sign in with API Key",
+        "title": "Rakshex: Sign in with API Key",
         "icon": "$(key)",
-        "category": "DevPulse"
+        "category": "Rakshex"
       },
       {
         "command": "rakshex.signOut",
-        "title": "DevPulse: Sign out",
+        "title": "Rakshex: Sign out",
         "icon": "$(sign-out)",
-        "category": "DevPulse"
+        "category": "Rakshex"
       },
       {
         "command": "rakshex.importCollections",
-        "title": "DevPulse: Import Postman / OpenAPI collections",
+        "title": "Rakshex: Import Postman / OpenAPI collections",
         "icon": "$(cloud-upload)",
-        "category": "DevPulse"
+        "category": "Rakshex"
       },
       {
         "command": "rakshex.importPostman",
-        "title": "DevPulse: Import Postman Collection & Scan",
+        "title": "Rakshex: Import Postman Collection & Scan",
         "icon": "$(file-code)",
-        "category": "DevPulse"
+        "category": "Rakshex"
       },
       {
         "command": "rakshex.scanCurrentFile",
-        "title": "DevPulse: Scan Current File for API Security",
+        "title": "Rakshex: Scan Current File for API Security",
         "icon": "$(shield)",
-        "category": "DevPulse"
+        "category": "Rakshex"
       },
       {
         "command": "rakshex.refresh",
-        "title": "DevPulse: Refresh Findings (Pull Latest)",
+        "title": "Rakshex: Refresh Findings (Pull Latest)",
         "icon": "$(refresh)",
-        "category": "DevPulse"
+        "category": "Rakshex"
       },
       {
         "command": "rakshex.runScan",
-        "title": "DevPulse: Run Security Scan",
+        "title": "Rakshex: Run Security Scan",
         "icon": "$(play)",
-        "category": "DevPulse"
+        "category": "Rakshex"
       },
       {
         "command": "rakshex.rerunLastScan",
-        "title": "DevPulse: Rerun Last Security Scan",
+        "title": "Rakshex: Rerun Last Security Scan",
         "icon": "$(debug-restart)",
-        "category": "DevPulse"
+        "category": "Rakshex"
       },
       {
         "command": "rakshex.openDashboard",
-        "title": "DevPulse: Open dashboard",
+        "title": "Rakshex: Open dashboard",
         "icon": "$(globe)",
-        "category": "DevPulse"
+        "category": "Rakshex"
       },
       {
         "command": "rakshex.markFindingResolved",
-        "title": "DevPulse: Mark finding resolved",
+        "title": "Rakshex: Mark finding resolved",
         "icon": "$(check)",
-        "category": "DevPulse"
+        "category": "Rakshex"
       },
       {
         "command": "rakshex.markFindingInProgress",
-        "title": "DevPulse: Mark finding in-progress",
+        "title": "Rakshex: Mark finding in-progress",
         "icon": "$(clock)",
-        "category": "DevPulse"
+        "category": "Rakshex"
       },
       {
         "command": "rakshex.openSecurityPanel",
-        "title": "DevPulse: Open Security Dashboard (Findings View)",
+        "title": "Rakshex: Open Security Dashboard (Findings View)",
         "icon": "$(shield)",
-        "category": "DevPulse"
+        "category": "Rakshex"
       },
       {
         "command": "rakshex.openControlPlane",
@@ -139,177 +139,177 @@
       },
       {
         "command": "rakshex.openSettings",
-        "title": "DevPulse: Open Settings",
+        "title": "Rakshex: Open Settings",
         "icon": "$(gear)",
-        "category": "DevPulse"
+        "category": "Rakshex"
       },
       {
         "command": "rakshex.askSecurityCopilot",
-        "title": "DevPulse: Ask Security Copilot",
+        "title": "Rakshex: Ask Security Copilot",
         "icon": "$(hubot)",
-        "category": "DevPulse"
+        "category": "Rakshex"
       },
       {
         "command": "rakshex.generateApiKey",
-        "title": "DevPulse: Generate API Key",
+        "title": "Rakshex: Generate API Key",
         "icon": "$(key)",
-        "category": "DevPulse"
+        "category": "Rakshex"
       },
       {
         "command": "rakshex.testPromptThroughGateway",
-        "title": "DevPulse: Test prompt through gateway",
+        "title": "Rakshex: Test prompt through gateway",
         "icon": "$(beaker)",
-        "category": "DevPulse"
+        "category": "Rakshex"
       },
       {
         "command": "rakshex.scanShadowApis",
-        "title": "DevPulse: Scan workspace for shadow APIs",
+        "title": "Rakshex: Scan workspace for shadow APIs",
         "icon": "$(search)",
-        "category": "DevPulse"
+        "category": "Rakshex"
       },
       {
         "command": "rakshex.applyAutoFix",
-        "title": "DevPulse: Apply auto-fix suggestion",
+        "title": "Rakshex: Apply auto-fix suggestion",
         "icon": "$(wand)",
-        "category": "DevPulse"
+        "category": "Rakshex"
       },
       {
         "command": "rakshex.dismissAutoFix",
-        "title": "DevPulse: Dismiss auto-fix suggestion",
+        "title": "Rakshex: Dismiss auto-fix suggestion",
         "icon": "$(close)",
-        "category": "DevPulse"
+        "category": "Rakshex"
       },
       {
         "command": "rakshex.runDemo",
-        "title": "DevPulse: Run Demo Scenarios",
+        "title": "Rakshex: Run Demo Scenarios",
         "icon": "$(play-circle)",
-        "category": "DevPulse"
+        "category": "Rakshex"
       },
       {
         "command": "rakshex.copyFindingId",
-        "title": "DevPulse: Copy finding ID",
+        "title": "Rakshex: Copy finding ID",
         "icon": "$(copy)",
-        "category": "DevPulse"
+        "category": "Rakshex"
       },
       {
         "command": "rakshex.openFindingInDashboard",
-        "title": "DevPulse: Open finding in dashboard",
+        "title": "Rakshex: Open finding in dashboard",
         "icon": "$(link-external)",
-        "category": "DevPulse"
+        "category": "Rakshex"
       },
       {
         "command": "rakshex.showWeeklyDigest",
-        "title": "DevPulse: Show Weekly Digest",
+        "title": "Rakshex: Show Weekly Digest",
         "icon": "$(report)",
-        "category": "DevPulse"
+        "category": "Rakshex"
       },
       {
         "command": "rakshex.sendFeedback",
-        "title": "DevPulse: Send Feedback",
+        "title": "Rakshex: Send Feedback",
         "icon": "$(comment)",
-        "category": "DevPulse"
+        "category": "Rakshex"
       },
       {
         "command": "rakshex.startOnboardingTour",
-        "title": "DevPulse: Start Onboarding Tour",
+        "title": "Rakshex: Start Onboarding Tour",
         "icon": "$(play)",
-        "category": "DevPulse"
+        "category": "Rakshex"
       },
       {
         "command": "rakshex.checkHealth",
-        "title": "DevPulse: Check Health",
+        "title": "Rakshex: Check Health",
         "icon": "$(pulse)",
-        "category": "DevPulse"
+        "category": "Rakshex"
       },
       {
         "command": "rakshex.toggleCompactMode",
-        "title": "DevPulse: Toggle Compact Findings Mode",
+        "title": "Rakshex: Toggle Compact Findings Mode",
         "icon": "$(collapse-all)",
-        "category": "DevPulse"
+        "category": "Rakshex"
       },
       {
         "command": "rakshex.showCritical",
-        "title": "DevPulse: Show Critical Findings",
-        "category": "DevPulse"
+        "title": "Rakshex: Show Critical Findings",
+        "category": "Rakshex"
       },
       {
         "command": "rakshex.showHigh",
-        "title": "DevPulse: Show High Findings",
-        "category": "DevPulse"
+        "title": "Rakshex: Show High Findings",
+        "category": "Rakshex"
       },
       {
         "command": "rakshex.showMedium",
-        "title": "DevPulse: Show Medium Findings",
-        "category": "DevPulse"
+        "title": "Rakshex: Show Medium Findings",
+        "category": "Rakshex"
       },
       {
         "command": "rakshex.showLow",
-        "title": "DevPulse: Show Low Findings",
-        "category": "DevPulse"
+        "title": "Rakshex: Show Low Findings",
+        "category": "Rakshex"
       },
       {
         "command": "rakshex.clearSeverityFilter",
-        "title": "DevPulse: Clear Severity Filter",
-        "category": "DevPulse"
+        "title": "Rakshex: Clear Severity Filter",
+        "category": "Rakshex"
       },
       {
         "command": "rakshex.markSelectedResolved",
-        "title": "DevPulse: Resolve Selected Findings",
+        "title": "Rakshex: Resolve Selected Findings",
         "icon": "$(check)",
-        "category": "DevPulse"
+        "category": "Rakshex"
       },
       {
         "command": "rakshex.openOnboardingAnalytics",
-        "title": "DevPulse: Open Onboarding Analytics",
+        "title": "Rakshex: Open Onboarding Analytics",
         "icon": "$(graph)",
-        "category": "DevPulse"
+        "category": "Rakshex"
       },
       {
         "command": "rakshex.dismissFinding",
-        "title": "DevPulse: Dismiss Finding",
+        "title": "Rakshex: Dismiss Finding",
         "icon": "$(close)",
-        "category": "DevPulse"
+        "category": "Rakshex"
       }
     ],
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "DevPulse",
-          "title": "DevPulse",
+          "id": "Rakshex",
+          "title": "Rakshex",
           "icon": "resources/icon.svg"
         }
       ]
     },
     "views": {
-      "DevPulse": [
+      "Rakshex": [
         {
           "id": "rakshex.welcome",
           "type": "webview",
           "name": "Welcome",
           "icon": "$(shield)",
           "when": "!rakshex.signedIn",
-          "contextualTitle": "DevPulse Welcome"
+          "contextualTitle": "Rakshex Welcome"
         },
         {
           "id": "rakshex.findings",
           "name": "Findings",
           "icon": "$(shield)",
           "when": "rakshex.signedIn",
-          "contextualTitle": "DevPulse Findings"
+          "contextualTitle": "Rakshex Findings"
         },
         {
           "id": "rakshex.autofix",
           "name": "Auto-fix Suggestions",
           "icon": "$(lightbulb)",
           "when": "rakshex.signedIn",
-          "contextualTitle": "DevPulse Auto-fix Suggestions"
+          "contextualTitle": "Rakshex Auto-fix Suggestions"
         }
       ]
     },
     "viewsWelcome": [
       {
         "view": "rakshex.findings",
-        "contents": "Sign in with your DevPulse API key to see findings.\n[Sign in](command:rakshex.authenticate)\n\nGenerate an API key from Settings on the DevPulse dashboard.\n\n---\n\n**Keyboard shortcuts:**\nCtrl+Shift+D â€” Refresh\nCtrl+Shift+S â€” Run Scan\nCtrl+Shift+R â€” Rerun Last Scan\nCtrl+Shift+1-4 â€” Filter by severity\nEnter â€” Resolve finding"
+        "contents": "Sign in with your Rakshex API key to see findings.\n[Sign in](command:rakshex.authenticate)\n\nGenerate an API key from Settings on the Rakshex dashboard.\n\n---\n\n**Keyboard shortcuts:**\nCtrl+Shift+D â€” Refresh\nCtrl+Shift+S â€” Run Scan\nCtrl+Shift+R â€” Rerun Last Scan\nCtrl+Shift+1-4 â€” Filter by severity\nEnter â€” Resolve finding"
       }
     ],
     "menus": {
@@ -481,12 +481,12 @@
       }
     ],
     "configuration": {
-      "title": "DevPulse",
+      "title": "Rakshex",
       "properties": {
         "rakshex.apiUrl": {
           "type": "string",
-          "default": "http://localhost:8000",
-          "description": "Base URL of the DevPulse backend (default: https://api.rakshex.in â€” self-hosted users can override to e.g. https://api.your-company.com or http://localhost:3000)."
+          "default": "http://localhost:3000",
+          "description": "Base URL of the Rakshex backend (default: https://api.rakshex.in â€” self-hosted users can override to e.g. https://api.your-company.com or http://localhost:3000)."
         },
         "rakshex.heartbeatIntervalSec": {
           "type": "number",
@@ -502,7 +502,7 @@
         "rakshex.gatewayUrl": {
           "type": "string",
           "default": "http://localhost:8081",
-          "description": "Base URL of the DevPulse inline LLM gateway (default: http://localhost:8081 for local dev; override to e.g. https://gateway.your-company.com when self-hosted)."
+          "description": "Base URL of the Rakshex inline LLM gateway (default: http://localhost:8081 for local dev; override to e.g. https://gateway.your-company.com when self-hosted)."
         },
         "rakshex.workspaceId": {
           "type": "number",
