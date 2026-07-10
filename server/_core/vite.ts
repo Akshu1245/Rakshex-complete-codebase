@@ -29,17 +29,20 @@ export async function setupVite(app: Express, server: Server) {
     try {
       const clientTemplate = path.resolve(import.meta.dirname, "../..", "client", "index.html");
 
-      // Guard: the project no longer uses a Vite SPA in client/.
-      // The frontend is a separate Next.js app under rakshex-frontend/.
+      // Guard: the project no longer uses a Vite SPA in client/. The product
+      // UI lives in the separate Next.js app under devpulse-frontend/.
       if (!fs.existsSync(clientTemplate)) {
+        if (process.env.NODE_ENV !== "production") {
+          res.redirect(302, `http://localhost:3001${url}`);
+          return;
+        }
         res.status(200).set({ "Content-Type": "text/html" }).end(`<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><title>Rakshex API</title></head>
 <body style="font-family:system-ui,sans-serif;padding:2rem">
-  <h1>Rakshex Backend is running</h1>
-  <p>The frontend is a separate Next.js app. Start it with:</p>
-  <pre style="background:#f4f4f4;padding:1rem">cd rakshex-frontend && npm run dev</pre>
-  <p>API health check: <a href="/api/health">/api/health</a></p>
+  <h1>Rakshex API</h1>
+  <p>This host serves the API. The customer application is deployed separately.</p>
+  <p>Health: <a href="/api/health">/api/health</a></p>
 </body>
 </html>`);
         return;
