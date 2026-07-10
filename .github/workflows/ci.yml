@@ -231,7 +231,7 @@ jobs:
           node-version: 22
           cache: pnpm
           cache-dependency-path: devpulse-vscode/pnpm-lock.yaml
-      - run: pnpm install --frozen-lockfile
+      - run: npm ci
         working-directory: devpulse-vscode
       - name: Build extension
         working-directory: devpulse-vscode
