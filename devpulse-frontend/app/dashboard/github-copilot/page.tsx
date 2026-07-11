@@ -19,6 +19,29 @@ export default function CopilotGovernancePage() {
     );
   }
 
+  if (metrics.status === "unavailable") {
+    return (
+      <div className="min-h-screen bg-[#090D16] p-8 text-white">
+        <div className="mx-auto flex min-h-[60vh] max-w-2xl flex-col justify-center">
+          <p className="font-mono text-xs uppercase tracking-widest text-primary">
+            Copilot governance
+          </p>
+          <h1 className="mt-3 text-3xl font-bold">No verified Copilot data yet</h1>
+          <p className="mt-3 max-w-xl text-sm leading-6 text-gray-400">
+            Connect a GitHub organization and run a permitted Copilot sync. Rakshex only displays
+            usage, seats, and costs returned by GitHub or explicitly imported by your workspace.
+          </p>
+          <Link
+            href="/enterprise"
+            className="mt-6 w-fit border border-primary/50 px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
+          >
+            Configure Copilot sync
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-8 text-white min-h-screen bg-[#090D16]">
       <div className="max-w-7xl mx-auto space-y-8">
