@@ -67,7 +67,9 @@ const playWhoosh = () => {
     gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8);
     osc.start();
     osc.stop(audioCtx.currentTime + 0.8);
-  } catch (e) {}
+  } catch {
+    // Audio feedback is optional and must never block the visual interaction.
+  }
 };
 
 const playPing = () => {
@@ -90,7 +92,9 @@ const playPing = () => {
     osc2.start();
     osc1.stop(audioCtx.currentTime + 0.5);
     osc2.stop(audioCtx.currentTime + 0.5);
-  } catch (e) {}
+  } catch {
+    // Audio feedback is optional and must never block the visual interaction.
+  }
 };
 
 const playScanTick = () => {
@@ -107,7 +111,9 @@ const playScanTick = () => {
     gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
     osc.start();
     osc.stop(audioCtx.currentTime + 0.08);
-  } catch (e) {}
+  } catch {
+    // Audio feedback is optional and must never block the visual interaction.
+  }
 };
 
 export function AntiGravity({ active, setActive }: AntiGravityProps) {

@@ -24,6 +24,7 @@ This is the release gate for RakshEx. A checked item is implemented and verified
 - [ ] Configure SMTP or transactional email, verify `security@rakshex.in`, and submit a real waitlist request.
 - [ ] Configure GitHub OAuth, Google OAuth, GitHub App installation, webhook secret, and callback URLs for production domains.
 - [ ] Configure Sentry, uptime monitoring, backups, and a status-page owner.
+- [ ] Connect Railway (or another production platform) to the verified main branch, configure the backend service variables, and set the frontend API/WebSocket URLs. GitHub Actions deployment is intentionally manual and main-only until this is complete.
 - [ ] Configure provider connectors with customer-authorized OAuth/admin credentials; do not add provider secrets to environment files or the frontend.
 - [ ] Review privacy policy, terms, DPA, support SLA, security disclosure policy, and any public customer/patent/certification statements.
 

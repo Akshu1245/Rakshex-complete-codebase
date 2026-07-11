@@ -249,7 +249,37 @@ vi.mock("./db", async () => {
       const a = mockShadowAPIs.find((a) => a.id === id);
       if (a) a.isDocumented = true;
     }),
-    recordTokenUsage: vi.fn(async () => {}),
+    recordTokenUsage: vi.fn(
+      async (
+        userId: number,
+        _model: string,
+        _promptTokens: number,
+        _completionTokens: number,
+        _thinkingTokens: number,
+        costUSD: number,
+      ) => {
+        const settings = mockKillSwitchSettings.find((s) => s.userId === userId);
+        if (!settings) return;
+
+        const currentSpend = Number(settings.currentSpendUSD || 0);
+        const updatedSpend = currentSpend + costUSD;
+        settings.currentSpendUSD = updatedSpend.toString();
+
+        const budgetLimit = Number(settings.budgetLimitUSD || 0);
+        if (budgetLimit > 0 && updatedSpend >= budgetLimit && !settings.isActive) {
+          settings.isActive = true;
+          mockKillSwitchEvents.push({
+            id: `ks_evt_${Date.now()}`,
+            userId,
+            eventType: "auto_triggered",
+            budgetLimit,
+            currentSpend: updatedSpend,
+            reason: `Budget limit of $${budgetLimit.toFixed(2)} exceeded`,
+            createdAt: new Date(),
+          });
+        }
+      },
+    ),
     getTokenUsageByUserId: vi.fn(async () => []),
     getTokenUsageByModel: vi.fn(async () => []),
     getKillSwitchSettings: vi.fn(
@@ -990,11 +1020,16 @@ describe("kill switch auto-trigger", () => {
     });
     expect(result.success).toBe(true);
 
-    // Note: kill switch auto-trigger from token usage is not implemented
-    // The kill switch needs to be manually triggered via killSwitch.trigger()
     const settings = await caller.killSwitch.getSettings();
-    expect(settings.isActive).toBe(false);
+    expect(settings.isActive).toBe(true);
     expect(settings.budgetLimitUSD).toBe(1);
+
+    const audit = await caller.killSwitch.getAuditTrail();
+    expect(audit.events.find((event) => event.eventType === "auto_triggered")).toMatchObject({
+      eventType: "auto_triggered",
+      budgetLimit: 1,
+      currentSpend: 2,
+    });
   });
 });
 

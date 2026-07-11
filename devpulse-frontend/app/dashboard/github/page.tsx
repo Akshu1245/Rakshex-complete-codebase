@@ -9,6 +9,7 @@ const SANDBOX_MODE =
 
 export default function GitHubIntegrationPage() {
   const [installationId, setInstallationId] = useState("");
+  const [connectionError, setConnectionError] = useState<string | null>(null);
 
   const connectMutation = trpc.github.connectInstallation.useMutation();
   const listReposQuery = trpc.github.listRepos.useQuery(
@@ -17,6 +18,7 @@ export default function GitHubIntegrationPage() {
   );
 
   const handleConnect = async () => {
+    setConnectionError(null);
     if (!SANDBOX_MODE) {
       window.open("https://github.com/apps", "_blank");
       return;
@@ -36,13 +38,18 @@ export default function GitHubIntegrationPage() {
 
   const handleManualConnect = async () => {
     if (!installationId) return;
+    setConnectionError(null);
     try {
       await connectMutation.mutateAsync({
         installationId: Number(installationId),
         accountLogin: "manual-connect",
         accountType: "User",
       });
-    } catch {}
+    } catch {
+      setConnectionError(
+        "Could not link this installation. Verify the installation ID and access.",
+      );
+    }
   };
 
   const handleTriggerPRScan = async () => {
@@ -137,6 +144,11 @@ export default function GitHubIntegrationPage() {
                 Trigger Test PR Scan
               </button>
             </div>
+            {connectionError && (
+              <p role="alert" className="mb-4 text-sm text-red-300">
+                {connectionError}
+              </p>
+            )}
 
             {listReposQuery.isLoading ? (
               <p className="text-gray-400">Loading repos...</p>

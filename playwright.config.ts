@@ -30,7 +30,8 @@ export default defineConfig({
       // `/metrics` proves the HTTP server is accepting requests without
       // claiming that optional local dependencies (DB/Redis) are healthy.
       url: `http://localhost:${BACKEND_PORT}/metrics`,
-      reuseExistingServer: false,
+      // Reuse a developer's local preview, but always create clean servers in CI.
+      reuseExistingServer: !process.env.CI,
       timeout: 120_000,
       env: {
         NODE_ENV: "test",
@@ -43,7 +44,7 @@ export default defineConfig({
       command: `npm run dev -- --port ${FRONTEND_PORT}`,
       cwd: "./devpulse-frontend",
       url: BASE_URL,
-      reuseExistingServer: false,
+      reuseExistingServer: !process.env.CI,
       timeout: 120_000,
       env: { NEXT_PUBLIC_TS_API_URL: `http://localhost:${BACKEND_PORT}` },
     },
