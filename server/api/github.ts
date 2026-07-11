@@ -15,6 +15,20 @@ import type { PrScanJobData } from "../queues/workers/prScanWorker";
 import { enqueueScan } from "../services/jobs";
 import crypto from "crypto";
 
+async function requireInstallationAccess(installationId: number, userId: number) {
+  const linked = await getLinkedInstallation(installationId);
+  if (!linked) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "GitHub installation not found" });
+  }
+  const workspaceIds = new Set(
+    (await db.listWorkspacesForUser(userId)).map((workspace) => workspace.id),
+  );
+  if (!workspaceIds.has(Number(linked.workspaceId))) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "GitHub installation not found" });
+  }
+  return linked;
+}
+
 export const githubRouter = router({
   /**
    * Link a GitHub installation to the current workspace.
@@ -54,7 +68,8 @@ export const githubRouter = router({
         installationId: z.number().int(),
       }),
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      await requireInstallationAccess(input.installationId, ctx.user.id);
       let repos = await listReposForInstallation(input.installationId);
 
       // Normalize to object form expected by frontend
@@ -103,12 +118,13 @@ export const githubRouter = router({
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      const linked = await requireInstallationAccess(input.installationId, ctx.user.id);
       const jobData: PrScanJobData = {
         installationId: input.installationId,
         repoFullName: input.repoFullName,
         prNumber: input.prNumber,
         headSha: input.headSha,
-        workspaceId: String((await db.listWorkspacesForUser(ctx.user.id))[0]?.id ?? "unknown"),
+        workspaceId: linked.workspaceId,
       };
 
       const job = await scanQueue.add("pr-scan", jobData);
