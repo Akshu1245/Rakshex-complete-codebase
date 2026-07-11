@@ -6,6 +6,8 @@
 
 import { logger } from "../_core/logger";
 
+const isProduction = process.env.NODE_ENV === "production";
+
 // In-memory store for installations (market-ready dev fallback; persists across hot reloads in same process)
 const installations = new Map<
   number,
@@ -26,6 +28,11 @@ function getOctokitApp(): any {
 
   const appId = process.env.GITHUB_APP_ID;
   const privateKey = process.env.GITHUB_APP_PRIVATE_KEY;
+
+  if ((!appId || !privateKey) && isProduction) {
+    logger.error("[githubApp] GitHub App credentials are required in production");
+    return null;
+  }
 
   if (!appId || !privateKey) {
     logger.warn(
@@ -103,6 +110,10 @@ export async function linkInstallation(
   accountType: "Organization" | "User",
   permissions: Record<string, unknown> = {},
 ): Promise<void> {
+  if (isProduction && !getOctokitApp()) {
+    throw new Error("GitHub App is not configured for this environment");
+  }
+
   installations.set(installationId, {
     installationId,
     workspaceId,
@@ -134,6 +145,9 @@ export async function listReposForInstallation(
 
   const app = getOctokitApp();
   if (!app) {
+    if (isProduction) {
+      throw new Error("GitHub App is not configured for this environment");
+    }
     // Dev-friendly mock data so the UI works immediately
     logger.info({ installationId }, "[githubApp] Returning mock repos for dev");
     return [
