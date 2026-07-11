@@ -1339,6 +1339,22 @@ export const workspaces = pgTable(
 export type WorkspaceRow = typeof workspaces.$inferSelect;
 export type InsertWorkspaceRow = typeof workspaces.$inferInsert;
 
+/** Durable GitHub App installation to workspace mapping. */
+export const githubInstallations = pgTable(
+  "github_installations",
+  {
+    id: serial("id").primaryKey(),
+    installationId: integer("installationId").notNull().unique(),
+    workspaceId: integer("workspaceId").notNull(),
+    accountLogin: varchar("accountLogin", { length: 255 }).notNull(),
+    accountType: varchar("accountType", { length: 32 }).notNull(),
+    permissions: json("permissions").$type<Record<string, unknown>>().notNull().default({}),
+    linkedAt: timestamp("linkedAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+  },
+  (table) => ({ workspaceIdx: index().on(table.workspaceId) }),
+);
+
 /**
  * Membership join — one row per (workspace, user) pair. Roles use a
  * strict 4-level hierarchy:

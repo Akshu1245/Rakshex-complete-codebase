@@ -47,6 +47,7 @@ import {
   ssoProviders,
   ssoLoginRequests,
   workspaces,
+  githubInstallations,
   workspaceMembers,
   workspaceInvitations,
   mcpServers,
@@ -3301,6 +3302,35 @@ export async function getPersonalWorkspaceForUser(userId: number): Promise<Works
     .select()
     .from(workspaces)
     .where(and(eq(workspaces.ownerUserId, userId), eq(workspaces.isPersonal, true)))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+export async function upsertGithubInstallation(input: {
+  installationId: number;
+  workspaceId: number;
+  accountLogin: string;
+  accountType: string;
+  permissions: Record<string, unknown>;
+}): Promise<void> {
+  const database = await getDb();
+  if (!database) return;
+  await database
+    .insert(githubInstallations)
+    .values(input)
+    .onConflictDoUpdate({
+      target: githubInstallations.installationId,
+      set: { ...input, updatedAt: new Date() },
+    });
+}
+
+export async function getGithubInstallation(installationId: number) {
+  const database = await getDb();
+  if (!database) return null;
+  const rows = await database
+    .select()
+    .from(githubInstallations)
+    .where(eq(githubInstallations.installationId, installationId))
     .limit(1);
   return rows[0] ?? null;
 }

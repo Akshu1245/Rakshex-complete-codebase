@@ -29,7 +29,11 @@ export const githubRouter = router({
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      const workspaceId = (ctx as any).user?.workspaceId || `ws_${ctx.user.id}`;
+      const workspace = (await db.listWorkspacesForUser(ctx.user.id))[0];
+      if (!workspace) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Create a workspace first" });
+      }
+      const workspaceId = workspace.id;
       await linkInstallation(
         input.installationId,
         workspaceId,
@@ -104,7 +108,7 @@ export const githubRouter = router({
         repoFullName: input.repoFullName,
         prNumber: input.prNumber,
         headSha: input.headSha,
-        workspaceId: `ws_${ctx.user.id}`,
+        workspaceId: String((await db.listWorkspacesForUser(ctx.user.id))[0]?.id ?? "unknown"),
       };
 
       const job = await scanQueue.add("pr-scan", jobData);
@@ -242,7 +246,7 @@ export async function handleGitHubWebhook(
   }
 
   // Try to resolve workspace from linked installation
-  const linked = getLinkedInstallation(installationId);
+  const linked = await getLinkedInstallation(installationId);
   const workspaceId = linked?.workspaceId || "unknown";
 
   // Enqueue PR scan

@@ -5,6 +5,7 @@
  */
 
 import { logger } from "../_core/logger";
+import * as db from "../db";
 
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -105,7 +106,7 @@ export function verifyWebhookSignature(payload: string, signature: string): bool
  */
 export async function linkInstallation(
   installationId: number,
-  workspaceId: string,
+  workspaceId: number,
   accountLogin: string,
   accountType: "Organization" | "User",
   permissions: Record<string, unknown> = {},
@@ -116,11 +117,18 @@ export async function linkInstallation(
 
   installations.set(installationId, {
     installationId,
-    workspaceId,
+    workspaceId: String(workspaceId),
     accountLogin,
     accountType,
     linkedAt: new Date().toISOString(),
     repos: [],
+  });
+  await db.upsertGithubInstallation({
+    installationId,
+    workspaceId,
+    accountLogin,
+    accountType,
+    permissions,
   });
 
   logger.info(
@@ -188,6 +196,18 @@ export async function listReposForInstallation(
   }
 }
 
-export function getLinkedInstallation(installationId: number) {
-  return installations.get(installationId);
+export async function getLinkedInstallation(installationId: number) {
+  const cached = installations.get(installationId);
+  if (cached) return cached;
+  const stored = await db.getGithubInstallation(installationId);
+  if (!stored) return undefined;
+  const linked = {
+    installationId: stored.installationId,
+    workspaceId: String(stored.workspaceId),
+    accountLogin: stored.accountLogin,
+    accountType: stored.accountType,
+    linkedAt: stored.linkedAt.toISOString(),
+  };
+  installations.set(installationId, linked);
+  return linked;
 }
