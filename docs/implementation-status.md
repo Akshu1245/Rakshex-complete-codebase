@@ -81,3 +81,5 @@ pnpm market:check   # full automated suite (API must be up for smoke step)
 2. Staging human journey (`docs/RELEASE_CHECKLIST.md`).
 3. Production secrets.
 4. Optional paid billing + GitHub App credentials.
+
+Full half-done / failure inventory: **`docs/GAP_INVENTORY.md`**.

@@ -185,3 +185,9 @@ repomix-output.txt
 
 .turbo/
 
+
+# Python build
+**/__pycache__/
+**/*.egg-info/
+*.pyc
+

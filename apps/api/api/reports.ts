@@ -40,7 +40,7 @@ export const reportsRouter = router({
 
       return {
         reportId,
-        url: `https://devpulse.ai/report/${reportId}`,
+        url: `${process.env.APP_URL || "https://rakshex.in"}/report/${reportId}`,
       };
     }),
 

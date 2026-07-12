@@ -99,7 +99,7 @@ export async function processPrScanJob(job: Job<PrScanJobData>): Promise<void> {
         owner: repoFullName.split("/")[0],
         repo: repoFullName.split("/")[1],
         issue_number: prNumber,
-        body: `## 🛡️ DevPulse PR Security Scan\n\nNo security-relevant files changed in this PR. ✅`,
+        body: `## 🛡️ Rakshex PR Security Scan\n\nNo security-relevant files changed in this PR. ✅`,
       });
       return;
     }
@@ -180,7 +180,7 @@ export async function processPrScanJob(job: Job<PrScanJobData>): Promise<void> {
           owner: repoFullName.split("/")[0],
           repo: repoFullName.split("/")[1],
           issue_number: prNumber,
-          body: `## 🛡️ DevPulse PR Scan\n\nScan encountered an error: ${String((err as any)?.message || err)}. Please check configuration or retry.`,
+          body: `## 🛡️ Rakshex PR Scan\n\nScan encountered an error: ${String((err as any)?.message || err)}. Please check configuration or retry.`,
         });
       }
     } catch (e) {
@@ -252,7 +252,7 @@ function buildRichComment(
   high: number,
   filesScanned: number,
 ): string {
-  const header = `## 🛡️ DevPulse Security Scan\n\n`;
+  const header = `## 🛡️ Rakshex Security Scan\n\n`;
   const counts = `**Files scanned:** ${filesScanned}  |  🔴 Critical: ${critical}  |  🟠 High: ${high}  |  🟡 Other: ${findings.length - critical - high}\n\n`;
 
   if (findings.length === 0) {
@@ -290,7 +290,7 @@ function buildRichComment(
       `\n\n`;
   }
 
-  body += `> Review these before merging. [Open in DevPulse Dashboard](https://app.devpulse.ai) for full details and fixes.\n`;
+  body += `> Review these before merging. [Open in Rakshex Dashboard](${process.env.APP_URL || "https://rakshex.in"}) for full details and fixes.\n`;
   body += `> Powered by real-time secret scanning + heuristic analysis.`;
 
   return body;
