@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>DevPulse Architecture — Judge View</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .node { transition: all 0.2s; }
+    .node:hover { transform: scale(1.02); }
+  </style>
+</head>
+<body class="bg-zinc-950 text-white p-8">
+  <div class="max-w-5xl mx-auto">
+    <div class="mb-8">
+      <div class="text-yellow-400 text-xs tracking-[3px]">DEV PULSE • COMPETITION ARCHITECTURE</div>
+      <h1 class="text-5xl font-semibold tracking-tight">One clean architecture.<br>Full control of the AI call path.</h1>
+    </div>
+
+    <!-- SVG Architecture -->
+    <svg width="100%" height="520" viewBox="0 0 1100 520" fill="none" xmlns="http://www.w3.org/2000/svg" class="border border-white/10 bg-zinc-900 rounded-3xl p-4">
+      <!-- Background grid lines -->
+      <defs>
+        <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#eab308" stop-opacity="0.15"/>
+          <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.08"/>
+        </linearGradient>
+      </defs>
+      
+      <!-- Left: Clients -->
+      <rect x="40" y="60" width="160" height="380" rx="16" fill="#111" stroke="#333"/>
+      <text x="120" y="90" fill="#888" font-size="13" font-weight="500">CLIENTS &amp; TOOLS</text>
+      
+      <g class="node">
+        <rect x="60" y="115" width="120" height="52" rx="10" fill="#1f1f1f" stroke="#444"/>
+        <text x="120" y="140" fill="#ddd" font-size="13" text-anchor="middle">VS Code Extension</text>
+        <text x="120" y="155" fill="#666" font-size="10" text-anchor="middle">Real-time scanning</text>
+      </g>
+      
+      <g class="node">
+        <rect x="60" y="185" width="120" height="52" rx="10" fill="#1f1f1f" stroke="#444"/>
+        <text x="120" y="210" fill="#ddd" font-size="13" text-anchor="middle">GitHub Action</text>
+        <text x="120" y="225" fill="#666" font-size="10" text-anchor="middle">PR security scans</text>
+      </g>
+      
+      <g class="node">
+        <rect x="60" y="255" width="120" height="52" rx="10" fill="#1f1f1f" stroke="#444"/>
+        <text x="120" y="280" fill="#ddd" font-size="13" text-anchor="middle">Web Apps / APIs</text>
+        <text x="120" y="295" fill="#666" font-size="10" text-anchor="middle">OpenAI • Anthropic • Groq</text>
+      </g>
+      
+      <g class="node">
+        <rect x="60" y="325" width="120" height="52" rx="10" fill="#1f1f1f" stroke="#444"/>
+        <text x="120" y="350" fill="#ddd" font-size="13" text-anchor="middle">Postman / OpenAPI</text>
+        <text x="120" y="365" fill="#666" font-size="10" text-anchor="middle">Collection scanner</text>
+      </g>
+
+      <!-- Arrow to Gateway -->
+      <path d="M210 250 L290 250" stroke="#eab308" stroke-width="3" marker-end="url(#arrow)"/>
+      
+      <!-- Central Gateway -->
+      <rect x="310" y="80" width="240" height="360" rx="20" fill="#18181b" stroke="#eab308" stroke-width="3"/>
+      <text x="430" y="115" fill="#eab308" font-size="15" font-weight="700" text-anchor="middle">DEV PULSE GATEWAY</text>
+      
+      <!-- Gateway internal -->
+      <g>
+        <rect x="335" y="145" width="190" height="62" rx="10" fill="#27272a"/>
+        <text x="430" y="167" fill="#ddd" font-size="13" text-anchor="middle">Prompt Injection Engine</text>
+        <text x="430" y="183" fill="#666" font-size="11" text-anchor="middle">3 Layers • 140+ patterns • &lt;200ms</text>
+      </g>
+      
+      <g>
+        <rect x="335" y="218" width="190" height="62" rx="10" fill="#27272a"/>
+        <text x="430" y="240" fill="#ddd" font-size="13" text-anchor="middle">PII + Secrets Detector</text>
+        <text x="430" y="256" fill="#666" font-size="11" text-anchor="middle">Real redaction • 10+ types</text>
+      </g>
+      
+      <g>
+        <rect x="335" y="291" width="190" height="62" rx="10" fill="#27272a"/>
+        <text x="430" y="313" fill="#ddd" font-size="13" text-anchor="middle">Cost &amp; Observability</text>
+        <text x="430" y="329" fill="#666" font-size="11" text-anchor="middle">Thinking tokens • Analytics</text>
+      </g>
+      
+      <g>
+        <rect x="335" y="364" width="190" height="48" rx="10" fill="#27272a"/>
+        <text x="430" y="390" fill="#ddd" font-size="13" text-anchor="middle">tRPC • Auth • Rate Limits</text>
+      </g>
+
+      <!-- Arrow to Providers -->
+      <path d="M560 250 L640 250" stroke="#3b82f6" stroke-width="3" marker-end="url(#arrow)"/>
+
+      <!-- Right: Model Providers -->
+      <rect x="660" y="80" width="200" height="360" rx="16" fill="#111" stroke="#333"/>
+      <text x="760" y="115" fill="#888" font-size="13" text-anchor="middle">MODEL PROVIDERS</text>
+      
+      <g class="node">
+        <rect x="685" y="145" width="150" height="42" rx="8" fill="#1f2937"/>
+        <text x="760" y="172" fill="#ddd" font-size="13" text-anchor="middle">OpenAI / o1 / GPT</text>
+      </g>
+      <g class="node">
+        <rect x="685" y="200" width="150" height="42" rx="8" fill="#1f2937"/>
+        <text x="760" y="227" fill="#ddd" font-size="13" text-anchor="middle">Anthropic Claude</text>
+      </g>
+      <g class="node">
+        <rect x="685" y="255" width="150" height="42" rx="8" fill="#1f2937"/>
+        <text x="760" y="282" fill="#ddd" font-size="13" text-anchor="middle">Google Gemini</text>
+      </g>
+      <g class="node">
+        <rect x="685" y="310" width="150" height="42" rx="8" fill="#1f2937"/>
+        <text x="760" y="337" fill="#ddd" font-size="13" text-anchor="middle">Groq • Bedrock • Self-hosted</text>
+      </g>
+      
+      <text x="760" y="400" fill="#666" font-size="12" text-anchor="middle">Every call is protected, observed, optimized</text>
+
+      <!-- Legend -->
+      <g>
+        <rect x="880" y="80" width="180" height="160" rx="12" fill="#111" stroke="#333"/>
+        <text x="970" y="105" fill="#eab308" font-size="12" font-weight="600" text-anchor="middle">KEY DIFFERENTIATORS</text>
+        
+        <text x="900" y="135" fill="#ddd" font-size="11">• Full-stack ownership</text>
+        <text x="900" y="155" fill="#ddd" font-size="11">• IDE + CI + Gateway</text>
+        <text x="900" y="175" fill="#ddd" font-size="11">• Real redaction (not just flag)</text>
+        <text x="900" y="195" fill="#ddd" font-size="11">• Thinking token visibility</text>
+        <text x="900" y="215" fill="#ddd" font-size="11">• One integration point</text>
+      </g>
+    </svg>
+
+    <div class="mt-6 text-center text-xs text-white/40">
+      All traffic flows through DevPulse. Security, cost, and observability applied before the model ever sees the prompt.
+    </div>
+  </div>
+</body>
+</html>

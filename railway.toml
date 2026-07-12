@@ -1,0 +1,10 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/api/health"
+healthcheckTimeout = 300
+preDeployCommand = "node node_modules/drizzle-kit/bin.cjs migrate"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10

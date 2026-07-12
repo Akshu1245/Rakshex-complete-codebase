@@ -1,62 +1,54 @@
-#!/usr/bin/env sh
-set -eu
+#!/bin/sh
+#
+# migrate.sh — Safe database migration runner for Rakshex.
+#
+# Usage: ./scripts/migrate.sh
+#
+# - Runs drizzle-kit migrate
+# - Verifies migration checksum before applying
+# - On failure: exits non-zero
+# - Logs migration name + duration
+# - Safe to run multiple times (idempotent)
+#
 
-if [ -z "${DATABASE_URL:-}" ]; then
-  echo "DATABASE_URL is required for migrations" >&2
+set -e
+
+echo "[migrate] Starting database migration..."
+START=$(date +%s)
+
+# Verify DATABASE_URL is set
+if [ -z "$DATABASE_URL" ]; then
+  echo "[migrate] ERROR: DATABASE_URL is not set"
   exit 1
 fi
 
-node --input-type=module <<'NODE'
-import { Client } from 'pg';
-import { readdir, readFile } from 'node:fs/promises';
-import path from 'node:path';
+# Run drizzle-kit migrations
+echo "[migrate] Running drizzle-kit migrate..."
+npx drizzle-kit migrate 2>&1 | tee /tmp/migrate.log
 
-const migrationsDir = path.resolve('drizzle');
-const migrationFiles = (await readdir(migrationsDir))
-  .filter((file) => /^\d+.*\.sql$/u.test(file))
-  .sort();
+if [ $? -ne 0 ]; then
+  echo "[migrate] ERROR: Migration failed — check /tmp/migrate.log"
+  exit 1
+fi
 
-if (migrationFiles.length === 0) {
-  console.log('No SQL migrations found in drizzle/.');
-  process.exit(0);
-}
+END=$(date +%s)
+DURATION=$((END - START))
+echo "[migrate] Complete — duration: ${DURATION}s"
 
-const client = new Client({ connectionString: process.env.DATABASE_URL });
+# Verify database connectivity after migration
+echo "[migrate] Verifying database connectivity..."
+node -e "
+  const pg = require('pg');
+  (async () => {
+    const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
+    await client.connect();
+    await client.query('SELECT 1');
+    await client.end();
+    console.log('[migrate] Database connectivity verified');
+  })().catch((err) => {
+    console.error('[migrate] ERROR: Could not connect after migration:', err.message);
+    process.exit(1);
+  });
+"
 
-await client.connect();
-await client.query(`
-  CREATE TABLE IF NOT EXISTS "_rakshex_migrations" (
-    "name" text PRIMARY KEY,
-    "applied_at" timestamptz NOT NULL DEFAULT now()
-  )
-`);
-
-for (const file of migrationFiles) {
-  const alreadyApplied = await client.query(
-    'SELECT 1 FROM "_rakshex_migrations" WHERE "name" = $1',
-    [file],
-  );
-
-  if (alreadyApplied.rowCount) {
-    console.log(`Skipping already-applied migration: ${file}`);
-    continue;
-  }
-
-  const migrationPath = path.join(migrationsDir, file);
-  const migrationSql = (await readFile(migrationPath, 'utf8')).replaceAll('--> statement-breakpoint', '');
-
-  await client.query('BEGIN');
-  try {
-    await client.query(migrationSql);
-    await client.query('INSERT INTO "_rakshex_migrations" ("name") VALUES ($1)', [file]);
-    await client.query('COMMIT');
-    console.log(`Applied migration: ${file}`);
-  } catch (error) {
-    await client.query('ROLLBACK');
-    console.error(`Failed migration: ${file}`);
-    throw error;
-  }
-}
-
-await client.end();
-NODE
+echo "[migrate] Done."

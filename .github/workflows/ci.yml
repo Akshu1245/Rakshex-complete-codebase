@@ -2,44 +2,115 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, "akshu1245/**"]
   pull_request:
     branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      deployStaging:
+        description: "Deploy to staging after successful gates"
+        required: true
+        default: false
+        type: boolean
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: akshu1245/devpulse-complete-codebase
+  IMAGE_NAME: akshu1245/rakshex
+  NODE_VERSION: "22"
+  HUSKY: "0"
+
+# Fail-fast policy: critical jobs never use continue-on-error.
+# A red gate blocks release (needs: chains + branch protection).
 
 jobs:
-  lint-typecheck:
-    name: Lint & Type Check
+  install:
+    name: Install
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+      - name: Cache store path
+        run: pnpm store path
+
+  format:
+    name: Format
+    needs: [install]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run check || true
+      - run: pnpm run format:check
+
+  lint:
+    name: Lint
+    needs: [install]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - run: pnpm run lint
 
-  test:
-    name: Unit Tests
+  typecheck:
+    name: Type-check
+    needs: [install]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run typecheck
+
+  unit:
+    name: Unit
+    needs: [install]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run test
+        env:
+          JWT_SECRET: test-secret-ci-unit
+
+  integration:
+    name: Integration
+    needs: [unit]
     runs-on: ubuntu-latest
     services:
       postgres:
         image: postgres:15-alpine
         env:
-          POSTGRES_USER: root
-          POSTGRES_PASSWORD: devpulse
-          POSTGRES_DB: devpulse_test
+          POSTGRES_USER: rakshex
+          POSTGRES_PASSWORD: rakshex
+          POSTGRES_DB: rakshex_test
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U root -d devpulse_test"
+          --health-cmd="pg_isready -U rakshex -d rakshex_test"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
@@ -54,43 +125,134 @@ jobs:
           --health-retries=5
     steps:
       - uses: actions/checkout@v4
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run db:migrate
+      - name: Migrate test database
+        run: pnpm run db:migrate
         env:
-          DATABASE_URL: postgresql://root:devpulse@127.0.0.1:5432/devpulse_test
-      - run: pnpm run test
+          DATABASE_URL: postgresql://rakshex:rakshex@127.0.0.1:5432/rakshex_test
+      - run: pnpm run test:integration
         env:
-          DATABASE_URL: postgresql://root:devpulse@127.0.0.1:5432/devpulse_test
+          DATABASE_URL: postgresql://rakshex:rakshex@127.0.0.1:5432/rakshex_test
           REDIS_URL: redis://127.0.0.1:6379
-          JWT_SECRET: test-secret-ci
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: coverage
-          path: coverage/
+          JWT_SECRET: test-secret-ci-integration
 
-  e2e:
-    name: E2E Tests (Playwright)
+  security:
+    name: Security
+    needs: [install]
     runs-on: ubuntu-latest
-    needs: [test]
-    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run test:security
+        env:
+          JWT_SECRET: test-secret-ci-security
+
+  build:
+    name: Build
+    needs: [lint, typecheck, unit]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+
+  docker:
+    name: Docker
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build API image (non-root)
+        run: docker build -f Dockerfile --target api -t rakshex-api:ci .
+      - name: Build worker image
+        run: docker build -f Dockerfile --target worker -t rakshex-worker:ci .
+      - name: Compose config validation
+        run: docker compose -f docker-compose.yml config
+      - name: Start infra stack
+        run: docker compose up -d postgres redis
+      - name: Wait for health
+        run: |
+          for i in $(seq 1 30); do
+            if docker compose exec -T postgres pg_isready -U rakshex -d rakshex && \
+               docker compose exec -T redis redis-cli ping | grep -q PONG; then
+              echo "infra healthy"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "infra health check failed"
+          docker compose ps
+          exit 1
+      - name: Stop stack
+        if: always()
+        run: docker compose down -v
+
+  migration:
+    name: Migration
+    needs: [integration]
+    runs-on: ubuntu-latest
     services:
       postgres:
         image: postgres:15-alpine
         env:
-          POSTGRES_USER: root
-          POSTGRES_PASSWORD: devpulse
-          POSTGRES_DB: devpulse_test
+          POSTGRES_USER: rakshex
+          POSTGRES_PASSWORD: rakshex
+          POSTGRES_DB: rakshex_mig
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U root -d devpulse_test"
+          --health-cmd="pg_isready -U rakshex -d rakshex_mig"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Apply migrations
+        run: pnpm run db:migrate
+        env:
+          DATABASE_URL: postgresql://rakshex:rakshex@127.0.0.1:5432/rakshex_mig
+      - name: Backup and restore smoke
+        run: bash scripts/ci-backup-restore.sh
+        env:
+          DATABASE_URL: postgresql://rakshex:rakshex@127.0.0.1:5432/rakshex_mig
+          PGPASSWORD: rakshex
+
+  e2e:
+    name: E2E
+    needs: [integration, build]
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: rakshex
+          POSTGRES_PASSWORD: rakshex
+          POSTGRES_DB: rakshex_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U rakshex -d rakshex_e2e"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
@@ -104,207 +266,146 @@ jobs:
           --health-timeout=3s
           --health-retries=5
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
-          cache-dependency-path: |
-            pnpm-lock.yaml
-            devpulse-frontend/pnpm-lock.yaml
-      - name: Install dependencies
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm install --frozen-lockfile --dir devpulse-frontend
-      - name: Check for Playwright config
-        id: check_playwright
-        run: |
-          if [ -f "playwright.config.ts" ]; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
-      - name: Install Playwright
-        if: steps.check_playwright.outputs.exists == 'true'
-        run: pnpm exec playwright install --with-deps
-      - name: Build Next.js
-        working-directory: devpulse-frontend
-        run: pnpm run build
-      - name: Build backend
-        run: pnpm run build
-      - name: Run migrations
+      - run: pnpm install --frozen-lockfile
+      - name: Migrate e2e database
         run: pnpm run db:migrate
         env:
-          DATABASE_URL: postgresql://root:devpulse@127.0.0.1:5432/devpulse_test
-      - name: Run E2E tests
-        if: steps.check_playwright.outputs.exists == 'true'
+          DATABASE_URL: postgresql://rakshex:rakshex@127.0.0.1:5432/rakshex_e2e
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Run Playwright smoke
         run: pnpm run test:e2e
         env:
-          DATABASE_URL: postgresql://root:devpulse@127.0.0.1:5432/devpulse_test
+          DATABASE_URL: postgresql://rakshex:rakshex@127.0.0.1:5432/rakshex_e2e
           REDIS_URL: redis://127.0.0.1:6379
-          JWT_SECRET: test-secret-ci
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: playwright-report
-          path: playwright-report/
+          JWT_SECRET: test-only-jwt-secret-with-at-least-32-characters
+          CI: true
+          PLAYWRIGHT_FRONTEND_PORT: "3001"
+          PORT: "3000"
 
-  security-audit:
-    name: Security Audit
+  dependency-audit:
+    name: Dependency audit
+    needs: [install]
     runs-on: ubuntu-latest
-    needs: [lint-typecheck, test]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Fail on high/critical production advisories
+      - name: pnpm audit
+        run: pnpm audit --prod --audit-level=high
+
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: Dependency vulnerability scan
-        run: pnpm audit --audit-level moderate
-        continue-on-error: true
-      - name: Run TruffleHog secret scan
-        uses: trufflesecurity/trufflehog@main
-        with:
-          path: .
-          extra_args: --only-verified
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  sast:
-    name: Static Analysis
+  sbom:
+    name: SBOM
+    needs: [install]
     runs-on: ubuntu-latest
-    needs: [lint-typecheck, test]
     steps:
       - uses: actions/checkout@v4
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: ESLint security rules
-        run: pnpm run lint
+      - name: Generate CycloneDX SBOM
+        run: |
+          pnpm dlx @cyclonedx/cdxgen -o sbom.json --spec-version 1.5
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.json
 
-  build:
-    name: Build & Push Docker
+  container-scan:
+    name: Container scan
+    needs: [docker]
     runs-on: ubuntu-latest
-    needs: [lint-typecheck, test, security-audit]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image for scan
+        run: docker build -f Dockerfile --target api -t rakshex-api:scan .
+      - name: Trivy vulnerability scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: rakshex-api:scan
+          format: table
+          exit-code: "1"
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+
+  release-gate:
+    name: Release gate
+    needs:
+      [
+        format,
+        lint,
+        typecheck,
+        unit,
+        integration,
+        security,
+        build,
+        docker,
+        migration,
+        e2e,
+        dependency-audit,
+        secret-scan,
+        sbom,
+        container-scan,
+      ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: All critical jobs passed
+        run: |
+          echo "Release gate GREEN — failure in any prior job would block this step."
+          echo "Do not promote to production without smoke:test against real staging services."
+
+  staging-deploy:
+    name: Staging deploy
+    needs: [release-gate]
+    if: github.event_name == 'workflow_dispatch' && inputs.deployStaging == true
+    runs-on: ubuntu-latest
+    environment: staging
     permissions:
       contents: read
       packages: write
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=sha,prefix=sha-,format=long
-            type=ref,event=branch
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-      - name: Build and push
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile.prod
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  vscode-extension:
-    name: Package VS Code Extension
-    runs-on: ubuntu-latest
-    needs: [lint-typecheck]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-          cache-dependency-path: devpulse-vscode/pnpm-lock.yaml
-      - run: pnpm install --frozen-lockfile
-        working-directory: devpulse-vscode
-      - name: Build extension
-        working-directory: devpulse-vscode
+      - name: Build and push staging tags
         run: |
-          npx esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node
-      - name: Package extension
-        working-directory: devpulse-vscode
-        run: npx @vscode/vsce package --no-dependencies
-      - uses: actions/upload-artifact@v4
-        with:
-          name: devpulse-vscode
-          path: devpulse-vscode/*.vsix
-
-  security-scan:
-    name: Trivy Security Scan
-    runs-on: ubuntu-latest
-    needs: [build]
-    permissions:
-      security-events: write
-      contents: read
-    steps:
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
-          format: sarif
-          output: trivy-results.sarif
-          severity: CRITICAL,HIGH
-          exit-code: 0
-      - uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: trivy-results.sarif
-
-  deploy:
-    name: Deploy to Production
-    runs-on: ubuntu-latest
-    needs: [build, e2e, security-scan]
-    if: github.ref == 'refs/heads/main'
-    environment: production
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-      - name: Run migrations
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          VERSION="staging-${GITHUB_SHA::7}"
+          docker build -f Dockerfile --target api -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-api:${VERSION} .
+          docker build -f Dockerfile --target worker -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-worker:${VERSION} .
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-api:${VERSION}
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-worker:${VERSION}
+          echo "Pushed ${VERSION}"
+          echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
+      - name: Record deploy metadata
         run: |
-          pnpm install --frozen-lockfile
-          chmod +x scripts/migrate.sh
-          ./scripts/migrate.sh
-      - name: Deploy
-        env:
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
-        run: |
-          echo "$DEPLOY_KEY" > deploy_key
-          chmod 600 deploy_key
-          ssh -i deploy_key -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST "
-            cd /opt/devpulse &&
-            docker compose -f docker-compose.prod.yml pull &&
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans
-          "
+          echo "image_version=${VERSION}" >> "$GITHUB_STEP_SUMMARY"
+          echo "rollback: retag previous version and redeploy (see docs/DEPLOYMENT.md)"

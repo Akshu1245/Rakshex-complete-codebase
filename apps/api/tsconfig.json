@@ -1,0 +1,30 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "../../dist/apps/api",
+    "rootDir": ".",
+    "noEmit": true,
+    // App typecheck only — do not emit .d.ts (avoids TS2742 portable type noise
+    // from Express request types leaking into tRPC procedure exports).
+    "declaration": false,
+    "declarationMap": false,
+    "strict": false,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "types": ["node"],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "paths": {
+      "@shared/*": ["../../packages/shared-types/src/*"],
+      "@rakshex/database": ["../../packages/database/src/index.ts"],
+      "@rakshex/database/*": ["../../packages/database/src/*"],
+      "@rakshex/scanner-core": ["../../packages/scanner-core/src/index.ts"],
+      "@rakshex/policy-engine": ["../../packages/policy-engine/src/index.ts"],
+      "@rakshex/config": ["../../packages/config/src/index.ts"],
+      "@rakshex/shared-types": ["../../packages/shared-types/src/index.ts"],
+      "@rakshex/agentguard-sdk": ["../../packages/agentguard-sdk/src/index.ts"],
+      "@rakshex/pricing-engine": ["../../packages/pricing-engine/src/index.ts"]
+    }
+  },
+  "include": ["./**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}

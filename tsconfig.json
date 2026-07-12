@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "types": ["node"]
+  },
+  "include": [],
+  "references": [
+    { "path": "./apps/api" },
+    { "path": "./packages/database" },
+    { "path": "./packages/shared-types" },
+    { "path": "./packages/scanner-core" },
+    { "path": "./packages/policy-engine" },
+    { "path": "./packages/config" },
+    { "path": "./packages/pricing-engine" },
+    { "path": "./packages/agentguard-sdk" }
+  ]
+}

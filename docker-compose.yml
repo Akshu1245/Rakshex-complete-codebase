@@ -1,4 +1,8 @@
-version: "3.8"
+# Local full stack: Postgres, Redis, API, worker, web
+# Usage:
+#   docker compose up -d postgres redis   # infra only
+#   docker compose up -d --build          # full stack
+# Health: curl http://localhost:3000/api/health
 
 services:
   postgres:
@@ -7,7 +11,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: rakshex
-      POSTGRES_PASSWORD: rakshex
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rakshex}
       POSTGRES_DB: rakshex
     ports:
       - "5432:5432"
@@ -18,11 +22,13 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
 
   redis:
     image: redis:7-alpine
     container_name: rakshex-redis
     restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
     ports:
       - "6379:6379"
     volumes:
@@ -33,35 +39,97 @@ services:
       timeout: 3s
       retries: 5
 
-  worker:
+  api:
     build:
       context: .
-      target: worker
-    container_name: rakshex-worker
+      dockerfile: Dockerfile
+      target: api
+    container_name: rakshex-api
     restart: unless-stopped
+    user: "1001:1001"
+    ports:
+      - "3000:3000"
     environment:
-      - DATABASE_URL=postgresql://rakshex:rakshex@postgres:5432/rakshex
-      - REDIS_URL=redis://redis:6379
-      - JWT_SECRET=${JWT_SECRET:-dev-secret-do-not-use-in-production}
-      - INTERNAL_SERVICE_SECRET=${INTERNAL_SERVICE_SECRET:-}
-      - NODE_ENV=${NODE_ENV:-production}
-      - WORKER_CONCURRENCY=${WORKER_CONCURRENCY:-3}
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3000
+      DATABASE_URL: postgresql://rakshex:${POSTGRES_PASSWORD:-rakshex}@postgres:5432/rakshex
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me-min-32-chars-long}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3001}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    stop_grace_period: 30s
 
-  # Optional: Jaeger for local trace visualization
-  jaeger:
-    image: jaegertracing/all-in-one:latest
-    container_name: rakshex-jaeger
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: worker
+    container_name: rakshex-worker
+    restart: unless-stopped
+    user: "1001:1001"
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      DATABASE_URL: postgresql://rakshex:${POSTGRES_PASSWORD:-rakshex}@postgres:5432/rakshex
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me-min-32-chars-long}
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-3}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    stop_grace_period: 30s
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: rakshex-web
     restart: unless-stopped
     ports:
-      - "16686:16686"  # Jaeger UI
-      - "4318:4318"    # OTLP HTTP receiver
+      - "3001:3000"
     environment:
-      - COLLECTOR_OTLP_ENABLED=true
+      NODE_ENV: production
+      NEXT_PUBLIC_TS_API_URL: ${NEXT_PUBLIC_TS_API_URL:-http://localhost:3000}
+      NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL:-ws://localhost:3000/ws}
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  # Optional local tracing UI
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    container_name: rakshex-jaeger
+    profiles: ["observability"]
+    restart: unless-stopped
+    ports:
+      - "16686:16686"
+      - "4318:4318"
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
 
 volumes:
   postgres_data:

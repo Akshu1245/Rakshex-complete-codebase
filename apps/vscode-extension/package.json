@@ -1,0 +1,550 @@
+{
+  "name": "@rakshex/vscode-extension",
+  "displayName": "Rakshex",
+  "description": "Stop AI agents from burning your API budget. Find leaked keys, hidden costs, and security risks in VS Code ├óΓé¼ΓÇ¥ first scan in 60 seconds.",
+  "version": "0.2.1",
+  "publisher": "rakshex",
+  "license": "MIT",
+  "icon": "resources/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Akshu1245/Rakshex-complete-codebase.git",
+    "directory": "apps/vscode-extension"
+  },
+  "bugs": {
+    "url": "https://github.com/Akshu1245/Rakshex-complete-codebase/issues"
+  },
+  "homepage": "https://rakshex.in",
+  "galleryBanner": {
+    "color": "#0F172A",
+    "theme": "dark"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "extensionKind": [
+    "workspace"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "Some features require workspace trust to access workspace files for shadow API scanning."
+    }
+  },
+  "categories": [
+    "Linters",
+    "Other",
+    "Testing"
+  ],
+  "keywords": [
+    "ai security",
+    "llm cost",
+    "api security",
+    "developer tools",
+    "openai",
+    "anthropic",
+    "agent guard",
+    "cost optimization",
+    "postman",
+    "openapi",
+    "bruno",
+    "api scanning",
+    "secret detection",
+    "prompt injection",
+    "Rakshex"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "rakshex.authenticate",
+        "title": "Rakshex: Sign in with API Key",
+        "icon": "$(key)",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.signOut",
+        "title": "Rakshex: Sign out",
+        "icon": "$(sign-out)",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.importCollections",
+        "title": "Rakshex: Import Postman / OpenAPI collections",
+        "icon": "$(cloud-upload)",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.importPostman",
+        "title": "Rakshex: Import Postman Collection & Scan",
+        "icon": "$(file-code)",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.scanCurrentFile",
+        "title": "Rakshex: Scan Current File for API Security",
+        "icon": "$(shield)",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.scanWorkspace",
+        "title": "Rakshex: Scan Workspace",
+        "icon": "$(folder)",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.scanChangedFiles",
+        "title": "Rakshex: Scan Changed Files",
+        "icon": "$(git-commit)",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.refresh",
+        "title": "Rakshex: Refresh Findings (Pull Latest)",
+        "icon": "$(refresh)",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.runScan",
+        "title": "Rakshex: Run Security Scan",
+        "icon": "$(play)",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.rerunLastScan",
+        "title": "Rakshex: Rerun Last Security Scan",
+        "icon": "$(debug-restart)",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.openDashboard",
+        "title": "Rakshex: Open dashboard",
+        "icon": "$(globe)",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.markFindingResolved",
+        "title": "Rakshex: Mark finding resolved",
+        "icon": "$(check)",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.markFindingInProgress",
+        "title": "Rakshex: Mark finding in-progress",
+        "icon": "$(clock)",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.openSecurityPanel",
+        "title": "Rakshex: Open Security Dashboard (Findings View)",
+        "icon": "$(shield)",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.openControlPlane",
+        "title": "Rakshex: Open AI Control Plane",
+        "icon": "$(organization)",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.openSettings",
+        "title": "Rakshex: Open Settings",
+        "icon": "$(gear)",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.askSecurityCopilot",
+        "title": "Rakshex: Ask Security Copilot",
+        "icon": "$(hubot)",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.generateApiKey",
+        "title": "Rakshex: Generate API Key",
+        "icon": "$(key)",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.testPromptThroughGateway",
+        "title": "Rakshex: Test prompt through gateway",
+        "icon": "$(beaker)",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.scanShadowApis",
+        "title": "Rakshex: Scan workspace for shadow APIs",
+        "icon": "$(search)",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.applyAutoFix",
+        "title": "Rakshex: Apply auto-fix suggestion",
+        "icon": "$(wand)",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.dismissAutoFix",
+        "title": "Rakshex: Dismiss auto-fix suggestion",
+        "icon": "$(close)",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.runDemo",
+        "title": "Rakshex: Run Demo Scenarios",
+        "icon": "$(play-circle)",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.copyFindingId",
+        "title": "Rakshex: Copy finding ID",
+        "icon": "$(copy)",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.openFindingInDashboard",
+        "title": "Rakshex: Open finding in dashboard",
+        "icon": "$(link-external)",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.showWeeklyDigest",
+        "title": "Rakshex: Show Weekly Digest",
+        "icon": "$(report)",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.sendFeedback",
+        "title": "Rakshex: Send Feedback",
+        "icon": "$(comment)",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.startOnboardingTour",
+        "title": "Rakshex: Start Onboarding Tour",
+        "icon": "$(play)",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.checkHealth",
+        "title": "Rakshex: Check Health",
+        "icon": "$(pulse)",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.toggleCompactMode",
+        "title": "Rakshex: Toggle Compact Findings Mode",
+        "icon": "$(collapse-all)",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.showCritical",
+        "title": "Rakshex: Show Critical Findings",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.showHigh",
+        "title": "Rakshex: Show High Findings",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.showMedium",
+        "title": "Rakshex: Show Medium Findings",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.showLow",
+        "title": "Rakshex: Show Low Findings",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.clearSeverityFilter",
+        "title": "Rakshex: Clear Severity Filter",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.markSelectedResolved",
+        "title": "Rakshex: Resolve Selected Findings",
+        "icon": "$(check)",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.openOnboardingAnalytics",
+        "title": "Rakshex: Open Onboarding Analytics",
+        "icon": "$(graph)",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.dismissFinding",
+        "title": "Rakshex: Dismiss Finding",
+        "icon": "$(close)",
+        "category": "Rakshex"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "Rakshex",
+          "title": "Rakshex",
+          "icon": "resources/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "Rakshex": [
+        {
+          "id": "rakshex.welcome",
+          "type": "webview",
+          "name": "Welcome",
+          "icon": "$(shield)",
+          "when": "!rakshex.signedIn",
+          "contextualTitle": "Rakshex Welcome"
+        },
+        {
+          "id": "rakshex.findings",
+          "name": "Findings",
+          "icon": "$(shield)",
+          "when": "rakshex.signedIn",
+          "contextualTitle": "Rakshex Findings"
+        },
+        {
+          "id": "rakshex.autofix",
+          "name": "Auto-fix Suggestions",
+          "icon": "$(lightbulb)",
+          "when": "rakshex.signedIn",
+          "contextualTitle": "Rakshex Auto-fix Suggestions"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "rakshex.findings",
+        "contents": "Sign in with your Rakshex API key to see findings.\n[Sign in](command:rakshex.authenticate)\n\nGenerate an API key from Settings on the Rakshex dashboard.\n\n---\n\n**Keyboard shortcuts:**\nCtrl+Shift+D ├óΓé¼ΓÇ¥ Refresh\nCtrl+Shift+S ├óΓé¼ΓÇ¥ Run Scan\nCtrl+Shift+R ├óΓé¼ΓÇ¥ Rerun Last Scan\nCtrl+Shift+1-4 ├óΓé¼ΓÇ¥ Filter by severity\nEnter ├óΓé¼ΓÇ¥ Resolve finding"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "rakshex.refresh",
+          "when": "view == rakshex.findings",
+          "group": "navigation"
+        },
+        {
+          "command": "rakshex.runScan",
+          "when": "view == rakshex.findings",
+          "group": "navigation"
+        },
+        {
+          "command": "rakshex.openSecurityPanel",
+          "when": "view == rakshex.findings",
+          "group": "navigation"
+        },
+        {
+          "command": "rakshex.importCollections",
+          "when": "view == rakshex.findings",
+          "group": "navigation"
+        },
+        {
+          "command": "rakshex.toggleCompactMode",
+          "when": "view == rakshex.findings",
+          "group": "9_compact@1"
+        },
+        {
+          "command": "rakshex.refresh",
+          "when": "view == rakshex.autofix",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "rakshex.markFindingResolved",
+          "when": "view == rakshex.findings && viewItem == finding",
+          "group": "inline@1"
+        },
+        {
+          "command": "rakshex.markFindingInProgress",
+          "when": "view == rakshex.findings && viewItem == finding",
+          "group": "inline@2"
+        },
+        {
+          "command": "rakshex.dismissFinding",
+          "when": "view == rakshex.findings && viewItem == finding",
+          "group": "inline@3"
+        },
+        {
+          "command": "rakshex.markSelectedResolved",
+          "when": "view == rakshex.findings && viewItem == finding",
+          "group": "2_bulk@1"
+        },
+        {
+          "command": "rakshex.copyFindingId",
+          "when": "view == rakshex.findings && viewItem == finding",
+          "group": "1_actions@1"
+        },
+        {
+          "command": "rakshex.openFindingInDashboard",
+          "when": "view == rakshex.findings && viewItem == finding",
+          "group": "1_actions@2"
+        },
+        {
+          "command": "rakshex.applyAutoFix",
+          "when": "view == rakshex.autofix && viewItem == autoFixSuggestion",
+          "group": "inline@1"
+        },
+        {
+          "command": "rakshex.dismissAutoFix",
+          "when": "view == rakshex.autofix && viewItem == autoFixSuggestion",
+          "group": "inline@2"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "rakshex.markFindingResolved",
+          "when": "false"
+        },
+        {
+          "command": "rakshex.markFindingInProgress",
+          "when": "false"
+        },
+        {
+          "command": "rakshex.applyAutoFix",
+          "when": "false"
+        },
+        {
+          "command": "rakshex.dismissAutoFix",
+          "when": "false"
+        },
+        {
+          "command": "rakshex.copyFindingId",
+          "when": "false"
+        },
+        {
+          "command": "rakshex.openFindingInDashboard",
+          "when": "false"
+        },
+        {
+          "command": "rakshex.dismissFinding",
+          "when": "false"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "rakshex.openSecurityPanel",
+        "key": "enter",
+        "when": "focusedView == rakshex.findings && viewItem == finding",
+        "mac": "enter"
+      },
+      {
+        "command": "rakshex.showCritical",
+        "key": "ctrl+shift+1",
+        "mac": "cmd+shift+1",
+        "when": "focusedView == rakshex.findings"
+      },
+      {
+        "command": "rakshex.showHigh",
+        "key": "ctrl+shift+2",
+        "mac": "cmd+shift+2",
+        "when": "focusedView == rakshex.findings"
+      },
+      {
+        "command": "rakshex.showMedium",
+        "key": "ctrl+shift+3",
+        "mac": "cmd+shift+3",
+        "when": "focusedView == rakshex.findings"
+      },
+      {
+        "command": "rakshex.showLow",
+        "key": "ctrl+shift+4",
+        "mac": "cmd+shift+4",
+        "when": "focusedView == rakshex.findings"
+      },
+      {
+        "command": "rakshex.clearSeverityFilter",
+        "key": "ctrl+shift+0",
+        "mac": "cmd+shift+0",
+        "when": "focusedView == rakshex.findings"
+      },
+      {
+        "command": "rakshex.refresh",
+        "key": "ctrl+shift+d",
+        "mac": "cmd+shift+d",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "rakshex.runScan",
+        "key": "ctrl+shift+s",
+        "mac": "cmd+shift+s",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "rakshex.rerunLastScan",
+        "key": "ctrl+shift+r",
+        "mac": "cmd+shift+r",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "rakshex.openSecurityPanel",
+        "key": "ctrl+shift+f",
+        "mac": "cmd+shift+f",
+        "when": "editorTextFocus"
+      }
+    ],
+    "configuration": {
+      "title": "Rakshex",
+      "properties": {
+        "rakshex.apiUrl": {
+          "type": "string",
+          "default": "http://localhost:3000",
+          "description": "Base URL of the Rakshex backend (default: https://api.rakshex.in ├óΓé¼ΓÇ¥ self-hosted users can override to e.g. https://api.your-company.com or http://localhost:3000)."
+        },
+        "rakshex.heartbeatIntervalSec": {
+          "type": "number",
+          "default": 120,
+          "minimum": 30,
+          "description": "Seconds between activity heartbeats sent to the backend. Set to 0 to disable."
+        },
+        "rakshex.trackFileChanges": {
+          "type": "boolean",
+          "default": true,
+          "description": "Send file-change activity events (never includes file contents)."
+        },
+        "rakshex.gatewayUrl": {
+          "type": "string",
+          "default": "http://localhost:8081",
+          "description": "Base URL of the Rakshex inline LLM gateway (default: http://localhost:8081 for local dev; override to e.g. https://gateway.your-company.com when self-hosted)."
+        },
+        "rakshex.workspaceId": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "description": "Workspace ID used for AI control-plane inventory, subscription seats, budgets, and governed usage. Obtain this from the Rakshex workspace settings."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run esbuild-base -- --minify",
+    "esbuild-base": "esbuild src/extension.ts --bundle --outdir=dist --external:vscode --format=cjs --platform=node",
+    "esbuild": "npm run esbuild-base -- --sourcemap",
+    "esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "check": "tsc --noEmit -p ./",
+    "test": "vitest run",
+    "package": "npx @vscode/vsce package --no-dependencies",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -p ./",
+    "lint": "echo @rakshex/vscode-extension lint ok"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "esbuild": "^0.28.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.6",
+    "yaml": "^2.4.2"
+  }
+}

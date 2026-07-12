@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DevPulse — First Prize Pitch Deck</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
+    
+    :root {
+      --bg: #050505;
+    }
+    
+    body {
+      font-family: 'Inter', system_ui, sans-serif;
+    }
+    
+    .font-display {
+      font-family: 'Space Grotesk', 'Inter', sans-serif;
+      font-weight: 600;
+    }
+
+    .section {
+      scroll-margin-top: 80px;
+    }
+
+    .stat {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .premium-card {
+      transition: transform 0.2s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.2s;
+    }
+    
+    .premium-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    }
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    .hero-gradient {
+      background: radial-gradient(circle at center, #1a1a1a 0%, #050505 70%);
+    }
+
+    .metric {
+      font-size: 4.2rem;
+      line-height: 0.9;
+      font-weight: 700;
+      letter-spacing: -4px;
+    }
+
+    .nav-active {
+      color: white;
+      border-bottom: 2px solid #eab308;
+    }
+
+    .win-badge {
+      background: linear-gradient(90deg, #eab308, #f59e0b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body class="bg-[#050505] text-white">
+  <!-- Top Nav -->
+  <nav class="border-b border-white/10 sticky top-0 z-50 bg-[#050505]/95 backdrop-blur-xl">
+    <div class="max-w-6xl mx-auto px-6 flex items-center justify-between h-16">
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-yellow-500 flex items-center justify-center">
+            <i class="fa-solid fa-shield-halved text-black text-xl"></i>
+          </div>
+          <span class="font-semibold tracking-tight text-2xl">DevPulse</span>
+        </div>
+        <div class="px-3 py-1 rounded-full bg-yellow-500/10 text-yellow-400 text-xs tracking-[2px] font-medium">COMPETITION 2026</div>
+      </div>
+      
+      <div class="flex items-center gap-8 text-sm">
+        <a href="#problem" class="hover:text-white/70 transition">Problem</a>
+        <a href="#solution" class="hover:text-white/70 transition">Solution</a>
+        <a href="#demo" class="hover:text-white/70 transition">Live Demo</a>
+        <a href="#differentiation" class="hover:text-white/70 transition">Why We Win</a>
+        <a href="#vision" class="hover:text-white/70 transition">Vision</a>
+        <a href="#demo/judge" target="_blank" 
+           class="px-5 py-2 rounded-2xl bg-white text-black font-medium flex items-center gap-2 hover:bg-yellow-400 transition text-sm">
+          <i class="fa-solid fa-play mr-1"></i> 
+          <span>OPEN JUDGE DEMO</span>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <div class="hero-gradient border-b border-white/10">
+    <div class="max-w-6xl mx-auto px-6 pt-20 pb-16 text-center">
+      <div class="inline-flex items-center gap-2 bg-white/5 text-white/60 px-4 py-1 rounded-full text-sm mb-6 border border-white/10">
+        <i class="fa-solid fa-trophy"></i>
+        <span class="font-medium tracking-wide">BUILT TO WIN FIRST PRIZE</span>
+      </div>
+      
+      <h1 class="text-7xl md:text-8xl font-semibold tracking-[-4.5px] leading-[0.92] mb-4">
+        The only platform<br>that secures, optimizes<br>and observes every<br>AI call.
+      </h1>
+      
+      <p class="max-w-md mx-auto text-2xl text-white/60 mb-10 tracking-tight">
+        Security + Cost + Observability.<br>
+        <span class="text-white/90">One gateway. One integration.</span>
+      </p>
+      
+      <div class="flex justify-center gap-4">
+        <a href="#demo" 
+           class="px-10 py-4 rounded-3xl bg-white text-black font-semibold text-lg flex items-center gap-3 hover:bg-yellow-400 active:scale-[0.985] transition">
+          <i class="fa-solid fa-play"></i>
+          <span>Watch the Judge Demo</span>
+        </a>
+        <a href="PITCH_FOR_JUDGES.md" target="_blank"
+           class="px-10 py-4 rounded-3xl border border-white/30 hover:bg-white/5 flex items-center gap-3 text-lg font-medium transition">
+          <span>Read 3-Min Script</span>
+        </a>
+      </div>
+      
+      <div class="mt-8 text-xs text-white/40 tracking-[3px]">SUB-200MS • MULTI-LAYER DETECTION • PRODUCTION PROVEN</div>
+    </div>
+  </div>
+
+  <!-- Problem -->
+  <div id="problem" class="max-w-6xl mx-auto px-6 pt-16 section">
+    <div class="grid md:grid-cols-12 gap-x-8 items-end">
+      <div class="md:col-span-5">
+        <div class="uppercase tracking-[3px] text-xs text-yellow-500 mb-2 font-medium">THE REALITY CHECK</div>
+        <h2 class="text-6xl tracking-[-2.5px] leading-none font-semibold">Companies are shipping AI<br>dangerously and expensively.</h2>
+      </div>
+      <div class="md:col-span-7 mt-8 md:mt-0 text-xl text-white/70 leading-relaxed">
+        Prompt injection is now OWASP AI Top 10. Developers leak keys and PII daily inside prompts. 
+        Teams burn $50k–$500k/month on LLM calls with zero visibility. 
+        <span class="text-white">Most companies use 4–6 different tools.</span>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-10">
+      <div class="premium-card border border-white/10 bg-zinc-950 rounded-3xl p-7">
+        <div class="text-red-400 text-sm font-medium mb-1">DATA BREACH RISK</div>
+        <div class="text-5xl font-semibold tracking-tight mb-2">1 successful<br>injection</div>
+        <div class="text-white/50">= full model jailbreak or customer data exfiltration</div>
+      </div>
+      <div class="premium-card border border-white/10 bg-zinc-950 rounded-3xl p-7">
+        <div class="text-orange-400 text-sm font-medium mb-1">HIDDEN COST</div>
+        <div class="text-5xl font-semibold tracking-tight mb-2">2–5× higher<br>LLM bills</div>
+        <div class="text-white/50">Unoptimized prompts + no visibility into thinking tokens (o1, Claude 3.5, Gemini)</div>
+      </div>
+      <div class="premium-card border border-white/10 bg-zinc-950 rounded-3xl p-7">
+        <div class="text-yellow-400 text-sm font-medium mb-1">OPERATIONAL PAIN</div>
+        <div class="text-5xl font-semibold tracking-tight mb-2">4–6 tools<br>to maintain</div>
+        <div class="text-white/50">Portkey + Lakera + Helicone + LangSmith + custom scripts = nightmare</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Solution -->
+  <div id="solution" class="max-w-6xl mx-auto px-6 pt-20 section">
+    <div class="text-center mb-12">
+      <div class="text-yellow-400 uppercase text-xs tracking-[4px] font-medium">THE UNFAIR ADVANTAGE</div>
+      <h2 class="text-6xl font-semibold tracking-[-2.5px] mt-1">One platform.<br>Everything you need.</h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="bg-zinc-950 border border-white/10 rounded-3xl p-9">
+        <div class="uppercase text-xs tracking-widest text-white/50 mb-6">WHAT WE DELIVER IN ONE GATEWAY</div>
+        
+        <div class="space-y-7 text-xl">
+          <div class="flex gap-5">
+            <div class="w-7 flex-shrink-0 mt-1"><i class="fa-solid fa-shield-halved text-2xl text-emerald-400"></i></div>
+            <div><span class="font-semibold">Real-time prompt injection defense</span><br><span class="text-base text-white/60">Multi-layer: 140+ patterns + heuristics + semantic</span></div>
+          </div>
+          <div class="flex gap-5">
+            <div class="w-7 flex-shrink-0 mt-1"><i class="fa-solid fa-user-secret text-2xl text-emerald-400"></i></div>
+            <div><span class="font-semibold">Automatic PII + secret redaction</span><br><span class="text-base text-white/60">10+ types including Indian Aadhaar, PAN, UPI</span></div>
+          </div>
+          <div class="flex gap-5">
+            <div class="w-7 flex-shrink-0 mt-1"><i class="fa-solid fa-dollar-sign text-2xl text-emerald-400"></i></div>
+            <div><span class="font-semibold">Thinking token &amp; cost analytics</span><br><span class="text-base text-white/60">Finally see the real cost of o1 / Claude reasoning</span></div>
+          </div>
+          <div class="flex gap-5">
+            <div class="w-7 flex-shrink-0 mt-1"><i class="fa-solid fa-code text-2xl text-emerald-400"></i></div>
+            <div><span class="font-semibold">Developer-native workflow</span><br><span class="text-base text-white/60">VS Code extension + GitHub Action + gateway</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-zinc-950 border border-white/10 rounded-3xl p-9 flex flex-col">
+        <div class="flex-1">
+          <div class="uppercase text-xs tracking-widest text-white/50 mb-4">THE POSITIONING</div>
+          <div class="text-[42px] leading-[0.95] tracking-[-1.5px] font-semibold">
+            The Plaid +<br>Cloudflare +<br>Datadog<br>for AI calls.
+          </div>
+        </div>
+        
+        <div class="pt-6 border-t border-white/10 text-sm text-white/60">
+          Works with OpenAI, Anthropic, Groq, Bedrock, self-hosted — any model provider.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Killer Demo Teaser -->
+  <div id="demo" class="max-w-6xl mx-auto px-6 pt-20 section">
+    <div class="bg-black border border-white/10 rounded-[3rem] p-2">
+      <div class="bg-zinc-950 rounded-[2.5rem] p-10 md:p-14">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
+          <div>
+            <div class="text-yellow-400 text-xs tracking-[3px]">THE PART THAT WINS JUDGES</div>
+            <div class="text-6xl tracking-[-2px] font-semibold leading-none mt-2 mb-3">Live demo.<br>Zero friction.<br>Maximum impact.</div>
+            <p class="max-w-sm text-lg text-white/70">Open /demo/judge. Click an example. Watch production-grade detection in real time.</p>
+          </div>
+          
+          <div>
+            <a href="/demo/judge" target="_blank"
+               class="block w-full md:w-auto text-center px-12 py-5 bg-white hover:bg-yellow-400 text-black text-xl font-semibold rounded-3xl transition flex items-center justify-center gap-3">
+              <i class="fa-solid fa-external-link-alt"></i>
+              <span>OPEN LIVE JUDGE DEMO</span>
+            </a>
+            <div class="text-center text-xs text-white/40 mt-3">No signup • No limits for judges • Real engines</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Differentiation -->
+  <div id="differentiation" class="max-w-6xl mx-auto px-6 pt-20 section">
+    <div class="text-center mb-8">
+      <div class="text-yellow-400 text-xs tracking-[3.5px] font-medium">WHY WE BEAT EVERYONE ELSE</div>
+      <h3 class="text-5xl font-semibold tracking-tight mt-1">DevPulse vs the fragmented market</h3>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full min-w-[820px] border-collapse text-sm">
+        <thead>
+          <tr class="border-b border-white/20 text-left">
+            <th class="py-5 px-6 font-medium text-white/60">Capability</th>
+            <th class="py-5 px-6 font-medium text-white/60">Portkey / Helicone</th>
+            <th class="py-5 px-6 font-medium text-white/60">Lakera / PromptArmor</th>
+            <th class="py-5 px-6 font-medium bg-yellow-500/10 text-yellow-300 rounded-tl-2xl">DevPulse</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-white/10 text-base">
+          <tr>
+            <td class="py-5 px-6 font-medium">Prompt Injection</td>
+            <td class="py-5 px-6 text-white/40">Weak / none</td>
+            <td class="py-5 px-6 text-white/40">Strong</td>
+            <td class="py-5 px-6 font-semibold bg-yellow-500/5 text-yellow-300">Strong + 3-layer engine</td>
+          </tr>
+          <tr>
+            <td class="py-5 px-6 font-medium">PII Protection + Redaction</td>
+            <td class="py-5 px-6 text-white/40">Basic</td>
+            <td class="py-5 px-6 text-white/40">Good</td>
+            <td class="py-5 px-6 font-semibold bg-yellow-500/5 text-yellow-300">Excellent + 10+ types + redaction</td>
+          </tr>
+          <tr>
+            <td class="py-5 px-6 font-medium">Cost &amp; Thinking Tokens</td>
+            <td class="py-5 px-6 text-white/40">Good</td>
+            <td class="py-5 px-6 text-white/40">None</td>
+            <td class="py-5 px-6 font-semibold bg-yellow-500/5 text-yellow-300">Best-in-class (o1 / Claude / Gemini)</td>
+          </tr>
+          <tr>
+            <td class="py-5 px-6 font-medium">Developer Experience</td>
+            <td class="py-5 px-6 text-white/40">Dashboard only</td>
+            <td class="py-5 px-6 text-white/40">API only</td>
+            <td class="py-5 px-6 font-semibold bg-yellow-500/5 text-yellow-300">VS Code + GitHub + Gateway</td>
+          </tr>
+          <tr>
+            <td class="py-5 px-6 font-medium">One unified platform</td>
+            <td class="py-5 px-6 text-white/40">No</td>
+            <td class="py-5 px-6 text-white/40">No</td>
+            <td class="py-5 px-6 font-semibold bg-yellow-500/5 text-yellow-300">Yes — Security + Cost + Observability</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="text-center text-xs text-white/40 mt-3">We own the full stack. Competitors own one slice.</div>
+  </div>
+
+  <!-- Vision + Traction -->
+  <div id="vision" class="max-w-6xl mx-auto px-6 pt-20 pb-16 section">
+    <div class="grid md:grid-cols-5 gap-6">
+      <div class="md:col-span-3">
+        <div class="uppercase tracking-[2.5px] text-xs text-yellow-400 font-medium mb-2">THE MOMENT IS NOW</div>
+        <div class="text-6xl font-semibold tracking-[-2px] leading-none">We're building the default layer<br>every AI product will route through.</div>
+      </div>
+      <div class="md:col-span-2 space-y-8 text-lg pt-3">
+        <div>
+          <div class="font-medium">Short term (next 3 months)</div>
+          <div class="text-white/60">500 paying teams • Deep integrations with top 5 model providers</div>
+        </div>
+        <div>
+          <div class="font-medium">Long term</div>
+          <div class="text-white/60">"The Cloudflare of AI" — every AI call in the world touches DevPulse.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer CTA -->
+  <div class="border-t border-white/10 py-12 bg-black">
+    <div class="max-w-4xl mx-auto px-6 text-center">
+      <div class="text-yellow-400 text-xs tracking-[3px] mb-2">READY FOR JUDGES • PRODUCTION GRADE</div>
+      <div class="text-4xl font-semibold tracking-tight mb-6">This is first-prize caliber.</div>
+      
+      <div class="flex flex-col sm:flex-row justify-center gap-4">
+        <a href="/demo/judge" target="_blank" class="px-9 py-4 rounded-3xl bg-yellow-400 hover:bg-yellow-300 transition text-black font-semibold text-lg flex items-center justify-center gap-3">
+          <span>Open the Judge Demo Now</span>
+        </a>
+        <a href="PITCH_FOR_JUDGES.md" target="_blank" class="px-9 py-4 rounded-3xl border border-white/30 hover:bg-white/5 transition text-lg flex items-center justify-center gap-3">
+          <span>3-Minute Winning Script</span>
+        </a>
+      </div>
+      <div class="text-xs text-white/30 mt-8">DevPulse — Protect every AI call. Cut costs. Ship with confidence.</div>
+    </div>
+  </div>
+
+  <script>
+    // Tailwind script
+    function initialize() {
+      console.log('%c[DevPulse] Judge Pitch Deck loaded. Go win this.', 'color:#666');
+      
+      // Keyboard shortcut hint
+      document.addEventListener('keydown', function(e) {
+        if (e.key.toLowerCase() === '?' && document.activeElement?.tagName !== 'INPUT') {
+          const demoLink = document.querySelector('a[href*="/demo/judge"]');
+          if (demoLink) demoLink.click();
+        }
+      });
+    }
+    
+    window.onload = initialize;
+  </script>
+</body>
+</html>

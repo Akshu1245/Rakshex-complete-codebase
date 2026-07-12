@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022"],
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "forceConsistentCasingInFileNames": true,
+    "noUncheckedIndexedAccess": true,
+    "baseUrl": ".",
+    "paths": {
+      "@rakshex/database": ["packages/database/src/index.ts"],
+      "@rakshex/database/*": ["packages/database/src/*"],
+      "@rakshex/shared-types": ["packages/shared-types/src/index.ts"],
+      "@rakshex/shared-types/*": ["packages/shared-types/src/*"],
+      "@shared/*": ["packages/shared-types/src/*"],
+      "@rakshex/scanner-core": ["packages/scanner-core/src/index.ts"],
+      "@rakshex/policy-engine": ["packages/policy-engine/src/index.ts"],
+      "@rakshex/config": ["packages/config/src/index.ts"],
+      "@rakshex/pricing-engine": ["packages/pricing-engine/src/index.ts"],
+      "@rakshex/agentguard-sdk": ["packages/agentguard-sdk/src/index.ts"],
+      "@rakshex/risk-baseline": ["packages/risk-baseline/src/index.ts"],
+      "@rakshex/agent-graph": ["packages/agent-graph/src/index.ts"],
+      "@rakshex/siem-export": ["packages/siem-export/src/index.ts"]
+    }
+  }
+}

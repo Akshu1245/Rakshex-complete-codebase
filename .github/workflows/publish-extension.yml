@@ -4,16 +4,16 @@ on:
   workflow_dispatch:
     inputs:
       versionBump:
-        description: 'Version bump type'
+        description: "Version bump type"
         required: true
-        default: 'patch'
+        default: "patch"
         type: choice
         options:
           - patch
           - minor
           - major
       dryRun:
-        description: 'Dry run (no actual publish)'
+        description: "Dry run (no actual publish)"
         required: false
         default: false
         type: boolean
@@ -32,8 +32,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
           cache-dependency-path: devpulse-vscode/package-lock.json
 
       - name: Install dependencies

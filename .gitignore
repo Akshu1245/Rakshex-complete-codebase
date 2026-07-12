@@ -161,4 +161,33 @@ tserr*.txt
 tsfinal.txt
 e2e_ci_logs.txt
 scratch_*.html
+artifacts/
+vendor/
+*.vsix
+nul
+server/nul
 vitest.config.ts.timestamp-*.mjs
+
+# Repomix packed-context output (generated, do not commit)
+repomix-output.txt
+
+# Local agent/tool runtime state
+.commandcode/
+
+# Keep DevPulse agentic productivity config tracked (agents/commands/skills),
+# but still ignore machine-local settings.
+!.claude/agents/
+!.claude/agents/**
+!.claude/commands/
+!.claude/commands/**
+!.claude/skills/
+!.claude/skills/**
+
+.turbo/
+
+
+# Python build
+**/__pycache__/
+**/*.egg-info/
+*.pyc
+

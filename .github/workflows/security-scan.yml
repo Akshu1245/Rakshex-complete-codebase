@@ -1,67 +1,31 @@
-name: RaksHex Security Scan
+name: Security scan
 
 on:
   push:
     branches: [main, master]
   pull_request:
     branches: [main, master]
+  schedule:
+    - cron: "0 6 * * 1"
+
+env:
+  HUSKY: "0"
 
 jobs:
-  security:
-    name: Scan API Collection
+  scanner-regression:
+    name: Credential and collection scanner
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      issues: write
-      pull-requests: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: "20"
-
-      - name: Run RaksHex Scan
-        run: npx rakshex scan ./postman-collection.json --format json
-        continue-on-error: true
-
-      - name: Upload scan report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: rakshex-scan-report
-          path: rakshex-report.json
-          if-no-files-found: ignore
-
-      - name: Comment PR with results
-        if: github.event_name == 'pull_request' && always()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            let body = '## 🔒 RaksHex Security Scan\n\n';
-            try {
-              const report = JSON.parse(fs.readFileSync('rakshex-report.json', 'utf8'));
-              body += `**Score:** ${report.score}/100\n`;
-              body += `**Findings:** ${report.findings?.length || 0}\n\n`;
-              if (report.findings?.length > 0) {
-                body += '| Severity | Finding | Endpoint |\n';
-                body += '|----------|---------|----------|\n';
-                report.findings.slice(0, 10).forEach(f => {
-                  body += `| ${f.severity} | ${f.title} | \`${f.endpoint}\` |\n`;
-                });
-              }
-              if (report.url) {
-                body += `\n📄 [Full Report](${report.url})\n`;
-              }
-            } catch {
-              body += '⚠️ Could not parse scan report. Check the artifact for details.\n';
-            }
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body
-            });
+          node-version: "22"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Run security-focused unit tests
+        run: pnpm run test:security
+        env:
+          JWT_SECRET: test-secret-security-scan
