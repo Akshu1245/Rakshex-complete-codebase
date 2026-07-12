@@ -19,6 +19,7 @@ import { PROVIDERS, type ControlPlaneProvider } from "../services/controlPlane/p
 import { sha256 } from "../utils/crypto";
 import { evaluateGatewayRequest } from "../services/controlPlane/gatewayPolicy";
 import { decideEnforcement, type KillSwitchState } from "../services/gateway/enforcement";
+import { readKillSwitchCache } from "../services/gateway/killSwitchCache";
 import { toNumber } from "../utils/decimal";
 
 const providerIds = [
@@ -613,11 +614,21 @@ export const controlPlaneRouter = router({
       .query(async ({ input, ctx }) => {
         await readAccess(input.workspaceId, ctx.user.id);
 
-        // Server-side kill switch + budget (never trust client)
-        const ks = await db.getKillSwitchSettings(ctx.user.id);
-        const killActive = Boolean(ks?.isActive);
-        const budgetLimit = ks ? toNumber(ks.budgetLimitUSD) : undefined;
-        const currentSpend = ks ? toNumber(ks.currentSpendUSD) : 0;
+        // Server-side kill switch + budget (never trust client).
+        // Prefer Redis hot cache for propagation latency; fall back to Postgres.
+        const cached = await readKillSwitchCache(ctx.user.id);
+        const ks = cached ? null : await db.getKillSwitchSettings(ctx.user.id);
+        const killActive = cached ? cached.isActive : Boolean(ks?.isActive);
+        const budgetLimit = cached
+          ? cached.budgetLimitUsd
+          : ks
+            ? toNumber(ks.budgetLimitUSD)
+            : undefined;
+        const currentSpend = cached
+          ? (cached.currentSpendUsd ?? 0)
+          : ks
+            ? toNumber(ks.currentSpendUSD)
+            : 0;
         const remainingFromDb =
           budgetLimit != null ? Math.max(0, budgetLimit - currentSpend) : undefined;
 

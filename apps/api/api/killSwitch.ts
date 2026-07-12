@@ -6,6 +6,7 @@ import { sendKillSwitchRecoveryEmail } from "../email";
 import { deliver as deliverWebhook } from "../services/webhookDelivery";
 import { toNumber, toNumberOrNull } from "../utils/decimal";
 import { logger } from "../_core/logger";
+import { publishKillSwitchState } from "../services/gateway/killSwitchCache";
 
 export const killSwitchRouter = router({
   setBudget: editorProcedure
@@ -16,6 +17,12 @@ export const killSwitchRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       await db.updateKillSwitchSettings(ctx.user.id, input.budgetLimitUSD, undefined);
+      const settings = await db.getKillSwitchSettings(ctx.user.id);
+      await publishKillSwitchState(ctx.user.id, {
+        isActive: Boolean(settings?.isActive),
+        budgetLimitUsd: input.budgetLimitUSD,
+        currentSpendUsd: toNumber(settings?.currentSpendUSD),
+      });
       await db.createKillSwitchEvent(
         ctx.user.id,
         "budget_set",
@@ -34,6 +41,12 @@ export const killSwitchRouter = router({
     .mutation(async ({ input, ctx }) => {
       const settings = await db.getKillSwitchSettings(ctx.user.id);
       await db.updateKillSwitchSettings(ctx.user.id, undefined, true);
+      // Fast path for gateway/SDK — Redis before next request
+      await publishKillSwitchState(ctx.user.id, {
+        isActive: true,
+        budgetLimitUsd: toNumber(settings?.budgetLimitUSD),
+        currentSpendUsd: toNumber(settings?.currentSpendUSD),
+      });
       await db.createKillSwitchEvent(
         ctx.user.id,
         "triggered",
@@ -65,6 +78,11 @@ export const killSwitchRouter = router({
     .mutation(async ({ input, ctx }) => {
       const settings = await db.getKillSwitchSettings(ctx.user.id);
       await db.updateKillSwitchSettings(ctx.user.id, undefined, false);
+      await publishKillSwitchState(ctx.user.id, {
+        isActive: false,
+        budgetLimitUsd: toNumber(settings?.budgetLimitUSD),
+        currentSpendUsd: toNumber(settings?.currentSpendUSD),
+      });
       await db.createKillSwitchEvent(
         ctx.user.id,
         "reset",

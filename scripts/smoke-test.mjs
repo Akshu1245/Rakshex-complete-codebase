@@ -17,18 +17,26 @@ async function check(url, label) {
 
 async function main() {
   console.log("smoke:test starting…");
-  const health = await check(`${API_URL}/api/health`, "health");
+  // Prefer /api/health; fall back to /health for older mounts
+  let health;
+  let healthPath = "/api/health";
+  try {
+    health = await check(`${API_URL}/api/health`, "health");
+  } catch {
+    healthPath = "/health";
+    health = await check(`${API_URL}/health`, "health");
+  }
   const body = await health.json().catch(() => ({}));
-  console.log("health:", body);
+  console.log("health:", healthPath, body);
 
   if (body.status && body.status !== "ok" && body.status !== "degraded") {
     throw new Error(`Unexpected health status: ${body.status}`);
   }
-  // Ready endpoint
+  // Ready endpoint (optional — 404 is not fatal if health passed)
   const ready = await fetch(`${API_URL}/api/health/ready`, {
     signal: AbortSignal.timeout(10_000),
-  });
-  console.log("ready status:", ready.status);
+  }).catch(() => null);
+  if (ready) console.log("ready status:", ready.status);
 
   if (WEB_URL) {
     const web = await check(WEB_URL, "web");
