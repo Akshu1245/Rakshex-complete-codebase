@@ -84,6 +84,16 @@ jobs:
     name: Unit
     needs: [install]
     runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=3s
+          --health-retries=5
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -95,6 +105,7 @@ jobs:
       - run: pnpm run test
         env:
           JWT_SECRET: test-secret-ci-unit
+          REDIS_URL: redis://127.0.0.1:6379
 
   integration:
     name: Integration
@@ -145,6 +156,16 @@ jobs:
     name: Security
     needs: [install]
     runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=3s
+          --health-retries=5
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -156,6 +177,7 @@ jobs:
       - run: pnpm run test:security
         env:
           JWT_SECRET: test-secret-ci-security
+          REDIS_URL: redis://127.0.0.1:6379
 
   build:
     name: Build
