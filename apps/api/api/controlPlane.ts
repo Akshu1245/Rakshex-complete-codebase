@@ -18,6 +18,8 @@ import { assertWorkspacePermission } from "../services/workspaceContext";
 import { PROVIDERS, type ControlPlaneProvider } from "../services/controlPlane/providerRegistry";
 import { sha256 } from "../utils/crypto";
 import { evaluateGatewayRequest } from "../services/controlPlane/gatewayPolicy";
+import { decideEnforcement, type KillSwitchState } from "../services/gateway/enforcement";
+import { toNumber } from "../utils/decimal";
 
 const providerIds = [
   "openai",
@@ -582,6 +584,10 @@ export const controlPlaneRouter = router({
   }),
 
   gateway: router({
+    /**
+     * Runtime preflight — kill switch and budgets are loaded server-side.
+     * Client-supplied killSwitchActive is ignored (cannot self-authorize).
+     */
     evaluate: protectedProcedure
       .input(
         workspaceInput.extend({
@@ -591,31 +597,101 @@ export const controlPlaneRouter = router({
           toolNames: z.array(z.string().max(128)).max(100).optional(),
           estimatedCostUsd: z.number().min(0).default(0),
           remainingBudgetUsd: z.number().min(0).optional(),
-          killSwitchActive: z.boolean().default(false),
+          /** @deprecated Ignored — server loads kill switch from DB */
+          killSwitchActive: z.boolean().optional(),
           allowedProviders: z.array(z.string().max(64)).optional(),
           allowedModels: z.array(z.string().max(128)).optional(),
           blockedTools: z.array(z.string().max(128)).optional(),
           redactPii: z.boolean().default(true),
           blockPromptInjection: z.boolean().default(true),
+          projectId: z.string().max(64).optional(),
+          agentId: z.string().max(128).optional(),
+          step: z.number().int().positive().optional(),
+          retryCount: z.number().int().nonnegative().optional(),
         }),
       )
       .query(async ({ input, ctx }) => {
         await readAccess(input.workspaceId, ctx.user.id);
+
+        // Server-side kill switch + budget (never trust client)
+        const ks = await db.getKillSwitchSettings(ctx.user.id);
+        const killActive = Boolean(ks?.isActive);
+        const budgetLimit = ks ? toNumber(ks.budgetLimitUSD) : undefined;
+        const currentSpend = ks ? toNumber(ks.currentSpendUSD) : 0;
+        const remainingFromDb =
+          budgetLimit != null ? Math.max(0, budgetLimit - currentSpend) : undefined;
+
+        const state: KillSwitchState = {
+          workspaceDisabled: killActive,
+          projectDisabled: false,
+          agentDisabled: false,
+          budgetLimitUsd: budgetLimit,
+          currentSpendUsd: currentSpend,
+          allowedModels: input.allowedModels,
+          allowedProviders: input.allowedProviders,
+          updatedAt: new Date().toISOString(),
+        };
+
+        const enforcement = decideEnforcement(
+          {
+            workspaceId: String(input.workspaceId),
+            projectId: input.projectId,
+            agentId: input.agentId,
+            provider: input.provider!,
+            model: input.model!,
+            toolNames: input.toolNames,
+            estimatedCostUsd: input.estimatedCostUsd ?? 0,
+            step: input.step,
+            retryCount: input.retryCount,
+            inputText: input.inputText,
+          },
+          state,
+          "closed",
+        );
+
+        if (!enforcement.allowed) {
+          try {
+            await db.createAuditLogEntry(ctx.user.id, "gateway_blocked", {
+              workspaceId: input.workspaceId,
+              reasons: enforcement.reasons,
+              provider: input.provider,
+              model: input.model,
+            });
+          } catch {
+            /* best effort audit */
+          }
+          return {
+            decision: "blocked" as const,
+            reasons: enforcement.reasons,
+            piiRedactions: 0,
+            promptInjectionDetected: false,
+            estimatedCostUsd: input.estimatedCostUsd ?? 0,
+            rawPromptStored: false,
+            killSwitchEnforced: killActive,
+            serverEnforced: true,
+          };
+        }
+
         const result = evaluateGatewayRequest({
           provider: input.provider!,
           model: input.model!,
           inputText: input.inputText,
           toolNames: input.toolNames,
           estimatedCostUsd: input.estimatedCostUsd ?? 0,
-          remainingBudgetUsd: input.remainingBudgetUsd,
-          killSwitchActive: input.killSwitchActive ?? false,
+          remainingBudgetUsd: remainingFromDb ?? input.remainingBudgetUsd,
+          killSwitchActive: killActive,
           allowedProviders: input.allowedProviders,
           allowedModels: input.allowedModels,
           blockedTools: input.blockedTools,
           redactPii: input.redactPii ?? true,
           blockPromptInjection: input.blockPromptInjection ?? true,
         });
-        return { ...result, rawPromptStored: false };
+        return {
+          ...result,
+          rawPromptStored: false,
+          killSwitchEnforced: killActive,
+          serverEnforced: true,
+        };
       }),
   }),
 

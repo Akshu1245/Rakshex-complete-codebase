@@ -135,6 +135,16 @@ export const telemetryRouter = router({
       });
     }
 
+    // Kill switch is server-enforced — not dashboard-only.
+    // When active, reject provider-success telemetry so clients surface the block.
+    const killSettings = await db.getKillSwitchSettings(userId);
+    if (killSettings?.isActive) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "Kill switch is active — model provider traffic is blocked for this account",
+      });
+    }
+
     // Rate limit check
     const allowed = await checkTelemetryRateLimit(input.events[0]?.workspaceId);
     if (!allowed) {
