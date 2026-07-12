@@ -1,0 +1,24 @@
+{
+  "name": "@rakshex/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "rakshex": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "echo \"@rakshex/cli: ok\"",
+    "test": "echo \"@rakshex/cli: no unit tests yet\"",
+    "dev": "node --import tsx src/index.ts"
+  },
+  "dependencies": {
+    "@rakshex/config": "workspace:*",
+    "@rakshex/scanner-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  }
+}

@@ -1,22 +1,22 @@
-version: "3.8"
+﻿version: "3.8"
 
 services:
   db:
     image: postgres:15-alpine
     restart: always
     environment:
-      POSTGRES_USER: devpulse
+      POSTGRES_USER: rakshex
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?err}
-      POSTGRES_DB: devpulse_db
+      POSTGRES_DB: rakshex
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U devpulse -d devpulse_db"]
+      test: ["CMD-SHELL", "pg_isready -U rakshex -d rakshex"]
       interval: 5s
       timeout: 5s
       retries: 10
     networks:
-      - devpulse-network
+      - rakshex-network
 
   redis:
     image: redis:7-alpine
@@ -30,7 +30,7 @@ services:
       timeout: 3s
       retries: 5
     networks:
-      - devpulse-network
+      - rakshex-network
 
   app:
     build:
@@ -45,7 +45,7 @@ services:
       PORT: 3000
       APP_URL: ${APP_URL}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3001}
-      DATABASE_URL: postgresql://devpulse:${POSTGRES_PASSWORD:?err}@db:5432/devpulse_db
+      DATABASE_URL: postgresql://rakshex:${POSTGRES_PASSWORD:?err}@db:5432/rakshex
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET}
       RAKSHEX_VAULT_KEY: ${RAKSHEX_VAULT_KEY:-}
@@ -62,7 +62,7 @@ services:
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
-      SMTP_FROM: ${SMTP_FROM:-noreply@devpulse.io}
+      SMTP_FROM: ${SMTP_FROM:-noreply@rakshex.com}
       SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:-}
       SENTRY_DSN: ${SENTRY_DSN:-}
       RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-}
@@ -75,11 +75,11 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - devpulse-network
+      - rakshex-network
 
   frontend:
     build:
-      context: ./devpulse-frontend
+      context: ./apps/web
       dockerfile: Dockerfile
     restart: always
     ports:
@@ -90,12 +90,12 @@ services:
     depends_on:
       - app
     networks:
-      - devpulse-network
+      - rakshex-network
 
 volumes:
   postgres_data:
   redis_data:
 
 networks:
-  devpulse-network:
+  rakshex-network:
     driver: bridge

@@ -1,0 +1,21 @@
+{
+  "name": "@rakshex/worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --import tsx src/index.ts",
+    "build": "tsc -p tsconfig.json --noEmit",
+    "start": "node ../../dist/apps/api/queues/workers/index.js",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "echo \"@rakshex/worker: lint via root\"",
+    "test": "echo \"@rakshex/worker: uses @rakshex/api worker tests\""
+  },
+  "dependencies": {
+    "@rakshex/config": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  }
+}

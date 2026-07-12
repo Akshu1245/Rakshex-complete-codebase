@@ -1,0 +1,3 @@
+﻿_core/googleOAuth.ts(8,30): error TS2307: Cannot find module 'google-auth-library' or its corresponding type declarations.
+_core/index.ts(634,49): error TS2307: Cannot find module '../../drizzle/schema' or its corresponding type declarations.
+db/queries/users.ts(134,45): error TS2307: Cannot find module '../../../drizzle/schema' or its corresponding type declarations.

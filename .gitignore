@@ -182,3 +182,6 @@ repomix-output.txt
 !.claude/commands/**
 !.claude/skills/
 !.claude/skills/**
+
+.turbo/
+

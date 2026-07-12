@@ -1,30 +1,21 @@
 {
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "esModuleInterop": true,
+    "noEmit": true,
     "strict": false,
     "noImplicitAny": false,
     "strictNullChecks": false,
-    "skipLibCheck": true,
-    "types": ["node"],
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "outDir": "dist",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "ignoreDeprecations": "5.0",
-    "paths": {
-      "@shared/*": ["./shared/*"]
-    }
+    "types": ["node"]
   },
-  "include": [
-    "server/**/*.ts",
-    "shared/**/*.ts",
-    "e2e/**/*.ts",
-    "vitest.config.ts",
-    "playwright.config.ts",
-    "vite.config.ts"
-  ],
-  "exclude": ["node_modules", "rakshex-frontend", "rakshex-vscode", "dist"]
+  "include": [],
+  "references": [
+    { "path": "./apps/api" },
+    { "path": "./packages/database" },
+    { "path": "./packages/shared-types" },
+    { "path": "./packages/scanner-core" },
+    { "path": "./packages/policy-engine" },
+    { "path": "./packages/config" },
+    { "path": "./packages/pricing-engine" },
+    { "path": "./packages/agentguard-sdk" }
+  ]
 }

@@ -3,12 +3,21 @@ import path from "path";
 
 export default defineConfig({
   test: {
-    include: ["server/**/*.test.ts", "server/**/*.test.tsx"],
-    exclude: ["rakshex-frontend/**", "rakshex-vscode/**", "e2e/**", "node_modules/**", "dist/**"],
+    include: ["server/**/*.test.ts", "server/**/*.test.tsx", "packages/**/*.test.ts"],
+    exclude: [
+      "rakshex-frontend/**",
+      "rakshex-vscode/**",
+      "devpulse-frontend/**",
+      "devpulse-vscode/**",
+      "e2e/**",
+      "node_modules/**",
+      "dist/**",
+    ],
   },
   resolve: {
     alias: {
       "@shared": path.resolve(__dirname, "shared"),
+      "@rakshex/scanner-core": path.resolve(__dirname, "packages/scanner-core/src/index.ts"),
     },
   },
 });

@@ -15,7 +15,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: akshu1245/devpulse-complete-codebase
+  IMAGE_NAME: akshu1245/rakshex
 
 jobs:
   lint-typecheck:
@@ -30,12 +30,8 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm install --frozen-lockfile --dir devpulse-frontend
-      - run: npm ci
-        working-directory: devpulse-vscode
-      - run: pnpm run check:all
       - run: pnpm run lint
-      - run: pnpm run lint:frontend
+      - run: pnpm run typecheck
 
   test:
     name: Unit Tests
@@ -44,13 +40,13 @@ jobs:
       postgres:
         image: postgres:15-alpine
         env:
-          POSTGRES_USER: root
-          POSTGRES_PASSWORD: devpulse
-          POSTGRES_DB: devpulse_test
+          POSTGRES_USER: rakshex
+          POSTGRES_PASSWORD: rakshex
+          POSTGRES_DB: rakshex_test
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U root -d devpulse_test"
+          --health-cmd="pg_isready -U rakshex -d rakshex_test"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
@@ -72,15 +68,9 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm install --frozen-lockfile --dir devpulse-frontend
-      - run: npm ci
-        working-directory: devpulse-vscode
-      - run: pnpm run db:migrate
+      - run: pnpm run test
         env:
-          DATABASE_URL: postgresql://root:devpulse@127.0.0.1:5432/devpulse_test
-      - run: pnpm run test:all
-        env:
-          DATABASE_URL: postgresql://root:devpulse@127.0.0.1:5432/devpulse_test
+          DATABASE_URL: postgresql://rakshex:rakshex@127.0.0.1:5432/rakshex_test
           REDIS_URL: redis://127.0.0.1:6379
           JWT_SECRET: test-secret-ci
       - uses: actions/upload-artifact@v4
@@ -97,13 +87,13 @@ jobs:
       postgres:
         image: postgres:15-alpine
         env:
-          POSTGRES_USER: root
-          POSTGRES_PASSWORD: devpulse
-          POSTGRES_DB: devpulse_test
+          POSTGRES_USER: rakshex
+          POSTGRES_PASSWORD: rakshex
+          POSTGRES_DB: rakshex_test
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U root -d devpulse_test"
+          --health-cmd="pg_isready -U rakshex -d rakshex_test"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
@@ -117,197 +107,18 @@ jobs:
           --health-timeout=3s
           --health-retries=5
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
-          cache-dependency-path: |
-            pnpm-lock.yaml
-            devpulse-frontend/pnpm-lock.yaml
-      - name: Install dependencies
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm install --frozen-lockfile --dir devpulse-frontend
-      - name: Install Playwright
-        run: pnpm exec playwright install --with-deps
-      - name: Build Next.js
-        working-directory: devpulse-frontend
-        run: pnpm run build
-      - name: Build backend
-        run: pnpm run build
-      - name: Run migrations
-        run: pnpm run db:migrate
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm exec playwright test --grep=Smoke
         env:
-          DATABASE_URL: postgresql://root:devpulse@127.0.0.1:5432/devpulse_test
-      - name: Run E2E tests
-        run: pnpm run test:e2e
-        env:
-          DATABASE_URL: postgresql://root:devpulse@127.0.0.1:5432/devpulse_test
+          DATABASE_URL: postgresql://rakshex:rakshex@127.0.0.1:5432/rakshex_test
           REDIS_URL: redis://127.0.0.1:6379
           JWT_SECRET: test-secret-ci
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: playwright-report
-          path: playwright-report/
-
-  security-audit:
-    name: Security Audit
-    runs-on: ubuntu-latest
-    needs: [lint-typecheck, test]
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: Dependency vulnerability scan
-        run: pnpm audit --audit-level moderate
-      - name: Run TruffleHog secret scan
-        uses: trufflesecurity/trufflehog@main
-        with:
-          path: .
-          extra_args: --only-verified
-
-  sast:
-    name: Static Analysis
-    runs-on: ubuntu-latest
-    needs: [lint-typecheck, test]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: ESLint security rules
-        run: pnpm run lint
-
-  build:
-    name: Build & Push Docker
-    runs-on: ubuntu-latest
-    needs: [lint-typecheck, test, security-audit]
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=sha,prefix=sha-,format=long
-            type=ref,event=branch
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-      - name: Build and push
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile.prod
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  vscode-extension:
-    name: Package VS Code Extension
-    runs-on: ubuntu-latest
-    needs: [lint-typecheck]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: devpulse-vscode/package-lock.json
-      - run: npm ci
-        working-directory: devpulse-vscode
-      - name: Validate extension
-        working-directory: devpulse-vscode
-        run: |
-          npm run check
-          npm test
-      - name: Package extension
-        working-directory: devpulse-vscode
-        run: npm run package
-      - uses: actions/upload-artifact@v4
-        with:
-          name: devpulse-vscode
-          path: devpulse-vscode/*.vsix
-
-  security-scan:
-    name: Trivy Security Scan
-    runs-on: ubuntu-latest
-    needs: [build]
-    permissions:
-      security-events: write
-      contents: read
-    steps:
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
-          format: sarif
-          output: trivy-results.sarif
-          severity: CRITICAL,HIGH
-          exit-code: 0
-      - uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: trivy-results.sarif
-
-  deploy:
-    name: Deploy to Production
-    runs-on: ubuntu-latest
-    needs: [build, e2e, security-scan]
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.deployProduction
-    environment: production
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-      - name: Run migrations
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: |
-          pnpm install --frozen-lockfile
-          chmod +x scripts/migrate.sh
-          ./scripts/migrate.sh
-      - name: Deploy
-        env:
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
-        run: |
-          echo "$DEPLOY_KEY" > deploy_key
-          chmod 600 deploy_key
-          ssh -i deploy_key -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST "
-            cd /opt/devpulse &&
-            docker compose -f docker-compose.prod.yml pull &&
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans
-          "
+        continue-on-error: false

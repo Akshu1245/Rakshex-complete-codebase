@@ -1,6 +1,10 @@
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 
+/**
+ * Shared ESLint flat config for the Rakshex monorepo.
+ * Apps may extend with local overrides; packages stay under this root config when linted from root.
+ */
 export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
@@ -10,29 +14,21 @@ export default tseslint.config(
       "**/dist/**",
       "**/build/**",
       "**/coverage/**",
-      "vendor/**",
       "**/.next/**",
       "**/out/**",
-      "devpulse-frontend/**",
-      "devpulse-vscode/**",
-      "rakshex-frontend/**",
-      "rakshex-vscode/**",
-      "scripts/**",
-      "insforge-clone/**",
-      "insforge-mirror/**",
-      "packages/**",
-      "vscode-extension/**",
-      "web-demo/**",
-      "backend/**",
-      "github-action/**",
-      "drizzle/**",
+      "vendor/**",
+      "artifacts/**",
+      "test-results/**",
       "e2e/**",
-      "marketing/**",
-      "test-labs/**",
-      "pitch-deck/**",
+      "scripts/**",
+      // VS Code extension uses its own tooling
+      "apps/vscode-extension/**",
+      // Generated / legacy
+      "packages/database/drizzle/meta/**",
     ],
   },
   {
+    files: ["**/*.{ts,tsx,js,mjs,cjs}"],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-unused-vars": "off",
@@ -40,7 +36,6 @@ export default tseslint.config(
       "@typescript-eslint/no-require-imports": "off",
       "no-useless-escape": "off",
       "prefer-const": "off",
-      "preserve-caught-error": "off",
     },
-  }
+  },
 );
