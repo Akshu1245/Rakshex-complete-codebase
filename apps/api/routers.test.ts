@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { appRouter } from "./routers";
-import { COOKIE_NAME } from "../shared/const";
+import { COOKIE_NAME } from "@rakshex/shared-types/const";
 import type { TrpcContext } from "./_core/context";
 import { generateCsrfToken } from "./utils/security";
 
@@ -114,6 +114,7 @@ vi.mock("./db", async () => {
     getCollectionById: vi.fn(
       async (id: string) => mockCollections.find((c) => c.id === id) ?? null,
     ),
+    findCollectionByContentHash: vi.fn(async () => null),
     hasCollectionAccess: vi.fn(async (id: string, userId: number, userEmail?: string) => {
       const col = mockCollections.find((c) => c.id === id);
       if (!col) return { access: false, collection: null, role: null };
