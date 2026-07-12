@@ -26,6 +26,8 @@ apps/vscode-extension/node_modules
 # Generated / large historical audit dumps
 ARCHITECTURE_FOR_JUDGES.html
 JUDGES_PITCH_DECK.html
-$null
-nul
--p
+# Python caches
+**/.pytest_cache
+**/__pycache__
+**/*.pyc
+.venv
