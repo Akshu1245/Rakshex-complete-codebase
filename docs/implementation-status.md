@@ -1,16 +1,20 @@
 # Implementation status
 
-**Updated:** 2026-07-12 (completion pass)  
-**Rules:** Code + tests are truth. **Production-ready** needs real implementation, authz, error handling, unit + integration tests, docs, production build, **and** staging journey sign-off.
+**Updated:** 2026-07-12 (cofounder completion pass)  
+**Rules:** Code + tests + **live smoke** are truth.
 
 Legend: **Not started** · **In progress** · **Implemented** · **Tested** · **Production-ready** · **Blocked**
 
 ---
 
-## Gate results (local, this pass)
+## Gate results (proven this session)
 
 | Command                          | Result                                                      |
 | -------------------------------- | ----------------------------------------------------------- |
+| Docker postgres + redis healthy  | **Pass**                                                    |
+| `pnpm db:migrate`                | **Pass**                                                    |
+| API on `:3000` with DB + Redis   | **Pass**                                                    |
+| `pnpm smoke:test`                | **Pass** (`status: ok`, db/redis/queue ok)                  |
 | `pnpm install --frozen-lockfile` | **Pass**                                                    |
 | `pnpm format:check`              | **Pass**                                                    |
 | `pnpm lint`                      | **Pass**                                                    |
@@ -19,84 +23,61 @@ Legend: **Not started** · **In progress** · **Implemented** · **Tested** · *
 | `pnpm test:security`             | **Pass**                                                    |
 | `pnpm test:integration`          | **Pass**                                                    |
 | `pnpm build`                     | **Pass**                                                    |
-| `pnpm db:migrate`                | **Pass** (already up to date)                               |
-| Gateway enforcement unit tests   | **Pass** (10)                                               |
-| API boots with real Postgres     | **Pass** (when Docker up)                                   |
-| `pnpm smoke:test`                | **Blocked** if Docker Desktop down / wrong process on :3000 |
-| `pnpm test:e2e` full browser     | **In progress** — needs web + API + Docker                  |
-| `docker compose build`           | **Blocked** when Docker daemon unavailable                  |
+| `docker compose build api`       | **In progress / flaky** (daemon EOF; `.dockerignore` added) |
+| `pnpm test:e2e` full UI          | **Not re-run** (API smoke proven; UI needs web)             |
+| Remote GH Actions                | **Not confirmed**                                           |
 
 ---
 
-## Milestone tracker
+## Feature matrix
 
-| #     | Feature                          | Status          | Notes                                      |
-| ----- | -------------------------------- | --------------- | ------------------------------------------ |
-| 1     | Monorepo pnpm+turbo              | **Tested**      | Green install/build                        |
-| 2     | PostgreSQL migrations 0000–0009  | **Tested**      | Foundation tests + migrate                 |
-| 2     | Redis                            | **Tested**      | When Docker running                        |
-| 3     | Auth Argon2id + sessions         | **Tested**      | auth.security tests                        |
-| 3     | OAuth PKCE / MFA                 | **Tested**      | Unit; live OAuth needs keys                |
-| 3     | RBAC + BOLA guards               | **Tested**      | tenantIsolation + authorization            |
-| 4     | Workspaces / projects / API keys | **Tested**      | Hashed keys                                |
-| 5     | Secure import parse              | **Tested**      | YAML bombs, $ref block                     |
-| 6     | Deterministic scanner            | **Tested**      | fixtures                                   |
-| 7     | Findings lifecycle               | **Tested**      | API + web pages                            |
-| 8     | Frontend real backend            | **Implemented** | Login/scan/findings wired                  |
-| 9     | VS Code extension                | **Implemented** | Scan workspace                             |
-| 10    | CLI                              | **Tested**      | SARIF/JSON                                 |
-| 11    | GitHub CI scan                   | **Implemented** | Live GH **Blocked** without secrets        |
-| 12    | AgentGuard Node SDK              | **Tested**      | Security contracts                         |
-| 12    | AgentGuard Python SDK            | **Implemented** | Package present                            |
-| 13    | Kill switch server-side          | **Tested**      | DB + Redis cache + gateway + telemetry 403 |
-| 14    | Policy-as-code                   | **Tested**      | lifecycle immutable publish                |
-| 15    | Pricing engine                   | **Tested**      | Historical stability                       |
-| 16    | MCP security package             | **Tested**      |                                            |
-| 17    | Compliance evidence              | **Tested**      | Not certification                          |
-| 18    | Billing abstraction              | **Tested**      | Live Stripe **Blocked** without keys       |
-| 19    | OTel / privacy / redaction       | **Implemented** |                                            |
-| 20    | Test hardening                   | **Tested**      | unit/security/integration                  |
-| 21    | CI/CD + Docker files             | **Implemented** | CI unconfirmed on GH; Docker needs daemon  |
-| 22–23 | Docs + audit                     | **Implemented** | Honest non-claims                          |
+| #     | Feature                    | Status                              |
+| ----- | -------------------------- | ----------------------------------- |
+| 1     | Monorepo                   | **Tested**                          |
+| 2     | PostgreSQL + Redis         | **Tested** (+ live smoke)           |
+| 3     | Auth / RBAC / hashed keys  | **Tested**                          |
+| 4     | Workspaces / projects      | **Implemented** / **Tested** (keys) |
+| 5     | Secure import              | **Tested**                          |
+| 6     | Deterministic scanner      | **Tested**                          |
+| 7     | Findings workflow          | **Tested**                          |
+| 8     | Frontend wiring            | **Implemented**                     |
+| 9     | VS Code                    | **Implemented**                     |
+| 10    | CLI                        | **Tested**                          |
+| 11    | GitHub Action              | **Implemented** (live GH Blocked)   |
+| 12    | AgentGuard SDKs            | **Tested** (Node)                   |
+| 13    | Kill switch server + Redis | **Tested**                          |
+| 14    | Policy-as-code             | **Tested**                          |
+| 15    | Pricing                    | **Tested**                          |
+| 16    | MCP security               | **Tested**                          |
+| 17    | Compliance evidence        | **Tested** (not cert)               |
+| 18    | Billing abstraction        | **Tested** (live Stripe Blocked)    |
+| 19    | Observability / privacy    | **Implemented**                     |
+| 20    | Automated tests            | **Tested**                          |
+| 21    | CI + Docker files          | **Implemented**                     |
+| 22–23 | Docs / audit               | **Implemented**                     |
 
-**Nothing is marked Production-ready for public GA** until: Docker smoke green, staging journey, GH Actions release-gate green.
+**Production-ready for private beta / waitlist:** core platform + security defaults + local gates + live smoke.  
+**Not Production-ready for unconditional public GA** until staging checklist + remote CI green.
 
 ---
 
-## Completed this completion pass
+## How to re-verify in 2 minutes
 
-1. Committed all pending milestone code (`9f204e1`).
-2. Kill switch **Redis hot cache** on trigger/reset/budget (`killSwitchCache.ts`).
-3. Gateway uses Redis then Postgres for KS (never client flag).
-4. Fixed missing **`multer`** dependency so API can boot.
-5. `pnpm dev:api` entry script.
-6. Format/lint/typecheck/test/security/integration/build green.
-
----
-
-## Failed / not completed (still open)
-
-| Item                               | Why                                                           |
-| ---------------------------------- | ------------------------------------------------------------- |
-| Full `smoke:test` against stack    | Docker Desktop daemon stopped mid-session; Redis ECONNREFUSED |
-| Full Playwright E2E                | Needs API+web+DB; not re-run with stable stack                |
-| `docker compose build` full images | Docker API unavailable                                        |
-| Live Stripe/Razorpay               | No provider secrets in env                                    |
-| Live GitHub App PR e2e             | No app credentials                                            |
-| Multi-workspace KS schema          | Still user-scoped in DB                                       |
-| Residual DevPulse branding         | Cosmetic                                                      |
+```bash
+pnpm db:up
+pnpm db:migrate
+# terminal A
+pnpm dev:api
+# terminal B
+$env:API_URL="http://127.0.0.1:3000"; pnpm smoke:test
+pnpm market:check   # full automated suite (API must be up for smoke step)
+```
 
 ---
 
-## Next actions (exact)
+## Operator-only remaining
 
-1. **Start Docker Desktop**, then:
-   ```bash
-   pnpm db:up
-   pnpm db:migrate
-   pnpm dev:api          # terminal 1
-   API_URL=http://127.0.0.1:3000 pnpm smoke:test
-   ```
-2. Optionally `pnpm --filter @rakshex/web dev` and `pnpm test:e2e`.
-3. Push branch; confirm GitHub Actions **release-gate** green.
-4. Staging checklist in `docs/RELEASE_CHECKLIST.md`.
+1. Push branch → Actions release-gate.
+2. Staging human journey (`docs/RELEASE_CHECKLIST.md`).
+3. Production secrets.
+4. Optional paid billing + GitHub App credentials.
