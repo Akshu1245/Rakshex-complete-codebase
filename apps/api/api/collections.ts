@@ -11,6 +11,11 @@ import { scanCollectionForGateway } from "../services/gatewayCollectionScan";
 import { parseBrunoCollection } from "../services/brunoImport";
 import { logger } from "../_core/logger";
 import { logSecurityEvent } from "../services/securityEvents";
+import {
+  parseCollectionImport,
+  MAX_IMPORT_BYTES,
+  SAFE_SAMPLE_COLLECTIONS,
+} from "../services/collectionImport/secureParse";
 
 /** Reject keys that could enable prototype pollution */
 function hasPollutionKeys(value: unknown): boolean {
@@ -22,17 +27,20 @@ function hasPollutionKeys(value: unknown): boolean {
   return Object.values(value).some((v) => hasPollutionKeys(v));
 }
 
-const MAX_COLLECTION_DATA_BYTES = 1_024 * 1_024; // 1 MB
+const MAX_COLLECTION_DATA_BYTES = MAX_IMPORT_BYTES;
 
 function checkDataSize(value: unknown): number {
   try {
-    return new Blob([JSON.stringify(value)]).size;
+    return Buffer.byteLength(JSON.stringify(value), "utf8");
   } catch {
     return 0;
   }
 }
 
 export const collectionsRouter = router({
+  /** Safe sample payloads for demos (no real secrets). */
+  samples: protectedProcedure.query(() => SAFE_SAMPLE_COLLECTIONS),
+
   create: editorProcedure
     .input(
       z.object({
@@ -40,19 +48,77 @@ export const collectionsRouter = router({
         description: z.string().max(1000).optional(),
         format: z.enum(["postman", "openapi", "bruno"]),
         data: z.record(z.unknown()),
+        /** Optional raw text for YAML path (server-side secure parse). */
+        rawText: z
+          .string()
+          .max(MAX_IMPORT_BYTES * 2)
+          .optional(),
+        tags: z.array(z.string().max(64)).max(32).optional(),
+        allowDuplicate: z.boolean().optional(),
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      if (!input.data || typeof input.data !== "object") {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Invalid collection data: must be a JSON object",
+      // Prefer secure parse when rawText provided or _rawYaml wrapper present
+      let collectionData: Record<string, unknown> = input.data as Record<string, unknown>;
+      let storageFormat = input.format;
+      let contentHash: string | undefined;
+      let tags = input.tags ?? [];
+      let endpointCount: number | undefined;
+      let importWarnings: string[] = [];
+      let secretsRedacted = 0;
+      let detectedFormat: string | undefined;
+
+      if (input.rawText || (input.data as any)?._rawYaml) {
+        const raw =
+          input.rawText ??
+          (typeof (input.data as any)._rawYaml === "string"
+            ? (input.data as any)._rawYaml
+            : JSON.stringify(input.data));
+        const parsed = parseCollectionImport(raw, {
+          filename: input.name + (input.rawText?.includes("openapi:") ? ".yaml" : ".json"),
+          forceYaml: Boolean((input.data as any)?._rawYaml) || input.format === "openapi",
         });
+        if (parsed.errors.length > 0) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: parsed.errors.join("; "),
+          });
+        }
+        collectionData = parsed.data;
+        storageFormat = parsed.storageFormat;
+        contentHash = parsed.contentHash;
+        tags = [...new Set([...(input.tags ?? []), ...parsed.tags])];
+        endpointCount = parsed.endpointCount;
+        importWarnings = parsed.warnings;
+        secretsRedacted = parsed.secretsRedacted;
+        detectedFormat = parsed.format;
+      } else {
+        if (!input.data || typeof input.data !== "object") {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Invalid collection data: must be a JSON object",
+          });
+        }
+        // Run secure pipeline on JSON objects too (refs + secrets + depth)
+        const parsed = parseCollectionImport(JSON.stringify(input.data), {
+          filename: `${input.name}.json`,
+        });
+        if (parsed.errors.length === 0 && Object.keys(parsed.data).length > 0) {
+          collectionData = parsed.data;
+          contentHash = parsed.contentHash;
+          tags = [...new Set([...(input.tags ?? []), ...parsed.tags])];
+          endpointCount = parsed.endpointCount;
+          importWarnings = parsed.warnings;
+          secretsRedacted = parsed.secretsRedacted;
+          detectedFormat = parsed.format;
+          if (parsed.storageFormat !== "bruno") storageFormat = parsed.storageFormat;
+        }
       }
-      if (hasPollutionKeys(input.data)) {
+
+      if (hasPollutionKeys(collectionData)) {
         logSecurityEvent(
           "prototype_pollution_blocked",
-          { keys: Object.keys(input.data) },
+          { keys: Object.keys(collectionData) },
           {
             userId: ctx.user.id,
             ip: ctx.req.ip,
@@ -65,7 +131,7 @@ export const collectionsRouter = router({
         });
       }
 
-      const dataSize = checkDataSize(input.data);
+      const dataSize = checkDataSize(collectionData);
       if (dataSize > MAX_COLLECTION_DATA_BYTES) {
         throw new TRPCError({
           code: "PAYLOAD_TOO_LARGE",
@@ -73,10 +139,27 @@ export const collectionsRouter = router({
         });
       }
 
-      // Plan-limit enforcement: free users are capped at `maxCollections`.
-      // Existing collections above the cap are grandfathered — we only
-      // block NEW creation. Pro / Enterprise resolve to Infinity.
-      // Throws a structured `plan_limit` TRPCError (see utils/planLimits.ts).
+      // Duplicate detection by content hash
+      if (contentHash && !input.allowDuplicate) {
+        const dup = await db.findCollectionByContentHash(ctx.user.id, contentHash);
+        if (dup) {
+          return {
+            id: dup.id,
+            userId: dup.userId,
+            name: dup.name,
+            format: dup.format,
+            totalRequests: dup.totalRequests,
+            duplicate: true,
+            contentHash,
+            importWarnings: ["Duplicate collection content detected; returning existing record"],
+            secretsRedacted: 0,
+            credentialFindings: [],
+            gatewayFindings: [],
+          };
+        }
+      }
+
+      // Plan-limit enforcement
       const plan = (ctx.user.plan ?? "free") as "free" | "pro" | "enterprise";
       const limits = getPlanLimits(plan);
       if (Number.isFinite(limits.maxCollections)) {
@@ -86,11 +169,9 @@ export const collectionsRouter = router({
         }
       }
 
-      // Normalize Bruno collections to internal format before scanning
-      let collectionData = input.data;
-      if (input.format === "bruno") {
+      if (storageFormat === "bruno" || input.format === "bruno") {
         try {
-          const brunoResult = parseBrunoCollection(JSON.stringify(input.data));
+          const brunoResult = parseBrunoCollection(JSON.stringify(collectionData));
           collectionData = {
             info: {
               name: brunoResult.name,
@@ -107,11 +188,9 @@ export const collectionsRouter = router({
             })),
             _brunoImport: { warnings: brunoResult.warnings },
           };
+          storageFormat = "postman";
           if (brunoResult.warnings.length > 0) {
-            logger.warn(
-              { userId: ctx.user.id, warnings: brunoResult.warnings },
-              "[Collections] Bruno import warnings",
-            );
+            importWarnings.push(...brunoResult.warnings);
           }
         } catch (err) {
           throw new TRPCError({
@@ -162,10 +241,34 @@ export const collectionsRouter = router({
       const collection = await db.createCollection(
         ctx.user.id,
         input.name,
-        input.format,
+        storageFormat,
         collectionData,
         input.description,
+        {
+          contentHash,
+          tags,
+          version: 1,
+          totalRequests: endpointCount,
+        },
       );
+
+      // Version history (workspace_id 0 for personal when not multi-tenant)
+      if (contentHash) {
+        try {
+          await db.saveCollectionVersion({
+            workspaceId: 0,
+            collectionId: collection.id,
+            version: 1,
+            format: detectedFormat ?? storageFormat,
+            contentHash,
+            data: collectionData,
+            createdByUserId: ctx.user.id,
+          });
+        } catch (err) {
+          logger.warn({ err }, "[Collections] version persist skipped");
+        }
+      }
+
       if (credentialFindings.length > 0) {
         logger.warn(
           {
@@ -180,6 +283,13 @@ export const collectionsRouter = router({
       await invalidateUserCache(ctx.user.id);
       return {
         ...collection,
+        contentHash,
+        tags,
+        version: 1,
+        detectedFormat,
+        secretsRedacted,
+        importWarnings,
+        duplicate: false,
         credentialFindings: credentialFindings.map((f) => ({
           ruleId: f.ruleId,
           description: f.description,

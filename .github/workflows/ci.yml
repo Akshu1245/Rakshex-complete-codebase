@@ -2,13 +2,13 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, "akshu1245/**"]
   pull_request:
     branches: [main, master]
   workflow_dispatch:
     inputs:
-      deployProduction:
-        description: "Deploy the already-verified main branch"
+      deployStaging:
+        description: "Deploy to staging after successful gates"
         required: true
         default: false
         type: boolean
@@ -16,73 +16,90 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: akshu1245/rakshex
+  NODE_VERSION: "22"
+  HUSKY: "0"
+
+# Fail-fast policy: critical jobs never use continue-on-error.
+# A red gate blocks release (needs: chains + branch protection).
 
 jobs:
-  lint-typecheck:
-    name: Lint & Type Check
+  install:
+    name: Install
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+      - name: Cache store path
+        run: pnpm store path
+
+  format:
+    name: Format
+    needs: [install]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run format:check
+
+  lint:
+    name: Lint
+    needs: [install]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm run lint
-      - run: pnpm run typecheck
 
-  test:
-    name: Unit Tests
+  typecheck:
+    name: Type-check
+    needs: [install]
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_USER: rakshex
-          POSTGRES_PASSWORD: rakshex
-          POSTGRES_DB: rakshex_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd="pg_isready -U rakshex -d rakshex_test"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd="redis-cli ping"
-          --health-interval=10s
-          --health-timeout=3s
-          --health-retries=5
     steps:
       - uses: actions/checkout@v4
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run typecheck
+
+  unit:
+    name: Unit
+    needs: [install]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm run test
         env:
-          DATABASE_URL: postgresql://rakshex:rakshex@127.0.0.1:5432/rakshex_test
-          REDIS_URL: redis://127.0.0.1:6379
-          JWT_SECRET: test-secret-ci
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: coverage
-          path: coverage/
+          JWT_SECRET: test-secret-ci-unit
 
-  e2e:
-    name: E2E Tests (Playwright)
+  integration:
+    name: Integration
+    needs: [unit]
     runs-on: ubuntu-latest
-    needs: [test]
     services:
       postgres:
         image: postgres:15-alpine
@@ -108,17 +125,287 @@ jobs:
           --health-retries=5
     steps:
       - uses: actions/checkout@v4
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm exec playwright test --grep=Smoke
+      - name: Migrate test database
+        run: pnpm run db:migrate
+        env:
+          DATABASE_URL: postgresql://rakshex:rakshex@127.0.0.1:5432/rakshex_test
+      - run: pnpm run test:integration
         env:
           DATABASE_URL: postgresql://rakshex:rakshex@127.0.0.1:5432/rakshex_test
           REDIS_URL: redis://127.0.0.1:6379
-          JWT_SECRET: test-secret-ci
-        continue-on-error: false
+          JWT_SECRET: test-secret-ci-integration
+
+  security:
+    name: Security
+    needs: [install]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run test:security
+        env:
+          JWT_SECRET: test-secret-ci-security
+
+  build:
+    name: Build
+    needs: [lint, typecheck, unit]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+
+  docker:
+    name: Docker
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build API image (non-root)
+        run: docker build -f Dockerfile --target api -t rakshex-api:ci .
+      - name: Build worker image
+        run: docker build -f Dockerfile --target worker -t rakshex-worker:ci .
+      - name: Compose config validation
+        run: docker compose -f docker-compose.yml config
+      - name: Start infra stack
+        run: docker compose up -d postgres redis
+      - name: Wait for health
+        run: |
+          for i in $(seq 1 30); do
+            if docker compose exec -T postgres pg_isready -U rakshex -d rakshex && \
+               docker compose exec -T redis redis-cli ping | grep -q PONG; then
+              echo "infra healthy"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "infra health check failed"
+          docker compose ps
+          exit 1
+      - name: Stop stack
+        if: always()
+        run: docker compose down -v
+
+  migration:
+    name: Migration
+    needs: [integration]
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: rakshex
+          POSTGRES_PASSWORD: rakshex
+          POSTGRES_DB: rakshex_mig
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U rakshex -d rakshex_mig"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Apply migrations
+        run: pnpm run db:migrate
+        env:
+          DATABASE_URL: postgresql://rakshex:rakshex@127.0.0.1:5432/rakshex_mig
+      - name: Backup and restore smoke
+        run: bash scripts/ci-backup-restore.sh
+        env:
+          DATABASE_URL: postgresql://rakshex:rakshex@127.0.0.1:5432/rakshex_mig
+          PGPASSWORD: rakshex
+
+  e2e:
+    name: E2E
+    needs: [integration, build]
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: rakshex
+          POSTGRES_PASSWORD: rakshex
+          POSTGRES_DB: rakshex_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U rakshex -d rakshex_e2e"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=3s
+          --health-retries=5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Migrate e2e database
+        run: pnpm run db:migrate
+        env:
+          DATABASE_URL: postgresql://rakshex:rakshex@127.0.0.1:5432/rakshex_e2e
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Run Playwright smoke
+        run: pnpm run test:e2e
+        env:
+          DATABASE_URL: postgresql://rakshex:rakshex@127.0.0.1:5432/rakshex_e2e
+          REDIS_URL: redis://127.0.0.1:6379
+          JWT_SECRET: test-only-jwt-secret-with-at-least-32-characters
+          CI: true
+          PLAYWRIGHT_FRONTEND_PORT: "3001"
+          PORT: "3000"
+
+  dependency-audit:
+    name: Dependency audit
+    needs: [install]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Fail on high/critical production advisories
+      - name: pnpm audit
+        run: pnpm audit --prod --audit-level=high
+
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  sbom:
+    name: SBOM
+    needs: [install]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Generate CycloneDX SBOM
+        run: |
+          pnpm dlx @cyclonedx/cdxgen -o sbom.json --spec-version 1.5
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.json
+
+  container-scan:
+    name: Container scan
+    needs: [docker]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image for scan
+        run: docker build -f Dockerfile --target api -t rakshex-api:scan .
+      - name: Trivy vulnerability scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: rakshex-api:scan
+          format: table
+          exit-code: "1"
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+
+  release-gate:
+    name: Release gate
+    needs:
+      [
+        format,
+        lint,
+        typecheck,
+        unit,
+        integration,
+        security,
+        build,
+        docker,
+        migration,
+        e2e,
+        dependency-audit,
+        secret-scan,
+        sbom,
+        container-scan,
+      ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: All critical jobs passed
+        run: |
+          echo "Release gate GREEN — failure in any prior job would block this step."
+          echo "Do not promote to production without smoke:test against real staging services."
+
+  staging-deploy:
+    name: Staging deploy
+    needs: [release-gate]
+    if: github.event_name == 'workflow_dispatch' && inputs.deployStaging == true
+    runs-on: ubuntu-latest
+    environment: staging
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push staging tags
+        run: |
+          VERSION="staging-${GITHUB_SHA::7}"
+          docker build -f Dockerfile --target api -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-api:${VERSION} .
+          docker build -f Dockerfile --target worker -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-worker:${VERSION} .
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-api:${VERSION}
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-worker:${VERSION}
+          echo "Pushed ${VERSION}"
+          echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
+      - name: Record deploy metadata
+        run: |
+          echo "image_version=${VERSION}" >> "$GITHUB_STEP_SUMMARY"
+          echo "rollback: retag previous version and redeploy (see docs/DEPLOYMENT.md)"

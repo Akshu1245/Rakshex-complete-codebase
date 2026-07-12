@@ -49,24 +49,62 @@ if [ -f "Cargo.toml" ]; then FRAMEWORK="rust"; fi
 
 echo "🔧 Detected framework: $FRAMEWORK"
 
-# Run scan via Rakshex API
+# Embed OpenAPI / Postman content when paths provided (safe for fork PRs — no private clone required beyond workspace)
+OPENAPI_CONTENT=""
+POSTMAN_CONTENT=""
+if [ -n "${SCAN_OPENAPI:-}" ] && [ -f "$SCAN_OPENAPI" ]; then
+  OPENAPI_CONTENT=$(jq -Rs . < "$SCAN_OPENAPI")
+fi
+if [ -n "${SCAN_POSTMAN:-}" ] && [ -f "$SCAN_POSTMAN" ]; then
+  POSTMAN_CONTENT=$(jq -Rs . < "$SCAN_POSTMAN")
+fi
+
+# Auto-discover collection if not specified
+if [ -z "$OPENAPI_CONTENT" ] && [ -z "$POSTMAN_CONTENT" ]; then
+  for f in openapi.json swagger.json collection.json postman.json; do
+    if [ -f "$f" ]; then
+      POSTMAN_CONTENT=$(jq -Rs . < "$f")
+      echo "Using discovered file: $f"
+      break
+    fi
+  done
+fi
+
 echo "🚀 Sending scan request to Rakshex..."
 
-SCAN_PAYLOAD=$(cat <<EOF
-{
-  "repository": "$GITHUB_REPOSITORY",
-  "prNumber": $PR_NUMBER,
-  "headSha": "$HEAD_SHA",
-  "baseSha": "$BASE_SHA",
-  "framework": "$FRAMEWORK",
-  "changedFiles": $(echo "$CHANGED_FILES" | jq -R 'split(",")' 2>/dev/null || echo '[]'),
-  "openapiPath": "${SCAN_OPENAPI:-}",
-  "postmanPath": "${SCAN_POSTMAN:-}"
-}
-EOF
-)
+SCAN_PAYLOAD=$(jq -n \
+  --arg repo "$GITHUB_REPOSITORY" \
+  --argjson pr "${PR_NUMBER:-0}" \
+  --arg head "$HEAD_SHA" \
+  --arg base "$BASE_SHA" \
+  --arg fw "$FRAMEWORK" \
+  --argjson openapi "${OPENAPI_CONTENT:-null}" \
+  --argjson postman "${POSTMAN_CONTENT:-null}" \
+  '{
+    repository: $repo,
+    prNumber: $pr,
+    headSha: $head,
+    baseSha: $base,
+    framework: $fw,
+    openapiContent: (if $openapi == null then empty else $openapi end),
+    postmanContent: (if $postman == null then empty else $postman end)
+  }')
 
-RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$RAKSHEX_API_URL/api/github/scan"   -H "Authorization: Bearer $RAKSHEX_API_KEY"   -H "Content-Type: application/json"   -d "$SCAN_PAYLOAD")
+# Fix empty content: jq may omit — rebuild if both empty
+if [ -z "$OPENAPI_CONTENT" ] && [ -z "$POSTMAN_CONTENT" ]; then
+  SCAN_PAYLOAD=$(jq -n \
+    --arg repo "$GITHUB_REPOSITORY" \
+    --argjson pr "${PR_NUMBER:-0}" \
+    --arg head "$HEAD_SHA" \
+    '{repository:$repo, prNumber:$pr, headSha:$head, collection:{item:[],paths:{}}}')
+fi
+
+IDEMP="${GITHUB_REPOSITORY}:${HEAD_SHA}"
+RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$RAKSHEX_API_URL/api/github/scan" \
+  -H "Authorization: Bearer $RAKSHEX_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "X-Idempotency-Key: $IDEMP" \
+  -d "$SCAN_PAYLOAD")
 
 HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
 BODY=$(echo "$RESPONSE" | sed '$d')
@@ -79,6 +117,12 @@ fi
 
 echo "✅ Scan complete"
 
+# Write SARIF for GitHub code scanning upload (when present)
+echo "$BODY" | jq '.sarif // empty' > rakshex-results.sarif 2>/dev/null || true
+if [ -f rakshex-results.sarif ] && [ -s rakshex-results.sarif ] && [ "$(cat rakshex-results.sarif)" != "null" ]; then
+  echo "📄 Wrote rakshex-results.sarif"
+fi
+
 # Parse findings
 FINDINGS=$(echo "$BODY" | jq '.findings // []')
 TOTAL=$(echo "$FINDINGS" | jq 'length')
@@ -86,8 +130,6 @@ CRITICAL=$(echo "$FINDINGS" | jq '[.[] | select(.severity=="Critical")] | length
 HIGH=$(echo "$FINDINGS" | jq '[.[] | select(.severity=="High")] | length')
 MEDIUM=$(echo "$FINDINGS" | jq '[.[] | select(.severity=="Medium")] | length')
 LOW=$(echo "$FINDINGS" | jq '[.[] | select(.severity=="Low")] | length')
-COST_ANOMALIES=$(echo "$BODY" | jq '.costAnomalies // []')
-SHADOW_APIS=$(echo "$BODY" | jq '.shadowApis // []')
 
 echo ""
 echo "📊 Results:"
@@ -96,8 +138,6 @@ echo "  Critical: $CRITICAL"
 echo "  High: $HIGH"
 echo "  Medium: $MEDIUM"
 echo "  Low: $LOW"
-echo "  Cost anomalies: $(echo "$COST_ANOMALIES" | jq 'length')"
-echo "  Shadow APIs: $(echo "$SHADOW_APIS" | jq 'length')"
 
 # Generate PR comment
 if [ "$POST_COMMENT" = "true" ] && [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then

@@ -1,4 +1,6 @@
 node_modules
+**/node_modules
+.pnpm-store
 dist
 build
 coverage
@@ -11,3 +13,19 @@ pnpm-lock.yaml
 package-lock.json
 *.min.js
 repomix-output.txt
+*.vsix
+**/drizzle/meta
+**/*.map
+apps/web/tsconfig.tsbuildinfo
+apps/web/public/**/*.docx
+apps/web/public/**/*.png
+apps/web/public/**/*.ico
+apps/vscode-extension/dist
+apps/vscode-extension/out
+apps/vscode-extension/node_modules
+# Generated / large historical audit dumps
+ARCHITECTURE_FOR_JUDGES.html
+JUDGES_PITCH_DECK.html
+$null
+nul
+-p

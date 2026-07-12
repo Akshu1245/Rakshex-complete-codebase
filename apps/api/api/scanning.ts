@@ -234,9 +234,35 @@ export const scanningRouter = router({
           remediation: f.remediation,
           status: f.status,
           cweId: f.cweId,
+          ruleId: (f as any).ruleId,
+          confidence: (f as any).confidence,
+          fingerprint: (f as any).fingerprint,
+          endpoint: (f as any).endpoint,
+          method: (f as any).method,
+          evidence: (f as any).evidence,
         })),
         createdAt: scan.createdAt,
       };
+    }),
+
+  /** Cancel a queued/active BullMQ scan job. */
+  cancelScan: editorProcedure
+    .input(z.object({ scanId: z.string().min(1) }))
+    .mutation(async ({ input, ctx }) => {
+      const job = await scanQueue.getJob(input.scanId);
+      if (!job) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Scan job not found" });
+      }
+      if (job.data.userId !== ctx.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Not your scan" });
+      }
+      const state = await job.getState();
+      if (state === "completed" || state === "failed") {
+        return { success: false, state, message: "Job already finished" };
+      }
+      await job.remove();
+      await db.createAuditLogEntry(ctx.user.id, "scan_cancelled", { scanId: input.scanId });
+      return { success: true, state: "cancelled" };
     }),
 
   /**

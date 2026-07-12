@@ -20,4 +20,11 @@ export {
   getRiskLevel,
   type RunScanOptions,
 } from "./engine.js";
-export { DEFAULT_API_RULES, getRuleById, listRuleIds } from "./rules/registry.js";
+export {
+  DEFAULT_API_RULES,
+  DEFAULT_AI_RULES,
+  DEFAULT_RULES,
+  getRuleById,
+  listRuleIds,
+  listRules,
+} from "./rules/registry.js";

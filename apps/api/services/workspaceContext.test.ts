@@ -39,7 +39,8 @@ describe("getWorkspaceRole", () => {
       invitedAt: null,
       joinedAt: new Date(),
     });
-    expect(await getWorkspaceRole(7, 42)).toBe("editor");
+    // legacy "editor" is normalized to "developer"
+    expect(await getWorkspaceRole(7, 42)).toBe("developer");
   });
 
   it("returns null when the user is not a member", async () => {
@@ -155,9 +156,9 @@ describe("checkWorkspacePermission", () => {
       joinedAt: new Date(),
     });
     const r1 = await checkWorkspacePermission(7, 42, "collections", "write");
-    expect(r1).toEqual({ allowed: true, role: "editor" });
+    expect(r1).toEqual({ allowed: true, role: "developer" });
     invalidateMembershipCache(7, 42);
     const r2 = await checkWorkspacePermission(7, 42, "members", "write");
-    expect(r2).toEqual({ allowed: false, role: "editor" });
+    expect(r2).toEqual({ allowed: false, role: "developer" });
   });
 });

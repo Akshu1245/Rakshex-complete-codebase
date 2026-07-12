@@ -8,9 +8,7 @@ export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  // Next dev compilation is intentionally serial here. It avoids test
-  // timeouts from six simultaneous cold route compiles on clean runners.
+  retries: process.env.CI ? 1 : 0,
   workers: 1,
   timeout: 60_000,
   reporter: process.env.CI ? "github" : "list",
@@ -26,27 +24,29 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: "pnpm run build && node dist/server/_core/index.js",
-      // `/metrics` proves the HTTP server is accepting requests without
-      // claiming that optional local dependencies (DB/Redis) are healthy.
-      url: `http://localhost:${BACKEND_PORT}/metrics`,
-      // Reuse a developer's local preview, but always create clean servers in CI.
+      // Monorepo API entry (tsx). Requires DATABASE_URL/REDIS_URL or in-memory fallbacks.
+      command: "pnpm --filter @rakshex/api exec tsx _core/index.ts",
+      url: `http://localhost:${BACKEND_PORT}/api/health`,
       reuseExistingServer: !process.env.CI,
-      timeout: 120_000,
+      timeout: 180_000,
       env: {
         NODE_ENV: "test",
         PORT: BACKEND_PORT,
         JWT_SECRET: "test-only-jwt-secret-with-at-least-32-characters",
-        USE_IN_MEMORY_REDIS: "true",
+        DATABASE_URL:
+          process.env.DATABASE_URL || "postgresql://rakshex:rakshex@127.0.0.1:5432/rakshex_e2e",
+        REDIS_URL: process.env.REDIS_URL || "redis://127.0.0.1:6379",
+        USE_IN_MEMORY_REDIS: process.env.USE_IN_MEMORY_REDIS || "false",
       },
     },
     {
-      command: `npm run dev -- --port ${FRONTEND_PORT}`,
-      cwd: "./devpulse-frontend",
+      command: `pnpm --filter @rakshex/web exec next dev -p ${FRONTEND_PORT}`,
       url: BASE_URL,
       reuseExistingServer: !process.env.CI,
-      timeout: 120_000,
-      env: { NEXT_PUBLIC_TS_API_URL: `http://localhost:${BACKEND_PORT}` },
+      timeout: 180_000,
+      env: {
+        NEXT_PUBLIC_TS_API_URL: `http://localhost:${BACKEND_PORT}`,
+      },
     },
   ],
 });

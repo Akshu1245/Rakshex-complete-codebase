@@ -252,6 +252,27 @@ class SDKServer {
     // cookie auth so headless clients never hit the OAuth sync path.
     const apiKey = this.extractApiKey(req);
     if (apiKey) {
+      // Prefer workspace-scoped multi-key table (hashed, revocable, scoped)
+      try {
+        const { validateWorkspaceApiKey } = await import("../services/workspaceApiKeys");
+        const validated = await validateWorkspaceApiKey(apiKey, {
+          ip: req.ip ?? (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim(),
+        });
+        if (validated) {
+          const user = await db.getUserById(validated.userId);
+          if (user) {
+            (user as any).__apiKeyAuth = {
+              keyId: validated.keyId,
+              workspaceId: validated.workspaceId,
+              scopes: validated.scopes,
+            };
+            return user;
+          }
+        }
+      } catch {
+        /* fall through to legacy */
+      }
+      // Legacy single-key on users table
       const user = await db.getUserByApiKey(apiKey);
       if (!user) {
         throw ForbiddenError("Invalid API key");

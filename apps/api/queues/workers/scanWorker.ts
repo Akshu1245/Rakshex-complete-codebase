@@ -29,7 +29,10 @@ function buildWorker(): Worker<ScanJobData> {
         triggeredBy: "user",
       };
 
+      // Progress for UI polling (idempotent retries re-run scan with same inputs)
+      await job.updateProgress(10);
       const result = await runCollectionScan(userId, collectionId, options);
+      await job.updateProgress(100);
 
       // Broadcast completion via WebSocket
       try {

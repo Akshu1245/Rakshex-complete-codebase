@@ -22,6 +22,7 @@ import {
   type WorkspaceRole,
   assertPermission,
   hasPermission,
+  normalizeRole,
 } from "./rbac";
 
 const CACHE_TTL_MS = 60_000;
@@ -59,8 +60,9 @@ export async function getWorkspaceRole(
   if (!member || !member.active) {
     return null;
   }
-  cache.set(key, { role: member.role, expiresAt: now + CACHE_TTL_MS });
-  return member.role;
+  const role = normalizeRole(member.role as string);
+  cache.set(key, { role, expiresAt: now + CACHE_TTL_MS });
+  return role;
 }
 
 /**

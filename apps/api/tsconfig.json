@@ -4,6 +4,10 @@
     "outDir": "../../dist/apps/api",
     "rootDir": ".",
     "noEmit": true,
+    // App typecheck only — do not emit .d.ts (avoids TS2742 portable type noise
+    // from Express request types leaking into tRPC procedure exports).
+    "declaration": false,
+    "declarationMap": false,
     "strict": false,
     "noImplicitAny": false,
     "strictNullChecks": false,

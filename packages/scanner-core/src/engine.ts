@@ -1,5 +1,5 @@
 import { normalizeCollection } from "./normalize.js";
-import { DEFAULT_API_RULES } from "./rules/registry.js";
+import { DEFAULT_RULES } from "./rules/registry.js";
 import type { LegacyFinding, RuleFinding, ScanResult, ScanRule, Severity } from "./types.js";
 
 export interface RunScanOptions {
@@ -30,7 +30,7 @@ function severityRank(s: Severity): number {
 export function runScan(rawCollection: unknown, options: RunScanOptions = {}): ScanResult {
   const started = Date.now();
   const collection = normalizeCollection(rawCollection);
-  let rules = options.rules ?? DEFAULT_API_RULES;
+  let rules = options.rules ?? DEFAULT_RULES;
   if (options.onlyRuleIds?.length) {
     const allow = new Set(options.onlyRuleIds);
     rules = rules.filter((r) => allow.has(r.id));

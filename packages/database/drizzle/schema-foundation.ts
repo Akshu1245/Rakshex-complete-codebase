@@ -219,8 +219,13 @@ export const apiKeys = pgTable(
     /** Public prefix e.g. rk_live_abc — secret only stored hashed. */
     keyPrefix: varchar("key_prefix", { length: 24 }).notNull(),
     keyHash: varchar("key_hash", { length: 128 }).notNull(),
+    keySuffix: varchar("key_suffix", { length: 8 }),
     environment: apiKeyEnvironmentEnum("environment").default("live").notNull(),
     scopes: json("scopes").$type<string[]>().notNull().default([]),
+    allowedIps: json("allowed_ips").$type<string[]>().default([]),
+    allowedRepositories: json("allowed_repositories").$type<string[]>().default([]),
+    projectId: varchar("project_id", { length: 64 }),
+    rotatedFromId: varchar("rotated_from_id", { length: 64 }),
     expiresAt: timestamp("expires_at"),
     lastUsedAt: timestamp("last_used_at"),
     revokedAt: timestamp("revoked_at"),
@@ -231,6 +236,32 @@ export const apiKeys = pgTable(
     prefixUniq: uniqueIndex("api_keys_prefix_uidx").on(t.keyPrefix),
     hashUniq: uniqueIndex("api_keys_hash_uidx").on(t.keyHash),
     workspaceIdx: index("api_keys_workspace_id_idx").on(t.workspaceId),
+  }),
+);
+
+export const environmentKindEnum = pgEnum("environment_kind", [
+  "development",
+  "staging",
+  "production",
+]);
+
+export const environments = pgTable(
+  "environments",
+  {
+    id: varchar("id", { length: 64 }).primaryKey(),
+    workspaceId: integer("workspace_id").notNull(),
+    projectId: varchar("project_id", { length: 64 }),
+    name: varchar("name", { length: 64 }).notNull(),
+    kind: environmentKindEnum("kind").notNull(),
+    slug: varchar("slug", { length: 64 }).notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at"),
+  },
+  (t) => ({
+    workspaceSlugUniq: uniqueIndex("environments_workspace_slug_uidx").on(t.workspaceId, t.slug),
+    workspaceIdx: index("environments_workspace_id_idx").on(t.workspaceId),
+    projectIdx: index("environments_project_id_idx").on(t.projectId),
   }),
 );
 

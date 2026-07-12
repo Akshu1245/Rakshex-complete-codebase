@@ -90,6 +90,18 @@
         "category": "Rakshex"
       },
       {
+        "command": "rakshex.scanWorkspace",
+        "title": "Rakshex: Scan Workspace",
+        "icon": "$(folder)",
+        "category": "Rakshex"
+      },
+      {
+        "command": "rakshex.scanChangedFiles",
+        "title": "Rakshex: Scan Changed Files",
+        "icon": "$(git-commit)",
+        "category": "Rakshex"
+      },
+      {
         "command": "rakshex.refresh",
         "title": "Rakshex: Refresh Findings (Pull Latest)",
         "icon": "$(refresh)",

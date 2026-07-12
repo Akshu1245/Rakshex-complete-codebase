@@ -97,14 +97,19 @@ export default function CollectionsPage() {
         const text = event.target?.result as string;
         try {
           if (format === "openapi" && (ext === "yaml" || ext === "yml")) {
+            // Server-side secure YAML parse (bomb protection, $ref block)
             resolve({ format, data: { _rawYaml: text }, name: baseName });
           } else {
-            const parsed = JSON.parse(text);
-            // Auto-detect Postman vs OpenAPI in JSON
-            let detectedFormat = format;
-            if (parsed.openapi || parsed.swagger) detectedFormat = "openapi";
-            else if (parsed.info?._postman_id || parsed.item) detectedFormat = "postman";
-            resolve({ format: detectedFormat, data: parsed, name: baseName });
+            try {
+              const parsed = JSON.parse(text);
+              let detectedFormat = format;
+              if (parsed.openapi || parsed.swagger) detectedFormat = "openapi";
+              else if (parsed.info?._postman_id || parsed.item) detectedFormat = "postman";
+              resolve({ format: detectedFormat, data: parsed, name: baseName });
+            } catch {
+              // Fallback: treat as YAML OpenAPI
+              resolve({ format: "openapi", data: { _rawYaml: text }, name: baseName });
+            }
           }
         } catch {
           reject(

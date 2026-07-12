@@ -16,7 +16,14 @@ import { publicProcedure, router, protectedProcedure, setCsrfCookie } from "./_c
 import * as db from "./db";
 import { sendPasswordResetEmail } from "./email";
 import { settingsRouter, verifyTotpCode } from "./settingsRouter";
-import { hashPassword, verifyPassword } from "./utils/password";
+import {
+  hashPassword,
+  verifyPassword,
+  needsRehash,
+  hashToken,
+  generateSecureToken,
+} from "./utils/password";
+import { consumeRecoveryCode } from "./services/recoveryCodes";
 import { users } from "@rakshex/database";
 import { sql } from "drizzle-orm";
 import {
@@ -55,6 +62,8 @@ import { apiDocsRouter, setAppRouterForDocs } from "./api/apiDocs";
 import { ssoRouter } from "./api/sso";
 import { workspacesRouter } from "./api/workspaces";
 import { apiKeysRouter } from "./api/apiKeys";
+import { projectsRouter } from "./api/projects";
+import { findingsRouter } from "./api/findings";
 import { researchRouter } from "./api/research";
 import { telemetryRouter } from "./api/telemetry";
 import { analyticsRouter } from "./api/analytics";
@@ -83,11 +92,39 @@ export const appRouter = router({
   system: systemRouter,
   auth: router({
     me: publicProcedure.query((opts) => opts.ctx.user),
-    logout: publicProcedure.mutation(({ ctx }) => {
+    logout: publicProcedure.mutation(async ({ ctx }) => {
+      // Immediate session revocation when we can resolve the session
+      if (ctx.user?.id) {
+        try {
+          const cookies = ctx.req.headers.cookie ?? "";
+          const parsed = Object.fromEntries(
+            cookies.split(";").map((c: string) => {
+              const [k, ...v] = c.trim().split("=");
+              return [k, v.join("=")];
+            }),
+          );
+          const rawRefresh = parsed[REFRESH_TOKEN_COOKIE];
+          if (rawRefresh && typeof rawRefresh === "string") {
+            const tokenHash = hashRefreshToken(rawRefresh);
+            const session = await db.getUserSessionByRefreshTokenHash(tokenHash);
+            if (session) {
+              await db.revokeUserSession(session.id);
+              try {
+                await redis.set(`revoked:${tokenHash}`, "1", "EX", 3600);
+              } catch {
+                /* Redis optional */
+              }
+            }
+          }
+        } catch {
+          /* best-effort revoke */
+        }
+      }
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       ctx.res.clearCookie(ACCESS_TOKEN_COOKIE, { ...cookieOptions, maxAge: -1 });
       ctx.res.clearCookie(REFRESH_TOKEN_COOKIE, { ...cookieOptions, maxAge: -1 });
+      ctx.res.clearCookie("session", { ...cookieOptions, maxAge: -1 });
       return { success: true };
     }),
     /**
@@ -251,6 +288,12 @@ export const appRouter = router({
           sameSite: "strict",
           path: "/trpc/auth.refreshToken",
         });
+        // Middleware-compatible alias
+        ctx.res.cookie("session", accessToken, {
+          ...cookieOptions,
+          maxAge: ACCESS_TOKEN_MAX_AGE_MS,
+          sameSite: "strict",
+        });
 
         setCsrfCookie(ctx.res);
 
@@ -309,10 +352,24 @@ export const appRouter = router({
 
         await db.resetFailedLoginAttempts(user.id);
 
+        // Transparent upgrade to Argon2id
+        if (needsRehash(user.passwordHash)) {
+          try {
+            await db.updateUserPassword(user.id, hashPassword(input.password));
+          } catch {
+            /* non-fatal */
+          }
+        }
+
         // Check 2FA
         const userWithTotp = await db.getUserById(user.id);
         if (userWithTotp && (userWithTotp as any).totpSecret) {
-          return { success: false, requires2FA: true, userId: user.id };
+          return {
+            success: false,
+            requires2FA: true,
+            userId: user.id,
+            mfaToken: await generateAccessToken(user.id, `mfa_pending_${user.id}`),
+          };
         }
 
         // Create session with dual tokens
@@ -343,6 +400,11 @@ export const appRouter = router({
           maxAge: REFRESH_TOKEN_MAX_AGE_MS,
           sameSite: "strict",
           path: "/trpc/auth.refreshToken",
+        });
+        ctx.res.cookie("session", accessToken, {
+          ...cookieOptions,
+          maxAge: ACCESS_TOKEN_MAX_AGE_MS,
+          sameSite: "strict",
         });
 
         setCsrfCookie(ctx.res);
@@ -440,15 +502,18 @@ export const appRouter = router({
     verify2FALogin: publicProcedure
       .input(
         z.object({
-          userId: z.string().length(1).max(100),
-          code: z
-            .string()
-            .length(6)
-            .regex(/^\d{6}$/),
+          userId: z.union([z.string().min(1).max(32), z.number().int().positive()]),
+          code: z.string().min(6).max(20),
+          /** When true, `code` is treated as a recovery code. */
+          useRecoveryCode: z.boolean().optional(),
         }),
       )
       .mutation(async ({ input, ctx }) => {
-        const user = await db.getUserById(Number(input.userId));
+        const userId = typeof input.userId === "number" ? input.userId : Number(input.userId);
+        if (!Number.isFinite(userId) || userId <= 0) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid user id" });
+        }
+        const user = await db.getUserById(userId);
         if (!user || !(user as any).totpSecret) {
           throw new TRPCError({
             code: "BAD_REQUEST",
@@ -456,7 +521,29 @@ export const appRouter = router({
           });
         }
 
-        if (!verifyTotpCode((user as any).totpSecret, input.code)) {
+        let verified = false;
+        if (input.useRecoveryCode) {
+          const stored = ((user as any).recoveryCodesHash as string[] | null) ?? [];
+          const remaining = consumeRecoveryCode(input.code, stored);
+          if (remaining) {
+            await db.updateUser(user.id, { recoveryCodesHash: remaining } as any);
+            verified = true;
+            await db.createAuditLogEntry(
+              user.id,
+              "login_recovery_code_used",
+              { remaining: remaining.length },
+              ctx.req.ip,
+              ctx.req.headers["user-agent"] as string,
+            );
+          }
+        } else if (
+          /^\d{6}$/.test(input.code) &&
+          verifyTotpCode((user as any).totpSecret, input.code)
+        ) {
+          verified = true;
+        }
+
+        if (!verified) {
           await db.createAuditLogEntry(
             user.id,
             "login_2fa_failed",
@@ -496,6 +583,11 @@ export const appRouter = router({
           sameSite: "strict",
           path: "/trpc/auth.refreshToken",
         });
+        ctx.res.cookie("session", accessToken, {
+          ...cookieOptions,
+          maxAge: ACCESS_TOKEN_MAX_AGE_MS,
+          sameSite: "strict",
+        });
 
         setCsrfCookie(ctx.res);
 
@@ -512,18 +604,20 @@ export const appRouter = router({
     forgotPassword: publicProcedure
       .input(z.object({ email: z.string().email() }))
       .mutation(async ({ input }) => {
-        const user = await db.getUserByEmail(input.email);
+        const user = await db.getUserByEmail(input.email.trim().toLowerCase());
         if (user && user.email) {
-          const token = crypto.randomBytes(32).toString("hex");
-          const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-          await db.createPasswordResetToken(user.id, token, expiresAt);
+          const token = generateSecureToken(32);
+          const tokenHash = hashToken(token);
+          // 1 hour expiry, single-use
+          const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+          await db.createPasswordResetToken(user.id, tokenHash, expiresAt);
           const appUrl = process.env.APP_URL || "http://localhost:3000";
           const resetUrl = `${appUrl}/reset-password?token=${token}`;
           try {
             await sendPasswordResetEmail({
               toEmail: user.email,
               resetUrl,
-              expiresInHours: 24,
+              expiresInHours: 1,
             });
           } catch (emailError) {
             logger.error({ err: emailError }, "[Auth] Failed to send password reset email");
@@ -542,7 +636,11 @@ export const appRouter = router({
         }),
       )
       .mutation(async ({ input, ctx }) => {
-        const resetToken = await db.getPasswordResetToken(input.token);
+        const tokenHash = hashToken(input.token);
+        const resetToken =
+          (await db.getPasswordResetToken(tokenHash)) ??
+          // Legacy: plaintext token rows created before hashing migration
+          (await db.getPasswordResetToken(input.token));
         if (!resetToken) {
           throw new TRPCError({
             code: "BAD_REQUEST",
@@ -561,9 +659,10 @@ export const appRouter = router({
             message: "Token has already been used",
           });
         }
+        // Mark used FIRST (single-use) before password update to prevent races
+        await db.markPasswordResetTokenUsed(resetToken.id);
         const hashedPassword = hashPassword(input.newPassword);
         await db.updateUserPassword(resetToken.userId, hashedPassword);
-        await db.markPasswordResetTokenUsed(resetToken.id);
         await db.revokeAllUserSessions(resetToken.userId);
         await db.createAuditLogEntry(
           resetToken.userId,
@@ -577,10 +676,56 @@ export const appRouter = router({
           message: "Password has been reset successfully",
         };
       }),
+    /**
+     * Request email verification link (authenticated).
+     */
+    requestEmailVerification: protectedProcedure.mutation(async ({ ctx }) => {
+      const user = await db.getUserById(ctx.user.id);
+      if (!user?.email) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "No email on account" });
+      }
+      if ((user as any).emailVerifiedAt) {
+        return { success: true, alreadyVerified: true };
+      }
+      const token = generateSecureToken(32);
+      await db.createVerificationToken(
+        ctx.user.id,
+        hashToken(token),
+        "email_verify",
+        new Date(Date.now() + 24 * 60 * 60 * 1000),
+      );
+      // Email delivery is best-effort; token returned only in non-production for tests
+      logger.info({ userId: ctx.user.id }, "[Auth] Email verification token issued");
+      return {
+        success: true,
+        ...(process.env.NODE_ENV !== "production" ? { devToken: token } : {}),
+      };
+    }),
+    verifyEmail: publicProcedure
+      .input(z.object({ token: z.string().min(1) }))
+      .mutation(async ({ input, ctx }) => {
+        const row = await db.consumeVerificationToken(hashToken(input.token), "email_verify");
+        if (!row) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Invalid or expired verification token",
+          });
+        }
+        await db.updateUser(row.userId, { emailVerifiedAt: new Date() } as any);
+        await db.createAuditLogEntry(
+          row.userId,
+          "email_verified",
+          {},
+          ctx.req.ip,
+          ctx.req.headers["user-agent"] as string,
+        );
+        return { success: true };
+      }),
   }),
   settings: settingsRouter,
   collections: collectionsRouter,
   scanning: scanningRouter,
+  findings: findingsRouter,
   shadowAPI: shadowAPIRouter,
   tokenAnalytics: tokenAnalyticsRouter,
   killSwitch: killSwitchRouter,
@@ -605,6 +750,7 @@ export const appRouter = router({
   sso: ssoRouter,
   workspaces: workspacesRouter,
   apiKeys: apiKeysRouter,
+  projects: projectsRouter,
   shadowAiDetection: shadowAiDetectionRouter,
   research: researchRouter,
   telemetry: telemetryRouter,

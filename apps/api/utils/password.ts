@@ -1,35 +1,71 @@
 /**
- * Password hashing utilities using Node.js built-in crypto module.
- * Uses PBKDF2 with SHA-512 for secure password storage.
+ * Password hashing with Argon2id (primary) and PBKDF2/legacy fallbacks for migration.
+ * Never stores plaintext passwords.
  */
 import crypto from "crypto";
+import { argon2id } from "@noble/hashes/argon2.js";
+import { bytesToHex, hexToBytes } from "@noble/hashes/utils.js";
 
 const PBKDF2_ITERATIONS = 100000;
 const HASH_LENGTH = 64;
 const SALT_LENGTH = 32;
 
 /**
- * Hash a password using PBKDF2-SHA512.
- * Returns a colon-separated string of algorithm:salt:hash for storage.
+ * Argon2id parameters.
+ * Pure-JS (@noble/hashes) is slower than native argon2; 19 MiB / t=2
+ * matches OWASP's minimum interactive guidance without multi-second logins.
+ */
+const ARGON2_OPTS = {
+  t: 2, // time cost
+  m: 19456, // ~19 MiB
+  p: 1, // parallelism
+  dkLen: 32,
+} as const;
+
+/**
+ * Hash a password with Argon2id.
+ * Format: argon2id$v=19$m=65536,t=3,p=1$<salt_hex>$<hash_hex>
  */
 export function hashPassword(password: string): string {
   const salt = crypto.randomBytes(SALT_LENGTH);
-  const hash = crypto.pbkdf2Sync(password, salt, PBKDF2_ITERATIONS, HASH_LENGTH, "sha512");
-  return `pbkdf2:sha512:${salt.toString("hex")}:${hash.toString("hex")}`;
+  const hash = argon2id(password, salt, ARGON2_OPTS);
+  return `argon2id$v=19$m=${ARGON2_OPTS.m},t=${ARGON2_OPTS.t},p=${ARGON2_OPTS.p}$${bytesToHex(salt)}$${bytesToHex(hash)}`;
 }
 
 /**
  * Verify a password against a stored hash.
- * Supports legacy SHA-256 hashes for migration, but new hashes use PBKDF2.
+ * Supports Argon2id, PBKDF2-SHA512, and legacy SHA-256.
  */
 export function verifyPassword(password: string, storedHash: string): boolean {
   if (!storedHash || !password) {
     return false;
   }
 
-  // Handle legacy SHA-256 hashes (for migration) — log a warning and force rehash
-  if (storedHash.length === 64 && !storedHash.includes(":")) {
-    const pepper = process.env.COOKIE_SECRET || "";
+  // Argon2id (primary)
+  if (storedHash.startsWith("argon2id$")) {
+    try {
+      const parts = storedHash.split("$");
+      // argon2id $ v=19 $ m=...,t=...,p=... $ salt $ hash
+      if (parts.length !== 5) return false;
+      const paramPart = parts[2]!;
+      const saltHex = parts[3]!;
+      const hashHex = parts[4]!;
+      const m = Number(/m=(\d+)/.exec(paramPart)?.[1] ?? ARGON2_OPTS.m);
+      const t = Number(/t=(\d+)/.exec(paramPart)?.[1] ?? ARGON2_OPTS.t);
+      const p = Number(/p=(\d+)/.exec(paramPart)?.[1] ?? ARGON2_OPTS.p);
+      const salt = hexToBytes(saltHex);
+      const expected = hexToBytes(hashHex);
+      const computed = argon2id(password, salt, { t, m, p, dkLen: expected.length });
+      if (computed.length !== expected.length) return false;
+      return crypto.timingSafeEqual(Buffer.from(computed), Buffer.from(expected));
+    } catch {
+      return false;
+    }
+  }
+
+  // Legacy SHA-256 (pre-PBKDF2)
+  if (storedHash.length === 64 && !storedHash.includes(":") && !storedHash.includes("$")) {
+    const pepper = process.env.COOKIE_SECRET || process.env.JWT_SECRET || "";
     const legacyHash = crypto
       .createHash("sha256")
       .update(password + pepper)
@@ -40,15 +76,15 @@ export function verifyPassword(password: string, storedHash: string): boolean {
     return crypto.timingSafeEqual(legacyBuf, storedBuf);
   }
 
-  // Handle new PBKDF2 hashes
+  // PBKDF2 (previous primary)
   if (storedHash.startsWith("pbkdf2:")) {
     const parts = storedHash.split(":");
     if (parts.length !== 4) {
       return false;
     }
     const [, algorithm, saltHex, hashHex] = parts;
-    const salt = Buffer.from(saltHex, "hex");
-    const storedHashBuf = Buffer.from(hashHex, "hex");
+    const salt = Buffer.from(saltHex!, "hex");
+    const storedHashBuf = Buffer.from(hashHex!, "hex");
 
     const computedHash = crypto.pbkdf2Sync(
       password,
@@ -58,7 +94,6 @@ export function verifyPassword(password: string, storedHash: string): boolean {
       algorithm as "sha512",
     );
 
-    // Use constant-time comparison to prevent timing attacks
     if (computedHash.length !== storedHashBuf.length) {
       return false;
     }
@@ -69,26 +104,30 @@ export function verifyPassword(password: string, storedHash: string): boolean {
 }
 
 /**
- * Check if a hash needs rehashing (e.g., legacy format or low iterations).
+ * True when the stored hash should be upgraded to Argon2id on next successful login.
  */
 export function needsRehash(storedHash: string): boolean {
-  // Legacy SHA-256 hashes need rehashing
-  if (storedHash.length === 64 && !storedHash.includes(":")) {
-    return true;
-  }
-  // PBKDF2 hashes — extract actual iteration count from the format pbkdf2:sha512:salt:hash
-  if (storedHash.startsWith("pbkdf2:")) {
-    const parts = storedHash.split(":");
-    // Format: pbkdf2:<algorithm>:<salt>:<hash> — iterations are always PBKDF2_ITERATIONS
-    // If the hash format changes in future, check parts.length for a version with explicit iterations
-    return false; // Current PBKDF2 hashes use the correct iteration count
+  if (!storedHash) return true;
+  if (storedHash.startsWith("argon2id$")) {
+    const paramPart = storedHash.split("$")[2] ?? "";
+    const m = Number(/m=(\d+)/.exec(paramPart)?.[1] ?? 0);
+    const t = Number(/t=(\d+)/.exec(paramPart)?.[1] ?? 0);
+    return m < ARGON2_OPTS.m || t < ARGON2_OPTS.t;
   }
   return true;
 }
 
 /**
- * Generate a secure random token.
+ * Generate a secure random token (hex).
  */
 export function generateSecureToken(length: number = 32): string {
   return crypto.randomBytes(length).toString("hex");
+}
+
+/**
+ * Hash opaque tokens (password reset, email verify, recovery codes) with SHA-256.
+ * Raw tokens are never stored.
+ */
+export function hashToken(token: string): string {
+  return crypto.createHash("sha256").update(token).digest("hex");
 }

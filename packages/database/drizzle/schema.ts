@@ -30,7 +30,15 @@ export const findingSeverityEnum = pgEnum("finding_severity", [
   "Medium",
   "Low",
 ]);
-export const findingStatusEnum = pgEnum("finding_status", ["open", "in-progress", "resolved"]);
+export const findingStatusEnum = pgEnum("finding_status", [
+  "open",
+  "in-progress",
+  "resolved",
+  "suppressed",
+  "false_positive",
+  "accepted_risk",
+  "reopened",
+]);
 export const killSwitchEventTypeEnum = pgEnum("kill_switch_event_type", [
   "budget_set",
   "triggered",
@@ -97,13 +105,21 @@ export const ssoDefaultRoleEnum = pgEnum("sso_default_role", ["admin", "editor",
 export const workspaceMemberRoleEnum = pgEnum("workspace_member_role", [
   "owner",
   "admin",
-  "editor",
+  "security_lead",
+  "developer",
+  "analyst",
   "viewer",
+  "billing_admin",
+  "editor", // legacy alias
 ]);
 export const workspaceInvitationRoleEnum = pgEnum("workspace_invitation_role", [
   "admin",
-  "editor",
+  "security_lead",
+  "developer",
+  "analyst",
   "viewer",
+  "billing_admin",
+  "editor", // legacy alias
 ]);
 export const aiEventStatusEnum = pgEnum("ai_event_status", ["ok", "error", "timeout", "blocked"]);
 export const securityEventTypeEnum = pgEnum("security_event_type", [
@@ -143,6 +159,9 @@ export const users = pgTable(
     totpSecret: varchar("totpSecret", { length: 64 }),
     pendingTotpSecret: varchar("pendingTotpSecret", { length: 64 }),
     pendingTotpExpiresAt: timestamp("pendingTotpExpiresAt"),
+    emailVerifiedAt: timestamp("email_verified_at"),
+    /** SHA-256 hashes of MFA recovery codes (JSON string array). */
+    recoveryCodesHash: json("recovery_codes_hash").$type<string[]>(),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     updatedAt: timestamp("updatedAt")
       .defaultNow()
@@ -196,6 +215,10 @@ export const collections = pgTable(
     totalRequests: integer("totalRequests").default(0).notNull(),
     githubRepo: varchar("githubRepo", { length: 255 }), // Link to GitHub repo (owner/repo format)
     lastScannedAt: timestamp("lastScannedAt"),
+    contentHash: varchar("content_hash", { length: 64 }),
+    tags: json("tags").$type<string[]>().default([]),
+    version: integer("version").default(1),
+    workspaceId: integer("workspace_id"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     updatedAt: timestamp("updatedAt")
       .defaultNow()
@@ -255,6 +278,20 @@ export const findings = pgTable(
     remediation: text("remediation"),
     status: findingStatusEnum("status").default("open").notNull(),
     cweId: varchar("cweId", { length: 64 }),
+    ruleId: varchar("rule_id", { length: 128 }),
+    confidence: varchar("confidence", { length: 32 }),
+    fingerprint: varchar("fingerprint", { length: 255 }),
+    endpoint: text("endpoint"),
+    method: varchar("method", { length: 16 }),
+    evidence: json("evidence"),
+    assigneeUserId: integer("assignee_user_id"),
+    dueAt: timestamp("due_at"),
+    duplicateOf: varchar("duplicate_of", { length: 64 }),
+    suppressionReason: text("suppression_reason"),
+    suppressionExpiresAt: timestamp("suppression_expires_at"),
+    acceptedRiskReason: text("accepted_risk_reason"),
+    acceptedRiskApprovedBy: integer("accepted_risk_approved_by"),
+    workspaceId: integer("workspace_id"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     updatedAt: timestamp("updatedAt")
       .defaultNow()
@@ -265,6 +302,9 @@ export const findings = pgTable(
     scanIdIdx: index().on(table.scanId),
     collectionIdIdx: index().on(table.collectionId),
     userIdIdx: index().on(table.userId),
+    fingerprintIdx: index().on(table.fingerprint),
+    ruleIdIdx: index().on(table.ruleId),
+    statusIdx: index().on(table.status),
   }),
 );
 

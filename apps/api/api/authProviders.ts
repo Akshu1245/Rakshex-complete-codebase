@@ -9,6 +9,6 @@ export const authProvidersRouter = router({
   list: publicProcedure.query(() => ({
     emailPassword: true,
     google: Boolean(ENV.googleClientId && ENV.googleClientSecret),
-    github: Boolean(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET),
+    github: Boolean(ENV.githubClientId && ENV.githubClientSecret),
   })),
 });

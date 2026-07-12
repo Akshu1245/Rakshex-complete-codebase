@@ -99,7 +99,8 @@ export function KeyInventoryTab() {
               onClick={() => setFilterType(filterType === type ? "all" : type)}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${filterType === type ? "bg-[#14b8a6]/15 border-[#14b8a6]/30 text-[#14b8a6]" : "bg-white/5 border-white/10 text-gray-400 hover:text-white"}`}
             >
-              {type.replace(/([A-Z])/g, " $1").trim()} <span className="opacity-60">{count}</span>
+              {type.replace(/([A-Z])/g, " $1").trim()}{" "}
+              <span className="opacity-60">{String(count)}</span>
             </button>
           ))}
           {filterType !== "all" && (

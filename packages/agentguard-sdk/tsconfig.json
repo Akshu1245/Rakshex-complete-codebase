@@ -3,7 +3,9 @@
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
-    "noEmit": true
+    "noEmit": true,
+    "lib": ["ES2022"],
+    "types": ["node"]
   },
   "include": ["src/**/*.ts"]
 }

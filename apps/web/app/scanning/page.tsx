@@ -65,71 +65,91 @@ export default function ScanningPage() {
     setTerminalLogs((prev) => [...prev, { time: timestamp, type, msg }]);
   };
 
-  // Seed default terminal logs on mount
+  // Real status polling — no simulated findings
+  const statusQuery = trpc.scanning.getScanStatus.useQuery(
+    { scanId: queuedScanId! },
+    {
+      enabled: Boolean(queuedScanId) && scanStatus === "queued",
+      refetchInterval: 2000,
+      retry: 1,
+    },
+  );
+
   useEffect(() => {
     setTerminalLogs([
       {
         time: new Date().toLocaleTimeString(),
         type: "info",
-        msg: "Initializing RaksHex Scanner Core...",
-      },
-      {
-        time: new Date().toLocaleTimeString(),
-        type: "info",
-        msg: "Target: https://api.rakshex-cloud.net",
-      },
-      {
-        time: new Date().toLocaleTimeString(),
-        type: "success",
-        msg: "Handshake successful. TLS 1.3 detected.",
-      },
-      {
-        time: new Date().toLocaleTimeString(),
-        type: "info",
-        msg: "Crawling API directory structure...",
-      },
-      {
-        time: new Date().toLocaleTimeString(),
-        type: "warn",
-        msg: "Found 12 exposed endpoints in root directory.",
+        msg: "Rakshex Scanner ready. Select a collection and start a scan.",
       },
     ]);
   }, []);
 
-  // Auto-scroll terminal
   useEffect(() => {
     terminalEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [terminalLogs]);
 
-  // Terminal simulated log streaming when scanning
   useEffect(() => {
-    if (startScan.isPending) {
-      addTerminalLog("info", `Initiating ${scanIntensity} scan on collection...`);
-      addTerminalLog("info", `Rate limit capped at ${rateLimit} requests/second.`);
-      const interval = setInterval(() => {
-        const simulatedMsgs = [
-          { type: "info" as const, msg: "Fuzzing authorization header tokens..." },
-          { type: "warn" as const, msg: "Detected possible CORS policy wildcard origin access." },
-          {
-            type: "info" as const,
-            msg: "Scanning input parameter values for SQL injection vectors...",
-          },
-          {
-            type: "error" as const,
-            msg: "CRITICAL: SQL syntax leakage detected on /v1/auth/login",
-          },
-          { type: "success" as const, msg: "Autofix patch prepared for SQLi vulnerability." },
-        ];
-        const randomMsg = simulatedMsgs[Math.floor(Math.random() * simulatedMsgs.length)];
-        addTerminalLog(randomMsg.type, randomMsg.msg);
-      }, 1500);
-
-      return () => clearInterval(interval);
+    if (!statusQuery.data) return;
+    const st = statusQuery.data.state;
+    addTerminalLog(
+      "info",
+      `Job state: ${st} · progress: ${String(statusQuery.data.progress ?? 0)}`,
+    );
+    if (st === "completed") {
+      setScanStatus("completed");
+      addTerminalLog("success", "Scan job completed. Loading findings…");
+      // Load latest scan for collection
+      setQueuedScanId(null);
+    } else if (st === "failed") {
+      setScanStatus("failed");
+      setError("Scan job failed. Retry from the configuration panel.");
+      addTerminalLog("error", "Scan job failed.");
+      setQueuedScanId(null);
     }
-  }, [startScan.isPending, scanIntensity, rateLimit]);
+  }, [statusQuery.data]);
+
+  const scansQuery = trpc.scanning.listScans.useQuery(
+    { collectionId: selectedCollection, page: 1, pageSize: 5 },
+    { enabled: Boolean(selectedCollection) },
+  );
+
+  const latestScanId = scansQuery.data?.scans?.[0]?.id;
+  const scanDetail = trpc.scanning.getScan.useQuery(
+    { scanId: latestScanId! },
+    {
+      enabled: Boolean(latestScanId) && scanStatus === "completed",
+      retry: 1,
+    },
+  );
+
+  useEffect(() => {
+    if (scanDetail.data?.findings) {
+      setScanResult({
+        riskScore: scanDetail.data.riskScore ?? 0,
+        riskLevel: scanDetail.data.riskLevel ?? "LOW",
+        findings: scanDetail.data.findings.map((f) => ({
+          id: f.id,
+          title: f.title,
+          description: f.description,
+          severity: f.severity,
+          category: f.category,
+          remediation: f.remediation,
+          cweId: f.cweId,
+        })),
+      });
+      addTerminalLog(
+        "success",
+        `Loaded ${scanDetail.data.findings.length} finding(s). Risk: ${scanDetail.data.riskLevel}`,
+      );
+    }
+  }, [scanDetail.data]);
 
   const handleScan = () => {
-    if (!selectedCollection) return;
+    if (!selectedCollection) {
+      setError("Select a collection first.");
+      return;
+    }
     setError(null);
     setScanResult(null);
     setScanStatus(null);
@@ -137,10 +157,18 @@ export default function ScanningPage() {
 
     addTerminalLog(
       "info",
-      `Preparing to trigger scan for collection: ${collections.find((c) => c.id === selectedCollection)?.name}`,
+      `Starting ${scanType} scan for: ${collections.find((c) => c.id === selectedCollection)?.name ?? selectedCollection}`,
     );
     startScan.mutate({ collectionId: selectedCollection, scanType });
   };
+
+  const cancelScan = trpc.scanning.cancelScan.useMutation({
+    onSuccess: () => {
+      addTerminalLog("warn", "Scan cancelled.");
+      setQueuedScanId(null);
+      setScanStatus(null);
+    },
+  });
 
   const handleTerminalSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -413,129 +441,33 @@ export default function ScanningPage() {
                 </div>
               </div>
             ) : (
-              // Default/Sandbox Mock Page (SQLi Vulnerability)
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <span className="px-3 py-1 bg-status-error/10 text-status-error border border-status-error/30 rounded font-label-mono text-[12px]">
-                      CRITICAL
-                    </span>
-                    <h2 className="font-headline-md text-headline-md text-primary font-bold">
-                      SQL Injection Vulnerability
-                    </h2>
-                  </div>
-                  <button className="text-primary hover:underline font-label-mono text-sm">
-                    EXPAND TRACE
-                  </button>
-                </div>
-
-                {/* Trace Card */}
-                <div className="glass-panel rounded-xl overflow-hidden border border-status-error/40 shadow-[0_0_15px_rgba(239,68,68,0.1)]">
-                  <div className="px-6 py-4 border-b border-glass bg-surface-container/30 flex justify-between items-center">
-                    <span className="font-label-mono text-label-mono text-primary uppercase">
-                      Vulnerable Trace: API Endpoint /v1/auth/login
-                    </span>
-                    <span className="material-symbols-outlined text-primary text-[20px]">
-                      verified_user
-                    </span>
-                  </div>
-                  <div className="p-6 font-code text-[13px] bg-black/40 leading-relaxed text-on-surface-variant">
-                    <div className="flex gap-4">
-                      <span className="text-on-surface-variant/30 select-none">122</span>
-                      <div>
-                        <span className="text-secondary">const</span> {"{ username, password }"} =
-                        req.body;
-                      </div>
-                    </div>
-                    <div className="flex gap-4">
-                      <span className="text-on-surface-variant/30 select-none">123</span>
-                      <div>
-                        <span className="text-secondary">const</span> query ={" "}
-                        <span className="text-primary-container">
-                          `SELECT * FROM users WHERE username = '${"{"}username{"}"}' AND password =
-                          '${"{"}password{"}"}'`
-                        </span>
-                        ;
-                      </div>
-                    </div>
-                    <div className="flex gap-4 bg-status-error/10 -mx-6 px-6 border-l-4 border-status-error">
-                      <span className="text-status-error/50 select-none">124</span>
-                      <div>
-                        <span className="text-on-surface">db.execute(query);</span>{" "}
-                        <span className="text-status-error ml-4 font-body-md">
-                          ⚠️ INJECTION POINT DETECTED
-                        </span>
-                      </div>
-                    </div>
-                    <div className="mt-4 p-4 rounded bg-surface-container border border-status-error/20">
-                      <div className="text-status-error font-semibold mb-1">Detected Payload:</div>
-                      <code className="text-primary-container">' OR '1'='1</code>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Remediation Block */}
-                <div className="glass-panel rounded-xl overflow-hidden border border-glass">
-                  <div className="px-6 py-4 border-b border-glass bg-surface-container/30 flex justify-between items-center">
-                    <span className="font-label-mono text-label-mono text-status-success uppercase">
-                      Proposed Patch (Parameterized Query)
-                    </span>
+              <div className="flex flex-col items-center justify-center h-full text-center p-12 space-y-4">
+                <span className="material-symbols-outlined text-5xl text-neutral-600">radar</span>
+                <h2 className="text-xl font-semibold text-white">No scan results yet</h2>
+                <p className="text-sm text-neutral-500 max-w-md">
+                  Import a collection, choose a scan type, then start a scan. Results and risk score
+                  appear here when the worker finishes — no simulated findings.
+                </p>
+                {error && (
+                  <div className="text-sm text-red-400 border border-red-900/50 rounded-lg px-4 py-2">
+                    {error}
                     <button
+                      type="button"
+                      className="ml-3 underline"
                       onClick={() => {
-                        navigator.clipboard.writeText(
-                          'const query = "SELECT * FROM users WHERE username = ? AND password = ?";\ndb.execute(query, [username, password]);',
-                        );
-                        addTerminalLog("info", "Remediation code snippet copied to clipboard.");
+                        setError(null);
+                        handleScan();
                       }}
-                      className="flex items-center gap-2 text-primary font-label-mono text-[12px] hover:bg-primary/10 px-2 py-1 rounded transition-colors"
                     >
-                      <span className="material-symbols-outlined text-[16px]">content_copy</span>
-                      COPY SNIPPET
+                      Retry
                     </button>
                   </div>
-                  <div className="p-6 font-code text-[13px] bg-surface-container-lowest leading-relaxed text-on-surface-variant">
-                    <div className="flex gap-4">
-                      <span className="text-on-surface-variant/30 select-none">123</span>
-                      <div>
-                        <span className="text-secondary">const</span> query ={" "}
-                        <span className="text-status-success">
-                          "SELECT * FROM users WHERE username = ? AND password = ?"
-                        </span>
-                        ;
-                      </div>
-                    </div>
-                    <div className="flex gap-4">
-                      <span className="text-on-surface-variant/30 select-none">124</span>
-                      <div>
-                        <span className="text-on-surface">
-                          db.execute(query, [username, password]);
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-6 pt-0">
-                    <button
-                      onClick={() => {
-                        setPatchCommitted(true);
-                        addTerminalLog(
-                          "success",
-                          "Auto-patch committed to staging. Triggering automated regression tests...",
-                        );
-                      }}
-                      disabled={patchCommitted}
-                      className={`w-full py-4 rounded-lg font-bold transition-all flex items-center justify-center gap-3 ${
-                        patchCommitted
-                          ? "bg-status-success/20 border border-status-success/50 text-status-success"
-                          : "bg-status-success/10 border border-status-success/40 text-status-success hover:bg-status-success/20"
-                      }`}
-                    >
-                      <span className="material-symbols-outlined">auto_fix_high</span>
-                      {patchCommitted
-                        ? "PATCH COMMITTED SUCCESSFULLY"
-                        : "COMMIT AUTO-PATCH TO STAGING"}
-                    </button>
-                  </div>
-                </div>
+                )}
+                {collectionsQuery.isError && (
+                  <p className="text-sm text-amber-400">
+                    Could not load collections. Check that you are signed in.
+                  </p>
+                )}
               </div>
             )}
           </div>

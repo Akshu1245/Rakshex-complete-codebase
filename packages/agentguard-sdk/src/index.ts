@@ -1,41 +1,39 @@
 /**
- * @rakshex/agentguard-sdk — public SDK surface (foundation scaffold).
+ * @rakshex/agentguard-sdk — runtime SDK for LLM telemetry and governance.
  *
- * TODO(product): implement provider wrappers (OpenAI, Anthropic, etc.),
- * privacy modes, and gateway transport. Existing server-side AgentGuard
- * logic remains under apps/api until extracted.
+ * Privacy: does not capture prompt content by default (metadata_only).
+ * Resilience: fail-open when telemetry is unavailable; offline queue + retry.
+ * Security: never accepts or forwards provider API keys to the gateway.
  */
 
-export type PrivacyMode =
-  "metadata_only" | "redacted_content" | "full_content" | "local_only" | "zero_retention";
+export type {
+  AgentGuardClientOptions,
+  AgentStepRecord,
+  CaptureContext,
+  EventStatus,
+  PrivacyMode,
+  ProviderCallResult,
+  ProviderName,
+  ToolCallRecord,
+  TransportResult,
+  UsageEvent,
+} from "./types.js";
 
-export interface AgentGuardClientOptions {
-  apiKey: string;
-  gatewayUrl?: string;
-  privacyMode?: PrivacyMode;
-  workspaceId?: string;
-}
+export { AgentGuardClient, createAgentGuardClient, SDK_NAME, SDK_VERSION } from "./client.js";
 
-export interface AgentGuardClient {
-  readonly options: AgentGuardClientOptions;
-  /** TODO(product): wrap provider clients */
-  isConfigured(): boolean;
-}
+export { applyPrivacy, looksLikeProviderKey, redactSecrets, scrubMetadataKeys } from "./privacy.js";
 
-/**
- * Compile-safe factory. Does not call network or invent runtime behavior.
- */
-export function createAgentGuardClient(options: AgentGuardClientOptions): AgentGuardClient {
-  return {
-    options: {
-      privacyMode: "metadata_only",
-      ...options,
-    },
-    isConfigured() {
-      return Boolean(options.apiKey);
-    },
-  };
-}
+export { OfflineQueue } from "./offline-queue.js";
+export { sendBatch } from "./transport.js";
+export { sha256Hex, randomId } from "./hash.js";
 
-export const SDK_NAME = "@rakshex/agentguard-sdk" as const;
-export const SDK_VERSION = "0.1.0" as const;
+export {
+  wrapOpenAI,
+  wrapAnthropic,
+  wrapGemini,
+  wrapAzureOpenAI,
+  wrapBedrock,
+  wrapOpenRouter,
+  instrumentProviderCall,
+} from "./providers/index.js";
+export type { WrapOptions } from "./providers/index.js";

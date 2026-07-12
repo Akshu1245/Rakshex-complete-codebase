@@ -23,6 +23,8 @@ const MIGRATION_ORDER = [
   "0005_universal_control_plane.sql",
   "0006_github_installations.sql",
   "0007_market_ready_foundation.sql",
+  "0008_auth_resource_model.sql",
+  "0009_findings_lifecycle.sql",
 ];
 
 export async function migrate(databaseUrl?: string): Promise<string[]> {

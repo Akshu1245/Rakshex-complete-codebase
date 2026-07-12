@@ -360,13 +360,22 @@ export async function createCollection(
   format: "postman" | "openapi" | "bruno",
   data: any,
   description?: string,
+  extras?: {
+    contentHash?: string;
+    tags?: string[];
+    version?: number;
+    workspaceId?: number;
+    totalRequests?: number;
+  },
 ) {
   const db = await getDb();
   assertDb(db);
 
   const id = secureId("col");
   let totalRequests: number;
-  if (format === "openapi") {
+  if (extras?.totalRequests != null) {
+    totalRequests = extras.totalRequests;
+  } else if (format === "openapi") {
     totalRequests = Object.keys(data.paths || {}).length;
   } else if (format === "bruno") {
     totalRequests = data.item?.length || 0;
@@ -382,9 +391,50 @@ export async function createCollection(
     data,
     description,
     totalRequests,
+    contentHash: extras?.contentHash,
+    tags: extras?.tags ?? [],
+    version: extras?.version ?? 1,
+    workspaceId: extras?.workspaceId,
   });
 
-  return { id, userId, name, format, totalRequests };
+  return { id, userId, name, format, totalRequests, contentHash: extras?.contentHash };
+}
+
+export async function findCollectionByContentHash(userId: number, contentHash: string) {
+  const db = await getDb();
+  if (!db || !contentHash) return null;
+  const rows = await db
+    .select()
+    .from(collections)
+    .where(and(eq(collections.userId, userId), eq(collections.contentHash, contentHash)))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+export async function saveCollectionVersion(opts: {
+  workspaceId: number;
+  collectionId: string;
+  version: number;
+  format: string;
+  contentHash: string;
+  data: unknown;
+  createdByUserId: number;
+}) {
+  const db = await getDb();
+  assertDb(db);
+  const { collectionVersions } = await import("@rakshex/database");
+  const id = secureId("cver");
+  await db.insert(collectionVersions).values({
+    id,
+    workspaceId: opts.workspaceId,
+    collectionId: opts.collectionId,
+    version: opts.version,
+    format: opts.format,
+    contentHash: opts.contentHash,
+    data: opts.data as any,
+    createdByUserId: opts.createdByUserId,
+  });
+  return { id };
 }
 
 export async function updateCollection(
@@ -693,6 +743,24 @@ export async function createFinding(
   category?: string,
   remediation?: string,
   cweId?: string,
+  extras?: {
+    ruleId?: string;
+    confidence?: string;
+    fingerprint?: string;
+    endpoint?: string;
+    method?: string;
+    evidence?: unknown;
+    workspaceId?: number;
+    status?:
+      | "open"
+      | "in-progress"
+      | "resolved"
+      | "suppressed"
+      | "false_positive"
+      | "accepted_risk"
+      | "reopened";
+    duplicateOf?: string;
+  },
 ) {
   const db = await getDb();
   assertDb(db);
@@ -710,6 +778,15 @@ export async function createFinding(
     category,
     remediation,
     cweId,
+    ruleId: extras?.ruleId,
+    confidence: extras?.confidence,
+    fingerprint: extras?.fingerprint,
+    endpoint: extras?.endpoint,
+    method: extras?.method,
+    evidence: extras?.evidence as any,
+    workspaceId: extras?.workspaceId,
+    status: extras?.status ?? "open",
+    duplicateOf: extras?.duplicateOf,
   });
 
   return { id };
@@ -795,11 +872,88 @@ export async function getFindingById(id: string) {
   return result.length > 0 ? result[0] : null;
 }
 
-export async function updateFindingStatus(id: string, status: "open" | "in-progress" | "resolved") {
+export async function updateFindingStatus(
+  id: string,
+  status:
+    | "open"
+    | "in-progress"
+    | "resolved"
+    | "suppressed"
+    | "false_positive"
+    | "accepted_risk"
+    | "reopened",
+  patch?: Partial<{
+    assigneeUserId: number | null;
+    dueAt: Date | null;
+    suppressionReason: string | null;
+    suppressionExpiresAt: Date | null;
+    acceptedRiskReason: string | null;
+    acceptedRiskApprovedBy: number | null;
+    duplicateOf: string | null;
+  }>,
+) {
   const db = await getDb();
   assertDb(db);
 
-  await db.update(findings).set({ status }).where(eq(findings.id, id));
+  await db
+    .update(findings)
+    .set({ status, updatedAt: new Date(), ...(patch as any) })
+    .where(eq(findings.id, id));
+}
+
+export async function listFindingsForUser(
+  userId: number,
+  opts?: {
+    status?: string;
+    severity?: string;
+    collectionId?: string;
+    assigneeUserId?: number;
+    limit?: number;
+    offset?: number;
+  },
+) {
+  const db = await getDb();
+  if (!db) return [];
+  const conditions = [eq(findings.userId, userId)];
+  if (opts?.status) conditions.push(eq(findings.status, opts.status as any));
+  if (opts?.severity) conditions.push(eq(findings.severity, opts.severity as any));
+  if (opts?.collectionId) conditions.push(eq(findings.collectionId, opts.collectionId));
+  if (opts?.assigneeUserId != null)
+    conditions.push(eq(findings.assigneeUserId, opts.assigneeUserId));
+  return db
+    .select()
+    .from(findings)
+    .where(and(...conditions))
+    .orderBy(desc(findings.createdAt))
+    .limit(opts?.limit ?? 100)
+    .offset(opts?.offset ?? 0);
+}
+
+/** Reactivate suppressions that have expired. */
+export async function reactivateExpiredSuppressions(userId?: number): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+  const conditions = [
+    eq(findings.status, "suppressed" as any),
+    sql`${findings.suppressionExpiresAt} IS NOT NULL`,
+    sql`${findings.suppressionExpiresAt} < NOW()`,
+  ];
+  if (userId != null) conditions.push(eq(findings.userId, userId));
+  const expired = await db
+    .select({ id: findings.id })
+    .from(findings)
+    .where(and(...conditions));
+  if (expired.length === 0) return 0;
+  await db
+    .update(findings)
+    .set({
+      status: "reopened" as any,
+      suppressionReason: null,
+      suppressionExpiresAt: null,
+      updatedAt: new Date(),
+    })
+    .where(and(...conditions));
+  return expired.length;
 }
 
 // ============================================================================
@@ -2336,14 +2490,65 @@ export async function updateUser(
     onboardingCompleted: boolean;
     plan: "free" | "pro" | "enterprise";
     role: "user" | "editor" | "admin";
+    emailVerifiedAt: Date | null;
+    recoveryCodesHash: string[] | null;
   }>,
 ) {
   const db = await getDb();
   assertDb(db);
   await db
     .update(users)
-    .set({ ...data, updatedAt: new Date() })
+    .set({ ...data, updatedAt: new Date() } as any)
     .where(eq(users.id, userId));
+}
+
+// ============================================================================
+// VERIFICATION TOKENS (email verify, etc.) — hashed at rest
+// ============================================================================
+
+export async function createVerificationToken(
+  userId: number,
+  tokenHash: string,
+  purpose: string,
+  expiresAt: Date,
+) {
+  const db = await getDb();
+  assertDb(db);
+  const { verificationTokens } = await import("@rakshex/database");
+  const id = secureId("vt");
+  await db.insert(verificationTokens).values({
+    id,
+    userId,
+    tokenHash,
+    purpose,
+    expiresAt,
+  });
+  return { id };
+}
+
+/**
+ * Single-use consume: returns row if valid, marks usedAt, null if invalid/expired/used.
+ */
+export async function consumeVerificationToken(tokenHash: string, purpose: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const { verificationTokens } = await import("@rakshex/database");
+  const rows = await db
+    .select()
+    .from(verificationTokens)
+    .where(
+      and(eq(verificationTokens.tokenHash, tokenHash), eq(verificationTokens.purpose, purpose)),
+    )
+    .limit(1);
+  const row = rows[0];
+  if (!row) return null;
+  if (row.usedAt) return null;
+  if (new Date(row.expiresAt) < new Date()) return null;
+  await db
+    .update(verificationTokens)
+    .set({ usedAt: new Date() })
+    .where(eq(verificationTokens.id, row.id));
+  return row;
 }
 
 export async function recordVSCodeActivity(

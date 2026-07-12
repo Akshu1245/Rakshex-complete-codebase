@@ -30,6 +30,12 @@ export interface ScanResult {
     category: string;
     remediation: string;
     cweId: string;
+    ruleId?: string;
+    confidence?: string;
+    fingerprint?: string;
+    endpoint?: string;
+    method?: string;
+    evidence?: unknown;
   }>;
   /**
    * Populated when the scan was stopped early by the ScanBudget
@@ -120,10 +126,38 @@ export async function runCollectionScan(
     findings,
   );
 
-  // Save individual findings — each is independent; partial failure is logged
-  // but does not roll back the scan record (scan remains queryable with 0 findings).
+  // Save individual findings with rich scanner metadata; group duplicates by fingerprint
   try {
+    await db.reactivateExpiredSuppressions(userId);
+
+    const priorOpen = await db.listFindingsForUser(userId, {
+      collectionId,
+      limit: 500,
+    });
+    const byFp = new Map(
+      priorOpen.filter((f) => f.fingerprint).map((f) => [f.fingerprint as string, f]),
+    );
+
     for (const finding of findings) {
+      const fp = (finding as { fingerprint?: string }).fingerprint;
+      const prior = fp ? byFp.get(fp) : undefined;
+      // Active suppression with future expiry → skip re-open as open
+      if (
+        prior &&
+        prior.status === ("suppressed" as any) &&
+        prior.suppressionExpiresAt &&
+        new Date(prior.suppressionExpiresAt) > new Date()
+      ) {
+        continue;
+      }
+      // Accepted risk still active → keep accepted
+      const status =
+        prior?.status === ("accepted_risk" as any)
+          ? ("accepted_risk" as const)
+          : prior && prior.status === ("false_positive" as any)
+            ? ("false_positive" as const)
+            : ("open" as const);
+
       await db.createFinding(
         scan.id,
         collectionId,
@@ -134,6 +168,16 @@ export async function runCollectionScan(
         finding.category,
         finding.remediation,
         finding.cweId,
+        {
+          ruleId: (finding as any).ruleId,
+          confidence: (finding as any).confidence,
+          fingerprint: fp,
+          endpoint: (finding as any).endpoint,
+          method: (finding as any).method,
+          evidence: (finding as any).evidence,
+          status,
+          duplicateOf: prior && prior.scanId !== scan.id ? prior.id : undefined,
+        },
       );
     }
   } catch (err) {

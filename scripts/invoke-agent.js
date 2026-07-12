@@ -47,9 +47,13 @@ async function main() {
     const agents = agentRegistry.list();
     console.log(`\nDevPulse Agent Registry — ${agents.length} agents\n`);
     for (const agent of agents) {
-      console.log(`  ${agent.number} │ ${agent.name.padEnd(22)} │ ${agent.category.padEnd(12)} │ ${agent.role}`);
+      console.log(
+        `  ${agent.number} │ ${agent.name.padEnd(22)} │ ${agent.category.padEnd(12)} │ ${agent.role}`,
+      );
     }
-    console.log(`\nTotal: ${agents.length} agents across ${new Set(agents.map(a => a.category)).size} categories\n`);
+    console.log(
+      `\nTotal: ${agents.length} agents across ${new Set(agents.map((a) => a.category)).size} categories\n`,
+    );
     return;
   }
 
@@ -101,7 +105,11 @@ async function main() {
   }
 
   if (args[0] === "--parallel") {
-    const taskDescs = args.slice(1).join(" ").split(/\s*;;\s*/).filter(Boolean);
+    const taskDescs = args
+      .slice(1)
+      .join(" ")
+      .split(/\s*;;\s*/)
+      .filter(Boolean);
     if (taskDescs.length < 2) {
       console.error("Error: --parallel requires 2+ tasks separated by ';;'");
       process.exit(1);
@@ -109,9 +117,11 @@ async function main() {
 
     console.log(`\nParallel execution — ${taskDescs.length} tasks\n`);
 
-    const tasks = taskDescs.map(t => {
+    const tasks = taskDescs.map((t) => {
       const route = agentRegistry.routeTask(t);
-      console.log(`  → ${route.agent.name.padEnd(22)} │ "${t.slice(0, 60)}${t.length > 60 ? "..." : ""}"`);
+      console.log(
+        `  → ${route.agent.name.padEnd(22)} │ "${t.slice(0, 60)}${t.length > 60 ? "..." : ""}"`,
+      );
       return { agentName: route.agent.name, task: t };
     });
 
@@ -125,7 +135,9 @@ async function main() {
       console.log("");
     }
 
-    console.log(`Total: ${(result.totalElapsedMs / 1000).toFixed(1)}s | Sequential est: ${(result.sequentialEquivalentMs / 1000).toFixed(1)}s | Speedup: ${result.speedup.toFixed(1)}x`);
+    console.log(
+      `Total: ${(result.totalElapsedMs / 1000).toFixed(1)}s | Sequential est: ${(result.sequentialEquivalentMs / 1000).toFixed(1)}s | Speedup: ${result.speedup.toFixed(1)}x`,
+    );
     return;
   }
 
@@ -141,7 +153,12 @@ async function main() {
   const agent = agentRegistry.get(agentName);
   if (!agent) {
     console.error(`Unknown agent: ${agentName}`);
-    console.error(`Available: ${agentRegistry.list().map(a => a.name).join(", ")}`);
+    console.error(
+      `Available: ${agentRegistry
+        .list()
+        .map((a) => a.name)
+        .join(", ")}`,
+    );
     process.exit(1);
   }
 
@@ -155,7 +172,7 @@ async function main() {
   }
 }
 
-main().catch(err => {
+main().catch((err) => {
   console.error("Fatal:", err.message);
   process.exit(1);
 });

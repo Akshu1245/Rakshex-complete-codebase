@@ -1,31 +1,28 @@
 /**
- * Role-Based Access Control (Sprint 6 / Domain 6).
+ * Role-Based Access Control — market-ready role set.
  *
- * Pure permissions logic. No DB, no async — every function here is a
- * deterministic mapping over (role, resource, action). DB lookups for
- * "what role does user X have in workspace Y?" live in
- * server/services/workspaceContext.ts, which calls into here for the
- * actual permission decision.
+ * Roles:
+ *   owner | admin | security_lead | developer | analyst | viewer | billing_admin
  *
- * Why keep it pure: testability + cache-friendliness. The result of a
- * permission check is a stable function of the inputs, so we can
- * memoize aggressively at the workspace-context layer without worrying
- * about staleness mid-request.
+ * Legacy "editor" is accepted as an alias for "developer" at the boundary
+ * (see normalizeRole) so existing DB rows keep working.
  */
 
-export type WorkspaceRole = "owner" | "admin" | "editor" | "viewer";
+export type WorkspaceRole =
+  | "owner"
+  | "admin"
+  | "security_lead"
+  | "developer"
+  | "analyst"
+  | "viewer"
+  | "billing_admin"
+  /** @deprecated use developer */
+  | "editor";
 
 export type RbacAction = "read" | "write" | "delete";
 
-/**
- * Scoped resources. Adding a new resource is a one-line change here +
- * one row in PERMISSIONS_MATRIX. Anything currently scoped to userId
- * (collections, policies, alerts, …) should grow a workspaceId column
- * in its table and start consulting `requirePermission` at the router
- * layer.
- */
 export type RbacResource =
-  | "workspace" // settings, rename, delete
+  | "workspace"
   | "members"
   | "billing"
   | "collections"
@@ -33,20 +30,39 @@ export type RbacResource =
   | "alerts"
   | "webhooks"
   | "sso"
-  | "data_export";
+  | "data_export"
+  | "api_keys"
+  | "projects"
+  | "repositories"
+  | "security"
+  | "audit";
 
 /**
- * Numeric rank so we can express "this action requires admin or higher."
- * Higher number = more privilege.
+ * Numeric rank for hierarchy comparisons.
+ * Higher = more privilege for general admin actions.
+ * Note: billing_admin is high for billing only; matrix below is authoritative.
  */
 const ROLE_RANK: Record<WorkspaceRole, number> = {
   viewer: 1,
-  editor: 2,
-  admin: 3,
-  owner: 4,
+  analyst: 2,
+  developer: 3,
+  editor: 3, // alias
+  billing_admin: 4,
+  security_lead: 5,
+  admin: 6,
+  owner: 7,
 };
 
-/** The minimum role required for (resource, action). */
+/** Canonical role after normalizing legacy aliases. */
+export function normalizeRole(role: string): WorkspaceRole {
+  if (role === "editor") return "developer";
+  return role as WorkspaceRole;
+}
+
+/**
+ * Minimum role required for (resource, action).
+ * Roles are checked via roleSatisfies against this minimum.
+ */
 const PERMISSIONS_MATRIX: Record<RbacResource, Record<RbacAction, WorkspaceRole>> = {
   workspace: {
     read: "viewer",
@@ -59,24 +75,24 @@ const PERMISSIONS_MATRIX: Record<RbacResource, Record<RbacAction, WorkspaceRole>
     delete: "admin",
   },
   billing: {
-    read: "admin",
-    write: "owner",
+    read: "billing_admin",
+    write: "billing_admin",
     delete: "owner",
   },
   collections: {
     read: "viewer",
-    write: "editor",
-    delete: "editor",
+    write: "developer",
+    delete: "developer",
   },
   policies: {
     read: "viewer",
-    write: "admin",
-    delete: "admin",
+    write: "security_lead",
+    delete: "security_lead",
   },
   alerts: {
     read: "viewer",
-    write: "editor",
-    delete: "editor",
+    write: "developer",
+    delete: "developer",
   },
   webhooks: {
     read: "viewer",
@@ -84,63 +100,143 @@ const PERMISSIONS_MATRIX: Record<RbacResource, Record<RbacAction, WorkspaceRole>
     delete: "admin",
   },
   sso: {
-    read: "admin",
-    write: "admin",
+    read: "security_lead",
+    write: "security_lead",
     delete: "owner",
   },
   data_export: {
-    read: "viewer",
-    write: "editor",
+    read: "analyst",
+    write: "analyst",
     delete: "admin",
+  },
+  api_keys: {
+    read: "developer",
+    write: "admin",
+    delete: "admin",
+  },
+  projects: {
+    read: "viewer",
+    write: "developer",
+    delete: "admin",
+  },
+  repositories: {
+    read: "viewer",
+    write: "developer",
+    delete: "admin",
+  },
+  security: {
+    read: "security_lead",
+    write: "security_lead",
+    delete: "security_lead",
+  },
+  audit: {
+    read: "security_lead",
+    write: "admin",
+    delete: "owner",
   },
 };
 
-/** Returns true iff `role` is at least as privileged as `minRequired`. */
+/** Special cases that don't fit pure rank (billing_admin, analyst scopes). */
+const ROLE_OVERRIDES: Partial<
+  Record<WorkspaceRole, Partial<Record<RbacResource, Partial<Record<RbacAction, boolean>>>>>
+> = {
+  billing_admin: {
+    billing: { read: true, write: true, delete: false },
+    workspace: { read: true, write: false, delete: false },
+    members: { read: true, write: false, delete: false },
+    audit: { read: true, write: false, delete: false },
+  },
+  analyst: {
+    collections: { read: true, write: false, delete: false },
+    data_export: { read: true, write: true, delete: false },
+    projects: { read: true, write: false, delete: false },
+    repositories: { read: true, write: false, delete: false },
+    alerts: { read: true, write: false, delete: false },
+    policies: { read: true, write: false, delete: false },
+    audit: { read: true, write: false, delete: false },
+  },
+  security_lead: {
+    security: { read: true, write: true, delete: true },
+    policies: { read: true, write: true, delete: true },
+    sso: { read: true, write: true, delete: false },
+    audit: { read: true, write: false, delete: false },
+    api_keys: { read: true, write: true, delete: true },
+    members: { read: true, write: false, delete: false },
+  },
+};
+
 export function roleSatisfies(role: WorkspaceRole, minRequired: WorkspaceRole): boolean {
-  return ROLE_RANK[role] >= ROLE_RANK[minRequired];
+  const r = normalizeRole(role);
+  const m = normalizeRole(minRequired);
+  // billing_admin only "satisfies" billing_admin min, not general admin
+  if (r === "billing_admin") {
+    return m === "billing_admin" || m === "viewer" || m === "analyst";
+  }
+  return ROLE_RANK[r] >= ROLE_RANK[m];
 }
 
-/** Pure check: can `role` perform `action` on `resource`? */
 export function hasPermission(
   role: WorkspaceRole,
   resource: RbacResource,
   action: RbacAction,
 ): boolean {
+  const r = normalizeRole(role);
+  if (r === "owner") return true;
+
+  const override = ROLE_OVERRIDES[r]?.[resource]?.[action];
+  if (typeof override === "boolean") return override;
+
+  // billing_admin: only billing (+ limited reads via overrides)
+  if (r === "billing_admin") {
+    return resource === "billing" && (action === "read" || action === "write");
+  }
+
   const minRequired = PERMISSIONS_MATRIX[resource][action];
-  return roleSatisfies(role, minRequired);
+  return roleSatisfies(r, minRequired);
 }
 
-/** A serialisable summary of what a role can do — feeds the frontend's UI gating. */
 export interface PermissionSummary {
   role: WorkspaceRole;
   permissions: Record<RbacResource, Record<RbacAction, boolean>>;
 }
 
 export function summarisePermissions(role: WorkspaceRole): PermissionSummary {
-  const out: Record<RbacResource, Record<RbacAction, boolean>> = {} as Record<
-    RbacResource,
-    Record<RbacAction, boolean>
-  >;
+  const r = normalizeRole(role);
+  const out = {} as Record<RbacResource, Record<RbacAction, boolean>>;
   for (const resource of Object.keys(PERMISSIONS_MATRIX) as RbacResource[]) {
     out[resource] = {
-      read: hasPermission(role, resource, "read"),
-      write: hasPermission(role, resource, "write"),
-      delete: hasPermission(role, resource, "delete"),
+      read: hasPermission(r, resource, "read"),
+      write: hasPermission(r, resource, "write"),
+      delete: hasPermission(r, resource, "delete"),
     };
   }
-  return { role, permissions: out };
+  return { role: r, permissions: out };
 }
 
-/**
- * The least privileged role that can perform (resource, action). Useful
- * for UI: "to do X, you need role Y."
- */
 export function minRoleFor(resource: RbacResource, action: RbacAction): WorkspaceRole {
   return PERMISSIONS_MATRIX[resource][action];
 }
 
-/** Exposed for tests / dashboard. */
-export const ALL_ROLES: WorkspaceRole[] = ["owner", "admin", "editor", "viewer"];
+export const ALL_ROLES: WorkspaceRole[] = [
+  "owner",
+  "admin",
+  "security_lead",
+  "developer",
+  "analyst",
+  "viewer",
+  "billing_admin",
+];
+
+/** Roles that can be assigned via invitation (not owner). */
+export const ASSIGNABLE_ROLES = [
+  "admin",
+  "security_lead",
+  "developer",
+  "analyst",
+  "viewer",
+  "billing_admin",
+] as const;
+
 export const ALL_RESOURCES: RbacResource[] = Object.keys(PERMISSIONS_MATRIX) as RbacResource[];
 export const ALL_ACTIONS: RbacAction[] = ["read", "write", "delete"];
 
@@ -158,14 +254,10 @@ export class PermissionDeniedError extends Error {
     this.resource = resource;
     this.action = action;
     this.required = required;
-    this.actual = actual;
+    this.actual = normalizeRole(actual);
   }
 }
 
-/**
- * Throwing wrapper for use in service code. Prefer the pure
- * `hasPermission` in tests; use this in routers / services.
- */
 export function assertPermission(
   role: WorkspaceRole,
   resource: RbacResource,

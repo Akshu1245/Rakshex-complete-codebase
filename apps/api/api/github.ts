@@ -216,15 +216,31 @@ export const githubRouter = router({
 export async function handleGitHubWebhook(
   payload: string,
   signature: string,
+  deliveryId?: string,
 ): Promise<{ status: number; body: Record<string, unknown> }> {
   if (!verifyWebhookSignature(payload, signature)) {
     return { status: 401, body: { error: "Invalid signature" } };
   }
 
+  // Replay prevention — same delivery ID is ignored
+  if (deliveryId) {
+    try {
+      const { redis } = await import("../_core/cache");
+      const key = `gh:delivery:${deliveryId}`;
+      const seen = await redis.get(key);
+      if (seen) {
+        return { status: 200, body: { received: true, action: "duplicate" } };
+      }
+      await redis.set(key, "1", "EX", 60 * 60 * 48);
+    } catch {
+      /* redis optional */
+    }
+  }
+
   let event: {
     action?: string;
     installation?: { id: number };
-    repository?: { full_name: string; name: string };
+    repository?: { full_name: string; name: string; private?: boolean };
     pull_request?: {
       number: number;
       head: { sha: string; ref: string };
@@ -252,23 +268,38 @@ export async function handleGitHubWebhook(
     return { status: 200, body: { received: true, action: "skipped" } };
   }
 
-  // Try to resolve workspace from linked installation
+  // Idempotent job key: installation + repo + PR + head SHA
+  const jobId = `pr-scan-${installationId}-${repoFullName}-${pr.number}-${pr.head.sha}`.replace(
+    /[^a-zA-Z0-9_-]/g,
+    "_",
+  );
+
   const linked = await getLinkedInstallation(installationId);
   const workspaceId = linked?.workspaceId || "unknown";
 
-  // Enqueue PR scan
-  await scanQueue.add("pr-scan", {
-    installationId,
-    repoFullName,
-    prNumber: pr.number,
-    headSha: pr.head.sha,
-    workspaceId,
-  } as PrScanJobData);
+  try {
+    await scanQueue.add(
+      "pr-scan",
+      {
+        installationId,
+        repoFullName,
+        prNumber: pr.number,
+        headSha: pr.head.sha,
+        workspaceId,
+        isPrivate: Boolean(event.repository?.private),
+      } as PrScanJobData,
+      { jobId, removeOnComplete: 100, removeOnFail: 50 },
+    );
+  } catch (err) {
+    // BullMQ rejects duplicate jobIds — treat as success (no double scan)
+    logger.info({ jobId, err }, "[GitHub] PR scan already queued (idempotent)");
+    return { status: 200, body: { received: true, action: "duplicate_job" } };
+  }
 
   logger.info(
-    { installationId, repoFullName, prNumber: pr.number },
+    { installationId, repoFullName, prNumber: pr.number, jobId },
     "[GitHub] Webhook received, PR scan queued",
   );
 
-  return { status: 200, body: { received: true, action: "queued" } };
+  return { status: 200, body: { received: true, action: "queued", jobId } };
 }

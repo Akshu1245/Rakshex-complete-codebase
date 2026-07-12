@@ -92,7 +92,7 @@ export default function NotificationsPage() {
           icon="🔔"
           title="You're all caught up"
           description="Notifications about your scans, cost anomalies, and security alerts will show up here."
-          actions={[{ label: "Run a scan", href: "/scans" }]}
+          actions={[{ label: "Run a scan", href: "/scanning" }]}
         />
       )}
 

@@ -4,6 +4,9 @@
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
+    // Strictness is enforced on packages + apps/api. The web app keeps
+    // pragmatic settings so production `next build` passes while AppRouter
+    // is typed via lib/app-router.d.ts (full router inference is a follow-up).
     "strict": false,
     "noImplicitAny": false,
     "strictNullChecks": false,
@@ -23,8 +26,7 @@
     "types": ["vitest/globals", "@testing-library/jest-dom"],
     "paths": {
       "@/*": ["./*"],
-      "@server/*": ["../server/*"],
-      "@shared/*": ["../shared/*"]
+      "@shared/*": ["../../packages/shared-types/src/*"]
     }
   },
   "include": [

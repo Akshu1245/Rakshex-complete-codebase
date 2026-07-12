@@ -10,15 +10,17 @@
     "build": "tsc -p tsconfig.json --noEmit",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "echo \"@rakshex/cli: ok\"",
-    "test": "echo \"@rakshex/cli: no unit tests yet\"",
+    "test": "vitest run",
     "dev": "node --import tsx src/index.ts"
   },
   "dependencies": {
     "@rakshex/config": "workspace:*",
-    "@rakshex/scanner-core": "workspace:*"
+    "@rakshex/scanner-core": "workspace:*",
+    "yaml": "^2.4.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
   }
 }

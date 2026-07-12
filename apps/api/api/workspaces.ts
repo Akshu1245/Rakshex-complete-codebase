@@ -34,7 +34,16 @@ import {
 const INVITE_TTL_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
 const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{1,62}[a-z0-9])?$/;
 
-const roleEnumWritable = z.enum(["admin", "editor", "viewer"]);
+const roleEnumWritable = z.enum([
+  "admin",
+  "security_lead",
+  "developer",
+  "analyst",
+  "viewer",
+  "billing_admin",
+  /** @deprecated alias for developer */
+  "editor",
+]);
 
 function normaliseSlug(input: string): string {
   return input

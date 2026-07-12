@@ -31,6 +31,9 @@ healthRouter.get("/health", async (_req: Request, res: Response) => {
     redisStatus = "error";
   }
 
+  // Queue / Redis is also the job backend (BullMQ) — surface as queue dependency
+  const queueStatus = redisStatus;
+
   const status = dbStatus === "ok" && redisStatus === "ok" ? "ok" : "degraded";
   const statusCode = status === "ok" ? 200 : 503;
 
@@ -38,6 +41,7 @@ healthRouter.get("/health", async (_req: Request, res: Response) => {
     status,
     db: dbStatus,
     redis: redisStatus,
+    queue: queueStatus,
     uptime: process.uptime(),
     version: VERSION,
   });

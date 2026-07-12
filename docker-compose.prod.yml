@@ -1,101 +1,40 @@
-﻿version: "3.8"
+# Production / staging compose overlay
+# Usage:
+#   export POSTGRES_PASSWORD=... JWT_SECRET=... APP_URL=...
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 
 services:
-  db:
-    image: postgres:15-alpine
-    restart: always
+  postgres:
     environment:
-      POSTGRES_USER: rakshex
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?err}
-      POSTGRES_DB: rakshex
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U rakshex -d rakshex"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-    networks:
-      - rakshex-network
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    restart: always
 
   redis:
-    image: redis:7-alpine
     restart: always
-    volumes:
-      - redis_data:/data
-    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-    networks:
-      - rakshex-network
 
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile.prod
+  api:
     restart: always
-    command: node dist/server/_core/index.js
-    ports:
-      - "3000:3000"
     environment:
       NODE_ENV: production
-      PORT: 3000
-      APP_URL: ${APP_URL}
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3001}
-      DATABASE_URL: postgresql://rakshex:${POSTGRES_PASSWORD:?err}@db:5432/rakshex
-      REDIS_URL: redis://redis:6379
-      JWT_SECRET: ${JWT_SECRET}
-      RAKSHEX_VAULT_KEY: ${RAKSHEX_VAULT_KEY:-}
-      VITE_APP_ID: ${VITE_APP_ID:-}
-      OAUTH_SERVER_URL: ${OAUTH_SERVER_URL:-https://auth.manus.app}
-      OWNER_OPEN_ID: ${OWNER_OPEN_ID:-}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
-      MINIMAX_API_KEY: ${MINIMAX_API_KEY:-}
-      MINIMAX_API_URL: ${MINIMAX_API_URL:-https://api.minimax.io/v1}
-      BUILT_IN_FORGE_API_URL: ${BUILT_IN_FORGE_API_URL:-https://api.manus.app/forge}
-      BUILT_IN_FORGE_API_KEY: ${BUILT_IN_FORGE_API_KEY:-}
-      SMTP_HOST: ${SMTP_HOST:-}
-      SMTP_PORT: ${SMTP_PORT:-587}
-      SMTP_USER: ${SMTP_USER:-}
-      SMTP_PASS: ${SMTP_PASS:-}
-      SMTP_FROM: ${SMTP_FROM:-noreply@rakshex.com}
-      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:-}
+      DATABASE_URL: postgresql://rakshex:${POSTGRES_PASSWORD}@postgres:5432/rakshex
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      APP_URL: ${APP_URL:?APP_URL is required}
+      FRONTEND_URL: ${FRONTEND_URL:-https://app.rakshex.com}
       SENTRY_DSN: ${SENTRY_DSN:-}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-}
       RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
-      RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET:-}
       GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET:-}
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - rakshex-network
 
-  frontend:
-    build:
-      context: ./apps/web
-      dockerfile: Dockerfile
+  worker:
     restart: always
-    ports:
-      - "3001:3000"
     environment:
-      NEXT_PUBLIC_TS_API_URL: http://app:3000
-      NEXT_PUBLIC_WS_URL: ws://app:3000/ws
-    depends_on:
-      - app
-    networks:
-      - rakshex-network
+      NODE_ENV: production
+      DATABASE_URL: postgresql://rakshex:${POSTGRES_PASSWORD}@postgres:5432/rakshex
+      JWT_SECRET: ${JWT_SECRET}
 
-volumes:
-  postgres_data:
-  redis_data:
-
-networks:
-  rakshex-network:
-    driver: bridge
+  web:
+    restart: always
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_TS_API_URL: ${NEXT_PUBLIC_TS_API_URL:-${APP_URL}}

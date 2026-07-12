@@ -470,9 +470,11 @@ async function startServer() {
   });
 
   // ── GitHub App webhook endpoint ───────────────────────────────────────────
-  app.post("/webhooks/github", express.json(), async (req, res) => {
+  app.post("/webhooks/github", express.json({ limit: "2mb" }), async (req, res) => {
     const signature = (req.headers["x-hub-signature-256"] as string) || "";
-    const result = await handleGitHubWebhook(JSON.stringify(req.body), signature);
+    const deliveryId = (req.headers["x-github-delivery"] as string) || undefined;
+    // Fork PRs: still accept; worker uses installation token only for allowed repos
+    const result = await handleGitHubWebhook(JSON.stringify(req.body), signature, deliveryId);
     res.status(result.status).json(result.body);
   });
 
@@ -677,6 +679,12 @@ async function startServer() {
   // ── OAuth routes ───────────────────────────────────────────────────────────
   registerOAuthRoutes(app);
   registerGoogleOAuthRoutes(app);
+  const { registerGitHubOAuthRoutes } = await import("./githubOAuth");
+  registerGitHubOAuthRoutes(app);
+
+  // ── GitHub Action / CI scan REST ───────────────────────────────────────────
+  const { registerGitHubCiScanRoute } = await import("../api/githubCiScan");
+  registerGitHubCiScanRoute(app);
 
   // ── SSO routes (SAML + OIDC login/callback) ──────────────────────────────
   const { registerSsoRoutes } = await import("../sso/routes");
@@ -1049,15 +1057,33 @@ async function startServer() {
   });
 
   // ── Graceful shutdown ──────────────────────────────────────────────────────
+  let shuttingDown = false;
+  const SHUTDOWN_TIMEOUT_MS = Number(process.env.SHUTDOWN_TIMEOUT_MS || 25_000);
+
   const handleShutdown = (signal: string) => {
-    logger.info(`[Server] ${signal} received. Shutting down gracefully`);
+    if (shuttingDown) return;
+    shuttingDown = true;
+    logger.info({ signal, timeoutMs: SHUTDOWN_TIMEOUT_MS }, "[Server] Graceful shutdown started");
+
+    const forceTimer = setTimeout(() => {
+      logger.error("[Server] Shutdown timed out; forcing exit");
+      process.exit(1);
+    }, SHUTDOWN_TIMEOUT_MS);
+    forceTimer.unref?.();
+
     server.close(async () => {
-      logger.info("[Server] Closed");
       try {
         await flushSecurityEventsOnShutdown();
       } catch (err) {
         logger.warn({ err }, "[Server] Failed to flush events on shutdown");
       }
+      try {
+        await redis.quit().catch(() => redis.disconnect());
+      } catch {
+        /* best effort */
+      }
+      clearTimeout(forceTimer);
+      logger.info("[Server] Closed cleanly");
       process.exit(0);
     });
   };

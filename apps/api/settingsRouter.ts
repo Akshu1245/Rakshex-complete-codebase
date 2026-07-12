@@ -8,6 +8,7 @@ import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure } from "./_core/trpc";
 import * as db from "./db";
 import { hashPassword, verifyPassword } from "./utils/password";
+import { generateRecoveryCodes, hashRecoveryCodes } from "./services/recoveryCodes";
 import { logger } from "./_core/logger";
 import { COOKIE_NAME } from "@rakshex/shared-types/const";
 import { getSessionCookieOptions } from "./_core/cookies";
@@ -457,6 +458,12 @@ export const settingsRouter = router({
       // Clear the pending secret
       await db.updatePendingTotpSecret(ctx.user.id, null, null);
 
+      // Generate single-use recovery codes (shown once)
+      const recoveryCodes = generateRecoveryCodes(10);
+      await db.updateUser(ctx.user.id, {
+        recoveryCodesHash: hashRecoveryCodes(recoveryCodes),
+      });
+
       await db.createAuditLogEntry(
         ctx.user.id,
         "2fa_enabled",
@@ -467,7 +474,7 @@ export const settingsRouter = router({
 
       logger.info(`[2FA] Enabled for user ${ctx.user.id}`);
 
-      return { success: true };
+      return { success: true, recoveryCodes };
     }),
 
   /**
@@ -498,6 +505,7 @@ export const settingsRouter = router({
       }
 
       await db.updateUserTotpSecret(ctx.user.id, null);
+      await db.updateUser(ctx.user.id, { recoveryCodesHash: null });
 
       await db.createAuditLogEntry(
         ctx.user.id,
@@ -525,10 +533,39 @@ export const settingsRouter = router({
       throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
     }
 
+    const recovery = ((user as any).recoveryCodesHash as string[] | null) ?? [];
     return {
       enabled: Boolean((user as any).totpSecret),
+      recoveryCodesRemaining: recovery.length,
     };
   }),
+
+  /**
+   * Regenerate recovery codes (requires password). Old codes are invalidated.
+   */
+  regenerateRecoveryCodes: protectedProcedure
+    .input(z.object({ password: z.string().min(1) }))
+    .mutation(async ({ input, ctx }) => {
+      const user = await db.getUserById(ctx.user.id);
+      if (!user?.passwordHash || !verifyPassword(input.password, user.passwordHash)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Incorrect password" });
+      }
+      if (!(user as any).totpSecret) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "2FA is not enabled" });
+      }
+      const recoveryCodes = generateRecoveryCodes(10);
+      await db.updateUser(ctx.user.id, {
+        recoveryCodesHash: hashRecoveryCodes(recoveryCodes),
+      });
+      await db.createAuditLogEntry(
+        ctx.user.id,
+        "recovery_codes_regenerated",
+        {},
+        ctx.req.ip,
+        ctx.req.headers["user-agent"] as string,
+      );
+      return { recoveryCodes };
+    }),
 
   // ==========================================================================
   // DANGER ZONE - ACCOUNT DELETION

@@ -60,9 +60,14 @@ interface Finding {
   remediation: string;
   cweId: string;
   ruleId?: string;
+  confidence?: string;
+  fingerprint?: string;
+  endpoint?: string;
+  method?: string;
+  evidence?: unknown;
 }
 
-interface ShadowAPI {
+export interface ShadowAPI {
   endpoint: string;
   method: string;
   riskLevel: RiskLevel;
@@ -110,7 +115,26 @@ export function safeGetPath(rawUrl: string): string | null {
  */
 export function generateRealFindings(collectionData: CollectionData): Finding[] {
   const result = runScan(collectionData);
-  return toLegacyFindings(result.findings, () => nanoid()) as Finding[];
+  // Preserve rich scanner fields for persistence (ruleId, confidence, evidence, etc.)
+  return result.findings.map((f) => {
+    const cwe = f.standards.cwe?.[0] ?? "CWE-0";
+    const owasp = f.standards.owaspApi?.[0] ?? f.standards.owaspLlm?.[0];
+    return {
+      id: nanoid(),
+      title: f.title,
+      severity: f.severity,
+      description: f.description,
+      category: owasp ? `${f.category} (${owasp})` : f.category,
+      remediation: f.remediation,
+      cweId: cwe,
+      ruleId: f.ruleId,
+      confidence: f.confidence,
+      fingerprint: f.fingerprint,
+      endpoint: f.endpoint,
+      method: f.method,
+      evidence: f.evidence,
+    };
+  });
 }
 
 export function detectShadowAPIs(collectionData: CollectionData): ShadowAPI[] {

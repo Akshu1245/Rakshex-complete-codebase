@@ -1,0 +1,38 @@
+# Repository policy file example — validate with @rakshex/policy-engine
+version: 1
+name: production-guardrails
+description: Default production agent guardrails for Rakshex
+agent:
+  max_steps: 15
+  max_retries: 3
+  max_cost_usd: 0.50
+  timeout_seconds: 120
+models:
+  allow:
+    - openai/gpt-4o-mini
+    - anthropic/claude-sonnet
+  deny:
+    - openai/gpt-4o
+tools:
+  deny:
+    - execute_shell
+    - shell
+  require_approval:
+    - send_email
+    - transfer_money
+    - delete_record
+  deny_by_default: false
+data:
+  block:
+    - api_key
+    - credit_card
+    - aadhaar
+    - pan
+  redact:
+    - email
+  action: block
+network:
+  allow_domains:
+    - api.example.com
+    - api.openai.com
+    - api.anthropic.com

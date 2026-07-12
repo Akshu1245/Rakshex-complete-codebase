@@ -13,7 +13,11 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const session = request.cookies.get("session")?.value;
+  // Accept dual-token access_token, legacy app_session_id, or session alias
+  const session =
+    request.cookies.get("access_token")?.value ||
+    request.cookies.get("app_session_id")?.value ||
+    request.cookies.get("session")?.value;
   if (!session) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("redirect", pathname);

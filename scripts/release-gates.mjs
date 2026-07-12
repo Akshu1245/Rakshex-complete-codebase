@@ -41,13 +41,7 @@ for (const pkg of PACKAGE_TESTS) {
     continue;
   }
   console.log(`→ test ${pkg}`);
-  const ok = run("pnpm", [
-    "exec",
-    "vitest",
-    "run",
-    "--config",
-    path.join(pkg, "vitest.config.ts"),
-  ]);
+  const ok = run("pnpm", ["exec", "vitest", "run", "--config", path.join(pkg, "vitest.config.ts")]);
   if (!ok) {
     console.log(`✗ ${pkg} tests failed`);
     failed += 1;

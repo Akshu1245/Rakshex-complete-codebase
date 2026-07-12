@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { compilePolicy } from "./compile.js";
 import { evaluatePolicy, simulatePolicy } from "./evaluate.js";
 import { parsePolicy, PolicyParseError } from "./parse.js";
+import { PolicyImmutabilityError, PolicyStore, validatePolicyYaml } from "./lifecycle.js";
 
 const SAMPLE_YAML = `
 version: 1
@@ -100,5 +101,41 @@ describe("evaluatePolicy", () => {
     ]);
     expect(results[0]?.decision.action).toBe("require_approval");
     expect(results[1]?.decision.action).toBe("deny");
+  });
+});
+
+describe("policy lifecycle", () => {
+  it("rejects invalid policies", () => {
+    const bad = validatePolicyYaml("version: 99\n");
+    expect(bad.ok).toBe(false);
+  });
+
+  it("published policies are immutable", () => {
+    const store = new PolicyStore();
+    store.createDraft("p1", SAMPLE_YAML);
+    store.publish("p1", "admin@example.com");
+    expect(() => store.updateDraft("p1", SAMPLE_YAML + "\n# edit\n")).toThrow(
+      PolicyImmutabilityError,
+    );
+  });
+
+  it("dry-run records violation but does not change semantics of action", () => {
+    const store = new PolicyStore();
+    store.createDraft("p1", SAMPLE_YAML);
+    store.publish("p1", "admin");
+    const d = store.dryRun("p1", { toolName: "execute_shell" });
+    expect(d.action).toBe("deny");
+    expect(store.getViolations("p1")[0]?.dryRun).toBe(true);
+  });
+
+  it("enforcement matches simulation", () => {
+    const store = new PolicyStore();
+    store.createDraft("p1", SAMPLE_YAML);
+    store.publish("p1", "admin");
+    const ctx = { step: 20 };
+    const sim = store.simulate("p1", [ctx])[0]!.decision;
+    const enf = store.enforce("p1", ctx);
+    expect(enf.action).toBe(sim.action);
+    expect(enf.matchedRules).toEqual(sim.matchedRules);
   });
 });

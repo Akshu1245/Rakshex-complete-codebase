@@ -29,6 +29,7 @@ import { registerGatewayCommand } from "./gatewayTester";
 import { registerShadowApiCommand } from "./shadowApi";
 import { PostmanImportCommand } from "./postmanImport";
 import { ScanCurrentFileCommand } from "./scanCurrentFile";
+import { ScanWorkspaceCommand } from "./scanWorkspace";
 import { AnalyticsDashboard } from "./analyticsDashboard";
 import { RetentionEngine } from "./retentionEngine";
 import { dismissFinding } from "./dismissFinding";
@@ -774,12 +775,21 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     vscode.commands.registerCommand("rakshex.importPostman", () => postmanImport.execute()),
   );
 
-  // Scan current file command
+  // Scan current file / workspace / changed files
   const scanCurrentFile = new ScanCurrentFileCommand(api);
+  const scanWorkspace = new ScanWorkspaceCommand(api);
   context.subscriptions.push(
     vscode.commands.registerCommand("rakshex.scanCurrentFile", () => {
       engagementTracker.record("scan_run");
       return scanCurrentFile.execute();
+    }),
+    vscode.commands.registerCommand("rakshex.scanWorkspace", () => {
+      engagementTracker.record("scan_run");
+      return scanWorkspace.execute(false);
+    }),
+    vscode.commands.registerCommand("rakshex.scanChangedFiles", () => {
+      engagementTracker.record("scan_run");
+      return scanWorkspace.execute(true);
     }),
   );
 

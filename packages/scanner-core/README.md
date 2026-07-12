@@ -24,7 +24,9 @@ console.log(result.findings, listRuleIds());
 pnpm test:scanner
 ```
 
-## Rule IDs (v0.1)
+## Rule IDs
+
+### API
 
 | ID                            | Severity        |
 | ----------------------------- | --------------- |
@@ -35,3 +37,13 @@ pnpm test:scanner
 | `api.debug_headers`           | Low             |
 | `api.missing_correlation_id`  | Low             |
 | `api.ssrf_risk_indicator`     | Medium          |
+
+### AI / agent
+
+| ID                            | Severity  |
+| ----------------------------- | --------- |
+| `ai.prompt_injection_surface` | High      |
+| `ai.excessive_agency`         | High/Crit |
+| `ai.insecure_plugin_output`   | Medium    |
+
+See [LIMITATIONS.md](./LIMITATIONS.md).
