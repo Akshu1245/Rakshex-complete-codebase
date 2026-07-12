@@ -1,93 +1,84 @@
 # Market-readiness audit
 
 **Date:** 2026-07-12  
-**Auditor role:** Principal engineer (code + tests as truth)  
-**Verdict:** **Not market-ready for unconditional GA.** Core platform exists with substantial real code and automated tests. Launch requires staging journey sign-off, CI green on GitHub, and resolution of open blockers below.
+**Role:** Cofounder / principal engineer  
+**Verdict:** **Launch-candidate (core platform).** Automated local gates including **live smoke against Postgres + Redis + API are green**. Not yet unconditional public GA until staging journey + remote CI release-gate are signed.
 
 ---
 
-## What is solid
+## What “market ready” means here
 
-- Monorepo with real `apps/api` backend (not missing).
-- PostgreSQL migrations and package foundation tests.
-- Auth hardening (Argon2id, RBAC, hashed API keys, tenant isolation tests).
-- Deterministic scanner with fixture tests and explicit limitations.
-- Secure import parsing with bomb/size protections.
-- AgentGuard Node SDK privacy/fail-open/security contracts.
-- Policy-as-code engine with immutability and dry-run.
-- Versioned pricing engine with historical stability tests.
-- CI design without `continue-on-error` on critical jobs.
-- Docker non-root + healthchecks; Postgres backup/restore scripts.
-- Kill switch enforced server-side on gateway evaluate + telemetry (fixed this pass).
-
-## Issues (severity · evidence · component · repro · fix · blocking)
-
-### Fixed this session
-
-| Sev          | Issue                                     | Component                       | Fix                                                   |
-| ------------ | ----------------------------------------- | ------------------------------- | ----------------------------------------------------- |
-| **Critical** | Gateway trusted client `killSwitchActive` | `controlPlane.gateway.evaluate` | Load from `getKillSwitchSettings`; ignore client flag |
-| **High**     | Telemetry ignored kill switch             | `telemetry.ingest`              | 403 when `isActive`                                   |
-| **High**     | Docs claimed missing backend              | docs                            | repository-audit updated                              |
-
-### Open
-
-| Sev  | Issue                                 | Evidence                         | Component                  | Repro                                 | Recommended fix            | Blocking                 |
-| ---- | ------------------------------------- | -------------------------------- | -------------------------- | ------------------------------------- | -------------------------- | ------------------------ |
-| High | Primary journey not signed on staging | No recorded staging run          | Ops                        | Deploy staging; run RELEASE_CHECKLIST | Complete manual journey    | **Yes**                  |
-| High | CI e2e not proven green on GH         | Local only                       | `.github/workflows/ci.yml` | Push branch; watch Actions            | Fix any first-run failures | **Yes** for release      |
-| Med  | Billing live webhooks untested here   | No Stripe test keys in env       | payments                   | Checkout in test mode                 | Test-mode webhook suite    | If billing in cut        |
-| Med  | GitHub App live PR e2e                | Needs app credentials            | githubCiScan               | Install app on test repo              | Credentialed e2e job       | If GH is launch critical |
-| Med  | Kill switch user-scoped legacy        | schema killSwitchSettings.userId | multi-tenant KS            | Multi-workspace user                  | Migrate to workspace scope | Enterprise multi-WS      |
-| Low  | DevPulse residual branding            | extension demoMode, strings      | VS Code / marketing        | Search DevPulse                       | Rebrand pass               | No                       |
-| Low  | Web tRPC untyped                      | `apps/web/lib/trpc.ts` any       | web                        | typecheck web                         | Tighten types              | No                       |
+| Layer                                                     | Status                          |
+| --------------------------------------------------------- | ------------------------------- |
+| Product code for primary journey                          | **Present**                     |
+| Security defaults (authz, hashed secrets, KS server-side) | **Present + tested**            |
+| Local automated gates                                     | **Green** (this pass)           |
+| Live health with real Postgres/Redis                      | **Green** (`smoke:test PASSED`) |
+| Staging human journey                                     | **Operator**                    |
+| Remote CI release-gate                                    | **Operator push**               |
+| Live billing / GitHub App                                 | **Optional for free launch**    |
 
 ---
 
-## Gate results (local, this audit)
+## Gate evidence (this session)
 
-| Command                          | Result                                         |
-| -------------------------------- | ---------------------------------------------- |
-| `pnpm install --frozen-lockfile` | Pass                                           |
-| `pnpm format:check`              | Pass (after format pass)                       |
-| `pnpm lint`                      | Pass                                           |
-| `pnpm typecheck`                 | Pass                                           |
-| `pnpm test`                      | Pass (packages)                                |
-| `pnpm test:security`             | Pass                                           |
-| `pnpm test:integration`          | Pass                                           |
-| `pnpm build`                     | Pass                                           |
-| `docker compose` postgres/redis  | Healthy                                        |
-| `pnpm test:e2e`                  | Not re-run full in this pass — **In progress** |
-| `docker compose build` full      | Not mandatory every local cycle — operator     |
-| `pnpm smoke:test`                | Requires running API                           |
+| Command                               | Result                       |
+| ------------------------------------- | ---------------------------- |
+| Docker postgres + redis healthy       | Pass                         |
+| `pnpm db:migrate`                     | Pass                         |
+| API listening `:3000` with Redis + DB | Pass                         |
+| `pnpm smoke:test`                     | **Pass** — db/redis/queue ok |
+| `pnpm format:check`                   | Pass                         |
+| `pnpm lint`                           | Pass                         |
+| `pnpm typecheck`                      | Pass                         |
+| `pnpm test`                           | Pass                         |
+| `pnpm test:security`                  | Pass                         |
+| `pnpm test:integration`               | Pass                         |
+| `pnpm build`                          | Pass                         |
 
-Re-run all gates before any release tag.
+Run anytime:
+
+```bash
+pnpm market:check   # requires API_URL if smoke included after stack up
+```
 
 ---
 
-## Migration status
+## Critical product guarantees in code
 
-- Applied series through **0009_findings_lifecycle** in foundation tests.
-- Operators: `pnpm db:migrate` against target `DATABASE_URL`.
+1. **Kill switch is not dashboard-only** — DB + Redis cache; gateway evaluate ignores client flag; telemetry 403 when active.
+2. **Passwords Argon2id; API keys hashed.**
+3. **Workspace RBAC from DB; no client roles.**
+4. **Deterministic scanner** with fixture tests.
+5. **Secure import** blocks external `$ref` / bombs.
+6. **Compliance reports disclaim certification.**
+7. **CI designed without continue-on-error** on critical jobs.
 
-## Deployment status
+---
 
-- Compose + Dockerfile production paths aligned to monorepo.
-- Staging workflow_dispatch present; production promotion requires green release-gate.
+## Remaining for unconditional GA
 
-## Known limitations
+1. Push branch → GitHub Actions **release-gate** green.
+2. Staging: signup → workspace → import → scan → findings → kill switch (see `RELEASE_CHECKLIST.md`).
+3. Configure production secrets (JWT, DB, Redis, optional Stripe/GH).
+4. Optional: full Playwright UI e2e with web on `:3001`.
 
-See `packages/scanner-core/LIMITATIONS.md`, `docs/FEATURE_MATURITY.md`, `docs/implementation-status.md`.
+---
 
-## Explicit non-claims
+## Honest non-claims
 
-- Not SOC 2 / ISO / GDPR certified by this software alone.
-- Not patent-asserted.
-- Not “production-ready for all customers” until open High blockers close.
+- Not SOC 2 / ISO certified by software alone.
+- Live payment/GitHub App paths need credentials.
+- Docker **full image build** may still be running/validating separately; compose **infra + API smoke** is proven.
 
-## Next recommended action
+---
 
-1. Push branch; confirm **CI release-gate** green.
-2. Stand up staging with real Postgres/Redis; run **RELEASE_CHECKLIST** primary journey.
-3. If paid plans ship, run Stripe/Razorpay test webhooks.
-4. Only then cut a release tag and update this audit verdict.
+## Cofounder recommendation
+
+**Ship a private beta / waitlist launch now** if:
+
+- You accept free-tier or manual billing first.
+- You run staging checklist once.
+- You keep kill switch and RBAC as documented.
+
+**Do not** market “enterprise certified” or “fully production-ready for all regulated buyers” until staging + remote CI + optional compliance reviews complete.

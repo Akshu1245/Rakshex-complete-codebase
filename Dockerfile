@@ -26,8 +26,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 
-RUN addgroup --system --gid 1001 nodejs \
-  && adduser --system --uid 1001 --ingroup /app nodejs
+RUN addgroup -g 1001 -S nodejs \
+  && adduser -S -u 1001 -G nodejs -h /app -s /sbin/nologin nodejs
 
 COPY --from=builder --chown=nodejs:nodejs /app/package.json ./
 COPY --from=builder --chown=nodejs:nodejs /app/pnpm-workspace.yaml ./

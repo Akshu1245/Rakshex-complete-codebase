@@ -20,6 +20,7 @@
     "test:e2e:api": "playwright test e2e/smoke.spec.ts --grep=\"API health\"",
     "smoke:test": "node scripts/smoke-test.mjs",
     "dev:api": "pnpm --filter @rakshex/api exec tsx _core/index.ts",
+    "market:check": "node scripts/market-ready-check.mjs",
     "format": "prettier --write \"packages/**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\" \"apps/api/**/*.{ts,tsx,js,json,md}\" \"apps/cli/**/*.{ts,js,json,md}\" \"apps/worker/**/*.{ts,js,json}\" \"docs/**/*.{md,yml,yaml}\" \".github/**/*.{yml,yaml}\" \"*.{md,yml,yaml,json}\" \"scripts/**/*.{mjs,js,md}\"",
     "format:check": "prettier --check \"packages/**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\" \"apps/api/**/*.{ts,tsx,js,json,md}\" \"apps/cli/**/*.{ts,js,json,md}\" \"apps/worker/**/*.{ts,js,json}\" \"docs/**/*.{md,yml,yaml}\" \".github/**/*.{yml,yaml}\" \"README.md\" \"GETTING_STARTED.md\" \"package.json\" \"docker-compose.yml\" \"docker-compose.prod.yml\" \"scripts/**/*.{mjs,js,md}\"",
     "db:up": "docker compose up -d postgres redis",

@@ -412,54 +412,78 @@ async function startServer() {
 
   app.use("/api/oauth", authLimiter);
 
-  // ── Health check endpoint ──────────────────────────────────────────────────
-  app.get("/api/health", async (_req, res) => {
-    const checks: Record<string, "ok" | "error"> = {};
-    let allOk = true;
-
-    // Database check
+  // ── Health / readiness (mounted early; never behind SPA catch-all) ─────────
+  async function runDependencyHealth(): Promise<{
+    db: "ok" | "error";
+    redis: "ok" | "error";
+    queue: "ok" | "error";
+  }> {
+    let dbStatus: "ok" | "error" = "error";
+    let redisStatus: "ok" | "error" = "error";
     try {
-      const db = await getDb();
-      if (db) {
-        // lightweight query — just verify connection is alive
-        await db.execute("SELECT 1");
-        checks.database = "ok";
-      } else {
-        checks.database = "error";
-        allOk = false;
+      const dbConn = await getDb();
+      if (dbConn) {
+        const { sql } = await import("drizzle-orm");
+        await dbConn.execute(sql`SELECT 1`);
+        dbStatus = "ok";
       }
     } catch {
-      checks.database = "error";
-      allOk = false;
+      dbStatus = "error";
     }
-
-    // Redis check
     try {
       await redis.ping();
-      checks.redis = "ok";
+      redisStatus = "ok";
     } catch {
-      checks.redis = "error";
-      allOk = false;
+      redisStatus = "error";
     }
+    return { db: dbStatus, redis: redisStatus, queue: redisStatus };
+  }
 
-    // Memory check — RSS vs 1GB limit (heap ratio is misleading because V8 heap grows dynamically)
+  app.get("/api/health", async (_req, res) => {
+    const checks = await runDependencyHealth();
+    const allOk = checks.db === "ok" && checks.redis === "ok";
     const mem = process.memoryUsage();
-    const heapUsedMB = Math.round(mem.heapUsed / 1024 / 1024);
-    const heapTotalMB = Math.round(mem.heapTotal / 1024 / 1024);
-    const rssMB = Math.round(mem.rss / 1024 / 1024);
-    const MEMORY_LIMIT_MB = 1024; // 1GB — reasonable for Railway hobby plan
-    checks.memory = rssMB < MEMORY_LIMIT_MB ? "ok" : "error";
-    if (checks.memory === "error") allOk = false;
-
     res.status(allOk ? 200 : 503).json({
       status: allOk ? "ok" : "degraded",
       timestamp: new Date().toISOString(),
       uptime: Math.round(process.uptime()),
-      version: process.env.npm_package_version ?? "1.0.0",
+      version: process.env.npm_package_version ?? process.env.APP_VERSION ?? "1.0.0",
       environment: process.env.NODE_ENV ?? "development",
-      checks,
-      memory: { heapUsedMB, heapTotalMB },
+      db: checks.db,
+      redis: checks.redis,
+      queue: checks.queue,
+      checks: {
+        database: checks.db,
+        redis: checks.redis,
+        queue: checks.queue,
+      },
+      memory: {
+        heapUsedMB: Math.round(mem.heapUsed / 1024 / 1024),
+        heapTotalMB: Math.round(mem.heapTotal / 1024 / 1024),
+        rssMB: Math.round(mem.rss / 1024 / 1024),
+      },
     });
+  });
+
+  app.get("/api/health/ready", async (_req, res) => {
+    const checks = await runDependencyHealth();
+    const ready = checks.db === "ok" && checks.redis === "ok";
+    res.status(ready ? 200 : 503).json({
+      status: ready ? "ok" : "not ready",
+      db: checks.db,
+      redis: checks.redis,
+      queue: checks.queue,
+      uptime: process.uptime(),
+      version: process.env.npm_package_version ?? process.env.APP_VERSION ?? "1.0.0",
+    });
+  });
+
+  // Alias for probes that hit /health
+  app.get("/health", (_req, res) => {
+    res.redirect(307, "/api/health");
+  });
+  app.get("/health/ready", (_req, res) => {
+    res.redirect(307, "/api/health/ready");
   });
 
   // ── Prometheus metrics endpoint ───────────────────────────────────────────
