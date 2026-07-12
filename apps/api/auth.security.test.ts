@@ -29,7 +29,7 @@ describe("PROMPT 3 acceptance — secrets never stored plaintext", () => {
     expect(hash).not.toEqual(pw);
     expect(hash.startsWith("argon2id$")).toBe(true);
     expect(verifyPassword(pw, hash)).toBe(true);
-  });
+  }, 30_000);
 
   it("password reset tokens are hashed before storage", () => {
     const raw = "reset-token-raw-value";

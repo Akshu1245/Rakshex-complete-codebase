@@ -74,7 +74,7 @@ export function FeatureCards() {
     },
     {
       title: "Thinking Tokens",
-      description: "World-first reasoning token isolation. Patent NHCE/DEV/2026/002.",
+      description: "Reasoning-token attribution when provider metadata is available.",
       link: "/features#thinking-tokens",
       icon: Brain,
       animClass: "animate-pulse-brain",

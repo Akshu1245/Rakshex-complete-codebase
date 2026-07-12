@@ -12,7 +12,7 @@ const {
 
 const root = path.resolve(__dirname, "..");
 const sourceDir = path.join(root, "docs", "legal");
-const outputDir = path.join(root, "devpulse-frontend", "public", "legal");
+const outputDir = path.join(root, "apps", "web", "public", "legal");
 
 const documents = [
   ["TERMS_OF_SERVICE.md", "rakshex-terms-of-service.docx"],

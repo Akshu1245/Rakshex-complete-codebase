@@ -1,7 +1,7 @@
 /**
  * tRPC router exposing the Unified Risk Score engine.
  *
- * Patent surface NHCE/DEV/2026/001. Stateless: callers provide the
+ * Stateless: callers provide the
  * security/cost inputs and receive a normalised combined score back. The
  * frontend can use this to render a top-N riskiest-endpoints panel without
  * the server having to know how to attribute spend to endpoints (which is

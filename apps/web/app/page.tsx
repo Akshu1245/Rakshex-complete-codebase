@@ -460,7 +460,7 @@ export default function HomePage() {
     },
     {
       title: "Thinking Tokens",
-      description: "World-first reasoning isolation.",
+      description: "Reasoning-token attribution where provider metadata supports it.",
       link: "/features#thinking-tokens",
       icon: Brain,
       hoverClass: "hover-brain-pulse text-teal-accent",
@@ -492,49 +492,6 @@ export default function HomePage() {
       link: "/features#mcp",
       icon: Network,
       hoverClass: "hover-connect-network text-teal-accent",
-    },
-  ];
-
-  const tweets = [
-    {
-      handle: "@devesh_k_r",
-      text: "@rakshexhq found a production OpenAI key in our test collection.\nOne that was about to go live. Not a drill.",
-      date: "May 2026",
-    },
-    {
-      handle: "@aarti_builds",
-      text: "The @rakshexhq kill switch tripped automatically on a runaway agent loop.\nSaved us ~$8K. This feature alone is worth it.",
-      date: "May 2026",
-    },
-    {
-      handle: "@siddharth_swe",
-      text: "SOC2 evidence prep used to be 3 days of pain.\n@rakshexhq generates the bundle in one click. Our auditor was genuinely confused.",
-      date: "May 2026",
-    },
-    {
-      handle: "@priya_appsec",
-      text: "Thinking token attribution from @rakshexhq is wild. 40% of our Claude\nbill was reasoning tokens from a single misconfigured endpoint.",
-      date: "April 2026",
-    },
-    {
-      handle: "@nikhil_founder",
-      text: "@rakshexhq in GitHub Actions is a no-brainer. Every PR gets security\nscore + cost delta in USD and INR. Team loves it.",
-      date: "April 2026",
-    },
-    {
-      handle: "@arjun_fintech",
-      text: "Shadow API discovery found 7 forgotten endpoints. Two had zero auth.\n@rakshexhq is now mandatory before every release.",
-      date: "April 2026",
-    },
-    {
-      handle: "@meera_devops",
-      text: "Deployed @rakshexhq in 4 minutes. Scanned 340 endpoints.\nFound a JWT secret we had no idea existed.",
-      date: "March 2026",
-    },
-    {
-      handle: "@rohan_ml",
-      text: "The MCP governance layer from @rakshexhq is exactly what AI agent\nsecurity needed. Nothing else does this.",
-      date: "March 2026",
     },
   ];
 
@@ -664,7 +621,7 @@ export default function HomePage() {
           </h2>
           <div className="flex gap-4">
             <a
-              href="https://github.com"
+              href="https://github.com/Akshu1245/Rakshex-complete-codebase/discussions"
               target="_blank"
               rel="noopener noreferrer"
               className="bg-transparent hover:bg-[#14B8A6]/10 text-white border-2 border-[#14B8A6] text-xs font-mono tracking-wider px-5 py-2.5 rounded-[6px] font-semibold hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_4px_12px_rgba(20,184,166,0.1)] transition-all duration-200 transform"
@@ -672,12 +629,10 @@ export default function HomePage() {
               GitHub Discussions
             </a>
             <a
-              href="https://discord.gg"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="mailto:support@rakshex.in"
               className="bg-[#14B8A6] hover:bg-[#0D9488] text-white hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_4px_12px_rgba(20,184,166,0.2)] text-xs font-mono tracking-wider px-5 py-2.5 rounded-[6px] font-bold transition-all duration-200 transform"
             >
-              Join Discord
+              Contact the team
             </a>
           </div>
         </div>

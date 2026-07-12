@@ -5,7 +5,7 @@
   "type": "module",
   "main": "./_core/index.ts",
   "scripts": {
-    "dev": "echo \"TODO(foundation): wire apps/api dev entry (was root vite)\"",
+    "dev": "tsx _core/index.ts",
     "build": "tsc --noEmit -p tsconfig.json",
     "start": "node ../../dist/apps/api/_core/index.js",
     "typecheck": "tsc --noEmit -p tsconfig.json",

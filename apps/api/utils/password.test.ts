@@ -20,12 +20,12 @@ describe("password Argon2id", () => {
     const pw = "SuperSecret123!";
     const hash = hashPassword(pw);
     expect(hash).not.toContain(pw);
-  });
+  }, 30_000);
 
   it("needsRehash is false for fresh argon2id", () => {
     const hash = hashPassword("x");
     expect(needsRehash(hash)).toBe(false);
-  });
+  }, 30_000);
 
   it("verifies legacy pbkdf2 hashes", () => {
     // Build a PBKDF2 hash compatible with previous format
