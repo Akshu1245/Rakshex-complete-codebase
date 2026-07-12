@@ -39,7 +39,7 @@ const RAZORPAY_KEY_SECRET = ENV.razorpayKeySecret;
 // ============================================================================
 
 // We bill three on-platform tiers (`free` / `pro` / `enterprise`) at the
-// database level today — these are the values the `users.plan` mysqlEnum
+// database level today — these are the values the `users.plan` pgEnum
 // accepts. "Business" and "Scale" are roadmap labels surfaced in marketing
 // copy; once the new SKUs are billable they will be added via DB migration.
 const PLAN_CONFIG = {

@@ -50,6 +50,13 @@
       "when": 1781100000000,
       "tag": "0006_github_installations",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1781200000000,
+      "tag": "0007_market_ready_foundation",
+      "breakpoints": true
     }
   ]
 }

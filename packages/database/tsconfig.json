@@ -10,5 +10,6 @@
     "types": ["node"],
     "lib": ["ES2022"]
   },
-  "include": ["src/**/*.ts", "drizzle/**/*.ts", "drizzle.config.ts"]
+  "include": ["src/**/*.ts", "drizzle/**/*.ts", "drizzle.config.ts"],
+  "exclude": ["src/**/*.test.ts", "node_modules", "dist"]
 }

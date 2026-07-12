@@ -8,16 +8,23 @@
   "exports": {
     ".": "./src/index.ts",
     "./schema": "./drizzle/schema.ts",
+    "./schema-foundation": "./drizzle/schema-foundation.ts",
     "./schema-enterprise": "./drizzle/schema-enterprise.ts",
-    "./relations": "./drizzle/relations.ts"
+    "./relations": "./drizzle/relations.ts",
+    "./migrate": "./src/migrate.ts",
+    "./seed": "./src/seed.ts",
+    "./client": "./src/client.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "echo \"@rakshex/database: lint deferred to root\"",
-    "test": "echo \"@rakshex/database: no unit tests yet\"",
+    "test": "vitest run --config vitest.config.ts",
     "build": "tsc -p tsconfig.json --noEmit",
     "db:generate": "drizzle-kit generate --config=drizzle.config.ts",
-    "db:migrate": "drizzle-kit migrate --config=drizzle.config.ts"
+    "db:migrate": "tsx src/migrate.ts",
+    "db:reset": "tsx src/reset.ts",
+    "db:seed": "tsx src/seed.ts",
+    "db:studio": "drizzle-kit studio --config=drizzle.config.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",
@@ -25,7 +32,10 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "@types/pg": "^8.20.0",
     "drizzle-kit": "^0.31.10",
-    "typescript": "^5.7.0"
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
   }
 }

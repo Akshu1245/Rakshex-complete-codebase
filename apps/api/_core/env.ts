@@ -33,7 +33,7 @@ const EnvSchema = z.object({
     : z.string().default("dev-secret-do-not-use-in-production"),
   OWNER_OPEN_ID: z.string().default(""),
 
-  // Database — driver accepts mysql:// / mysql2:// / IPv6, so we just
+  // Database — PostgreSQL only (postgresql:// or postgres://). IPv6 hosts OK.
   // require non-empty rather than a strict URL parse. Optional in dev
   // / test so the suite can boot without a real DATABASE_URL.
   DATABASE_URL: isProduction

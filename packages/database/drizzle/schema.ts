@@ -1561,5 +1561,8 @@ export const scanReports = pgTable(
 export type ScanReport = typeof scanReports.$inferSelect;
 export type InsertScanReport = typeof scanReports.$inferInsert;
 
+// ─── Market-ready foundation tables (additive) ───────────────────────────
+export * from "./schema-foundation";
+
 // ─── Rakshex Enterprise Tables ───────────────────────────────────────────
 export * from "./schema-enterprise";

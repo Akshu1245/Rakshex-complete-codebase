@@ -47,7 +47,7 @@ render blueprints apply --confirm
 Go to Render Dashboard → `rakshex-backend` → **Environment**:
 
 ```
-DATABASE_URL=mysql://username:password@host:3306/rakshex    ← REQUIRED
+DATABASE_URL=postgresql://rakshex:rakshex@host:5432/rakshex    ← REQUIRED (PostgreSQL only)
 APP_URL=https://rakshex-backend-xxx.onrender.com            ← auto-set
 NEXT_PUBLIC_APP_URL=https://app.rakshex.in                  ← after domain
 SMTP_HOST=smtp.sendgrid.net                                    ← after email setup
