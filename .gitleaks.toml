@@ -1,0 +1,23 @@
+# Gitleaks config — allow false positives from tests/fixtures and migration names.
+# Real secrets must still never land in committed code.
+
+title = "Rakshex gitleaks"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Test fixtures, migration filenames, and known false positives"
+paths = [
+  '''(?i).*\.test\.ts$''',
+  '''(?i).*\.test\.tsx$''',
+  '''(?i).*\.spec\.ts$''',
+  '''(?i).*/__tests__/.*''',
+  '''(?i).*/fixtures/.*''',
+  '''packages/database/src/migrate\.ts''',
+  '''(?i)^server/.*''',
+]
+
+regexes = [
+  '''0002_auth_and_settings\.sql''',
+]
