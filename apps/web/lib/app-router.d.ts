@@ -4,6 +4,5 @@
  * path mapping resolves.
  */
 declare module "@server/routers" {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   export type AppRouter = any;
 }

@@ -38,4 +38,15 @@ export default tseslint.config(
       "prefer-const": "off",
     },
   },
+  {
+    files: ["**/next.config.js", "**/postcss.config.js", "**/tailwind.config.js"],
+    languageOptions: {
+      globals: {
+        require: "readonly",
+        process: "readonly",
+        __dirname: "readonly",
+        module: "readonly",
+      },
+    },
+  },
 );

@@ -8,5 +8,4 @@ import { createTRPCReact } from "@trpc/react-query";
  * without loading apps/api (which can surface helper-name collisions).
  * Server Zod/tRPC still validates every call at runtime.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const trpc: any = createTRPCReact();
