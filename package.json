@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "turbo run dev --filter=@rakshex/api --filter=@rakshex/web",
     "build": "turbo run build --filter=./packages/* --filter=@rakshex/api --filter=@rakshex/web --filter=@rakshex/vscode-extension --filter=@rakshex/cli --filter=@rakshex/worker",
-    "lint": "eslint packages apps/api apps/web apps/cli apps/worker --max-warnings=0",
+    "lint": "eslint packages apps/cli apps/worker apps/api --max-warnings=0",
     "typecheck": "turbo run typecheck --filter=./packages/* --filter=@rakshex/api --filter=@rakshex/web --filter=@rakshex/vscode-extension --filter=@rakshex/cli --filter=@rakshex/worker",
     "test": "turbo run test --filter=@rakshex/scanner-core --filter=@rakshex/policy-engine --filter=@rakshex/risk-baseline --filter=@rakshex/agent-graph --filter=@rakshex/siem-export --filter=@rakshex/database --filter=@rakshex/agentguard-sdk --filter=@rakshex/pricing-engine --filter=@rakshex/mcp-security --filter=@rakshex/compliance-engine --filter=@rakshex/api --filter=@rakshex/web --filter=@rakshex/vscode-extension",
     "test:api": "pnpm --filter @rakshex/api test",
