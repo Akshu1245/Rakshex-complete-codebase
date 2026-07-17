@@ -63,6 +63,14 @@ class MockRedis {
     return "OK";
   }
 
+  async set(key: string, value: string, mode?: string, ttl?: number): Promise<string> {
+    this.store.set(key, value);
+    if (mode?.toUpperCase() === "EX" && typeof ttl === "number") {
+      this.expireTimes.set(key, Date.now() + ttl * 1000);
+    }
+    return "OK";
+  }
+
   async keys(pattern: string): Promise<string[]> {
     const regex = new RegExp("^" + pattern.replace(/\*/g, ".*").replace(/\?/g, ".?") + "$");
     const result: string[] = [];
@@ -173,11 +181,7 @@ class MockRedis {
 
 // Browser smoke tests can opt into the local implementation without changing
 // the Redis client contract that the unit suite deliberately mocks.
-const REDIS_URL =
-  process.env.USE_IN_MEMORY_REDIS === "true"
-    ? undefined
-    : process.env.REDIS_URL ||
-      (process.env.NODE_ENV === "test" ? "redis://localhost:6379" : undefined);
+const REDIS_URL = process.env.USE_IN_MEMORY_REDIS === "true" ? undefined : process.env.REDIS_URL;
 
 export const redis = REDIS_URL
   ? new Redis(REDIS_URL, {

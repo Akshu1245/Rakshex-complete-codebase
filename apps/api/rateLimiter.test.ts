@@ -2,6 +2,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+  redisUrl: (process.env.REDIS_URL = "redis://test"),
   zremrangebyscore: vi.fn().mockReturnThis(),
   zadd: vi.fn().mockReturnThis(),
   zcard: vi.fn().mockReturnThis(),
