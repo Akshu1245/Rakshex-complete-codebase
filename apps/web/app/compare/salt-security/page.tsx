@@ -35,7 +35,7 @@ export default function CompareSaltSecurity() {
                 ✅ LLM-specific: prompt injection firewall, thinking token telemetry, cost
                 attribution
               </li>
-              <li>✅ AgentGuard kill-switch and human-in-the-loop approvals for tool calls</li>
+              <li>✅ AgentGuard kill-switch and runtime policy blocks for risky tool calls</li>
               <li>✅ GitHub App + VS Code deep integration</li>
               <li>✅ OWASP AI Top 10 + custom policy engine</li>
               <li>✅ Fast iteration, developer-first UX</li>

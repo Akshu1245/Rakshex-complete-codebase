@@ -6,6 +6,7 @@ export const PUBLIC_PATH_PREFIXES = [
   "/reset-password",
   "/forgot-password",
   "/verify-email",
+  "/invite",
   "/mfa",
   // findings/collections require auth — not listed
   "/privacy",

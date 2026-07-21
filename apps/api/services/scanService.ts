@@ -114,6 +114,8 @@ export async function runCollectionScan(
   const riskScore = calculateRiskScore(findings);
   const riskLevel = getRiskLevel(riskScore);
 
+  const workspaceId = collection.workspaceId ?? undefined;
+
   // Create scan record
   const scan = await db.createScan(
     userId,
@@ -124,6 +126,7 @@ export async function runCollectionScan(
     riskLevel,
     findings.length,
     findings,
+    workspaceId,
   );
 
   // Save individual findings with rich scanner metadata; group duplicates by fingerprint
@@ -175,6 +178,7 @@ export async function runCollectionScan(
           endpoint: (finding as any).endpoint,
           method: (finding as any).method,
           evidence: (finding as any).evidence,
+          workspaceId,
           status,
           duplicateOf: prior && prior.scanId !== scan.id ? prior.id : undefined,
         },

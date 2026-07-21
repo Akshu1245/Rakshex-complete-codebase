@@ -3,18 +3,19 @@ import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure, editorProcedure } from "../_core/trpc";
 import * as db from "../db";
 import { detectShadowAPIs, type CollectionData } from "../utils/scanning";
+import { requireCollectionAccess } from "../services/tenantAccess";
 
 export const shadowAPIRouter = router({
   scanShadowAPIs: editorProcedure
     .input(z.object({ collectionId: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      const collection = await db.getCollectionById(input.collectionId);
-      if (!collection || collection.userId !== ctx.user.id) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Collection not found or access denied",
-        });
-      }
+      const { collection, workspaceId } = await requireCollectionAccess(
+        input.collectionId,
+        ctx.user.id,
+        "collections",
+        "write",
+        ctx.user.name,
+      );
 
       const shadowAPIs = detectShadowAPIs(collection.data as CollectionData);
 
@@ -26,6 +27,8 @@ export const shadowAPIRouter = router({
         shadowAPIs.length * 10,
         shadowAPIs.length > 0 ? "HIGH" : "LOW",
         shadowAPIs.length,
+        undefined,
+        workspaceId,
       );
 
       for (const api of shadowAPIs) {
@@ -59,13 +62,13 @@ export const shadowAPIRouter = router({
       }),
     )
     .query(async ({ input, ctx }) => {
-      const collection = await db.getCollectionById(input.collectionId);
-      if (!collection || collection.userId !== ctx.user.id) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Collection not found or access denied",
-        });
-      }
+      await requireCollectionAccess(
+        input.collectionId,
+        ctx.user.id,
+        "collections",
+        "read",
+        ctx.user.name,
+      );
 
       const allShadowAPIs = await db.getShadowAPIsByCollectionId(input.collectionId);
 

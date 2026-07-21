@@ -4,6 +4,7 @@ import { StatusBadge } from "./StatusBadge";
 import { MetricCard } from "./MetricCard";
 import { PageLoading, ErrorState, EmptyState } from "./States";
 import { useEnterpriseWorkspace } from "./WorkspaceContext";
+import { SocTwoEvidencePanel } from "@/components/SocTwoEvidencePanel";
 
 export function ComplianceTab() {
   const { workspaceId } = useEnterpriseWorkspace();
@@ -124,6 +125,10 @@ export function ComplianceTab() {
           action={{ label: "Run Assessment", onClick: handleAssess }}
         />
       )}
+
+      <div className="glass-card rounded-xl p-5 border border-[#14b8a6]/20">
+        <SocTwoEvidencePanel compact />
+      </div>
     </div>
   );
 }

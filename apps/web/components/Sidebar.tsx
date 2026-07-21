@@ -9,6 +9,7 @@ interface NavItem {
   href: string;
   icon: string;
   group?: string;
+  adminOnly?: boolean;
 }
 
 const navItems: NavItem[] = [
@@ -16,22 +17,27 @@ const navItems: NavItem[] = [
   { label: "AI Control Plane", href: "/control-plane", icon: "hub", group: "main" },
   { label: "Collections", href: "/collections", icon: "folder_open", group: "main" },
   { label: "Import", href: "/import", icon: "upload", group: "main" },
+  { label: "Findings", href: "/findings", icon: "bug_report", group: "security" },
   { label: "Scanning", href: "/scanning", icon: "search", group: "security" },
   { label: "Compliance", href: "/compliance", icon: "gavel", group: "security" },
   { label: "Kill Switch", href: "/kill-switch", icon: "power_settings_new", group: "security" },
   { label: "Shadow APIs", href: "/shadow-apis", icon: "visibility_off", group: "security" },
-  { label: "Playbooks", href: "/playbooks", icon: "menu_book", group: "security" },
-  { label: "Agent Drift", href: "/agent-drift", icon: "psychology", group: "ai" },
+  { label: "Red Team", href: "/red-team", icon: "swords", group: "security" },
+  { label: "Playbooks (docs)", href: "/playbooks", icon: "menu_book", group: "security" },
+  { label: "Enterprise", href: "/enterprise", icon: "corporate_fare", group: "security" },
+  { label: "Cost Anomalies", href: "/agent-drift", icon: "psychology", group: "ai" },
+  { label: "Reports", href: "/report", icon: "description", group: "security" },
   { label: "Analytics", href: "/analytics", icon: "analytics", group: "ai" },
   { label: "Token Analytics", href: "/token-analytics", icon: "toll", group: "ai" },
   { label: "Copilot Metrics", href: "/dashboard/github-copilot", icon: "smart_toy", group: "ai" },
   { label: "Metrics", href: "/metrics", icon: "bar_chart", group: "ai" },
   { label: "Benchmark", href: "/benchmark", icon: "speed", group: "ai" },
+  { label: "Notifications", href: "/notifications", icon: "notifications", group: "account" },
   { label: "Team", href: "/team", icon: "group", group: "account" },
   { label: "Audit Log", href: "/audit-log", icon: "assignment", group: "account" },
   { label: "Settings", href: "/settings", icon: "settings", group: "account" },
   { label: "Billing", href: "/billing", icon: "credit_card", group: "account" },
-  { label: "Admin", href: "/admin", icon: "build", group: "account" },
+  { label: "Admin", href: "/admin", icon: "build", group: "account", adminOnly: true },
 ];
 
 interface SidebarProps {
@@ -42,11 +48,14 @@ interface SidebarProps {
 export default function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const isAdmin = user?.role === "admin";
 
   const isActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard";
     return pathname.startsWith(href);
   };
+
+  const visibleItems = navItems.filter((item) => !item.adminOnly || isAdmin);
 
   return (
     <>
@@ -57,7 +66,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
           bg-surface-base border-r border-glass
           ${open ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
       >
-        <div className="p-6">
+        <div className="p-6 overflow-y-auto flex-1">
           <Link href="/dashboard" className="flex items-center gap-3 mb-10">
             <img src="/icon-mark-128.png" alt="RaksHex Mark" className="w-8 h-8 object-contain" />
             <div>
@@ -70,11 +79,9 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
             </div>
           </Link>
 
-          {/* Nav */}
           <nav className="flex flex-col gap-1">
-            {navItems.map((item) => {
+            {visibleItems.map((item) => {
               const active = isActive(item.href);
-              // Hide group headings, make it a single unified menu list like in the mockup
               return (
                 <Link
                   key={item.href}
@@ -103,12 +110,15 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
           </nav>
         </div>
 
-        {/* Bottom links */}
-        <div className="mt-auto p-6 flex flex-col gap-1 border-t border-glass bg-surface-base/50">
+        <div className="p-6 flex flex-col gap-1 border-t border-glass bg-surface-base/50">
           {user && (
-            <button className="w-full py-3 mb-4 bg-primary text-on-primary font-bold rounded text-sm hover:brightness-110 active:scale-[0.98] transition-all">
+            <Link
+              href="/billing"
+              onClick={onClose}
+              className="w-full py-3 mb-4 bg-primary text-on-primary font-bold rounded text-sm hover:brightness-110 active:scale-[0.98] transition-all text-center block"
+            >
               Upgrade Protection
-            </button>
+            </Link>
           )}
 
           <Link
@@ -126,7 +136,6 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
             <span className="font-button-text text-button-text">Support</span>
           </Link>
 
-          {/* User footer */}
           <div className="border-t border-glass pt-4 mt-2">
             {user ? (
               <div className="flex items-center gap-3">

@@ -14,6 +14,7 @@ import { summarizeFindings } from "../utils/findingSummarizer";
 import { createNotification } from "./notifications";
 import { INJECTION_PAYLOADS, groupPayloadsByCategory } from "../utils/promptInjectionPayloads";
 import { toNumber } from "../utils/decimal";
+import { requireCollectionAccess, requireFindingAccess } from "../services/tenantAccess";
 
 // In-memory fallback for scan rate limiting when Redis is down
 const scanFallbackCounters = new Map<string, { count: number; expiresAt: number }>();
@@ -39,13 +40,13 @@ export const scanningRouter = router({
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      const collection = await db.getCollectionById(input.collectionId);
-      if (!collection || collection.userId !== ctx.user.id) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Collection not found or access denied",
-        });
-      }
+      const { collection, workspaceId } = await requireCollectionAccess(
+        input.collectionId,
+        ctx.user.id,
+        "collections",
+        "write",
+        ctx.user.name,
+      );
 
       // Plan-limit enforcement: cap scans per day on free plan. Shadow-API
       // scans are a gated feature entirely — only pro/enterprise. Errors
@@ -115,10 +116,20 @@ export const scanningRouter = router({
         collectionId: input.collectionId,
         scanType: input.scanType,
         engineType: input.scanType === "prompt_injection" ? "agentguard" : "full",
+        workspaceId,
       };
       const job = await scanQueue.add("scan", scanJobData);
 
-      logger.info({ jobId: job.id, collectionId: input.collectionId }, "[Scanning] Scan enqueued");
+      logger.info(
+        { jobId: job.id, collectionId: input.collectionId, workspaceId },
+        "[Scanning] Scan enqueued",
+      );
+
+      try {
+        await db.updateOnboardingStep(ctx.user.id, "runScan");
+      } catch (err) {
+        logger.warn({ err }, "[Scanning] onboarding step update skipped");
+      }
 
       await createNotification({
         userId: ctx.user.id,
@@ -172,13 +183,13 @@ export const scanningRouter = router({
       }),
     )
     .query(async ({ input, ctx }) => {
-      const collection = await db.getCollectionById(input.collectionId);
-      if (!collection || collection.userId !== ctx.user.id) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Collection not found or access denied",
-        });
-      }
+      await requireCollectionAccess(
+        input.collectionId,
+        ctx.user.id,
+        "collections",
+        "read",
+        ctx.user.name,
+      );
 
       let scans = await db.getScansByCollectionId(input.collectionId);
 
@@ -275,12 +286,19 @@ export const scanningRouter = router({
     .input(z.object({ scanId: z.string() }))
     .mutation(async ({ input, ctx }) => {
       const scan = await db.getScanById(input.scanId);
-      if (!scan || scan.userId !== ctx.user.id) {
+      if (!scan) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Scan not found or access denied",
         });
       }
+      await requireCollectionAccess(
+        scan.collectionId,
+        ctx.user.id,
+        "collections",
+        "read",
+        ctx.user.name,
+      );
       const collection = await db.getCollectionById(scan.collectionId);
       const findings = await db.getFindingsByScanId(input.scanId);
 
@@ -333,13 +351,7 @@ export const scanningRouter = router({
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      const finding = await db.getFindingById(input.findingId);
-      if (!finding || finding.userId !== ctx.user.id) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Finding not found or access denied",
-        });
-      }
+      await requireFindingAccess(input.findingId, ctx.user.id, "write");
       await db.updateFindingStatus(input.findingId, input.status);
       return { success: true };
     }),

@@ -2,12 +2,23 @@
 import Link from "next/link";
 import { EmptyState } from "@/components/EmptyState";
 import { trpc } from "@/lib/trpc";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 export default function AnalyticsPage() {
   const fmtCost = (n: number) => (n < 0.01 && n > 0 ? n.toFixed(4) : n.toFixed(2));
   const tokenQuery = trpc.tokenAnalytics.getAnalytics.useQuery({ days: 30 });
   const recentScansQuery = trpc.dashboard.getRecentScans.useQuery();
   const metricsQuery = trpc.dashboard.getMetrics.useQuery();
+  const forecastQuery = trpc.runtimeGovernance.forecast.useQuery({ days: 30, horizon: 14 });
 
   const loading = tokenQuery.isLoading || recentScansQuery.isLoading || metricsQuery.isLoading;
 
@@ -25,13 +36,30 @@ export default function AnalyticsPage() {
 
   const totalApiCalls = tokenAnalytics?.usage?.length ?? 0;
 
+  const forecast = forecastQuery.data?.forecast;
+  const chartData = [
+    ...(forecast?.history ?? []).map((p) => ({
+      date: p.date.slice(5),
+      actual: p.estimatedCostUsd,
+      projected: null as number | null,
+    })),
+    ...(forecast?.forecast ?? []).map((p) => ({
+      date: p.date.slice(5),
+      actual: null as number | null,
+      projected: p.estimatedCostUsd,
+    })),
+  ];
+  const projectedTotal = forecast?.forecast.reduce((s, p) => s + p.estimatedCostUsd, 0) ?? 0;
+
   return (
     <div className="text-white p-8">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-blue-400">Analytics</h1>
-            <p className="text-gray-400 mt-1">Cost breakdown and security event history</p>
+            <p className="text-gray-400 mt-1">
+              Cost breakdown, forecast, and security event history
+            </p>
           </div>
           <Link href="/dashboard" className="text-blue-400 hover:text-blue-300">
             &larr; Back to Dashboard
@@ -53,6 +81,94 @@ export default function AnalyticsPage() {
             <h3 className="text-gray-400 text-sm uppercase tracking-wide">Total Findings</h3>
             <p className="text-4xl font-bold mt-2 text-purple-400">{metrics?.totalFindings ?? 0}</p>
           </div>
+        </div>
+
+        <div className="bg-black/50 p-6 rounded-lg border border-gray-700 mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+            <div>
+              <h2 className="text-xl font-semibold">Cost forecast (14d)</h2>
+              <p className="text-sm text-gray-400 mt-1">
+                Holt-Winters projection from gateway spend
+                {forecast
+                  ? ` · method ${forecast.method} · confidence ${Math.round(forecast.confidence * 100)}%`
+                  : ""}
+              </p>
+            </div>
+            <p className="text-green-400 font-mono text-sm">
+              Projected +${fmtCost(projectedTotal)}
+            </p>
+          </div>
+          {forecastQuery.isLoading ? (
+            <div className="h-72 bg-gray-800/40 rounded animate-pulse" />
+          ) : chartData.length === 0 ? (
+            <EmptyState
+              compact
+              icon={<span>📈</span>}
+              title="No forecast data yet"
+              description="Route LLM traffic through the gateway so daily spend history can power a cost forecast."
+            />
+          ) : (
+            <div className="h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis dataKey="date" stroke="#9CA3AF" tick={{ fontSize: 11 }} />
+                  <YAxis
+                    stroke="#9CA3AF"
+                    tick={{ fontSize: 11 }}
+                    tickFormatter={(v) => `$${Number(v).toFixed(2)}`}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#111827",
+                      border: "1px solid #374151",
+                      borderRadius: "8px",
+                    }}
+                    formatter={(value: number | string) =>
+                      value == null || value === "" ? "—" : `$${fmtCost(Number(value))}`
+                    }
+                  />
+                  <Legend />
+                  <Area
+                    type="monotone"
+                    dataKey="actual"
+                    name="Actual"
+                    stroke="#34D399"
+                    fill="#34D39933"
+                    strokeWidth={2}
+                    connectNulls={false}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="projected"
+                    name="Forecast"
+                    stroke="#60A5FA"
+                    fill="#60A5FA22"
+                    strokeWidth={2}
+                    strokeDasharray="4 4"
+                    connectNulls={false}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+          {(forecastQuery.data?.anomalies?.length ?? 0) > 0 && (
+            <div className="mt-4 pt-4 border-t border-gray-700">
+              <p className="text-sm text-gray-400 mb-2">
+                Recent spend anomalies ({forecastQuery.data!.anomalies.length})
+              </p>
+              <ul className="space-y-1 max-h-32 overflow-y-auto">
+                {forecastQuery.data!.anomalies.slice(-8).map((a) => (
+                  <li key={a.date} className="text-xs text-gray-400 flex justify-between gap-2">
+                    <span>
+                      {a.date} · {a.reason} (z={a.zScore})
+                    </span>
+                    <span className="text-yellow-400">${fmtCost(a.estimatedCostUsd)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

@@ -23,6 +23,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { ENV, validateEnv } from "./env";
+import { buildCorsAllowlist } from "./corsAllowlist";
 import { accessLogMiddleware, logger, requestIdMiddleware } from "./logger";
 import {
   createAllLimiters,
@@ -59,26 +60,7 @@ import { getDb } from "../db";
 //
 // `FRONTEND_URL` is added on top of the static list so single-tenant
 // self-hosters can override the dashboard origin without forking.
-function buildCorsAllowlist(): string[] {
-  if (ENV.isProduction) {
-    return [
-      "https://rakshex.in",
-      "https://www.rakshex.in",
-      "https://app.devpulse.ai",
-      "https://yc7y9pq9.insforge.site",
-      ENV.frontendUrl,
-    ].filter((v, i, arr) => v && arr.indexOf(v) === i);
-  }
-  return [
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "http://localhost:5173",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:3001",
-    "http://127.0.0.1:5173",
-    ENV.frontendUrl,
-  ].filter((v, i, arr) => v && arr.indexOf(v) === i);
-}
+// Implementation: `./corsAllowlist` (unit-tested; no *.vercel / *.insforge).
 
 // ============================================================================
 // STARTUP VALIDATION — fail fast if critical config is missing
@@ -237,25 +219,31 @@ async function startServer() {
   // in to credentialled cross-origin requests from the allowlist. Any
   // request from an origin not on the list is rejected before tRPC ever
   // sees it.
-  const corsAllowlist = buildCorsAllowlist();
+  const corsAllowlist = buildCorsAllowlist({
+    isProduction: ENV.isProduction,
+    frontendUrl: ENV.frontendUrl,
+    corsOrigins: ENV.corsOrigins,
+  });
   app.use(
     cors({
       origin: (origin, callback) => {
         // Same-origin requests (server-to-server, curl, mobile native
         // clients) don't send Origin — let those through.
         if (!origin) return callback(null, true);
-        if (
-          corsAllowlist.includes(origin) ||
-          origin.endsWith(".insforge.site") ||
-          origin.endsWith(".vercel.app")
-        ) {
+        if (corsAllowlist.includes(origin)) {
           return callback(null, true);
         }
         callback(new Error(`CORS: origin ${origin} not allowed`));
       },
       credentials: true,
       methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization", "X-Api-Key", "X-Requested-With"],
+      allowedHeaders: [
+        "Content-Type",
+        "Authorization",
+        "X-Api-Key",
+        "X-Requested-With",
+        "X-CSRF-Token",
+      ],
     }),
   );
 
@@ -486,8 +474,20 @@ async function startServer() {
     res.redirect(307, "/api/health/ready");
   });
 
-  // ── Prometheus metrics endpoint ───────────────────────────────────────────
-  app.get("/metrics", async (_req, res) => {
+  // ── Prometheus metrics endpoint (bearer-token protected) ──────────────────
+  app.get("/metrics", async (req, res) => {
+    const expected = ENV.metricsToken;
+    if (ENV.isProduction || expected) {
+      const auth = req.headers.authorization;
+      const presented =
+        typeof auth === "string" && auth.startsWith("Bearer ")
+          ? auth.slice("Bearer ".length).trim()
+          : "";
+      if (!expected || !presented || presented !== expected) {
+        res.status(401).json({ error: "Unauthorized" });
+        return;
+      }
+    }
     const register = (await import("./metrics")).register;
     res.set("Content-Type", register.contentType);
     res.end(await register.metrics());
@@ -520,6 +520,33 @@ async function startServer() {
     if (presented.length !== expected.length) return false;
     return crypto.timingSafeEqual(Buffer.from(presented), Buffer.from(expected));
   }
+
+  // One-time data export download (token from dataExport.prepare). Auth = token possession.
+  app.get("/api/internal/data-export/:token", async (req, res) => {
+    try {
+      const { buildExportFromToken } = await import("../api/dataExport");
+      const token = String(req.params.token || "");
+      if (!token || token.length < 16) {
+        res.status(400).json({ error: "invalid_token" });
+        return;
+      }
+      const out = await buildExportFromToken(token);
+      if (!out) {
+        res.status(404).json({ error: "token_expired_or_unknown" });
+        return;
+      }
+      res.setHeader("Content-Type", out.contentType);
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${out.filename.replace(/"/g, "")}"`,
+      );
+      res.setHeader("Cache-Control", "no-store");
+      res.status(200).send(out.body);
+    } catch (err) {
+      logger.error({ err }, "[data-export] download failed");
+      res.status(500).json({ error: "export_failed" });
+    }
+  });
 
   app.get("/api/internal/kill-switch/:tenantId", async (req, res) => {
     if (!gatewayAuthOk(req)) {
@@ -1009,19 +1036,27 @@ async function startServer() {
   // ── WebSocket initialization ─────────────────────────────────────────────────
   wsManager.initialize(server);
 
-  // ── GitHub Webhook ─────────────────────────────────────────────────────────
+  // ── GitHub Webhook (legacy) ────────────────────────────────────────────────
+  // Always reject when GITHUB_WEBHOOK_SECRET is missing — never process
+  // unsigned webhooks in any environment.
   app.post("/api/webhooks/github", express.raw({ type: "application/json" }), async (req, res) => {
     const signature = req.headers["x-hub-signature-256"] as string;
     const githubSecret = ENV.githubWebhookSecret || "";
 
     const body = req.body.toString("utf-8");
 
-    if (githubSecret) {
-      const isValid = verifyGitHubWebhook(body, signature, githubSecret);
-      if (!isValid) {
-        res.status(401).json({ error: "Invalid signature" });
-        return;
-      }
+    if (!githubSecret) {
+      logger.error(
+        "[GitHub] GITHUB_WEBHOOK_SECRET missing — rejecting legacy webhook (fail-closed)",
+      );
+      res.status(503).json({ error: "GitHub webhook secret not configured" });
+      return;
+    }
+
+    const isValid = verifyGitHubWebhook(body, signature, githubSecret);
+    if (!isValid) {
+      res.status(401).json({ error: "Invalid signature" });
+      return;
     }
 
     const event = req.headers["x-github-event"] as string;

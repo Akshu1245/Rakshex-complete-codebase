@@ -78,60 +78,65 @@ class MockQueue {
   async close(): Promise<void> {}
 }
 
+const isProduction = process.env.NODE_ENV === "production";
 const REDIS_URL = process.env.REDIS_URL;
 
-export const scanQueue = REDIS_URL
-  ? new Queue("scan", {
-      connection,
-      defaultJobOptions: {
-        attempts: 3,
-        backoff: { type: "exponential", delay: 1000 },
-        removeOnComplete: { count: 500 },
-        removeOnFail: { count: 500 },
-      },
-    })
-  : (new MockQueue("scan") as unknown as Queue);
+if (isProduction && !REDIS_URL) {
+  throw new Error(
+    "REDIS_URL is required in production — refusing to start with mock BullMQ queues",
+  );
+}
 
-export const webhookQueue = REDIS_URL
-  ? new Queue("webhook-delivery", {
-      connection,
-      defaultJobOptions: {
-        attempts: 5,
-        backoff: { type: "exponential", delay: 1000 },
-        removeOnComplete: { count: 500 },
-        removeOnFail: { count: 500 },
-      },
-    })
-  : (new MockQueue("webhook-delivery") as unknown as Queue);
+function createQueue(
+  name: string,
+  opts: { attempts: number; delay: number; keepComplete: number; keepFail: number },
+) {
+  if (!REDIS_URL) {
+    return new MockQueue(name) as unknown as Queue;
+  }
+  return new Queue(name, {
+    connection,
+    defaultJobOptions: {
+      attempts: opts.attempts,
+      backoff: { type: "exponential", delay: opts.delay },
+      removeOnComplete: { count: opts.keepComplete },
+      removeOnFail: { count: opts.keepFail },
+    },
+  });
+}
 
-export const emailQueue = REDIS_URL
-  ? new Queue("email", {
-      connection,
-      defaultJobOptions: {
-        attempts: 3,
-        backoff: { type: "exponential", delay: 2000 },
-        removeOnComplete: { count: 200 },
-        removeOnFail: { count: 200 },
-      },
-    })
-  : (new MockQueue("email") as unknown as Queue);
+export const scanQueue = createQueue("scan", {
+  attempts: 3,
+  delay: 1000,
+  keepComplete: 500,
+  keepFail: 500,
+});
 
-export const telemetryQueue = REDIS_URL
-  ? new Queue("telemetry", {
-      connection,
-      defaultJobOptions: {
-        attempts: 3,
-        backoff: { type: "exponential", delay: 500 },
-        removeOnComplete: { count: 5000 },
-        removeOnFail: { count: 500 },
-      },
-    })
-  : (new MockQueue("telemetry") as unknown as Queue);
+export const webhookQueue = createQueue("webhook-delivery", {
+  attempts: 5,
+  delay: 1000,
+  keepComplete: 500,
+  keepFail: 500,
+});
+
+export const emailQueue = createQueue("email", {
+  attempts: 3,
+  delay: 2000,
+  keepComplete: 200,
+  keepFail: 200,
+});
+
+export const telemetryQueue = createQueue("telemetry", {
+  attempts: 3,
+  delay: 500,
+  keepComplete: 5000,
+  keepFail: 500,
+});
 
 logger.info(
   REDIS_URL
     ? "[Queues] BullMQ queues initialized"
-    : "[Queues] Mock in-memory queues initialized (including pr-scan support)",
+    : "[Queues] Mock in-memory queues initialized (development/test only)",
 );
 
 export async function closeQueues(): Promise<void> {

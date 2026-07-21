@@ -1,7 +1,8 @@
 /**
  * Email Service
  * Uses nodemailer with SMTP for real email delivery.
- * Falls back to console logging when SMTP is not configured.
+ * In development, falls back to console logging when SMTP is not configured.
+ * In production, send helpers throw if SMTP is missing — never pretend sent.
  */
 import nodemailer from "nodemailer";
 import { logger } from "./_core/logger";
@@ -84,6 +85,22 @@ function createTransport() {
   };
 }
 
+/**
+ * Resolve SMTP transport or fail closed.
+ * Dev/test: log intent and return null (caller should return early).
+ * Production: throw — never log-and-pretend-sent.
+ */
+function resolveTransportOrFail(context: string): ReturnType<typeof createTransport> {
+  const config = createTransport();
+  if (config) return config;
+  if (ENV.isProduction) {
+    throw new Error(
+      `SMTP is not configured — cannot send email (${context}). Set SMTP_HOST, SMTP_USER, and SMTP_PASS.`,
+    );
+  }
+  return null;
+}
+
 export async function sendTeamInviteEmail(
   opts: TeamInviteEmailOptions & { token?: string },
 ): Promise<void> {
@@ -135,10 +152,8 @@ export async function sendTeamInviteEmail(
 </body>
 </html>`;
 
-  const config = createTransport();
-
+  const config = resolveTransportOrFail("team-invite");
   if (!config) {
-    // Log to console when SMTP not configured (dev mode)
     logger.info(`[Email] SMTP not configured. Would have sent invite to: ${opts.toEmail}`);
     logger.info(`[Email] Subject: ${subject}`);
     return;
@@ -192,8 +207,7 @@ export async function sendPasswordResetEmail(opts: PasswordResetEmailOptions): P
 </body>
 </html>`;
 
-  const config = createTransport();
-
+  const config = resolveTransportOrFail("password-reset");
   if (!config) {
     logger.info(`[Email] SMTP not configured. Would have sent password reset to: ${opts.toEmail}`);
     logger.info(`[Email] Reset URL: ${opts.resetUrl}`);
@@ -254,8 +268,7 @@ export async function sendWelcomeEmail(opts: WelcomeEmailOptions): Promise<void>
 </body>
 </html>`;
 
-  const config = createTransport();
-
+  const config = resolveTransportOrFail("welcome");
   if (!config) {
     logger.info(`[Email] SMTP not configured. Would have sent welcome email to: ${opts.toEmail}`);
     return;
@@ -344,8 +357,7 @@ export async function sendScanCompleteEmail(opts: ScanCompleteEmailOptions): Pro
 </body>
 </html>`;
 
-  const config = createTransport();
-
+  const config = resolveTransportOrFail("scan-complete");
   if (!config) {
     logger.info(
       `[Email] SMTP not configured. Would have sent scan complete email to: ${opts.toEmail}`,
@@ -425,8 +437,7 @@ export async function sendBudgetWarningEmail(opts: BudgetWarningEmailOptions): P
 </body>
 </html>`;
 
-  const config = createTransport();
-
+  const config = resolveTransportOrFail("budget-warning");
   if (!config) {
     logger.info(`[Email] SMTP not configured. Would have sent budget warning to: ${opts.toEmail}`);
     return;
@@ -511,8 +522,7 @@ export async function sendWeeklyDigestEmail(opts: WeeklyDigestEmailOptions): Pro
 </body>
 </html>`;
 
-  const config = createTransport();
-
+  const config = resolveTransportOrFail("weekly-digest");
   if (!config) {
     logger.info(`[Email] SMTP not configured. Would have sent weekly digest to: ${opts.toEmail}`);
     return;
@@ -531,14 +541,6 @@ export async function sendWeeklyDigestEmail(opts: WeeklyDigestEmailOptions): Pro
 // ============================================================================
 // KILL SWITCH RECOVERY EMAIL
 // ============================================================================
-
-interface KillSwitchRecoveryEmailOptions {
-  toEmail: string;
-  userName: string;
-  resetAt: string;
-  newBudgetLimit: number;
-  dashboardUrl: string;
-}
 
 export async function sendKillSwitchRecoveryEmail(
   opts: KillSwitchRecoveryEmailOptions,
@@ -586,8 +588,7 @@ export async function sendKillSwitchRecoveryEmail(
 </body>
 </html>`;
 
-  const config = createTransport();
-
+  const config = resolveTransportOrFail("kill-switch-recovery");
   if (!config) {
     logger.info(
       `[Email] SMTP not configured. Would have sent kill switch recovery email to: ${opts.toEmail}`,
@@ -652,8 +653,7 @@ export async function sendPaymentFailedEmail(opts: PaymentFailedEmailOptions): P
 </body>
 </html>`;
 
-  const config = createTransport();
-
+  const config = resolveTransportOrFail("payment-failed");
   if (!config) {
     logger.info(
       `[Email] SMTP not configured. Would have sent payment failed email to: ${opts.toEmail}`,
@@ -708,21 +708,26 @@ export async function sendWaitlistConfirmationEmail(toEmail: string, plan: strin
 </body>
 </html>`;
 
-  const config = createTransport();
+  const config = resolveTransportOrFail("waitlist");
   if (!config) {
     logger.info(`[Email] SMTP not configured. Would have sent waitlist user email to: ${toEmail}`);
-  } else {
-    try {
-      await config.transport.sendMail({
-        from: `"RakshEx" <${config.from}>`,
-        to: toEmail,
-        subject,
-        html,
-      });
-      logger.info(`[Email] Waitlist confirmation email sent to ${toEmail}`);
-    } catch (err) {
-      logger.error({ err }, `[Email] Failed to send waitlist user email to: ${toEmail}`);
-    }
+    logger.info(
+      `[Email] SMTP not configured. Would have sent waitlist internal alert for: ${toEmail}`,
+    );
+    return;
+  }
+
+  try {
+    await config.transport.sendMail({
+      from: `"RakshEx" <${config.from}>`,
+      to: toEmail,
+      subject,
+      html,
+    });
+    logger.info(`[Email] Waitlist confirmation email sent to ${toEmail}`);
+  } catch (err) {
+    logger.error({ err }, `[Email] Failed to send waitlist user email to: ${toEmail}`);
+    throw err;
   }
 
   // Send internal notification to akshay@devpulse.ai
@@ -740,21 +745,16 @@ export async function sendWaitlistConfirmationEmail(toEmail: string, plan: strin
 </body>
 </html>`;
 
-  if (!config) {
-    logger.info(
-      `[Email] SMTP not configured. Would have sent waitlist internal alert for: ${toEmail}`,
-    );
-  } else {
-    try {
-      await config.transport.sendMail({
-        from: `"RakshEx System" <${config.from}>`,
-        to: "akshay@devpulse.ai",
-        subject: internalSubject,
-        html: internalHtml,
-      });
-      logger.info(`[Email] Waitlist internal notification sent to akshay@devpulse.ai`);
-    } catch (err) {
-      logger.error({ err }, `[Email] Failed to send waitlist internal notification for ${toEmail}`);
-    }
+  try {
+    await config.transport.sendMail({
+      from: `"RakshEx System" <${config.from}>`,
+      to: "akshay@devpulse.ai",
+      subject: internalSubject,
+      html: internalHtml,
+    });
+    logger.info(`[Email] Waitlist internal notification sent to akshay@devpulse.ai`);
+  } catch (err) {
+    logger.error({ err }, `[Email] Failed to send waitlist internal notification for ${toEmail}`);
+    throw err;
   }
 }

@@ -37,6 +37,7 @@ const resourceEnum = z.enum([
 ]);
 
 type ResourceKind = z.infer<typeof resourceEnum>;
+export type { ResourceKind };
 
 interface ResourceConfig {
   title: string;
@@ -205,26 +206,124 @@ const RESOURCES: Record<ResourceKind, ResourceConfig> = {
 };
 
 /**
- * Short-lived in-memory token store. Each token maps to the resource
- * config + already-fetched rows so the download endpoint can stream
- * the body without re-running the query.
+ * Short-lived prepare → download tokens.
  *
- * Tokens expire after 5 minutes. This is intentionally NOT Redis-backed —
- * the dashboard's expected pattern is "create token → download within
- * seconds". Long-lived signed URLs are an S3-backed Sprint-7 follow-up.
+ * Stores metadata only (not full row sets) so multi-instance deploys can
+ * re-fetch on download. Prefers Redis when REDIS_URL is set; falls back to
+ * an in-process Map in development/test only.
+ *
+ * Limits:
+ *  - MAX_EXPORT_ROWS: hard cap when materializing for download
+ *  - MAX_PENDING_EXPORTS: bound local Map size
+ *  - EXPORT_TTL_MS: tokens expire after 5 minutes
  */
-interface PendingExport {
+interface PendingExportMeta {
   userId: number;
   format: ExportFormat;
   resource: ResourceKind;
-  rows: ExportRow[];
+  days: number;
   expiresAt: number;
 }
 
-const PENDING_EXPORTS = new Map<string, PendingExport>();
-const EXPORT_TTL_MS = 5 * 60_000;
+export type { PendingExportMeta };
 
-export function consumePendingExport(token: string): PendingExport | null {
+const PENDING_EXPORTS = new Map<string, PendingExportMeta>();
+const EXPORT_TTL_MS = 5 * 60_000;
+const EXPORT_REDIS_PREFIX = "dataexport:token:";
+/** Hard row cap — refuse unbounded materialization. */
+export const MAX_EXPORT_ROWS = 10_000;
+/** Bound concurrent pending tokens in this process (dev fallback). */
+export const MAX_PENDING_EXPORTS = 64;
+
+function mintToken(): string {
+  return crypto.randomBytes(24).toString("base64url");
+}
+
+function reapExpired(): void {
+  const now = Date.now();
+  for (const [token, data] of Array.from(PENDING_EXPORTS.entries())) {
+    if (now > data.expiresAt) PENDING_EXPORTS.delete(token);
+  }
+}
+
+/** Exported for unit tests (prepare → download metadata round-trip). */
+export async function storePendingExport(token: string, meta: PendingExportMeta): Promise<void> {
+  const { redis } = await import("../_core/cache");
+  const payload = JSON.stringify(meta);
+  try {
+    if (process.env.REDIS_URL) {
+      await redis.setex(`${EXPORT_REDIS_PREFIX}${token}`, Math.ceil(EXPORT_TTL_MS / 1000), payload);
+      return;
+    }
+  } catch {
+    // fall through to local Map
+  }
+  reapExpired();
+  if (PENDING_EXPORTS.size >= MAX_PENDING_EXPORTS) {
+    throw new ValidationError(
+      "too many pending exports — download or wait for prior tokens to expire",
+    );
+  }
+  PENDING_EXPORTS.set(token, meta);
+}
+
+/** Consume one-time token metadata (does not fetch rows). */
+export async function consumePendingExportMeta(token: string): Promise<PendingExportMeta | null> {
+  const { redis } = await import("../_core/cache");
+  try {
+    if (process.env.REDIS_URL) {
+      const key = `${EXPORT_REDIS_PREFIX}${token}`;
+      const raw = await redis.get(key);
+      if (raw) {
+        await redis.del(key);
+        const meta = JSON.parse(raw) as PendingExportMeta;
+        if (Date.now() > meta.expiresAt) return null;
+        return meta;
+      }
+    }
+  } catch {
+    // fall through
+  }
+  const entry = PENDING_EXPORTS.get(token);
+  if (!entry) return null;
+  PENDING_EXPORTS.delete(token);
+  if (Date.now() > entry.expiresAt) return null;
+  return entry;
+}
+
+/** Build export bytes for a consumed token (re-fetches rows at download time). */
+export async function buildExportFromToken(token: string): Promise<{
+  filename: string;
+  contentType: string;
+  body: Buffer;
+  recordCount: number;
+} | null> {
+  const meta = await consumePendingExportMeta(token);
+  if (!meta) return null;
+  const cfg = RESOURCES[meta.resource];
+  if (!cfg) return null;
+  const rows = await cfg.fetch(meta.userId, { days: meta.days });
+  if (rows.length > MAX_EXPORT_ROWS) {
+    throw new ValidationError(`export exceeds ${MAX_EXPORT_ROWS} row limit`);
+  }
+  const out = await buildExport({
+    format: meta.format,
+    title: cfg.title,
+    resource: meta.resource,
+    columns: cfg.columns,
+    columnHeaders: cfg.columnHeaders,
+    rows,
+  });
+  return {
+    filename: out.filename,
+    contentType: out.contentType,
+    body: out.body,
+    recordCount: out.recordCount,
+  };
+}
+
+/** @deprecated use consumePendingExportMeta + buildExportFromToken */
+export function consumePendingExport(token: string): PendingExportMeta | null {
   const entry = PENDING_EXPORTS.get(token);
   if (!entry) return null;
   if (Date.now() > entry.expiresAt) {
@@ -233,19 +332,6 @@ export function consumePendingExport(token: string): PendingExport | null {
   }
   PENDING_EXPORTS.delete(token);
   return entry;
-}
-
-function mintToken(): string {
-  return crypto.randomBytes(24).toString("base64url");
-}
-
-function reapExpired(): void {
-  const now = Date.now();
-  for (const entry of Array.from(PENDING_EXPORTS.entries())) {
-    const token = entry[0];
-    const data = entry[1];
-    if (now > data.expiresAt) PENDING_EXPORTS.delete(token);
-  }
 }
 
 export const dataExportRouter = router({
@@ -273,7 +359,12 @@ export const dataExportRouter = router({
       const cfg = RESOURCES[input.resource];
       if (!cfg) throw new ValidationError("unknown resource");
       const rows = await cfg.fetch(ctx.user.id, { days: input.days });
-      // Refuse to return >5 MB through tRPC; force the streaming path.
+      if (rows.length > MAX_EXPORT_ROWS) {
+        throw new ValidationError(
+          `result set exceeds ${MAX_EXPORT_ROWS} row limit — narrow filters or use prepare/download with a smaller window`,
+        );
+      }
+      // Refuse large payloads through tRPC; force the streaming path.
       if (rows.length > 5000) {
         throw new ValidationError("result set too large for inline export — use prepare/download");
       }
@@ -309,22 +400,29 @@ export const dataExportRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      reapExpired();
       const cfg = RESOURCES[input.resource];
       if (!cfg) throw new ValidationError("unknown resource");
+      // Lightweight count probe — full rows materialize on download only.
       const rows = await cfg.fetch(ctx.user.id, { days: input.days });
+      if (rows.length > MAX_EXPORT_ROWS) {
+        throw new ValidationError(
+          `export exceeds ${MAX_EXPORT_ROWS} row limit — narrow the date range`,
+        );
+      }
       const token = mintToken();
-      PENDING_EXPORTS.set(token, {
+      await storePendingExport(token, {
         userId: ctx.user.id,
         format: input.format,
         resource: input.resource,
-        rows,
+        days: input.days,
         expiresAt: Date.now() + EXPORT_TTL_MS,
       });
       return {
         token,
         recordCount: rows.length,
         expiresInSeconds: Math.floor(EXPORT_TTL_MS / 1000),
+        maxRows: MAX_EXPORT_ROWS,
+        downloadPath: `/api/internal/data-export/${token}`,
       };
     }),
 });

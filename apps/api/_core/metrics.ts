@@ -37,14 +37,16 @@ export const activeUsersGauge = new Gauge({
 export const tokenUsageCounter = new Counter({
   name: "token_usage_total",
   help: "Total token usage",
-  labelNames: ["model", "userId"],
+  // No userId label — high-cardinality identity labels explode series count
+  // and risk leaking tenant identifiers via Prometheus.
+  labelNames: ["model"],
   registers: [register],
 });
 
 export const findingsCounter = new Counter({
   name: "findings_total",
   help: "Total number of security findings",
-  labelNames: ["severity", "collectionId"],
+  labelNames: ["severity"],
   registers: [register],
 });
 
@@ -69,10 +71,10 @@ export function setActiveUsers(count: number) {
   activeUsersGauge.set(count);
 }
 
-export function incrementTokenUsage(model: string, userId: number) {
-  tokenUsageCounter.inc({ model, userId: userId.toString() });
+export function incrementTokenUsage(model: string, _userId?: number) {
+  tokenUsageCounter.inc({ model });
 }
 
-export function incrementFindings(severity: string, collectionId: string) {
-  findingsCounter.inc({ severity, collectionId });
+export function incrementFindings(severity: string, _collectionId?: string) {
+  findingsCounter.inc({ severity });
 }

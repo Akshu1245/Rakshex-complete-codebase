@@ -35,7 +35,7 @@ export default function CompareTraceableAI() {
                 ✅ LLM-first: prompt injection firewall, thinking token telemetry, cost
                 kill-switches
               </li>
-              <li>✅ AgentGuard for human-in-the-loop approval of agent tool calls</li>
+              <li>✅ AgentGuard kill-switch and runtime policy enforcement for agent tool calls</li>
               <li>✅ Native GitHub App + VS Code integration</li>
               <li>✅ OWASP AI Top 10 + custom runtime policies</li>
               <li>✅ Lightweight and developer-friendly</li>

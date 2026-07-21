@@ -1,5 +1,5 @@
 import { Worker, type Job } from "bullmq";
-import { redis } from "../../_core/cache";
+import { invalidateUserCache, redis } from "../../_core/cache";
 import { logger } from "../../_core/logger";
 import * as db from "../../db";
 import { runCollectionScan, type ScanOptions } from "../../services/scanService";
@@ -11,6 +11,7 @@ export interface ScanJobData {
   collectionId: string;
   engineType?: "owasp" | "agentguard" | "full";
   scanType?: "full" | "quick" | "shadow_api" | "prompt_injection";
+  workspaceId?: number;
 }
 
 function buildWorker(): Worker<ScanJobData> {
@@ -34,8 +35,9 @@ function buildWorker(): Worker<ScanJobData> {
       const result = await runCollectionScan(userId, collectionId, options);
       await job.updateProgress(100);
 
-      // Broadcast completion via WebSocket
+      // Broadcast completion via WebSocket + drop stale dashboard/collection caches
       try {
+        await invalidateUserCache(userId);
         wsManager.broadcastScanComplete(userId, {
           scanId: result.scanId,
           collectionId,

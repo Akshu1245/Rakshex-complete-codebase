@@ -10,6 +10,8 @@ import {
 import { generateReport } from "../engines/complianceEngine";
 import { toNumber } from "../utils/decimal";
 import PDFDocument from "pdfkit";
+import { requireCollectionAccess } from "../services/tenantAccess";
+import { logger } from "../_core/logger";
 
 /**
  * Shape of a single compliance requirement persisted in
@@ -41,13 +43,13 @@ export const complianceRouter = router({
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      const collection = await db.getCollectionById(input.collectionId);
-      if (!collection || collection.userId !== ctx.user.id) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Collection not found or access denied",
-        });
-      }
+      const { collection } = await requireCollectionAccess(
+        input.collectionId,
+        ctx.user.id,
+        "collections",
+        "write",
+        ctx.user.name,
+      );
 
       // Get findings for this collection to power the compliance engine
       const scans = await db.getScansByCollectionId(input.collectionId);
@@ -127,6 +129,12 @@ export const complianceRouter = router({
         reportResult.requirements,
       );
 
+      try {
+        await db.updateOnboardingStep(ctx.user.id, "setupCompliance");
+      } catch (err) {
+        logger.warn({ err }, "[Compliance] onboarding step update skipped");
+      }
+
       return {
         reportId: report.id,
         complianceScore: Math.round(reportResult.score),
@@ -147,13 +155,13 @@ export const complianceRouter = router({
       }),
     )
     .query(async ({ input, ctx }) => {
-      const collection = await db.getCollectionById(input.collectionId);
-      if (!collection || collection.userId !== ctx.user.id) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Collection not found or access denied",
-        });
-      }
+      await requireCollectionAccess(
+        input.collectionId,
+        ctx.user.id,
+        "collections",
+        "read",
+        ctx.user.name,
+      );
 
       const reports = await db.getComplianceReportsByCollectionId(input.collectionId);
       const page = input.page ?? 1;

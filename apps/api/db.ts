@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { eq, and, desc, gte, lt, sql } from "drizzle-orm";
+import { eq, and, or, isNull, desc, gte, lt, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
@@ -456,17 +456,8 @@ export async function updateCollection(
 export async function getCollectionsByUserId(userId: number) {
   const db = await getDb();
   if (!db) {
-    return [
-      {
-        id: "col_1",
-        userId: 1,
-        name: "Production APIs",
-        format: "postman",
-        totalRequests: 5,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    ] as any;
+    logger.warn("[Database] Cannot list collections: database not available");
+    return [];
   }
 
   return await db
@@ -474,6 +465,76 @@ export async function getCollectionsByUserId(userId: number) {
     .from(collections)
     .where(eq(collections.userId, userId))
     .orderBy(desc(collections.createdAt));
+}
+
+export async function getCollectionsByWorkspaceId(workspaceId: number) {
+  const db = await getDb();
+  if (!db) {
+    logger.warn("[Database] Cannot list collections: database not available");
+    return [];
+  }
+
+  return await db
+    .select()
+    .from(collections)
+    .where(eq(collections.workspaceId, workspaceId))
+    .orderBy(desc(collections.createdAt));
+}
+
+/**
+ * DB-level paginated collection list for a workspace (hot path).
+ * Includes legacy rows owned by `userId` with null workspaceId so tenancy
+ * backfill does not hide imports mid-migration.
+ */
+export async function listCollectionsPage(opts: {
+  workspaceId: number;
+  userId: number;
+  limit: number;
+  offset: number;
+}): Promise<{ items: Awaited<ReturnType<typeof getCollectionsByWorkspaceId>>; total: number }> {
+  const db = await getDb();
+  if (!db) {
+    logger.warn("[Database] Cannot list collections page: database not available");
+    return { items: [], total: 0 };
+  }
+
+  const scope = or(
+    eq(collections.workspaceId, opts.workspaceId),
+    and(eq(collections.userId, opts.userId), isNull(collections.workspaceId)),
+  );
+
+  const [countRow] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(collections)
+    .where(scope);
+
+  const items = await db
+    .select()
+    .from(collections)
+    .where(scope)
+    .orderBy(desc(collections.createdAt))
+    .limit(opts.limit)
+    .offset(opts.offset);
+
+  return { items, total: Number(countRow?.count ?? 0) };
+}
+
+export async function setCollectionWorkspaceId(collectionId: string, workspaceId: number) {
+  const db = await getDb();
+  assertDb(db);
+  await db
+    .update(collections)
+    .set({ workspaceId })
+    .where(and(eq(collections.id, collectionId), sql`${collections.workspaceId} IS NULL`));
+}
+
+export async function setFindingWorkspaceId(findingId: string, workspaceId: number) {
+  const db = await getDb();
+  assertDb(db);
+  await db
+    .update(findings)
+    .set({ workspaceId })
+    .where(and(eq(findings.id, findingId), sql`${findings.workspaceId} IS NULL`));
 }
 
 /**
@@ -485,17 +546,8 @@ export async function getCollectionsByUserId(userId: number) {
 export async function getWorkspaceCollections(userId: number, userEmail?: string) {
   const db = await getDb();
   if (!db) {
-    return [
-      {
-        id: "col_1",
-        userId: 1,
-        name: "Production APIs",
-        format: "postman",
-        totalRequests: 5,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    ] as any;
+    logger.warn("[Database] Cannot list workspace collections: database not available");
+    return [];
   }
 
   // Get collections owned by the user
@@ -552,15 +604,8 @@ export async function getWorkspaceCollections(userId: number, userEmail?: string
 export async function getCollectionById(id: string) {
   const db = await getDb();
   if (!db) {
-    return {
-      id: id,
-      userId: 1,
-      name: "Production APIs",
-      format: "postman",
-      data: {},
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    } as any;
+    logger.warn("[Database] Cannot get collection: database not available");
+    return null;
   }
 
   const result = await db.select().from(collections).where(eq(collections.id, id)).limit(1);
@@ -662,6 +707,7 @@ export async function createScan(
   riskLevel: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL",
   totalFindings: number,
   findingsData?: any,
+  workspaceId?: number,
 ) {
   const db = await getDb();
   assertDb(db);
@@ -678,6 +724,7 @@ export async function createScan(
     riskLevel,
     totalFindings,
     findingsData,
+    workspaceId: workspaceId ?? null,
     completedAt: status === "completed" ? new Date() : null,
   });
 
@@ -687,19 +734,8 @@ export async function createScan(
 export async function getScansByCollectionId(collectionId: string) {
   const db = await getDb();
   if (!db) {
-    return [
-      {
-        id: "scan_1",
-        collectionId: "col_1",
-        status: "completed",
-        scanType: "quick",
-        riskScore: "45",
-        riskLevel: "MEDIUM",
-        totalFindings: 3,
-        createdAt: new Date(),
-        completedAt: new Date(),
-      },
-    ] as any;
+    logger.warn("[Database] Cannot list scans: database not available");
+    return [];
   }
 
   return await db
@@ -712,17 +748,8 @@ export async function getScansByCollectionId(collectionId: string) {
 export async function getScanById(id: string) {
   const db = await getDb();
   if (!db) {
-    return {
-      id: id,
-      collectionId: "col_1",
-      status: "completed",
-      scanType: "quick",
-      riskScore: "45",
-      riskLevel: "MEDIUM",
-      totalFindings: 3,
-      createdAt: new Date(),
-      completedAt: new Date(),
-    } as any;
+    logger.warn("[Database] Cannot get scan: database not available");
+    return null;
   }
 
   const result = await db.select().from(scans).where(eq(scans.id, id)).limit(1);
@@ -795,35 +822,8 @@ export async function createFinding(
 export async function getFindingsByScanId(scanId: string) {
   const db = await getDb();
   if (!db) {
-    return [
-      {
-        id: "demo-f-001",
-        title: "Exposed OpenAI API key in collection",
-        severity: "Critical" as const,
-        status: "open" as const,
-        category: "Secret Exposure",
-        collectionName: "Production APIs",
-        createdAt: new Date(),
-      },
-      {
-        id: "demo-f-002",
-        title: "Missing auth header on /payments endpoint",
-        severity: "High" as const,
-        status: "open" as const,
-        category: "Missing Authentication",
-        collectionName: "Production APIs",
-        createdAt: new Date(),
-      },
-      {
-        id: "demo-f-003",
-        title: "SQL injection vector in query param",
-        severity: "High" as const,
-        status: "in-progress" as const,
-        category: "Injection",
-        collectionName: "Production APIs",
-        createdAt: new Date(),
-      },
-    ] as any;
+    logger.warn("[Database] Cannot list findings: database not available");
+    return [];
   }
 
   return await db
@@ -836,36 +836,8 @@ export async function getFindingsByScanId(scanId: string) {
 export async function getFindingById(id: string) {
   const db = await getDb();
   if (!db) {
-    const findingsList = [
-      {
-        id: "demo-f-001",
-        title: "Exposed OpenAI API key in collection",
-        severity: "Critical" as const,
-        status: "open" as const,
-        category: "Secret Exposure",
-        collectionName: "Production APIs",
-        createdAt: new Date(),
-      },
-      {
-        id: "demo-f-002",
-        title: "Missing auth header on /payments endpoint",
-        severity: "High" as const,
-        status: "open" as const,
-        category: "Missing Authentication",
-        collectionName: "Production APIs",
-        createdAt: new Date(),
-      },
-      {
-        id: "demo-f-003",
-        title: "SQL injection vector in query param",
-        severity: "High" as const,
-        status: "in-progress" as const,
-        category: "Injection",
-        collectionName: "Production APIs",
-        createdAt: new Date(),
-      },
-    ];
-    return (findingsList.find((f) => f.id === id) ?? null) as any;
+    logger.warn("[Database] Cannot get finding: database not available");
+    return null;
   }
 
   const result = await db.select().from(findings).where(eq(findings.id, id)).limit(1);
@@ -1850,6 +1822,26 @@ export async function getUserSessionByToken(sessionToken: string) {
   return result.length > 0 ? result[0] : null;
 }
 
+/** Active (non-revoked, non-expired) session by id — used to bind JWT access tokens. */
+export async function getActiveUserSessionById(sessionId: string) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db
+    .select()
+    .from(userSessions)
+    .where(
+      and(
+        eq(userSessions.id, sessionId),
+        sql`${userSessions.expiresAt} > NOW()`,
+        eq(userSessions.isRevoked, false),
+      ),
+    )
+    .limit(1);
+
+  return result.length > 0 ? result[0] : null;
+}
+
 export async function revokeUserSession(sessionId: string) {
   const db = await getDb();
   assertDb(db);
@@ -2233,6 +2225,18 @@ export async function deleteUserAccount(
       await tx.delete(collections).where(eq(collections.userId, userId));
       await tx.delete(subscriptions).where(eq(subscriptions.userId, userId));
       await tx.delete(payments).where(eq(payments.userId, userId));
+
+      // Workspace tenancy cleanup — leave shared workspaces; delete personal ones
+      await tx.delete(workspaceInvitations).where(
+        sql`${workspaceInvitations.workspaceId} IN (
+          SELECT id FROM workspaces WHERE "ownerUserId" = ${userId}
+        )`,
+      );
+      await tx.delete(workspaceMembers).where(eq(workspaceMembers.userId, userId));
+      await tx
+        .delete(workspaces)
+        .where(and(eq(workspaces.ownerUserId, userId), eq(workspaces.isPersonal, true)));
+
       await tx.delete(users).where(eq(users.id, userId));
 
       return {
@@ -2770,35 +2774,8 @@ export async function isWebhookEventProcessed(provider: string, eventId: string)
 export async function getRecentFindingsForUser(userId: number, limit = 5) {
   const db = await getDb();
   if (!db) {
-    return [
-      {
-        id: "demo-f-001",
-        title: "Exposed OpenAI API key in collection",
-        severity: "Critical" as const,
-        status: "open" as const,
-        category: "Secret Exposure",
-        collectionName: "Production APIs",
-        createdAt: new Date(),
-      },
-      {
-        id: "demo-f-002",
-        title: "Missing auth header on /payments endpoint",
-        severity: "High" as const,
-        status: "open" as const,
-        category: "Missing Authentication",
-        collectionName: "Production APIs",
-        createdAt: new Date(),
-      },
-      {
-        id: "demo-f-003",
-        title: "SQL injection vector in query param",
-        severity: "High" as const,
-        status: "in-progress" as const,
-        category: "Injection",
-        collectionName: "Production APIs",
-        createdAt: new Date(),
-      },
-    ] as any;
+    logger.warn("[Database] Cannot list recent findings: database not available");
+    return [];
   }
   const rows = await db
     .select({

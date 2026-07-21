@@ -40,8 +40,11 @@ const EnvSchema = z.object({
     ? z.string().min(1, "DATABASE_URL is required")
     : z.string().default(""),
 
-  // Redis (optional — falls back to in-memory caches with a warning)
-  REDIS_URL: z.union([z.literal(""), z.string().min(1)]).optional(),
+  // Redis — REQUIRED in production (no in-memory MockRedis / mock BullMQ).
+  // Dev/test may omit it and use in-memory fallbacks for local ergonomics.
+  REDIS_URL: isProduction
+    ? z.string().min(1, "REDIS_URL is required in production")
+    : z.union([z.literal(""), z.string().min(1)]).optional(),
 
   // OAuth (Manus + Google)
   VITE_APP_ID: z.string().default(""),
@@ -63,12 +66,19 @@ const EnvSchema = z.object({
   OPENROUTER_API_KEY: z.string().default(""),
   OPENROUTER_DEFAULT_MODEL: z.string().default("deepseek/deepseek-chat-v3-0324:free"),
 
-  // Email (SMTP)
-  SMTP_HOST: z.string().default(""),
+  // Email (SMTP) — REQUIRED in production for transactional mail
+  // (invites, password reset, billing alerts). Dev may omit and log instead.
+  SMTP_HOST: isProduction
+    ? z.string().min(1, "SMTP_HOST is required in production")
+    : z.string().default(""),
   SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(587),
-  SMTP_USER: z.string().default(""),
-  SMTP_PASS: z.string().default(""),
-  SMTP_FROM: z.string().default("noreply@devpulse.io"),
+  SMTP_USER: isProduction
+    ? z.string().min(1, "SMTP_USER is required in production")
+    : z.string().default(""),
+  SMTP_PASS: isProduction
+    ? z.string().min(1, "SMTP_PASS is required in production")
+    : z.string().default(""),
+  SMTP_FROM: z.string().default("noreply@rakshex.in"),
   APP_URL: z.string().url("APP_URL must be a valid URL").default("http://localhost:3000"),
 
   // Notifications — empty string allowed, but if set must be a URL.
@@ -88,8 +98,20 @@ const EnvSchema = z.object({
   // origin allowlist, so it MUST be a valid URL.
   FRONTEND_URL: z.string().url("FRONTEND_URL must be a valid URL").default("http://localhost:3000"),
 
-  GITHUB_WEBHOOK_SECRET: z.string().default(""),
+  // Extra CORS origins (comma-separated absolute URLs). Merged with FRONTEND_URL
+  // and the static production allowlist. No wildcards — list each origin explicitly.
+  CORS_ORIGINS: z.string().default(""),
+
+  // Bearer token required to scrape GET /metrics in production.
+  METRICS_TOKEN: isProduction
+    ? z.string().min(16, "METRICS_TOKEN must be at least 16 characters in production")
+    : z.string().default(""),
+
+  GITHUB_WEBHOOK_SECRET: isProduction
+    ? z.string().min(1, "GITHUB_WEBHOOK_SECRET is required in production")
+    : z.string().default(""),
   GITHUB_APP_ID: z.string().default(""),
+  GITHUB_APP_SLUG: z.string().default(""),
   GITHUB_APP_PRIVATE_KEY: z.string().default(""),
   GITHUB_APP_CLIENT_ID: z.string().default(""),
   GITHUB_APP_CLIENT_SECRET: z.string().default(""),
@@ -197,8 +219,11 @@ export const ENV = {
   razorpayWebhookSecret: parsed.RAZORPAY_WEBHOOK_SECRET,
 
   frontendUrl: parsed.FRONTEND_URL,
+  corsOrigins: parsed.CORS_ORIGINS,
+  metricsToken: parsed.METRICS_TOKEN,
   githubWebhookSecret: parsed.GITHUB_WEBHOOK_SECRET,
   githubAppId: parsed.GITHUB_APP_ID,
+  githubAppSlug: parsed.GITHUB_APP_SLUG,
   githubAppPrivateKey: parsed.GITHUB_APP_PRIVATE_KEY,
   githubAppClientId: parsed.GITHUB_APP_CLIENT_ID,
   githubAppClientSecret: parsed.GITHUB_APP_CLIENT_SECRET,
@@ -246,8 +271,19 @@ export function validateEnv(): {
   if (!ENV.cookieSecret) errors.push("JWT_SECRET is not set — authentication will not work");
   if (!ENV.databaseUrl) errors.push("DATABASE_URL is not set — database connection will fail");
 
-  // Production-only warnings (not fatal — the app can run without these)
+  // Production-only — Redis + SMTP are schema-required above; also enforce
+  // via validateEnv so callers that skip Zod still fail closed.
   if (ENV.isProduction) {
+    if (!ENV.redisUrl) errors.push("REDIS_URL is not set — required in production (no mock Redis)");
+    if (!ENV.smtpHost || !ENV.smtpUser || !ENV.smtpPass) {
+      errors.push(
+        "SMTP_HOST/SMTP_USER/SMTP_PASS are required in production for transactional mail",
+      );
+    }
+    if (!ENV.metricsToken)
+      errors.push("METRICS_TOKEN is not set — /metrics must not be publicly scrapable");
+    if (!ENV.githubWebhookSecret)
+      errors.push("GITHUB_WEBHOOK_SECRET is not set — GitHub webhooks must fail closed");
     if (!ENV.googleClientId) warnings.push("GOOGLE_CLIENT_ID is not set — OAuth login will fail");
     if (!ENV.googleClientSecret)
       warnings.push("GOOGLE_CLIENT_SECRET is not set — OAuth login will fail");
@@ -256,16 +292,16 @@ export function validateEnv(): {
       warnings.push("RAZORPAY_KEY_SECRET is not set — payments will not work");
     if (!ENV.razorpayWebhookSecret)
       warnings.push("RAZORPAY_WEBHOOK_SECRET is not set — webhook verification will fail");
-    if (!ENV.smtpHost) warnings.push("SMTP_HOST is not set — team invite emails will not be sent");
     if (!ENV.sentryDsn) warnings.push("SENTRY_DSN is not set — error monitoring disabled");
   }
 
-  // Non-critical warnings
+  // Non-critical warnings (dev / optional integrations)
   if (!ENV.slackWebhookUrl)
     warnings.push("SLACK_WEBHOOK_URL is not set — kill switch alerts will not be sent to Slack");
-  if (!ENV.smtpHost) warnings.push("SMTP_HOST is not set — email features (team invites) disabled");
+  if (!ENV.isProduction && !ENV.smtpHost)
+    warnings.push("SMTP_HOST is not set — email features log-only in development");
   if (!ENV.razorpayKeyId) warnings.push("RAZORPAY_KEY_ID is not set — payment features disabled");
-  if (!ENV.githubWebhookSecret)
+  if (!ENV.isProduction && !ENV.githubWebhookSecret)
     warnings.push("GITHUB_WEBHOOK_SECRET is not set — GitHub webhook integration disabled");
 
   // Log warnings

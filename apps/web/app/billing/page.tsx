@@ -38,7 +38,6 @@ export default function BillingPage() {
   const [oneTimeAmount, setOneTimeAmount] = useState<number>(500);
   const [isPayingOneTime, setIsPayingOneTime] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState<boolean>(false);
-  const [debugLog, setDebugLog] = useState<string[]>([]);
 
   const subscription = planQuery.data ?? null;
   const invoices: Invoice[] = (invoicesQuery.data?.invoices ?? []) as Invoice[];
@@ -107,11 +106,6 @@ export default function BillingPage() {
     }
   };
 
-  const addDebug = (msg: string) => {
-    setDebugLog((prev) => [...prev.slice(-4), `[${new Date().toLocaleTimeString()}] ${msg}`]);
-    console.log(`[Razorpay Debug] ${msg}`);
-  };
-
   const createOrderMutation = trpc.payment.createOrder.useMutation();
   const verifyPaymentMutation = trpc.payment.verifyPayment.useMutation();
 
@@ -119,31 +113,24 @@ export default function BillingPage() {
     setError(null);
     setPaymentSuccess(false);
     setIsPayingOneTime(true);
-    setDebugLog([]);
-    addDebug("Payment initiated");
 
     try {
       const amountInPaise = oneTimeAmount * 100;
-      addDebug(`Amount: ${amountInPaise} paise`);
 
       if (amountInPaise < 100) {
         throw new Error("Minimum amount is 100 paise (₹1)");
       }
 
-      addDebug("Creating order via tRPC...");
       const orderData = await createOrderMutation.mutateAsync({
         amount: amountInPaise,
         currency: "INR",
         receipt: `onetime_${Date.now()}`,
       });
-      addDebug(`Order created: ${orderData.order_id}`);
       const orderId = orderData.order_id;
 
       const openRazorpayModal = () => {
-        addDebug("Opening Razorpay modal...");
         try {
           const key = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
-          addDebug(`Key check: ${key ? "present" : "MISSING"}`);
           if (!key) {
             throw new Error("Razorpay key not configured. Please contact support.");
           }
@@ -151,7 +138,6 @@ export default function BillingPage() {
             throw new Error("Invalid order response from server.");
           }
 
-          addDebug("Constructing Razorpay options...");
           const options = {
             key,
             amount: orderData.amount,
@@ -161,7 +147,6 @@ export default function BillingPage() {
             order_id: orderId,
             image: "/logo.png",
             handler: async function (response: any) {
-              addDebug("Payment succeeded, verifying via tRPC...");
               try {
                 setIsPayingOneTime(true);
                 await verifyPaymentMutation.mutateAsync({
@@ -169,11 +154,9 @@ export default function BillingPage() {
                   razorpay_order_id: response.razorpay_order_id,
                   razorpay_signature: response.razorpay_signature,
                 });
-                addDebug("Payment verified successfully!");
                 setPaymentSuccess(true);
                 refreshAll();
               } catch (err: any) {
-                addDebug(`Verification error: ${err.message}`);
                 setError(err.message || "Failed to verify signature");
               } finally {
                 setIsPayingOneTime(false);
@@ -188,56 +171,43 @@ export default function BillingPage() {
             },
             modal: {
               ondismiss: function () {
-                addDebug("Modal dismissed by user");
                 setIsPayingOneTime(false);
                 setError("Payment checkout cancelled by user");
               },
             },
           };
 
-          addDebug("Creating Razorpay instance...");
           const rzp = new (window as any).Razorpay(options);
           rzp.on("payment.failed", function (response: any) {
-            addDebug(`Payment failed: ${response.error?.description || "unknown"}`);
             setError(response.error.description || "Payment failed");
             setIsPayingOneTime(false);
           });
-          addDebug("Calling rzp.open()...");
           rzp.open();
-          addDebug("Modal should be visible now");
         } catch (err: any) {
-          addDebug(`Modal error: ${err.message}`);
           setError(err.message || "Failed to initialize Razorpay checkout");
           setIsPayingOneTime(false);
         }
       };
 
-      // If Razorpay SDK is already loaded, open modal immediately
       const hasRazorpay = !!(window as any).Razorpay;
-      addDebug(`Razorpay SDK loaded: ${hasRazorpay}`);
 
       if (hasRazorpay) {
         openRazorpayModal();
         return;
       }
 
-      // Otherwise load the script
-      addDebug("Loading Razorpay SDK script...");
       const script = document.createElement("script");
       script.src = "https://checkout.razorpay.com/v1/checkout.js";
       script.async = true;
       script.onload = () => {
-        addDebug("Razorpay SDK loaded successfully");
         openRazorpayModal();
       };
       script.onerror = () => {
-        addDebug("Razorpay SDK failed to load");
         setError("Failed to load Razorpay SDK. Please check your internet connection.");
         setIsPayingOneTime(false);
       };
       document.body.appendChild(script);
     } catch (err: any) {
-      addDebug(`Error: ${err.message}`);
       setError(err.message || "An unexpected error occurred during checkout");
       setIsPayingOneTime(false);
     }
@@ -294,18 +264,6 @@ export default function BillingPage() {
           <div className="flex items-center gap-2 p-4 bg-red-900/30 border border-red-500 rounded-lg text-red-400">
             <AlertCircle className="w-5 h-5 flex-shrink-0" />
             <span>{error}</span>
-          </div>
-        )}
-
-        {/* Debug Panel */}
-        {debugLog.length > 0 && (
-          <div className="p-3 bg-transparent/80 border border-gray-700 rounded-lg text-xs font-mono">
-            <p className="text-gray-500 mb-1">Debug Log:</p>
-            {debugLog.map((line, i) => (
-              <p key={i} className="text-gray-400">
-                {line}
-              </p>
-            ))}
           </div>
         )}
 

@@ -181,7 +181,17 @@ class MockRedis {
 
 // Browser smoke tests can opt into the local implementation without changing
 // the Redis client contract that the unit suite deliberately mocks.
-const REDIS_URL = process.env.USE_IN_MEMORY_REDIS === "true" ? undefined : process.env.REDIS_URL;
+// Production ALWAYS requires a real REDIS_URL — never silently use MockRedis
+// that reports healthy via ping() while providing no durability or sharing.
+const isProduction = process.env.NODE_ENV === "production";
+const REDIS_URL =
+  process.env.USE_IN_MEMORY_REDIS === "true" && !isProduction ? undefined : process.env.REDIS_URL;
+
+if (isProduction && !REDIS_URL) {
+  throw new Error(
+    "REDIS_URL is required in production — refusing to start with in-memory MockRedis",
+  );
+}
 
 export const redis = REDIS_URL
   ? new Redis(REDIS_URL, {
@@ -203,11 +213,13 @@ if (REDIS_URL) {
   redis.on("connect", () => {
     logger.info("Redis connected");
   });
+} else {
+  logger.warn("[Redis] Using in-memory MockRedis (development/test only)");
 }
 
 // Cache TTL constants (in seconds)
 export const CACHE_TTL = {
-  DASHBOARD_STATS: 60, // 1 minute
+  DASHBOARD_STATS: 45, // short TTL — invalidated on scan complete
   USER_COLLECTIONS: 30, // 30 seconds
   COMPLIANCE_SCORES: 300, // 5 minutes
   SCAN_RESULTS: 60, // 1 minute

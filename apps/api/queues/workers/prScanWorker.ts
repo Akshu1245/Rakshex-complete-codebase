@@ -23,8 +23,11 @@ let worker: Worker<PrScanJobData> | null = null;
 export function startPrScanWorker(): Worker<PrScanJobData> | null {
   if (worker) return worker;
   if (!redis || !process.env.REDIS_URL) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("REDIS_URL is required in production — refusing to skip PR scan worker");
+    }
     logger.info(
-      "[prScanWorker] Skipping BullMQ (no Redis) — PR scans will rely on direct calls or mock",
+      "[prScanWorker] Skipping BullMQ (no Redis) — development/test only; use direct PR scan calls",
     );
     return null;
   }

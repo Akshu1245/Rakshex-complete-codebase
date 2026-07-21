@@ -3,7 +3,7 @@ import Link from "next/link";
 export const metadata = {
   title: "Features — RaksHex AI Runtime Governance",
   description:
-    "Complete feature breakdown of RaksHex: AI security scanning, LLM cost monitoring, compliance automation, shadow API detection, kill switch, and enterprise SSO.",
+    "Feature breakdown of RaksHex: API security scanning, LLM cost monitoring, compliance scoring, shadow API detection, kill switch, and workspace controls.",
   alternates: { canonical: "/features" },
 };
 
@@ -13,23 +13,23 @@ const FEATURES = [
     items: [
       {
         title: "Prompt Injection Detection",
-        desc: "87-payload library detecting indirect prompt injection, jailbreak attempts, and system prompt leakage. Updated weekly with new attack vectors.",
+        desc: "Payload library covering common jailbreaks, indirect injection, and system-prompt leakage patterns. Continuously expanded as new attack vectors appear.",
       },
       {
         title: "API Vulnerability Scanner",
-        desc: "BOLA/IDOR detection, insecure HTTP methods, missing auth, CORS misconfigurations, rate limit bypass testing. OWASP API Top 10 mapped.",
+        desc: "BOLA/IDOR heuristics, insecure HTTP methods, missing auth, CORS misconfigurations. Findings mapped to OWASP API Top 10 where applicable.",
       },
       {
         title: "Secret Scanning",
-        desc: "10-rule detection for AWS, GitHub, OpenAI, Anthropic, Stripe, Slack, JWT, and private keys. Includes Aadhaar and PAN for India compliance.",
+        desc: "Detects common cloud and LLM credentials (AWS, GitHub, OpenAI, Anthropic, Stripe, Slack, JWT, private keys) plus India-specific ID patterns.",
       },
       {
         title: "Shadow API Discovery",
-        desc: "Static route extraction for Express, FastAPI, Flask, Django, Spring Boot, Laravel. No production traffic needed.",
+        desc: "Static route extraction for popular frameworks from imported collections and source patterns — without requiring production traffic.",
       },
       {
-        title: "PII Redaction",
-        desc: "Real-time redaction of emails, phone numbers, SSNs, credit cards, and Indian ID numbers before data leaves your infrastructure.",
+        title: "PII Redaction (gateway path)",
+        desc: "Redaction helpers for emails, phone numbers, and common ID formats on supported gateway paths. Coverage depends on deployment configuration.",
       },
     ],
   },
@@ -38,23 +38,23 @@ const FEATURES = [
     items: [
       {
         title: "Per-Request Cost Tracking",
-        desc: "Track every LLM token across OpenAI, Anthropic, Gemini, Cohere, Mistral, and Groq. Includes reasoning token isolation.",
+        desc: "Track token usage and estimated spend across supported LLM providers when traffic flows through the RakshEx gateway or instrumented paths.",
       },
       {
-        title: "Holt-Winters Forecasting",
-        desc: "Predict next 30 days of spend with 95% confidence intervals. Detect seasonality and trend shifts automatically.",
+        title: "Spend Forecasting",
+        desc: "Trend and forecast views for upcoming spend based on recent usage — confidence bands improve with more history.",
       },
       {
         title: "Anomaly Detection",
-        desc: "Statistical anomaly detection flags unusual spend patterns. Alert when daily variance exceeds 3 standard deviations.",
+        desc: "Flags unusual spend patterns relative to your recent baseline so teams can investigate spikes early.",
       },
       {
         title: "Autonomous Kill Switch",
-        desc: "Circuit breaker that blocks all LLM calls when budget, anomaly threshold, or red-team score triggers. Sub-second response.",
+        desc: "Circuit breaker that blocks LLM calls when budget or policy thresholds trip. Response time depends on your deployment topology.",
       },
       {
         title: "Thinking Token Attribution",
-        desc: "First-in-world isolation of reasoning tokens (o1, o3, Claude). Exact cost per reasoning step.",
+        desc: "Separates reasoning/thinking tokens where providers expose them so cost reports stay accurate for o-series and similar models.",
       },
     ],
   },
@@ -62,24 +62,24 @@ const FEATURES = [
     category: "Compliance",
     items: [
       {
-        title: "SOC 2 Evidence Builder",
-        desc: "Auto-generate evidence for all 5 Trust Services Criteria. Map findings to controls. Export for Vanta/Drata import.",
+        title: "SOC 2-oriented Evidence Packs",
+        desc: "Generate structured evidence exports mapped to common Trust Services themes. Not a SOC 2 certification and not a Vanta/Drata connector.",
       },
       {
-        title: "PCI DSS v4.0.1 Mapping",
-        desc: "47 controls mapped to API security findings. Requirement 6.5, 11.3, and 6.4 coverage with remediation guidance.",
+        title: "PCI DSS Control Mapping",
+        desc: "Maps relevant API-security findings to PCI DSS control language for remediation guidance. Does not claim PCI attestation.",
       },
       {
         title: "OWASP Compliance Scoring",
-        desc: "Real-time score for OWASP API Top 10 and LLM Top 10. Track improvement over time with trend analysis.",
+        desc: "Score views for OWASP API Top 10 and LLM Top 10 based on your scan findings and trend over time.",
       },
       {
         title: "Audit Log Export",
-        desc: "Immutable audit logs with tamper-proof hashing. Export as JSON, CSV, or PDF. 7-year retention for enterprise.",
+        desc: "Export workspace audit events as JSON/CSV for your GRC tooling. Retention policies are plan- and deployment-dependent.",
       },
       {
-        title: "GDPR / DPDP Act Support",
-        desc: "Data subject request handling, right to erasure, consent tracking, and cross-border transfer documentation.",
+        title: "Privacy Controls",
+        desc: "Tools to support GDPR/DPDP-oriented workflows (export/erasure paths). Legal compliance remains the customer’s responsibility.",
       },
     ],
   },
@@ -88,23 +88,23 @@ const FEATURES = [
     items: [
       {
         title: "VS Code Extension",
-        desc: "Scan collections, view findings, and trigger kill switch from your editor. Inline security warnings as you code.",
+        desc: "Scan collections and review findings from the editor when the published extension is installed and authenticated.",
       },
       {
-        title: "GitHub Action",
-        desc: "PR comments with severity badges, exact endpoint names, one-line fixes, and cost impact in USD + INR.",
+        title: "GitHub App + PR Comments",
+        desc: "Webhook-driven PR scans with findings posted as pull-request comments when the GitHub App is installed.",
       },
       {
-        title: "JavaScript SDK",
-        desc: "One-line integration: `import { Rakshex } from '@rakshex/sdk'`. Automatic request interception and cost tracking.",
+        title: "HTTP / tRPC API",
+        desc: "Programmatic access to collections, scans, and findings via the RakshEx API. Dedicated public SDKs are on the roadmap.",
       },
       {
-        title: "Python SDK",
-        desc: "Drop-in middleware for FastAPI, Flask, Django. Async-first design with zero blocking on the hot path.",
+        title: "OpenAPI / Postman Import",
+        desc: "Import OpenAPI, Postman, and Bruno collections to kick off security scans without rewriting your specs.",
       },
       {
-        title: "Express.js Middleware",
-        desc: `app.use(RaksHex.middleware()) — automatic route discovery, secret scanning, and cost attribution.`,
+        title: "Webhook Notifications",
+        desc: "Lifecycle webhooks (scan, finding, quota, kill-switch) plus Slack when configured. Manage endpoints in Settings → Webhooks.",
       },
     ],
   },
@@ -112,24 +112,24 @@ const FEATURES = [
     category: "Enterprise",
     items: [
       {
-        title: "SAML 2.0 + OIDC SSO",
-        desc: "Okta, Google Workspace, Microsoft Entra, Azure AD, OneLogin. JIT provisioning and 4-role RBAC.",
+        title: "SSO (SAML / OIDC)",
+        desc: "Configure OIDC or SAML providers in Settings → SSO. Enable after verifying IdP settings; plan entitlements may apply.",
       },
       {
         title: "Team Workspaces",
-        desc: "Isolated workspaces with shared collections, role-based access, and per-team budget caps.",
+        desc: "Shared workspaces with role-based access for collections, scans, and billing boundaries.",
       },
       {
-        title: "Custom Data Retention",
-        desc: "Configure retention from 30 days to 7 years per workspace. Automated archival and deletion workflows.",
+        title: "Configurable Retention",
+        desc: "Retention and export controls for scan and audit data based on your workspace settings.",
       },
       {
         title: "Priority Support",
-        desc: "4-hour SLA for Enterprise. Dedicated Slack channel, quarterly business reviews, and custom onboarding.",
+        desc: "Higher-touch support options for Enterprise agreements (SLA details in your contract).",
       },
       {
-        title: "Private Cloud Deploy",
-        desc: "Self-hosted option with Docker Compose, Kubernetes Helm chart, or AWS/Azure/GCP marketplace deployment.",
+        title: "Self-Hosted Deploy",
+        desc: "Docker Compose and container-based self-host paths for teams that need to run RakshEx in their own cloud.",
       },
     ],
   },
@@ -138,16 +138,15 @@ const FEATURES = [
 export default function FeaturesPage() {
   return (
     <div className="min-h-screen bg-transparent text-white">
-      {/* Hero */}
       <div className="text-center py-20 px-4 border-b border-gray-800">
-        <h1 className="text-4xl md:text-5xl font-bold mb-4">Every Feature You Need to Govern AI</h1>
+        <h1 className="text-4xl md:text-5xl font-bold mb-4">Features that ship with RakshEx</h1>
         <p className="text-gray-400 max-w-2xl mx-auto text-lg">
-          One platform. Five modules. Zero stitching. From security scanning to compliance export —
-          everything is here.
+          Honest product surface: security scanning, cost governance, compliance scoring, and
+          GitHub/Slack integrations that are available today — without claiming unshipped
+          certifications or connectors.
         </p>
       </div>
 
-      {/* Features by Category */}
       <div className="max-w-6xl mx-auto py-16 px-4 space-y-20">
         {FEATURES.map((section) => (
           <section key={section.category}>
@@ -170,7 +169,6 @@ export default function FeaturesPage() {
         ))}
       </div>
 
-      {/* CTA */}
       <div className="text-center py-16 border-t border-gray-800">
         <h2 className="text-2xl font-bold mb-4">Ready to see it in action?</h2>
         <div className="flex flex-col sm:flex-row justify-center gap-4">

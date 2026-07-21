@@ -10,6 +10,7 @@ import { getWorkspaceRole } from "./workspaceContext";
 import {
   requireWorkspaceMembership,
   requireWorkspacePermission,
+  assertWorkspacePermission,
   checkWorkspacePermission,
 } from "./authorization";
 
@@ -46,6 +47,12 @@ describe("authorization middleware", () => {
     vi.mocked(getWorkspaceRole).mockResolvedValue("admin");
     const role = await requireWorkspacePermission(1, 1, "api_keys", "write");
     expect(role).toBe("admin");
+  });
+
+  it("assertWorkspacePermission is an alias of requireWorkspacePermission", async () => {
+    vi.mocked(getWorkspaceRole).mockResolvedValue("owner");
+    expect(assertWorkspacePermission).toBe(requireWorkspacePermission);
+    await expect(assertWorkspacePermission(1, 1, "collections", "read")).resolves.toBe("owner");
   });
 
   it("checkWorkspacePermission returns false for non-member", async () => {

@@ -228,6 +228,11 @@ export const collections = pgTable(
   (table) => ({
     userIdIdx: index().on(table.userId),
     githubRepoIdx: index().on(table.githubRepo),
+    workspaceIdIdx: index("collections_workspace_id_idx").on(table.workspaceId),
+    workspaceCreatedIdx: index("collections_workspace_created_idx").on(
+      table.workspaceId,
+      table.createdAt,
+    ),
   }),
 );
 
@@ -249,12 +254,22 @@ export const scans = pgTable(
     riskLevel: riskLevelEnum("riskLevel").notNull(),
     totalFindings: integer("totalFindings").default(0).notNull(),
     findingsData: json("findingsData"), // Store findings summary
+    workspaceId: integer("workspace_id"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     completedAt: timestamp("completedAt"),
   },
   (table) => ({
     userIdIdx: index().on(table.userId),
     collectionIdIdx: index().on(table.collectionId),
+    workspaceIdIdx: index("scans_workspace_id_idx").on(table.workspaceId),
+    workspaceCreatedIdx: index("scans_workspace_created_idx").on(
+      table.workspaceId,
+      table.createdAt,
+    ),
+    collectionCreatedIdx: index("scans_collection_created_idx").on(
+      table.collectionId,
+      table.createdAt,
+    ),
   }),
 );
 
@@ -305,6 +320,15 @@ export const findings = pgTable(
     fingerprintIdx: index().on(table.fingerprint),
     ruleIdIdx: index().on(table.ruleId),
     statusIdx: index().on(table.status),
+    workspaceIdIdx: index("findings_workspace_id_idx").on(table.workspaceId),
+    workspaceCreatedIdx: index("findings_workspace_created_idx").on(
+      table.workspaceId,
+      table.createdAt,
+    ),
+    collectionStatusIdx: index("findings_collection_status_idx").on(
+      table.collectionId,
+      table.status,
+    ),
   }),
 );
 
@@ -614,13 +638,15 @@ export type Payment = typeof payments.$inferSelect;
 export type InsertPayment = typeof payments.$inferInsert;
 
 /**
- * Password Reset Tokens - secure tokens for password reset flow
+ * Password Reset Tokens - stores SHA-256 hashes of reset tokens (never plaintext).
+ * Column name remains `token` for compatibility; writers must hash before insert.
  */
 export const passwordResetTokens = pgTable(
   "password_reset_tokens",
   {
     id: varchar("id", { length: 64 }).primaryKey(),
     userId: integer("userId").notNull(),
+    /** SHA-256 hex of the raw token sent to the user */
     token: varchar("token", { length: 255 }).notNull().unique(),
     expiresAt: timestamp("expiresAt").notNull(),
     usedAt: timestamp("usedAt"),

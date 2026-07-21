@@ -255,9 +255,9 @@ export default function BlogOwaspAiTop10() {
             GitHub or Stripe.
           </p>
           <p>
-            <strong>How RaksHex Detects It:</strong> RaksHex AgentGuard requires human-in-the-loop
-            approvals for destructive operations (e.g. `delete`, `refund`, `write`) detected in
-            model tool execution paths.
+            <strong>How RaksHex Detects It:</strong> RaksHex AgentGuard can block or alert on
+            destructive operations (e.g. `delete`, `refund`, `write`) via runtime policies and the
+            kill switch — requests are not held in an approvals queue for later unblock.
           </p>
 
           <h2 className="text-2xl font-bold text-white mt-8">LLM09: Overreliance</h2>

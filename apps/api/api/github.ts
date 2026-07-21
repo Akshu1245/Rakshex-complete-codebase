@@ -2,6 +2,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure, publicProcedure } from "../_core/trpc";
 import { logger } from "../_core/logger";
+import { ENV } from "../_core/env";
 import * as db from "../db";
 import {
   getInstallationClient,
@@ -9,6 +10,7 @@ import {
   linkInstallation,
   listReposForInstallation,
   getLinkedInstallation,
+  resolveGithubAppInstallUrl,
 } from "../services/githubApp";
 import { scanQueue } from "../queues";
 import type { PrScanJobData } from "../queues/workers/prScanWorker";
@@ -31,6 +33,17 @@ async function requireInstallationAccess(installationId: number, userId: number)
 }
 
 export const githubRouter = router({
+  /** Public install URL for the configured GitHub App (null if unset). */
+  getInstallUrl: protectedProcedure.query(() => {
+    const installUrl = resolveGithubAppInstallUrl(ENV.githubAppSlug, ENV.githubAppId);
+    return {
+      installUrl,
+      configured: Boolean(installUrl),
+      slug: ENV.githubAppSlug || null,
+      appId: ENV.githubAppId || null,
+    };
+  }),
+
   /**
    * Link a GitHub installation to the current workspace.
    */

@@ -4,6 +4,14 @@ import { trpc } from "@/lib/trpc";
 
 type StepKey = "importCollection" | "runScan" | "reviewFindings" | "inviteTeam" | "setupCompliance";
 
+const STEP_ACTIONS: Record<StepKey, { href: string; cta: string; auto: boolean }> = {
+  importCollection: { href: "/import", cta: "Import a collection", auto: true },
+  runScan: { href: "/scanning", cta: "Run a scan", auto: true },
+  reviewFindings: { href: "/findings", cta: "Review findings", auto: true },
+  inviteTeam: { href: "/team", cta: "Invite a teammate", auto: true },
+  setupCompliance: { href: "/compliance", cta: "Open compliance", auto: false },
+};
+
 export default function OnboardingPage() {
   const utils = trpc.useUtils();
   const progressQuery = trpc.onboarding.getProgress.useQuery();
@@ -13,10 +21,6 @@ export default function OnboardingPage() {
   const completeStepMutation = trpc.onboarding.completeStep.useMutation({
     onSuccess: () => utils.onboarding.getProgress.invalidate(),
   });
-
-  const completeStep = (step: StepKey) => {
-    completeStepMutation.mutate({ step });
-  };
 
   const steps: {
     id: StepKey;
@@ -28,31 +32,32 @@ export default function OnboardingPage() {
       id: "importCollection",
       completedKey: "importCollectionCompleted",
       title: "Import a Collection",
-      description: "Import your first API collection to get started",
+      description: "Import your first API collection — completes automatically when you import",
     },
     {
       id: "runScan",
       completedKey: "runScanCompleted",
       title: "Run a Security Scan",
-      description: "Scan your collection for vulnerabilities",
+      description: "Scan a collection — completes automatically when a scan is queued",
     },
     {
       id: "reviewFindings",
       completedKey: "reviewFindingsCompleted",
       title: "Review Findings",
-      description: "Review and prioritize security findings",
+      description: "Open a finding detail — completes automatically when you review one",
     },
     {
       id: "inviteTeam",
       completedKey: "inviteTeamCompleted",
       title: "Invite Team Members",
-      description: "Add colleagues to collaborate",
+      description: "Send an invite — completes automatically when you invite someone",
     },
     {
       id: "setupCompliance",
       completedKey: "setupComplianceCompleted",
       title: "Setup Compliance Reporting",
-      description: "Configure PCI DSS or OWASP reporting",
+      description:
+        "Configure PCI DSS or OWASP reporting (or mark done after you generate a report)",
     },
   ];
 
@@ -64,7 +69,9 @@ export default function OnboardingPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-blue-400">Onboarding</h1>
-            <p className="text-gray-400 mt-1">Get started with RaksHex in 5 steps</p>
+            <p className="text-gray-400 mt-1">
+              Steps complete from real product actions — not checkboxes alone
+            </p>
           </div>
           <Link href="/dashboard" className="text-blue-400 hover:text-blue-300">
             &larr; Dashboard
@@ -77,6 +84,7 @@ export default function OnboardingPage() {
           <div className="space-y-6">
             {steps.map((step) => {
               const done = isStepDone(step.completedKey);
+              const action = STEP_ACTIONS[step.id];
               return (
                 <div
                   key={step.id}
@@ -84,7 +92,7 @@ export default function OnboardingPage() {
                     done ? "bg-green-900/20 border-green-500" : "bg-black/50 border-gray-700"
                   }`}
                 >
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <div
@@ -108,17 +116,32 @@ export default function OnboardingPage() {
                           )}
                         </div>
                         <h3 className="text-lg font-semibold">{step.title}</h3>
+                        {action.auto && !done && (
+                          <span className="text-xs px-2 py-0.5 rounded bg-blue-900/40 text-blue-300">
+                            Auto
+                          </span>
+                        )}
                       </div>
                       <p className="text-sm text-gray-400">{step.description}</p>
                     </div>
                     {!done && (
-                      <button
-                        onClick={() => completeStep(step.id)}
-                        disabled={completeStepMutation.isPending}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 rounded-lg font-medium transition-colors"
-                      >
-                        Complete
-                      </button>
+                      <div className="flex flex-col gap-2 shrink-0">
+                        <Link
+                          href={action.href}
+                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors text-center"
+                        >
+                          {action.cta}
+                        </Link>
+                        {!action.auto && (
+                          <button
+                            onClick={() => completeStepMutation.mutate({ step: step.id })}
+                            disabled={completeStepMutation.isPending}
+                            className="px-4 py-2 bg-gray-700 hover:bg-gray-600 disabled:opacity-60 rounded-lg font-medium transition-colors text-sm"
+                          >
+                            Mark complete
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>

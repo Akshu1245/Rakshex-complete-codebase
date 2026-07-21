@@ -1,14 +1,15 @@
-export default function Loading() {
+export default function RedTeamLoading() {
   return (
-    <div className="p-6 space-y-4 animate-pulse">
-      <div className="h-8 w-48 bg-muted rounded" />
-      <div className="h-4 w-96 bg-muted rounded" />
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="h-32 bg-muted rounded-lg" />
-        ))}
+    <div className="min-h-screen bg-transparent text-white p-8">
+      <div className="max-w-7xl mx-auto space-y-6 animate-pulse">
+        <div className="h-8 w-56 bg-black/50 rounded" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-28 bg-black/40 rounded border border-gray-800" />
+          ))}
+        </div>
+        <div className="h-72 bg-black/40 rounded border border-gray-800" />
       </div>
-      <div className="h-64 bg-muted rounded-lg mt-4" />
     </div>
   );
 }

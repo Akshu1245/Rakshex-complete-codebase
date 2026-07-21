@@ -1,15 +1,29 @@
 /**
- * GitHub App Integration — fully functional for dev + production.
+ * GitHub App Integration — fully functional for production.
  * Uses @octokit/app when credentials present.
- * Falls back to in-memory linking for development / mock GitHub App flows.
+ * Dev/test may use in-memory linking + mock Octokit when credentials are absent.
+ * Production never returns mock clients or fake repos.
  */
 
 import { logger } from "../_core/logger";
 import * as db from "../db";
 
+/** Live GitHub App install URL from slug (preferred) or numeric App ID. */
+export function resolveGithubAppInstallUrl(slug = "", appId = ""): string | null {
+  const s = (slug || "").trim();
+  if (s) {
+    return `https://github.com/apps/${encodeURIComponent(s)}/installations/new`;
+  }
+  const id = (appId || "").trim();
+  if (id && /^\d+$/.test(id)) {
+    return `https://github.com/apps/${id}/installations/new`;
+  }
+  return null;
+}
+
 const isProduction = process.env.NODE_ENV === "production";
 
-// In-memory store for installations (market-ready dev fallback; persists across hot reloads in same process)
+// In-memory store for installations (dev cache; production also persists via DB)
 const installations = new Map<
   number,
   {
@@ -24,18 +38,27 @@ const installations = new Map<
 
 let octokitApp: any = null;
 
+function requireGithubAppCredentials(): { appId: string; privateKey: string } {
+  const appId = process.env.GITHUB_APP_ID;
+  const privateKey = process.env.GITHUB_APP_PRIVATE_KEY;
+  if (!appId || !privateKey) {
+    throw new Error("GitHub App is not configured — set GITHUB_APP_ID and GITHUB_APP_PRIVATE_KEY");
+  }
+  return { appId, privateKey };
+}
+
 function getOctokitApp(): any {
   if (octokitApp) return octokitApp;
 
   const appId = process.env.GITHUB_APP_ID;
   const privateKey = process.env.GITHUB_APP_PRIVATE_KEY;
 
-  if ((!appId || !privateKey) && isProduction) {
-    logger.error("[githubApp] GitHub App credentials are required in production");
-    return null;
-  }
-
   if (!appId || !privateKey) {
+    if (isProduction) {
+      throw new Error(
+        "GitHub App credentials are required in production — set GITHUB_APP_ID and GITHUB_APP_PRIVATE_KEY",
+      );
+    }
     logger.warn(
       "[githubApp] No GitHub App credentials — running in mock/dev mode with in-memory linking",
     );
@@ -50,6 +73,11 @@ function getOctokitApp(): any {
     });
     logger.info("[githubApp] Real GitHub App initialized");
   } catch (err) {
+    if (isProduction) {
+      throw new Error(
+        `Failed to initialize GitHub App: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
     logger.error({ err }, "[githubApp] Failed to load @octokit/app — falling back to mock");
   }
   return octokitApp;
@@ -58,7 +86,10 @@ function getOctokitApp(): any {
 export async function getInstallationClient(installationId: number): Promise<any> {
   const app = getOctokitApp();
   if (!app) {
-    // Dev fallback: return a very limited mock client that still allows some flows
+    if (isProduction) {
+      throw new Error("GitHub App is not configured for this environment");
+    }
+    // Dev fallback: limited mock client
     logger.info({ installationId }, "[githubApp] Using dev mock Octokit client");
     return {
       rest: {
@@ -102,7 +133,7 @@ export function verifyWebhookSignature(payload: string, signature: string): bool
 }
 
 /**
- * Link installation — now persists in-memory (and logs for prod DB migration path).
+ * Link installation — persists to github_installations via Drizzle.
  */
 export async function linkInstallation(
   installationId: number,
@@ -111,8 +142,9 @@ export async function linkInstallation(
   accountType: "Organization" | "User",
   permissions: Record<string, unknown> = {},
 ): Promise<void> {
-  if (isProduction && !getOctokitApp()) {
-    throw new Error("GitHub App is not configured for this environment");
+  if (isProduction) {
+    requireGithubAppCredentials();
+    getOctokitApp();
   }
 
   installations.set(installationId, {
@@ -131,12 +163,7 @@ export async function linkInstallation(
     permissions,
   });
 
-  logger.info(
-    { installationId, workspaceId, accountLogin },
-    "[githubApp] installation linked (in-memory + log)",
-  );
-
-  // TODO: when github_installations table exists in Drizzle, persist here too.
+  logger.info({ installationId, workspaceId, accountLogin }, "[githubApp] installation linked");
 }
 
 /**
@@ -192,6 +219,9 @@ export async function listReposForInstallation(
     return result;
   } catch (err) {
     logger.error({ err, installationId }, "[githubApp] failed to list repos from GitHub");
+    if (isProduction) {
+      throw new Error(`Failed to list repositories for GitHub installation ${installationId}`);
+    }
     return stored?.repos || [];
   }
 }

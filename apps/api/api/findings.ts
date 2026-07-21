@@ -11,6 +11,8 @@ import { router, protectedProcedure } from "../_core/trpc";
 import * as db from "../db";
 import { getDb } from "../db";
 import { findings, findingComments } from "@rakshex/database";
+import { requireFindingAccess, requireCollectionAccess } from "../services/tenantAccess";
+import { logger } from "../_core/logger";
 
 const statusEnum = z.enum([
   "open",
@@ -24,12 +26,13 @@ const statusEnum = z.enum([
 
 const severityEnum = z.enum(["Critical", "High", "Medium", "Low"]);
 
-async function requireOwnedFinding(findingId: string, userId: number) {
-  const row = await db.getFindingById(findingId);
-  if (!row || (row as { userId?: number }).userId !== userId) {
-    throw new TRPCError({ code: "NOT_FOUND", message: "Finding not found" });
-  }
-  return row as typeof findings.$inferSelect;
+async function requireOwnedFinding(
+  findingId: string,
+  userId: number,
+  action: "read" | "write" = "read",
+) {
+  const { finding, workspaceId } = await requireFindingAccess(findingId, userId, action);
+  return { ...(finding as typeof findings.$inferSelect), workspaceId };
 }
 
 function toSarif(rows: Array<typeof findings.$inferSelect>) {
@@ -160,7 +163,7 @@ export const findingsRouter = router({
   get: protectedProcedure
     .input(z.object({ id: z.string().min(1) }))
     .query(async ({ input, ctx }) => {
-      const row = await requireOwnedFinding(input.id, ctx.user.id);
+      const row = await requireOwnedFinding(input.id, ctx.user.id, "read");
       const driver = await getDb();
       let comments: unknown[] = [];
       if (driver) {
@@ -169,6 +172,11 @@ export const findingsRouter = router({
           .from(findingComments)
           .where(eq(findingComments.findingId, input.id))
           .orderBy(desc(findingComments.createdAt));
+      }
+      try {
+        await db.updateOnboardingStep(ctx.user.id, "reviewFindings");
+      } catch (err) {
+        logger.warn({ err }, "[Findings] onboarding step update skipped");
       }
       return { finding: row, comments };
     }),
@@ -184,7 +192,7 @@ export const findingsRouter = router({
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      await requireOwnedFinding(input.id, ctx.user.id);
+      await requireOwnedFinding(input.id, ctx.user.id, "write");
 
       if (input.status === "suppressed") {
         if (!input.reason) {
@@ -250,7 +258,7 @@ export const findingsRouter = router({
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      await requireOwnedFinding(input.id, ctx.user.id);
+      await requireOwnedFinding(input.id, ctx.user.id, "write");
       await db.updateFindingStatus(input.id, "in-progress", {
         assigneeUserId: input.assigneeUserId,
         dueAt: input.dueAt ? new Date(input.dueAt) : input.dueAt === null ? null : undefined,
@@ -270,13 +278,13 @@ export const findingsRouter = router({
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      await requireOwnedFinding(input.id, ctx.user.id);
+      const finding = await requireOwnedFinding(input.id, ctx.user.id, "write");
       const driver = await getDb();
       if (!driver) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const commentId = `fc_${Date.now()}_${Math.random().toString(16).slice(2)}`;
       await driver.insert(findingComments).values({
         id: commentId,
-        workspaceId: 0,
+        workspaceId: finding.workspaceId,
         findingId: input.id,
         authorUserId: ctx.user.id,
         body: input.body,
@@ -300,7 +308,7 @@ export const findingsRouter = router({
       let updated = 0;
       for (const id of input.ids) {
         try {
-          await requireOwnedFinding(id, ctx.user.id);
+          await requireOwnedFinding(id, ctx.user.id, "write");
           await db.updateFindingStatus(id, input.status, {
             suppressionReason: input.reason ?? null,
           });
@@ -348,10 +356,13 @@ export const findingsRouter = router({
   baselineDiff: protectedProcedure
     .input(z.object({ collectionId: z.string().min(1) }))
     .query(async ({ input, ctx }) => {
-      const collection = await db.getCollectionById(input.collectionId);
-      if (!collection || collection.userId !== ctx.user.id) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Collection not found" });
-      }
+      await requireCollectionAccess(
+        input.collectionId,
+        ctx.user.id,
+        "collections",
+        "read",
+        ctx.user.name,
+      );
       const all = await db.listFindingsForUser(ctx.user.id, {
         collectionId: input.collectionId,
         limit: 500,

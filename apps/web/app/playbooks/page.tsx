@@ -3,7 +3,6 @@ import { useState } from "react";
 import {
   BookOpen,
   Play,
-  CheckCircle,
   Clock,
   AlertTriangle,
   Zap,
@@ -170,7 +169,10 @@ export default function PlaybooksPage() {
             Security Playbooks
           </h1>
           <p className="text-gray-400 mt-1">
-            Step-by-step runbooks for common security and cost incidents
+            Documentation runbooks for common incidents — not executable automation
+          </p>
+          <p className="text-xs text-[#FDB022] mt-2 border border-[#FDB022]/30 bg-[#FDB022]/10 rounded-lg px-3 py-2 inline-block">
+            Docs only · Automated playbook execution is not available yet
           </p>
         </div>
         <div className="text-right">
@@ -251,13 +253,18 @@ export default function PlaybooksPage() {
                     </li>
                   ))}
                 </ol>
-                <div className="mt-5 flex gap-3">
-                  <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-[#06D6A0] to-[#00F0FF] text-[#0A0E1A] text-sm font-semibold hover:opacity-90 transition-all">
-                    <Play className="w-4 h-4" /> Start Runbook
+                <div className="mt-5 flex flex-col sm:flex-row gap-3 items-start">
+                  <button
+                    type="button"
+                    disabled
+                    title="Playbooks are documentation only — automated runbooks are not available yet"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1a2332] border border-[#2D3E50] text-gray-500 text-sm font-semibold cursor-not-allowed"
+                  >
+                    <Play className="w-4 h-4" /> Documentation only
                   </button>
-                  <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-transparent border border-[#2D3E50] text-gray-300 text-sm font-semibold hover:bg-black/50/80 transition-colors">
-                    <CheckCircle className="w-4 h-4" /> Mark Complete
-                  </button>
+                  <span className="text-xs text-gray-500 self-center">
+                    These steps are guidance — not an executable runbook.
+                  </span>
                 </div>
               </div>
             )}

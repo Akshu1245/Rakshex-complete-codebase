@@ -25,6 +25,8 @@ const MIGRATION_ORDER = [
   "0007_market_ready_foundation.sql",
   "0008_auth_resource_model.sql",
   "0009_findings_lifecycle.sql",
+  "0010_p1_workspace_tenancy.sql",
+  "0011_p3_hot_path_indexes.sql",
 ];
 
 export async function migrate(databaseUrl?: string): Promise<string[]> {

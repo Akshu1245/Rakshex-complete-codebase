@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { SocTwoEvidencePanel } from "@/components/SocTwoEvidencePanel";
 
 type Framework = "pci_dss" | "owasp";
 
@@ -428,6 +429,11 @@ export default function CompliancePage() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* SOC 2 evidence (runtimeGovernance telemetry) */}
+        <div className="glass-panel p-6 mb-24">
+          <SocTwoEvidencePanel />
         </div>
 
         {/* Status bar */}

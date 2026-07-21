@@ -4,7 +4,7 @@ import {
   ONE_YEAR_MS,
   ACCESS_TOKEN_COOKIE,
 } from "@rakshex/shared-types/const";
-import { ForbiddenError } from "@rakshex/shared-types";
+import { ForbiddenError, HttpError } from "@rakshex/shared-types";
 import axios, { type AxiosInstance } from "axios";
 import { parse as parseCookieHeader } from "cookie";
 import type { Request } from "express";
@@ -288,8 +288,21 @@ class SDKServer {
     if (accessTokenCookie) {
       try {
         const payload = await verifyAccessToken(accessTokenCookie);
-        return db.getUserById(payload.userId) as Promise<User>;
-      } catch {
+        // Bind JWT to server-side session so logout/revoke invalidates tokens
+        const session = await db.getActiveUserSessionById(payload.sessionId);
+        if (!session || session.userId !== payload.userId) {
+          throw ForbiddenError("Session revoked or expired");
+        }
+        const user = await db.getUserById(payload.userId);
+        if (!user) {
+          throw ForbiddenError("User not found");
+        }
+        return user;
+      } catch (err) {
+        // Revoked/missing session must not fall through to legacy cookie auth
+        if (err instanceof HttpError && err.statusCode === 403) {
+          throw err;
+        }
         // Fall through to legacy app_session_id
         logger.warn("[Auth] Access token invalid, falling back to legacy session");
       }

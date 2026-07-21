@@ -9,7 +9,33 @@
         value: production
       - key: DATABASE_URL
         sync: false
+      - key: REDIS_URL
+        sync: false
       - key: JWT_SECRET
+        sync: false
+      - key: APP_URL
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: METRICS_TOKEN
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      - key: GITHUB_WEBHOOK_SECRET
+        sync: false
+      - key: GITHUB_APP_ID
+        sync: false
+      - key: GITHUB_APP_PRIVATE_KEY
         sync: false
       - key: STRIPE_SECRET_KEY
         sync: false
@@ -19,7 +45,5 @@
         sync: false
       - key: RAZORPAY_KEY_SECRET
         sync: false
-      - key: REDIS_URL
-        sync: false
-      - key: APP_URL
+      - key: SENTRY_DSN
         sync: false

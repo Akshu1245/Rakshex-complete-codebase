@@ -16,6 +16,8 @@ import {
   MAX_IMPORT_BYTES,
   SAFE_SAMPLE_COLLECTIONS,
 } from "../services/collectionImport/secureParse";
+import { assertWorkspacePermission } from "../services/authorization";
+import { requireCollectionAccess, resolveCallerWorkspace } from "../services/tenantAccess";
 
 /** Reject keys that could enable prototype pollution */
 function hasPollutionKeys(value: unknown): boolean {
@@ -58,6 +60,9 @@ export const collectionsRouter = router({
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      const workspace = await resolveCallerWorkspace(ctx.user.id, ctx.user.name);
+      await assertWorkspacePermission(workspace.id, ctx.user.id, "collections", "write");
+
       // Prefer secure parse when rawText provided or _rawYaml wrapper present
       let collectionData: Record<string, unknown> = input.data as Record<string, unknown>;
       let storageFormat = input.format;
@@ -249,14 +254,15 @@ export const collectionsRouter = router({
           tags,
           version: 1,
           totalRequests: endpointCount,
+          workspaceId: workspace.id,
         },
       );
 
-      // Version history (workspace_id 0 for personal when not multi-tenant)
+      // Version history — always scoped to the caller's workspace (never workspaceId: 0)
       if (contentHash) {
         try {
           await db.saveCollectionVersion({
-            workspaceId: 0,
+            workspaceId: workspace.id,
             collectionId: collection.id,
             version: 1,
             format: detectedFormat ?? storageFormat,
@@ -267,6 +273,13 @@ export const collectionsRouter = router({
         } catch (err) {
           logger.warn({ err }, "[Collections] version persist skipped");
         }
+      }
+
+      // Onboarding truth: import is a real event
+      try {
+        await db.updateOnboardingStep(ctx.user.id, "importCollection");
+      } catch (err) {
+        logger.warn({ err }, "[Collections] onboarding step update skipped");
       }
 
       if (credentialFindings.length > 0) {
@@ -314,70 +327,64 @@ export const collectionsRouter = router({
         .optional(),
     )
     .query(async ({ input, ctx }) => {
-      const cacheKey = cacheKeys.userCollections(ctx.user.id);
+      const workspace = await resolveCallerWorkspace(ctx.user.id, ctx.user.name);
+      await assertWorkspacePermission(workspace.id, ctx.user.id, "collections", "read");
 
-      const allCollections = await getOrSetCache(cacheKey, CACHE_TTL.USER_COLLECTIONS, () =>
-        db.getCollectionsByUserId(ctx.user.id),
-      );
-
-      const cursor = input?.cursor ?? 0;
-      const limit = input?.limit ?? input?.pageSize ?? 20;
       const page = input?.page ?? 1;
       const pageSize = input?.pageSize ?? 20;
-      const total = allCollections.length;
+      const limit = input?.limit ?? pageSize;
+      // Prefer page offset; cursor remains offset-compatible for older clients.
+      const offset = input?.page != null ? (page - 1) * pageSize : (input?.cursor ?? 0);
 
-      // Cursor-based slice
-      const sliced = allCollections.slice(cursor, cursor + limit + 1);
-      const hasMore = sliced.length > limit;
-      const items = sliced.slice(0, limit);
+      const cacheKey = `${cacheKeys.userCollections(ctx.user.id)}:ws:${workspace.id}:o:${offset}:l:${limit}`;
 
-      // Legacy page-based slice (backwards compat)
-      const paginated = allCollections.slice((page - 1) * pageSize, page * pageSize);
+      const { items, total } = await getOrSetCache(cacheKey, CACHE_TTL.USER_COLLECTIONS, () =>
+        db.listCollectionsPage({
+          workspaceId: workspace.id,
+          userId: ctx.user.id,
+          limit,
+          offset,
+        }),
+      );
+
+      const mapRow = (c: (typeof items)[number]) => ({
+        id: c.id,
+        name: c.name,
+        description: c.description,
+        format: c.format,
+        totalRequests: c.totalRequests,
+        createdAt: c.createdAt,
+      });
+
+      const mapped = items.map(mapRow);
+      const hasMore = offset + mapped.length < total;
+
       return {
-        collections: paginated.map((c) => ({
-          id: c.id,
-          name: c.name,
-          description: c.description,
-          format: c.format,
-          totalRequests: c.totalRequests,
-          createdAt: c.createdAt,
-        })),
-        items: items.map((c) => ({
-          id: c.id,
-          name: c.name,
-          description: c.description,
-          format: c.format,
-          totalRequests: c.totalRequests,
-          createdAt: c.createdAt,
-        })),
-        nextCursor: hasMore ? cursor + limit : undefined,
+        collections: mapped,
+        items: mapped,
+        nextCursor: hasMore ? offset + limit : undefined,
         total,
         page,
         pageSize,
-        totalPages: Math.ceil(total / pageSize),
+        totalPages: Math.ceil(total / pageSize) || 0,
       };
     }),
 
   get: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ input, ctx }) => {
-    const collection = await db.getCollectionById(input.id);
-    if (!collection || collection.userId !== ctx.user.id) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Collection not found or access denied",
-      });
-    }
+    const { collection } = await requireCollectionAccess(
+      input.id,
+      ctx.user.id,
+      "collections",
+      "read",
+      ctx.user.name,
+    );
     return collection;
   }),
 
   delete: editorProcedure.input(z.object({ id: z.string() })).mutation(async ({ input, ctx }) => {
-    const collection = await db.getCollectionById(input.id);
-    if (!collection || collection.userId !== ctx.user.id) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Collection not found or access denied",
-      });
-    }
+    await requireCollectionAccess(input.id, ctx.user.id, "collections", "delete", ctx.user.name);
     await db.deleteCollection(input.id);
+    await invalidateUserCache(ctx.user.id);
     return { success: true };
   }),
 
@@ -390,39 +397,34 @@ export const collectionsRouter = router({
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      const collection = await db.getCollectionById(input.id);
-      if (!collection || collection.userId !== ctx.user.id) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Collection not found or access denied",
-        });
-      }
+      await requireCollectionAccess(input.id, ctx.user.id, "collections", "write", ctx.user.name);
       await db.updateCollection(input.id, {
         name: input.name,
         description: input.description,
       });
+      await invalidateUserCache(ctx.user.id);
       return { success: true };
     }),
 
   getWithDetails: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ input, ctx }) => {
-      const collection = await db.getCollectionById(input.id);
-      if (!collection || collection.userId !== ctx.user.id) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Collection not found or access denied",
-        });
-      }
+      const { collection } = await requireCollectionAccess(
+        input.id,
+        ctx.user.id,
+        "collections",
+        "read",
+        ctx.user.name,
+      );
 
-      const [scans, recentFindings, shadowApis, complianceReports] = await Promise.all([
+      const [scans, shadowApis, complianceReports] = await Promise.all([
         db.getScansByCollectionId(input.id),
-        db.getFindingsByScanId((await db.getScansByCollectionId(input.id))[0]?.id || ""),
         db.getShadowAPIsByCollectionId(input.id),
         db.getComplianceReportsByCollectionId(input.id),
       ]);
 
       const lastScan = scans.length > 0 ? scans[0] : null;
+      const recentFindings = lastScan?.id ? await db.getFindingsByScanId(lastScan.id) : [];
       const totalFindings = scans.reduce((sum, scan) => sum + (scan.totalFindings || 0), 0);
 
       return {

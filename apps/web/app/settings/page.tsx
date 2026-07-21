@@ -2,14 +2,27 @@
 
 import { useState, Suspense, useEffect } from "react";
 import Link from "next/link";
-import { User, Lock, Bell, ClipboardList, AlertTriangle } from "lucide-react";
+import {
+  User,
+  Lock,
+  Bell,
+  ClipboardList,
+  AlertTriangle,
+  KeyRound,
+  Webhook,
+  Siren,
+} from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/components/AuthProvider";
 import { useToast } from "@/components/Toast";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { SsoSettingsPanel } from "@/components/settings/SsoSettingsPanel";
+import { WebhooksSettingsPanel } from "@/components/settings/WebhooksSettingsPanel";
+import { AlertsSettingsPanel } from "@/components/settings/AlertsSettingsPanel";
 
-type Tab = "profile" | "security" | "notifications" | "danger" | "audit";
+type Tab =
+  "profile" | "security" | "sso" | "webhooks" | "alerts" | "notifications" | "danger" | "audit";
 
 // ============================================================================
 // PROFILE TAB
@@ -34,6 +47,14 @@ function ProfileTab() {
     type: "success" | "error";
     text: string;
   } | null>(null);
+
+  // Hydrate local form state when profile query resolves (initial useState
+  // only sees undefined on first render).
+  useEffect(() => {
+    if (!profile) return;
+    setName(profile.name || "");
+    setEmail(profile.email || "");
+  }, [profile]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,7 +107,7 @@ function ProfileTab() {
               {profile?.plan}
             </span>
             <Link
-              href="/pricing"
+              href="/billing"
               className="text-sm text-blue-400 hover:text-blue-300 hover:underline"
             >
               Upgrade →
@@ -688,8 +709,13 @@ function DangerZoneTab() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [confirmation, setConfirmation] = useState("");
   const [reason, setReason] = useState("");
+  const [workspaceConfirm, setWorkspaceConfirm] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
   const router = useRouter();
   const { logout } = useAuth();
+  const { addToast } = useToast();
 
   const deleteAccount = trpc.settings.deleteAccount.useMutation({
     onSuccess: () => {
@@ -698,10 +724,79 @@ function DangerZoneTab() {
     },
   });
 
+  const workspacesQuery = trpc.workspaces.listMine.useQuery();
+  const deleteWorkspace = trpc.workspaces.delete.useMutation({
+    onSuccess: () => {
+      workspacesQuery.refetch();
+      setWorkspaceConfirm(null);
+      addToast("success", "Workspace deleted");
+    },
+    onError: (err: { message: string }) => addToast("error", err.message),
+  });
+
   const { data: auditLog } = trpc.settings.getAuditLog.useQuery({ limit: 20 });
+  const deletableWorkspaces = (workspacesQuery.data ?? []).filter(
+    (w: { isPersonal?: boolean; role?: string }) => !w.isPersonal && w.role === "owner",
+  );
 
   return (
     <div className="space-y-8">
+      {/* Workspace deletion */}
+      <div>
+        <h3 className="text-lg font-medium text-white">Delete workspace</h3>
+        <p className="text-sm text-gray-400 mt-1">
+          Remove a non-personal workspace you own. Personal workspaces cannot be deleted — use
+          account deletion instead.
+        </p>
+        {deletableWorkspaces.length === 0 ? (
+          <p className="text-sm text-gray-500 mt-3">No deletable workspaces.</p>
+        ) : (
+          <ul className="mt-3 space-y-2">
+            {deletableWorkspaces.map((w: { id: number; name: string; slug: string }) => (
+              <li
+                key={w.id}
+                className="flex items-center justify-between p-3 bg-gray-700/50 rounded-md border border-gray-600"
+              >
+                <span className="text-sm text-white">
+                  {w.name} <span className="text-gray-500">({w.slug})</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setWorkspaceConfirm({ id: w.id, name: w.name })}
+                  className="text-sm text-red-400 hover:text-red-300"
+                >
+                  Delete
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        {workspaceConfirm && (
+          <div className="mt-4 p-4 border border-red-500/50 rounded-md bg-red-900/20">
+            <p className="text-sm text-red-300 mb-3">
+              Permanently delete workspace &quot;{workspaceConfirm.name}&quot;?
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => deleteWorkspace.mutate({ workspaceId: workspaceConfirm.id })}
+                disabled={deleteWorkspace.isPending}
+                className="px-3 py-1.5 bg-red-600 text-white rounded-md text-sm disabled:opacity-50"
+              >
+                {deleteWorkspace.isPending ? "Deleting..." : "Confirm delete"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setWorkspaceConfirm(null)}
+                className="px-3 py-1.5 bg-gray-700 text-gray-200 rounded-md text-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Security Audit Log */}
       <div>
         <h3 className="text-lg font-medium text-white">Security Audit Log</h3>
@@ -840,12 +935,30 @@ function DangerZoneTab() {
 // MAIN SETTINGS PAGE
 // ============================================================================
 function SettingsContent() {
-  const [activeTab, setActiveTab] = useState<Tab>("profile");
-  const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab") as Tab | null;
+  const initialTab: Tab =
+    tabParam &&
+    [
+      "profile",
+      "security",
+      "sso",
+      "webhooks",
+      "alerts",
+      "notifications",
+      "audit",
+      "danger",
+    ].includes(tabParam)
+      ? tabParam
+      : "profile";
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab);
 
   const tabs: { id: Tab; label: string; icon: LucideIcon }[] = [
     { id: "profile", label: "Profile", icon: User },
     { id: "security", label: "Security", icon: Lock },
+    { id: "sso", label: "SSO", icon: KeyRound },
+    { id: "webhooks", label: "Webhooks", icon: Webhook },
+    { id: "alerts", label: "Alerts", icon: Siren },
     { id: "notifications", label: "Notifications", icon: Bell },
     { id: "audit", label: "Audit Log", icon: ClipboardList },
     { id: "danger", label: "Danger Zone", icon: AlertTriangle },
@@ -898,6 +1011,9 @@ function SettingsContent() {
             <div className="bg-black/50 rounded-lg border border-gray-700 p-6">
               {activeTab === "profile" && <ProfileTab />}
               {activeTab === "security" && <SecurityTab />}
+              {activeTab === "sso" && <SsoSettingsPanel />}
+              {activeTab === "webhooks" && <WebhooksSettingsPanel />}
+              {activeTab === "alerts" && <AlertsSettingsPanel />}
               {activeTab === "notifications" && <NotificationsTab />}
               {activeTab === "danger" && <DangerZoneTab />}
               {activeTab === "audit" && <AuditTab />}

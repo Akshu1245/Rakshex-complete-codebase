@@ -31,6 +31,12 @@ export const teamRouter = router({
         token: member.id,
       }).catch((err) => logger.warn({ err: err }, "[Team] Email send failed"));
 
+      try {
+        await db.updateOnboardingStep(ctx.user.id, "inviteTeam");
+      } catch (err) {
+        logger.warn({ err }, "[Team] onboarding step update skipped");
+      }
+
       return { success: true, memberId: member.id };
     }),
 
@@ -125,7 +131,8 @@ export const teamRouter = router({
       await sendTeamInviteEmail({
         toEmail: member.memberEmail,
         inviterName: ctx.user.name ?? "A Rakshex user",
-        role: member.role,
+        role: member.role as "admin" | "editor" | "viewer",
+        token: member.id,
       }).catch((err) => logger.warn({ err: err }, "[Team] Email send failed"));
       return { success: true };
     }),

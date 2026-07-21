@@ -42,6 +42,16 @@ export default function TeamPage() {
     onError: (err: { message: string }) => setError(err.message),
   });
 
+  const updateRoleMutation = trpc.team.updateRole.useMutation({
+    onSuccess: () => utils.team.list.invalidate(),
+    onError: (err: { message: string }) => setError(err.message),
+  });
+
+  const resendMutation = trpc.team.resendInvite.useMutation({
+    onSuccess: () => setError(null),
+    onError: (err: { message: string }) => setError(err.message),
+  });
+
   const handleInvite = () => {
     if (!inviteEmail.trim()) return;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -134,23 +144,30 @@ export default function TeamPage() {
               {members.map((member) => (
                 <div
                   key={member.id}
-                  className="bg-black/50 p-4 rounded-lg border border-gray-700 flex justify-between items-center"
+                  className="bg-black/50 p-4 rounded-lg border border-gray-700 flex flex-wrap justify-between items-center gap-3"
                 >
                   <div>
                     <p className="font-semibold">{member.email}</p>
                     {member.name && <p className="text-sm text-gray-400">{member.name}</p>}
-                    <div className="flex gap-4 mt-1 text-sm">
-                      <span
-                        className={`px-2 py-1 rounded ${
-                          member.role === "admin"
-                            ? "bg-purple-900/30 text-purple-400"
-                            : member.role === "editor"
-                              ? "bg-blue-900/30 text-blue-400"
-                              : "bg-gray-700 text-gray-400"
-                        }`}
-                      >
-                        {member.role.toUpperCase()}
-                      </span>
+                    <div className="flex gap-4 mt-1 text-sm items-center flex-wrap">
+                      <label className="flex items-center gap-2">
+                        <span className="text-gray-500">Role</span>
+                        <select
+                          value={member.role}
+                          onChange={(e) =>
+                            updateRoleMutation.mutate({
+                              memberId: member.id,
+                              role: e.target.value as Role,
+                            })
+                          }
+                          disabled={updateRoleMutation.isPending}
+                          className="px-2 py-1 rounded bg-gray-800 border border-gray-600 text-sm"
+                        >
+                          <option value="viewer">Viewer</option>
+                          <option value="editor">Editor</option>
+                          <option value="admin">Admin</option>
+                        </select>
+                      </label>
                       <span
                         className={`px-2 py-1 rounded ${
                           member.status === "active"
@@ -164,12 +181,23 @@ export default function TeamPage() {
                       </span>
                     </div>
                   </div>
-                  <button
-                    onClick={() => setRemoveConfirm(member.id)}
-                    className="px-4 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/50 rounded-lg font-medium transition-colors text-sm"
-                  >
-                    Remove
-                  </button>
+                  <div className="flex gap-2">
+                    {member.status === "pending" && (
+                      <button
+                        onClick={() => resendMutation.mutate({ memberId: member.id })}
+                        disabled={resendMutation.isPending}
+                        className="px-4 py-2 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/50 rounded-lg font-medium transition-colors text-sm disabled:opacity-50"
+                      >
+                        Resend
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setRemoveConfirm(member.id)}
+                      className="px-4 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/50 rounded-lg font-medium transition-colors text-sm"
+                    >
+                      Remove
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -177,7 +205,6 @@ export default function TeamPage() {
         </div>
       </div>
 
-      {/* Remove Team Member Confirmation Modal */}
       <ConfirmModal
         open={!!removeConfirm}
         title="Remove Team Member?"

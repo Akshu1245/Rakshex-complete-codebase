@@ -1,6 +1,7 @@
 # Production / staging compose overlay
 # Usage:
-#   export POSTGRES_PASSWORD=... JWT_SECRET=... APP_URL=...
+#   export POSTGRES_PASSWORD=... JWT_SECRET=... APP_URL=... REDIS_URL=...
+#   export SMTP_HOST=... SMTP_USER=... SMTP_PASS=... METRICS_TOKEN=...
 #   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 
 services:
@@ -17,24 +18,39 @@ services:
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://rakshex:${POSTGRES_PASSWORD}@postgres:5432/rakshex
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       APP_URL: ${APP_URL:?APP_URL is required}
       FRONTEND_URL: ${FRONTEND_URL:-https://app.rakshex.com}
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
+      METRICS_TOKEN: ${METRICS_TOKEN:?METRICS_TOKEN is required}
+      SMTP_HOST: ${SMTP_HOST:?SMTP_HOST is required}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:?SMTP_USER is required}
+      SMTP_PASS: ${SMTP_PASS:?SMTP_PASS is required}
+      SMTP_FROM: ${SMTP_FROM:-noreply@rakshex.in}
       SENTRY_DSN: ${SENTRY_DSN:-}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-}
       RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
-      GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET:-}
+      GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET:?GITHUB_WEBHOOK_SECRET is required}
+      GITHUB_APP_ID: ${GITHUB_APP_ID:-}
+      GITHUB_APP_PRIVATE_KEY: ${GITHUB_APP_PRIVATE_KEY:-}
 
   worker:
     restart: always
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://rakshex:${POSTGRES_PASSWORD}@postgres:5432/rakshex
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       JWT_SECRET: ${JWT_SECRET}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
 
   web:
     restart: always
     environment:
       NODE_ENV: production
       NEXT_PUBLIC_TS_API_URL: ${NEXT_PUBLIC_TS_API_URL:-${APP_URL}}
+      NEXT_PUBLIC_SANDBOX_MODE: "false"

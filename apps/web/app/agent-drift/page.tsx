@@ -1,7 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 import { trpc } from "@/lib/trpc";
-import { AlertTriangle, CheckCircle, RefreshCw, Activity, Brain, ArrowRight } from "lucide-react";
+import { AlertTriangle, CheckCircle, Activity, Brain, ArrowRight } from "lucide-react";
 
 interface DriftEvent {
   id: string;
@@ -72,10 +72,11 @@ export default function AgentDriftPage() {
         <div>
           <h1 className="text-3xl font-bold text-white flex items-center gap-3">
             <Brain className="w-8 h-8 text-[#06D6A0]" />
-            Agent Drift Monitor
+            Cost Anomaly Monitor
           </h1>
           <p className="text-gray-400 mt-1">
-            Cost anomaly &amp; drift detection from your live AI telemetry
+            Spend spikes vs a 7-day rolling baseline from live AI telemetry (cost only — not
+            behavioral agent drift)
           </p>
         </div>
         <button
@@ -217,31 +218,26 @@ export default function AgentDriftPage() {
                   </span>
                 </div>
               </div>
-              <div className="mt-5 pt-4 border-t border-[#2D3E50]">
-                <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-3">
-                  Recommended Actions
-                </p>
-                <div className="space-y-2">
-                  {[
-                    "Review agent logs for this time window",
-                    "Compare current vs baseline prompts",
-                    selectedEvent.severity === "critical"
-                      ? "Trigger kill switch if runaway"
-                      : "Set cost alert threshold",
-                  ].map((action) => (
-                    <div key={action} className="flex items-start gap-2 text-xs text-gray-400">
-                      <ArrowRight className="w-3 h-3 text-[#06D6A0] shrink-0 mt-0.5" />
-                      {action}
-                    </div>
-                  ))}
-                </div>
+              <div className="mt-5 pt-4 border-t border-[#2D3E50] space-y-2">
+                <a
+                  href="/analytics"
+                  className="w-full py-2 rounded-lg bg-[#06D6A0]/10 border border-[#06D6A0]/20 text-[#06D6A0] text-sm font-semibold hover:bg-[#06D6A0]/20 transition-all flex items-center justify-center gap-2"
+                >
+                  <ArrowRight className="w-4 h-4" /> View cost forecast
+                </a>
+                <a
+                  href="/kill-switch"
+                  className="w-full py-2 rounded-lg bg-[#EF4444]/10 border border-[#EF4444]/20 text-[#EF4444] text-sm font-semibold hover:bg-[#EF4444]/20 transition-all flex items-center justify-center gap-2"
+                >
+                  <AlertTriangle className="w-4 h-4" /> Open Kill Switch
+                </a>
+                <a
+                  href="/settings?tab=alerts"
+                  className="w-full py-2 rounded-lg border border-[#2D3E50] text-gray-300 text-sm font-semibold hover:bg-black/50 transition-all flex items-center justify-center gap-2"
+                >
+                  Configure cost alerts
+                </a>
               </div>
-              <a
-                href="/kill-switch"
-                className="mt-4 w-full py-2 rounded-lg bg-[#EF4444]/10 border border-[#EF4444]/20 text-[#EF4444] text-sm font-semibold hover:bg-[#EF4444]/20 transition-all flex items-center justify-center gap-2"
-              >
-                <AlertTriangle className="w-4 h-4" /> Open Kill Switch
-              </a>
             </div>
           ) : (
             <div className="text-center py-8 text-gray-500">

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { SkeletonCard, SkeletonRow } from "@/components/Skeleton";
+import { EmptyState } from "@/components/EmptyState";
 import {
   LineChart,
   Line,
@@ -17,60 +18,65 @@ import {
 interface TrendPoint {
   date: string;
   overall: number;
-  injection: number;
-  leakage: number;
-  jailbreak: number;
-  toxicity: number;
-}
-
-interface RedTeamRun {
-  id: string;
-  findings: Finding[];
-  createdAt: string;
-}
-
-interface Finding {
-  id: string;
-  category: string;
-  severity: "Critical" | "High" | "Medium" | "Low";
-  description: string;
-  model: string;
-  createdAt: string;
+  blockedRate: number;
+  leakRate: number;
+  errorRate: number;
 }
 
 export default function RedTeamPage() {
   const [activeTab, setActiveTab] = useState<"trends" | "findings" | "schedule">("trends");
-  const [trendData, setTrendData] = useState<TrendPoint[]>([]);
-  const [findings, setFindings] = useState<Finding[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
+  const utils = trpc.useUtils();
 
-  const utils = trpc.useContext();
+  const runsQuery = trpc.runtimeGovernance.redteamRuns.useQuery({ limit: 50 });
+  const startRedteam = trpc.runtimeGovernance.startRedteam.useMutation({
+    onSuccess: () => {
+      utils.runtimeGovernance.redteamRuns.invalidate();
+    },
+  });
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const runs = await utils.client.runtimeGovernance.redteamRuns.query({ limit: 50 });
-        const mappedFindings = (runs.runs as unknown as RedTeamRun[])
-          .flatMap((r) => r.findings || [])
-          .slice(0, 50);
-        setFindings(mappedFindings);
-      } catch (err) {
-        console.error("Failed to load red-team data", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, [utils.client.runtimeGovernance]);
+  const runs = runsQuery.data?.runs ?? [];
+  const loading = runsQuery.isLoading;
+
+  const trendData: TrendPoint[] = useMemo(() => {
+    const completed = [...runs]
+      .filter((r) => r.status === "completed" || r.securityScore != null)
+      .sort(
+        (a, b) =>
+          new Date(a.finishedAt ?? a.createdAt).getTime() -
+          new Date(b.finishedAt ?? b.createdAt).getTime(),
+      );
+
+    return completed.map((r) => {
+      const total = Math.max(1, r.totalPayloads ?? 0);
+      const date = new Date(r.finishedAt ?? r.createdAt);
+      return {
+        date: date.toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+        overall: r.securityScore ?? 0,
+        blockedRate: Math.round(((r.blockedCount ?? 0) / total) * 100),
+        leakRate: Math.round(((r.leakedCount ?? 0) / total) * 100),
+        errorRate: Math.round(((r.erroredCount ?? 0) / total) * 100),
+      };
+    });
+  }, [runs]);
+
+  const latestRunId = useMemo(() => {
+    const completed = runs.find((r) => r.status === "completed") ?? runs[0];
+    return completed?.id ?? null;
+  }, [runs]);
+
+  const activeRunId = selectedRunId ?? latestRunId;
+  const activeFindingsQuery = trpc.runtimeGovernance.redteamRun.useQuery(
+    { runId: activeRunId! },
+    { enabled: Boolean(activeRunId) && activeTab === "findings" },
+  );
+  const findings = activeFindingsQuery.data?.findings ?? [];
 
   const runNow = async () => {
     try {
-      await utils.client.runtimeGovernance.startRedteam.mutate({
+      await startRedteam.mutateAsync({
         target: window.location.origin,
       });
-      const runs = await utils.client.runtimeGovernance.redteamRuns.query({ limit: 50 });
-      const mappedFindings = runs.runs.flatMap((r: any) => r.findings || []).slice(0, 50);
-      setFindings(mappedFindings as Finding[]);
     } catch (err) {
       alert("Run failed: " + (err as Error).message);
     }
@@ -78,10 +84,13 @@ export default function RedTeamPage() {
 
   const severityColor = (s: string) => {
     switch (s) {
+      case "critical":
       case "Critical":
         return "text-[#EF4444] bg-[#EF4444]/15 border-[#EF4444]/30";
+      case "high":
       case "High":
         return "text-[#F59E0B] bg-[#F59E0B]/15 border-[#F59E0B]/30";
+      case "medium":
       case "Medium":
         return "text-[#FDB022] bg-[#FDB022]/15 border-[#FDB022]/30";
       default:
@@ -100,13 +109,13 @@ export default function RedTeamPage() {
         </div>
         <button
           onClick={runNow}
-          className="px-4 py-2 bg-[#EF4444] text-white rounded-lg hover:bg-[#EF4444]/90 font-semibold transition-all"
+          disabled={startRedteam.isPending}
+          className="px-4 py-2 bg-[#EF4444] text-white rounded-lg hover:bg-[#EF4444]/90 font-semibold transition-all disabled:opacity-50"
         >
-          Run Now
+          {startRedteam.isPending ? "Running…" : "Run Now"}
         </button>
       </div>
 
-      {/* Tabs */}
       <div className="flex gap-1 mb-6 bg-black/50/50 rounded-lg p-1 w-fit border border-[#2D3E50]">
         {(["trends", "findings", "schedule"] as const).map((tab) => (
           <button
@@ -121,10 +130,8 @@ export default function RedTeamPage() {
         ))}
       </div>
 
-      {/* Trends Tab */}
       {activeTab === "trends" && (
         <div className="space-y-6">
-          {/* Overall Score Card */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {loading ? (
               <>
@@ -141,33 +148,37 @@ export default function RedTeamPage() {
                   previous={trendData[trendData.length - 2]?.overall ?? 0}
                 />
                 <ScoreCard
-                  label="Prompt Injection"
-                  score={trendData[trendData.length - 1]?.injection ?? 0}
-                  previous={trendData[trendData.length - 2]?.injection ?? 0}
+                  label="Block rate %"
+                  score={trendData[trendData.length - 1]?.blockedRate ?? 0}
+                  previous={trendData[trendData.length - 2]?.blockedRate ?? 0}
                 />
                 <ScoreCard
-                  label="Data Leakage"
-                  score={trendData[trendData.length - 1]?.leakage ?? 0}
-                  previous={trendData[trendData.length - 2]?.leakage ?? 0}
+                  label="Leak rate %"
+                  score={trendData[trendData.length - 1]?.leakRate ?? 0}
+                  previous={trendData[trendData.length - 2]?.leakRate ?? 0}
+                  invertDelta
                 />
                 <ScoreCard
-                  label="Jailbreak"
-                  score={trendData[trendData.length - 1]?.jailbreak ?? 0}
-                  previous={trendData[trendData.length - 2]?.jailbreak ?? 0}
+                  label="Error rate %"
+                  score={trendData[trendData.length - 1]?.errorRate ?? 0}
+                  previous={trendData[trendData.length - 2]?.errorRate ?? 0}
+                  invertDelta
                 />
               </>
             )}
           </div>
 
-          {/* Chart */}
           <div className="bg-black/50/50 border border-[#2D3E50] rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Resilience Trend (30 days)</h2>
+            <h2 className="text-lg font-semibold text-white mb-4">Resilience Trend</h2>
             {loading ? (
               <div className="h-80 bg-transparent rounded-lg animate-pulse border border-[#2D3E50]" />
             ) : trendData.length === 0 ? (
-              <div className="h-80 flex items-center justify-center text-gray-400">
-                No trend data available. Run your first red-team test.
-              </div>
+              <EmptyState
+                compact
+                title="No trend data available"
+                description="Run your first red-team test to populate security score history."
+                actions={[{ label: "Run now", onClick: runNow, variant: "primary" }]}
+              />
             ) : (
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
@@ -187,40 +198,32 @@ export default function RedTeamPage() {
                     <Line
                       type="monotone"
                       dataKey="overall"
-                      name="Overall"
+                      name="Overall score"
                       stroke="#06D6A0"
                       strokeWidth={2}
                       dot={false}
                     />
                     <Line
                       type="monotone"
-                      dataKey="injection"
-                      name="Injection"
-                      stroke="#EF4444"
-                      strokeWidth={2}
-                      dot={false}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="leakage"
-                      name="Leakage"
-                      stroke="#FDB022"
-                      strokeWidth={2}
-                      dot={false}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="jailbreak"
-                      name="Jailbreak"
+                      dataKey="blockedRate"
+                      name="Block %"
                       stroke="#00F0FF"
                       strokeWidth={2}
                       dot={false}
                     />
                     <Line
                       type="monotone"
-                      dataKey="toxicity"
-                      name="Toxicity"
-                      stroke="#10B981"
+                      dataKey="leakRate"
+                      name="Leak %"
+                      stroke="#EF4444"
+                      strokeWidth={2}
+                      dot={false}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="errorRate"
+                      name="Error %"
+                      stroke="#FDB022"
                       strokeWidth={2}
                       dot={false}
                     />
@@ -229,58 +232,103 @@ export default function RedTeamPage() {
               </div>
             )}
           </div>
-        </div>
-      )}
 
-      {/* Findings Tab */}
-      {activeTab === "findings" && (
-        <div className="bg-black/50/50 border border-[#2D3E50] rounded-lg overflow-hidden">
-          {loading ? (
-            <div className="p-6 space-y-4">
-              <SkeletonRow />
-              <SkeletonRow />
-              <SkeletonRow />
-            </div>
-          ) : findings.length === 0 ? (
-            <div className="p-12 text-center text-gray-400">
-              No findings yet. Run a red-team test to discover vulnerabilities.
-            </div>
-          ) : (
-            <table className="w-full text-left text-sm">
-              <thead className="bg-transparent text-gray-300">
-                <tr>
-                  <th className="px-4 py-3 font-medium">Severity</th>
-                  <th className="px-4 py-3 font-medium">Category</th>
-                  <th className="px-4 py-3 font-medium">Description</th>
-                  <th className="px-4 py-3 font-medium">Model</th>
-                  <th className="px-4 py-3 font-medium">Date</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#2D3E50]/30">
-                {findings.map((f) => (
-                  <tr key={f.id} className="hover:bg-[#06D6A0]/10 transition-colors">
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-block px-2 py-1 rounded text-xs font-medium border ${severityColor(f.severity)}`}
-                      >
-                        {f.severity}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-300">{f.category}</td>
-                    <td className="px-4 py-3 text-gray-300 max-w-md truncate">{f.description}</td>
-                    <td className="px-4 py-3 text-gray-400 font-mono text-xs">{f.model}</td>
-                    <td className="px-4 py-3 text-gray-400 text-xs">
-                      {new Date(f.createdAt).toLocaleDateString()}
-                    </td>
-                  </tr>
+          {runs.length > 0 && (
+            <div className="bg-black/50/50 border border-[#2D3E50] rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-white mb-3">Recent runs</h3>
+              <ul className="space-y-2 max-h-48 overflow-y-auto">
+                {runs.slice(0, 12).map((r) => (
+                  <li
+                    key={r.id}
+                    className="text-xs text-gray-400 flex justify-between gap-2 border-b border-[#2D3E50]/40 pb-2"
+                  >
+                    <span className="truncate">
+                      {r.target} · {r.status}
+                      {r.securityScore != null ? ` · score ${r.securityScore}` : ""}
+                    </span>
+                    <span className="shrink-0">
+                      {new Date(r.finishedAt ?? r.createdAt).toLocaleString()}
+                    </span>
+                  </li>
                 ))}
-              </tbody>
-            </table>
+              </ul>
+            </div>
           )}
         </div>
       )}
 
-      {/* Schedule Tab */}
+      {activeTab === "findings" && (
+        <div className="space-y-4">
+          {runs.length > 0 && (
+            <div>
+              <label className="text-xs text-gray-400 block mb-1">Run</label>
+              <select
+                className="bg-transparent border border-[#2D3E50] rounded-lg px-3 py-2 text-gray-200 text-sm"
+                value={activeRunId ?? ""}
+                onChange={(e) => setSelectedRunId(e.target.value || null)}
+              >
+                {runs.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {new Date(r.createdAt).toLocaleString()} · {r.status}
+                    {r.securityScore != null ? ` · ${r.securityScore}` : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          <div className="bg-black/50/50 border border-[#2D3E50] rounded-lg overflow-hidden">
+            {activeFindingsQuery.isLoading || loading ? (
+              <div className="p-6 space-y-4">
+                <SkeletonRow />
+                <SkeletonRow />
+                <SkeletonRow />
+              </div>
+            ) : findings.length === 0 ? (
+              <div className="p-12">
+                <EmptyState
+                  compact
+                  title="No findings yet"
+                  description="Run a red-team test to discover vulnerabilities."
+                />
+              </div>
+            ) : (
+              <table className="w-full text-left text-sm">
+                <thead className="bg-transparent text-gray-300">
+                  <tr>
+                    <th className="px-4 py-3 font-medium">Severity</th>
+                    <th className="px-4 py-3 font-medium">Category</th>
+                    <th className="px-4 py-3 font-medium">Outcome</th>
+                    <th className="px-4 py-3 font-medium">Sample</th>
+                    <th className="px-4 py-3 font-medium">Date</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#2D3E50]/30">
+                  {findings.map((f) => (
+                    <tr key={f.id} className="hover:bg-[#06D6A0]/10 transition-colors">
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-block px-2 py-1 rounded text-xs font-medium border ${severityColor(f.severity)}`}
+                        >
+                          {f.severity}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-gray-300">{f.category}</td>
+                      <td className="px-4 py-3 text-gray-300">{f.outcome}</td>
+                      <td className="px-4 py-3 text-gray-400 max-w-md truncate font-mono text-xs">
+                        {f.sample ?? "—"}
+                      </td>
+                      <td className="px-4 py-3 text-gray-400 text-xs">
+                        {new Date(f.createdAt).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      )}
+
       {activeTab === "schedule" && (
         <div className="bg-black/50/50 border border-[#2D3E50] rounded-lg p-6">
           <SchedulePanel />
@@ -290,9 +338,20 @@ export default function RedTeamPage() {
   );
 }
 
-function ScoreCard({ label, score, previous }: { label: string; score: number; previous: number }) {
+function ScoreCard({
+  label,
+  score,
+  previous,
+  invertDelta = false,
+}: {
+  label: string;
+  score: number;
+  previous: number;
+  invertDelta?: boolean;
+}) {
   const delta = score - previous;
-  const deltaColor = delta >= 0 ? "text-[#10B981]" : "text-[#EF4444]";
+  const improved = invertDelta ? delta <= 0 : delta >= 0;
+  const deltaColor = improved ? "text-[#10B981]" : "text-[#EF4444]";
   const deltaIcon = delta >= 0 ? "↑" : "↓";
 
   return (
@@ -309,12 +368,11 @@ function ScoreCard({ label, score, previous }: { label: string; score: number; p
 function SchedulePanel() {
   const [cron, setCron] = useState("0 2 * * 1");
   const [enabled, setEnabled] = useState(true);
-  const [models, setModels] = useState<string[]>(["all"]);
-  const utils = trpc.useContext();
+  const schedule = trpc.runtimeGovernance.scheduleRedteam.useMutation();
 
   const saveSchedule = async () => {
     try {
-      await utils.client.runtimeGovernance.scheduleRedteam.mutate({
+      await schedule.mutateAsync({
         target: window.location.origin,
         cron,
       });
@@ -351,9 +409,10 @@ function SchedulePanel() {
 
       <button
         onClick={saveSchedule}
-        className="px-4 py-2 bg-gradient-to-r from-[#06D6A0] to-[#00F0FF] text-[#0A0E1A] font-semibold rounded-lg hover:opacity-90 transition-all"
+        disabled={schedule.isPending || !enabled}
+        className="px-4 py-2 bg-gradient-to-r from-[#06D6A0] to-[#00F0FF] text-[#0A0E1A] font-semibold rounded-lg hover:opacity-90 transition-all disabled:opacity-50"
       >
-        Save Schedule
+        {schedule.isPending ? "Saving…" : "Save Schedule"}
       </button>
     </div>
   );

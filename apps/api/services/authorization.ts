@@ -57,6 +57,13 @@ export async function requireWorkspacePermission(
 }
 
 /**
+ * Alias used by market-ready routers — same semantics as requireWorkspacePermission
+ * (DB-resolved membership + RBAC, TRPCError on denial). Prefer this name at call sites
+ * that historically imported assertWorkspacePermission from workspaceContext.
+ */
+export const assertWorkspacePermission = requireWorkspacePermission;
+
+/**
  * Soft check — returns false instead of throwing.
  */
 export async function checkWorkspacePermission(

@@ -44,4 +44,29 @@ describe("db security — no fake demo user on DB outage", () => {
     const user = await db.getUserByApiKey("dp_malicious_key_123");
     expect(user).toBeUndefined();
   });
+
+  it("getCollectionsByUserId returns empty array (not demo data) when DB is down", async () => {
+    const rows = await db.getCollectionsByUserId(1);
+    expect(rows).toEqual([]);
+  });
+
+  it("getFindingsByScanId returns empty array (not demo findings) when DB is down", async () => {
+    const rows = await db.getFindingsByScanId("scan_any");
+    expect(rows).toEqual([]);
+  });
+
+  it("getScanById returns null (not a fabricated scan) when DB is down", async () => {
+    const scan = await db.getScanById("scan_any");
+    expect(scan).toBeNull();
+  });
+
+  it("getRecentFindingsForUser returns empty array when DB is down", async () => {
+    const rows = await db.getRecentFindingsForUser(1);
+    expect(rows).toEqual([]);
+  });
+
+  it("getCollectionById returns null (not a fabricated collection) when DB is down", async () => {
+    const row = await db.getCollectionById("col_any");
+    expect(row).toBeNull();
+  });
 });

@@ -19,6 +19,12 @@ describe("GitHub CI / App security helpers", () => {
     expect(verifyWebhookSignature(payload, sig)).toBe(true);
   });
 
+  it("rejects webhooks when GITHUB_WEBHOOK_SECRET is missing", () => {
+    delete process.env.GITHUB_WEBHOOK_SECRET;
+    const payload = JSON.stringify({ action: "opened" });
+    expect(verifyWebhookSignature(payload, "sha256=anything")).toBe(false);
+  });
+
   it("CI scan path produces findings for insecure collections", () => {
     const result = runScan({
       item: [

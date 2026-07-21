@@ -24,39 +24,26 @@ export default function StatusPage() {
         {/* Dynamic Client Service health checks */}
         <StatusClient />
 
-        {/* Static Incident logs */}
+        {/* Example incident format — not live history */}
         <div className="mt-12">
-          <h3 className="text-xl font-bold text-white mb-6">Recent System Logs (Last 30 Days)</h3>
-          <div className="space-y-4">
+          <h3 className="text-xl font-bold text-white mb-2">Incident history format</h3>
+          <p className="text-sm text-amber-200/80 mb-6 border border-amber-500/30 bg-amber-500/5 rounded-lg px-4 py-3">
+            Example only — the entries below are illustrative samples of how incidents would appear.
+            They are not live production incidents.
+          </p>
+          <div className="space-y-4 opacity-80">
             <div className="bg-slate-900/40 border border-slate-900 rounded-xl p-6">
               <div className="flex items-center justify-between mb-2">
                 <h4 className="font-semibold text-slate-200">
-                  Intermittent latency on scanning engine
+                  [Example] Intermittent latency on scanning engine
                 </h4>
-                <span className="text-xs text-slate-500">May 15, 2026</span>
+                <span className="text-xs text-slate-500">Sample</span>
               </div>
               <p className="text-slate-400 text-sm mb-3">
-                Elevated response times during bulk collection uploads. Resolved automatically after
-                container scaling.
+                Placeholder description for elevated response times during bulk uploads.
               </p>
               <div className="flex items-center gap-4 text-xs">
-                <span className="text-emerald-400 font-semibold">Resolved</span>
-                <span className="text-slate-500">Duration: 12 minutes</span>
-              </div>
-            </div>
-
-            <div className="bg-slate-900/40 border border-slate-900 rounded-xl p-6">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="font-semibold text-slate-200">OAuth Provider Redirect Outage</h4>
-                <span className="text-xs text-slate-500">May 2, 2026</span>
-              </div>
-              <p className="text-slate-400 text-sm mb-3">
-                Google OAuth redirect configuration had a mismatch due to an upstream configuration
-                roll. Mappings updated.
-              </p>
-              <div className="flex items-center gap-4 text-xs">
-                <span className="text-emerald-400 font-semibold">Resolved</span>
-                <span className="text-slate-500">Duration: 4 minutes</span>
+                <span className="text-slate-400 font-semibold">Example</span>
               </div>
             </div>
           </div>
