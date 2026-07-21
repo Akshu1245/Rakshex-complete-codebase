@@ -41,6 +41,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
+    "@playwright/test": "1.60.0",
+    "docx": "^9.6.1",
     "eslint": "^9.0.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.4",
@@ -48,8 +50,7 @@
     "turbo": "^2.3.0",
     "typescript": "^5.7.0",
     "typescript-eslint": "^8.60.0",
-    "vitest": "^3.0.0",
-    "docx": "^9.6.1"
+    "vitest": "^3.0.0"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,json,md,yml,yaml}": [
