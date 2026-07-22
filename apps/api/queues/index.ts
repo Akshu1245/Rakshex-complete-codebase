@@ -112,6 +112,13 @@ export const scanQueue = createQueue("scan", {
   keepFail: 500,
 });
 
+export const prScanQueue = createQueue("pr-scan", {
+  attempts: 3,
+  delay: 1000,
+  keepComplete: 500,
+  keepFail: 500,
+});
+
 export const webhookQueue = createQueue("webhook-delivery", {
   attempts: 5,
   delay: 1000,
@@ -142,6 +149,7 @@ logger.info(
 export async function closeQueues(): Promise<void> {
   await Promise.all([
     scanQueue.close(),
+    prScanQueue.close(),
     webhookQueue.close(),
     emailQueue.close(),
     telemetryQueue.close(),

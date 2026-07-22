@@ -12,7 +12,7 @@ import {
   getLinkedInstallation,
   resolveGithubAppInstallUrl,
 } from "../services/githubApp";
-import { scanQueue } from "../queues";
+import { prScanQueue } from "../queues";
 import type { PrScanJobData } from "../queues/workers/prScanWorker";
 import { enqueueScan } from "../services/jobs";
 import crypto from "crypto";
@@ -141,7 +141,7 @@ export const githubRouter = router({
         workspaceId: linked.workspaceId,
       };
 
-      const job = await scanQueue.add("pr-scan", jobData);
+      const job = await prScanQueue.add("pr-scan", jobData);
 
       logger.info(
         { jobId: job.id, repoFullName: input.repoFullName, prNumber: input.prNumber },
@@ -291,7 +291,7 @@ export async function handleGitHubWebhook(
   const workspaceId = linked?.workspaceId || "unknown";
 
   try {
-    await scanQueue.add(
+    await prScanQueue.add(
       "pr-scan",
       {
         installationId,

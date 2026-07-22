@@ -113,6 +113,7 @@ export async function processPrScanJob(job: Job<PrScanJobData>): Promise<void> {
       file: string;
       line?: number;
       rule?: string;
+      remediation?: string;
     }> = [];
     let criticalCount = 0;
     let highCount = 0;
@@ -145,6 +146,8 @@ export async function processPrScanJob(job: Job<PrScanJobData>): Promise<void> {
             file: file.filename,
             line: s.line,
             rule: s.ruleId,
+            remediation:
+              "Rotate this credential immediately, remove it from version control history, and load it from a secret manager or environment variable instead of hardcoding it.",
           });
           if (s.severity === "critical") criticalCount++;
           else highCount++;
@@ -207,6 +210,8 @@ function runExtraHeuristics(filename: string, content: string) {
       severity: "Medium",
       finding: "Hardcoded localhost/loopback URL in source",
       file: filename,
+      remediation:
+        "Move environment-specific URLs into configuration/environment variables so the code works across dev, staging, and production.",
     });
   }
 
@@ -216,6 +221,8 @@ function runExtraHeuristics(filename: string, content: string) {
       severity: "High",
       finding: "Potential sensitive data logged to console",
       file: filename,
+      remediation:
+        "Remove logging of secrets/credentials. Use a redacting logger and never emit tokens, passwords, or keys to stdout.",
     });
   }
 
@@ -225,6 +232,8 @@ function runExtraHeuristics(filename: string, content: string) {
       severity: "Low",
       finding: "Unresolved TODO/FIXME/HACK comment in code",
       file: filename,
+      remediation:
+        "Resolve or track the outstanding work in an issue before shipping; unresolved HACK/FIXME markers often hide security shortcuts.",
     });
   }
 
@@ -237,6 +246,8 @@ function runExtraHeuristics(filename: string, content: string) {
       severity: "Medium",
       finding: "State-changing endpoint without obvious rate limiting",
       file: filename,
+      remediation:
+        "Add rate limiting/throttling to mutating endpoints to mitigate brute-force and abuse (e.g. express-rate-limit or a gateway policy).",
     });
   }
 
@@ -250,6 +261,7 @@ function buildRichComment(
     file: string;
     line?: number;
     rule?: string;
+    remediation?: string;
   }>,
   critical: number,
   high: number,
@@ -271,6 +283,7 @@ function buildRichComment(
     body += `### 🔴 Critical Issues\n`;
     criticals.slice(0, 8).forEach((f) => {
       body += `- **${f.finding}** in \`${f.file}\`${f.line ? ` (line ~${f.line})` : ""}${f.rule ? ` • ${f.rule}` : ""}\n`;
+      if (f.remediation) body += `  - _Fix:_ ${f.remediation}\n`;
     });
     body += `\n`;
   }
@@ -279,6 +292,7 @@ function buildRichComment(
     body += `### 🟠 High Issues\n`;
     highs.slice(0, 8).forEach((f) => {
       body += `- **${f.finding}** in \`${f.file}\`${f.line ? ` (line ~${f.line})` : ""}\n`;
+      if (f.remediation) body += `  - _Fix:_ ${f.remediation}\n`;
     });
     body += `\n`;
   }
