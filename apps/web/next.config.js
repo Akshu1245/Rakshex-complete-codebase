@@ -91,6 +91,11 @@ const nextConfig = {
         source: "/api/import/:path*",
         destination: `${TS_BACKEND_URL}/api/import/:path*`,
       },
+      // Public quick-scan lead magnet (no auth) served by the Node backend.
+      {
+        source: "/api/public/:path*",
+        destination: `${TS_BACKEND_URL}/api/public/:path*`,
+      },
     ];
   },
   // Bundle splitting: extract vendor chunks and enable code splitting

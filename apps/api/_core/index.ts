@@ -751,6 +751,10 @@ async function startServer() {
   const { registerImportRoutes } = await import("../api/import");
   registerImportRoutes(app);
 
+  // ── Public quick-scan lead magnet (no auth, rate-limited, SSRF-guarded) ─────
+  const { registerQuickScanRoute } = await import("../api/quickScan");
+  registerQuickScanRoute(app);
+
   // ── Razorpay Payment Checkout routes ───────────────────────────────────────
   const { registerRazorpayRoutes } = await import("./razorpay");
   registerRazorpayRoutes(app);
