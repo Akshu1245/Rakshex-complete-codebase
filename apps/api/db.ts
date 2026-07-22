@@ -3469,6 +3469,35 @@ export async function createWorkspace(row: InsertWorkspaceRow): Promise<number> 
   return created?.id ?? 0;
 }
 
+/**
+ * Atomically create a workspace AND its owner membership row in a single
+ * transaction. Prevents the partial-state failure mode where a workspace is
+ * created but the owner membership insert fails (leaving an orphan workspace
+ * the owner can't access).
+ */
+export async function createWorkspaceWithOwner(
+  row: InsertWorkspaceRow,
+  ownerUserId: number,
+): Promise<number> {
+  const db = await getDb();
+  assertDb(db);
+  return db.transaction(async (tx) => {
+    const [created] = await tx.insert(workspaces).values(row).returning({ id: workspaces.id });
+    const workspaceId = created?.id ?? 0;
+    if (!workspaceId) {
+      throw new InternalError("Failed to create workspace");
+    }
+    await tx.insert(workspaceMembers).values({
+      workspaceId,
+      userId: ownerUserId,
+      role: "owner",
+      active: true,
+      joinedAt: new Date(),
+    });
+    return workspaceId;
+  });
+}
+
 export async function getWorkspaceById(id: number): Promise<WorkspaceRow | null> {
   const db = await getDb();
   if (!db) return null;
