@@ -2,6 +2,7 @@ import { z } from "zod";
 import { router, protectedProcedure } from "../_core/trpc";
 import * as db from "../db";
 import { bytesPerTokenForFileType, estimateCostForContent } from "../utils/tokenEstimation";
+import { getThinkingTokenAnalytics } from "../services/thinkingTokens";
 import { toNumber } from "../utils/decimal";
 
 export const tokenAnalyticsRouter = router({
@@ -70,6 +71,17 @@ export const tokenAnalyticsRouter = router({
           cost: toNumber(u.costUSD),
         })),
       };
+    }),
+
+  /**
+   * Thinking-token attribution analytics (Patent NHCE/DEV/2026/002): how much
+   * of the user's LLM spend went to hidden reasoning/thinking tokens, broken
+   * down per model, over the requested window.
+   */
+  getThinkingBreakdown: protectedProcedure
+    .input(z.object({ days: z.number().int().min(1).max(365).default(30) }))
+    .query(async ({ input, ctx }) => {
+      return getThinkingTokenAnalytics(ctx.user.id, input.days);
     }),
 
   getModelBreakdown: protectedProcedure

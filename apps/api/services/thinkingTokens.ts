@@ -184,6 +184,38 @@ export function extractThinkingTokensFromResponse(
   return { reasoningTokens: 0, completionTokens: 0 };
 }
 
+/**
+ * Secondary "response timing signature" estimator (Patent NHCE/DEV/2026/002).
+ *
+ * When a provider does NOT expose reasoning tokens explicitly (or exposes them
+ * unreliably), unusually high wall-clock latency relative to the number of
+ * visible output tokens is a strong signal of hidden thinking tokens. We model
+ * an expected visible-output throughput (tokens/sec) and attribute the "excess"
+ * generation time to reasoning tokens produced at the same throughput.
+ *
+ * This is a heuristic fallback — used only when explicit reasoning-token counts
+ * are unavailable — and is intentionally conservative (returns 0 unless the
+ * latency clearly exceeds what the visible tokens can explain).
+ */
+export function estimateThinkingTokensFromLatency(params: {
+  latencyMs: number;
+  visibleCompletionTokens: number;
+  baselineTokensPerSec?: number;
+  /** Minimum excess ms before we attribute any hidden reasoning (noise floor). */
+  minExcessMs?: number;
+}): number {
+  const { latencyMs, visibleCompletionTokens } = params;
+  const tps = params.baselineTokensPerSec ?? 40;
+  const minExcessMs = params.minExcessMs ?? 750;
+  if (latencyMs <= 0 || tps <= 0) return 0;
+
+  const expectedMs = (Math.max(0, visibleCompletionTokens) / tps) * 1000;
+  const excessMs = latencyMs - expectedMs;
+  if (excessMs <= minExcessMs) return 0;
+
+  return Math.round((excessMs / 1000) * tps);
+}
+
 // ── Cost Calculation ───────────────────────────────────────────────────────
 
 export function calculateThinkingCost(
