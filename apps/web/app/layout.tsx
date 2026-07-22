@@ -6,6 +6,7 @@ import { AuthProvider } from "../components/AuthProvider";
 import { CookieConsent } from "../components/CookieConsent";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { OfflineBanner } from "../components/OfflineBanner";
+import { ServiceWorkerRegister } from "../components/ServiceWorkerRegister";
 import { TRPCProvider } from "@/lib/providers";
 import AppShell from "@/components/AppShell";
 import { ToastProvider } from "@/components/Toast";
@@ -110,6 +111,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="twitter:image:alt" content="RaksHex — AI Runtime Governance Platform" />
       </head>
       <body className={inter.className}>
+        <ServiceWorkerRegister />
         <TRPCProvider>
           <AuthProvider>
             <TrialBanner />
