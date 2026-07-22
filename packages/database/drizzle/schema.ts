@@ -45,7 +45,14 @@ export const killSwitchEventTypeEnum = pgEnum("kill_switch_event_type", [
   "auto_triggered",
   "reset",
 ]);
-export const reportTypeEnum = pgEnum("report_type", ["pci_dss", "owasp", "custom"]);
+export const reportTypeEnum = pgEnum("report_type", [
+  "pci_dss",
+  "owasp",
+  "custom",
+  "owasp_llm",
+  "dpdp",
+  "gdpr",
+]);
 export const teamMemberRoleEnum = pgEnum("team_member_role", ["admin", "editor", "viewer"]);
 export const teamMemberStatusEnum = pgEnum("team_member_status", [
   "pending",
