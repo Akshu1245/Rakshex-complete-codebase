@@ -85,17 +85,63 @@ export const enterpriseOverprivilegedRouter = router({
 
 // ─── Shadow Keys ───────────────────────────────────────────────────
 export const enterpriseShadowKeysRouter = router({
-  list: protectedProcedure.input(ws).query(async ({ input, ctx }) => {
-    await requireEnterpriseRead(input.workspaceId, ctx.user.id);
-    const d = await db.getDb();
-    if (!d) return [];
-    return d!
-      .select()
-      .from(shadowKeys)
-      .where(eq(shadowKeys.workspaceId, input.workspaceId))
-      .orderBy(desc(shadowKeys.createdAt))
-      .limit(100);
-  }),
+  list: protectedProcedure
+    .input(
+      ws.extend({
+        status: z.enum(["open", "acknowledged", "resolved", "false_positive"]).optional(),
+        assigneeUserId: z.number().int().positive().optional(),
+      }),
+    )
+    .query(async ({ input, ctx }) => {
+      await requireEnterpriseRead(input.workspaceId, ctx.user.id);
+      const d = await db.getDb();
+      if (!d) return [];
+      const filters = [eq(shadowKeys.workspaceId, input.workspaceId)];
+      if (input.status) filters.push(eq(shadowKeys.status, input.status));
+      if (input.assigneeUserId) {
+        filters.push(eq(shadowKeys.assigneeUserId, input.assigneeUserId));
+      }
+      return d!
+        .select()
+        .from(shadowKeys)
+        .where(and(...filters))
+        .orderBy(desc(shadowKeys.lastSeenAt))
+        .limit(200);
+    }),
+
+  update: editorProcedure
+    .input(
+      ws.extend({
+        id: z.number().int().positive(),
+        status: z.enum(["open", "acknowledged", "resolved", "false_positive"]),
+        assigneeUserId: z.number().int().positive().nullable().optional(),
+        resolutionNote: z.string().max(2000).nullable().optional(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      await requireEnterpriseWrite(input.workspaceId, ctx.user.id);
+      const d = await db.getDb();
+      if (!d) noDb();
+      const [row] = await d!
+        .update(shadowKeys)
+        .set({
+          status: input.status,
+          assigneeUserId: input.assigneeUserId,
+          resolutionNote: input.resolutionNote,
+          remediatedAt:
+            input.status === "resolved" || input.status === "false_positive" ? new Date() : null,
+        })
+        .where(and(eq(shadowKeys.id, input.id), eq(shadowKeys.workspaceId, input.workspaceId)))
+        .returning();
+      if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Shadow key not found" });
+      await db.createAuditLogEntry(ctx.user.id, "shadow_key_status_updated", {
+        workspaceId: input.workspaceId,
+        shadowKeyId: input.id,
+        status: input.status,
+        assigneeUserId: input.assigneeUserId,
+      });
+      return row;
+    }),
 });
 
 // ─── AgentGuard ────────────────────────────────────────────────────

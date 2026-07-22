@@ -34,7 +34,7 @@ async function syncOnboardingFromEvents(userId: number) {
       }
     }
     const hasInvite = teamMembers.some(
-      (m) => m.status === "pending" || m.status === "active" || m.memberUserId != null,
+      (m) => m.status === "pending" || m.status === "accepted" || m.memberUserId != null,
     );
 
     if (hasCollection && !progress.importCollectionCompleted) {

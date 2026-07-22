@@ -154,6 +154,83 @@ describe("AgentGuardClient", () => {
     expect(a).toBe(b);
     expect(a.length).toBeGreaterThan(8);
   });
+
+  it("routes model calls through the fail-closed workspace gateway", async () => {
+    const fetchImpl = vi.fn(async (_url: string, init?: RequestInit) => {
+      const headers = init?.headers as Record<string, string>;
+      expect(headers.authorization).toBe("Bearer rx_workspace_gateway_key");
+      expect(headers["x-rakshex-provider"]).toBe("openai");
+      expect(headers["x-rakshex-project-id"]).toBe("payments");
+      expect(headers["x-rakshex-agent-id"]).toBe("invoice-agent");
+      expect(headers["x-rakshex-identity-id"]).toBe("12");
+      return new Response(
+        JSON.stringify({
+          id: "chatcmpl_1",
+          choices: [{ message: { role: "assistant", content: "approved" } }],
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
+    }) as unknown as typeof fetch;
+    const client = createAgentGuardClient({
+      apiKey: "rx_workspace_gateway_key",
+      gatewayUrl: "https://api.rakshex.test",
+      projectId: "payments",
+      agentId: "invoice-agent",
+      flushIntervalMs: 0,
+      fetchImpl,
+    });
+
+    const result = await client.gatewayChatCompletions<{
+      id: string;
+      choices: Array<{ message: { content: string } }>;
+    }>(
+      {
+        model: "gpt-4o-mini",
+        messages: [{ role: "user", content: "approve invoice" }],
+      },
+      { identityId: 12 },
+    );
+
+    expect(result.id).toBe("chatcmpl_1");
+    expect(fetchImpl).toHaveBeenCalledWith(
+      "https://api.rakshex.test/v1/chat/completions",
+      expect.objectContaining({ method: "POST" }),
+    );
+    await client.close();
+  });
+
+  it("never fails open when the enforcement gateway blocks", async () => {
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            error: {
+              message: "A scoped kill switch is active",
+              code: "rakshex_policy_blocked",
+            },
+          }),
+          { status: 403, headers: { "content-type": "application/json" } },
+        ),
+    ) as unknown as typeof fetch;
+    const client = createAgentGuardClient({
+      apiKey: "rx_workspace_gateway_key",
+      failOpen: true,
+      flushIntervalMs: 0,
+      fetchImpl,
+    });
+
+    await expect(
+      client.gatewayChatCompletions({
+        model: "gpt-4o-mini",
+        messages: [{ role: "user", content: "hello" }],
+      }),
+    ).rejects.toMatchObject({
+      message: "A scoped kill switch is active",
+      status: 403,
+      code: "rakshex_policy_blocked",
+    });
+    await client.close();
+  });
 });
 
 describe("provider wrappers", () => {

@@ -22,7 +22,8 @@ import dns from "dns/promises";
 import { nanoid } from "nanoid";
 import { router, protectedProcedure } from "../_core/trpc";
 import * as db from "../db";
-import { deliver, buildSignature, type WebhookEvent } from "../services/webhookDelivery";
+import { deliverToWorkspace, buildSignature, type WebhookEvent } from "../services/webhookDelivery";
+import { requireWorkspacePermission } from "../services/authorization";
 
 /**
  * Returns true if `ip` is inside one of RFC1918 / link-local / loopback /
@@ -99,11 +100,13 @@ export const webhooksRouter = router({
   register: protectedProcedure
     .input(
       z.object({
+        workspaceId: z.number().int().positive(),
         url: z.string().url().max(1024),
         events: z.array(eventSchema).min(1),
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      await requireWorkspacePermission(input.workspaceId, ctx.user.id, "webhooks", "write");
       // SSRF guard: a compromised account cannot use the webhook system as
       // an internal-network pivot. We enforce this in two layers because
       // literal-hostname matching alone can be bypassed by pointing a
@@ -163,6 +166,7 @@ export const webhooksRouter = router({
       await db.createWebhookEndpoint({
         id,
         userId: ctx.user.id,
+        workspaceId: input.workspaceId,
         url: input.url,
         secret,
         events: input.events as unknown as object,
@@ -183,36 +187,46 @@ export const webhooksRouter = router({
   /**
    * List the caller's webhook endpoints. Secrets are masked.
    */
-  list: protectedProcedure.query(async ({ ctx }) => {
-    const rows = await db.listWebhookEndpointsByUserId(ctx.user.id);
-    return rows.map((row) => ({
-      id: row.id,
-      url: row.url,
-      events: Array.isArray(row.events) ? row.events : [],
-      secretMasked: maskSecret(row.secret),
-      isActive: row.isActive,
-      lastDeliveryAt: row.lastDeliveryAt,
-      lastStatus: row.lastStatus,
-      consecutiveFailures: row.consecutiveFailures,
-      createdAt: row.createdAt,
-    }));
-  }),
+  list: protectedProcedure
+    .input(z.object({ workspaceId: z.number().int().positive() }))
+    .query(async ({ input, ctx }) => {
+      await requireWorkspacePermission(input.workspaceId, ctx.user.id, "webhooks", "read");
+      const rows = await db.listWebhookEndpointsByWorkspaceId(input.workspaceId);
+      return rows.map((row) => ({
+        id: row.id,
+        url: row.url,
+        events: Array.isArray(row.events) ? row.events : [],
+        secretMasked: maskSecret(row.secret),
+        isActive: row.isActive,
+        lastDeliveryAt: row.lastDeliveryAt,
+        lastStatus: row.lastStatus,
+        consecutiveFailures: row.consecutiveFailures,
+        createdAt: row.createdAt,
+      }));
+    }),
 
   /**
    * Toggle an endpoint active/inactive. Useful for pausing noisy webhooks
    * during an incident without losing the configuration.
    */
   setActive: protectedProcedure
-    .input(z.object({ id: z.string(), isActive: z.boolean() }))
+    .input(
+      z.object({
+        workspaceId: z.number().int().positive(),
+        id: z.string(),
+        isActive: z.boolean(),
+      }),
+    )
     .mutation(async ({ input, ctx }) => {
-      const existing = await db.getWebhookEndpointById(input.id);
-      if (!existing || existing.userId !== ctx.user.id) {
+      await requireWorkspacePermission(input.workspaceId, ctx.user.id, "webhooks", "write");
+      const existing = await db.getWebhookEndpointByWorkspaceId(input.id, input.workspaceId);
+      if (!existing) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Webhook endpoint not found",
         });
       }
-      await db.updateWebhookEndpointActive(input.id, input.isActive);
+      await db.updateWebhookEndpointActiveForWorkspace(input.id, input.workspaceId, input.isActive);
       return { success: true };
     }),
 
@@ -221,16 +235,17 @@ export const webhooksRouter = router({
    * cleanup if we ever add one — for now, deliveries are kept for audit).
    */
   delete: protectedProcedure
-    .input(z.object({ id: z.string() }))
+    .input(z.object({ workspaceId: z.number().int().positive(), id: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      const existing = await db.getWebhookEndpointById(input.id);
-      if (!existing || existing.userId !== ctx.user.id) {
+      await requireWorkspacePermission(input.workspaceId, ctx.user.id, "webhooks", "write");
+      const existing = await db.getWebhookEndpointByWorkspaceId(input.id, input.workspaceId);
+      if (!existing) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Webhook endpoint not found",
         });
       }
-      await db.deleteWebhookEndpoint(input.id);
+      await db.deleteWebhookEndpointForWorkspace(input.id, input.workspaceId);
       await db.createAuditLogEntry(ctx.user.id, "webhook_deleted", { endpointId: input.id });
       return { success: true };
     }),
@@ -240,46 +255,50 @@ export const webhooksRouter = router({
    * receiver before relying on it in production. The payload is clearly
    * marked as a test event.
    */
-  test: protectedProcedure.input(z.object({ id: z.string() })).mutation(async ({ input, ctx }) => {
-    const endpoint = await db.getWebhookEndpointById(input.id);
-    if (!endpoint || endpoint.userId !== ctx.user.id) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Webhook endpoint not found",
+  test: protectedProcedure
+    .input(z.object({ workspaceId: z.number().int().positive(), id: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      await requireWorkspacePermission(input.workspaceId, ctx.user.id, "webhooks", "write");
+      const endpoint = await db.getWebhookEndpointByWorkspaceId(input.id, input.workspaceId);
+      if (!endpoint) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Webhook endpoint not found",
+        });
+      }
+
+      // Use the first event the endpoint subscribes to so we don't fire
+      // for a type it filters out.
+      const events = Array.isArray(endpoint.events) ? endpoint.events : [];
+      const event = (events[0] ?? "scan.complete") as WebhookEvent;
+
+      const results = await deliverToWorkspace(input.workspaceId, event, {
+        test: true,
+        message: "This is a test delivery from Rakshex.",
+        endpointId: endpoint.id,
+        triggeredBy: ctx.user.id,
       });
-    }
 
-    // Use the first event the endpoint subscribes to so we don't fire
-    // for a type it filters out.
-    const events = Array.isArray(endpoint.events) ? endpoint.events : [];
-    const event = (events[0] ?? "scan.complete") as WebhookEvent;
-
-    const results = await deliver(ctx.user.id, event, {
-      test: true,
-      message: "This is a test delivery from Rakshex.",
-      endpointId: endpoint.id,
-      triggeredBy: ctx.user.id,
-    });
-
-    return {
-      delivered: results.length,
-      results: results.map((r) => ({
-        status: r.status,
-        httpStatus: r.httpStatus,
-        error: r.error,
-      })),
-    };
-  }),
+      return {
+        delivered: results.length,
+        results: results.map((r) => ({
+          status: r.status,
+          httpStatus: r.httpStatus,
+          error: r.error,
+        })),
+      };
+    }),
 
   /**
    * Inspect recent delivery attempts for an endpoint (success or failure).
    * Most recent first, capped at 50.
    */
   listDeliveries: protectedProcedure
-    .input(z.object({ id: z.string() }))
+    .input(z.object({ workspaceId: z.number().int().positive(), id: z.string() }))
     .query(async ({ input, ctx }) => {
-      const endpoint = await db.getWebhookEndpointById(input.id);
-      if (!endpoint || endpoint.userId !== ctx.user.id) {
+      await requireWorkspacePermission(input.workspaceId, ctx.user.id, "webhooks", "read");
+      const endpoint = await db.getWebhookEndpointByWorkspaceId(input.id, input.workspaceId);
+      if (!endpoint) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Webhook endpoint not found",
@@ -301,10 +320,17 @@ export const webhooksRouter = router({
    * Used by customer integration tests (rare, but saves a support ticket).
    */
   computeSignature: protectedProcedure
-    .input(z.object({ id: z.string(), body: z.string().max(65_536) }))
+    .input(
+      z.object({
+        workspaceId: z.number().int().positive(),
+        id: z.string(),
+        body: z.string().max(65_536),
+      }),
+    )
     .query(async ({ input, ctx }) => {
-      const endpoint = await db.getWebhookEndpointById(input.id);
-      if (!endpoint || endpoint.userId !== ctx.user.id) {
+      await requireWorkspacePermission(input.workspaceId, ctx.user.id, "webhooks", "read");
+      const endpoint = await db.getWebhookEndpointByWorkspaceId(input.id, input.workspaceId);
+      if (!endpoint) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Webhook endpoint not found",

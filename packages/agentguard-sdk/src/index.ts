@@ -11,6 +11,8 @@ export type {
   AgentStepRecord,
   CaptureContext,
   EventStatus,
+  GatewayChatCompletionOptions,
+  GatewayChatCompletionRequest,
   PrivacyMode,
   ProviderCallResult,
   ProviderName,

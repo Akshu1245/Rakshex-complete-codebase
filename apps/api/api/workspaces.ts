@@ -30,6 +30,14 @@ import {
   getWorkspaceRole,
   invalidateMembershipCache,
 } from "../services/workspaceContext";
+import * as seats from "../db/workspaceSeats";
+import { seatLimitError } from "../utils/planLimits";
+import type { PlanType } from "../payments";
+
+function planFromEntitlement(plan: string | undefined): PlanType {
+  if (plan === "pro" || plan === "enterprise") return plan;
+  return "free";
+}
 
 const INVITE_TTL_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
 const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{1,62}[a-z0-9])?$/;
@@ -168,6 +176,14 @@ export const workspacesRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       await assertWorkspacePermission(input.workspaceId, ctx.user.id, "members", "write");
+      try {
+        await seats.assertSeatAvailable(input.workspaceId);
+      } catch {
+        const ent = await seats.getWorkspaceEntitlement(input.workspaceId);
+        const used = await seats.countReservedSeats(input.workspaceId);
+        const limit = ent ? seats.effectiveSeatLimit(ent) : 1;
+        throw seatLimitError(planFromEntitlement(ent?.plan), used, limit);
+      }
       const token = crypto.randomBytes(24).toString("base64url");
       const id = await db.createWorkspaceInvitation({
         workspaceId: input.workspaceId,
@@ -176,6 +192,8 @@ export const workspacesRouter = router({
         token,
         invitedBy: ctx.user.id,
         expiresAt: new Date(Date.now() + INVITE_TTL_MS),
+        status: "pending",
+        seatReservedAt: new Date(),
       });
       return { id, token };
     }),
@@ -214,6 +232,16 @@ export const workspacesRouter = router({
         throw new ValidationError("this invitation was sent to a different email address");
       }
       const existing = await db.getWorkspaceMembership(inv.workspaceId, ctx.user.id);
+      if (!existing) {
+        try {
+          await seats.assertSeatAvailable(inv.workspaceId);
+        } catch {
+          const ent = await seats.getWorkspaceEntitlement(inv.workspaceId);
+          const used = await seats.countReservedSeats(inv.workspaceId);
+          const limit = ent ? seats.effectiveSeatLimit(ent) : 1;
+          throw seatLimitError(planFromEntitlement(ent?.plan), used, limit);
+        }
+      }
       if (existing) {
         await db.updateWorkspaceMember(inv.workspaceId, ctx.user.id, {
           role: inv.role,

@@ -8,8 +8,15 @@ export default function ApiKeysPage() {
   const workspaces = trpc.workspaces.listMine.useQuery();
   const workspaceId = workspaces.data?.[0]?.id ?? 0;
   const list = trpc.apiKeys.list.useQuery({ workspaceId }, { enabled: workspaceId > 0 });
-  const [name, setName] = useState("CI key");
+  const [name, setName] = useState("LLM gateway key");
+  const [purpose, setPurpose] = useState<"gateway" | "ci" | "admin">("gateway");
   const [rawOnce, setRawOnce] = useState<string | null>(null);
+
+  const scopesByPurpose = {
+    gateway: ["gateway:invoke"],
+    ci: ["scan:read", "scan:write", "collections:read"],
+    admin: ["*"],
+  } as const;
 
   const create = trpc.apiKeys.create.useMutation({
     onSuccess: (data) => {
@@ -64,11 +71,11 @@ export default function ApiKeysPage() {
           create.mutate({
             workspaceId,
             name,
-            scopes: ["*"],
+            scopes: [...scopesByPurpose[purpose]],
             environment: "live",
           });
         }}
-        className="flex gap-2 mb-8"
+        className="grid grid-cols-1 sm:grid-cols-[1fr_220px_auto] gap-2 mb-3"
       >
         <input
           value={name}
@@ -76,6 +83,16 @@ export default function ApiKeysPage() {
           className="flex-1 px-3 py-2 bg-neutral-900 border border-neutral-700 rounded-md text-sm"
           required
         />
+        <select
+          value={purpose}
+          onChange={(e) => setPurpose(e.target.value as "gateway" | "ci" | "admin")}
+          className="px-3 py-2 bg-neutral-900 border border-neutral-700 rounded-md text-sm"
+          aria-label="API key purpose"
+        >
+          <option value="gateway">LLM gateway only</option>
+          <option value="ci">CI scanning</option>
+          <option value="admin">Full workspace access</option>
+        </select>
         <button
           type="submit"
           disabled={!workspaceId || create.isPending}
@@ -84,6 +101,13 @@ export default function ApiKeysPage() {
           Create key
         </button>
       </form>
+      <p className="text-xs text-neutral-500 mb-8">
+        {purpose === "gateway"
+          ? "Use this Rakshex key as the OpenAI client credential and set the base URL to /v1. Provider credentials remain centrally managed and are never issued to employees."
+          : purpose === "ci"
+            ? "Restricted to collection reads and security scan execution."
+            : "Full-access keys are high risk. Prefer a purpose-specific key whenever possible."}
+      </p>
       {create.error && <p className="text-red-400 text-sm mb-4">{create.error.message}</p>}
 
       <div className="space-y-3">

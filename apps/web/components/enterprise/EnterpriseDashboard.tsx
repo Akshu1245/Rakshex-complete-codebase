@@ -5,6 +5,7 @@ import { OverviewTab } from "./OverviewTab";
 import { KeyInventoryTab } from "./KeyInventoryTab";
 import { SecurityRisksTab } from "./SecurityRisksTab";
 import { CopilotGovernanceTab } from "./CopilotGovernanceTab";
+import { TeamGovernanceTab } from "./TeamGovernanceTab";
 import { AzureConnectionsTab } from "./AzureConnectionsTab";
 import { AgentGuardTab } from "./AgentGuardTab";
 import { ComplianceTab } from "./ComplianceTab";
@@ -14,6 +15,7 @@ const tabs = [
   { id: "overview", label: "Overview", icon: "dashboard" },
   { id: "keys", label: "Key Inventory", icon: "vpn_key" },
   { id: "security", label: "Security Risks", icon: "gpp_bad" },
+  { id: "team", label: "Team & Usage", icon: "groups" },
   { id: "copilot", label: "Copilot Governance", icon: "smart_toy" },
   { id: "azure", label: "Azure Connections", icon: "cloud" },
   { id: "agentguard", label: "AgentGuard", icon: "security" },
@@ -35,6 +37,8 @@ function DashboardInner() {
         return <SecurityRisksTab />;
       case "copilot":
         return <CopilotGovernanceTab />;
+      case "team":
+        return <TeamGovernanceTab />;
       case "azure":
         return <AzureConnectionsTab />;
       case "agentguard":

@@ -18,15 +18,19 @@ Mark items only after you have run them against the deployed staging stack.
 4. [ ] **Import** — import a Postman/OpenAPI/Bruno collection into the workspace
 5. [ ] **Scan** — run a scan; job completes without silent mock findings
 6. [ ] **Findings** — open findings UI; filter/export at least one format
-7. [ ] **Pay** — start checkout (Razorpay and/or Stripe test mode); webhook marks subscription/payment correctly
-8. [ ] **Export / delete** — prepare data export download; exercise account/workspace delete or data-deletion path if offered
+7. [ ] **Gateway** — store control-plane OpenAI credential → create `gateway:invoke` API key → `POST /v1/chat/completions` succeeds; flip workspace kill switch → next call returns 403
+8. [ ] **Governance** — set a hard gateway budget; confirm monitor_only budgets never claim a RakshEx block
+9. [ ] **Connectors** — sync Copilot or Cursor (or CSV import); identities appear under Team Governance
+10. [ ] **Pay** — start checkout with `workspaceId`; webhook upserts `workspace_entitlements` (not only `users.plan`); replay webhook → duplicate, no double side effects
+11. [ ] **Export / delete** — `/exports` prepare/download; exercise account/workspace delete or data-deletion path if offered
 
 ## Integration sign-off
 
 - [ ] **SMTP** — invite + password-reset emails deliver (fail-closed if SMTP missing in production)
-- [ ] **Payments** — test-mode keys only on staging; webhook signatures verified; amounts match provider dashboard
+- [ ] **Payments** — test-mode keys only on staging; webhook signatures verified; amounts match provider dashboard; seats match plan catalog (Pro 5 / Enterprise 25)
 - [ ] **GitHub App** — install URL resolves (`GITHUB_APP_SLUG` or numeric id); webhook rejects bad/missing signatures; no mock repos in staging/production
-- [ ] **Legal** — privacy policy, terms, and DPA links live and reviewed by counsel/ops
+- [ ] **Legal** — `/terms`, `/privacy`, `/legal/dpa`, `/legal/sla`, and Legal Center downloads live; counsel/ops review tracked in `docs/operations/LEGAL_LAUNCH_SIGNOFF.md`
+- [ ] **Deploy** — Render `preDeployCommand` migrate ran; worker + Redis healthy; `/api/health/live` used for liveness
 
 ## Security spot-checks
 

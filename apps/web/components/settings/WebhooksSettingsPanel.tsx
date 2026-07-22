@@ -11,7 +11,10 @@ const inputClass =
 export function WebhooksSettingsPanel() {
   const { addToast } = useToast();
   const utils = trpc.useUtils();
-  const listQuery = trpc.webhooks.list.useQuery();
+  const workspaces = trpc.workspaces.listMine.useQuery();
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<number>(0);
+  const workspaceId = selectedWorkspaceId || workspaces.data?.[0]?.id || 0;
+  const listQuery = trpc.webhooks.list.useQuery({ workspaceId }, { enabled: workspaceId > 0 });
   const eventsQuery = trpc.webhooks.listSupportedEvents.useQuery();
   const [url, setUrl] = useState("");
   const [selectedEvents, setSelectedEvents] = useState<string[]>(["scan.complete"]);
@@ -94,6 +97,7 @@ export function WebhooksSettingsPanel() {
             return;
           }
           register.mutate({
+            workspaceId,
             url,
             events: selectedEvents as (
               | "scan.complete"
@@ -106,6 +110,22 @@ export function WebhooksSettingsPanel() {
           });
         }}
       >
+        {workspaces.data && workspaces.data.length > 1 && (
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1">Workspace</label>
+            <select
+              className={inputClass}
+              value={workspaceId}
+              onChange={(event) => setSelectedWorkspaceId(Number(event.target.value))}
+            >
+              {workspaces.data.map((workspace) => (
+                <option key={workspace.id} value={workspace.id}>
+                  {workspace.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-1">Endpoint URL</label>
           <input
@@ -141,7 +161,7 @@ export function WebhooksSettingsPanel() {
         </div>
         <button
           type="submit"
-          disabled={register.isPending}
+          disabled={register.isPending || !workspaceId}
           className="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 text-sm"
         >
           {register.isPending ? "Registering…" : "Register webhook"}
@@ -184,7 +204,7 @@ export function WebhooksSettingsPanel() {
                     type="button"
                     className="text-sm px-3 py-1.5 rounded-md border border-gray-500 text-gray-200 hover:bg-gray-600"
                     disabled={test.isPending}
-                    onClick={() => test.mutate({ id: ep.id })}
+                    onClick={() => test.mutate({ workspaceId, id: ep.id })}
                   >
                     Test
                   </button>
@@ -192,7 +212,9 @@ export function WebhooksSettingsPanel() {
                     type="button"
                     className="text-sm px-3 py-1.5 rounded-md border border-gray-500 text-gray-200 hover:bg-gray-600"
                     disabled={setActive.isPending}
-                    onClick={() => setActive.mutate({ id: ep.id, isActive: !ep.isActive })}
+                    onClick={() =>
+                      setActive.mutate({ workspaceId, id: ep.id, isActive: !ep.isActive })
+                    }
                   >
                     {ep.isActive ? "Pause" : "Resume"}
                   </button>
@@ -201,7 +223,9 @@ export function WebhooksSettingsPanel() {
                     className="text-sm px-3 py-1.5 rounded-md text-red-400 hover:bg-red-900/30"
                     disabled={remove.isPending}
                     onClick={() => {
-                      if (confirm("Delete this webhook?")) remove.mutate({ id: ep.id });
+                      if (confirm("Delete this webhook?")) {
+                        remove.mutate({ workspaceId, id: ep.id });
+                      }
                     }}
                   >
                     Delete

@@ -1,101 +1,48 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc";
 import { EmptyState } from "@/components/EmptyState";
 import { useToast } from "@/components/Toast";
 
-const RECENT_KEY = "rakshex.recentScanReports";
-
-type RecentReport = {
-  id: string;
-  score: number;
-  findingCount: number;
-  filename?: string;
-  createdAt: string;
-};
-
-function loadRecent(): RecentReport[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(RECENT_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as RecentReport[];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveRecent(items: RecentReport[]) {
-  localStorage.setItem(RECENT_KEY, JSON.stringify(items.slice(0, 25)));
-}
-
-function scoreFromFindings(findings: { severity: string }[]): number {
-  if (findings.length === 0) return 100;
-  const weights: Record<string, number> = {
-    Critical: 25,
-    High: 15,
-    Medium: 8,
-    Low: 3,
-  };
-  const penalty = findings.reduce((s, f) => s + (weights[f.severity] ?? 5), 0);
-  return Math.max(0, Math.min(100, 100 - penalty));
-}
-
 export default function ReportListPage() {
   const router = useRouter();
+  const utils = trpc.useUtils();
   const { addToast } = useToast();
-  const [recent, setRecent] = useState<RecentReport[]>([]);
   const [openId, setOpenId] = useState("");
+  const [expiresInDays, setExpiresInDays] = useState(30);
 
   const findingsQuery = trpc.findings.list.useQuery({ limit: 100 });
+  const reportsQuery = trpc.reports.listMine.useQuery();
   const createReport = trpc.reports.create.useMutation({
     onSuccess: (data) => {
-      const findings = findingsQuery.data?.findings ?? [];
-      const entry: RecentReport = {
-        id: data.reportId,
-        score: scoreFromFindings(findings),
-        findingCount: findings.length,
-        filename: "workspace-findings",
-        createdAt: new Date().toISOString(),
-      };
-      const next = [entry, ...recent.filter((r) => r.id !== entry.id)];
-      setRecent(next);
-      saveRecent(next);
+      void utils.reports.listMine.invalidate();
       addToast("success", "Report generated");
       router.push(`/report/${data.reportId}`);
     },
     onError: (err) => addToast("error", err.message),
   });
-
-  useEffect(() => {
-    setRecent(loadRecent());
-  }, []);
+  const revokeReport = trpc.reports.revoke.useMutation({
+    onSuccess: () => {
+      void utils.reports.listMine.invalidate();
+      addToast("success", "Report revoked");
+    },
+    onError: (err) => addToast("error", err.message),
+  });
 
   const findings = findingsQuery.data?.findings ?? [];
-  const previewScore = useMemo(() => scoreFromFindings(findings), [findings]);
+  const latestScanId = findings[0]?.scanId;
 
   const handleGenerate = () => {
-    if (findings.length === 0) {
+    if (!latestScanId) {
       addToast("error", "No findings to include — run a scan first");
       return;
     }
     createReport.mutate({
-      score: previewScore,
-      filename: "workspace-findings",
-      endpoints: Array.from(
-        new Set(findings.map((f) => f.endpoint).filter((e): e is string => Boolean(e))),
-      ).slice(0, 100),
-      findings: findings.slice(0, 200).map((f) => ({
-        title: f.title,
-        severity: f.severity as "Critical" | "High" | "Medium" | "Low",
-        endpoint: f.endpoint ?? "unknown",
-        description: f.description ?? undefined,
-        remediation: f.remediation ?? undefined,
-      })),
+      scanId: latestScanId,
+      expiresInDays,
     });
   };
 
@@ -120,19 +67,33 @@ export default function ReportListPage() {
             <p className="text-sm text-gray-400 mt-1">
               {findingsQuery.isLoading
                 ? "Loading findings…"
-                : `${findings.length} findings · estimated score ${previewScore}`}
+                : latestScanId
+                  ? `Latest scan ${latestScanId} · server-derived, tamper-resistant snapshot`
+                  : "No completed scan findings available"}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={handleGenerate}
-            disabled={createReport.isPending || findingsQuery.isLoading || findings.length === 0}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-md text-sm font-semibold"
-          >
-            {createReport.isPending ? "Generating…" : "Generate report"}
-          </button>
+          <div className="flex items-center gap-2">
+            <select
+              value={expiresInDays}
+              onChange={(event) => setExpiresInDays(Number(event.target.value))}
+              className="px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-sm"
+              aria-label="Report expiry"
+            >
+              <option value={7}>Expires in 7 days</option>
+              <option value={30}>Expires in 30 days</option>
+              <option value={90}>Expires in 90 days</option>
+            </select>
+            <button
+              type="button"
+              onClick={handleGenerate}
+              disabled={createReport.isPending || findingsQuery.isLoading || !latestScanId}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-md text-sm font-semibold"
+            >
+              {createReport.isPending ? "Generating…" : "Generate report"}
+            </button>
+          </div>
         </div>
-        {findings.length === 0 && !findingsQuery.isLoading && (
+        {!latestScanId && !findingsQuery.isLoading && (
           <EmptyState
             compact
             title="No findings to report"
@@ -169,30 +130,53 @@ export default function ReportListPage() {
       </div>
 
       <div className="bg-black/50 border border-gray-700 rounded-lg p-6">
-        <h2 className="text-lg font-semibold mb-3">Recently generated (this browser)</h2>
-        {recent.length === 0 ? (
+        <h2 className="text-lg font-semibold mb-3">Your generated reports</h2>
+        {reportsQuery.isLoading ? (
+          <p className="text-sm text-gray-400">Loading reports…</p>
+        ) : !reportsQuery.data?.length ? (
           <EmptyState
             compact
             title="No recent reports"
-            description="Generated reports appear here so you can reopen them. Shareable links work via /report/[id]."
+            description="Authenticated, expiring reports you create will appear here."
           />
         ) : (
           <ul className="space-y-2">
-            {recent.map((r) => (
-              <li key={r.id}>
-                <Link
-                  href={`/report/${r.id}`}
-                  className="flex items-center justify-between gap-3 p-3 rounded-md border border-gray-700 hover:border-blue-500/50 hover:bg-gray-800/50"
-                >
-                  <div>
-                    <p className="font-mono text-sm text-blue-300">{r.id}</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Score {r.score} · {r.findingCount} findings ·{" "}
-                      {new Date(r.createdAt).toLocaleString()}
-                    </p>
-                  </div>
-                  <span className="text-sm text-gray-400">View →</span>
+            {reportsQuery.data.map((r) => (
+              <li
+                key={r.id}
+                className="flex items-center justify-between gap-3 p-3 rounded-md border border-gray-700"
+              >
+                <Link href={`/report/${r.id}`} className="min-w-0 flex-1 hover:border-blue-500/50">
+                  <p className="font-mono text-sm text-blue-300">{r.id}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Score {r.score} · {r.findingCount} findings ·{" "}
+                    {new Date(r.createdAt).toLocaleString()}
+                    {r.revokedAt
+                      ? " · revoked"
+                      : r.expiresAt
+                        ? ` · expires ${new Date(r.expiresAt).toLocaleDateString()}`
+                        : ""}
+                  </p>
                 </Link>
+                <div className="flex items-center gap-2 shrink-0">
+                  {!r.revokedAt && (
+                    <button
+                      type="button"
+                      className="text-xs px-3 py-1.5 rounded-md border border-red-500/40 text-red-300 hover:bg-red-900/20"
+                      disabled={revokeReport.isPending}
+                      onClick={() => {
+                        if (confirm("Revoke this shareable report link?")) {
+                          revokeReport.mutate({ id: r.id });
+                        }
+                      }}
+                    >
+                      Revoke
+                    </button>
+                  )}
+                  <Link href={`/report/${r.id}`} className="text-sm text-gray-400">
+                    View →
+                  </Link>
+                </div>
               </li>
             ))}
           </ul>

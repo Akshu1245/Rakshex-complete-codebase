@@ -44,8 +44,9 @@ export default function StatusClient() {
   }, []);
 
   const isApiOk = health && health.status === "ok";
-  const isDbOk = health && health.db === "connected";
-  const isRedisOk = health && health.redis === "connected";
+  // API returns "ok" for healthy components, not "connected" — match accordingly.
+  const isDbOk = health && (health.db === "ok" || health.db === "connected");
+  const isRedisOk = health && (health.redis === "ok" || health.redis === "connected");
 
   // Match Option B requirements: API Status, Auth Service, Scanner Engine
   const services = [

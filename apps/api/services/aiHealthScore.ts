@@ -105,19 +105,49 @@ export async function calculateAIHealthScore(userId: number): Promise<AIHealthSc
 
 async function calculateSecurityScore(userId: number): Promise<AIHealthScore["security"]> {
   try {
+    const dbConn = await db.getDb();
     const [metrics, redTeamHistory, gatewayAudit] = await Promise.all([
       db.getDashboardMetrics(userId).catch(() => null),
       db.listRedteamRuns(userId).catch(() => []),
       db.getGatewayDailyTotals(userId, 30).catch(() => []),
     ]);
 
-    const totalFindings = metrics?.totalFindings || 0;
-    const critical = 0;
-    const high = 0;
-    const medium = 0;
-    const low = 0;
+    // Real severity counts — query findings table directly
+    const { findings: findingsTable } = await import("@rakshex/database");
+    const { sql: drizzleSql, eq: drizzleEq } = await import("drizzle-orm");
+    let critical = 0,
+      high = 0,
+      medium = 0,
+      low = 0,
+      shadowApiCount = 0;
+    if (dbConn) {
+      const severityRows = await dbConn
+        .select({
+          severity: findingsTable.severity,
+          count: drizzleSql<number>`count(*)::int`,
+        })
+        .from(findingsTable)
+        .where(drizzleEq(findingsTable.userId, userId))
+        .groupBy(findingsTable.severity)
+        .catch(() => []);
+      for (const row of severityRows) {
+        if (row.severity === "Critical") critical = row.count;
+        else if (row.severity === "High") high = row.count;
+        else if (row.severity === "Medium") medium = row.count;
+        else if (row.severity === "Low") low = row.count;
+      }
+      // Real shadow API event count
+      const { shadowAiEvents } = await import("@rakshex/database");
+      const shadowRows = await dbConn
+        .select({ count: drizzleSql<number>`count(*)::int` })
+        .from(shadowAiEvents)
+        .where(drizzleEq(shadowAiEvents.userId, userId))
+        .catch(() => []);
+      shadowApiCount = shadowRows[0]?.count ?? 0;
+    }
 
-    const severityWeight = totalFindings * 1;
+    const _totalFindings = metrics?.totalFindings || 0; // use severity-weighted score instead
+    const severityWeight = critical * 20 + high * 10 + medium * 3 + low * 1;
 
     const redTeamScore =
       redTeamHistory.length > 0
@@ -135,7 +165,7 @@ async function calculateSecurityScore(userId: number): Promise<AIHealthScore["se
     const promptInjectionBlockRate =
       totalGatewayCalls > 0 ? Math.round((blockedCalls / totalGatewayCalls) * 100) : 100;
 
-    const maxSeverityWeight = 100;
+    const maxSeverityWeight = 200;
     const severityScore = Math.max(0, 100 - (severityWeight / maxSeverityWeight) * 100);
 
     const score = Math.round(
@@ -146,8 +176,8 @@ async function calculateSecurityScore(userId: number): Promise<AIHealthScore["se
       score: Math.min(100, score),
       findings: { critical, high, medium, low },
       promptInjectionBlockRate,
-      piiLeakEvents: 0,
-      shadowApiCount: 0,
+      piiLeakEvents: 0, // PII redaction requires gateway; labeled as unavailable
+      shadowApiCount,
       redTeamScore,
       trend: score >= 80 ? "stable" : score >= 60 ? "stable" : "declining",
     };

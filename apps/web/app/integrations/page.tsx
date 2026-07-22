@@ -52,12 +52,19 @@ const INTEGRATIONS: IntegrationItem[] = [
     description: "Pipeline integration for merge-request scanning. Not shipped yet.",
   },
   {
-    name: "OpenAI / Anthropic / Gemini",
+    name: "OpenAI + Anthropic gateway",
+    category: "LLM Providers",
+    status: "Available",
+    icon: ICON_DOT,
+    description:
+      "Workspace-keyed OpenAI-compatible (/v1/chat/completions) and Anthropic Messages (/v1/messages) gateway with budgets and kill switches. Gemini connector UX is still planned.",
+  },
+  {
+    name: "Gemini",
     category: "LLM Providers",
     status: "Coming soon",
     icon: ICON_DOT,
-    description:
-      "First-party provider connectors for cost attribution. Gateway path exists; dedicated OAuth/setup UX is not GA.",
+    description: "First-party Gemini connector and gateway path are not GA yet.",
   },
   {
     name: "Datadog",

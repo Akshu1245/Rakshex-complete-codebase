@@ -6,6 +6,9 @@ from rakshex_agentguard import (
 )
 from rakshex_agentguard.types import UsageEvent, ToolCallRecord
 from datetime import datetime, timezone
+from io import BytesIO
+import json
+import urllib.error
 
 
 def _event(**kw):
@@ -88,3 +91,90 @@ def test_redact_secrets():
     text, n = redact_secrets("token sk-abcdefghijklmnopqrstuvwxyz123456")
     assert n >= 1
     assert "sk-abcd" not in text
+
+
+def test_gateway_chat_completions_routes_workspace_key(monkeypatch):
+    observed = {}
+
+    class FakeResponse:
+        status = 200
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def read(self):
+            return json.dumps(
+                {
+                    "id": "chatcmpl_1",
+                    "choices": [
+                        {"message": {"role": "assistant", "content": "approved"}}
+                    ],
+                }
+            ).encode()
+
+    def fake_urlopen(request, timeout):
+        observed["url"] = request.full_url
+        observed["authorization"] = request.get_header("Authorization")
+        observed["project"] = request.get_header("X-rakshex-project-id")
+        observed["identity"] = request.get_header("X-rakshex-identity-id")
+        observed["timeout"] = timeout
+        return FakeResponse()
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+    client = create_client(
+        "rk_live_workspace",
+        gateway_url="https://api.rakshex.test",
+        project_id="payments",
+    )
+    result = client.gateway_chat_completions(
+        {
+            "model": "gpt-4o-mini",
+            "messages": [{"role": "user", "content": "approve invoice"}],
+        },
+        identity_id=12,
+    )
+
+    assert result["id"] == "chatcmpl_1"
+    assert observed["url"] == "https://api.rakshex.test/v1/chat/completions"
+    assert observed["authorization"] == "Bearer rk_live_workspace"
+    assert observed["project"] == "payments"
+    assert observed["identity"] == "12"
+
+
+def test_gateway_chat_completions_never_fails_open(monkeypatch):
+    def blocked(*_args, **_kwargs):
+        raise urllib.error.HTTPError(
+            "https://api.rakshex.test/v1/chat/completions",
+            403,
+            "Forbidden",
+            {},
+            BytesIO(
+                json.dumps(
+                    {
+                        "error": {
+                            "message": "A scoped kill switch is active",
+                            "code": "rakshex_policy_blocked",
+                        }
+                    }
+                ).encode()
+            ),
+        )
+
+    monkeypatch.setattr("urllib.request.urlopen", blocked)
+    client = create_client("rk_live_workspace", fail_open=True)
+
+    try:
+        client.gateway_chat_completions(
+            {
+                "model": "gpt-4o-mini",
+                "messages": [{"role": "user", "content": "hello"}],
+            }
+        )
+        assert False, "blocked gateway call must raise"
+    except RuntimeError as exc:
+        assert str(exc) == "A scoped kill switch is active"
+        assert getattr(exc, "status") == 403
+        assert getattr(exc, "code") == "rakshex_policy_blocked"

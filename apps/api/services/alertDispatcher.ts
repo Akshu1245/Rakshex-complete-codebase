@@ -104,16 +104,42 @@ export async function dispatchAlert(alert: FiredAlert): Promise<DispatchOutcome[
     );
   }
 
-  // Generic outbound webhooks delegate to the existing webhook delivery
-  // service so retry/backoff/HMAC signing all stay in one place.
+  // Generic outbound webhooks — deliver via the existing webhook pipeline so
+  // retry/backoff/HMAC signing all stay in one place.
+  // The deliver() function resolves the user's registered endpoints internally;
+  // webhookEndpointIds is treated as an opt-in filter for future per-endpoint routing.
   if (alert.channels.webhookEndpointIds?.length) {
     tasks.push(
-      Promise.resolve({
-        channel: "webhook" as const,
-        ok: true,
-        // The delivery itself is fire-and-forget through the existing pipeline.
-        status: 0,
-      }),
+      (async () => {
+        try {
+          const { deliver } = await import("./webhookDelivery");
+          const results = await deliver(alert.userId, "alert.fired", {
+            ruleId: alert.ruleId,
+            ruleName: alert.ruleName,
+            severity: alert.severity,
+            summary: alert.summary,
+            snapshots: alert.snapshots.map((s) => ({
+              metric: s.metric,
+              value: s.value,
+              observedAt: s.observedAt.toISOString(),
+            })),
+          });
+          const anyFailed = results.some((r) => r.status === "failed");
+          return {
+            channel: "webhook" as const,
+            ok: !anyFailed,
+            status: anyFailed ? 207 : 200,
+          };
+        } catch (err) {
+          logger.warn({ err }, "[AlertDispatcher] Webhook delivery failed");
+          return {
+            channel: "webhook" as const,
+            ok: false,
+            status: 0,
+            errorMessage: err instanceof Error ? err.message : "unknown",
+          };
+        }
+      })(),
     );
   }
 

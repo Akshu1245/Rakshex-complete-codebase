@@ -309,9 +309,9 @@ function streamPdf(req: ExportRequest): Readable {
     margin: 40,
     info: {
       Title: req.title,
-      Author: "Ojas Security",
+      Author: "RaksHex",
       Subject: req.resource,
-      Producer: "Ojas Security",
+      Producer: "RaksHex",
     },
   });
 

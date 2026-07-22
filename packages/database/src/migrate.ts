@@ -27,6 +27,13 @@ const MIGRATION_ORDER = [
   "0009_findings_lifecycle.sql",
   "0010_p1_workspace_tenancy.sql",
   "0011_p3_hot_path_indexes.sql",
+  "0012_team_ai_governance.sql",
+  "0013_governance_extensions.sql",
+  "0014_shadow_key_lifecycle.sql",
+  "0015_secure_scan_reports.sql",
+  "0016_gateway_key_bindings.sql",
+  "0017_workspace_webhooks.sql",
+  "0018_gateway_audit_workspace.sql",
 ];
 
 export async function migrate(databaseUrl?: string): Promise<string[]> {

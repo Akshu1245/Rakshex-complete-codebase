@@ -1,9 +1,19 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { Shield, AlertTriangle, AlertCircle, Info, Copy, Check, ArrowRight } from "lucide-react";
+import {
+  Shield,
+  AlertTriangle,
+  AlertCircle,
+  Info,
+  Copy,
+  Check,
+  ArrowRight,
+  Printer,
+} from "lucide-react";
+import { trpc } from "@/lib/trpc";
 
 interface Finding {
   title: string;
@@ -17,9 +27,10 @@ interface ReportData {
   id: string;
   score: number;
   findings: Finding[];
-  filename?: string;
-  endpoints?: string[];
-  createdAt: string;
+  filename?: string | null;
+  endpoints?: string[] | null;
+  createdAt: string | Date;
+  expiresAt?: string | Date | null;
   viewCount: number;
 }
 
@@ -65,31 +76,12 @@ function getScoreLabel(score: number) {
 export default function ReportPage() {
   const params = useParams();
   const reportId = params.reportId as string;
-  const [report, setReport] = useState<ReportData | null>(null);
-  const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function fetchReport() {
-      try {
-        const res = await fetch(
-          `/api/trpc/reports.getById?input=${encodeURIComponent(JSON.stringify({ id: reportId }))}`,
-        );
-        const json = await res.json();
-        if (json.result?.data) {
-          setReport(json.result.data);
-        } else {
-          setError("Report not found");
-        }
-      } catch {
-        setError("Failed to load report");
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchReport();
-  }, [reportId]);
+  const reportQuery = trpc.reports.getById.useQuery(
+    { id: reportId },
+    { enabled: typeof reportId === "string" && reportId.length >= 16, retry: false },
+  );
+  const report = reportQuery.data as ReportData | null | undefined;
 
   const handleShare = () => {
     const url = window.location.href;
@@ -98,7 +90,7 @@ export default function ReportPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (loading) {
+  if (reportQuery.isLoading) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#14B8A6]" />
@@ -106,14 +98,15 @@ export default function ReportPage() {
     );
   }
 
-  if (error || !report) {
+  if (reportQuery.error || !report) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center text-white">
         <div className="text-center">
           <Shield className="w-16 h-16 mx-auto mb-4 text-[#14B8A6]" />
           <h1 className="text-2xl font-bold mb-2">Report Not Found</h1>
           <p className="text-gray-400 mb-6">
-            {error || "This scan report does not exist or has expired."}
+            {reportQuery.error?.message ||
+              "This scan report does not exist, was revoked, or expired."}
           </p>
           <Link href="/" className="inline-flex items-center gap-2 text-[#14B8A6] hover:underline">
             <ArrowRight className="w-4 h-4" />
@@ -140,13 +133,24 @@ export default function ReportPage() {
             <img src="/icon-mark-128.png" alt="RaksHex" className="w-8 h-8 object-contain" />
             <span className="text-xl font-bold text-[#d4a853]">RaksHex</span>
           </Link>
-          <button
-            onClick={handleShare}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-sm font-medium"
-          >
-            {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
-            {copied ? "Copied!" : "Share Report"}
-          </button>
+          <div className="flex items-center gap-2 print:hidden">
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-sm font-medium"
+            >
+              <Printer className="w-4 h-4" />
+              Print / PDF
+            </button>
+            <button
+              type="button"
+              onClick={handleShare}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-sm font-medium"
+            >
+              {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+              {copied ? "Copied!" : "Share Report"}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -171,6 +175,7 @@ export default function ReportPage() {
           </p>
           <p className="text-gray-500 text-sm mt-1">
             Generated {new Date(report.createdAt).toLocaleDateString()} · {report.viewCount} views
+            {report.expiresAt && ` · expires ${new Date(report.expiresAt).toLocaleDateString()}`}
           </p>
         </div>
 
@@ -241,7 +246,7 @@ export default function ReportPage() {
         </div>
 
         {/* CTA */}
-        <div className="bg-gradient-to-r from-[#14B8A6]/20 to-[#d4a853]/20 border border-white/10 rounded-xl p-8 text-center">
+        <div className="bg-gradient-to-r from-[#14B8A6]/20 to-[#d4a853]/20 border border-white/10 rounded-xl p-8 text-center print:hidden">
           <Shield className="w-12 h-12 mx-auto mb-4 text-[#14B8A6]" />
           <h2 className="text-2xl font-bold mb-2">Scan Your Own Collection</h2>
           <p className="text-gray-300 mb-6 max-w-md mx-auto">

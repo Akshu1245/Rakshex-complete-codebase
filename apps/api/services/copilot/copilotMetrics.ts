@@ -8,7 +8,7 @@ import * as db from "../../db";
 import { copilotSyncState } from "@rakshex/database/schema-enterprise";
 import { eq, and, desc } from "drizzle-orm";
 
-interface CopilotSeat {
+export interface CopilotSeat {
   assignee: { login: string; name?: string; id: number };
   assigned_at: string;
   last_activity_at?: string;
@@ -16,139 +16,137 @@ interface CopilotSeat {
   plan_type: string;
 }
 
-interface CopilotUsageMetrics {
-  total_active_users: number;
-  total_engaged_users: number;
-  total_suggestions: number;
-  total_acceptances: number;
-  total_lines_suggested: number;
-  total_lines_accepted: number;
-  total_chat_acceptances: number;
-  total_chat_turns: number;
-  users: Array<{
-    login: string;
-    suggestions: number;
-    acceptances: number;
-    lines_suggested: number;
-    lines_accepted: number;
-  }>;
+export interface CopilotUserUsage {
+  user_id?: string | number;
+  user_login?: string;
+  day?: string;
+  report_start_day?: string;
+  report_end_day?: string;
+  ai_credits_used?: number;
+  used_chat?: boolean;
+  used_code_completions?: boolean;
+  used_agent?: boolean;
+  used_code_review?: boolean;
+  used_cli?: boolean;
+  ai_adoption_phase?: string;
+  [key: string]: unknown;
+}
+
+export interface CopilotUsageReport {
+  reportStartDay?: string;
+  reportEndDay?: string;
+  users: CopilotUserUsage[];
+}
+
+const GITHUB_API_VERSION = "2022-11-28";
+
+function githubHeaders(token: string): HeadersInit {
+  return {
+    Authorization: `Bearer ${token}`,
+    Accept: "application/vnd.github+json",
+    "X-GitHub-Api-Version": GITHUB_API_VERSION,
+  };
+}
+
+async function githubFetch(url: string, token: string, signal?: AbortSignal): Promise<Response> {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const response = await fetch(url, { headers: githubHeaders(token), signal });
+    if (response.ok) return response;
+    const retryable = response.status === 429 || response.status >= 500;
+    if (retryable && attempt < 2) {
+      const retryAfter = Number(response.headers.get("retry-after") ?? 0);
+      const waitMs = retryAfter > 0 ? Math.min(retryAfter * 1_000, 10_000) : 250 * 2 ** attempt;
+      await new Promise<void>((resolve, reject) => {
+        const timer = setTimeout(resolve, waitMs);
+        signal?.addEventListener(
+          "abort",
+          () => {
+            clearTimeout(timer);
+            reject(new Error("GitHub Copilot sync aborted"));
+          },
+          { once: true },
+        );
+      });
+      continue;
+    }
+    const body = await response.text().catch(() => "");
+    throw new Error(`GitHub Copilot API ${response.status}: ${body.slice(0, 300)}`);
+  }
+  throw new Error("GitHub Copilot API retry limit exceeded");
 }
 
 /**
  * Fetch Copilot seat assignments from GitHub API.
  */
-export async function fetchCopilotSeats(orgName: string, token: string): Promise<CopilotSeat[]> {
-  try {
-    const allSeats: CopilotSeat[] = [];
-    let page = 1;
-    let hasMore = true;
-
-    while (hasMore) {
-      const response = await fetch(
-        `https://api.github.com/orgs/${orgName}/copilot/billing/seats?per_page=100&page=${page}`,
-        { headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github.v3+json" } },
-      );
-
-      if (!response.ok) {
-        logger.error({ status: response.status, orgName }, "[Copilot] Failed to fetch seats");
-        return allSeats;
-      }
-
-      const data = (await response.json()) as { seats: CopilotSeat[] };
-      allSeats.push(...data.seats);
-      hasMore = data.seats.length === 100;
-      page++;
-    }
-
-    logger.info({ orgName, seatCount: allSeats.length }, "[Copilot] Seats fetched");
-    return allSeats;
-  } catch (err: unknown) {
-    logger.error({ err, orgName }, "[Copilot] Seat fetch failed");
-    return [];
+export async function fetchCopilotSeats(
+  orgName: string,
+  token: string,
+  signal?: AbortSignal,
+): Promise<CopilotSeat[]> {
+  const allSeats: CopilotSeat[] = [];
+  let page = 1;
+  while (page <= 100) {
+    const response = await githubFetch(
+      `https://api.github.com/orgs/${encodeURIComponent(orgName)}/copilot/billing/seats?per_page=100&page=${page}`,
+      token,
+      signal,
+    );
+    const data = (await response.json()) as { seats?: CopilotSeat[] };
+    const seats = data.seats ?? [];
+    allSeats.push(...seats);
+    if (seats.length < 100) break;
+    page += 1;
   }
+  logger.info({ orgName, seatCount: allSeats.length }, "[Copilot] Seats fetched");
+  return allSeats;
 }
 
 /**
- * Fetch Copilot usage metrics for a time period.
+ * Fetch the latest official 28-day per-user report. GitHub returns signed
+ * download URLs whose contents are NDJSON; metrics are not returned inline.
  */
 export async function fetchCopilotUsage(
   orgName: string,
   token: string,
-  since?: string,
-): Promise<CopilotUsageMetrics> {
-  try {
-    const params = new URLSearchParams();
-    if (since) params.set("since", since);
-    params.set("page", "1");
-    params.set("per_page", "100");
-
-    const response = await fetch(
-      `https://api.github.com/orgs/${orgName}/copilot/metrics?${params}`,
-      { headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github.v3+json" } },
-    );
-
-    if (!response.ok) {
-      logger.error({ status: response.status, orgName }, "[Copilot] Failed to fetch metrics");
-      return {
-        total_active_users: 0,
-        total_engaged_users: 0,
-        total_suggestions: 0,
-        total_acceptances: 0,
-        total_lines_suggested: 0,
-        total_lines_accepted: 0,
-        total_chat_acceptances: 0,
-        total_chat_turns: 0,
-        users: [],
-      };
+  _since?: string,
+  signal?: AbortSignal,
+): Promise<CopilotUsageReport> {
+  const response = await githubFetch(
+    `https://api.github.com/orgs/${encodeURIComponent(orgName)}/copilot/metrics/reports/users-28-day/latest`,
+    token,
+    signal,
+  );
+  const report = (await response.json()) as {
+    download_links?: string[];
+    report_start_day?: string;
+    report_end_day?: string;
+  };
+  const users: CopilotUserUsage[] = [];
+  for (const link of report.download_links ?? []) {
+    const parsed = new URL(link);
+    if (parsed.protocol !== "https:") {
+      throw new Error("GitHub Copilot report download URL must use HTTPS");
     }
-
-    const data = (await response.json()) as CopilotUsageMetrics[];
-    // GitHub returns an array of daily metrics; aggregate them
-    const aggregated: CopilotUsageMetrics = {
-      total_active_users: 0,
-      total_engaged_users: 0,
-      total_suggestions: 0,
-      total_acceptances: 0,
-      total_lines_suggested: 0,
-      total_lines_accepted: 0,
-      total_chat_acceptances: 0,
-      total_chat_turns: 0,
-      users: [],
-    };
-
-    for (const day of data) {
-      aggregated.total_active_users = Math.max(
-        aggregated.total_active_users,
-        day.total_active_users,
-      );
-      aggregated.total_engaged_users = Math.max(
-        aggregated.total_engaged_users,
-        day.total_engaged_users,
-      );
-      aggregated.total_suggestions += day.total_suggestions;
-      aggregated.total_acceptances += day.total_acceptances;
-      aggregated.total_lines_suggested += day.total_lines_suggested;
-      aggregated.total_lines_accepted += day.total_lines_accepted;
-      aggregated.total_chat_acceptances += day.total_chat_acceptances;
-      aggregated.total_chat_turns += day.total_chat_turns;
-      aggregated.users.push(...day.users);
+    const download = await fetch(link, { signal });
+    if (!download.ok) {
+      throw new Error(`GitHub Copilot report download failed (${download.status})`);
     }
-
-    return aggregated;
-  } catch (err: unknown) {
-    logger.error({ err, orgName }, "[Copilot] Usage fetch failed");
-    return {
-      total_active_users: 0,
-      total_engaged_users: 0,
-      total_suggestions: 0,
-      total_acceptances: 0,
-      total_lines_suggested: 0,
-      total_lines_accepted: 0,
-      total_chat_acceptances: 0,
-      total_chat_turns: 0,
-      users: [],
-    };
+    const ndjson = await download.text();
+    for (const line of ndjson.split(/\r?\n/)) {
+      if (!line.trim()) continue;
+      try {
+        const row = JSON.parse(line) as CopilotUserUsage;
+        if (row && typeof row === "object") users.push(row);
+      } catch {
+        throw new Error("GitHub Copilot report contained invalid NDJSON");
+      }
+    }
   }
+  return {
+    reportStartDay: report.report_start_day,
+    reportEndDay: report.report_end_day,
+    users,
+  };
 }
 
 /**
@@ -169,15 +167,27 @@ export async function syncCopilotMetrics(
     new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
   );
 
-  // Calculate estimated cost: $19/user/month for Copilot Business
-  const estimatedCostUsd = (usage.total_engaged_users * 19).toFixed(2);
+  const activeUsers = new Set(
+    usage.users
+      .filter(
+        (user) =>
+          Boolean(user.used_chat) ||
+          Boolean(user.used_code_completions) ||
+          Boolean(user.used_agent) ||
+          Boolean(user.used_code_review) ||
+          Boolean(user.used_cli) ||
+          Number(user.ai_credits_used ?? 0) > 0,
+      )
+      .map((user) => String(user.user_id ?? user.user_login ?? "")),
+  );
 
   await dbConn.insert(copilotSyncState).values({
     workspaceId,
     orgName,
     totalSeats: seats.length,
-    activeSeats: usage.total_active_users,
-    totalUsageUsd: estimatedCostUsd,
+    activeSeats: activeUsers.size,
+    // Copilot reports credits/activity, not a reliable invoiced USD amount.
+    totalUsageUsd: "0.00",
     data: {
       seats,
       usage,
@@ -194,7 +204,7 @@ export async function syncCopilotMetrics(
   });
 
   logger.info(
-    { workspaceId, orgName, seats: seats.length, activeUsers: usage.total_active_users },
+    { workspaceId, orgName, seats: seats.length, activeUsers: activeUsers.size },
     "[Copilot] Metrics synced",
   );
 }

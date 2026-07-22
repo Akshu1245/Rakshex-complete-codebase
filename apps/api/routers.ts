@@ -81,6 +81,7 @@ import { publicReportsRouter } from "./api/publicReports";
 import { authProvidersRouter } from "./api/authProviders";
 import { enterpriseRouter } from "./api/enterprise";
 import { controlPlaneRouter } from "./api/controlPlane";
+import { teamGovernanceRouter } from "./api/teamGovernance";
 import { ensurePersonalWorkspace } from "./services/workspaceContext";
 import { logger } from "./_core/logger";
 
@@ -771,6 +772,7 @@ export const appRouter = router({
   // ─── Rakshex Enterprise ──────────────────────────────────────────────
   enterprise: enterpriseRouter,
   controlPlane: controlPlaneRouter,
+  teamGovernance: teamGovernanceRouter,
 });
 
 // Register the appRouter with the apiDocs introspector so its `spec`

@@ -134,8 +134,63 @@ describe("gateway enforcement", () => {
     expect(merged.currentSpendUsd).toBe(1);
   });
 
-  it("redis keys are scoped", () => {
+  it("redis keys are scoped and identity never shares agent namespace", () => {
     expect(killSwitchRedisKey("agent", "a1")).toBe("ag:kill:agent:a1");
+    expect(killSwitchRedisKey("identity", "42")).toBe("ag:kill:identity:42");
+    expect(killSwitchRedisKey("identity", "42")).not.toBe(killSwitchRedisKey("agent", "42"));
+    expect(killSwitchRedisKey("project", "p1")).toBe("ag:kill:project:p1");
+    expect(killSwitchRedisKey("workspace", "9")).toBe("ag:kill:workspace:9");
+  });
+
+  it("blocks when estimated spend would exceed budget", () => {
+    const result = decideEnforcement(
+      {
+        workspaceId: "ws1",
+        provider: "openai",
+        model: "gpt-4o",
+        estimatedCostUsd: 2.01,
+      },
+      {
+        ...baseState(),
+        budgetLimitUsd: 10,
+        currentSpendUsd: 8,
+      },
+    );
+    expect(result.allowed).toBe(false);
+  });
+
+  it("allows when spend equals budget limit exactly (strict greater-than)", () => {
+    const result = decideEnforcement(
+      {
+        workspaceId: "ws1",
+        provider: "openai",
+        model: "gpt-4o",
+        estimatedCostUsd: 2,
+      },
+      {
+        ...baseState(),
+        budgetLimitUsd: 10,
+        currentSpendUsd: 8,
+      },
+    );
+    expect(result.allowed).toBe(true);
+  });
+
+  it("allows when spend is under budget", () => {
+    const result = decideEnforcement(
+      {
+        workspaceId: "ws1",
+        provider: "openai",
+        model: "gpt-4o",
+        estimatedCostUsd: 1,
+      },
+      {
+        ...baseState(),
+        budgetLimitUsd: 10,
+        currentSpendUsd: 8,
+      },
+    );
+    expect(result.allowed).toBe(true);
   });
 
   it("client cannot clear kill switch by omitting flags — server state wins", () => {

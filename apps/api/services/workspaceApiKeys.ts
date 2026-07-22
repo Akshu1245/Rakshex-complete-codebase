@@ -18,6 +18,7 @@ export type ApiKeyScope =
   | "collections:read"
   | "collections:write"
   | "projects:read"
+  | "gateway:invoke"
   | "admin"
   | "*";
 
@@ -31,6 +32,8 @@ export interface CreateApiKeyInput {
   allowedIps?: string[];
   allowedRepositories?: string[];
   projectId?: string | null;
+  identityId?: number | null;
+  agentId?: string | null;
 }
 
 export interface ApiKeyPublic {
@@ -44,6 +47,8 @@ export interface ApiKeyPublic {
   allowedIps: string[];
   allowedRepositories: string[];
   projectId: string | null;
+  identityId: number | null;
+  agentId: string | null;
   expiresAt: Date | null;
   lastUsedAt: Date | null;
   revokedAt: Date | null;
@@ -62,6 +67,8 @@ function toPublic(row: typeof apiKeys.$inferSelect): ApiKeyPublic {
     allowedIps: (row.allowedIps as string[]) ?? [],
     allowedRepositories: (row.allowedRepositories as string[]) ?? [],
     projectId: row.projectId ?? null,
+    identityId: row.identityId ?? null,
+    agentId: row.agentId ?? null,
     expiresAt: row.expiresAt ?? null,
     lastUsedAt: row.lastUsedAt ?? null,
     revokedAt: row.revokedAt ?? null,
@@ -96,10 +103,12 @@ export async function createWorkspaceApiKey(
     keyHash,
     keySuffix,
     environment,
-    scopes: input.scopes ?? ["*"],
+    scopes: input.scopes ?? ["scan:read"],
     allowedIps: input.allowedIps ?? [],
     allowedRepositories: input.allowedRepositories ?? [],
     projectId: input.projectId ?? null,
+    identityId: input.identityId ?? null,
+    agentId: input.agentId ?? null,
     expiresAt: input.expiresAt ?? null,
   });
 
@@ -161,11 +170,13 @@ export async function rotateApiKey(
     createdByUserId: userId,
     name: existing.name,
     environment: existing.environment as "live" | "test",
-    scopes: (existing.scopes as string[]) ?? ["*"],
+    scopes: (existing.scopes as string[]) ?? ["scan:read"],
     expiresAt: existing.expiresAt,
     allowedIps: (existing.allowedIps as string[]) ?? [],
     allowedRepositories: (existing.allowedRepositories as string[]) ?? [],
     projectId: existing.projectId,
+    identityId: existing.identityId,
+    agentId: existing.agentId,
   }).then(async (created) => {
     await db
       .update(apiKeys)
@@ -181,6 +192,8 @@ export interface ValidatedApiKey {
   userId: number;
   scopes: string[];
   projectId: string | null;
+  identityId: number | null;
+  agentId: string | null;
 }
 
 /**
@@ -204,6 +217,9 @@ export async function validateWorkspaceApiKey(
   if (row.expiresAt && new Date(row.expiresAt) < new Date()) return null;
 
   const allowedIps = (row.allowedIps as string[]) ?? [];
+  if (allowedIps.length > 0 && !opts?.ip) {
+    return null;
+  }
   if (allowedIps.length > 0 && opts?.ip) {
     const ip = opts.ip.replace(/^::ffff:/, "");
     if (!allowedIps.includes(ip) && !allowedIps.includes(opts.ip)) {
@@ -231,6 +247,8 @@ export async function validateWorkspaceApiKey(
     userId: row.createdByUserId,
     scopes,
     projectId: row.projectId ?? null,
+    identityId: row.identityId ?? null,
+    agentId: row.agentId ?? null,
   };
 }
 

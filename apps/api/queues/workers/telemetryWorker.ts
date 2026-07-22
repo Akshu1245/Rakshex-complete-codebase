@@ -48,6 +48,32 @@ function buildWorker(): Worker<TelemetryJobData> {
         logger.warn({ err }, "[TelemetryWorker] Redis counter update failed");
       }
 
+      // Aggregate SDK cost into kill-switch budget so auto-trigger fires on agent spend.
+      // Group by user: resolve workspace -> user mapping via workspace API keys.
+      if (totalCost > 0 && workspaceId) {
+        try {
+          const wsId = parseInt(workspaceId, 10);
+          if (!isNaN(wsId)) {
+            const workspaceRow = await db.getWorkspaceById(wsId);
+            if (workspaceRow?.ownerUserId) {
+              await db.recordTokenUsage(
+                workspaceRow.ownerUserId,
+                "sdk_telemetry",
+                events.reduce((s, e) => s + (e.inputTokens ?? 0), 0),
+                events.reduce((s, e) => s + (e.outputTokens ?? 0), 0),
+                0,
+                totalCost,
+              );
+            }
+          }
+        } catch (spendErr) {
+          logger.warn(
+            { err: spendErr, workspaceId },
+            "[TelemetryWorker] Failed to aggregate spend into budget",
+          );
+        }
+      }
+
       // Publish to Redis for SSE subscribers
       try {
         const pubData = events.slice(0, 20).map((e) => ({

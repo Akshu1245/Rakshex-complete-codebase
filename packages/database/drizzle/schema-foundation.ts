@@ -225,6 +225,10 @@ export const apiKeys = pgTable(
     allowedIps: json("allowed_ips").$type<string[]>().default([]),
     allowedRepositories: json("allowed_repositories").$type<string[]>().default([]),
     projectId: varchar("project_id", { length: 64 }),
+    /** Optional gateway identity binding; prevents caller-selected attribution. */
+    identityId: integer("identity_id"),
+    /** Optional gateway agent binding; prevents caller-selected agent scope. */
+    agentId: varchar("agent_id", { length: 128 }),
     rotatedFromId: varchar("rotated_from_id", { length: 64 }),
     expiresAt: timestamp("expires_at"),
     lastUsedAt: timestamp("last_used_at"),
