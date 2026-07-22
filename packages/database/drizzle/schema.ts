@@ -386,6 +386,10 @@ export const tokenUsage = pgTable(
     thinkingTokens: integer("thinkingTokens").default(0).notNull(),
     totalTokens: integer("totalTokens").default(0).notNull(),
     costUSD: decimal("costUSD", { precision: 10, scale: 6 }).default("0"),
+    // Optional cost-attribution dimensions: which API endpoint / product
+    // feature this LLM spend should be charged to.
+    endpoint: varchar("endpoint", { length: 512 }),
+    feature: varchar("feature", { length: 128 }),
     date: timestamp("date").defaultNow().notNull(),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },

@@ -1014,6 +1014,7 @@ export async function recordTokenUsage(
   completionTokens: number,
   thinkingTokens: number,
   costUSD: number,
+  attribution?: { endpoint?: string | null; feature?: string | null },
 ) {
   const db = await getDb();
   assertDb(db);
@@ -1030,6 +1031,8 @@ export async function recordTokenUsage(
     thinkingTokens,
     totalTokens,
     costUSD: costUSD.toString(),
+    endpoint: attribution?.endpoint ?? null,
+    feature: attribution?.feature ?? null,
   });
 
   // Auto-increment currentSpendUSD in killSwitchSettings

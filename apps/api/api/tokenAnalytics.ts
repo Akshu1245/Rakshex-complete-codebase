@@ -14,6 +14,8 @@ export const tokenAnalyticsRouter = router({
         completionTokens: z.number().int().min(0),
         thinkingTokens: z.number().int().min(0),
         costUSD: z.number().min(0),
+        endpoint: z.string().max(512).optional(),
+        feature: z.string().max(128).optional(),
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -24,8 +26,60 @@ export const tokenAnalyticsRouter = router({
         input.completionTokens,
         input.thinkingTokens,
         input.costUSD,
+        { endpoint: input.endpoint, feature: input.feature },
       );
       return { success: true };
+    }),
+
+  /**
+   * Per-endpoint and per-feature cost attribution over the requested window.
+   * Groups recorded LLM spend by the endpoint/feature dimension so users can
+   * see which API route or product feature is driving their bill.
+   */
+  getCostAttribution: protectedProcedure
+    .input(z.object({ days: z.number().int().min(1).max(365).default(30) }))
+    .query(async ({ input, ctx }) => {
+      const usage = await db.getTokenUsageByUserId(ctx.user.id, input.days);
+      const byEndpoint = new Map<string, { cost: number; tokens: number; calls: number }>();
+      const byFeature = new Map<string, { cost: number; tokens: number; calls: number }>();
+      const add = (
+        map: Map<string, { cost: number; tokens: number; calls: number }>,
+        key: string,
+        cost: number,
+        tokens: number,
+      ) => {
+        const cur = map.get(key) ?? { cost: 0, tokens: 0, calls: 0 };
+        cur.cost += cost;
+        cur.tokens += tokens;
+        cur.calls += 1;
+        map.set(key, cur);
+      };
+      for (const u of usage) {
+        const cost = toNumber(u.costUSD);
+        const tokens = u.totalTokens;
+        add(
+          byEndpoint,
+          (u as { endpoint?: string | null }).endpoint || "(unattributed)",
+          cost,
+          tokens,
+        );
+        add(
+          byFeature,
+          (u as { feature?: string | null }).feature || "(unattributed)",
+          cost,
+          tokens,
+        );
+      }
+      const toSorted = (map: Map<string, { cost: number; tokens: number; calls: number }>) =>
+        Array.from(map.entries())
+          .map(([key, v]) => ({
+            key,
+            cost: Number(v.cost.toFixed(6)),
+            tokens: v.tokens,
+            calls: v.calls,
+          }))
+          .sort((a, b) => b.cost - a.cost);
+      return { byEndpoint: toSorted(byEndpoint), byFeature: toSorted(byFeature) };
     }),
 
   getAnalytics: protectedProcedure
