@@ -159,11 +159,26 @@ export function detectShadowAPIs(collectionData: CollectionData): ShadowAPI[] {
   const safePrefixes = ["/api/v1", "/api/v2", "/api/v3", "/public", "/v1", "/v2", "/v3"];
   const seen = new Set<string>();
 
+  // Normalize endpoints from both Postman collections (item[]) and OpenAPI
+  // specs (paths{}) so shadow discovery covers either import format.
+  const endpoints: Array<{ method: string; path: string }> = [];
   items.forEach((item: PostmanItem) => {
-    const method = (item.request?.method || "GET").toUpperCase();
-    const displayUrl = extractUrl(item.request);
-    const path = safeGetPath(displayUrl) || "/";
+    endpoints.push({
+      method: (item.request?.method || "GET").toUpperCase(),
+      path: safeGetPath(extractUrl(item.request)) || "/",
+    });
+  });
+  const openApiPaths = collectionData.paths || {};
+  for (const [rawPath, methods] of Object.entries(openApiPaths)) {
+    const methodMap = (methods || {}) as Record<string, unknown>;
+    for (const m of Object.keys(methodMap)) {
+      if (["get", "post", "put", "delete", "patch"].includes(m.toLowerCase())) {
+        endpoints.push({ method: m.toUpperCase(), path: rawPath || "/" });
+      }
+    }
+  }
 
+  endpoints.forEach(({ method, path }) => {
     const key = method + ":" + path;
     if (seen.has(key)) return;
     seen.add(key);
