@@ -5,13 +5,13 @@ import * as db from "../db";
 export const costRouter = router({
   breakdown: protectedProcedure.query(async ({ ctx }) => {
     const usage = await db.getTokenUsageByUserId(ctx.user.id, 30);
-    const total = usage.reduce((s: number, u: any) => s + (u.costUsd || 0), 0);
+    const total = usage.reduce((s: number, u: any) => s + Number(u.costUSD ?? 0), 0);
     return { totalCost: total, usage };
   }),
 
   summary: protectedProcedure.query(async ({ ctx }) => {
     const usage = await db.getTokenUsageByUserId(ctx.user.id, 14);
-    const weeklyTotal = usage.reduce((s: number, u: any) => s + (u.costUsd || 0), 0);
+    const weeklyTotal = usage.reduce((s: number, u: any) => s + Number(u.costUSD ?? 0), 0);
     return { dailySpend: usage, weeklyTotal };
   }),
 

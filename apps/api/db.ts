@@ -3235,8 +3235,11 @@ export async function listCopilotMessages(conversationId: string): Promise<Copil
 export async function createTenantPolicy(row: InsertTenantPolicyRow): Promise<number> {
   const db = await getDb();
   assertDb(db);
-  const result = await db.insert(tenantPolicies).values(row);
-  return Number((result as unknown as { insertId?: number }).insertId ?? 0);
+  const [created] = await db
+    .insert(tenantPolicies)
+    .values(row)
+    .returning({ id: tenantPolicies.id });
+  return created?.id ?? 0;
 }
 
 export async function listTenantPolicies(userId: number): Promise<TenantPolicyRow[]> {
@@ -3286,8 +3289,8 @@ export async function deleteTenantPolicy(userId: number, id: number): Promise<vo
 export async function createAlertRule(row: InsertAlertRuleRow): Promise<number> {
   const db = await getDb();
   assertDb(db);
-  const result = await db.insert(alertRules).values(row);
-  return Number((result as unknown as { insertId?: number }).insertId ?? 0);
+  const [created] = await db.insert(alertRules).values(row).returning({ id: alertRules.id });
+  return created?.id ?? 0;
 }
 
 export async function listAlertRules(userId: number): Promise<AlertRuleRow[]> {
@@ -3361,8 +3364,8 @@ export async function listAlertEvents(userId: number, limit = 100): Promise<Aler
 export async function createSsoProvider(row: InsertSsoProviderRow): Promise<number> {
   const db = await getDb();
   assertDb(db);
-  const result = await db.insert(ssoProviders).values(row);
-  return Number((result as unknown as { insertId?: number }).insertId ?? 0);
+  const [created] = await db.insert(ssoProviders).values(row).returning({ id: ssoProviders.id });
+  return created?.id ?? 0;
 }
 
 export async function listSsoProviders(userId: number): Promise<SsoProviderRow[]> {
@@ -3459,8 +3462,8 @@ export async function reapExpiredSsoLoginRequests(): Promise<number> {
 export async function createWorkspace(row: InsertWorkspaceRow): Promise<number> {
   const db = await getDb();
   assertDb(db);
-  const result = await db.insert(workspaces).values(row);
-  return Number((result as unknown as { insertId?: number }).insertId ?? 0);
+  const [created] = await db.insert(workspaces).values(row).returning({ id: workspaces.id });
+  return created?.id ?? 0;
 }
 
 export async function getWorkspaceById(id: number): Promise<WorkspaceRow | null> {
@@ -3654,8 +3657,11 @@ export async function createWorkspaceInvitation(
 ): Promise<number> {
   const db = await getDb();
   assertDb(db);
-  const result = await db.insert(workspaceInvitations).values(row);
-  return Number((result as unknown as { insertId?: number }).insertId ?? 0);
+  const [created] = await db
+    .insert(workspaceInvitations)
+    .values(row)
+    .returning({ id: workspaceInvitations.id });
+  return created?.id ?? 0;
 }
 
 export async function getWorkspaceInvitationByToken(
