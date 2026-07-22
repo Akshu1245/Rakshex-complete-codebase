@@ -77,7 +77,24 @@ export default function ImportPage() {
       });
       if (!res.ok) throw new Error((await res.json()).error || "Import failed");
       const r = await res.json();
-      setResult(`Imported ${r.collections ?? r.endpoints ?? "N/A"} items successfully.`);
+      const parts: string[] = [];
+      if (r.collectionsCreated) {
+        parts.push(
+          `${r.collectionsCreated} collection${r.collectionsCreated === 1 ? "" : "s"}` +
+            (r.recordsImported ? ` (${r.recordsImported} endpoints)` : ""),
+        );
+        if (r.credentialFindings) parts.push(`${r.credentialFindings} exposed credential(s)`);
+        if (r.gatewayFindings) parts.push(`${r.gatewayFindings} gateway risk(s)`);
+      } else if (r.gatewayLogsImported) {
+        parts.push(`${r.gatewayLogsImported} gateway log(s)`);
+        if (r.tokenUsageImported) parts.push(`${r.tokenUsageImported} token-usage record(s)`);
+      } else if (r.policiesImported) {
+        parts.push(`${r.policiesImported} policy(ies)`);
+      } else {
+        parts.push(`${r.recordsImported ?? 0} record(s)`);
+      }
+      const skipped = r.recordsSkipped ? ` · ${r.recordsSkipped} skipped` : "";
+      setResult(`Imported ${parts.join(" · ")}${skipped}.`);
       setPreview(null);
       setData("");
     } catch (err) {
