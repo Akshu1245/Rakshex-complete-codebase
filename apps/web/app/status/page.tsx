@@ -21,32 +21,15 @@ export default function StatusPage() {
           </p>
         </header>
 
-        {/* Dynamic Client Service health checks */}
+        {/* Live health probes against /api/health (and related checks). */}
         <StatusClient />
 
-        {/* Example incident format — not live history */}
-        <div className="mt-12">
-          <h3 className="text-xl font-bold text-white mb-2">Incident history format</h3>
-          <p className="text-sm text-amber-200/80 mb-6 border border-amber-500/30 bg-amber-500/5 rounded-lg px-4 py-3">
-            Example only — the entries below are illustrative samples of how incidents would appear.
-            They are not live production incidents.
+        <div className="mt-12 rounded-xl border border-slate-800 bg-slate-900/40 p-6">
+          <h3 className="text-xl font-bold text-white mb-2">Incident history</h3>
+          <p className="text-slate-400 text-sm">
+            No public incidents are recorded for this deployment yet. When an incident is declared,
+            it will appear here with start time, impact, and resolution notes.
           </p>
-          <div className="space-y-4 opacity-80">
-            <div className="bg-slate-900/40 border border-slate-900 rounded-xl p-6">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="font-semibold text-slate-200">
-                  [Example] Intermittent latency on scanning engine
-                </h4>
-                <span className="text-xs text-slate-500">Sample</span>
-              </div>
-              <p className="text-slate-400 text-sm mb-3">
-                Placeholder description for elevated response times during bulk uploads.
-              </p>
-              <div className="flex items-center gap-4 text-xs">
-                <span className="text-slate-400 font-semibold">Example</span>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>

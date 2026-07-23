@@ -5,9 +5,12 @@ const TS_BACKEND_URL =
   process.env.NEXT_PUBLIC_TS_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
 const nextConfig = {
-  // This project sits inside a larger local workspace that has its own lock
-  // file. Pin tracing here so production builds never walk the parent tree.
-  outputFileTracingRoot: path.join(__dirname, ".."),
+  // Pin tracing + Turbopack to this app package so monorepo CI/Playwright
+  // `next dev` can resolve `next/package.json` (avoids inferring apps/web/app).
+  outputFileTracingRoot: path.join(__dirname),
+  turbopack: {
+    root: path.join(__dirname),
+  },
   // Don't advertise Next.js in response headers. Attackers can still
   // fingerprint us via HTML quirks, but no reason to make it trivial.
   poweredByHeader: false,
@@ -84,6 +87,17 @@ const nextConfig = {
       {
         source: "/api/waitlist",
         destination: `${TS_BACKEND_URL}/api/waitlist`,
+      },
+      // Competitor / collection migration import API (preview, execute, history,
+      // supported-sources) is served by the Node backend, not Next.
+      {
+        source: "/api/import/:path*",
+        destination: `${TS_BACKEND_URL}/api/import/:path*`,
+      },
+      // Public quick-scan lead magnet (no auth) served by the Node backend.
+      {
+        source: "/api/public/:path*",
+        destination: `${TS_BACKEND_URL}/api/public/:path*`,
       },
     ];
   },

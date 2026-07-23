@@ -1,7 +1,7 @@
 {
-  "name": "@rakshex/vscode-extension",
+  "name": "rakshex-vscode",
   "displayName": "Rakshex",
-  "description": "Stop AI agents from burning your API budget. Find leaked keys, hidden costs, and security risks in VS Code ├óΓé¼ΓÇ¥ first scan in 60 seconds.",
+  "description": "Stop AI agents from burning your API budget. Find leaked keys, hidden costs, and security risks in VS Code — first scan in 60 seconds.",
   "version": "0.2.1",
   "publisher": "rakshex",
   "license": "MIT",
@@ -321,7 +321,7 @@
     "viewsWelcome": [
       {
         "view": "rakshex.findings",
-        "contents": "Sign in with your Rakshex API key to see findings.\n[Sign in](command:rakshex.authenticate)\n\nGenerate an API key from Settings on the Rakshex dashboard.\n\n---\n\n**Keyboard shortcuts:**\nCtrl+Shift+D ├óΓé¼ΓÇ¥ Refresh\nCtrl+Shift+S ├óΓé¼ΓÇ¥ Run Scan\nCtrl+Shift+R ├óΓé¼ΓÇ¥ Rerun Last Scan\nCtrl+Shift+1-4 ├óΓé¼ΓÇ¥ Filter by severity\nEnter ├óΓé¼ΓÇ¥ Resolve finding"
+        "contents": "Sign in with your Rakshex API key to see findings.\n[Sign in](command:rakshex.authenticate)\n\nGenerate an API key from Settings on the Rakshex dashboard.\n\n---\n\n**Keyboard shortcuts:**\nCtrl+Shift+D — Refresh\nCtrl+Shift+S — Run Scan\nCtrl+Shift+R — Rerun Last Scan\nCtrl+Shift+1-4 — Filter by severity\nEnter — Resolve finding"
       }
     ],
     "menus": {
@@ -498,7 +498,7 @@
         "rakshex.apiUrl": {
           "type": "string",
           "default": "http://localhost:3000",
-          "description": "Base URL of the Rakshex backend (default: https://api.rakshex.in ├óΓé¼ΓÇ¥ self-hosted users can override to e.g. https://api.your-company.com or http://localhost:3000)."
+          "description": "Base URL of the Rakshex backend (default: https://api.rakshex.in — self-hosted users can override to e.g. https://api.your-company.com or http://localhost:3000)."
         },
         "rakshex.heartbeatIntervalSec": {
           "type": "number",
@@ -530,14 +530,15 @@
     "esbuild-base": "esbuild src/extension.ts --bundle --outdir=dist --external:vscode --format=cjs --platform=node",
     "esbuild": "npm run esbuild-base -- --sourcemap",
     "esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
+    "compile": "npm run build",
+    "watch": "npm run esbuild-watch",
     "check": "tsc --noEmit -p ./",
     "test": "vitest run",
-    "package": "npx @vscode/vsce package --no-dependencies",
-    "typecheck": "tsc --noEmit",
-    "build": "tsc -p ./",
-    "lint": "echo @rakshex/vscode-extension lint ok"
+    "validate": "node scripts/validate-package.js",
+    "package": "npm run build && npm run validate && npx @vscode/vsce package --no-dependencies",
+    "typecheck": "tsc --noEmit -p ./",
+    "build": "npm run esbuild-base -- --minify",
+    "lint": "echo rakshex-vscode lint ok"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

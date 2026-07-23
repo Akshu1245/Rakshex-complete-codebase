@@ -7,6 +7,10 @@
 
 import * as db from "../db";
 import { logger } from "../_core/logger";
+import { parseCollectionImport } from "./collectionImport/secureParse";
+import { scanCollectionForCredentials } from "./collectionCredentialScan";
+import { scanCollectionForGateway } from "./gatewayCollectionScan";
+import { ensurePersonalWorkspace } from "./workspaceContext";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -33,6 +37,10 @@ export interface ImportResult {
   policiesImported: number;
   scannedImports: boolean;
   durationMs: number;
+  /** For collection-format imports (postman/openapi/insomnia/bruno). */
+  collectionId?: string;
+  credentialFindings?: number;
+  gatewayFindings?: number;
 }
 
 export interface ImportPreview {
@@ -544,6 +552,135 @@ export async function importUniversalJSON(
 
   result.durationMs = Date.now() - startTime;
   logComplete(userId, "universal_json", result);
+  return result;
+}
+
+// ── Collection-format imports (Postman / OpenAPI / Insomnia / Bruno) ─────────
+
+/**
+ * Convert an Insomnia v4 export into a Postman-shaped collection so it can go
+ * through the same secure parser + scanners as every other collection format.
+ */
+export function convertInsomniaToCollection(raw: string | object): Record<string, unknown> {
+  const root: any = typeof raw === "string" ? JSON.parse(raw) : raw;
+  const resources: any[] = Array.isArray(root?.resources) ? root.resources : [];
+  const requests = resources.filter((r) => r?._type === "request");
+
+  const item = requests.map((r) => {
+    const headers = Array.isArray(r.headers)
+      ? r.headers.map((h: any) => ({ key: h.name ?? h.key ?? "", value: h.value ?? "" }))
+      : [];
+    return {
+      name: r.name || r.url || "request",
+      request: {
+        method: (r.method || "GET").toUpperCase(),
+        url: { raw: typeof r.url === "string" ? r.url : "" },
+        header: headers,
+        ...(r.body?.text ? { body: { mode: "raw", raw: r.body.text } } : {}),
+      },
+    };
+  });
+
+  return {
+    info: {
+      name: root?.__export_source ? "Insomnia Import" : "Insomnia Import",
+      schema: "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    },
+    item,
+  };
+}
+
+const COLLECTION_STORAGE_FORMATS = new Set(["postman", "openapi", "bruno"]);
+
+/**
+ * Import a collection/API-spec format (Postman v2.1, OpenAPI, Insomnia, Bruno),
+ * persist it as a real collection, and run the same credential + gateway
+ * security scans the interactive importer runs. This is the migration path for
+ * "bring your API collection from tool X".
+ */
+export async function importCollectionSpec(
+  userId: number,
+  source: "postman" | "openapi" | "insomnia" | "bruno",
+  raw: string | object,
+  name?: string,
+): Promise<ImportResult> {
+  const startTime = Date.now();
+  const result = emptyResult(source);
+
+  try {
+    let rawText: string;
+    let forceYaml = false;
+
+    if (source === "insomnia") {
+      rawText = JSON.stringify(convertInsomniaToCollection(raw));
+    } else if (typeof raw === "string") {
+      rawText = raw;
+      forceYaml =
+        source === "openapi" &&
+        !rawText.trimStart().startsWith("{") &&
+        !rawText.trimStart().startsWith("[");
+    } else {
+      rawText = JSON.stringify(raw);
+    }
+
+    const parsed = parseCollectionImport(rawText, {
+      filename: `${name ?? source}.${forceYaml ? "yaml" : "json"}`,
+      forceYaml: forceYaml || source === "openapi",
+    });
+
+    if (parsed.errors.length > 0) {
+      result.errors.push(...parsed.errors);
+      result.durationMs = Date.now() - startTime;
+      return result;
+    }
+
+    const storageFormat = COLLECTION_STORAGE_FORMATS.has(parsed.storageFormat)
+      ? (parsed.storageFormat as "postman" | "openapi" | "bruno")
+      : "postman";
+
+    // Scope to the caller's personal workspace so tenant checks pass cleanly.
+    let workspaceId: number | undefined;
+    try {
+      const ws = await ensurePersonalWorkspace(userId, null);
+      workspaceId = ws.id;
+    } catch {
+      workspaceId = undefined;
+    }
+
+    const collectionName = name || parsed.name || `Imported from ${source}`;
+    const col = await db.createCollection(
+      userId,
+      collectionName,
+      storageFormat,
+      parsed.data,
+      undefined,
+      {
+        contentHash: parsed.contentHash,
+        tags: parsed.tags,
+        totalRequests: parsed.endpointCount,
+        workspaceId,
+      },
+    );
+
+    result.collectionsCreated = 1;
+    result.collectionId = (col as { id?: string })?.id;
+    result.recordsImported = parsed.endpointCount;
+    result.scannedImports = true;
+
+    try {
+      const cred = scanCollectionForCredentials(parsed.data);
+      result.credentialFindings = cred.length;
+      const gw = scanCollectionForGateway(parsed.data);
+      result.gatewayFindings = gw.findings.length;
+    } catch (err) {
+      result.errors.push(`Scan warning: ${(err as Error).message}`);
+    }
+  } catch (err) {
+    result.errors.push(`${source} import error: ${(err as Error).message}`);
+  }
+
+  result.durationMs = Date.now() - startTime;
+  logComplete(userId, source, result);
   return result;
 }
 

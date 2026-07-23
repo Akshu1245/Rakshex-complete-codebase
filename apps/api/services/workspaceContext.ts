@@ -122,19 +122,17 @@ export async function ensurePersonalWorkspace(
   if (await db.getWorkspaceBySlug(slug)) {
     slug = `${base}-${crypto.randomBytes(3).toString("hex")}`;
   }
-  const id = await db.createWorkspace({
-    slug,
-    name: (displayName && displayName.trim()) || `User ${userId}`,
-    ownerUserId: userId,
-    isPersonal: true,
-  });
-  await db.addWorkspaceMember({
-    workspaceId: id,
+  // Create the workspace and its owner membership atomically so we never end
+  // up with an orphan workspace the owner cannot access.
+  const id = await db.createWorkspaceWithOwner(
+    {
+      slug,
+      name: (displayName && displayName.trim()) || `User ${userId}`,
+      ownerUserId: userId,
+      isPersonal: true,
+    },
     userId,
-    role: "owner",
-    active: true,
-    joinedAt: new Date(),
-  });
+  );
   invalidateMembershipCache(id, userId);
   const row = await db.getWorkspaceById(id);
   if (!row) {

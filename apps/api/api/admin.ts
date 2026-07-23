@@ -3,11 +3,26 @@ import { TRPCError } from "@trpc/server";
 import { router, adminProcedure } from "../_core/trpc";
 import * as db from "../db";
 import { processRefund } from "../payments";
+import { getDeadLetters, clearDeadLetters } from "../services/jobQueue";
 
 export const adminRouter = router({
   listAllUsers: adminProcedure.query(async () => {
     const users = await db.getAllUsers();
     return { users };
+  }),
+
+  /** Failed background jobs that exhausted all retries (dead-letter queue). */
+  deadLetterJobs: adminProcedure
+    .input(z.object({ limit: z.number().int().min(1).max(200).default(50) }).optional())
+    .query(async ({ input }) => {
+      const jobs = getDeadLetters(input?.limit ?? 50);
+      return { jobs, total: jobs.length };
+    }),
+
+  /** Acknowledge / clear the dead-letter buffer. */
+  clearDeadLetterJobs: adminProcedure.mutation(async () => {
+    const cleared = clearDeadLetters();
+    return { success: true, cleared };
   }),
 
   listAllWaitlist: adminProcedure.query(async () => {

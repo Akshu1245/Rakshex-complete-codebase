@@ -45,7 +45,14 @@ export const killSwitchEventTypeEnum = pgEnum("kill_switch_event_type", [
   "auto_triggered",
   "reset",
 ]);
-export const reportTypeEnum = pgEnum("report_type", ["pci_dss", "owasp", "custom"]);
+export const reportTypeEnum = pgEnum("report_type", [
+  "pci_dss",
+  "owasp",
+  "custom",
+  "owasp_llm",
+  "dpdp",
+  "gdpr",
+]);
 export const teamMemberRoleEnum = pgEnum("team_member_role", ["admin", "editor", "viewer"]);
 export const teamMemberStatusEnum = pgEnum("team_member_status", [
   "pending",
@@ -379,6 +386,10 @@ export const tokenUsage = pgTable(
     thinkingTokens: integer("thinkingTokens").default(0).notNull(),
     totalTokens: integer("totalTokens").default(0).notNull(),
     costUSD: decimal("costUSD", { precision: 10, scale: 6 }).default("0"),
+    // Optional cost-attribution dimensions: which API endpoint / product
+    // feature this LLM spend should be charged to.
+    endpoint: varchar("endpoint", { length: 512 }),
+    feature: varchar("feature", { length: 128 }),
     date: timestamp("date").defaultNow().notNull(),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
@@ -756,6 +767,7 @@ export const webhookEndpoints = pgTable(
   {
     id: varchar("id", { length: 64 }).primaryKey(),
     userId: integer("userId").notNull(),
+    workspaceId: integer("workspace_id"),
     url: varchar("url", { length: 1024 }).notNull(),
     // 32-byte random secret, base64-encoded (length 44). Never exposed
     // after creation except in masked form.
@@ -778,6 +790,7 @@ export const webhookEndpoints = pgTable(
   },
   (table) => ({
     userIdIdx: index().on(table.userId),
+    workspaceIdIdx: index("webhook_endpoints_workspace_id_idx").on(table.workspaceId),
   }),
 );
 
@@ -961,6 +974,7 @@ export const gatewayAudit = pgTable(
   {
     id: serial("id").primaryKey(),
     userId: integer("userId").notNull(),
+    workspaceId: integer("workspace_id"),
     requestId: varchar("requestId", { length: 64 }).notNull(),
     model: varchar("model", { length: 96 }).notNull(),
     provider: varchar("provider", { length: 32 }),
@@ -978,6 +992,7 @@ export const gatewayAudit = pgTable(
   },
   (table) => ({
     userIdIdx: index().on(table.userId),
+    workspaceIdIdx: index("gateway_audit_workspace_id_idx").on(table.workspaceId),
     createdAtIdx: index().on(table.createdAt),
     decisionIdx: index().on(table.decision),
     modelIdx: index().on(table.model),
@@ -1445,6 +1460,8 @@ export const workspaceMembers = pgTable(
     invitedBy: integer("invitedBy"),
     invitedAt: timestamp("invitedAt"),
     joinedAt: timestamp("joinedAt").defaultNow().notNull(),
+    suspendedAt: timestamp("suspended_at"),
+    deactivatedAt: timestamp("deactivated_at"),
   },
   (table) => ({
     workspaceUserUniq: index().on(table.workspaceId, table.userId),
@@ -1469,6 +1486,8 @@ export const workspaceInvitations = pgTable(
     invitedBy: integer("invitedBy").notNull(),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     expiresAt: timestamp("expiresAt").notNull(),
+    status: varchar("status", { length: 32 }).default("pending").notNull(),
+    seatReservedAt: timestamp("seat_reserved_at"),
   },
   (table) => ({
     workspaceIdIdx: index().on(table.workspaceId),
@@ -1605,6 +1624,9 @@ export const scanReports = pgTable(
   "scan_reports",
   {
     id: varchar("id", { length: 32 }).primaryKey(),
+    ownerUserId: integer("owner_user_id"),
+    workspaceId: integer("workspace_id"),
+    scanId: varchar("scan_id", { length: 64 }),
     score: integer("score").notNull(),
     findings: json("findings").notNull().$type<
       Array<{
@@ -1618,10 +1640,18 @@ export const scanReports = pgTable(
     filename: varchar("filename", { length: 256 }),
     endpoints: json("endpoints").$type<string[]>(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
+    expiresAt: timestamp("expires_at"),
+    revokedAt: timestamp("revoked_at"),
     viewCount: integer("view_count").default(0).notNull(),
   },
   (table) => ({
     createdAtIdx: index().on(table.createdAt),
+    ownerCreatedIdx: index("scan_reports_owner_created_idx").on(table.ownerUserId, table.createdAt),
+    workspaceCreatedIdx: index("scan_reports_workspace_created_idx").on(
+      table.workspaceId,
+      table.createdAt,
+    ),
+    expiresAtIdx: index("scan_reports_expires_at_idx").on(table.expiresAt),
   }),
 );
 export type ScanReport = typeof scanReports.$inferSelect;
@@ -1632,3 +1662,6 @@ export * from "./schema-foundation";
 
 // ─── Rakshex Enterprise Tables ───────────────────────────────────────────
 export * from "./schema-enterprise";
+
+// ─── Team AI governance extensions ───────────────────────────────────────
+export * from "./schema-governance";

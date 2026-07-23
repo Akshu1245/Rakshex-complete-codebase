@@ -535,65 +535,60 @@ export default function ScanningPage() {
         </aside>
       </div>
 
-      {/* Bottom panel: Patch Queue */}
+      {/* Bottom panel: Patch Queue — real findings from the latest scan */}
       <footer className="h-24 border-t border-glass bg-surface/90 backdrop-blur-xl flex items-center px-6 gap-8 flex-shrink-0">
         <div className="flex-shrink-0">
           <div className="font-label-mono text-[10px] text-on-surface-variant mb-1">
             PATCH QUEUE
           </div>
           <div className="flex items-center gap-2">
-            <span className="font-headline-md text-primary font-bold">04</span>
+            <span className="font-headline-md text-primary font-bold">
+              {String(scanResult?.findings.length ?? 0).padStart(2, "0")}
+            </span>
             <span className="text-on-surface-variant text-sm">Pending</span>
           </div>
         </div>
         <div className="h-10 w-px bg-glass"></div>
         <div className="flex-1 flex gap-4 overflow-x-auto no-scrollbar">
-          {/* Queue Items */}
-          <div className="min-w-[280px] p-3 rounded-lg border border-glass bg-surface-container-low flex items-center gap-4 hover:border-primary/40 transition-all cursor-pointer group">
-            <div className="w-10 h-10 rounded bg-status-error/10 flex items-center justify-center text-status-error">
-              <span className="material-symbols-outlined">warning</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-semibold truncate text-white">CORS Policy Misconfig</div>
-              <div className="text-[11px] text-on-surface-variant truncate">
-                Origin: * detected in /v2/data
+          {scanResult && scanResult.findings.length > 0 ? (
+            scanResult.findings.map((f) => (
+              <div
+                key={f.id}
+                className="min-w-[280px] p-3 rounded-lg border border-glass bg-surface-container-low flex items-center gap-4 hover:border-primary/40 transition-all cursor-pointer group"
+              >
+                <div
+                  className={`w-10 h-10 rounded flex items-center justify-center ${
+                    f.severity.toLowerCase() === "critical" || f.severity.toLowerCase() === "high"
+                      ? "bg-status-error/10 text-status-error"
+                      : "bg-tertiary/10 text-tertiary"
+                  }`}
+                >
+                  <span className="material-symbols-outlined">warning</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold truncate text-white">{f.title}</div>
+                  <div className="text-[11px] text-on-surface-variant truncate">
+                    {f.category ?? f.severity}
+                    {f.cweId ? ` · ${f.cweId}` : ""}
+                  </div>
+                </div>
+                <span className="material-symbols-outlined text-on-surface-variant group-hover:text-primary text-sm">
+                  arrow_forward_ios
+                </span>
               </div>
+            ))
+          ) : (
+            <div className="flex items-center text-sm text-on-surface-variant">
+              No pending findings — run a scan to populate the patch queue.
             </div>
-            <span className="material-symbols-outlined text-on-surface-variant group-hover:text-primary text-sm">
-              arrow_forward_ios
-            </span>
-          </div>
-
-          <div className="min-w-[280px] p-3 rounded-lg border border-glass bg-surface-container-low flex items-center gap-4 hover:border-primary/40 transition-all cursor-pointer group">
-            <div className="w-10 h-10 rounded bg-status-error/10 flex items-center justify-center text-status-error">
-              <span className="material-symbols-outlined">link_off</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-semibold truncate text-white">Broken Auth Token</div>
-              <div className="text-[11px] text-on-surface-variant truncate">
-                Weak JWT secret detected
-              </div>
-            </div>
-            <span className="material-symbols-outlined text-on-surface-variant group-hover:text-primary text-sm">
-              arrow_forward_ios
-            </span>
-          </div>
-
-          <div className="min-w-[280px] p-3 rounded-lg border border-glass bg-surface-container-low flex items-center gap-4 hover:border-primary/40 transition-all cursor-pointer group opacity-50">
-            <div className="w-10 h-10 rounded bg-surface-container-highest flex items-center justify-center">
-              <span className="material-symbols-outlined">history</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-semibold truncate text-white font-medium">XSS Fixed</div>
-              <div className="text-[11px] text-on-surface-variant truncate">
-                Successfully patched 2m ago
-              </div>
-            </div>
-          </div>
+          )}
         </div>
-        <button className="flex-shrink-0 px-6 py-2 border border-primary text-primary font-bold rounded-lg hover:bg-primary/10 transition-all font-button-text">
+        <a
+          href="/findings"
+          className="flex-shrink-0 px-6 py-2 border border-primary text-primary font-bold rounded-lg hover:bg-primary/10 transition-all font-button-text"
+        >
           VIEW ALL ISSUES
-        </button>
+        </a>
       </footer>
     </div>
   );

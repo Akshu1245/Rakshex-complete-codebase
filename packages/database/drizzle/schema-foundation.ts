@@ -11,6 +11,7 @@
  * - Soft delete via deletedAt where required
  */
 
+import { sql } from "drizzle-orm";
 import {
   boolean,
   decimal,
@@ -225,6 +226,10 @@ export const apiKeys = pgTable(
     allowedIps: json("allowed_ips").$type<string[]>().default([]),
     allowedRepositories: json("allowed_repositories").$type<string[]>().default([]),
     projectId: varchar("project_id", { length: 64 }),
+    /** Optional gateway identity binding; prevents caller-selected attribution. */
+    identityId: integer("identity_id"),
+    /** Optional gateway agent binding; prevents caller-selected agent scope. */
+    agentId: varchar("agent_id", { length: 128 }),
     rotatedFromId: varchar("rotated_from_id", { length: 64 }),
     expiresAt: timestamp("expires_at"),
     lastUsedAt: timestamp("last_used_at"),
@@ -236,6 +241,9 @@ export const apiKeys = pgTable(
     prefixUniq: uniqueIndex("api_keys_prefix_uidx").on(t.keyPrefix),
     hashUniq: uniqueIndex("api_keys_hash_uidx").on(t.keyHash),
     workspaceIdx: index("api_keys_workspace_id_idx").on(t.workspaceId),
+    workspaceIdentityIdx: index("api_keys_workspace_identity_idx")
+      .on(t.workspaceId, t.identityId)
+      .where(sql`${t.identityId} IS NOT NULL`),
   }),
 );
 

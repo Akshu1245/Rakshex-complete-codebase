@@ -1,0 +1,17 @@
+# Railway service: BullMQ worker (no HTTP)
+# In Railway: New Service → same repo → Settings → Config-as-Code path:
+#   railway.worker.toml
+# Or set Dockerfile target to `worker` and disable HTTP health checks.
+#
+# Do NOT set healthcheckPath — the worker process does not listen on PORT.
+# Share DATABASE_URL + REDIS_URL with the API service (same Postgres/Redis).
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+dockerBuildTarget = "worker"
+
+[deploy]
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+# No healthcheckPath — worker has no /api/health

@@ -5,6 +5,7 @@ import * as db from "../db";
 import {
   generateOWASPRequirements,
   generatePCIDSSRequirements,
+  generateGDPRRequirements,
   type CollectionData,
 } from "../utils/scanning";
 import { generateReport } from "../engines/complianceEngine";
@@ -39,7 +40,7 @@ export const complianceRouter = router({
     .input(
       z.object({
         collectionId: z.string(),
-        reportType: z.enum(["pci_dss", "owasp", "owasp_llm", "dpdp"]).default("pci_dss"),
+        reportType: z.enum(["pci_dss", "owasp", "owasp_llm", "dpdp", "gdpr"]).default("pci_dss"),
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -102,6 +103,19 @@ export const complianceRouter = router({
         };
       } else if (input.reportType === "pci_dss") {
         const requirements = generatePCIDSSRequirements(collection.data as CollectionData);
+        const met = requirements.filter((r: any) => r.status === "met").length;
+        reportResult = {
+          requirements: requirements as any,
+          metCount: met,
+          notMetCount:
+            requirements.length -
+            met -
+            requirements.filter((r: any) => r.status === "manual_review").length,
+          manualCount: requirements.filter((r: any) => r.status === "manual_review").length,
+          score: requirements.length > 0 ? (met / requirements.length) * 100 : 0,
+        };
+      } else if (input.reportType === "gdpr") {
+        const requirements = generateGDPRRequirements(collection.data as CollectionData);
         const met = requirements.filter((r: any) => r.status === "met").length;
         reportResult = {
           requirements: requirements as any,
@@ -269,7 +283,15 @@ async function generateCompliancePDF(data: {
     doc.on("error", reject);
 
     const { report, collectionName, requirements, metCount, manualCount, notMetCount } = data;
-    const reportType = report.reportType === "pci_dss" ? "PCI DSS" : "OWASP";
+    const REPORT_TYPE_LABELS: Record<string, string> = {
+      pci_dss: "PCI DSS v4.0.1",
+      owasp: "OWASP API Top 10",
+      owasp_llm: "OWASP LLM Top 10",
+      dpdp: "DPDP Act",
+      gdpr: "GDPR",
+      custom: "Custom",
+    };
+    const reportType = REPORT_TYPE_LABELS[report.reportType as string] ?? String(report.reportType);
     const score = toNumber(report.complianceScore);
 
     // Page 1: Header and Executive Summary

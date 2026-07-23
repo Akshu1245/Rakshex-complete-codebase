@@ -10,6 +10,7 @@
 import { fetchWithTimeout } from "../utils/fetchWithTimeout";
 import { ExternalServiceError, RuntimePolicyError } from "../_core/errors";
 import { logger } from "../_core/logger";
+import { estimateAnthropicThinkingTokens } from "./thinkingTokens";
 import type {
   InvokeParams,
   InvokeResult,
@@ -301,6 +302,9 @@ export async function invokeAnthropic(
     const cost =
       (result.usage.prompt_tokens / 1_000_000) * pricing.prompt +
       (result.usage.completion_tokens / 1_000_000) * pricing.completion;
+    // Extended-thinking tokens are estimated from any `thinking` content
+    // blocks (Claude 3.7+); they are NOT the same as cache-read tokens.
+    const { thinkingTokens } = estimateAnthropicThinkingTokens(raw);
     import("../db").then(async (db) => {
       try {
         await db.recordTokenUsage(
@@ -308,7 +312,7 @@ export async function invokeAnthropic(
           model,
           result.usage!.prompt_tokens,
           result.usage!.completion_tokens,
-          raw.usage.cache_read_input_tokens ?? 0,
+          thinkingTokens,
           cost,
         );
       } catch (err) {

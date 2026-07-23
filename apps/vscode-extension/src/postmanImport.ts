@@ -26,8 +26,6 @@ interface PostmanScanResult {
   findings: PostmanFinding[];
   credentials: PostmanCredential[];
   riskScore: number;
-  owaspScore: number;
-  pciScore: number;
   scanTime: number;
 }
 
@@ -231,19 +229,12 @@ export class PostmanImportCommand {
     const maxRisk = uniqueFindings.length * 10 || 1;
     const riskScore = Math.min(100, Math.round((rawRisk / maxRisk) * 100));
 
-    const criticalCount = uniqueFindings.filter((f) => f.severity === "Critical").length;
-    const highCount = uniqueFindings.filter((f) => f.severity === "High").length;
-    const owaspScore = Math.max(0, Math.round(100 - (criticalCount * 15 + highCount * 8)));
-    const pciScore = Math.max(0, Math.round(100 - (criticalCount * 20 + highCount * 10)));
-
     return {
       collectionName: collection.info?.name || fileName,
       endpoints: [...new Set(endpoints)],
       findings: uniqueFindings,
       credentials: uniqueCredentials,
       riskScore,
-      owaspScore,
-      pciScore,
       scanTime: 0,
     };
   }
@@ -470,15 +461,11 @@ export class PostmanImportCommand {
       <div class="score-label">Endpoints</div>
       <div class="score-value" style="color: white;">${result.endpoints.length}</div>
     </div>
-    <div class="score-card">
-      <div class="score-label">OWASP</div>
-      <div class="score-value" style="color: ${result.owaspScore >= 80 ? "#22c55e" : result.owaspScore >= 50 ? "#eab308" : "#ef4444"};">${result.owaspScore}</div>
-      <div style="font-size: 11px; color: #64748b;">/100</div>
-    </div>
-    <div class="score-card">
-      <div class="score-label">PCI DSS</div>
-      <div class="score-value" style="color: ${result.pciScore >= 80 ? "#22c55e" : result.pciScore >= 50 ? "#eab308" : "#ef4444"};">${result.pciScore}</div>
-      <div style="font-size: 11px; color: #64748b;">/100</div>
+    <div class="score-card" style="grid-column: span 2;">
+      <div class="score-label">Compliance</div>
+      <div style="color: #cbd5e1; font-size: 13px; margin-top: 8px; line-height: 1.4;">
+        Import complete — run a compliance report in the Rakshex web dashboard for real OWASP / PCI scores.
+      </div>
     </div>
   </div>
 

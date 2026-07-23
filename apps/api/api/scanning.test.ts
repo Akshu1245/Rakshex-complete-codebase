@@ -42,6 +42,23 @@ vi.mock("../db", async () => {
       email: "test@example.com",
       name: "Test User",
     })),
+    // Tenant-access resolution (personal workspace + membership) used by
+    // requireCollectionAccess / requireFindingAccess.
+    getPersonalWorkspaceForUser: vi.fn(async (userId: number) => ({
+      id: 1,
+      ownerUserId: userId,
+      isPersonal: true,
+      name: "Personal",
+      slug: `user-${userId}`,
+    })),
+    getWorkspaceMembership: vi.fn(async (workspaceId: number, userId: number) => ({
+      workspaceId,
+      userId,
+      role: "owner",
+      active: true,
+    })),
+    setCollectionWorkspaceId: vi.fn(async () => {}),
+    setFindingWorkspaceId: vi.fn(async () => {}),
   };
 });
 

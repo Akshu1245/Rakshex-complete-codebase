@@ -1,6 +1,16 @@
+# Railway service: API (default)
+# Create a second Railway service from the same repo with:
+#   railway.toml → use railway.worker.toml settings (or set Docker target=worker in UI)
+# and attach the same Postgres + Redis plugins / env vars.
+#
+# Required plugins: PostgreSQL, Redis
+# Required env (API): see docs/DEPLOY_RAILWAY_VERCEL.md
+
 [build]
 builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
+# Explicit API target so the default CMD is the HTTP server
+dockerBuildTarget = "api"
 
 [deploy]
 healthcheckPath = "/api/health"

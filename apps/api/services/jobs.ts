@@ -71,17 +71,34 @@ export function registerJobWorkers(opts?: { force?: boolean }): void {
   q.registerWorker<ScanJob>(
     QUEUE_SCAN,
     async (data) => {
+      // Accept both the structured `{ options }` shape (enqueueScan / GitHub
+      // webhook path) and the flat `{ scanType, engineType, ... }` shape that
+      // `scanning.startScan` enqueues directly onto the `scan` queue.
+      const flat = data as ScanJob & {
+        scanType?: ScanOptions["scanType"];
+        triggeredBy?: ScanOptions["triggeredBy"];
+        prNumber?: number;
+        branch?: string;
+        commitSha?: string;
+      };
+      const options: ScanOptions = flat.options ?? {
+        scanType: flat.scanType ?? "full",
+        triggeredBy: flat.triggeredBy ?? "user",
+        prNumber: flat.prNumber,
+        branch: flat.branch,
+        commitSha: flat.commitSha,
+      };
       logger.info(
         {
           queue: QUEUE_SCAN,
           userId: data.userId,
           collectionId: data.collectionId,
-          scanType: data.options.scanType,
-          triggeredBy: data.options.triggeredBy,
+          scanType: options.scanType,
+          triggeredBy: options.triggeredBy,
         },
         "[Jobs] running queued scan",
       );
-      await runCollectionScan(data.userId, data.collectionId, data.options);
+      await runCollectionScan(data.userId, data.collectionId, options);
     },
     { concurrency: 4, maxAttempts: 3 },
   );

@@ -371,6 +371,27 @@ vi.mock("./db", async () => {
     getTeamMembersByUserId: vi.fn(async (userId: number) =>
       mockTeamMembers.filter((m) => m.userId === userId),
     ),
+    // Tenant-access resolution (personal workspace + membership) used by
+    // requireCollectionAccess / requireFindingAccess.
+    getPersonalWorkspaceForUser: vi.fn(async (userId: number) => ({
+      id: 1,
+      ownerUserId: userId,
+      isPersonal: true,
+      name: "Personal",
+      slug: `user-${userId}`,
+    })),
+    getWorkspaceMembership: vi.fn(async (workspaceId: number, userId: number) => ({
+      workspaceId,
+      userId,
+      role: "owner",
+      active: true,
+    })),
+    setCollectionWorkspaceId: vi.fn(async () => {}),
+    setFindingWorkspaceId: vi.fn(async () => {}),
+    listCollectionsPage: vi.fn(async ({ userId, limit, offset }: any) => {
+      const all = mockCollections.filter((c) => c.userId === userId);
+      return { items: all.slice(offset ?? 0, (offset ?? 0) + (limit ?? 20)), total: all.length };
+    }),
     updateTeamMemberRole: vi.fn(async (id: string, role: string) => {
       const m = mockTeamMembers.find((m) => m.id === id);
       if (m) m.role = role;
@@ -849,21 +870,30 @@ describe("onboarding", () => {
     expect(progress.currentStep).toBe(1);
   });
 
-  it("marks a step as complete", async () => {
+  it("allows manual attestation of setupCompliance", async () => {
+    // Onboarding is event-backed: only steps without a hard event signal
+    // (setupCompliance) can be manually attested.
     const { ctx } = createAuthContext({ id: 400 });
     const caller = appRouter.createCaller(ctx);
-    const result = await caller.onboarding.completeStep({
-      step: "importCollection",
-    });
+    const result = await caller.onboarding.completeStep({ step: "setupCompliance" });
     expect(result.success).toBe(true);
   });
 
-  it("step completion persists correctly", async () => {
+  it("does not mark event-backed steps without evidence", async () => {
+    const { ctx } = createAuthContext({ id: 400 });
+    const caller = appRouter.createCaller(ctx);
+    const result = await caller.onboarding.completeStep({ step: "importCollection" });
+    // No collection imported for this user → soft no-op, not marked complete.
+    expect(result.success).toBe(false);
+    const progress = await caller.onboarding.getProgress();
+    expect(progress.importCollectionCompleted).toBe(false);
+  });
+
+  it("persists manual setupCompliance completion", async () => {
     const { ctx } = createAuthContext({ id: 400 });
     const caller = appRouter.createCaller(ctx);
     const progress = await caller.onboarding.getProgress();
-    expect(progress.importCollectionCompleted).toBe(true);
-    expect(progress.currentStep).toBe(2);
+    expect(progress.setupComplianceCompleted).toBe(true);
   });
 });
 

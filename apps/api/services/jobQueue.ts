@@ -33,6 +33,42 @@ export interface JobQueue {
   shutdown(): Promise<void>;
 }
 
+// ── Dead-letter queue (DLQ) ─────────────────────────────────────────────────
+// Jobs that exhaust all retries are recorded here (bounded ring buffer) so
+// failures are visible to operators instead of vanishing silently.
+
+export interface DeadLetterEntry {
+  id: string;
+  queueName: string;
+  error: string;
+  failedAt: string;
+  attempts: number;
+}
+
+const DEAD_LETTER_MAX = 200;
+const deadLetters: DeadLetterEntry[] = [];
+
+export function recordDeadLetter(entry: DeadLetterEntry): void {
+  deadLetters.unshift(entry);
+  if (deadLetters.length > DEAD_LETTER_MAX) deadLetters.length = DEAD_LETTER_MAX;
+  logger.error(
+    { queueName: entry.queueName, jobId: entry.id, attempts: entry.attempts },
+    "[JobQueue][DLQ] job moved to dead-letter queue",
+  );
+}
+
+/** Read the current dead-letter entries (newest first) for admin visibility. */
+export function getDeadLetters(limit = 50): DeadLetterEntry[] {
+  return deadLetters.slice(0, Math.max(1, Math.min(limit, DEAD_LETTER_MAX)));
+}
+
+/** Clear the dead-letter buffer (used by admin "acknowledge all"). */
+export function clearDeadLetters(): number {
+  const n = deadLetters.length;
+  deadLetters.length = 0;
+  return n;
+}
+
 class MemoryJobQueue implements JobQueue {
   private workers: Map<
     string,
@@ -126,10 +162,13 @@ class MemoryJobQueue implements JobQueue {
           }
         }, backoff);
       } else {
-        logger.error(
-          { queueName: env.queueName, jobId: env.id },
-          "[JobQueue] job exhausted retries, dropping",
-        );
+        recordDeadLetter({
+          id: env.id,
+          queueName: env.queueName,
+          error: err instanceof Error ? err.message : String(err),
+          failedAt: new Date().toISOString(),
+          attempts: env.attempts,
+        });
       }
     }
   }
@@ -215,6 +254,18 @@ async function createBullMQQueue(redisUrl: string): Promise<JobQueue> {
           { err, queueName, jobId: job?.id, attempt: job?.attemptsMade },
           "[JobQueue] BullMQ job failed",
         );
+        // Only dead-letter once all retry attempts are exhausted.
+        const attemptsMade = job?.attemptsMade ?? 0;
+        const maxAttempts = job?.opts?.attempts ?? 3;
+        if (attemptsMade >= maxAttempts) {
+          recordDeadLetter({
+            id: String(job?.id ?? "unknown"),
+            queueName,
+            error: err instanceof Error ? err.message : String(err),
+            failedAt: new Date().toISOString(),
+            attempts: attemptsMade,
+          });
+        }
       });
       workers.set(queueName, worker);
     },

@@ -62,9 +62,12 @@ export class RakshexStatusBar {
     if (severityCounts.Low > 0) parts.push(`${severityCounts.Low}L`);
 
     const findingsText = parts.length > 0 ? parts.join(" ") : "✓ clear";
+    const weeklyCost =
+      typeof data.weeklyCost === "number" && Number.isFinite(data.weeklyCost) ? data.weeklyCost : 0;
+    const costCompact = `$${weeklyCost.toFixed(2)}/wk`;
     const resolvedCount = findings.filter((f) => f.status === "resolved").length;
 
-    this.item.text = `$(shield) ${findingsText}`;
+    this.item.text = `$(shield) ${findingsText} · ${costCompact}`;
 
     // Color based on risk level
     if (hasCritical) {
@@ -87,7 +90,6 @@ export class RakshexStatusBar {
         ? `💡 ${openCritical + openHigh} unresolved critical/high — a quick review keeps your APIs safer`
         : null;
 
-    // Detailed tooltip focused on value, not cost
     this.item.tooltip = [
       `Rakshex Security Status`,
       ``,
@@ -101,6 +103,7 @@ export class RakshexStatusBar {
       `  High: ${severityCounts.High}`,
       `  Medium: ${severityCounts.Medium}`,
       `  Low: ${severityCounts.Low}`,
+      `Weekly cost: $${weeklyCost.toFixed(2)} this week`,
       `Recent scans: ${data.recentScans}`,
       data.lastScanAt ? `Last scan: ${data.lastScanAt}` : null,
       ``,

@@ -367,7 +367,8 @@ jobs:
       - name: Build image for scan
         run: docker build -f Dockerfile --target api -t rakshex-api:scan .
       - name: Trivy vulnerability scan
-        uses: aquasecurity/trivy-action@0.28.0
+        # Pin post-compromise release (0.28.0 tag missing; prefer v-prefixed published tag).
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: rakshex-api:scan
           format: table

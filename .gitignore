@@ -15,7 +15,13 @@ build/
 .env.production.local
 
 # IDE and editor files
-.vscode/
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/extensions.json
+**/.vscode/*
+!**/.vscode/launch.json
+!**/.vscode/tasks.json
 .idea/
 *.swp
 *.swo

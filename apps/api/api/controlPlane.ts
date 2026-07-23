@@ -20,6 +20,8 @@ import { sha256 } from "../utils/crypto";
 import { evaluateGatewayRequest } from "../services/controlPlane/gatewayPolicy";
 import { decideEnforcement, type KillSwitchState } from "../services/gateway/enforcement";
 import { readKillSwitchCache } from "../services/gateway/killSwitchCache";
+import { detectAgentLoop, createRedisLoopStore } from "../services/agentguard/loopDetector";
+import { redis } from "../_core/cache";
 import { toNumber } from "../utils/decimal";
 
 const providerIds = [
@@ -681,6 +683,55 @@ export const controlPlaneRouter = router({
             killSwitchEnforced: killActive,
             serverEnforced: true,
           };
+        }
+
+        // AgentGuard: autonomous runaway-loop / rate-anomaly detection. Counts
+        // this agent's gateway calls (and identical-prompt repeats) in a sliding
+        // window; on a detected loop it auto-trips the kill switch so subsequent
+        // calls are severed, then blocks this call.
+        if (input.agentId) {
+          const loopStore = createRedisLoopStore(redis as never);
+          if (loopStore) {
+            const promptHash = input.inputText ? sha256(input.inputText) : undefined;
+            const loop = await detectAgentLoop(loopStore, {
+              scopeKey: `${input.workspaceId}:${input.agentId}`,
+              promptHash,
+            });
+            if (loop.loopDetected) {
+              try {
+                // Autonomous action: sever further spend by activating the kill switch.
+                await db.updateKillSwitchSettings(ctx.user.id, undefined, true);
+                await db.createKillSwitchEvent(
+                  ctx.user.id,
+                  "auto_triggered",
+                  budgetLimit,
+                  currentSpend,
+                  loop.reasons[0],
+                  { agentId: input.agentId, ...loop },
+                );
+                await db.createAuditLogEntry(ctx.user.id, "agentguard_loop_blocked", {
+                  workspaceId: input.workspaceId,
+                  agentId: input.agentId,
+                  reasons: loop.reasons,
+                  callsInWindow: loop.callsInWindow,
+                  duplicatePromptCount: loop.duplicatePromptCount,
+                });
+              } catch {
+                /* best effort autonomous action + audit */
+              }
+              return {
+                decision: "blocked" as const,
+                reasons: loop.reasons,
+                piiRedactions: 0,
+                promptInjectionDetected: false,
+                estimatedCostUsd: input.estimatedCostUsd ?? 0,
+                rawPromptStored: false,
+                killSwitchEnforced: true,
+                serverEnforced: true,
+                loopDetected: true,
+              };
+            }
+          }
         }
 
         const result = evaluateGatewayRequest({

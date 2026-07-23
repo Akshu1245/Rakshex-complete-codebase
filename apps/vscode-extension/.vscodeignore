@@ -1,4 +1,4 @@
-# DevPulse VS Code Extension — publish ignore list
+# Rakshex VS Code Extension — publish ignore list
 node_modules
 src
 .vscode
@@ -10,3 +10,10 @@ vitest.config.ts
 .gitignore
 .eslintrc*
 .prettierrc*
+# tsc emit — runtime is esbuild dist/ only
+out
+.turbo
+scripts
+PUBLISHING.md
+MARKETPLACE_PUBLISH_PREP.md
+*.vsix

@@ -6,8 +6,10 @@
 import * as db from "../db";
 import { NotFoundError } from "../_core/errors";
 import { logger } from "../_core/logger";
+import { nanoid } from "nanoid";
 import {
   generateRealFindings,
+  detectShadowAPIs,
   calculateRiskScore,
   getRiskLevel,
   type CollectionData,
@@ -108,6 +110,32 @@ export async function runCollectionScan(
       cweId: f.cweId,
     }));
     budget = piResult.budget;
+  } else if (options.scanType === "shadow_api") {
+    // Shadow API discovery: surface undocumented / non-standard / destructive
+    // endpoints as findings instead of running the generic OWASP ruleset.
+    const severityByRisk = {
+      CRITICAL: "Critical",
+      HIGH: "High",
+      MEDIUM: "Medium",
+      LOW: "Low",
+    } as const;
+    findings = detectShadowAPIs(collection.data as CollectionData).map((s) => ({
+      id: nanoid(),
+      title: `Shadow API: ${s.method} ${s.endpoint}`,
+      severity: severityByRisk[s.riskLevel],
+      description:
+        s.reason ||
+        "Undocumented or non-standard endpoint discovered that is not part of the published API inventory.",
+      category: "Shadow API (OWASP API9:2023 Improper Inventory Management)",
+      remediation:
+        s.recommendation ||
+        "Document this endpoint in your API specification and restrict access via authentication/authorization.",
+      cweId: "CWE-1059",
+      ruleId: "shadow_api.discovery",
+      confidence: "medium",
+      endpoint: s.endpoint,
+      method: s.method,
+    }));
   } else {
     findings = generateRealFindings(collection.data as CollectionData);
   }
