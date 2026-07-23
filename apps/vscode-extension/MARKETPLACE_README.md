@@ -2,9 +2,9 @@
 
 > Find security issues, hidden costs, and compliance risks in your AI agents and APIs before they hit production.
 
-[![Version](https://img.shields.io/visual-studio-marketplace/v/rakshex.rakshex)](https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex)
-[![Installs](https://img.shields.io/visual-studio-marketplace/i/rakshex.rakshex)](https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex)
-[![Rating](https://img.shields.io/visual-studio-marketplace/r/rakshex.rakshex)](https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex)
+[![Version](https://img.shields.io/visual-studio-marketplace/v/rakshex.rakshex-vscode)](https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex-vscode)
+[![Installs](https://img.shields.io/visual-studio-marketplace/i/rakshex.rakshex-vscode)](https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex-vscode)
+[![Rating](https://img.shields.io/visual-studio-marketplace/r/rakshex.rakshex-vscode)](https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex-vscode)
 
 ---
 
@@ -26,7 +26,7 @@ Rakshex scans your AI agent configurations, API collections, and LLM integration
 
 ```bash
 # From VS Code Marketplace
-ext install rakshex
+ext install rakshex.rakshex-vscode
 
 # Or search "Rakshex" in the Extensions sidebar
 ```
@@ -49,14 +49,9 @@ ext install rakshex
 
 Scan any API collection or AI agent configuration file with one click. Find leaked secrets, misconfigurations, and compliance issues instantly.
 
-### 🛡️ AgentGuard
+### AgentGuard
 
-Detects when AI agents are about to:
-
-- Expose sensitive data to LLM providers
-- Enter infinite cost loops
-- Call unauthorized APIs
-- Generate non-compliant code
+Configure agent guardrails in the Rakshex dashboard. The extension surfaces related findings and cost signals; live kill-switch state is managed server-side, not invented in the IDE.
 
 ### 💰 Cost Intelligence
 

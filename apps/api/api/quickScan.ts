@@ -18,7 +18,7 @@ import rateLimit from "express-rate-limit";
 import express from "express";
 import { logger } from "../_core/logger";
 import { fetchWithTimeout } from "../utils/fetchWithTimeout";
-import { validateScanTarget } from "../utils/validateScanTarget";
+import { buildValidatedScanUrl, validateScanTarget } from "../utils/validateScanTarget";
 import {
   generateRealFindings,
   calculateRiskScore,
@@ -52,11 +52,22 @@ export function registerQuickScanRoute(app: Express): void {
         // Optionally fetch the spec from a URL (SSRF-guarded).
         if (!spec && typeof req.body?.url === "string") {
           const check = await validateScanTarget(req.body.url);
-          if (!check.ok) {
-            res.status(400).json({ error: `Blocked target: ${check.reason}` });
+          if (
+            !check.ok ||
+            !check.hostname ||
+            (check.protocol !== "http:" && check.protocol !== "https:")
+          ) {
+            res.status(400).json({ error: `Blocked target: ${check.reason ?? "invalid"}` });
             return;
           }
-          const resp = await fetchWithTimeout(req.body.url, { timeoutMs: 5000 });
+          const safeHref = buildValidatedScanUrl({
+            protocol: check.protocol,
+            hostname: check.hostname,
+            pathname: check.pathname,
+            search: check.search,
+          });
+          // Fetch only the rebuilt URL — never raw req.body.url.
+          const resp = await fetchWithTimeout(safeHref, { timeoutMs: 5000 });
           if (!resp.ok) {
             res.status(400).json({ error: `Could not fetch spec (HTTP ${resp.status})` });
             return;

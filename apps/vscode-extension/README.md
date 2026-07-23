@@ -1,9 +1,9 @@
 # Rakshex — Stop AI agents from burning your API budget
 
-> The first VS Code extension that reveals hidden LLM costs, auto-stops
-> infinite loops, and scans your API collections for vulnerabilities.
+> The first VS Code extension that reveals hidden LLM costs, helps stop
+> runaway agent loops, and scans your API collections for vulnerabilities.
 
-![Rakshex hero](resources/screenshot-hero.png)
+![Rakshex command palette](resources/screenshot-command-palette.png)
 
 ---
 
@@ -17,7 +17,7 @@ If you're building with AI, you're probably paying **3× more** for LLM APIs tha
 
 ## What Rakshex Does
 
-### 1. Hidden Cost Detection 💰
+### 1. Hidden Cost Detection
 
 Reveals reasoning tokens that OpenAI, Anthropic, and Gemini hide from you.
 
@@ -25,28 +25,26 @@ Reveals reasoning tokens that OpenAI, Anthropic, and Gemini hide from you.
 - Weekly spend tracking
 - Alerts when costs spike unexpectedly
 
-![Cost dashboard](resources/screenshot-cost.png)
+![Findings tree](resources/screenshot-findings-tree.png)
 
-### 2. AgentGuard Kill Switch 🛑
+### 2. AgentGuard Controls
 
-Auto-stops infinite loops and runaway agents in real-time.
+Configure agent guardrails in the Rakshex dashboard (kill-switch and policy live state is managed server-side — the extension surfaces findings and cost signals).
 
-- Detects recursive API call patterns
-- Blocks cost anomalies
+- Detect recursive API call patterns
+- Flag cost anomalies
 - Configurable thresholds per project
 
-![AgentGuard alert](resources/screenshot-agentguard.png)
+![Status bar](resources/screenshot-status-bar.png)
 
-### 3. Instant Security Scan 🔍
+### 3. Instant Security Scan
 
 Import any Postman, OpenAPI, or Bruno collection. Get a full security report in seconds.
 
 - Secret detection
 - Auth weakness detection
 - Injection vulnerability scanning
-- OWASP API Top 10 coverage
-
-![Findings](resources/screenshot-findings.png)
+- OWASP API Top 10 coverage (via compliance reports in the web dashboard)
 
 ## Setup (30 Seconds)
 
@@ -56,28 +54,6 @@ Import any Postman, OpenAPI, or Bruno collection. Get a full security report in 
 4. **Scan** — Click "Run Scan" and see your first findings
 
 Most developers find at least **2 issues** they didn't know about.
-
-## What Developers Say
-
-> "Rakshex found $1,200 in hidden reasoning costs we didn't know existed."
-> — Engineering Lead, Series B SaaS
-
-> "AgentGuard stopped an infinite loop that would have burned $500 overnight."
-> — CTO, AI Startup
-
-> "The fastest security tool I've ever used. Found 6 issues in 30 seconds."
-> — Staff Engineer, Fortune 500
-
-## Supported Providers
-
-| Provider        | Cost Tracking | AgentGuard | Scanning |
-| --------------- | ------------- | ---------- | -------- |
-| OpenAI          | ✅            | ✅         | ✅       |
-| Anthropic       | ✅            | ✅         | ✅       |
-| Google (Gemini) | ✅            | ✅         | ✅       |
-| Azure OpenAI    | ✅            | ✅         | ✅       |
-| AWS Bedrock     | ✅            | ✅         | ✅       |
-| Local (Ollama)  | ✅            | ✅         | ✅       |
 
 ## Commands
 
@@ -90,10 +66,10 @@ Most developers find at least **2 issues** they didn't know about.
 
 ## Privacy First
 
-- 🔒 **Your code never leaves your machine** — we only scan collections you explicitly import
-- 🔒 **API keys are encrypted** — stored in VS Code's SecretStorage (OS keychain)
-- 🔒 **No prompt logging** — we never see your LLM prompts or responses
-- 🔒 **Telemetry is optional** — opt out anytime in settings
+- **Your code never leaves your machine** — we only scan collections you explicitly import
+- **API keys are encrypted** — stored in VS Code's SecretStorage (OS keychain)
+- **No prompt logging** — we never see your LLM prompts or responses
+- **Telemetry is optional** — opt out anytime in settings
 
 Read our full [Privacy Policy](https://rakshex.in/privacy).
 
@@ -109,9 +85,9 @@ Read our full [Privacy Policy](https://rakshex.in/privacy).
 
 ## Support
 
-- 💬 [Discord community](https://discord.gg/rakshex)
-- 🐛 [GitHub Issues](https://github.com/rakshex/rakshex/issues)
-- 📧 [support@rakshex.in](mailto:support@rakshex.in)
+- [Discord community](https://discord.gg/rakshex)
+- [GitHub Issues](https://github.com/rakshex/rakshex/issues)
+- [support@rakshex.in](mailto:support@rakshex.in)
 
 ## License
 

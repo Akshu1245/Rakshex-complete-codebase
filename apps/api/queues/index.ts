@@ -33,10 +33,18 @@ class MockQueue {
           const { wsManager } = await import("../websocket");
 
           logger.info({ id, data }, "[MockQueue] Running mock scan job");
-          const result = await runCollectionScan(data.userId, data.collectionId, {
-            scanType: data.scanType ?? "full",
-            triggeredBy: "user",
-          });
+          // Accept both flat `{ scanType }` and nested `{ options }` job shapes
+          // (same contract as scanWorker / jobs.ts registerWorker).
+          const options = data.options?.scanType
+            ? data.options
+            : {
+                scanType: data.scanType ?? data.options?.scanType ?? "full",
+                triggeredBy: data.triggeredBy ?? data.options?.triggeredBy ?? "user",
+                prNumber: data.prNumber ?? data.options?.prNumber,
+                branch: data.branch ?? data.options?.branch,
+                commitSha: data.commitSha ?? data.options?.commitSha,
+              };
+          const result = await runCollectionScan(data.userId, data.collectionId, options);
 
           try {
             wsManager.broadcastScanComplete(data.userId, {

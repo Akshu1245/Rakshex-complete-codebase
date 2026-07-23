@@ -2807,6 +2807,8 @@ export async function getRecentFindingsForUser(userId: number, limit = 5) {
 
 interface GatewayAuditPayload {
   tenantId?: string;
+  /** Optional workspace tenancy (migration 0020). Resolved from personal WS if omitted. */
+  workspaceId?: number;
   requestId?: string;
   model?: string;
   provider?: string;
@@ -2883,8 +2885,18 @@ export async function recordGatewayAudit(payload: GatewayAuditPayload): Promise<
 
   const latencyMs =
     payload.startedAt && payload.endedAt ? Math.max(0, payload.endedAt - payload.startedAt) : null;
+  let workspaceId = payload.workspaceId ?? null;
+  if (workspaceId == null) {
+    try {
+      const personal = await getPersonalWorkspaceForUser(userId);
+      workspaceId = personal?.id ?? null;
+    } catch {
+      workspaceId = null;
+    }
+  }
   const row: InsertGatewayAuditRow = {
     userId,
+    workspaceId,
     requestId: payload.requestId ?? crypto.randomUUID(),
     model,
     decision: payload.decision,

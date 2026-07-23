@@ -60,11 +60,11 @@ For Open VSX:
 ## 3. Local dev loop
 
 ```bash
-cd rakshex-vscode
+cd apps/vscode-extension
 npm install
-npm run compile        # builds to ./out
-# Press F5 in VS Code, or use the "Run Extension" launch profile,
-# to open an Extension Development Host with the extension loaded.
+npm run build          # esbuild minify → ./dist
+# Press F5 in VS Code (Run Extension / Run Rakshex VS Code Extension),
+# or use the launch profile under .vscode/ — preLaunchTask starts esbuild-watch.
 ```
 
 Run `npm run check` before every commit — it typechecks the whole
@@ -73,9 +73,9 @@ extension without writing anything to disk.
 ## 4. Package a `.vsix` for manual install / review
 
 ```bash
-cd rakshex-vscode
+cd apps/vscode-extension
 npm install
-npm run compile
+npm run build
 vsce package
 ```
 

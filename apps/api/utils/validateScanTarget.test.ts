@@ -35,8 +35,11 @@ describe("validateScanTarget", () => {
     expect((await validateScanTarget("http://192.168.0.10/api")).ok).toBe(false);
   });
 
-  it("allows a normal public https URL", async () => {
+  it("allows a normal public https URL and returns rebuildable components", async () => {
     const r = await validateScanTarget("https://8.8.8.8/openapi.json");
     expect(r.ok).toBe(true);
+    expect(r.hostname).toBe("8.8.8.8");
+    expect(r.protocol).toBe("https:");
+    expect(r.href).toMatch(/^https:\/\/8\.8\.8\.8\/openapi\.json/);
   });
 });

@@ -5,6 +5,7 @@
 export * from "../drizzle/schema";
 export * from "../drizzle/schema-foundation";
 export * from "../drizzle/schema-enterprise";
+export * from "../drizzle/schema-governance";
 export * from "../drizzle/relations";
 export * from "../drizzle/relations-enterprise";
 

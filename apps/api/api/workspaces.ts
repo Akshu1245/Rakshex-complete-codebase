@@ -105,19 +105,16 @@ export const workspacesRouter = router({
       if (await db.getWorkspaceBySlug(slug)) {
         throw new ValidationError("a workspace with this slug already exists");
       }
-      const id = await db.createWorkspace({
-        slug,
-        name: input.name.trim(),
-        ownerUserId: ctx.user.id,
-        isPersonal: false,
-      });
-      await db.addWorkspaceMember({
-        workspaceId: id,
-        userId: ctx.user.id,
-        role: "owner",
-        active: true,
-        joinedAt: new Date(),
-      });
+      // Atomic workspace + owner membership (Postgres `.returning()`, not insertId).
+      const id = await db.createWorkspaceWithOwner(
+        {
+          slug,
+          name: input.name.trim(),
+          ownerUserId: ctx.user.id,
+          isPersonal: false,
+        },
+        ctx.user.id,
+      );
       return { id, slug };
     }),
 

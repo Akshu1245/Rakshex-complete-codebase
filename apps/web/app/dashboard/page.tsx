@@ -9,6 +9,21 @@ import AiGovernanceSummary from "../../components/AiGovernanceSummary";
 
 function getSocketUrl(): string {
   if (typeof window === "undefined") return "";
+  // Prefer explicit WS URL, then API origin (Vercel web ≠ Railway API).
+  const explicit = process.env.NEXT_PUBLIC_WS_URL?.trim();
+  if (explicit) return explicit.replace(/\/$/, "");
+
+  const api = process.env.NEXT_PUBLIC_TS_API_URL?.trim() || process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (api) {
+    try {
+      const u = new URL(api);
+      u.protocol = u.protocol === "https:" ? "wss:" : "ws:";
+      return u.origin;
+    } catch {
+      /* fall through */
+    }
+  }
+
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   return `${protocol}//${window.location.host}`;
 }

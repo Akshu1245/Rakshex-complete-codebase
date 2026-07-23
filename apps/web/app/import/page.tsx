@@ -53,6 +53,7 @@ export default function ImportPage() {
     try {
       const res = await fetch("/api/import/preview", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ source, data: JSON.parse(data) }),
       });
@@ -72,6 +73,7 @@ export default function ImportPage() {
     try {
       const res = await fetch("/api/import/execute", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ source, data: JSON.parse(data) }),
       });

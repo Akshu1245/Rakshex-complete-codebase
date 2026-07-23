@@ -575,8 +575,8 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
     <div class="feature">
       <div class="feature-icon">⚡</div>
       <div>
-        <div class="feature-title">AgentGuard kill switch</div>
-        <div class="feature-desc">Auto-stop rogue agents, unauthorized API calls & compliance risks</div>
+        <div class="feature-title">AgentGuard controls</div>
+        <div class="feature-desc">Configure agent guardrails in the Rakshex dashboard — kill-switch live state is managed server-side</div>
       </div>
     </div>
   </div>

@@ -36,6 +36,34 @@ export interface Collection {
   id: string;
   name: string;
   isShared?: boolean;
+  format?: string;
+  totalRequests?: number;
+}
+
+/** Full collection row from `collections.get` (includes raw import data). */
+export interface CollectionDetail extends Collection {
+  description?: string | null;
+  data?: unknown;
+}
+
+export interface ComplianceReportSummary {
+  id: string;
+  reportType: string;
+  complianceScore: number;
+  totalRequirements?: number;
+  metRequirements?: number;
+  createdAt: string;
+}
+
+export interface ComplianceScoreSnapshot {
+  score: number;
+  createdAt: string;
+  reportType: string;
+}
+
+export interface LatestComplianceScores {
+  owasp: ComplianceScoreSnapshot | null;
+  pci: ComplianceScoreSnapshot | null;
 }
 
 export interface ControlPlaneSummary {
@@ -111,8 +139,63 @@ export class RakshexApi {
   }
 
   async listCollections(): Promise<Collection[]> {
-    // `collections.list` is the canonical list endpoint on the server.
-    return this.query<Collection[]>("collections.list");
+    // `collections.list` returns a paginated object; older shapes may be a bare array.
+    const result = await this.query<
+      Collection[] | { collections?: Collection[]; items?: Collection[] }
+    >("collections.list");
+    if (Array.isArray(result)) return result;
+    return result.collections ?? result.items ?? [];
+  }
+
+  async getCollection(id: string): Promise<CollectionDetail> {
+    return this.query<CollectionDetail>("collections.get", { id });
+  }
+
+  async listComplianceReports(
+    collectionId: string,
+    page = 1,
+    pageSize = 20,
+  ): Promise<{ reports: ComplianceReportSummary[] }> {
+    return this.query<{ reports: ComplianceReportSummary[] }>("compliance.listReports", {
+      collectionId,
+      page,
+      pageSize,
+    });
+  }
+
+  /**
+   * Fetch latest OWASP / PCI DSS compliance scores across the user's
+   * first few collections. Returns nulls when no reports exist yet.
+   */
+  async getLatestComplianceScores(maxCollections = 5): Promise<LatestComplianceScores> {
+    const collections = await this.listCollections();
+    let owasp: ComplianceScoreSnapshot | null = null;
+    let pci: ComplianceScoreSnapshot | null = null;
+
+    for (const c of collections.slice(0, maxCollections)) {
+      try {
+        const { reports } = await this.listComplianceReports(c.id, 1, 20);
+        for (const r of reports ?? []) {
+          const snap: ComplianceScoreSnapshot = {
+            score: Number(r.complianceScore) || 0,
+            createdAt: String(r.createdAt ?? ""),
+            reportType: r.reportType,
+          };
+          const newer = (prev: ComplianceScoreSnapshot | null) =>
+            !prev ||
+            (snap.createdAt &&
+              prev.createdAt &&
+              new Date(snap.createdAt).getTime() > new Date(prev.createdAt).getTime());
+
+          if (r.reportType === "owasp" && newer(owasp)) owasp = snap;
+          if (r.reportType === "pci_dss" && newer(pci)) pci = snap;
+        }
+      } catch {
+        // Skip collections the key cannot read or that have no reports.
+      }
+    }
+
+    return { owasp, pci };
   }
 
   async triggerScan(collectionId: string): Promise<{ scanId: string; status: string }> {
@@ -356,5 +439,5 @@ export class RakshexApi {
 export function getConfiguredBaseUrl(): string {
   return vscode.workspace
     .getConfiguration("rakshex")
-    .get<string>("apiUrl", "http://localhost:8000");
+    .get<string>("apiUrl", "http://localhost:3000");
 }

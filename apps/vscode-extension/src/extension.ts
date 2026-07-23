@@ -767,6 +767,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   await registerGatewayCommand(context, readApiKey);
   registerShadowApiCommand(context, {
     isTrusted: () => vscode.workspace.isTrusted,
+    api,
+    isSignedIn: () => Boolean(cachedApiKey),
   });
 
   // Postman credential scanner command
@@ -907,7 +909,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
           if (choice === "Leave Review") {
             void vscode.env.openExternal(
               vscode.Uri.parse(
-                "https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex&ssr=false#review-details",
+                "https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex-vscode&ssr=false#review-details",
               ),
             );
           }

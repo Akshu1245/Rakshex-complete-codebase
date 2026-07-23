@@ -48,6 +48,8 @@ CMD ["node", "--import", "tsx", "apps/api/_core/index.ts"]
 
 FROM runner AS worker
 ENV WORKER_CONCURRENCY=3
+# Worker has no HTTP listener — clear inherited API healthcheck.
+HEALTHCHECK NONE
 CMD ["node", "--import", "tsx", "apps/api/queues/workers/index.ts"]
 
 FROM runner AS api

@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   pgEnum,
   pgTable,
@@ -217,12 +218,24 @@ export const shadowKeys = pgTable(
     isInVault: boolean("is_in_vault").default(false).notNull(),
     suggestedVault: varchar("suggested_vault", { length: 255 }),
     status: varchar("status", { length: 32 }).default("open").notNull(),
+    assigneeUserId: integer("assignee_user_id"),
+    resolutionNote: text("resolution_note"),
     remediatedAt: timestamp("remediated_at"),
+    lastSeenAt: timestamp("last_seen_at").defaultNow().notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => ({
     workspaceIdx: index().on(table.workspaceId),
     keyHashIdx: index().on(table.keyHash),
+    workspaceKeyUniq: uniqueIndex("shadow_keys_workspace_key_uniq").on(
+      table.workspaceId,
+      table.keyHash,
+    ),
+    workspaceStatusIdx: index("shadow_keys_workspace_status_idx").on(
+      table.workspaceId,
+      table.status,
+      table.lastSeenAt,
+    ),
   }),
 );
 
@@ -586,3 +599,219 @@ export const controlPlaneDiscoveryFindings = pgTable(
 );
 export type ControlPlaneDiscoveryFinding = typeof controlPlaneDiscoveryFindings.$inferSelect;
 export type InsertControlPlaneDiscoveryFinding = typeof controlPlaneDiscoveryFindings.$inferInsert;
+
+// ─── Team AI Governance ──────────────────────────────────────────────────
+
+export const teamAiIdentityStatusEnum = pgEnum("team_ai_identity_status", [
+  "active",
+  "inactive",
+  "suspended",
+  "unknown",
+]);
+
+export const teamAiUsageSourceEnum = pgEnum("team_ai_usage_source", [
+  "gateway",
+  "admin_api",
+  "analytics_api",
+  "cloud_billing",
+  "otel",
+  "csv",
+  "manual",
+]);
+
+export const teamAiBudgetPeriodEnum = pgEnum("team_ai_budget_period", ["monthly"]);
+
+export const teamAiEnforcementModeEnum = pgEnum("team_ai_enforcement_mode", [
+  "gateway",
+  "provider_native",
+  "monitor_only",
+]);
+
+export const runtimeKillScopeTypeEnum = pgEnum("runtime_kill_scope_type", [
+  "workspace",
+  "identity",
+  "project",
+  "agent",
+]);
+
+export const providerSyncRunStatusEnum = pgEnum("provider_sync_run_status", [
+  "pending",
+  "running",
+  "success",
+  "partial",
+  "failed",
+  "not_configured",
+  "not_implemented",
+]);
+
+/** Normalized per-employee AI identity linked to a provider seat/user. */
+export const teamAiIdentities = pgTable(
+  "team_ai_identities",
+  {
+    id: serial("id").primaryKey(),
+    workspaceId: integer("workspace_id").notNull(),
+    workspaceUserId: integer("workspace_user_id"),
+    provider: controlPlaneProviderEnum("provider").notNull(),
+    externalUserId: varchar("external_user_id", { length: 255 }).notNull(),
+    email: varchar("email", { length: 320 }),
+    displayName: varchar("display_name", { length: 255 }),
+    subscriptionSeatId: integer("subscription_seat_id"),
+    status: teamAiIdentityStatusEnum("status").default("active").notNull(),
+    metadata: json("metadata").$type<Record<string, unknown>>(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdateFn(() => new Date())
+      .notNull(),
+  },
+  (table) => ({
+    workspaceProviderExternalUniq: uniqueIndex("team_ai_identities_ws_provider_ext_uniq").on(
+      table.workspaceId,
+      table.provider,
+      table.externalUserId,
+    ),
+    workspaceIdx: index("team_ai_identities_workspace_idx").on(table.workspaceId),
+    emailIdx: index("team_ai_identities_email_idx").on(table.email),
+    workspaceUserIdx: index("team_ai_identities_workspace_user_idx").on(table.workspaceUserId),
+  }),
+);
+export type TeamAiIdentity = typeof teamAiIdentities.$inferSelect;
+export type InsertTeamAiIdentity = typeof teamAiIdentities.$inferInsert;
+
+/** Idempotent usage/cost events attributed to identities (no raw prompts). */
+export const teamAiUsageEvents = pgTable(
+  "team_ai_usage_events",
+  {
+    id: serial("id").primaryKey(),
+    workspaceId: integer("workspace_id").notNull(),
+    identityId: integer("identity_id"),
+    providerAccountId: integer("provider_account_id"),
+    provider: controlPlaneProviderEnum("provider").notNull(),
+    source: teamAiUsageSourceEnum("source").notNull(),
+    externalEventId: varchar("external_event_id", { length: 255 }).notNull(),
+    occurredAt: timestamp("occurred_at").notNull(),
+    requestCount: integer("request_count").default(1).notNull(),
+    inputTokens: integer("input_tokens").default(0).notNull(),
+    outputTokens: integer("output_tokens").default(0).notNull(),
+    costUsd: decimal("cost_usd", { precision: 18, scale: 8 }).default("0").notNull(),
+    model: varchar("model", { length: 128 }),
+    product: varchar("product", { length: 128 }),
+    confidence: controlPlaneEvidenceConfidenceEnum("confidence").default("imported").notNull(),
+    metadata: json("metadata").$type<Record<string, unknown>>(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    workspaceExternalUniq: uniqueIndex("team_ai_usage_events_ws_ext_uniq").on(
+      table.workspaceId,
+      table.externalEventId,
+    ),
+    workspaceOccurredIdx: index("team_ai_usage_events_ws_occurred_idx").on(
+      table.workspaceId,
+      table.occurredAt,
+    ),
+    identityIdx: index("team_ai_usage_events_identity_idx").on(table.identityId),
+    providerIdx: index("team_ai_usage_events_provider_idx").on(table.provider),
+  }),
+);
+export type TeamAiUsageEvent = typeof teamAiUsageEvents.$inferSelect;
+export type InsertTeamAiUsageEvent = typeof teamAiUsageEvents.$inferInsert;
+
+/** Workspace or per-identity AI spend budgets with honest enforcement modes. */
+export const teamAiBudgets = pgTable(
+  "team_ai_budgets",
+  {
+    id: serial("id").primaryKey(),
+    workspaceId: integer("workspace_id").notNull(),
+    /** null = workspace default budget */
+    identityId: integer("identity_id"),
+    period: teamAiBudgetPeriodEnum("period").default("monthly").notNull(),
+    limitUsd: decimal("limit_usd", { precision: 18, scale: 4 }).notNull(),
+    warningPct: integer("warning_pct").default(80).notNull(),
+    hardLimit: boolean("hard_limit").default(false).notNull(),
+    enforcementMode: teamAiEnforcementModeEnum("enforcement_mode")
+      .default("monitor_only")
+      .notNull(),
+    currentSpendUsd: decimal("current_spend_usd", { precision: 18, scale: 8 })
+      .default("0")
+      .notNull(),
+    periodStart: timestamp("period_start"),
+    metadata: json("metadata").$type<Record<string, unknown>>(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdateFn(() => new Date())
+      .notNull(),
+  },
+  (table) => ({
+    workspaceDefaultPeriodUniq: uniqueIndex("team_ai_budgets_ws_default_period_uniq")
+      .on(table.workspaceId, table.period)
+      .where(sql`${table.identityId} IS NULL`),
+    workspaceIdentityPeriodUniq: uniqueIndex("team_ai_budgets_ws_identity_period_uniq")
+      .on(table.workspaceId, table.identityId, table.period)
+      .where(sql`${table.identityId} IS NOT NULL`),
+    workspaceIdx: index("team_ai_budgets_workspace_idx").on(table.workspaceId),
+  }),
+);
+export type TeamAiBudget = typeof teamAiBudgets.$inferSelect;
+export type InsertTeamAiBudget = typeof teamAiBudgets.$inferInsert;
+
+/** Durable runtime kill switches scoped to workspace / identity / project / agent. */
+export const runtimeKillSwitches = pgTable(
+  "runtime_kill_switches",
+  {
+    id: serial("id").primaryKey(),
+    workspaceId: integer("workspace_id").notNull(),
+    scopeType: runtimeKillScopeTypeEnum("scope_type").notNull(),
+    scopeId: varchar("scope_id", { length: 128 }).notNull(),
+    active: boolean("active").default(false).notNull(),
+    reason: text("reason"),
+    setBy: integer("set_by"),
+    version: integer("version").default(1).notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdateFn(() => new Date())
+      .notNull(),
+  },
+  (table) => ({
+    workspaceScopeUniq: uniqueIndex("runtime_kill_switches_ws_scope_uniq").on(
+      table.workspaceId,
+      table.scopeType,
+      table.scopeId,
+    ),
+    workspaceIdx: index("runtime_kill_switches_workspace_idx").on(table.workspaceId),
+    activeIdx: index("runtime_kill_switches_active_idx").on(table.workspaceId, table.active),
+  }),
+);
+export type RuntimeKillSwitch = typeof runtimeKillSwitches.$inferSelect;
+export type InsertRuntimeKillSwitch = typeof runtimeKillSwitches.$inferInsert;
+
+/** Provider connector sync run history for health / staleness UI. */
+export const providerSyncRuns = pgTable(
+  "provider_sync_runs",
+  {
+    id: serial("id").primaryKey(),
+    workspaceId: integer("workspace_id").notNull(),
+    provider: controlPlaneProviderEnum("provider").notNull(),
+    providerAccountId: integer("provider_account_id"),
+    status: providerSyncRunStatusEnum("status").default("pending").notNull(),
+    startedAt: timestamp("started_at").defaultNow().notNull(),
+    finishedAt: timestamp("finished_at"),
+    latencyMs: integer("latency_ms"),
+    seatsSynced: integer("seats_synced").default(0),
+    usageEventsSynced: integer("usage_events_synced").default(0),
+    errorCode: varchar("error_code", { length: 64 }),
+    errorMessage: text("error_message"),
+    metadata: json("metadata").$type<Record<string, unknown>>(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    workspaceProviderIdx: index("provider_sync_runs_ws_provider_idx").on(
+      table.workspaceId,
+      table.provider,
+    ),
+    startedIdx: index("provider_sync_runs_started_idx").on(table.workspaceId, table.startedAt),
+  }),
+);
+export type ProviderSyncRun = typeof providerSyncRuns.$inferSelect;
+export type InsertProviderSyncRun = typeof providerSyncRuns.$inferInsert;

@@ -12,6 +12,32 @@ export interface ScanTargetValidation {
   ok: boolean;
   reason?: string;
   hostname?: string;
+  protocol?: "http:" | "https:";
+  pathname?: string;
+  search?: string;
+  /** Canonical http(s) URL rebuilt after validation — use this for fetches. */
+  href?: string;
+}
+
+/**
+ * Rebuild a fetch URL from validated URL components so callers never pass the
+ * raw user string into `fetch` (SSRF sink). Hostname must already have passed
+ * `validateScanTarget` DNS/IP checks.
+ */
+export function buildValidatedScanUrl(parts: {
+  protocol: "http:" | "https:";
+  hostname: string;
+  pathname?: string;
+  search?: string;
+}): string {
+  const u = new URL("https://invalid.example/");
+  u.protocol = parts.protocol;
+  u.hostname = parts.hostname;
+  u.pathname = parts.pathname && parts.pathname.length > 0 ? parts.pathname : "/";
+  u.search = parts.search ?? "";
+  u.username = "";
+  u.password = "";
+  return u.toString();
 }
 
 /** Block-list checks for a resolved/literal IPv4 or IPv6 address. */
@@ -97,5 +123,19 @@ export async function validateScanTarget(rawUrl: string): Promise<ScanTargetVali
     }
   }
 
-  return { ok: true, hostname };
+  // Rebuild from validated components — never return the original user string.
+  const href = buildValidatedScanUrl({
+    protocol: url.protocol as "http:" | "https:",
+    hostname,
+    pathname: url.pathname,
+    search: url.search,
+  });
+  return {
+    ok: true,
+    hostname,
+    protocol: url.protocol as "http:" | "https:",
+    pathname: url.pathname,
+    search: url.search,
+    href,
+  };
 }

@@ -12,11 +12,18 @@
  */
 import * as crypto from "crypto";
 import * as vscode from "vscode";
-import type { RakshexApi, DashboardData, Finding, FindingStatus, Severity } from "./api";
+import type {
+  RakshexApi,
+  DashboardData,
+  Finding,
+  FindingStatus,
+  LatestComplianceScores,
+} from "./api";
 
 type PanelState = {
   dashboard: DashboardData | null;
   findings: Finding[];
+  compliance: LatestComplianceScores | null;
   error: string | null;
   errorCategory: "network" | "auth" | "unknown" | null;
   lastUpdated: string | null;
@@ -31,6 +38,7 @@ export class SecurityWebviewPanel {
   private autoRefreshTimer: NodeJS.Timeout | undefined;
   private isFirstRender = true;
   private refreshInFlight = false;
+  private hasRenderedDashboard = false;
 
   private constructor(
     panel: vscode.WebviewPanel,
@@ -135,6 +143,7 @@ export class SecurityWebviewPanel {
         this.panel.webview.html = this._getHtmlForWebview(this.panel.webview, {
           dashboard: null,
           findings: [],
+          compliance: null,
           error: null,
           errorCategory: null,
           lastUpdated: null,
@@ -146,13 +155,15 @@ export class SecurityWebviewPanel {
       }
 
       try {
-        const [dashboard, findings] = await Promise.all([
+        const [dashboard, findings, compliance] = await Promise.all([
           this.api.getDashboardData(),
           this.api.getRecentFindings(50),
+          this.api.getLatestComplianceScores().catch(() => ({ owasp: null, pci: null })),
         ]);
         const state: PanelState = {
           dashboard,
           findings,
+          compliance,
           error: null,
           errorCategory: null,
           lastUpdated: new Date().toLocaleTimeString(),
@@ -160,12 +171,19 @@ export class SecurityWebviewPanel {
         if (!this.panel.visible) {
           return;
         }
-        this.panel.webview.postMessage({ type: "dataUpdate", state });
+        // First successful paint needs full HTML (loading shell has no dashboard DOM).
+        if (!this.hasRenderedDashboard) {
+          this.panel.webview.html = this._getHtmlForWebview(this.panel.webview, state);
+          this.hasRenderedDashboard = true;
+        } else {
+          this.panel.webview.postMessage({ type: "dataUpdate", state });
+        }
       } catch (err) {
         const { message, category } = this.classifyError(err);
         const state: PanelState = {
           dashboard: null,
           findings: [],
+          compliance: null,
           error: message,
           errorCategory: category,
           lastUpdated: null,
@@ -173,6 +191,7 @@ export class SecurityWebviewPanel {
         if (!this.panel.visible) {
           return;
         }
+        this.hasRenderedDashboard = false;
         this.panel.webview.postMessage({ type: "dataUpdate", state });
       }
     } finally {
@@ -199,7 +218,7 @@ export class SecurityWebviewPanel {
       `img-src ${webview.cspSource} data:`,
     ].join("; ");
 
-    const { dashboard, findings, error, errorCategory, lastUpdated } = state;
+    const { dashboard, findings, error, errorCategory, lastUpdated, compliance } = state;
 
     const severityCounts = {
       Critical: findings.filter((f) => f.severity === "Critical").length,
@@ -222,32 +241,40 @@ export class SecurityWebviewPanel {
     const riskScore = Math.min(100, Math.round((rawRisk / maxRisk) * 100));
     const riskColor = riskScore >= 70 ? "#ef4444" : riskScore >= 40 ? "#f97316" : "#22c55e";
 
-    // Mock compliance data based on findings
-    const owaspScore =
-      totalFindings > 0
-        ? Math.max(
-            0,
-            Math.round(
-              100 -
-                (severityCounts.Critical * 15 +
-                  severityCounts.High * 8 +
-                  severityCounts.Medium * 3 +
-                  severityCounts.Low * 1),
-            ),
-          )
-        : 100;
-    const pciScore =
-      totalFindings > 0
-        ? Math.max(
-            0,
-            Math.round(
-              100 -
-                (severityCounts.Critical * 20 +
-                  severityCounts.High * 10 +
-                  severityCounts.Medium * 4),
-            ),
-          )
-        : 100;
+    const owasp = compliance?.owasp ?? null;
+    const pci = compliance?.pci ?? null;
+    const formatReportDate = (iso: string) => {
+      try {
+        return new Date(iso).toLocaleDateString();
+      } catch {
+        return iso;
+      }
+    };
+    const complianceCard = (title: string, snap: { score: number; createdAt: string } | null) => {
+      if (!snap) {
+        return `<div class="compliance-card">
+            <div class="compliance-header">
+              <h3>${title}</h3>
+              <span class="compliance-pct pct-muted">—</span>
+            </div>
+            <p class="compliance-hint">No compliance report yet</p>
+            <p class="compliance-cta">Run a compliance report in the Rakshex web dashboard to see real ${escapeHtml(title)} scores here.</p>
+          </div>`;
+      }
+      const score = Math.round(snap.score);
+      const pctClass = score >= 80 ? "pct-good" : score >= 50 ? "pct-warn" : "pct-bad";
+      const fillClass = score >= 80 ? "fill-good" : score >= 50 ? "fill-warn" : "fill-bad";
+      return `<div class="compliance-card">
+            <div class="compliance-header">
+              <h3>${title}</h3>
+              <span class="compliance-pct ${pctClass}">${score}%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill ${fillClass}" style="width:${score}%"></div>
+            </div>
+            <p class="compliance-hint">From compliance report · ${escapeHtml(formatReportDate(snap.createdAt))}</p>
+          </div>`;
+    };
 
     const errorIcon = errorCategory === "auth" ? "🔑" : errorCategory === "network" ? "🌐" : "⚠";
     const errorTitle =
@@ -419,26 +446,8 @@ export class SecurityWebviewPanel {
       <section class="compliance-section">
         <h2>Compliance Summary</h2>
         <div class="compliance-grid">
-          <div class="compliance-card">
-            <div class="compliance-header">
-              <h3>OWASP Top 10</h3>
-              <span class="compliance-pct ${owaspScore >= 80 ? "pct-good" : owaspScore >= 50 ? "pct-warn" : "pct-bad"}">${owaspScore}%</span>
-            </div>
-            <div class="progress-bar">
-              <div class="progress-fill ${owaspScore >= 80 ? "fill-good" : owaspScore >= 50 ? "fill-warn" : "fill-bad"}" style="width:${owaspScore}%"></div>
-            </div>
-            <p class="compliance-hint">${owaspScore >= 80 ? "Good compliance posture" : owaspScore >= 50 ? "Moderate — address critical findings" : "At risk — immediate action required"}</p>
-          </div>
-          <div class="compliance-card">
-            <div class="compliance-header">
-              <h3>PCI DSS</h3>
-              <span class="compliance-pct ${pciScore >= 80 ? "pct-good" : pciScore >= 50 ? "pct-warn" : "pct-bad"}">${pciScore}%</span>
-            </div>
-            <div class="progress-bar">
-              <div class="progress-fill ${pciScore >= 80 ? "fill-good" : pciScore >= 50 ? "fill-warn" : "fill-bad"}" style="width:${pciScore}%"></div>
-            </div>
-            <p class="compliance-hint">${pciScore >= 80 ? "Compliant" : pciScore >= 50 ? "Review recommended" : "Non-compliant — remediate findings"}</p>
-          </div>
+          ${complianceCard("OWASP Top 10", owasp)}
+          ${complianceCard("PCI DSS", pci)}
         </div>
       </section>
     `;
@@ -707,6 +716,8 @@ export class SecurityWebviewPanel {
     .pct-good { color: #22c55e; }
     .pct-warn { color: #eab308; }
     .pct-bad { color: #ef4444; }
+    .pct-muted { color: var(--vscode-descriptionForeground, #8b8b8b); }
+    .compliance-cta { font-size: 11px; color: var(--vscode-descriptionForeground, #8b8b8b); margin-top: 4px; }
     .progress-bar {
       height: 6px; border-radius: 3px;
       background: var(--vscode-panel-border, #3c3c3c);
@@ -870,18 +881,33 @@ export class SecurityWebviewPanel {
           btn.textContent = label + " (" + count + ")";
         });
 
-        // Update compliance
-        var owaspScore = total > 0 ? Math.max(0, Math.round(100 - (sc.Critical * 15 + sc.High * 8 + sc.Medium * 3 + sc.Low * 1))) : 100;
-        var pciScore = total > 0 ? Math.max(0, Math.round(100 - (sc.Critical * 20 + sc.High * 10 + sc.Medium * 4))) : 100;
-        var pctEls = document.querySelectorAll(".compliance-pct");
-        var fillEls = document.querySelectorAll(".progress-fill");
-        var hintEls = document.querySelectorAll(".compliance-hint");
-        if (pctEls[0]) { pctEls[0].textContent = owaspScore + "%"; pctEls[0].className = "compliance-pct " + (owaspScore >= 80 ? "pct-good" : owaspScore >= 50 ? "pct-warn" : "pct-bad"); }
-        if (fillEls[0]) { fillEls[0].style.width = owaspScore + "%"; fillEls[0].className = "progress-fill " + (owaspScore >= 80 ? "fill-good" : owaspScore >= 50 ? "fill-warn" : "fill-bad"); }
-        if (hintEls[0]) hintEls[0].textContent = owaspScore >= 80 ? "Good compliance posture" : owaspScore >= 50 ? "Moderate — address critical findings" : "At risk — immediate action required";
-        if (pctEls[1]) { pctEls[1].textContent = pciScore + "%"; pctEls[1].className = "compliance-pct " + (pciScore >= 80 ? "pct-good" : pciScore >= 50 ? "pct-warn" : "pct-bad"); }
-        if (fillEls[1]) { fillEls[1].style.width = pciScore + "%"; fillEls[1].className = "progress-fill " + (pciScore >= 80 ? "fill-good" : pciScore >= 50 ? "fill-warn" : "fill-bad"); }
-        if (hintEls[1]) hintEls[1].textContent = pciScore >= 80 ? "Compliant" : pciScore >= 50 ? "Review recommended" : "Non-compliant — remediate findings";
+        // Update compliance from real reports only (never invent scores)
+        var compliance = state.compliance || { owasp: null, pci: null };
+        var grid = document.querySelector(".compliance-grid");
+        if (grid) {
+          function formatReportDate(iso) {
+            try { return new Date(iso).toLocaleDateString(); } catch (e) { return iso || ""; }
+          }
+          function renderCard(title, snap) {
+            if (!snap) {
+              return '<div class="compliance-card">' +
+                '<div class="compliance-header"><h3>' + escapeHtml(title) + '</h3>' +
+                '<span class="compliance-pct pct-muted">—</span></div>' +
+                '<p class="compliance-hint">No compliance report yet</p>' +
+                '<p class="compliance-cta">Run a compliance report in the Rakshex web dashboard to see real ' +
+                escapeHtml(title) + ' scores here.</p></div>';
+            }
+            var score = Math.round(Number(snap.score) || 0);
+            var pctClass = score >= 80 ? "pct-good" : score >= 50 ? "pct-warn" : "pct-bad";
+            var fillClass = score >= 80 ? "fill-good" : score >= 50 ? "fill-warn" : "fill-bad";
+            return '<div class="compliance-card">' +
+              '<div class="compliance-header"><h3>' + escapeHtml(title) + '</h3>' +
+              '<span class="compliance-pct ' + pctClass + '">' + score + '%</span></div>' +
+              '<div class="progress-bar"><div class="progress-fill ' + fillClass + '" style="width:' + score + '%"></div></div>' +
+              '<p class="compliance-hint">From compliance report · ' + escapeHtml(formatReportDate(snap.createdAt)) + '</p></div>';
+          }
+          grid.innerHTML = renderCard("OWASP Top 10", compliance.owasp) + renderCard("PCI DSS", compliance.pci);
+        }
       }
 
       function bindRefreshBtn() {

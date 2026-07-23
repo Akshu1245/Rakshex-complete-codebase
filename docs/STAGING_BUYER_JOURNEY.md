@@ -42,4 +42,4 @@ Mark items only after you have run them against the deployed staging stack.
 | Ops / SRE   |      |      |       |
 | GTM / Sales |      |      |       |
 
-Related: [MARKET_READINESS_LAUNCH_BAR.md](../MARKET_READINESS_LAUNCH_BAR.md), [FEATURE_MATURITY.md](./FEATURE_MATURITY.md).
+Related: [DEPLOY_RAILWAY_VERCEL.md](./DEPLOY_RAILWAY_VERCEL.md), [BETA_OPS_CHECKLIST.md](./BETA_OPS_CHECKLIST.md), [MARKET_READINESS_LAUNCH_BAR.md](../MARKET_READINESS_LAUNCH_BAR.md), [FEATURE_MATURITY.md](./FEATURE_MATURITY.md).

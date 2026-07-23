@@ -10,25 +10,48 @@ export interface ScanJobData {
   userId: number;
   collectionId: string;
   engineType?: "owasp" | "agentguard" | "full";
+  /** Flat shape used by `scanning.startScan` → scanQueue.add */
   scanType?: "full" | "quick" | "shadow_api" | "prompt_injection";
   workspaceId?: number;
+  /**
+   * Nested shape used by `enqueueScan` / GitHub webhooks via jobs.ts.
+   * Accept both so whichever BullMQ consumer picks up the shared `scan`
+   * queue never crashes on `options.scanType` being undefined.
+   */
+  options?: ScanOptions;
+  triggeredBy?: ScanOptions["triggeredBy"];
+  prNumber?: number;
+  branch?: string;
+  commitSha?: string;
 }
+
+function resolveScanOptions(data: ScanJobData): ScanOptions {
+  if (data.options?.scanType) {
+    return data.options;
+  }
+  return {
+    scanType: data.scanType ?? "full",
+    triggeredBy: data.triggeredBy ?? data.options?.triggeredBy ?? "user",
+    prNumber: data.prNumber ?? data.options?.prNumber,
+    branch: data.branch ?? data.options?.branch,
+    commitSha: data.commitSha ?? data.options?.commitSha,
+  };
+}
+
+/** Exported for unit tests — dual job-shape contract with jobs.ts. */
+export { resolveScanOptions };
 
 function buildWorker(): Worker<ScanJobData> {
   const worker = new Worker<ScanJobData>(
     "scan",
     async (job: Job<ScanJobData>) => {
-      const { userId, collectionId, scanType } = job.data;
+      const { userId, collectionId } = job.data;
+      const options = resolveScanOptions(job.data);
 
       logger.info(
-        { jobId: job.id, userId, collectionId, scanType },
+        { jobId: job.id, userId, collectionId, scanType: options.scanType },
         "[ScanWorker] Processing scan job",
       );
-
-      const options: ScanOptions = {
-        scanType: scanType ?? "full",
-        triggeredBy: "user",
-      };
 
       // Progress for UI polling (idempotent retries re-run scan with same inputs)
       await job.updateProgress(10);

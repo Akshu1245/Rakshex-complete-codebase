@@ -23,6 +23,7 @@ import { nanoid } from "nanoid";
 import { router, protectedProcedure } from "../_core/trpc";
 import * as db from "../db";
 import { deliver, buildSignature, type WebhookEvent } from "../services/webhookDelivery";
+import { ensurePersonalWorkspace } from "../services/workspaceContext";
 
 /**
  * Returns true if `ip` is inside one of RFC1918 / link-local / loopback /
@@ -159,10 +160,14 @@ export const webhooksRouter = router({
 
       const id = `wh_${nanoid(24)}`;
       const secret = generateSecret();
+      // Migration 0019 added workspace_id; stamp personal workspace so new
+      // endpoints are scoped (legacy rows were backfilled by the SQL migration).
+      const workspace = await ensurePersonalWorkspace(ctx.user.id, ctx.user.name ?? null);
 
       await db.createWebhookEndpoint({
         id,
         userId: ctx.user.id,
+        workspaceId: workspace.id,
         url: input.url,
         secret,
         events: input.events as unknown as object,
