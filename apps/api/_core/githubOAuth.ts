@@ -193,13 +193,11 @@ export function registerGitHubOAuthRoutes(app: Express) {
       res.cookie(ACCESS_TOKEN_COOKIE, accessToken, {
         ...cookieOptions,
         maxAge: ACCESS_TOKEN_MAX_AGE_MS,
-        sameSite: "strict",
       });
       res.cookie(REFRESH_TOKEN_COOKIE, refreshToken, {
         ...cookieOptions,
         maxAge: REFRESH_TOKEN_MAX_AGE_MS,
-        sameSite: "strict",
-        path: "/trpc/auth.refreshToken",
+        path: "/api/trpc/auth.refreshToken",
       });
 
       // Legacy cookie for middleware compatibility

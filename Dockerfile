@@ -29,6 +29,9 @@ ENV PORT=3000
 RUN addgroup -g 1001 -S nodejs \
   && adduser -S -u 1001 -G nodejs -h /app -s /sbin/nologin nodejs
 
+# Runtime uses node + tsx only — drop image-bundled npm to clear Trivy CRITICAL/HIGH on npm deps.
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx || true
+
 COPY --from=builder --chown=nodejs:nodejs /app/package.json ./
 COPY --from=builder --chown=nodejs:nodejs /app/pnpm-workspace.yaml ./
 COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules

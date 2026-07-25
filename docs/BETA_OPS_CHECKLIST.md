@@ -54,8 +54,10 @@ See `apps/vscode-extension/PUBLISHING.md`.
 
 ## Sign-off
 
-| Role        | Name | Date | Notes |
-| ----------- | ---- | ---- | ----- |
-| Engineering |      |      |       |
-| Ops         |      |      |       |
-| GTM         |      |      |       |
+Code for Market Beta product loop (editor signup, session refresh, workspace invite emails, Razorpay CSP, Quick Scan, CI Docker/E2E fixes) is in the PR branch. **Ops/GTM rows stay founder-owned** until Railway worker + SMTP + Vercel envs + payment webhooks are live and [STAGING_BUYER_JOURNEY.md](./STAGING_BUYER_JOURNEY.md) is walked on HTTPS.
+
+| Role        | Name  | Date       | Notes                                           |
+| ----------- | ----- | ---------- | ----------------------------------------------- |
+| Engineering | Agent | 2026-07-25 | Code/docs ready on PR; await green Release gate |
+| Ops         |       |            | Railway API+worker, SMTP, secrets, uptime       |
+| GTM         |       |            | Buyer journey + Marketplace publish             |

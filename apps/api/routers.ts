@@ -249,14 +249,19 @@ export const appRouter = router({
           logger.warn({ err: err }, "[signup] first-user promotion skipped");
         }
 
-        // Auto-create the user's personal workspace
+        // Auto-create the user's personal workspace — fail hard (no silent skip)
         try {
           await ensurePersonalWorkspace(created.id, input.name.trim());
         } catch (err) {
-          logger.warn(
+          logger.error(
             { err: err, userId: created.id },
-            "[signup] personal workspace creation skipped",
+            "[signup] personal workspace creation failed",
           );
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Account created but workspace setup failed. Please contact support.",
+            cause: err,
+          });
         }
 
         // Create session with dual tokens
@@ -279,20 +284,17 @@ export const appRouter = router({
         ctx.res.cookie(ACCESS_TOKEN_COOKIE, accessToken, {
           ...cookieOptions,
           maxAge: ACCESS_TOKEN_MAX_AGE_MS,
-          sameSite: "strict",
         });
 
         ctx.res.cookie(REFRESH_TOKEN_COOKIE, refreshToken, {
           ...cookieOptions,
           maxAge: REFRESH_TOKEN_MAX_AGE_MS,
-          sameSite: "strict",
-          path: "/trpc/auth.refreshToken",
+          path: "/api/trpc/auth.refreshToken",
         });
         // Middleware-compatible alias
         ctx.res.cookie("session", accessToken, {
           ...cookieOptions,
           maxAge: ACCESS_TOKEN_MAX_AGE_MS,
-          sameSite: "strict",
         });
 
         setCsrfCookie(ctx.res);
@@ -392,19 +394,16 @@ export const appRouter = router({
         ctx.res.cookie(ACCESS_TOKEN_COOKIE, accessToken, {
           ...cookieOptions,
           maxAge: ACCESS_TOKEN_MAX_AGE_MS,
-          sameSite: "strict",
         });
 
         ctx.res.cookie(REFRESH_TOKEN_COOKIE, refreshToken, {
           ...cookieOptions,
           maxAge: REFRESH_TOKEN_MAX_AGE_MS,
-          sameSite: "strict",
-          path: "/trpc/auth.refreshToken",
+          path: "/api/trpc/auth.refreshToken",
         });
         ctx.res.cookie("session", accessToken, {
           ...cookieOptions,
           maxAge: ACCESS_TOKEN_MAX_AGE_MS,
-          sameSite: "strict",
         });
 
         setCsrfCookie(ctx.res);
@@ -476,14 +475,12 @@ export const appRouter = router({
       ctx.res.cookie(ACCESS_TOKEN_COOKIE, accessToken, {
         ...cookieOptions,
         maxAge: ACCESS_TOKEN_MAX_AGE_MS,
-        sameSite: "strict",
       });
 
       ctx.res.cookie(REFRESH_TOKEN_COOKIE, newRefreshToken, {
         ...cookieOptions,
         maxAge: REFRESH_TOKEN_MAX_AGE_MS,
-        sameSite: "strict",
-        path: "/trpc/auth.refreshToken",
+        path: "/api/trpc/auth.refreshToken",
       });
 
       await db.createAuditLogEntry(
@@ -574,19 +571,16 @@ export const appRouter = router({
         ctx.res.cookie(ACCESS_TOKEN_COOKIE, accessToken, {
           ...cookieOptions,
           maxAge: ACCESS_TOKEN_MAX_AGE_MS,
-          sameSite: "strict",
         });
 
         ctx.res.cookie(REFRESH_TOKEN_COOKIE, refreshToken, {
           ...cookieOptions,
           maxAge: REFRESH_TOKEN_MAX_AGE_MS,
-          sameSite: "strict",
-          path: "/trpc/auth.refreshToken",
+          path: "/api/trpc/auth.refreshToken",
         });
         ctx.res.cookie("session", accessToken, {
           ...cookieOptions,
           maxAge: ACCESS_TOKEN_MAX_AGE_MS,
-          sameSite: "strict",
         });
 
         setCsrfCookie(ctx.res);
@@ -611,7 +605,7 @@ export const appRouter = router({
           // 1 hour expiry, single-use
           const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
           await db.createPasswordResetToken(user.id, tokenHash, expiresAt);
-          const appUrl = process.env.APP_URL || "http://localhost:3000";
+          const appUrl = process.env.FRONTEND_URL || process.env.APP_URL || "https://rakshex.in";
           const resetUrl = `${appUrl}/reset-password?token=${token}`;
           try {
             await sendPasswordResetEmail({

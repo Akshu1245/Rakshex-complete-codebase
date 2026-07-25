@@ -40,7 +40,8 @@ export default defineConfig({
       },
     },
     {
-      command: `pnpm --filter @rakshex/web exec next dev -p ${FRONTEND_PORT}`,
+      // Use webpack in Playwright — Turbopack monorepo root inference fails in CI.
+      command: `pnpm --filter @rakshex/web exec next dev --webpack -p ${FRONTEND_PORT}`,
       url: BASE_URL,
       reuseExistingServer: !process.env.CI,
       timeout: 180_000,

@@ -497,7 +497,7 @@
       "properties": {
         "rakshex.apiUrl": {
           "type": "string",
-          "default": "http://localhost:3000",
+          "default": "https://api.rakshex.in",
           "description": "Base URL of the Rakshex backend (default: https://api.rakshex.in — self-hosted users can override to e.g. https://api.your-company.com or http://localhost:3000)."
         },
         "rakshex.heartbeatIntervalSec": {

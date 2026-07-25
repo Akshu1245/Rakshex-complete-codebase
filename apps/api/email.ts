@@ -104,7 +104,7 @@ function resolveTransportOrFail(context: string): ReturnType<typeof createTransp
 export async function sendTeamInviteEmail(
   opts: TeamInviteEmailOptions & { token?: string },
 ): Promise<void> {
-  const appUrl = process.env.APP_URL || "https://rakshex.in";
+  const appUrl = process.env.FRONTEND_URL || process.env.APP_URL || "https://rakshex.in";
   const inviteUrl = opts.token ? `${appUrl}/invite/${opts.token}` : appUrl;
   const subject = `You've been invited to Rakshex by ${opts.inviterName}`;
 

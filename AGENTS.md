@@ -73,16 +73,15 @@ Commands are defined in the root `package.json` (`pnpm lint`, `pnpm typecheck`, 
 - `pnpm test`: package tests pass; `@rakshex/api` has ~14 failing tests because some `../db` vitest mocks omit `getPersonalWorkspaceForUser`.
 - `pnpm lint` passes cleanly.
 
-### Known runtime bugs to expect (pre-existing, not env issues)
+### Fixed (do not re-diagnose as env issues)
 
-- **New-user workspace creation is broken.** `db.createWorkspace` reads MySQL-style `result.insertId`, which is `0` on Postgres, so the follow-up `workspace_members` insert fails an FK constraint. Result: a freshly registered user has no workspace membership and cannot create collections (`editorProcedure`/workspace checks fail). To exercise authenticated flows, promote the user and add the membership row manually, e.g.:
-  ```sql
-  UPDATE users SET role='admin', plan='enterprise' WHERE email='<email>';
-  INSERT INTO workspace_members ("workspaceId","userId",role,active,"joinedAt")
-    SELECT id, "ownerUserId", 'owner', true, now() FROM workspaces WHERE "ownerUserId"=<userId>
-    ON CONFLICT DO NOTHING;
-  ```
-- **Async scans fail.** The API process registers a `jobs.ts` scan worker expecting `data.options.scanType`, which conflicts with the intended flat-shape `scanWorker.ts` on the same Redis `scan` queue, so queued scans error with `Cannot read properties of undefined (reading 'scanType')`. However, **collection import runs the scanner synchronously** and returns credential + gateway findings in the create response (this is the reliable way to demo the scanner).
+- **Personal workspace on signup** — uses `createWorkspaceWithOwner` with Postgres `.returning()` (not MySQL `insertId`). Signup fails hard if workspace creation throws.
+- **Async scan worker shape** — `jobs.ts` accepts both nested `data.options.scanType` and flat `{ scanType, ... }` job payloads.
+
+### Remaining beta ops / known quirks
+
+- **SMTP** must be configured in production for invite / password-reset / welcome email (`SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`). Without it, send helpers throw in production.
+- **Worker deploy** — run the dedicated worker image/process (`apps/api/queues/workers`) for queued scans and email jobs; API-only deploys will not drain Redis queues.
 - The sidebar **"Import"** link (`/import`) posts to REST endpoints that aren't proxied in dev and returns HTML ("Unexpected token '<'"). Use the **"Import Collection"** button on the `/collections` page instead (it calls tRPC `collections.create`). That button currently renders with a near-invisible background.
 - The credential scanner flags secrets embedded in request **URLs** (e.g. `?api_key=sk_live_...`); a secret placed only in an `Authorization: Bearer` header is treated as legitimate and not flagged.
-- Access tokens expire after 15 minutes; long interactive sessions may need a re-login.
+- Access tokens expire after 15 minutes; the web client now attempts one `auth.refreshToken` retry on `UNAUTHORIZED` (refresh cookie path `/api/trpc/auth.refreshToken`).

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { EmptyState } from "@/components/EmptyState";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { trpc } from "@/lib/trpc";
+import { useWorkspace } from "@/hooks/useWorkspace";
 
 type Role = "admin" | "editor" | "viewer";
 
@@ -17,6 +18,7 @@ interface TeamMember {
 
 export default function TeamPage() {
   const utils = trpc.useUtils();
+  const { workspaceId, workspace, isLoading: workspaceLoading } = useWorkspace();
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<Role>("viewer");
   const [error, setError] = useState<string | null>(null);
@@ -26,9 +28,10 @@ export default function TeamPage() {
   const members: TeamMember[] = (teamQuery.data?.members ?? []) as TeamMember[];
   const loading = teamQuery.isLoading;
 
-  const inviteMutation = trpc.team.invite.useMutation({
+  const workspaceInviteMutation = trpc.workspaces.inviteMember.useMutation({
     onSuccess: () => {
       setInviteEmail("");
+      setError(null);
       utils.team.list.invalidate();
     },
     onError: (err: { message: string }) => setError(err.message),
@@ -52,6 +55,9 @@ export default function TeamPage() {
     onError: (err: { message: string }) => setError(err.message),
   });
 
+  const canInviteToWorkspace = Boolean(workspace?.id && workspaceId > 0);
+  const invitePending = workspaceInviteMutation.isPending;
+
   const handleInvite = () => {
     if (!inviteEmail.trim()) return;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -60,7 +66,17 @@ export default function TeamPage() {
       return;
     }
     setError(null);
-    inviteMutation.mutate({ email: inviteEmail, role: inviteRole });
+    if (canInviteToWorkspace && workspace?.id) {
+      workspaceInviteMutation.mutate({
+        workspaceId: workspace.id,
+        email: inviteEmail.trim(),
+        role: inviteRole,
+      });
+      return;
+    }
+    setError(
+      "No workspace available. Invite teammates from Settings → Workspace so they get real workspace access.",
+    );
   };
 
   const handleRemoveConfirm = () => {
@@ -82,8 +98,30 @@ export default function TeamPage() {
           </Link>
         </div>
 
+        <div className="mb-6 p-4 rounded-lg border border-amber-500/40 bg-amber-900/20 text-amber-100 text-sm">
+          <p className="font-medium text-amber-200">Legacy team page</p>
+          <p className="mt-1 text-amber-100/90">
+            Team invites on this page are being replaced by workspace members. Prefer inviting from{" "}
+            <Link href="/settings" className="underline text-amber-200 hover:text-white">
+              Settings / Workspace
+            </Link>{" "}
+            so invitees receive workspace access.{" "}
+            {canInviteToWorkspace
+              ? `Invites below go to workspace “${workspace?.name ?? workspaceId}”.`
+              : workspaceLoading
+                ? "Loading workspace…"
+                : "No workspace found — invite form is disabled until a workspace is available."}
+          </p>
+        </div>
+
         <div className="mb-8 bg-black/50 p-6 rounded-lg border border-gray-700">
           <h2 className="text-xl font-semibold mb-4">Invite Team Member</h2>
+          {!canInviteToWorkspace && !workspaceLoading && (
+            <p className="mb-4 text-sm text-yellow-300/90">
+              This form cannot grant workspace access without a current workspace. Use Settings →
+              Workspace instead.
+            </p>
+          )}
           <div className="space-y-4">
             <div>
               <label htmlFor="invite-email" className="block text-sm text-gray-400 mb-1">
@@ -95,7 +133,8 @@ export default function TeamPage() {
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
                 placeholder="colleague@company.com"
-                className="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none"
+                disabled={!canInviteToWorkspace}
+                className="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-teal-500 outline-none disabled:opacity-50"
               />
             </div>
             <div>
@@ -103,7 +142,8 @@ export default function TeamPage() {
               <select
                 value={inviteRole}
                 onChange={(e) => setInviteRole(e.target.value as Role)}
-                className="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none"
+                disabled={!canInviteToWorkspace}
+                className="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-teal-500 outline-none disabled:opacity-50"
               >
                 <option value="viewer">Viewer</option>
                 <option value="editor">Editor</option>
@@ -112,10 +152,10 @@ export default function TeamPage() {
             </div>
             <button
               onClick={handleInvite}
-              disabled={inviteMutation.isPending}
+              disabled={invitePending || !canInviteToWorkspace}
               className="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors disabled:opacity-50"
             >
-              {inviteMutation.isPending ? "Sending..." : "Send Invite"}
+              {invitePending ? "Sending..." : "Send Invite"}
             </button>
           </div>
         </div>
@@ -170,7 +210,7 @@ export default function TeamPage() {
                       </label>
                       <span
                         className={`px-2 py-1 rounded ${
-                          member.status === "active"
+                          member.status === "accepted"
                             ? "bg-green-900/30 text-green-400"
                             : member.status === "pending"
                               ? "bg-yellow-900/30 text-yellow-400"

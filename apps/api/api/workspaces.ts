@@ -23,7 +23,9 @@ import { z } from "zod";
 import * as db from "../db";
 import type { WorkspaceRow } from "@rakshex/database";
 import { ValidationError } from "../_core/errors";
+import { logger } from "../_core/logger";
 import { protectedProcedure, router } from "../_core/trpc";
+import { sendTeamInviteEmail } from "../email";
 import { type WorkspaceRole, PermissionDeniedError, summarisePermissions } from "../services/rbac";
 import {
   assertWorkspacePermission,
@@ -44,6 +46,14 @@ const roleEnumWritable = z.enum([
   /** @deprecated alias for developer */
   "editor",
 ]);
+
+function mapInviteRoleForEmail(
+  role: z.infer<typeof roleEnumWritable> | "owner",
+): "admin" | "editor" | "viewer" {
+  if (role === "admin" || role === "owner") return "admin";
+  if (role === "viewer" || role === "analyst" || role === "billing_admin") return "viewer";
+  return "editor";
+}
 
 function normaliseSlug(input: string): string {
   return input
@@ -174,6 +184,16 @@ export const workspacesRouter = router({
         invitedBy: ctx.user.id,
         expiresAt: new Date(Date.now() + INVITE_TTL_MS),
       });
+      try {
+        await sendTeamInviteEmail({
+          toEmail: input.email.toLowerCase(),
+          inviterName: ctx.user.name ?? "A Rakshex user",
+          role: mapInviteRoleForEmail(input.role),
+          token,
+        });
+      } catch (err) {
+        logger.warn({ err, invitationId: id }, "[workspaces] invite email failed");
+      }
       return { id, token };
     }),
 

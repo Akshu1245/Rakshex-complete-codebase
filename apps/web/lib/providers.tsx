@@ -24,6 +24,69 @@ export function getCsrfTokenFromCookie(): string | undefined {
   return match?.split("=")[1];
 }
 
+let refreshInFlight: Promise<boolean> | null = null;
+
+async function tryRefreshSession(): Promise<boolean> {
+  if (refreshInFlight) return refreshInFlight;
+  refreshInFlight = (async () => {
+    try {
+      const csrfToken = getCsrfTokenFromCookie();
+      const headers = new Headers({ "content-type": "application/json" });
+      if (csrfToken) headers.set("x-csrf-token", csrfToken);
+      const res = await fetch(`${getBaseUrl()}/api/trpc/auth.refreshToken`, {
+        method: "POST",
+        credentials: "include",
+        headers,
+        body: JSON.stringify({}),
+      });
+      if (!res.ok) return false;
+      // tRPC mutation may return 200 with error envelope
+      const json = (await res.json().catch(() => null)) as {
+        error?: { data?: { code?: string }; json?: { data?: { code?: string } } };
+        result?: unknown;
+      } | null;
+      if (!json) return res.ok;
+      const code =
+        json.error?.data?.code ||
+        json.error?.json?.data?.code ||
+        (json as { error?: { json?: { data?: { httpStatus?: number } } } }).error?.json?.data
+          ?.httpStatus;
+      if (code === "UNAUTHORIZED" || code === 401) return false;
+      return !json.error;
+    } catch {
+      return false;
+    } finally {
+      refreshInFlight = null;
+    }
+  })();
+  return refreshInFlight;
+}
+
+function isUnauthorizedResponse(res: Response, bodyText: string): boolean {
+  if (res.status === 401) return true;
+  try {
+    const json = JSON.parse(bodyText) as {
+      error?: { data?: { code?: string; httpStatus?: number }; message?: string };
+      // batch shape: [{ error: ... }]
+      [key: number]: { error?: { json?: { data?: { code?: string; httpStatus?: number } } } };
+    };
+    if (Array.isArray(json)) {
+      return json.some(
+        (item) =>
+          item?.error?.json?.data?.code === "UNAUTHORIZED" ||
+          item?.error?.json?.data?.httpStatus === 401,
+      );
+    }
+    return (
+      json?.error?.data?.code === "UNAUTHORIZED" ||
+      json?.error?.data?.httpStatus === 401 ||
+      /UNAUTHORIZED/i.test(json?.error?.message ?? "")
+    );
+  } catch {
+    return false;
+  }
+}
+
 export function TRPCProvider({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
     () =>
@@ -67,10 +130,35 @@ export function TRPCProvider({ children }: { children: ReactNode }) {
               headers.set("x-csrf-token", csrfToken);
             }
 
+            const urlStr = typeof url === "string" ? url : url.toString();
+            const isRefreshCall = urlStr.includes("auth.refreshToken");
+
             return fetch(url, {
               ...options,
               credentials: "include",
               headers,
+            }).then(async (res) => {
+              if (isRefreshCall || res.ok) return res;
+
+              // Clone + read so we can detect UNAUTHORIZED without consuming the body
+              // for the caller when we are not going to retry.
+              const clone = res.clone();
+              const bodyText = await clone.text().catch(() => "");
+              if (!isUnauthorizedResponse(res, bodyText)) return res;
+
+              const refreshed = await tryRefreshSession();
+              if (!refreshed) return res;
+
+              const retryHeaders = new Headers(options?.headers);
+              const freshCsrf = getCsrfTokenFromCookie();
+              if (freshCsrf && options?.method !== "GET") {
+                retryHeaders.set("x-csrf-token", freshCsrf);
+              }
+              return fetch(url, {
+                ...options,
+                credentials: "include",
+                headers: retryHeaders,
+              });
             });
           },
         }),

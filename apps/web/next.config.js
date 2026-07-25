@@ -4,6 +4,29 @@ const path = require("path");
 const TS_BACKEND_URL =
   process.env.NEXT_PUBLIC_TS_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
+function apiOriginForCsp(url) {
+  try {
+    return new URL(url).origin;
+  } catch {
+    return "https://api.rakshex.in";
+  }
+}
+
+const API_CONNECT_ORIGIN = apiOriginForCsp(TS_BACKEND_URL);
+
+const PRODUCTION_CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://accounts.google.com https://checkout.razorpay.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "img-src 'self' data: https:",
+  "font-src 'self' https://fonts.gstatic.com",
+  `connect-src 'self' wss: ${API_CONNECT_ORIGIN} https://api.razorpay.com https://lumberjack.razorpay.com https://*.sentry.io https://script.google.com`,
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "upgrade-insecure-requests",
+].join("; ");
+
 const nextConfig = {
   // Pin tracing + Turbopack to this app package so monorepo CI/Playwright
   // `next dev` can resolve `next/package.json` (avoids inferring apps/web/app).
@@ -52,8 +75,7 @@ const nextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value:
-              "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' wss: https://api.rakshex.in https://*.sentry.io https://script.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;",
+            value: PRODUCTION_CSP,
           },
         ],
       },

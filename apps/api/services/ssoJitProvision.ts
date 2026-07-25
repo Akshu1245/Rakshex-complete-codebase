@@ -128,12 +128,14 @@ export async function jitProvisionUser(
     }
   }
 
-  // 3. Create.
+  // 3. Create (editor by default; re-assert in case schema default drifts).
   const created = await db.createLocalUser({
     email,
     name,
     passwordHash: placeholderPasswordHash(),
+    role: "editor",
   });
+  await db.updateUser(created.id, { role: "editor" });
   return {
     user: { id: created.id, email, name },
     wasCreated: true,

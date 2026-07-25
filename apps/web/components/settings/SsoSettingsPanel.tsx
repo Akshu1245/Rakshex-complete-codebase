@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/EmptyState";
 type ProviderKind = "oidc" | "saml";
 
 const inputClass =
-  "w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm";
+  "w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm";
 
 export function SsoSettingsPanel() {
   const { addToast } = useToast();
@@ -30,6 +30,7 @@ export function SsoSettingsPanel() {
   const [samlIssuer, setSamlIssuer] = useState("");
   const [audience, setAudience] = useState("");
   const [callbackUrl, setCallbackUrl] = useState("");
+  const [certificate, setCertificate] = useState("");
 
   const createProvider = trpc.sso.createProvider.useMutation({
     onSuccess: () => {
@@ -68,6 +69,7 @@ export function SsoSettingsPanel() {
     setSamlIssuer("");
     setAudience("");
     setCallbackUrl("");
+    setCertificate("");
   };
 
   const handleCreate = (e: React.FormEvent) => {
@@ -91,6 +93,7 @@ export function SsoSettingsPanel() {
           issuer: samlIssuer,
           audience,
           callbackUrl,
+          ...(certificate.trim() ? { certificate: certificate.trim() } : {}),
         },
       });
     }
@@ -241,6 +244,25 @@ export function SsoSettingsPanel() {
                   required
                   type="url"
                 />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  IdP signing certificate (PEM)
+                </label>
+                <textarea
+                  className={`${inputClass} font-mono text-xs min-h-[96px]`}
+                  value={certificate}
+                  onChange={(e) => setCertificate(e.target.value)}
+                  placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"
+                />
+                {!certificate.trim() && (
+                  <p className="mt-2 text-xs text-amber-300/90" role="status">
+                    Warning: SAML signature verification is incomplete without an IdP certificate.
+                    Assertions may be accepted without crypto verification until a cert is
+                    configured. Paste the IdP X.509 cert before enabling this provider in
+                    production.
+                  </p>
+                )}
               </div>
             </div>
           )}

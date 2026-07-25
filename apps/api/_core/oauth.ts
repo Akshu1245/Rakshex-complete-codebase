@@ -29,6 +29,7 @@ export function registerOAuthRoutes(app: Express) {
         return;
       }
 
+      // upsertUser defaults newly created users to role "editor"
       await db.upsertUser({
         openId: userInfo.openId,
         name: userInfo.name || null,

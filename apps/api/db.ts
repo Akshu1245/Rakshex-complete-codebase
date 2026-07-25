@@ -227,6 +227,9 @@ export async function upsertUser(user: InsertUser): Promise<{ isNew: boolean }> 
     } else if (user.openId === ENV.ownerOpenId) {
       values.role = "admin";
       updateSet.role = "admin";
+    } else if (isNewUser) {
+      // New OAuth/SSO users get editor (least privilege above default "user").
+      values.role = "editor";
     }
 
     if (!values.lastSignedIn) {
@@ -754,6 +757,142 @@ export async function getScanById(id: string) {
 
   const result = await db.select().from(scans).where(eq(scans.id, id)).limit(1);
   return result.length > 0 ? result[0] : null;
+}
+
+export async function getScansPageByCollectionId(opts: {
+  collectionId: string;
+  scanType?: string;
+  limit: number;
+  offset: number;
+}): Promise<{ items: any[]; total: number }> {
+  const db = await getDb();
+  if (!db) {
+    logger.warn("[Database] Cannot list scans page: database not available");
+    return { items: [], total: 0 };
+  }
+
+  const conditions = [eq(scans.collectionId, opts.collectionId)];
+  if (opts.scanType && opts.scanType !== "all") {
+    conditions.push(eq(scans.scanType, opts.scanType as any));
+  }
+
+  const [countRow] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(scans)
+    .where(and(...conditions));
+
+  const items = await db
+    .select()
+    .from(scans)
+    .where(and(...conditions))
+    .orderBy(desc(scans.createdAt))
+    .limit(opts.limit)
+    .offset(opts.offset);
+
+  return { items, total: countRow?.count ?? 0 };
+}
+
+export async function saveScanWithFindings(opts: {
+  userId: number;
+  collectionId: string;
+  scanType: "full" | "quick" | "shadow_api" | "prompt_injection";
+  riskScore: number;
+  riskLevel: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+  findings: any[];
+  workspaceId?: number;
+}): Promise<{ id: string }> {
+  const db = await getDb();
+  assertDb(db);
+
+  return db.transaction(async (tx) => {
+    // 1. Reactivate expired suppressions
+    await tx
+      .update(findings)
+      .set({ status: "open" as any, suppressionExpiresAt: null, updatedAt: new Date() })
+      .where(
+        and(
+          eq(findings.userId, opts.userId),
+          eq(findings.status, "suppressed" as any),
+          sql`${findings.suppressionExpiresAt} IS NOT NULL`,
+          lt(findings.suppressionExpiresAt, new Date()),
+        ),
+      );
+
+    // 2. Fetch prior findings to carry over suppression / accepted risk status
+    const priorOpen = await tx
+      .select()
+      .from(findings)
+      .where(and(eq(findings.userId, opts.userId), eq(findings.collectionId, opts.collectionId)))
+      .orderBy(desc(findings.createdAt))
+      .limit(500);
+
+    const byFp = new Map(
+      priorOpen.filter((f) => f.fingerprint).map((f) => [f.fingerprint as string, f]),
+    );
+
+    // 3. Insert scan
+    const scanId = secureId("scan");
+    await tx.insert(scans).values({
+      id: scanId,
+      userId: opts.userId,
+      collectionId: opts.collectionId,
+      scanType: opts.scanType,
+      status: "completed",
+      riskScore: opts.riskScore.toString(),
+      riskLevel: opts.riskLevel,
+      totalFindings: opts.findings.length,
+      findingsData: opts.findings,
+      workspaceId: opts.workspaceId ?? null,
+      completedAt: new Date(),
+    });
+
+    // 4. Insert individual findings
+    for (const finding of opts.findings) {
+      const fp = finding.fingerprint;
+      const prior = fp ? byFp.get(fp) : undefined;
+
+      if (
+        prior &&
+        prior.status === ("suppressed" as any) &&
+        prior.suppressionExpiresAt &&
+        new Date(prior.suppressionExpiresAt) > new Date()
+      ) {
+        continue;
+      }
+
+      const status =
+        prior?.status === ("accepted_risk" as any)
+          ? ("accepted_risk" as const)
+          : prior && prior.status === ("false_positive" as any)
+            ? ("false_positive" as const)
+            : ("open" as const);
+
+      const findingId = secureId("finding");
+      await tx.insert(findings).values({
+        id: findingId,
+        scanId,
+        collectionId: opts.collectionId,
+        userId: opts.userId,
+        title: finding.title,
+        severity: finding.severity,
+        description: finding.description || null,
+        category: finding.category || null,
+        remediation: finding.remediation || null,
+        cweId: finding.cweId || null,
+        ruleId: finding.ruleId || null,
+        confidence: finding.confidence || null,
+        fingerprint: fp || null,
+        endpoint: finding.endpoint || null,
+        method: finding.method || null,
+        evidence: finding.evidence || null,
+        workspaceId: opts.workspaceId ?? null,
+        status,
+        duplicateOf: prior && prior.scanId !== scanId ? prior.id : null,
+      });
+    }
+
+    return { id: scanId };
+  });
 }
 
 // ============================================================================
@@ -1996,6 +2135,47 @@ export async function getAuditLogForUser(userId: number, limit: number = 50) {
     .limit(limit);
 }
 
+export async function getAuditLogForUserPage(opts: {
+  userId: number;
+  limit: number;
+  offset: number;
+  action?: string;
+  startDate?: Date;
+  endDate?: Date;
+}): Promise<{ items: any[]; total: number }> {
+  const db = await getDb();
+  if (!db) {
+    logger.warn("[Database] Cannot get audit log page: database not available");
+    return { items: [], total: 0 };
+  }
+
+  const conditions = [eq(auditLog.userId, opts.userId)];
+  if (opts.action) {
+    conditions.push(eq(auditLog.action, opts.action));
+  }
+  if (opts.startDate) {
+    conditions.push(gte(auditLog.createdAt, opts.startDate));
+  }
+  if (opts.endDate) {
+    conditions.push(lt(auditLog.createdAt, opts.endDate));
+  }
+
+  const [countRow] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(auditLog)
+    .where(and(...conditions));
+
+  const items = await db
+    .select()
+    .from(auditLog)
+    .where(and(...conditions))
+    .orderBy(desc(auditLog.createdAt))
+    .limit(opts.limit)
+    .offset(opts.offset);
+
+  return { items, total: countRow?.count ?? 0 };
+}
+
 // ============================================================================
 // USER PROFILE MANAGEMENT
 // ============================================================================
@@ -2109,6 +2289,7 @@ export async function createLocalUser(data: {
   email: string;
   name: string;
   passwordHash: string;
+  role?: "user" | "editor" | "admin";
 }): Promise<{ id: number; openId: string }> {
   const db = await getDb();
   assertDb(db);
@@ -2121,6 +2302,7 @@ export async function createLocalUser(data: {
     name: data.name,
     loginMethod: "email",
     passwordHash: data.passwordHash,
+    role: data.role ?? "editor",
     lastSignedIn: new Date(),
   });
 

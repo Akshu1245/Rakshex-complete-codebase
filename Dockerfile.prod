@@ -25,6 +25,9 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 
+# Runtime uses node + tsx only — drop image-bundled npm to clear Trivy CRITICAL/HIGH on npm deps.
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx || true
+
 RUN addgroup -g 1001 -S nodejs \
   && adduser -S -u 1001 -G nodejs -h /app -s /sbin/nologin nodejs
 
