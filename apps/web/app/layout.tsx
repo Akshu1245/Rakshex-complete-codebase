@@ -1,7 +1,6 @@
 import "./globals-insforge.css";
 import "./globals.css";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import { AuthProvider } from "../components/AuthProvider";
 import { CookieConsent } from "../components/CookieConsent";
 import { ErrorBoundary } from "../components/ErrorBoundary";
@@ -11,9 +10,6 @@ import AppShell from "@/components/AppShell";
 import { ToastProvider } from "@/components/Toast";
 import { TrialBanner } from "@/app/components/TrialBanner";
 import { CrispChat } from "@/components/CrispChat";
-
-// Inter kept for fallback but primary fonts loaded via CSS
-const inter = Inter({ subsets: ["latin"] });
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.rakshex.in";
 
@@ -109,7 +105,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="twitter:image" content={`${SITE_URL}/og-image.png`} />
         <meta name="twitter:image:alt" content="RaksHex — AI Runtime Governance Platform" />
       </head>
-      <body className={inter.className}>
+      <body>
         <TRPCProvider>
           <AuthProvider>
             <TrialBanner />

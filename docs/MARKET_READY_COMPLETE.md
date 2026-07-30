@@ -17,20 +17,20 @@
 
 ## Product capabilities ready to sell / demo
 
-| Capability | Entry points |
-| ---------- | ------------ |
-| Secure collection import + deterministic API/AI scanner | Web, CLI, VS Code, GitHub Action |
-| Findings lifecycle + export (SARIF/JSON/PDF/CSV) | Web, API, CLI |
-| AgentGuard telemetry SDKs (Node + Python) | packages/agentguard-sdk, agentguard-python |
-| Policy-as-code YAML + runtime evaluation | packages/policy-engine, control plane |
-| Kill switch + budget enforcement + gateway | killSwitch API, gateway/enforcement |
-| Pricing calculator + checkout code paths | packages/pricing-engine, payments/stripe/razorpay |
-| MCP security inventory | packages/mcp-security |
-| Compliance catalog + SOC2 evidence panel | compliance-engine, web compliance |
-| SSO (SAML/OIDC) scaffolding + settings UI | sso services + settings |
-| Workspace RBAC, team invite, audit log | workspaces, team, audit |
-| Data export, webhooks, alerts | dataExport, webhooks, alertRules |
-| Waitlist, trust center, legal drafts | web routes + docs/legal |
+| Capability                                              | Entry points                                      |
+| ------------------------------------------------------- | ------------------------------------------------- |
+| Secure collection import + deterministic API/AI scanner | Web, CLI, VS Code, GitHub Action                  |
+| Findings lifecycle + export (SARIF/JSON/PDF/CSV)        | Web, API, CLI                                     |
+| AgentGuard telemetry SDKs (Node + Python)               | packages/agentguard-sdk, agentguard-python        |
+| Policy-as-code YAML + runtime evaluation                | packages/policy-engine, control plane             |
+| Kill switch + budget enforcement + gateway              | killSwitch API, gateway/enforcement               |
+| Pricing calculator + checkout code paths                | packages/pricing-engine, payments/stripe/razorpay |
+| MCP security inventory                                  | packages/mcp-security                             |
+| Compliance catalog + SOC2 evidence panel                | compliance-engine, web compliance                 |
+| SSO (SAML/OIDC) scaffolding + settings UI               | sso services + settings                           |
+| Workspace RBAC, team invite, audit log                  | workspaces, team, audit                           |
+| Data export, webhooks, alerts                           | dataExport, webhooks, alertRules                  |
+| Waitlist, trust center, legal drafts                    | web routes + docs/legal                           |
 
 ---
 

@@ -8,16 +8,16 @@
 
 ## What “market ready” means here
 
-| Layer                                                     | Status                                      |
-| --------------------------------------------------------- | ------------------------------------------- |
-| Product code for primary journey                          | **Complete**                                |
-| Security defaults (authz, hashed secrets, KS server-side) | **Present + tested**                        |
-| Local automated gates                                     | **Green**                                   |
-| Live health with real Postgres/Redis                      | **Green when stack up**                     |
-| Feature maturity (all shippable surfaces)                 | **Available** (see FEATURE_MATURITY.md)     |
-| Residual branding / DevPulse                              | **Cleaned**                                 |
-| Staging human journey                                     | **Operator**                                |
-| Remote CI release-gate / branch protection                | **Operator push + GitHub settings**         |
+| Layer                                                     | Status                                          |
+| --------------------------------------------------------- | ----------------------------------------------- |
+| Product code for primary journey                          | **Complete**                                    |
+| Security defaults (authz, hashed secrets, KS server-side) | **Present + tested**                            |
+| Local automated gates                                     | **Green**                                       |
+| Live health with real Postgres/Redis                      | **Green when stack up**                         |
+| Feature maturity (all shippable surfaces)                 | **Available** (see FEATURE_MATURITY.md)         |
+| Residual branding / DevPulse                              | **Cleaned**                                     |
+| Staging human journey                                     | **Operator**                                    |
+| Remote CI release-gate / branch protection                | **Operator push + GitHub settings**             |
 | Live billing / GitHub App secrets                         | **Optional for free launch; required for paid** |
 
 ---

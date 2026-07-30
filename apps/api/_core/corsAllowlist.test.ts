@@ -11,16 +11,14 @@ describe("buildCorsAllowlist", () => {
 
     expect(list).toContain("https://rakshex.in");
     expect(list).toContain("https://www.rakshex.in");
-    expect(list).toContain("https://yc7y9pq9.insforge.site");
-    expect(list).toContain("https://app.devpulse.ai");
     expect(list).toContain("https://app.rakshex.in");
+    expect(list).not.toContain("https://app.devpulse.ai");
 
     for (const origin of list) {
       expect(origin).not.toMatch(/\*/);
       expect(origin).not.toMatch(/vercel\.app/i);
     }
-    // Exact InsForge production origin is allowed; wildcards are not.
-    expect(list.some((o) => o.includes("*") && o.toLowerCase().includes("insforge"))).toBe(false);
+    expect(list.some((origin) => origin.includes("insforge"))).toBe(false);
   });
 
   it("merges comma-separated CORS_ORIGINS without introducing wildcards", () => {

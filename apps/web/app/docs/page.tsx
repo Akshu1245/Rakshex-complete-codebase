@@ -96,7 +96,7 @@ export default function DocsOverview() {
           {
             title: "Thinking Tokens",
             icon: "🧠",
-            desc: "World-first reasoning token isolation.",
+            desc: "Reasoning-token cost visibility.",
             href: "/docs/thinking-tokens",
           },
           {

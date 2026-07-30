@@ -17,10 +17,10 @@ export default function CompareSaltSecurity() {
             Head-to-Head
           </span>
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white mb-4">
-            DevPulse vs Salt Security
+            Rakshex vs Salt Security
           </h1>
           <p className="text-slate-400 text-base leading-relaxed max-w-3xl">
-            Salt Security pioneered ML-based API anomaly detection and posture management. DevPulse
+            Salt Security pioneered ML-based API anomaly detection and posture management. Rakshex
             is a modern AI-native runtime governance platform focused on prompt security, LLM cost
             control, agentic workflows, and deep GitHub-native scanning.
           </p>
@@ -28,7 +28,7 @@ export default function CompareSaltSecurity() {
 
         <div className="grid md:grid-cols-2 gap-8 mb-10">
           <div className="bg-zinc-900 p-6 rounded-2xl border border-zinc-800">
-            <h2 className="font-bold text-xl mb-4 text-emerald-400">DevPulse</h2>
+            <h2 className="font-bold text-xl mb-4 text-emerald-400">Rakshex</h2>
             <ul className="space-y-2 text-sm">
               <li>✅ Real-time PR secret + heuristic scanning with rich GitHub comments</li>
               <li>
@@ -65,7 +65,7 @@ export default function CompareSaltSecurity() {
             href="/dashboard"
             className="px-8 py-3 bg-blue-600 hover:bg-blue-500 rounded-lg font-medium"
           >
-            Start with DevPulse
+            Start with Rakshex
           </Link>
           <p className="text-xs mt-3 text-slate-500">
             Free tier includes GitHub PR scanning and basic LLM governance.

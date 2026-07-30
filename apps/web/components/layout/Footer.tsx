@@ -163,7 +163,7 @@ export function Footer() {
             className="flex items-center gap-2 text-sm text-neutral-400 font-manrope hover:text-white transition-colors duration-200 order-1 md:order-2 w-fit"
           >
             <span className="w-2 h-2 rounded-full bg-[#14B8A6] animate-pulse" />
-            <span>All systems operational</span>
+            <span>View service status</span>
           </Link>
         </div>
       </div>

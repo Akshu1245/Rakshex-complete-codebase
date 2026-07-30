@@ -1,6 +1,6 @@
 "use client";
 import { createContext, useContext, useMemo, type ReactNode } from "react";
-import { trpc } from "@/lib/trpc";
+import { useWorkspace } from "@/hooks/useWorkspace";
 
 interface WorkspaceCtx {
   workspaceId: number;
@@ -10,8 +10,8 @@ interface WorkspaceCtx {
 }
 
 const WorkspaceContext = createContext<WorkspaceCtx>({
-  workspaceId: 1,
-  workspaceName: "Default",
+  workspaceId: 0,
+  workspaceName: "No workspace",
   isLoading: false,
   workspaces: [],
 });
@@ -21,20 +21,16 @@ export function useEnterpriseWorkspace() {
 }
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
-  const { data: workspaces, isLoading } = trpc.workspaces.listMine.useQuery(undefined, {
-    retry: false,
-    staleTime: 30_000,
-  });
+  const { workspaces, workspace: activeWorkspace, isLoading } = useWorkspace();
 
   const value = useMemo<WorkspaceCtx>(() => {
-    const active = workspaces?.[0];
     return {
-      workspaceId: active?.id ?? 1,
-      workspaceName: active?.name ?? "Default",
+      workspaceId: activeWorkspace?.id ?? 0,
+      workspaceName: activeWorkspace?.name ?? "No workspace",
       isLoading,
-      workspaces: (workspaces ?? []).map((w) => ({ id: w.id, name: w.name, slug: w.slug })),
+      workspaces: workspaces.map((w) => ({ id: w.id, name: w.name, slug: w.slug })),
     };
-  }, [workspaces, isLoading]);
+  }, [workspaces, activeWorkspace, isLoading]);
 
   return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>;
 }

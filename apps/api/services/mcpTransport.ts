@@ -44,6 +44,20 @@ interface StdioSession {
   buffer: string;
 }
 
+function writeStdioLine(session: StdioSession, value: unknown): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const stdin = session.proc.stdin;
+    if (!stdin || stdin.destroyed || !stdin.writable) {
+      reject(new Error("MCP stdio process is not accepting input"));
+      return;
+    }
+    stdin.write(`${JSON.stringify(value)}\n`, (error) => {
+      if (error) reject(error);
+      else resolve();
+    });
+  });
+}
+
 function stdioRequest(
   session: StdioSession,
   method: string,
@@ -52,8 +66,10 @@ function stdioRequest(
   return new Promise((resolve, reject) => {
     const id = session.nextId++;
     session.pending.set(id, { resolve, reject });
-    const req = JSON.stringify({ jsonrpc: "2.0", id, method, params });
-    session.proc.stdin?.write(req + "\n");
+    void writeStdioLine(session, { jsonrpc: "2.0", id, method, params }).catch((error) => {
+      session.pending.delete(id);
+      reject(error instanceof Error ? error : new Error(String(error)));
+    });
   });
 }
 
@@ -141,6 +157,14 @@ async function discoverViaStdio(command: string[]): Promise<McpDiscoverResult> {
       stderr += chunk.toString("utf-8");
     });
 
+    // Child processes can exit between a writeability check and the actual
+    // write. Always consume stdin errors so EPIPE becomes a rejected request
+    // instead of an uncaught process-level exception.
+    proc.stdin?.on("error", (err) => {
+      for (const [, pending] of session.pending) pending.reject(err);
+      session.pending.clear();
+    });
+
     proc.on("error", (err) => {
       clearTimeout(timeout);
       reject(err);
@@ -162,10 +186,10 @@ async function discoverViaStdio(command: string[]): Promise<McpDiscoverResult> {
     })
       .then(() => {
         // Send initialized notification
-        proc.stdin?.write(
-          JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }) + "\n",
-        );
-        return stdioRequest(session, "tools/list");
+        return writeStdioLine(session, {
+          jsonrpc: "2.0",
+          method: "notifications/initialized",
+        }).then(() => stdioRequest(session, "tools/list"));
       })
       .then((result) => {
         clearTimeout(timeout);

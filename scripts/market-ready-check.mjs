@@ -6,23 +6,31 @@
 import { spawnSync } from "node:child_process";
 
 const steps = [
-  ["install", ["pnpm", "install", "--frozen-lockfile"]],
-  ["format", ["pnpm", "format:check"]],
-  ["lint", ["pnpm", "lint"]],
-  ["typecheck", ["pnpm", "typecheck"]],
-  ["test", ["pnpm", "test"]],
-  ["test:security", ["pnpm", "test:security"]],
-  ["test:integration", ["pnpm", "test:integration"]],
-  ["build", ["pnpm", "build"]],
-  ["smoke:test", ["pnpm", "smoke:test"]],
+  ["install", ["install", "--frozen-lockfile"]],
+  ["format", ["format:check"]],
+  ["lint", ["lint"]],
+  ["typecheck", ["typecheck"]],
+  ["test", ["test"]],
+  ["test:security", ["test:security"]],
+  ["test:integration", ["test:integration"]],
+  ["build", ["build"]],
 ];
+
+// A live smoke check is meaningful only when the caller supplies the staging
+// target. Keeping it out of the default local run avoids testing an unrelated
+// process that happens to occupy localhost:3000.
+if (process.env.SMOKE_BASE_URL) {
+  steps.push(["smoke:test", ["smoke:test"]]);
+}
 
 let failed = 0;
 console.log("\n═══ Rakshex market-ready check ═══\n");
 
 for (const [name, cmd] of steps) {
   console.log(`→ ${name}`);
-  const r = spawnSync(cmd[0], cmd.slice(1), {
+  // Corepack honors package.json#packageManager, preventing a globally
+  // installed pnpm version from invalidating a CI-frozen lockfile.
+  const r = spawnSync("corepack", ["pnpm", ...cmd], {
     stdio: "inherit",
     shell: process.platform === "win32",
     env: process.env,

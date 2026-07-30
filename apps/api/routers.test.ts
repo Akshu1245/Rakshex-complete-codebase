@@ -108,8 +108,53 @@ vi.mock("./db", async () => {
   const mockPayments: any[] = [];
 
   return {
+    getPersonalWorkspaceForUser: vi.fn(async (userId: number) => ({
+      id: userId,
+      slug: `user-${userId}`,
+      name: "Test Workspace",
+      ownerUserId: userId,
+      isPersonal: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })),
+    getWorkspaceMembership: vi.fn(async (workspaceId: number, userId: number) => ({
+      id: userId,
+      workspaceId,
+      userId,
+      role: "owner",
+      active: true,
+      invitedBy: null,
+      invitedAt: null,
+      joinedAt: new Date(),
+    })),
+    setCollectionWorkspaceId: vi.fn(async (id: string, workspaceId: number) => {
+      const col = mockCollections.find((c) => c.id === id);
+      if (col) col.workspaceId = workspaceId;
+    }),
+    setFindingWorkspaceId: vi.fn(async (id: string, workspaceId: number) => {
+      const finding = mockFindings.find((f) => f.id === id);
+      if (finding) finding.workspaceId = workspaceId;
+    }),
     getCollectionsByUserId: vi.fn(async (userId: number) =>
       mockCollections.filter((c) => c.userId === userId),
+    ),
+    listCollectionsPage: vi.fn(
+      async ({
+        workspaceId,
+        userId,
+        limit,
+        offset,
+      }: {
+        workspaceId: number;
+        userId: number;
+        limit: number;
+        offset: number;
+      }) => {
+        const scoped = mockCollections.filter(
+          (c) => c.workspaceId === workspaceId || (c.workspaceId == null && c.userId === userId),
+        );
+        return { items: scoped.slice(offset, offset + limit), total: scoped.length };
+      },
     ),
     getCollectionById: vi.fn(
       async (id: string) => mockCollections.find((c) => c.id === id) ?? null,
@@ -849,16 +894,19 @@ describe("onboarding", () => {
     expect(progress.currentStep).toBe(1);
   });
 
-  it("marks a step as complete", async () => {
+  it("does not allow manual completion of an event-backed step", async () => {
     const { ctx } = createAuthContext({ id: 400 });
     const caller = appRouter.createCaller(ctx);
     const result = await caller.onboarding.completeStep({
       step: "importCollection",
     });
-    expect(result.success).toBe(true);
+    expect(result.success).toBe(false);
+    expect(result.reason).toBe("complete_via_product_action");
   });
 
-  it("step completion persists correctly", async () => {
+  it("marks import complete after a real collection is created", async () => {
+    const db = await import("./db");
+    await db.createCollection(400, "Imported Collection", "postman", { item: [] });
     const { ctx } = createAuthContext({ id: 400 });
     const caller = appRouter.createCaller(ctx);
     const progress = await caller.onboarding.getProgress();

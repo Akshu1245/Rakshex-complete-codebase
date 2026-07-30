@@ -121,11 +121,12 @@ export class SettingsWebviewPanel {
   }
 
   private async handleTestConnection(url: string): Promise<void> {
-    const baseUrl = (url || this.api["getBaseUrl"]()).replace(/\/+$/, "");
+    const baseUrl = (url || this.api.getConfiguredApiUrl()).replace(/\/+$/, "");
+    const healthUrl = `${baseUrl.endsWith("/api") ? baseUrl : `${baseUrl}/api`}/health`;
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 10_000);
-      const res = await fetch(`${baseUrl}/health`, {
+      const res = await fetch(healthUrl, {
         method: "GET",
         signal: controller.signal,
       });

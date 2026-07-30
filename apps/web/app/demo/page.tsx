@@ -543,13 +543,13 @@ export default function DemoPage() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <a
-                  href="https://devpulse.ai/signup"
+                  href="https://www.rakshex.in/register"
                   className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white px-8 py-4 rounded-xl font-bold text-lg transition-colors"
                 >
-                  Get DevPulse Free <ArrowRight className="w-5 h-5" />
+                  Get Rakshex Free <ArrowRight className="w-5 h-5" />
                 </a>
                 <a
-                  href="https://marketplace.visualstudio.com/items?itemName=DevPulse.DevPulse"
+                  href="https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex-vscode"
                   className="inline-flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-white px-8 py-4 rounded-xl font-bold text-lg transition-colors"
                 >
                   <FileJson className="w-5 h-5" /> VS Code Extension

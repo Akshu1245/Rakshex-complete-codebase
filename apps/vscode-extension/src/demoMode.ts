@@ -119,8 +119,8 @@ export async function runDemoScenarios(): Promise<void> {
       },
     },
     {
-      name: "💰 Hidden Cost Revelation",
-      description: "Reveals thinking tokens that providers hide",
+      name: "💰 Sample Cost Anomaly (Synthetic)",
+      description: "Shows how a cost anomaly would appear using sample data",
       run: async () => {
         await vscode.window.withProgress(
           {
@@ -131,12 +131,12 @@ export async function runDemoScenarios(): Promise<void> {
           async (progress) => {
             progress.report({ increment: 50, message: "Attributing hidden reasoning costs..." });
             await sleep(1200);
-            progress.report({ increment: 50, message: "Done! $1,247 hidden costs found." });
+            progress.report({ increment: 50, message: "Synthetic cost anomaly prepared." });
             await sleep(500);
           },
         );
         void vscode.window.showWarningMessage(
-          "💰 Hidden cost detected: $1,247 in reasoning tokens this week (3.2× visible cost)",
+          "💰 Synthetic example: elevated reasoning-token spend would be flagged here.",
         );
       },
     },
@@ -158,12 +158,15 @@ export async function runDemoScenarios(): Promise<void> {
               message: "Anomaly detected! Infinite loop pattern...",
             });
             await sleep(800);
-            progress.report({ increment: 34, message: "Kill switch activated. Agent stopped." });
+            progress.report({
+              increment: 34,
+              message: "Synthetic response: kill switch activated.",
+            });
             await sleep(500);
           },
         );
         void vscode.window.showErrorMessage(
-          "🛑 AgentGuard STOPPED a rogue agent after 847 recursive calls ($42.30 saved)",
+          "🛑 Synthetic example: AgentGuard stopped a repeated-call loop.",
         );
       },
     },

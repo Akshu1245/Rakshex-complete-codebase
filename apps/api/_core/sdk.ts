@@ -138,7 +138,10 @@ class SDKServer {
     const auth = req.headers.authorization;
     if (typeof auth === "string" && auth.toLowerCase().startsWith("bearer ")) {
       const token = auth.slice(7).trim();
-      if (token.length > 0 && token.startsWith("dp_")) {
+      if (
+        token.length > 0 &&
+        (token.startsWith("rk_live_") || token.startsWith("rk_test_") || token.startsWith("dp_"))
+      ) {
         return token;
       }
     }

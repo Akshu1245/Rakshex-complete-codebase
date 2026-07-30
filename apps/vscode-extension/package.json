@@ -1,7 +1,7 @@
 {
-  "name": "@rakshex/vscode-extension",
+  "name": "rakshex-vscode",
   "displayName": "Rakshex",
-  "description": "Stop AI agents from burning your API budget. Find leaked keys, hidden costs, and security risks in VS Code ├óΓé¼ΓÇ¥ first scan in 60 seconds.",
+  "description": "Find leaked keys, hidden API costs, and security risks without leaving VS Code.",
   "version": "0.2.1",
   "publisher": "rakshex",
   "license": "MIT",
@@ -321,7 +321,7 @@
     "viewsWelcome": [
       {
         "view": "rakshex.findings",
-        "contents": "Sign in with your Rakshex API key to see findings.\n[Sign in](command:rakshex.authenticate)\n\nGenerate an API key from Settings on the Rakshex dashboard.\n\n---\n\n**Keyboard shortcuts:**\nCtrl+Shift+D ├óΓé¼ΓÇ¥ Refresh\nCtrl+Shift+S ├óΓé¼ΓÇ¥ Run Scan\nCtrl+Shift+R ├óΓé¼ΓÇ¥ Rerun Last Scan\nCtrl+Shift+1-4 ├óΓé¼ΓÇ¥ Filter by severity\nEnter ├óΓé¼ΓÇ¥ Resolve finding"
+        "contents": "Connect an API key to see your workspace findings.\n[Connect API key](command:rakshex.authenticate)\n\nCreate a key in Rakshex Dashboard → Settings → API keys.\n\n---\n\n**Shortcuts:**\nCtrl+Shift+D — Refresh\nCtrl+Shift+S — Run scan\nCtrl+Shift+R — Rerun last scan\nCtrl+Shift+1-4 — Filter by severity\nEnter — Resolve finding"
       }
     ],
     "menus": {
@@ -497,8 +497,13 @@
       "properties": {
         "rakshex.apiUrl": {
           "type": "string",
-          "default": "http://localhost:3000",
-          "description": "Base URL of the Rakshex backend (default: https://api.rakshex.in ├óΓé¼ΓÇ¥ self-hosted users can override to e.g. https://api.your-company.com or http://localhost:3000)."
+          "default": "https://api.rakshex.in",
+          "description": "Rakshex API origin. Change this only for a reviewed self-hosted deployment."
+        },
+        "rakshex.dashboardUrl": {
+          "type": "string",
+          "default": "https://www.rakshex.in/dashboard",
+          "description": "Rakshex web dashboard opened from extension actions."
         },
         "rakshex.heartbeatIntervalSec": {
           "type": "number",
@@ -526,7 +531,8 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run esbuild-base -- --minify",
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
+    "vscode:prepublish": "npm run clean && npm run esbuild-base -- --minify",
     "esbuild-base": "esbuild src/extension.ts --bundle --outdir=dist --external:vscode --format=cjs --platform=node",
     "esbuild": "npm run esbuild-base -- --sourcemap",
     "esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
@@ -537,7 +543,7 @@
     "package": "npx @vscode/vsce package --no-dependencies",
     "typecheck": "tsc --noEmit",
     "build": "tsc -p ./",
-    "lint": "echo @rakshex/vscode-extension lint ok"
+    "lint": "echo rakshex-vscode lint ok"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

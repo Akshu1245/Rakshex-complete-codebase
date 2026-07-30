@@ -7,8 +7,6 @@
  *   - presents detected routes in an output channel and offers a quick-pick
  *     to jump to the source location
  *
- * Patent surface NHCE/DEV/2026/003 (Shadow API Discovery via IDE Correlation).
- *
  * Comparing the detected list against tracked endpoints (Postman/OpenAPI
  * collections) happens server-side — the extension shows the raw detected
  * set so a developer can spot routes the security inventory is missing

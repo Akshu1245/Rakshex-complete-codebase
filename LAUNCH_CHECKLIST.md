@@ -222,7 +222,7 @@ npx @vscode/vsce publish
 **Code Status: 100% COMPLETE**
 
 - Frontend: 45 pages, deployed to Vercel
-- Backend: 37 API routers, 478 tests, Dockerized
+- Backend: API routers, automated release suite, and container targets (use current QA evidence)
 - VS Code Extension: Compiled, packaged as .vsix
 - Marketing: Pitch deck, press kit, email templates, social kit
 - Documentation: API reference, self-hosting guide, migration guides

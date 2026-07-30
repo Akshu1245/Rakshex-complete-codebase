@@ -67,7 +67,7 @@ export default function JudgeDemoPage() {
 
   function copyReport() {
     if (!result || result.error) return;
-    const text = `DevPulse Real Engine Scan
+    const text = `Rakshex Real Engine Scan
 Prompt: ${prompt.substring(0, 120)}
 
 Injection: ${result.injection?.threatLevel} (${Math.round((result.injection?.confidence || 0) * 100)}%)
@@ -90,9 +90,7 @@ Time: ${scanTime}ms (real engines)`;
             <div className="text-yellow-400 text-xs tracking-[3px] font-mono">
               REAL ENGINES • NO FAKE DATA • FOR JUDGES &amp; REAL USERS
             </div>
-            <h1 className="text-5xl font-semibold tracking-[-2.5px]">
-              DevPulse Live Security Demo
-            </h1>
+            <h1 className="text-5xl font-semibold tracking-[-2.5px]">Rakshex Live Security Demo</h1>
           </div>
         </div>
 
@@ -233,7 +231,7 @@ Time: ${scanTime}ms (real engines)`;
           ))}
 
         <div className="mt-12 text-center text-xs text-white/30">
-          DevPulse — Real security and cost layer for AI applications. Built for the market.
+          Rakshex — Real security and cost layer for AI applications. Built for the market.
         </div>
       </div>
     </div>

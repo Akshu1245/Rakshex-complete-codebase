@@ -2,8 +2,8 @@
  * Thin fetch wrapper around the Rakshex tRPC `vscodeExtension.*` router.
  *
  * tRPC v11 wire format:
- *   Query:    GET  /trpc/<path>?input=<urlencoded-json>
- *   Mutation: POST /trpc/<path>   body: { input: <json> }
+ *   Query:    GET  /api/trpc/<path>?input={"json":<input>}
+ *   Mutation: POST /api/trpc/<path>   body: {"json":<input>}
  *
  * Responses are wrapped as `{ result: { data: <payload> } }` (tRPC serializes
  * through superjson on the server; for the shapes we consume here the JSON
@@ -193,6 +193,15 @@ export class RakshexApi {
     return this.isOnline;
   }
 
+  getConfiguredApiUrl(): string {
+    return this.getBaseUrl().replace(/\/+$/, "");
+  }
+
+  getHealthUrl(): string {
+    const base = this.getConfiguredApiUrl();
+    return `${base.endsWith("/api") ? base : `${base}/api`}/health`;
+  }
+
   /**
    * Resilient fetch with timeout, retry, and offline detection.
    * Never blocks the UI — returns clear errors for callers to handle.
@@ -239,7 +248,7 @@ export class RakshexApi {
   private async query<T>(path: string, input?: unknown): Promise<T> {
     const url = new URL(`${this.trpcBase()}/${path}`);
     if (input !== undefined) {
-      url.searchParams.set("input", JSON.stringify(input));
+      url.searchParams.set("input", JSON.stringify({ json: input }));
     }
     const res = await this.resilientFetch(url.toString(), {
       method: "GET",
@@ -289,7 +298,7 @@ export class RakshexApi {
     opts: { apiKeyOverride?: string } = {},
   ): Promise<T> {
     const url = `${this.trpcBase()}/${path}`;
-    const body = input === undefined ? {} : { input };
+    const body = input === undefined ? {} : { json: input };
     const res = await this.resilientFetch(
       url,
       {
@@ -316,8 +325,8 @@ export class RakshexApi {
   }
 
   private trpcBase(): string {
-    const base = this.getBaseUrl().replace(/\/+$/, "");
-    return `${base}/trpc`;
+    const base = this.getConfiguredApiUrl();
+    return `${base.endsWith("/api") ? base : `${base}/api`}/trpc`;
   }
 
   private async handleResponse<T>(res: Response): Promise<T> {
@@ -333,6 +342,8 @@ export class RakshexApi {
 
     if (!res.ok) {
       const errMsg =
+        (parsed as { error?: { message?: string; json?: { message?: string } } } | undefined)?.error
+          ?.json?.message ??
         (parsed as { error?: { message?: string } } | undefined)?.error?.message ??
         (parsed as { message?: string } | undefined)?.message ??
         rawText ??
@@ -356,5 +367,5 @@ export class RakshexApi {
 export function getConfiguredBaseUrl(): string {
   return vscode.workspace
     .getConfiguration("rakshex")
-    .get<string>("apiUrl", "http://localhost:8000");
+    .get<string>("apiUrl", "https://api.rakshex.in");
 }

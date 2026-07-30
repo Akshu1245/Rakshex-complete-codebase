@@ -15,6 +15,27 @@ vi.mock("../db", async () => {
   const mockFindings = new Map();
 
   return {
+    getPersonalWorkspaceForUser: vi.fn(async (userId: number) => ({
+      id: userId,
+      slug: `user-${userId}`,
+      name: "Test Workspace",
+      ownerUserId: userId,
+      isPersonal: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })),
+    getWorkspaceMembership: vi.fn(async (workspaceId: number, userId: number) => ({
+      id: userId,
+      workspaceId,
+      userId,
+      role: "owner",
+      active: true,
+      invitedBy: null,
+      invitedAt: null,
+      joinedAt: new Date(),
+    })),
+    setCollectionWorkspaceId: vi.fn(async () => {}),
+    setFindingWorkspaceId: vi.fn(async () => {}),
     getCollectionById: vi.fn(async (id: string) => mockCollections.get(id) || null),
     createScan: vi.fn(async (...args: any[]) => {
       const id = `scan_${Date.now()}`;
