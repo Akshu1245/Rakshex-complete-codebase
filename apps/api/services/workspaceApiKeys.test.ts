@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { generateRawApiKey, apiKeyHasScope } from "./workspaceApiKeys";
-import { hashApiKey } from "../utils/crypto";
+import { apiKeyHashCandidates, hashApiKey, verifyApiKeyHash } from "../utils/crypto";
 
 describe("API key helpers", () => {
   it("generates rk_live_ prefixed secrets", () => {
@@ -15,6 +15,16 @@ describe("API key helpers", () => {
     const h2 = hashApiKey(raw);
     expect(h1).toBe(h2);
     expect(h1).not.toBe(raw);
+  });
+
+  it("accepts legacy API key digests for rolling migration", () => {
+    const raw = generateRawApiKey("test");
+    const [primary, legacy] = apiKeyHashCandidates(raw);
+    expect(primary).toBe(hashApiKey(raw));
+    expect(primary).not.toBe(legacy);
+    expect(verifyApiKeyHash(raw, primary!)).toBe(true);
+    expect(verifyApiKeyHash(raw, legacy!)).toBe(true);
+    expect(verifyApiKeyHash(`${raw}-wrong`, primary!)).toBe(false);
   });
 
   it("scope check allows * and admin", () => {

@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { eq, and, or, isNull, desc, gte, lt, sql } from "drizzle-orm";
+import { eq, and, or, inArray, isNull, desc, gte, lt, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
@@ -2574,12 +2574,23 @@ export async function getUserByApiKey(apiKey: string) {
     return undefined;
   }
 
-  const { hashApiKey, verifyApiKeyHash } = await import("./utils/crypto");
+  const { apiKeyHashCandidates, hashApiKey, verifyApiKeyHash } = await import("./utils/crypto");
   const hashed = hashApiKey(apiKey);
+  const hashCandidates = apiKeyHashCandidates(apiKey);
 
-  // Primary lookup: hashed-at-rest keys
-  let result = await db.select().from(users).where(eq(users.apiKey, hashed)).limit(1);
-  if (result.length > 0) return result[0];
+  // Primary lookup accepts the former digest during a rolling migration.
+  let result = await db.select().from(users).where(inArray(users.apiKey, hashCandidates)).limit(1);
+  if (result.length > 0) {
+    const user = result[0]!;
+    if (user.apiKey !== hashed) {
+      await db
+        .update(users)
+        .set({ apiKey: hashed, updatedAt: new Date() })
+        .where(and(eq(users.id, user.id), eq(users.apiKey, user.apiKey!)));
+      return { ...user, apiKey: hashed };
+    }
+    return user;
+  }
 
   // Legacy fallback: plaintext keys stored before migration (dp_ prefix)
   if (apiKey.startsWith("dp_")) {
@@ -2587,7 +2598,11 @@ export async function getUserByApiKey(apiKey: string) {
     if (result.length > 0) {
       const user = result[0]!;
       if (verifyApiKeyHash(apiKey, user.apiKey ?? "") || user.apiKey === apiKey) {
-        return user;
+        await db
+          .update(users)
+          .set({ apiKey: hashed, updatedAt: new Date() })
+          .where(and(eq(users.id, user.id), eq(users.apiKey, user.apiKey!)));
+        return { ...user, apiKey: hashed };
       }
     }
   }

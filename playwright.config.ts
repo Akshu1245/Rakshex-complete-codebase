@@ -40,7 +40,10 @@ export default defineConfig({
       },
     },
     {
-      command: `pnpm --filter @rakshex/web exec next dev -p ${FRONTEND_PORT}`,
+      // Match the package's supported dev/build path. Next 16 otherwise
+      // defaults to Turbopack, which can infer apps/web/app as the workspace
+      // root in CI and then fail to resolve the hoisted Next.js package.
+      command: `pnpm --filter @rakshex/web exec next dev --webpack -p ${FRONTEND_PORT}`,
       url: BASE_URL,
       reuseExistingServer: !process.env.CI,
       timeout: 180_000,

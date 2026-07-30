@@ -3,9 +3,9 @@
  * expiry, last-used, IP restriction, repo restriction, rotation, revocation.
  */
 import crypto from "crypto";
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { apiKeys } from "@rakshex/database";
-import { hashApiKey, apiKeyPrefix as shortPrefix } from "../utils/crypto";
+import { apiKeyHashCandidates, hashApiKey, apiKeyPrefix as shortPrefix } from "../utils/crypto";
 import { getDb } from "../db";
 
 function secureId(prefix: string): string {
@@ -195,8 +195,13 @@ export async function validateWorkspaceApiKey(
   const db = await getDb();
   if (!db) return null;
 
-  const keyHash = hashApiKey(rawKey);
-  const rows = await db.select().from(apiKeys).where(eq(apiKeys.keyHash, keyHash)).limit(1);
+  const keyHashCandidates = apiKeyHashCandidates(rawKey);
+  const currentKeyHash = keyHashCandidates[0]!;
+  const rows = await db
+    .select()
+    .from(apiKeys)
+    .where(inArray(apiKeys.keyHash, keyHashCandidates))
+    .limit(1);
   const row = rows[0];
   if (!row) return null;
 
@@ -223,7 +228,13 @@ export async function validateWorkspaceApiKey(
     return null;
   }
 
-  await db.update(apiKeys).set({ lastUsedAt: new Date() }).where(eq(apiKeys.id, row.id));
+  await db
+    .update(apiKeys)
+    .set({
+      lastUsedAt: new Date(),
+      ...(row.keyHash !== currentKeyHash ? { keyHash: currentKeyHash, updatedAt: new Date() } : {}),
+    })
+    .where(eq(apiKeys.id, row.id));
 
   return {
     keyId: row.id,
