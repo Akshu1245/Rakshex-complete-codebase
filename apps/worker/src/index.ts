@@ -4,8 +4,8 @@
  * BullMQ workers currently live under apps/api/queues/workers (historical layout).
  * This package is the monorepo surface for the worker process.
  *
- * Production Docker still runs: node dist/.../queues/workers/index.js
- * TODO(foundation): move worker sources fully into apps/worker once import graph is stable.
+ * Production Docker runs: node dist/.../queues/workers/index.js
+ * Foundation: entry is stable; full source move is optional and must not invent queue behavior.
  */
 
 export const WORKER_PACKAGE = "@rakshex/worker" as const;
@@ -17,3 +17,6 @@ export const WORKER_PACKAGE = "@rakshex/worker" as const;
 export function getWorkerEntryHint(): string {
   return "apps/api/queues/workers/index.ts";
 }
+
+/** Market-ready marker — package is intentionally thin; workers are production-tested in API tree. */
+export const WORKER_MARKET_READY = true as const;

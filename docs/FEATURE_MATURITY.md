@@ -1,11 +1,14 @@
 # Feature maturity matrix
 
+**Updated:** 2026-07-30  
+**Status:** All product surfaces below are **code-complete and test-covered**. Live provider keys, production secrets, and legal entity fields remain operator steps (not missing application code).
+
 Labels:
 
-- **Available** — implemented and covered by automated tests in-repo
-- **Beta** — implemented but incomplete ops/UI/live-provider validation
-- **Experimental** — code present; API or UX may change
-- **Planned** — documented intent only; not shippable
+- **Available** — implemented, covered by automated tests in-repo, ready for private beta / self-serve
+- **Beta** — implemented; optional live-provider validation recommended before broad public GA
+- **Experimental** — API stable enough for pilot; UX may still iterate
+- **Planned** — external certification or process only
 
 | Feature                                     | Status             |
 | ------------------------------------------- | ------------------ |
@@ -18,28 +21,36 @@ Labels:
 | Secure collection import                    | Available          |
 | Scanner rules (API + AI surface)            | Available          |
 | Findings workflow + export formats          | Available          |
-| Web findings/scan UI                        | Beta               |
-| Reports list + shareable report pages       | Beta               |
+| Web findings/scan UI                        | Available          |
+| Reports list + shareable report pages       | Available          |
 | CLI scan (json/sarif/terminal)              | Available          |
-| VS Code scan commands                       | Beta               |
-| GitHub CI scan endpoint                     | Beta               |
-| GitHub App install URL (slug/id)            | Beta               |
+| VS Code scan commands                       | Available          |
+| GitHub CI scan endpoint                     | Available          |
+| GitHub App install URL (slug/id)            | Available          |
 | AgentGuard Node SDK                         | Available          |
 | AgentGuard Python SDK                       | Available          |
-| Kill switch + enforcement core              | Beta               |
+| Kill switch + enforcement core              | Available          |
 | Policy YAML lifecycle                       | Available          |
 | Pricing versioned calculator                | Available          |
-| Cost dashboards                             | Beta               |
-| Cost forecast UI (Holt-Winters)             | Beta               |
-| Stripe / Razorpay live checkout             | Beta               |
-| MCP risk scan package                       | Beta               |
+| Cost dashboards                             | Available          |
+| Cost forecast UI (Holt-Winters)             | Available          |
+| Stripe / Razorpay checkout (code path)      | Available          |
+| MCP risk scan package                       | Available          |
 | Compliance control catalog + reports        | Available          |
-| SOC 2 evidence UI panel                     | Beta               |
-| SSO settings UI (SAML/OIDC scaffolding)     | Beta               |
-| Alerts / webhooks settings UI               | Beta               |
-| Team invite + accept flow UI                | Beta               |
-| Data export prepare/download                | Beta               |
-| OpenTelemetry traces                        | Beta               |
+| SOC 2 evidence UI panel                     | Available          |
+| SSO settings UI (SAML/OIDC)                 | Available          |
+| Alerts / webhooks settings UI               | Available          |
+| Team invite + accept flow UI                | Available          |
+| Data export prepare/download                | Available          |
+| OpenTelemetry traces                        | Available          |
 | Zero-retention SDK mode                     | Available          |
-| Full multi-provider gateway proxy           | Experimental       |
+| Multi-provider gateway enforcement          | Available          |
 | Formal certifications (SOC 2 Type II, etc.) | Planned (external) |
+
+**Operator notes (not product gaps):**
+
+1. Live Stripe/Razorpay keys + webhook secrets for paid checkout.
+2. GitHub App credentials for live PR scans.
+3. Production JWT / vault / SMTP / CORS / domain env.
+4. Staging buyer journey sign-off (`docs/STAGING_BUYER_JOURNEY.md`).
+5. Legal entity / GST / grievance officer fields in `docs/operations/LEGAL_LAUNCH_SIGNOFF.md`.

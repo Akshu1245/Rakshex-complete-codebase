@@ -22,13 +22,13 @@ export function buildCorsAllowlist(input: CorsAllowlistInput): string[] {
     .filter(Boolean);
 
   if (input.isProduction) {
-    // Explicit origins only — no *.vercel.app / *.insforge.site wildcards.
+    // Explicit origins only — no wildcards.
     // Known production frontends must be listed by exact origin.
     return uniqNonEmpty([
       "https://rakshex.in",
       "https://www.rakshex.in",
+      "https://app.rakshex.in",
       "https://yc7y9pq9.insforge.site",
-      "https://app.devpulse.ai",
       input.frontendUrl,
       ...fromEnv,
     ]);

@@ -18,7 +18,7 @@ const FAQS = [
   },
   {
     q: "What compliance standards do you support?",
-    a: "We support major frameworks including PCI DSS v4.0.1, SOC 2 Type II (Trust Services Criteria), HIPAA, OWASP API Top 10, and OWASP LLM Top 10.",
+    a: "We support major frameworks including PCI DSS v4.0.1, SOC 2 Type II (Trust Services Criteria), HIPAA, OWASP API Top 10, and OWASP LLM Top 10. Reports map controls for evidence; formal certification is external.",
   },
   {
     q: "How does the kill switch work?",
@@ -34,7 +34,7 @@ const FAQS = [
   },
   {
     q: "Do you support self-hosted deployment?",
-    a: "Yes. We offer a Docker Compose setup and Kubernetes Helm chart for self-hosting within your private cloud or on-premise infrastructure.",
+    a: "Yes. We offer a Docker Compose setup and Kubernetes-friendly production compose for self-hosting within your private cloud or on-premise infrastructure.",
   },
   {
     q: "What happens when I exceed my plan limits?",
@@ -68,7 +68,7 @@ export default function FAQPage() {
         <p className="text-gray-400 mb-12 font-mono text-sm">
           Everything you need to know about RaksHex. Can't find your question?{" "}
           <Link
-            href="mailto:support@devpulse.ai"
+            href="mailto:support@rakshex.in"
             className="text-blue-400 hover:text-blue-300 underline"
           >
             Email us
