@@ -1,8 +1,8 @@
-# RakshEx Legal Package
+# Rakshex Legal Package
 
-Version: 2026-07-12
+Version: 2026-07-30
 
-This directory is the source of truth for RakshEx customer-facing legal documents. Generated Word documents are published under `devpulse-frontend/public/legal`.
+This directory is the source of truth for Rakshex customer-facing legal documents. Generated Word documents are published under `apps/web/public/legal`.
 
 ## Documents
 

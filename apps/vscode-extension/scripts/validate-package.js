@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Pre-publish validation script for DevPulse VS Code extension.
+ * Pre-publish validation script for Rakshex VS Code extension.
  * Run before `vsce publish` to catch issues early.
  */
 const fs = require("fs");
@@ -60,7 +60,9 @@ if (!fs.existsSync(readmePath)) {
   if (!readme.includes("## Install")) warn("README missing ## Install section");
   if (!readme.includes("## Features")) warn("README missing ## Features section");
   if (!readme.includes("## Pricing")) warn("README missing ## Pricing section");
-  if (!readme.includes("devpulse.in")) warn("README missing link to devpulse.in");
+  if (!readme.includes("rakshex.in") && !readme.includes("rakshex")) {
+    warn("README missing link to rakshex.in");
+  }
 }
 
 // --- CHANGELOG validation ---
@@ -83,7 +85,7 @@ if (!fs.existsSync(distDir)) {
 }
 
 // --- Output ---
-console.log("=== DevPulse Extension Validation ===\n");
+console.log("=== Rakshex Extension Validation ===\n");
 
 if (warnings.length) {
   console.log(`⚠️  ${warnings.length} Warning${warnings.length > 1 ? "s" : ""}:`);
