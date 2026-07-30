@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 
 interface HealthData {
   status: string;
-  db: string;
-  redis: string;
+  checks?: {
+    database?: string;
+    redis?: string;
+  };
   uptime: number;
   timestamp: string;
   version: string;
@@ -44,10 +46,9 @@ export default function StatusClient() {
   }, []);
 
   const isApiOk = health && health.status === "ok";
-  const isDbOk = health && health.db === "connected";
-  const isRedisOk = health && health.redis === "connected";
+  const isDbOk = health?.checks?.database === "ok";
+  const isRedisOk = health?.checks?.redis === "ok";
 
-  // Match Option B requirements: API Status, Auth Service, Scanner Engine
   const services = [
     {
       name: "API Gateway & Engine",
@@ -56,16 +57,16 @@ export default function StatusClient() {
       desc: "Handles inbound request validation and runtime policy execution.",
     },
     {
-      name: "Authentication Service",
-      status: loading ? "checking" : error ? "offline" : isRedisOk ? "operational" : "degraded",
-      uptime: "Live health",
-      desc: "Manages session storage, login sequences, and OAuth tokens.",
-    },
-    {
-      name: "Scanner & Rules Engine",
+      name: "Database",
       status: loading ? "checking" : error ? "offline" : isDbOk ? "operational" : "degraded",
       uptime: "Live health",
-      desc: "Runs deterministic security scans on OpenAPI/Postman schemas.",
+      desc: "Stores workspaces, scans, findings, memberships, and billing state.",
+    },
+    {
+      name: "Queue & Cache",
+      status: loading ? "checking" : error ? "offline" : isRedisOk ? "operational" : "degraded",
+      uptime: "Live health",
+      desc: "Coordinates background scan and notification jobs.",
     },
   ];
 
@@ -104,14 +105,14 @@ export default function StatusClient() {
         <div>
           <h2 className="text-xl font-bold tracking-tight">
             {overallStatus === "operational"
-              ? "All Systems Operational"
+              ? "Current Checks Passed"
               : overallStatus === "degraded"
                 ? "Service Degraded"
                 : "Connecting to monitor..."}
           </h2>
           <p className="text-sm opacity-80 mt-0.5">
             {overallStatus === "operational"
-              ? "All RaksHex backend engines and governance services are running smoothly."
+              ? "The API, database, and queue checks are responding normally."
               : overallStatus === "degraded"
                 ? "We are experiencing service degradations or connectivity issues. Our engineers are investigating."
                 : "Checking system health status..."}
@@ -182,7 +183,7 @@ export default function StatusClient() {
         </div>
         <div>
           <span>API Health Version: </span>
-          <code className="text-slate-400 font-mono">{health?.version || "0.4.0"}</code>
+          <code className="text-slate-400 font-mono">{health?.version || "Unavailable"}</code>
         </div>
       </div>
     </div>

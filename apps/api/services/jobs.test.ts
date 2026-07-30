@@ -71,7 +71,7 @@ describe("services/jobs typed queue wrappers", () => {
   });
 
   it("exports stable queue-name constants", () => {
-    expect(QUEUE_SCAN).toBe("scan");
+    expect(QUEUE_SCAN).toBe("background-scan");
     expect(QUEUE_WEBHOOK_DELIVERY).toBe("webhook-delivery");
     expect(QUEUE_WEEKLY_DIGEST).toBe("weekly-digest");
   });
@@ -87,7 +87,7 @@ describe("services/jobs typed queue wrappers", () => {
         commitSha: "abc123",
       },
     });
-    expect(id).toMatch(/^(scan-.*|[0-9]+)$/);
+    expect(id).toMatch(/^(background-scan-.*|[0-9]+)$/);
     await flushQueue();
     expect(runCollectionScan).toHaveBeenCalledTimes(1);
     expect(runCollectionScan).toHaveBeenCalledWith(7, "col-1", {

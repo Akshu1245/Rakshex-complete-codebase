@@ -39,6 +39,21 @@ services:
       timeout: 3s
       retries: 5
 
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: api
+    restart: "no"
+    user: "1001:1001"
+    command: ["node", "--import", "tsx", "packages/database/src/migrate.ts"]
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      DATABASE_URL: postgresql://rakshex:${POSTGRES_PASSWORD:-rakshex}@postgres:5432/rakshex
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   api:
     build:
       context: .
@@ -50,7 +65,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      NODE_ENV: ${NODE_ENV:-production}
+      NODE_ENV: ${NODE_ENV:-development}
       PORT: 3000
       DATABASE_URL: postgresql://rakshex:${POSTGRES_PASSWORD:-rakshex}@postgres:5432/rakshex
       REDIS_URL: redis://redis:6379
@@ -58,8 +73,8 @@ services:
       APP_URL: ${APP_URL:-http://localhost:3000}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3001}
     depends_on:
-      postgres:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
     healthcheck:
@@ -85,22 +100,22 @@ services:
     restart: unless-stopped
     user: "1001:1001"
     environment:
-      NODE_ENV: ${NODE_ENV:-production}
+      NODE_ENV: ${NODE_ENV:-development}
       DATABASE_URL: postgresql://rakshex:${POSTGRES_PASSWORD:-rakshex}@postgres:5432/rakshex
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me-min-32-chars-long}
       WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-3}
     depends_on:
-      postgres:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
     stop_grace_period: 30s
 
   web:
     build:
-      context: ./apps/web
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/web/Dockerfile
     container_name: rakshex-web
     restart: unless-stopped
     ports:

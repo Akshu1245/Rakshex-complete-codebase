@@ -1,7 +1,8 @@
-# DevPulse VS Code Extension — publish ignore list
+# Rakshex VS Code Extension — publish ignore list
 node_modules
 src
 .vscode
+.turbo
 tests
 *.ts
 !src/types/*.d.ts
@@ -10,3 +11,7 @@ vitest.config.ts
 .gitignore
 .eslintrc*
 .prettierrc*
+PUBLISHING.md
+dist/**/*.map
+dist/**/*.test.js
+*.vsix

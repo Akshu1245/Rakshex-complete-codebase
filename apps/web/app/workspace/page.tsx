@@ -3,9 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { trpc } from "@/lib/trpc";
+import { useWorkspace } from "@/hooks/useWorkspace";
+import { WorkspaceSubscriptionCard } from "@/components/workspace/WorkspaceSubscriptionCard";
 
 export default function WorkspacePage() {
   const list = trpc.workspaces.listMine.useQuery();
+  const { workspace, workspaceId, workspaces, switchWorkspace } = useWorkspace();
   const [name, setName] = useState("");
   const create = trpc.workspaces.create.useMutation({
     onSuccess: () => {
@@ -14,8 +17,6 @@ export default function WorkspacePage() {
     },
   });
 
-  const workspace = list.data?.[0];
-  const workspaceId = workspace?.id ?? 0;
   const members = trpc.workspaces.listMembers.useQuery(
     { workspaceId },
     { enabled: workspaceId > 0 },
@@ -50,7 +51,23 @@ export default function WorkspacePage() {
       {workspace && (
         <div className="space-y-6">
           <section className="border border-neutral-800 rounded-lg p-6">
-            <h2 className="font-medium mb-2">{workspace.name}</h2>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="font-medium">{workspace.name}</h2>
+              {workspaces.length > 1 && (
+                <select
+                  value={workspace.id}
+                  onChange={(event) => switchWorkspace(Number(event.target.value))}
+                  className="rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm"
+                  aria-label="Active workspace"
+                >
+                  {workspaces.map((item) => (
+                    <option value={item.id} key={item.id}>
+                      {item.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
             <p className="text-sm text-neutral-500">
               slug: {workspace.slug} · your role: {perms.data?.role ?? "…"}
             </p>
@@ -59,17 +76,25 @@ export default function WorkspacePage() {
           <section className="border border-neutral-800 rounded-lg p-6">
             <h2 className="font-medium mb-4">Members</h2>
             <ul className="space-y-2">
-              {(members.data ?? []).map((m: { userId: number; role: string; email?: string }) => (
-                <li
-                  key={m.userId}
-                  className="flex justify-between text-sm border-b border-neutral-900 py-2"
-                >
-                  <span>User #{m.userId}</span>
-                  <span className="text-neutral-400">{m.role}</span>
-                </li>
-              ))}
+              {(members.data ?? []).map(
+                (m: { userId: number; role: string; name?: string | null; email?: string }) => (
+                  <li
+                    key={m.userId}
+                    className="flex justify-between text-sm border-b border-neutral-900 py-2"
+                  >
+                    <span>{m.name || m.email || `User #${m.userId}`}</span>
+                    <span className="text-neutral-400">{m.role}</span>
+                  </li>
+                ),
+              )}
             </ul>
           </section>
+
+          {perms.data?.permissions.billing.read && (
+            <section className="border border-neutral-800 rounded-lg p-6">
+              <WorkspaceSubscriptionCard workspaceId={workspaceId} />
+            </section>
+          )}
         </div>
       )}
 

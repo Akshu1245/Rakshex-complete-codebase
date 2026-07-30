@@ -85,6 +85,10 @@ const nextConfig = {
         source: "/api/waitlist",
         destination: `${TS_BACKEND_URL}/api/waitlist`,
       },
+      {
+        source: "/api/import/:path*",
+        destination: `${TS_BACKEND_URL}/api/import/:path*`,
+      },
     ];
   },
   // Bundle splitting: extract vendor chunks and enable code splitting

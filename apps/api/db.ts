@@ -22,6 +22,7 @@ import {
   teamMembers,
   onboardingProgress,
   subscriptions,
+  workspaceSubscriptions,
   payments,
   passwordResetTokens,
   userSessions,
@@ -73,6 +74,8 @@ import {
   type InsertWorkspaceMemberRow,
   type WorkspaceInvitationRow,
   type InsertWorkspaceInvitationRow,
+  type WorkspaceSubscription,
+  type InsertWorkspaceSubscription,
   type WebhookEndpoint,
   type InsertWebhookEndpoint,
   type InsertWebhookDelivery,
@@ -1597,7 +1600,32 @@ export async function getTrialStatus(userId: number): Promise<{
 
 export async function getEffectivePlan(userId: number): Promise<"free" | "pro" | "enterprise"> {
   const plan = await getUserPlan(userId);
-  if (plan !== "free") return plan as "free" | "pro" | "enterprise";
+  if (plan === "enterprise") return "enterprise";
+
+  // A paid workspace subscription grants the plan to every active member of
+  // that workspace. This prevents invited teammates from being incorrectly
+  // evaluated as Free while working inside a paid organisation.
+  const db = await getDb();
+  if (db) {
+    const workspacePlans = await db
+      .select({ plan: workspaceSubscriptions.plan })
+      .from(workspaceMembers)
+      .innerJoin(
+        workspaceSubscriptions,
+        eq(workspaceSubscriptions.workspaceId, workspaceMembers.workspaceId),
+      )
+      .where(
+        and(
+          eq(workspaceMembers.userId, userId),
+          eq(workspaceMembers.active, true),
+          eq(workspaceSubscriptions.status, "active"),
+        ),
+      );
+    if (workspacePlans.some((row) => row.plan === "enterprise")) return "enterprise";
+    if (plan === "pro" || workspacePlans.some((row) => row.plan === "pro")) return "pro";
+  } else if (plan === "pro") {
+    return "pro";
+  }
 
   const trial = await getTrialStatus(userId);
   return trial.isTrial ? "pro" : "free";
@@ -2334,6 +2362,98 @@ export async function updateSubscriptionStatus(
     .where(eq(subscriptions.id, id));
 }
 
+export async function upsertWorkspaceSubscription(
+  data: InsertWorkspaceSubscription,
+): Promise<WorkspaceSubscription> {
+  const db = await getDb();
+  assertDb(db);
+  const rows = await db
+    .insert(workspaceSubscriptions)
+    .values(data)
+    .onConflictDoUpdate({
+      target: workspaceSubscriptions.workspaceId,
+      set: {
+        billingOwnerUserId: data.billingOwnerUserId,
+        plan: data.plan,
+        seatCount: data.seatCount,
+        unitAmountMinor: data.unitAmountMinor,
+        totalAmountMinor: data.totalAmountMinor,
+        currency: data.currency,
+        provider: data.provider,
+        providerSubscriptionId: data.providerSubscriptionId,
+        providerCustomerId: data.providerCustomerId,
+        status: data.status,
+        currentPeriodStart: data.currentPeriodStart,
+        currentPeriodEnd: data.currentPeriodEnd,
+        cancelAtPeriodEnd: data.cancelAtPeriodEnd,
+        cancelledAt: data.cancelledAt,
+        updatedAt: new Date(),
+      },
+    })
+    .returning();
+  if (!rows[0]) throw new InternalError("Workspace subscription write returned no row");
+  return rows[0];
+}
+
+export async function getWorkspaceSubscription(
+  workspaceId: number,
+): Promise<WorkspaceSubscription | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db
+    .select()
+    .from(workspaceSubscriptions)
+    .where(eq(workspaceSubscriptions.workspaceId, workspaceId))
+    .limit(1);
+  return rows[0];
+}
+
+export async function getWorkspaceSubscriptionByProviderId(
+  providerSubscriptionId: string,
+): Promise<WorkspaceSubscription | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db
+    .select()
+    .from(workspaceSubscriptions)
+    .where(eq(workspaceSubscriptions.providerSubscriptionId, providerSubscriptionId))
+    .limit(1);
+  return rows[0];
+}
+
+export async function updateWorkspaceSubscription(
+  id: string,
+  patch: Partial<WorkspaceSubscription>,
+): Promise<void> {
+  const db = await getDb();
+  assertDb(db);
+  await db
+    .update(workspaceSubscriptions)
+    .set({ ...patch, updatedAt: new Date() })
+    .where(eq(workspaceSubscriptions.id, id));
+}
+
+export async function countReservedWorkspaceSeats(workspaceId: number): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+  const [members, invitations] = await Promise.all([
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(workspaceMembers)
+      .where(and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.active, true))),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(workspaceInvitations)
+      .where(
+        and(
+          eq(workspaceInvitations.workspaceId, workspaceId),
+          gte(workspaceInvitations.expiresAt, new Date()),
+        ),
+      ),
+  ]);
+  return Number(members[0]?.count ?? 0) + Number(invitations[0]?.count ?? 0);
+}
+
 export async function updateUserSubscriptionId(userId: number, subscriptionId: string | null) {
   // Subscription link is in subscriptions table
 }
@@ -2361,7 +2481,8 @@ export async function createOrUpdatePayment(data: {
   subscriptionId?: string;
   razorpayPaymentId: string;
   razorpayOrderId?: string;
-  amount: number;
+  /** Canonical provider amount in paise/cents. */
+  amountMinor: number;
   currency: string;
   status: PaymentStatus;
   receipt?: string;
@@ -2383,7 +2504,8 @@ export async function createOrUpdatePayment(data: {
       .update(payments)
       .set({
         status: data.status,
-        amount: data.amount.toString(),
+        amountMinor: data.amountMinor,
+        amount: (data.amountMinor / 100).toFixed(2),
         updatedAt: new Date(),
       })
       .where(eq(payments.id, existing[0].id));
@@ -2396,7 +2518,8 @@ export async function createOrUpdatePayment(data: {
       subscriptionId: data.subscriptionId || null,
       razorpayPaymentId: data.razorpayPaymentId,
       razorpayOrderId: data.razorpayOrderId || null,
-      amount: data.amount.toString(),
+      amountMinor: data.amountMinor,
+      amount: (data.amountMinor / 100).toFixed(2),
       currency: data.currency,
       status: data.status,
       receipt: data.receipt || null,
@@ -3235,8 +3358,12 @@ export async function listCopilotMessages(conversationId: string): Promise<Copil
 export async function createTenantPolicy(row: InsertTenantPolicyRow): Promise<number> {
   const db = await getDb();
   assertDb(db);
-  const result = await db.insert(tenantPolicies).values(row);
-  return Number((result as unknown as { insertId?: number }).insertId ?? 0);
+  const [created] = await db
+    .insert(tenantPolicies)
+    .values(row)
+    .returning({ id: tenantPolicies.id });
+  if (!created) throw new Error("failed to create tenant policy");
+  return created.id;
 }
 
 export async function listTenantPolicies(userId: number): Promise<TenantPolicyRow[]> {
@@ -3286,8 +3413,9 @@ export async function deleteTenantPolicy(userId: number, id: number): Promise<vo
 export async function createAlertRule(row: InsertAlertRuleRow): Promise<number> {
   const db = await getDb();
   assertDb(db);
-  const result = await db.insert(alertRules).values(row);
-  return Number((result as unknown as { insertId?: number }).insertId ?? 0);
+  const [created] = await db.insert(alertRules).values(row).returning({ id: alertRules.id });
+  if (!created) throw new Error("failed to create alert rule");
+  return created.id;
 }
 
 export async function listAlertRules(userId: number): Promise<AlertRuleRow[]> {
@@ -3361,8 +3489,9 @@ export async function listAlertEvents(userId: number, limit = 100): Promise<Aler
 export async function createSsoProvider(row: InsertSsoProviderRow): Promise<number> {
   const db = await getDb();
   assertDb(db);
-  const result = await db.insert(ssoProviders).values(row);
-  return Number((result as unknown as { insertId?: number }).insertId ?? 0);
+  const [created] = await db.insert(ssoProviders).values(row).returning({ id: ssoProviders.id });
+  if (!created) throw new Error("failed to create SSO provider");
+  return created.id;
 }
 
 export async function listSsoProviders(userId: number): Promise<SsoProviderRow[]> {
@@ -3451,7 +3580,7 @@ export async function reapExpiredSsoLoginRequests(): Promise<number> {
   const result = await db
     .delete(ssoLoginRequests)
     .where(lt(ssoLoginRequests.expiresAt, new Date()));
-  return Number((result as unknown as { affectedRows?: number }).affectedRows ?? 0);
+  return Number((result as unknown as { rowCount?: number }).rowCount ?? 0);
 }
 
 // ── Workspaces + RBAC (Sprint 6 / Domain 6) ──────────────────────────────────
@@ -3459,8 +3588,9 @@ export async function reapExpiredSsoLoginRequests(): Promise<number> {
 export async function createWorkspace(row: InsertWorkspaceRow): Promise<number> {
   const db = await getDb();
   assertDb(db);
-  const result = await db.insert(workspaces).values(row);
-  return Number((result as unknown as { insertId?: number }).insertId ?? 0);
+  const [created] = await db.insert(workspaces).values(row).returning({ id: workspaces.id });
+  if (!created) throw new Error("failed to create workspace");
+  return created.id;
 }
 
 export async function getWorkspaceById(id: number): Promise<WorkspaceRow | null> {
@@ -3582,6 +3712,28 @@ export async function listWorkspaceMembers(workspaceId: number): Promise<Workspa
     .orderBy(desc(workspaceMembers.joinedAt));
 }
 
+export async function listWorkspaceMembersDetailed(workspaceId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select({
+      id: workspaceMembers.id,
+      workspaceId: workspaceMembers.workspaceId,
+      userId: workspaceMembers.userId,
+      role: workspaceMembers.role,
+      active: workspaceMembers.active,
+      invitedBy: workspaceMembers.invitedBy,
+      invitedAt: workspaceMembers.invitedAt,
+      joinedAt: workspaceMembers.joinedAt,
+      email: users.email,
+      name: users.name,
+    })
+    .from(workspaceMembers)
+    .innerJoin(users, eq(workspaceMembers.userId, users.id))
+    .where(eq(workspaceMembers.workspaceId, workspaceId))
+    .orderBy(desc(workspaceMembers.joinedAt));
+}
+
 export async function updateWorkspaceMember(
   workspaceId: number,
   userId: number,
@@ -3654,8 +3806,12 @@ export async function createWorkspaceInvitation(
 ): Promise<number> {
   const db = await getDb();
   assertDb(db);
-  const result = await db.insert(workspaceInvitations).values(row);
-  return Number((result as unknown as { insertId?: number }).insertId ?? 0);
+  const [created] = await db
+    .insert(workspaceInvitations)
+    .values(row)
+    .returning({ id: workspaceInvitations.id });
+  if (!created) throw new Error("failed to create workspace invitation");
+  return created.id;
 }
 
 export async function getWorkspaceInvitationByToken(
@@ -3667,6 +3823,20 @@ export async function getWorkspaceInvitationByToken(
     .select()
     .from(workspaceInvitations)
     .where(eq(workspaceInvitations.token, token))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+export async function getWorkspaceInvitationForWorkspace(
+  id: number,
+  workspaceId: number,
+): Promise<WorkspaceInvitationRow | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db
+    .select()
+    .from(workspaceInvitations)
+    .where(and(eq(workspaceInvitations.id, id), eq(workspaceInvitations.workspaceId, workspaceId)))
     .limit(1);
   return rows[0] ?? null;
 }
@@ -3687,6 +3857,17 @@ export async function deleteWorkspaceInvitation(id: number): Promise<void> {
   const db = await getDb();
   assertDb(db);
   await db.delete(workspaceInvitations).where(eq(workspaceInvitations.id, id));
+}
+
+export async function deleteWorkspaceInvitationForWorkspace(
+  id: number,
+  workspaceId: number,
+): Promise<void> {
+  const db = await getDb();
+  assertDb(db);
+  await db
+    .delete(workspaceInvitations)
+    .where(and(eq(workspaceInvitations.id, id), eq(workspaceInvitations.workspaceId, workspaceId)));
 }
 
 export async function reapExpiredWorkspaceInvitations(): Promise<number> {

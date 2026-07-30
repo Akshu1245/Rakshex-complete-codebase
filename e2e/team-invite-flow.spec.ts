@@ -28,74 +28,93 @@ test.describe("Critical Path 2: Team Invite Flow", () => {
       },
     ]);
 
-    // Stub tRPC responses
+    // Stub the workspace-scoped tRPC surface. The production client may batch
+    // multiple procedures into one request, so return one envelope per path.
     await page.route("**/api/trpc/**", async (route) => {
       const url = route.request().url();
+      const encodedProcedures = new URL(url).pathname.split("/api/trpc/")[1] ?? "";
+      const procedures = decodeURIComponent(encodedProcedures).split(",");
       const json = (data: unknown) => ({ result: { data } });
-
-      if (url.includes("auth.me")) {
-        return route.fulfill({
-          status: 200,
-          body: JSON.stringify(
-            json({
+      const dataFor = (procedure: string): unknown => {
+        if (procedure === "auth.me") {
+          return {
+            id: 1,
+            email: "inviter@example.com",
+            name: "Inviter User",
+            plan: "pro",
+          };
+        }
+        if (procedure === "workspaces.listMine") {
+          return [
+            {
               id: 1,
+              name: "Test Workspace",
+              slug: "test-workspace",
+              ownerUserId: 1,
+              isPersonal: false,
+            },
+          ];
+        }
+        if (procedure === "workspaces.listMembers") {
+          return [
+            {
+              id: 1,
+              workspaceId: 1,
+              userId: 1,
               email: "inviter@example.com",
               name: "Inviter User",
+              role: "owner",
+              active: true,
+              joinedAt: new Date().toISOString(),
+            },
+          ];
+        }
+        if (procedure === "workspaces.listInvitations") return [];
+        if (procedure === "workspaces.myPermissions") {
+          return {
+            role: "owner",
+            permissions: {
+              members: { read: true, write: true, delete: true },
+              billing: { read: true, write: true, delete: true },
+            },
+          };
+        }
+        if (procedure === "payment.getWorkspaceSubscription") {
+          return {
+            subscription: {
+              id: "wsub_test",
               plan: "pro",
-            }),
-          ),
-          contentType: "application/json",
-        });
-      }
+              status: "active",
+              seatCount: 5,
+              amountMinor: 829900,
+              currency: "INR",
+              cancelAtPeriodEnd: false,
+            },
+            reservedSeats: 1,
+            availablePlans: [
+              {
+                plan: "pro",
+                name: "Rakshex Pro",
+                amountMinor: 829900,
+                currency: "INR",
+                includedSeats: 5,
+              },
+            ],
+          };
+        }
+        if (procedure === "workspaces.inviteMember") return { id: 2, token: "test-token" };
+        return null;
+      };
 
-      if (url.includes("auth.login")) {
-        return route.fulfill({
-          status: 200,
-          body: JSON.stringify(
-            json({
-              id: 1,
-              email: "inviter@example.com",
-              name: "Inviter User",
-            }),
-          ),
-          contentType: "application/json",
-        });
-      }
-
-      if (url.includes("team.list")) {
-        return route.fulfill({
-          status: 200,
-          body: JSON.stringify(
-            json({
-              members: [
-                {
-                  id: "m1",
-                  email: "inviter@example.com",
-                  role: "admin",
-                  status: "active",
-                },
-              ],
-            }),
-          ),
-          contentType: "application/json",
-        });
-      }
-
-      if (url.includes("team.invite")) {
-        return route.fulfill({
-          status: 200,
-          body: JSON.stringify(
-            json({
-              success: true,
-              memberId: "m2",
-            }),
-          ),
-          contentType: "application/json",
-        });
-      }
-
-      // Let other requests pass through
-      return route.continue();
+      return route.fulfill({
+        status: 200,
+        body: JSON.stringify(
+          procedures.length === 1
+            ? json(dataFor(procedures[0]))
+            : procedures.map((procedure) => json(dataFor(procedure))),
+        ),
+        contentType: "application/json",
+      });
     });
   });
 
@@ -113,9 +132,8 @@ test.describe("Critical Path 2: Team Invite Flow", () => {
     await page.getByRole("button", { name: /send invite/i }).click();
 
     // Step 4: Verify the invited member appears in the list
-    // After invite, the team.list query is invalidated and re-fetched.
-    // Our stub always returns the inviter, but the UI clears the email
-    // input on successful invite — assert that as proof the mutation ran.
+    // After invite, workspace queries are invalidated and re-fetched. The
+    // input clears only after the mutation succeeds.
     await expect(page.getByLabel(/email/i)).toHaveValue("", { timeout: 5_000 });
   });
 

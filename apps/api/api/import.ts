@@ -10,6 +10,7 @@
 import type { Express, Request, Response } from "express";
 import { logger } from "../_core/logger";
 import { sdk } from "../_core/sdk";
+import { verifyCsrfToken } from "../utils/security";
 import {
   previewImport,
   importHelicone,
@@ -23,6 +24,26 @@ import {
 } from "../services/importCompetitor";
 import { recordImportHistory, getImportHistory } from "../db";
 
+function cookieValue(req: Request, name: string): string | undefined {
+  const prefix = `${name}=`;
+  return req.headers.cookie
+    ?.split(";")
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(prefix))
+    ?.slice(prefix.length);
+}
+
+function hasValidCsrf(req: Request): boolean {
+  // Non-browser clients authenticate with an explicit API key and cannot
+  // silently inherit a victim's session cookie.
+  if (typeof req.headers["x-api-key"] === "string") return true;
+  const header = req.headers["x-csrf-token"];
+  return verifyCsrfToken(
+    typeof header === "string" ? header : undefined,
+    cookieValue(req, "csrf-token"),
+  );
+}
+
 export function registerImportRoutes(app: Express) {
   /**
    * POST /api/import/preview
@@ -34,6 +55,10 @@ export function registerImportRoutes(app: Express) {
       const user = await sdk.authenticateRequest(req);
       if (!user) {
         res.status(401).json({ error: "Authentication required" });
+        return;
+      }
+      if (!hasValidCsrf(req)) {
+        res.status(403).json({ error: "CSRF token mismatch — please refresh and try again" });
         return;
       }
 
@@ -72,7 +97,7 @@ export function registerImportRoutes(app: Express) {
       res.json(preview);
     } catch (err) {
       logger.error({ err }, "[Import] Preview error");
-      res.status(500).json({ error: (err as Error).message });
+      res.status(500).json({ error: "Unable to preview import" });
     }
   });
 
@@ -86,6 +111,10 @@ export function registerImportRoutes(app: Express) {
       const user = await sdk.authenticateRequest(req);
       if (!user) {
         res.status(401).json({ error: "Authentication required" });
+        return;
+      }
+      if (!hasValidCsrf(req)) {
+        res.status(403).json({ error: "CSRF token mismatch — please refresh and try again" });
         return;
       }
       const userId = user.id;
@@ -142,7 +171,7 @@ export function registerImportRoutes(app: Express) {
       res.json(result);
     } catch (err) {
       logger.error({ err }, "[Import] Execute error");
-      res.status(500).json({ error: (err as Error).message });
+      res.status(500).json({ error: "Unable to execute import" });
     }
   });
 

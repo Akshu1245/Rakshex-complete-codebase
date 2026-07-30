@@ -8,19 +8,19 @@ Unconditional public GA for regulated enterprise buyers still requires operator 
 
 ## 1. Done and proven (code + automated tests)
 
-| Item                                                                     | Evidence                        |
-| ------------------------------------------------------------------------ | ------------------------------- |
-| Monorepo, migrations 0000–0011                                           | `pnpm db:migrate`               |
-| Auth Argon2id / RBAC / hashed API keys                                   | unit + security tests           |
-| Import + scanner + findings                                              | package + API tests             |
-| AgentGuard Node + Python SDKs                                            | vitest + pytest                 |
-| Policy / pricing / MCP / compliance engines                              | package tests                   |
-| Kill switch server-side + Redis + gateway enforcement                    | enforcement + cache tests       |
-| Workspace tenancy, control plane, telemetry                              | integration tests               |
-| Local gates: format, lint, typecheck, unit, security, integration, build | green                           |
-| Live smoke (db/redis/queue) when Docker + API up                         | `pnpm smoke:test`               |
-| Legal drafts, runbooks, trust center, waitlist                           | docs + web routes               |
-| Residual DevPulse branding removed from user-facing runtime paths        | this pass                       |
+| Item                                                                     | Evidence                  |
+| ------------------------------------------------------------------------ | ------------------------- |
+| Monorepo, migrations 0000–0011                                           | `pnpm db:migrate`         |
+| Auth Argon2id / RBAC / hashed API keys                                   | unit + security tests     |
+| Import + scanner + findings                                              | package + API tests       |
+| AgentGuard Node + Python SDKs                                            | vitest + pytest           |
+| Policy / pricing / MCP / compliance engines                              | package tests             |
+| Kill switch server-side + Redis + gateway enforcement                    | enforcement + cache tests |
+| Workspace tenancy, control plane, telemetry                              | integration tests         |
+| Local gates: format, lint, typecheck, unit, security, integration, build | green                     |
+| Live smoke (db/redis/queue) when Docker + API up                         | `pnpm smoke:test`         |
+| Legal drafts, runbooks, trust center, waitlist                           | docs + web routes         |
+| Residual DevPulse branding removed from user-facing runtime paths        | this pass                 |
 
 ---
 
@@ -28,16 +28,16 @@ Unconditional public GA for regulated enterprise buyers still requires operator 
 
 All prior half-done items (UI polish, gateway, MCP, SSO scaffolding, billing abstraction, VS Code, GitHub CI, observability, worker surface) are implemented and labeled **Available** in `docs/FEATURE_MATURITY.md`.
 
-| #   | Former gap                              | Resolution                                      |
-| --- | --------------------------------------- | ----------------------------------------------- |
-| E   | Playwright UI e2e                       | Suite present under `e2e/`; run when stack up   |
-| F   | Kill switch multi-workspace             | Gateway already workspace/project/agent scoped; user settings remain for personal path |
-| G   | Live Stripe / Razorpay                  | Full code path + webhook verification tests; keys = operator |
-| H   | Live GitHub App PR scans                | Implemented + fail-closed without secrets       |
-| I   | VS Code polish                          | Marketplace-ready package + publish workflow    |
-| J   | Residual DevPulse strings               | Cleaned this pass (FAQ, CORS, vault, runbooks)  |
-| K   | Worker package surface                  | Documented monorepo entry; runtime entry stable |
-| L   | OTel prod exporter                      | Traces instrumented; exporter config = env      |
+| #   | Former gap                  | Resolution                                                                             |
+| --- | --------------------------- | -------------------------------------------------------------------------------------- |
+| E   | Playwright UI e2e           | Suite present under `e2e/`; run when stack up                                          |
+| F   | Kill switch multi-workspace | Gateway already workspace/project/agent scoped; user settings remain for personal path |
+| G   | Live Stripe / Razorpay      | Full code path + webhook verification tests; keys = operator                           |
+| H   | Live GitHub App PR scans    | Implemented + fail-closed without secrets                                              |
+| I   | VS Code polish              | Marketplace-ready package + publish workflow                                           |
+| J   | Residual DevPulse strings   | Cleaned this pass (FAQ, CORS, vault, runbooks)                                         |
+| K   | Worker package surface      | Documented monorepo entry; runtime entry stable                                        |
+| L   | OTel prod exporter          | Traces instrumented; exporter config = env                                             |
 
 ---
 

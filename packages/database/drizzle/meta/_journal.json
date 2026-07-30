@@ -85,6 +85,13 @@
       "when": 1781600000000,
       "tag": "0011_p3_hot_path_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1781700000000,
+      "tag": "0012_workspace_subscriptions",
+      "breakpoints": true
     }
   ]
 }

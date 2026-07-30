@@ -16,6 +16,14 @@ export class HealthCheckCommand {
     const results = await this.runChecks();
 
     panel.webview.html = this.getHtml(results);
+    panel.webview.onDidReceiveMessage(async (message) => {
+      if (message?.type === "openSettings") {
+        await vscode.commands.executeCommand("rakshex.openSettings");
+      }
+      if (message?.type === "retry") {
+        panel.webview.html = this.getHtml(await this.runChecks());
+      }
+    });
   }
 
   private async runChecks(): Promise<HealthResult[]> {
@@ -30,10 +38,10 @@ export class HealthCheckCommand {
 
     // Check 2: API connectivity
     try {
-      const baseUrl = (this.api as any).getBaseUrl?.() ?? "https://api.rakshex.in";
+      const baseUrl = this.api.getConfiguredApiUrl();
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 5000);
-      const res = await fetch(`${baseUrl.replace(/\/+$/, "")}/health`, {
+      const res = await fetch(this.api.getHealthUrl(), {
         method: "GET",
         signal: controller.signal,
       });
@@ -84,11 +92,11 @@ export class HealthCheckCommand {
       }
     }
 
-    // Check 4: Telemetry
+    // Check 4: privacy-safe activity events
     results.push({
-      name: "Telemetry",
+      name: "Activity events",
       status: "pass",
-      message: "Telemetry is active and batched.",
+      message: "Metadata-only activity events are enabled. File contents are not included.",
     });
 
     return results;
@@ -153,7 +161,7 @@ export class HealthCheckCommand {
   <div class="subtitle">Diagnose connectivity and configuration issues</div>
 
   <div class="status-banner ${allPass ? "pass" : "warn"}">
-    ${allPass ? "All systems operational" : "Some checks need attention"}
+    ${allPass ? "Extension checks passed" : "Some checks need attention"}
   </div>
 
   <table>

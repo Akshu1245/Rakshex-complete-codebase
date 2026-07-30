@@ -300,7 +300,7 @@ jobs:
         env:
           DATABASE_URL: postgresql://rakshex:rakshex@127.0.0.1:5432/rakshex_e2e
       - run: pnpm exec playwright install --with-deps chromium
-      - name: Run Playwright smoke
+      - name: Run complete Playwright journey suite
         run: pnpm run test:e2e
         env:
           DATABASE_URL: postgresql://rakshex:rakshex@127.0.0.1:5432/rakshex_e2e
@@ -309,6 +309,16 @@ jobs:
           CI: true
           PLAYWRIGHT_FRONTEND_PORT: "3001"
           PORT: "3000"
+      - name: Upload Playwright diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-diagnostics
+          path: |
+            playwright-report
+            test-results
+          if-no-files-found: ignore
+          retention-days: 14
 
   dependency-audit:
     name: Dependency audit

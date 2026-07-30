@@ -45,12 +45,29 @@ vi.mock("../payments", () => ({
     shadowAPI: plan !== "free",
   })),
   PLAN_CONFIG: {
-    free: { name: "Free", amount: 0, features: [] },
-    pro: { name: "Pro", amount: 99900, features: ["All features"] },
+    free: {
+      name: "Free",
+      amount: 0,
+      currency: "INR",
+      interval: "monthly",
+      features: [],
+      limits: { maxTeamMembers: 1 },
+    },
+    pro: {
+      name: "Pro",
+      amount: 99900,
+      currency: "INR",
+      interval: "monthly",
+      features: ["All features"],
+      limits: { maxTeamMembers: 5 },
+    },
     enterprise: {
       name: "Enterprise",
       amount: 499900,
+      currency: "INR",
+      interval: "monthly",
       features: ["All features"],
+      limits: { maxTeamMembers: 25 },
     },
   },
 }));
@@ -58,6 +75,19 @@ vi.mock("../payments", () => ({
 vi.mock("../db", async () => ({
   getSubscriptionByUserId: vi.fn(async (userId: number) => null),
   getSubscriptionByRazorpayId: vi.fn(async (id: string) => null),
+  getWorkspaceSubscriptionByProviderId: vi.fn(async () => null),
+  getWorkspaceSubscription: vi.fn(async () => null),
+  countReservedWorkspaceSeats: vi.fn(async () => 1),
+  upsertWorkspaceSubscription: vi.fn(async (data: any) => data),
+  updateWorkspaceSubscription: vi.fn(async () => {}),
+  getWorkspaceMembership: vi.fn(async (_workspaceId: number, userId: number) => ({
+    id: 1,
+    workspaceId: 1,
+    userId,
+    role: "owner",
+    active: true,
+  })),
+  createAuditLogEntry: vi.fn(async () => {}),
   createSubscription: vi.fn(async () => ({ id: `sub_${Date.now()}` })),
   updateSubscriptionStatus: vi.fn(async () => {}),
   updateUserPlan: vi.fn(async () => {}),
@@ -146,6 +176,38 @@ describe("payments router", () => {
 
       expect(result.subscriptionId).toBeDefined();
       expect(result.customerId).toBeDefined();
+    });
+  });
+
+  describe("workspace subscription seats", () => {
+    it("creates a workspace-scoped subscription for an owner", async () => {
+      const { ctx } = createAuthContext();
+      const caller = appRouter.createCaller(ctx);
+
+      const result = await caller.payment.createWorkspaceSubscription({
+        workspaceId: 1,
+        plan: "pro",
+        seatCount: 3,
+      });
+
+      expect(result.workspaceSubscriptionId).toBeDefined();
+      expect(result.seatCount).toBe(3);
+      expect(result.amountMinor).toBe(99900);
+    });
+
+    it("rejects an allocation below already reserved seats", async () => {
+      const { ctx } = createAuthContext();
+      const caller = appRouter.createCaller(ctx);
+      const { countReservedWorkspaceSeats } = await import("../db");
+      vi.mocked(countReservedWorkspaceSeats).mockResolvedValueOnce(4);
+
+      await expect(
+        caller.payment.createWorkspaceSubscription({
+          workspaceId: 1,
+          plan: "pro",
+          seatCount: 3,
+        }),
+      ).rejects.toThrow("already reserves 4 seats");
     });
   });
 

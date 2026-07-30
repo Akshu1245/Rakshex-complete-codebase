@@ -28,7 +28,6 @@ export function buildCorsAllowlist(input: CorsAllowlistInput): string[] {
       "https://rakshex.in",
       "https://www.rakshex.in",
       "https://app.rakshex.in",
-      "https://yc7y9pq9.insforge.site",
       input.frontendUrl,
       ...fromEnv,
     ]);

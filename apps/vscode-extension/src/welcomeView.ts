@@ -46,9 +46,9 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
       } else if (msg.type === "authenticate") {
         vscode.commands.executeCommand("rakshex.authenticate");
       } else if (msg.type === "openDocs") {
-        vscode.env.openExternal(vscode.Uri.parse("https://rakshex.in"));
+        vscode.env.openExternal(vscode.Uri.parse("https://www.rakshex.in/docs"));
       } else if (msg.type === "createAccount") {
-        vscode.env.openExternal(vscode.Uri.parse("https://rakshex.in/signup"));
+        vscode.env.openExternal(vscode.Uri.parse("https://www.rakshex.in/register"));
       } else if (msg.type === "quickAction" && this.onQuickAction) {
         this.onQuickAction(msg.action as string);
       }
@@ -526,16 +526,16 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
     <div class="tagline">Security &amp; cost intelligence for AI agents</div>
   </div>
 
-  <!-- Social proof banner -->
+  <!-- Outcome banner -->
   <div class="social-proof">
     <span class="sparkle">✨</span>
-    <span>First scan in under 60 seconds — no credit card required</span>
+    <span>Start with one guided scan — no credit card required</span>
   </div>
 
   <!-- Primary CTA -->
   <div class="cta-section">
     <button class="btn btn-primary" id="create-account-btn">Get Started Free →</button>
-    <div class="cta-sub">Takes 30 seconds. Free forever for individuals.</div>
+    <div class="cta-sub">A free plan is available for individual evaluation.</div>
     <button class="btn-link" id="has-key-toggle">Already have an API key?</button>
   </div>
 
@@ -545,15 +545,15 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
       <span>\u26A0</span>
       <span id="error-feedback-msg"></span>
     </div>
-    <input type="password" id="api-key-input" placeholder="Paste your API key (dp_...)" />
+    <input type="password" id="api-key-input" placeholder="Paste your API key (rk_live_...)" />
     <button class="btn" id="connect-btn">Connect to Rakshex</button>
   </div>
 
   <!-- Trust badges -->
   <div class="trust-badges">
-    <div class="trust-badge"><div class="trust-dot"></div>AES-256 Encrypted</div>
-    <div class="trust-badge">🔒 Code never uploaded</div>
-    <div class="trust-badge">⚡ Real-time scans</div>
+    <div class="trust-badge"><div class="trust-dot"></div>API key in SecretStorage</div>
+    <div class="trust-badge">🔍 Review before upload</div>
+    <div class="trust-badge">✓ Actionable findings</div>
   </div>
 
   <!-- Features -->
@@ -683,7 +683,10 @@ export class WelcomeViewProvider implements vscode.WebviewViewProvider {
           hideError();
           if (!key) { showError("Please enter your API key."); return; }
           if (key.length < 8) { showError("API key must be at least 8 characters."); return; }
-          if (!key.startsWith("dp_")) { showError('API key should start with "dp_". Check your Rakshex dashboard.'); return; }
+          if (!key.startsWith("rk_live_") && !key.startsWith("rk_test_") && !key.startsWith("dp_")) {
+            showError('Use an API key from Rakshex Dashboard → Settings → API keys.');
+            return;
+          }
           connectBtn.disabled = true;
           connectBtn.textContent = "Connecting\u2026";
           vscode.postMessage({ type: "connect", apiKey: key });

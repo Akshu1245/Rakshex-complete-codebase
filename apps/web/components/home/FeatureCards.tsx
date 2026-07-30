@@ -95,7 +95,7 @@ export function FeatureCards() {
     },
     {
       title: "Compliance Reports",
-      description: "SOC2, PCI DSS, OWASP. JSON, CSV, PDF. Vanta/Drata ready.",
+      description: "SOC 2, PCI DSS, and OWASP-mapped evidence in JSON, CSV, and PDF.",
       link: "/features#compliance",
       icon: FileText,
       animClass: "animate-draw-check",

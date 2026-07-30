@@ -1,11 +1,7 @@
 /**
  * Shadow API workspace scanner.
  *
- * Patent surface NHCE/DEV/2026/003 — "A Method for Shadow API Endpoint
- * Discovery Through IDE Framework-Specific Static Route Extraction and
- * Local Development Traffic Correlation".
- *
- * This module is the static-route-extraction half of that patent: given the
+ * Given the
  * raw text of a source file, it returns the list of HTTP route declarations
  * detected, regardless of language. The list is then compared against the
  * collection-tracked endpoints to surface "shadow" routes — code paths the

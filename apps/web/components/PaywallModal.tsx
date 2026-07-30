@@ -29,7 +29,7 @@ interface RazorpayInstance {
   open(): void;
 }
 
-interface RazorpayWindow extends Window {
+interface RazorpayWindow {
   Razorpay?: new (opts: RazorpayOptions) => RazorpayInstance;
 }
 
@@ -55,7 +55,7 @@ export default function PaywallModal({
       script.src = "https://checkout.razorpay.com/v1/checkout.js";
       script.async = true;
       script.onload = () => {
-        const win = window as RazorpayWindow;
+        const win = window as unknown as RazorpayWindow;
         if (!win.Razorpay) {
           setError("Razorpay checkout failed to load.");
           return;

@@ -9,6 +9,10 @@ import { router, protectedProcedure, publicProcedure } from "../_core/trpc";
 import * as db from "../db";
 import { toNumber } from "../utils/decimal";
 import { rateLimitSlidingWindow } from "../_core/cache";
+import { hashApiKey, apiKeyPrefix } from "../utils/crypto";
+import { scanQueue } from "../queues";
+import type { ScanJobData } from "../queues/workers/scanWorker";
+import { requireCollectionAccess } from "../services/tenantAccess";
 
 // VS Code activity rate limit — 60 events per rolling 60s window per
 // user. Backed by a Redis sorted-set (see `rateLimitSlidingWindow`) so
@@ -48,7 +52,14 @@ export const vscodeExtensionRouter = router({
   recordActivity: protectedProcedure
     .input(
       z.object({
-        type: z.enum(["heartbeat", "file_change", "session_start", "session_end"]),
+        type: z.enum([
+          "heartbeat",
+          "file_change",
+          "session_start",
+          "session_end",
+          "feedback",
+          "uninstall_feedback",
+        ]),
         data: z.record(z.string(), z.any()),
         timestamp: z.string().datetime(),
       }),
@@ -102,13 +113,13 @@ export const vscodeExtensionRouter = router({
   getScanSummary: protectedProcedure
     .input(z.object({ collectionId: z.string() }))
     .query(async ({ input, ctx }) => {
-      const collection = await db.getCollectionById(input.collectionId);
-      if (!collection || collection.userId !== ctx.user.id) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Collection not found or access denied",
-        });
-      }
+      await requireCollectionAccess(
+        input.collectionId,
+        ctx.user.id,
+        "collections",
+        "write",
+        ctx.user.name,
+      );
 
       const scans = await db.getScansByCollectionId(input.collectionId);
       const lastScan = scans[0];
@@ -145,13 +156,13 @@ export const vscodeExtensionRouter = router({
   triggerScan: protectedProcedure
     .input(z.object({ collectionId: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      const collection = await db.getCollectionById(input.collectionId);
-      if (!collection || collection.userId !== ctx.user.id) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Collection not found or access denied",
-        });
-      }
+      const { workspaceId } = await requireCollectionAccess(
+        input.collectionId,
+        ctx.user.id,
+        "collections",
+        "write",
+        ctx.user.name,
+      );
 
       // Check user plan limits
       const user = await db.getUserById(ctx.user.id);
@@ -169,15 +180,14 @@ export const vscodeExtensionRouter = router({
       }
 
       // Queue a pending scan — the scanning worker will pick it up asynchronously.
-      const scan = await db.createScan(
-        ctx.user.id,
-        input.collectionId,
-        "quick",
-        "pending",
-        0,
-        "LOW",
-        0,
-      );
+      const scanJobData: ScanJobData = {
+        userId: ctx.user.id,
+        collectionId: input.collectionId,
+        scanType: "quick",
+        engineType: "full",
+        workspaceId,
+      };
+      const job = await scanQueue.add("scan", scanJobData);
 
       // Decrement free user scans
       if (user.plan === "free") {
@@ -186,7 +196,7 @@ export const vscodeExtensionRouter = router({
         });
       }
 
-      return { scanId: scan.id, status: "queued" };
+      return { scanId: job.id ?? "queued", status: "queued" };
     }),
 
   /**
@@ -252,8 +262,8 @@ export const vscodeExtensionRouter = router({
    * Generate API key for VS Code extension
    */
   generateApiKey: protectedProcedure.mutation(async ({ ctx }) => {
-    const apiKey = `dp_${generateSecureApiKey()}`;
-    await db.updateUserApiKey(ctx.user.id, apiKey);
+    const apiKey = `rk_live_${generateSecureApiKey()}`;
+    await db.updateUserApiKey(ctx.user.id, hashApiKey(apiKey), apiKeyPrefix(apiKey));
     return { apiKey };
   }),
 
