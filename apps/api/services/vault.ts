@@ -1,12 +1,13 @@
 /**
- * Encryption vault for sensitive credentials at rest.
- * Requires RAKSHEX_VAULT_KEY (32+ chars). Legacy DEVPULSE_VAULT_KEY is accepted
- * only as a temporary migration fallback and should be removed after rotate.
+ * Application vault singleton for encrypting enterprise credentials.
+ * Uses AES-256-GCM via `encryptedVault` with RAKSHEX_VAULT_KEY.
+ * Legacy DEVPULSE_VAULT_KEY is accepted only as a temporary migration fallback.
  */
+import { createVault, type VaultHandle } from "./encryptedVault";
 
-import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "crypto";
+let _vault: VaultHandle | null = null;
 
-function getVaultKeyMaterial(): Buffer {
+function resolveVaultKeyMaterial(): string {
   const key =
     process.env.RAKSHEX_VAULT_KEY?.trim() || process.env.DEVPULSE_VAULT_KEY?.trim();
   if (!key || key.length < 32) {
@@ -15,39 +16,32 @@ function getVaultKeyMaterial(): Buffer {
         "In development, generate one with: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\"",
     );
   }
-  // Derive a 32-byte key from the secret material
-  return scryptSync(key, "rakshex-vault-v1", 32);
+  return key;
 }
 
-export function encryptVault(plaintext: string): string {
-  const key = getVaultKeyMaterial();
-  const iv = randomBytes(12);
-  const cipher = createCipheriv("aes-256-gcm", key, iv);
-  const enc = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
-  const tag = cipher.getAuthTag();
-  return `v1.${iv.toString("base64url")}.${tag.toString("base64url")}.${enc.toString("base64url")}`;
-}
-
-export function decryptVault(payload: string): string {
-  const key = getVaultKeyMaterial();
-  const parts = payload.split(".");
-  if (parts.length !== 4 || parts[0] !== "v1") {
-    throw new Error("Invalid vault payload format");
+/** Return the process-wide vault handle (lazy). */
+export function getVault(): VaultHandle {
+  if (!_vault) {
+    _vault = createVault({ key: resolveVaultKeyMaterial() });
   }
-  const [, ivB64, tagB64, dataB64] = parts;
-  const iv = Buffer.from(ivB64, "base64url");
-  const tag = Buffer.from(tagB64, "base64url");
-  const data = Buffer.from(dataB64, "base64url");
-  const decipher = createDecipheriv("aes-256-gcm", key, iv);
-  decipher.setAuthTag(tag);
-  return Buffer.concat([decipher.update(data), decipher.final()]).toString("utf8");
+  return _vault;
 }
 
 export function isVaultConfigured(): boolean {
   try {
-    getVaultKeyMaterial();
+    resolveVaultKeyMaterial();
     return true;
   } catch {
     return false;
   }
+}
+
+/** Encrypt a secret for a tenant (workspace or user id as string). */
+export function encryptSecret(plaintext: string, tenantId: string): string {
+  return getVault().encrypt(plaintext, tenantId).ciphertext;
+}
+
+/** Decrypt a secret previously produced by encryptSecret. */
+export function decryptSecret(ciphertext: string, tenantId: string): string {
+  return getVault().decrypt({ ciphertext }, tenantId);
 }
