@@ -191,17 +191,18 @@ export const scanningRouter = router({
         ctx.user.name,
       );
 
-      let scans = await db.getScansByCollectionId(input.collectionId);
+      const limit = input.pageSize;
+      const offset = (input.page - 1) * input.pageSize;
 
-      if (input.scanType !== "all") {
-        scans = scans.filter((s) => s.scanType === input.scanType);
-      }
-
-      const total = scans.length;
-      const paginated = scans.slice((input.page - 1) * input.pageSize, input.page * input.pageSize);
+      const { items, total } = await db.getScansPageByCollectionId({
+        collectionId: input.collectionId,
+        scanType: input.scanType,
+        limit,
+        offset,
+      });
 
       return {
-        scans: paginated.map((s) => ({
+        scans: items.map((s) => ({
           id: s.id,
           scanType: s.scanType,
           status: s.status,

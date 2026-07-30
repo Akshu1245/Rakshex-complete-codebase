@@ -29,62 +29,46 @@ export const auditRouter = router({
       }),
     )
     .query(async ({ input, ctx }) => {
-      const entries = await db.getAuditLogForUser(input.userId ?? ctx.user.id, 1000);
-
-      let filtered = entries;
-
-      if (input.eventType) {
-        filtered = filtered.filter((e) => e.action === input.eventType);
-      }
-      if (input.userId && ctx.user.id !== input.userId) {
-        // Admin-only: viewing another user's audit log requires admin
-        if (ctx.user.role !== "admin") {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "Only admins can view another user's audit log",
-          });
-        }
-      }
-      if (input.startDate) {
-        const start = new Date(input.startDate);
-        filtered = filtered.filter((e) => new Date(e.createdAt) >= start);
-      }
-      if (input.endDate) {
-        const end = new Date(input.endDate);
-        filtered = filtered.filter((e) => new Date(e.createdAt) <= end);
+      const targetUserId = input.userId ?? ctx.user.id;
+      if (targetUserId !== ctx.user.id && ctx.user.role !== "admin") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Only admins can view another user's audit log",
+        });
       }
 
-      const total = filtered.length;
-      const cursor = input.cursor ?? input.offset;
       const limit = input.limit;
-      const sliced = filtered.slice(cursor, cursor + limit + 1);
-      const hasMore = sliced.length > limit;
-      const items = sliced.slice(0, limit);
-      const page = filtered.slice(input.offset, input.offset + input.limit);
+      const offset = input.cursor > 0 ? input.cursor : input.offset;
+
+      const { items, total } = await db.getAuditLogForUserPage({
+        userId: targetUserId,
+        limit: limit + 1, // fetch one extra to determine hasMore
+        offset,
+        action: input.eventType,
+        startDate: input.startDate ? new Date(input.startDate) : undefined,
+        endDate: input.endDate ? new Date(input.endDate) : undefined,
+      });
+
+      const hasMore = items.length > limit;
+      const pageItems = items.slice(0, limit);
+
+      const mapped = pageItems.map((e) => ({
+        id: e.id,
+        action: e.action,
+        details: e.details,
+        ipAddress: e.ipAddress,
+        userAgent: e.userAgent,
+        createdAt: e.createdAt,
+        userId: e.userId,
+      }));
 
       return {
-        entries: page.map((e) => ({
-          id: e.id,
-          action: e.action,
-          details: e.details,
-          ipAddress: e.ipAddress,
-          userAgent: e.userAgent,
-          createdAt: e.createdAt,
-          userId: e.userId,
-        })),
-        items: items.map((e) => ({
-          id: e.id,
-          action: e.action,
-          details: e.details,
-          ipAddress: e.ipAddress,
-          userAgent: e.userAgent,
-          createdAt: e.createdAt,
-          userId: e.userId,
-        })),
-        nextCursor: hasMore ? cursor + limit : undefined,
+        entries: mapped,
+        items: mapped,
+        nextCursor: hasMore ? offset + limit : undefined,
         total,
-        limit: input.limit,
-        offset: input.offset,
+        limit,
+        offset,
       };
     }),
 

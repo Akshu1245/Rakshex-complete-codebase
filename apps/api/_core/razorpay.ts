@@ -115,7 +115,7 @@ export function registerRazorpayRoutes(app: Express) {
               userId: user.id,
               razorpayPaymentId: razorpay_payment_id,
               razorpayOrderId: razorpay_order_id,
-              amount: paymentDetails.amount, // in paise
+              amount: Number(paymentDetails.amount) / 100, // converted from paise to INR
               currency: paymentDetails.currency,
               status: "captured",
               description: paymentDetails.description || "Razorpay Standard Web Checkout",

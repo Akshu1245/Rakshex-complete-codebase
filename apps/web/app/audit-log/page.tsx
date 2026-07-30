@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { EmptyState } from "@/components/EmptyState";
 
@@ -10,16 +10,15 @@ export default function AuditLogPage() {
   const [page, setPage] = useState(1);
   const [filter, setFilter] = useState("");
 
-  const auditQuery = trpc.settings.getAuditLog.useQuery({ limit: 100 });
+  const auditQuery = trpc.audit.listEntries.useQuery({
+    limit: PAGE_SIZE,
+    offset: (page - 1) * PAGE_SIZE,
+    eventType: filter || undefined,
+  });
 
-  const filteredLogs = useMemo(() => {
-    const all = auditQuery.data?.logs ?? [];
-    if (!filter) return all;
-    return all.filter((l) => l.action === filter);
-  }, [auditQuery.data, filter]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredLogs.length / PAGE_SIZE));
-  const pagedLogs = filteredLogs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const pagedLogs = auditQuery.data?.items ?? [];
+  const total = auditQuery.data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const loading = auditQuery.isLoading;
 
   // Reset to page 1 when filter changes
@@ -80,7 +79,7 @@ export default function AuditLogPage() {
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="border border-gray-600 rounded-lg px-3 py-2 bg-black/50 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+            className="border border-gray-600 rounded-lg px-3 py-2 bg-black/50 text-white focus:ring-2 focus:ring-teal-500 outline-none"
           >
             <option value="">All Actions</option>
             <option value="user_login">User Login</option>
@@ -95,7 +94,7 @@ export default function AuditLogPage() {
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
           </div>
-        ) : filteredLogs.length === 0 ? (
+        ) : pagedLogs.length === 0 ? (
           <EmptyState
             icon={
               <span className="material-symbols-outlined" style={{ fontSize: "32px" }}>

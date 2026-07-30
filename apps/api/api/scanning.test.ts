@@ -24,6 +24,15 @@ vi.mock("../db", async () => {
     getScansByCollectionId: vi.fn(async (collectionId: string) => {
       return Array.from(mockScans.values()).filter((s) => s.collectionId === collectionId);
     }),
+    getScansPageByCollectionId: vi.fn(async (opts: any) => {
+      const items = Array.from(mockScans.values()).filter(
+        (s) => s.collectionId === opts.collectionId,
+      );
+      return {
+        items: items.slice(opts.offset, opts.offset + opts.limit),
+        total: items.length,
+      };
+    }),
     getScanById: vi.fn(async (id: string) => mockScans.get(id) || null),
     createFinding: vi.fn(async (...args: any[]) => {
       const id = `finding_${Date.now()}`;
@@ -297,12 +306,12 @@ describe("scanning router", () => {
       const { ctx } = createAuthContext(1, "editor");
       const caller = appRouter.createCaller(ctx);
 
-      const { getCollectionById, getScansByCollectionId } = await import("../db");
+      const { getCollectionById, getScansPageByCollectionId } = await import("../db");
       vi.mocked(getCollectionById).mockResolvedValueOnce({
         id: "col_123",
         userId: 1,
       });
-      vi.mocked(getScansByCollectionId).mockResolvedValueOnce([]);
+      vi.mocked(getScansPageByCollectionId).mockResolvedValueOnce({ items: [], total: 0 });
 
       const result = await caller.scanning.listScans({
         collectionId: "col_123",
@@ -317,37 +326,34 @@ describe("scanning router", () => {
       const { ctx } = createAuthContext(1, "editor");
       const caller = appRouter.createCaller(ctx);
 
-      const { getCollectionById, getScansByCollectionId } = await import("../db");
+      const { getCollectionById, getScansPageByCollectionId } = await import("../db");
       vi.mocked(getCollectionById).mockResolvedValueOnce({
         id: "col_123",
         userId: 1,
       });
-      vi.mocked(getScansByCollectionId).mockResolvedValueOnce([
-        {
-          id: "scan1",
-          scanType: "full",
-          status: "completed",
-          riskScore: "30",
-          riskLevel: "MEDIUM",
-          totalFindings: 2,
-        },
-        {
-          id: "scan2",
-          scanType: "quick",
-          status: "completed",
-          riskScore: "20",
-          riskLevel: "LOW",
-          totalFindings: 1,
-        },
-        {
-          id: "scan3",
-          scanType: "full",
-          status: "completed",
-          riskScore: "45",
-          riskLevel: "MEDIUM",
-          totalFindings: 3,
-        },
-      ]);
+      vi.mocked(getScansPageByCollectionId).mockResolvedValueOnce({
+        items: [
+          {
+            id: "scan1",
+            scanType: "full",
+            status: "completed",
+            riskScore: "30",
+            riskLevel: "MEDIUM",
+            totalFindings: 2,
+            createdAt: new Date(),
+          },
+          {
+            id: "scan3",
+            scanType: "full",
+            status: "completed",
+            riskScore: "45",
+            riskLevel: "MEDIUM",
+            totalFindings: 3,
+            createdAt: new Date(),
+          },
+        ],
+        total: 2,
+      });
 
       const result = await caller.scanning.listScans({
         collectionId: "col_123",

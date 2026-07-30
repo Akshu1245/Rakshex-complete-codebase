@@ -66,6 +66,17 @@ let registered = false;
 export function registerJobWorkers(opts?: { force?: boolean }): void {
   if (registered && !opts?.force) return;
   registered = true;
+
+  // In Redis/BullMQ mode, the background worker process registers workers,
+  // so the main API process does not need to register them unless it is
+  // running in-memory queue mode.
+  if (process.env.REDIS_URL && !opts?.force) {
+    logger.info(
+      "[Jobs] Skipping worker registration in API process (running in Redis/BullMQ mode)",
+    );
+    return;
+  }
+
   const q = getJobQueue();
 
   q.registerWorker<ScanJob>(

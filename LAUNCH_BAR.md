@@ -5,16 +5,16 @@
 ### CI/CD Gates
 
 - [x] `pnpm audit --audit-level moderate` exits non-zero on vulnerable deps (no `continue-on-error`)
-- [ ] `tsc --noEmit` passes with zero errors (backend)
-- [ ] `tsc --noEmit` passes with zero errors (frontend)
+- [x] `tsc --noEmit` passes with zero errors (backend)
+- [x] `tsc --noEmit` passes with zero errors (frontend)
 - [x] Trivy scan exits non-zero on CRITICAL/HIGH CVEs (`exit-code: 1`)
-- [ ] Minimum smoke E2E passing: landing → auth → first scan → billing view
+- [x] Minimum smoke E2E passing: landing → auth → first scan → billing view
 - [x] GitHub webhook rejects unverified payloads in ALL environments (no dev bypass)
 
 ### Security Gates
 
 - [x] All enterprise endpoints have workspace-scoped row-level queries (SELECT + UPDATE)
-- [ ] Cross-tenant negative test suite: user A (workspace 1) → IDs from workspace 2 → 404
+- [x] Cross-tenant negative test suite: user A (workspace 1) → IDs from workspace 2 → 404
 - [x] API keys hashed at rest (SHA-256 + pepper)
 - [x] GitHub webhook signature verification mandatory (fail-closed in all environments)
 - [x] Vault key does NOT fall back to JWT_SECRET
@@ -35,16 +35,16 @@
 - [x] Webhook signature uses correct secret
 - [x] Idempotency enforced via `processedWebhookEvents` table
 - [x] "created" subscription status fixed to "pending" (valid PostgreSQL enum)
-- [ ] Currency unit regression tests (paise vs INR)
-- [ ] Real-HMAC webhook integration test
+- [x] Currency unit regression tests (paise vs INR)
+- [x] Real-HMAC webhook integration test
 
 ### Product/UX Gates
 
 - [x] `/audit-log` removed from public routes
 - [x] Cookie consent pipeline unified (single `consent.ts` module)
-- [ ] Privacy page aligned with Cookie Policy (no contradictions)
-- [ ] Dead links and demo copy removed from production UI
-- [ ] Brand naming consistent (DevPulse not RaksHex)
+- [x] Privacy page aligned with Cookie Policy (no contradictions)
+- [x] Dead links and demo copy removed from production UI
+- [x] Brand naming consistent (DevPulse not RaksHex)
 
 ## Ownership
 

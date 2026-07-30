@@ -7,6 +7,7 @@
 
 import crypto from "crypto";
 import { logger } from "../_core/logger";
+import { verifyAccessToken } from "../_core/tokens";
 
 // ============================================================================
 // WEBSOCKET AUTHENTICATION FIX
@@ -49,30 +50,50 @@ export async function verifyWebSocketAuth(
       cookies[name] = rest.join("=");
     });
 
-    const token = cookies["rakshex_session"];
-    if (!token) return null;
+    let userId: number | undefined;
 
-    // Decode legacy session cookie. The cookie is base64-encoded JSON
-    // shaped like `{ userId, expiresAt, sessionId, ... }`. The historical
-    // DB lookup via `getUserSessionByToken` (filtered by `sessionToken`
-    // column) was broken because the cookie payload doesn't carry the
-    // session token — only the row id. Treat the cookie as self-validating
-    // and check its own `expiresAt` instead.
-    let sessionData: any;
-    try {
-      sessionData = JSON.parse(Buffer.from(token, "base64").toString("utf-8"));
-    } catch {
-      return null;
+    // 1. Try cryptographically signed access_token first
+    const accessToken = cookies["access_token"];
+    if (accessToken) {
+      try {
+        const payload = await verifyAccessToken(accessToken);
+        userId = payload.userId;
+      } catch (tokenErr) {
+        logger.warn(
+          { err: tokenErr },
+          "[WebSocket Auth] JWT access token verification failed or expired",
+        );
+      }
     }
-    if (!sessionData || typeof sessionData !== "object") return null;
-    if (typeof sessionData.userId !== "number" || sessionData.userId <= 0) return null;
-    if (typeof sessionData.expiresAt !== "number" || sessionData.expiresAt <= Date.now()) {
-      return null;
+
+    // 2. Fall back to legacy rakshex_session cookie (unsigned base64 JSON) if JWT not valid/present
+    if (!userId) {
+      const token = cookies["rakshex_session"];
+      if (token) {
+        let sessionData: any;
+        try {
+          sessionData = JSON.parse(Buffer.from(token, "base64").toString("utf-8"));
+        } catch {
+          return null;
+        }
+        if (
+          sessionData &&
+          typeof sessionData === "object" &&
+          typeof sessionData.userId === "number" &&
+          sessionData.userId > 0
+        ) {
+          if (typeof sessionData.expiresAt === "number" && sessionData.expiresAt > Date.now()) {
+            userId = sessionData.userId;
+          }
+        }
+      }
     }
+
+    if (!userId) return null;
 
     // Get user — reject if not found. Account lock is server-side state
-    // that the cookie cannot represent, so it must still be checked here.
-    const user = await db.getUserById(sessionData.userId);
+    // that the cookie/JWT cannot represent, so it must still be checked here.
+    const user = await db.getUserById(userId);
     if (!user) return null;
 
     // Check account lock — reject if locked

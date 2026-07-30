@@ -4,6 +4,9 @@ export const metadata = {
   title: "RaksHex Blog — AI Security, Cost Governance, and Compliance",
   description:
     "Articles on securing production AI agents, LLM cost optimization, compliance automation, and AI governance best practices.",
+  alternates: {
+    canonical: "https://rakshex.in/blog",
+  },
 };
 
 const posts = [
@@ -67,30 +70,32 @@ const posts = [
 
 export default function BlogIndex() {
   return (
-    <div className="min-h-screen bg-transparent text-white p-8">
+    <div className="min-h-screen bg-transparent text-white pt-28 pb-16 px-6 xl:px-8">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold mb-2">RaksHex Blog</h1>
-        <p className="text-gray-400 mb-8">
-          Articles on securing production AI agents, LLM cost optimization, and compliance
-          automation.
-        </p>
+        <div className="mb-10">
+          <h1 className="text-4xl font-bold mb-3 text-white">RaksHex Blog</h1>
+          <p className="text-[#9CA3AF] text-lg">
+            Articles on securing production AI agents, LLM cost optimization, and compliance
+            automation.
+          </p>
+        </div>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           {posts.map((post) => (
             <Link
               key={post.slug}
               href={`/blog/${post.slug}`}
-              className="block bg-black/50 rounded-xl p-6 border border-gray-700 hover:border-blue-500 transition-colors group"
+              className="block bg-black/40 rounded-xl p-6 border border-[#1A1F2E] hover:border-[#14B8A6]/40 hover:bg-black/60 transition-all duration-200 group"
             >
-              <div className="flex items-center gap-3 text-sm text-gray-500 mb-2">
+              <div className="flex items-center gap-3 text-sm text-[#6B7280] mb-2">
                 <span>{post.date}</span>
                 <span>·</span>
                 <span>{post.readTime} read</span>
               </div>
-              <h2 className="text-xl font-bold mb-2 group-hover:text-blue-400 transition-colors">
+              <h2 className="text-lg font-semibold mb-2 text-white group-hover:text-[#14B8A6] transition-colors">
                 {post.title}
               </h2>
-              <p className="text-gray-400">{post.excerpt}</p>
+              <p className="text-[#9CA3AF] text-sm leading-relaxed">{post.excerpt}</p>
             </Link>
           ))}
         </div>

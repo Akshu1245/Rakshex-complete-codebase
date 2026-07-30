@@ -78,7 +78,7 @@ export function EmptyState({
             const base =
               "inline-flex items-center rounded-md px-4 py-2 text-sm font-medium transition-colors";
             const primary =
-              "bg-blue-600 hover:bg-blue-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500";
+              "bg-blue-600 hover:bg-blue-700 text-white focus:outline-none focus:ring-2 focus:ring-teal-500";
             const secondary =
               "border border-gray-700 text-gray-200 hover:bg-black/50 focus:outline-none focus:ring-2 focus:ring-gray-500";
             const cls = [base, action.variant === "secondary" ? secondary : primary].join(" ");

@@ -144,80 +144,16 @@ export async function runCollectionScan(
 
   const workspaceId = collection.workspaceId ?? undefined;
 
-  // Create scan record
-  const scan = await db.createScan(
+  // Create scan and findings atomically inside a single database transaction
+  const scan = await db.saveScanWithFindings({
     userId,
     collectionId,
-    options.scanType,
-    "completed",
+    scanType: options.scanType,
     riskScore,
     riskLevel,
-    findings.length,
     findings,
     workspaceId,
-  );
-
-  // Save individual findings with rich scanner metadata; group duplicates by fingerprint
-  try {
-    await db.reactivateExpiredSuppressions(userId);
-
-    const priorOpen = await db.listFindingsForUser(userId, {
-      collectionId,
-      limit: 500,
-    });
-    const byFp = new Map(
-      priorOpen.filter((f) => f.fingerprint).map((f) => [f.fingerprint as string, f]),
-    );
-
-    for (const finding of findings) {
-      const fp = (finding as { fingerprint?: string }).fingerprint;
-      const prior = fp ? byFp.get(fp) : undefined;
-      // Active suppression with future expiry → skip re-open as open
-      if (
-        prior &&
-        prior.status === ("suppressed" as any) &&
-        prior.suppressionExpiresAt &&
-        new Date(prior.suppressionExpiresAt) > new Date()
-      ) {
-        continue;
-      }
-      // Accepted risk still active → keep accepted
-      const status =
-        prior?.status === ("accepted_risk" as any)
-          ? ("accepted_risk" as const)
-          : prior && prior.status === ("false_positive" as any)
-            ? ("false_positive" as const)
-            : ("open" as const);
-
-      await db.createFinding(
-        scan.id,
-        collectionId,
-        userId,
-        finding.title,
-        finding.severity,
-        finding.description,
-        finding.category,
-        finding.remediation,
-        finding.cweId,
-        {
-          ruleId: (finding as any).ruleId,
-          confidence: (finding as any).confidence,
-          fingerprint: fp,
-          endpoint: (finding as any).endpoint,
-          method: (finding as any).method,
-          evidence: (finding as any).evidence,
-          workspaceId,
-          status,
-          duplicateOf: prior && prior.scanId !== scan.id ? prior.id : undefined,
-        },
-      );
-    }
-  } catch (err) {
-    logger.error(
-      { err, scanId: scan.id, totalFindings: findings.length },
-      "[ScanService] findings insert failed partially — scan record preserved",
-    );
-  }
+  });
 
   // Update last scanned timestamp
   await db.updateCollectionLastScannedAt(collectionId);

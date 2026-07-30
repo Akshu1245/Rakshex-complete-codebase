@@ -210,12 +210,12 @@ export default function AdminPage() {
                     value={query}
                     onChange={(e) => handleQueryChange(e.target.value)}
                     placeholder="Search email or name…"
-                    className="px-3 py-2 rounded-md bg-black/50 border border-gray-700 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="px-3 py-2 rounded-md bg-black/50 border border-gray-700 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500"
                   />
                   <select
                     value={planFilter}
                     onChange={(e) => handlePlanFilterChange(e.target.value)}
-                    className="px-3 py-2 rounded-md bg-black/50 border border-gray-700 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="px-3 py-2 rounded-md bg-black/50 border border-gray-700 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
                   >
                     <option value="all">All plans</option>
                     <option value="free">Free</option>
