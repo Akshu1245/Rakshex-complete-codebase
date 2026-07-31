@@ -1,6 +1,6 @@
 "use client";
 
-const CONSENT_KEY = "devpulse-cookie-consent";
+const CONSENT_KEY = "rakshex-cookie-consent";
 
 interface ConsentState {
   analytics: boolean;

@@ -12,31 +12,30 @@ interface NavItem {
   adminOnly?: boolean;
 }
 
-const navItems: NavItem[] = [
-  { label: "Command Center", href: "/dashboard", icon: "dashboard", group: "main" },
-  { label: "AI Control Plane", href: "/control-plane", icon: "hub", group: "main" },
-  { label: "Collections", href: "/collections", icon: "folder_open", group: "main" },
-  { label: "Import", href: "/import", icon: "upload", group: "main" },
-  { label: "Findings", href: "/findings", icon: "bug_report", group: "security" },
-  { label: "Scanning", href: "/scanning", icon: "search", group: "security" },
-  { label: "Compliance", href: "/compliance", icon: "gavel", group: "security" },
+const primaryItems: NavItem[] = [
+  { label: "Overview", href: "/dashboard", icon: "dashboard" },
+  { label: "APIs & collections", href: "/collections", icon: "folder_open" },
+  { label: "Findings", href: "/findings", icon: "bug_report" },
+  { label: "Scans", href: "/scanning", icon: "search" },
+  { label: "AI control plane", href: "/control-plane", icon: "hub" },
+  { label: "Compliance", href: "/compliance", icon: "gavel" },
+  { label: "Team", href: "/team", icon: "group" },
+  { label: "Workspace & billing", href: "/workspace", icon: "domain" },
+  { label: "Settings", href: "/settings", icon: "settings" },
+];
+
+const advancedItems: NavItem[] = [
+  { label: "Import directly", href: "/import", icon: "upload" },
   { label: "Kill Switch", href: "/kill-switch", icon: "power_settings_new", group: "security" },
   { label: "Shadow APIs", href: "/shadow-apis", icon: "visibility_off", group: "security" },
   { label: "Red Team", href: "/red-team", icon: "swords", group: "security" },
-  { label: "Playbooks (docs)", href: "/playbooks", icon: "menu_book", group: "security" },
-  { label: "Enterprise", href: "/enterprise", icon: "corporate_fare", group: "security" },
   { label: "Cost Anomalies", href: "/agent-drift", icon: "psychology", group: "ai" },
   { label: "Reports", href: "/report", icon: "description", group: "security" },
   { label: "Analytics", href: "/analytics", icon: "analytics", group: "ai" },
   { label: "Token Analytics", href: "/token-analytics", icon: "toll", group: "ai" },
   { label: "Copilot Metrics", href: "/dashboard/github-copilot", icon: "smart_toy", group: "ai" },
-  { label: "Metrics", href: "/metrics", icon: "bar_chart", group: "ai" },
-  { label: "Benchmark", href: "/benchmark", icon: "speed", group: "ai" },
   { label: "Notifications", href: "/notifications", icon: "notifications", group: "account" },
-  { label: "Team", href: "/team", icon: "group", group: "account" },
   { label: "Audit Log", href: "/audit-log", icon: "assignment", group: "account" },
-  { label: "Settings", href: "/settings", icon: "settings", group: "account" },
-  { label: "Billing", href: "/billing", icon: "credit_card", group: "account" },
   { label: "Admin", href: "/admin", icon: "build", group: "account", adminOnly: true },
 ];
 
@@ -55,7 +54,36 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
     return pathname.startsWith(href);
   };
 
-  const visibleItems = navItems.filter((item) => !item.adminOnly || isAdmin);
+  const visibleAdvancedItems = advancedItems.filter((item) => !item.adminOnly || isAdmin);
+  const advancedIsActive = visibleAdvancedItems.some((item) => isActive(item.href));
+
+  const renderItem = (item: NavItem) => {
+    const active = isActive(item.href);
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        onClick={onClose}
+        className={`flex items-center gap-3 px-4 py-2.5 rounded transition-all duration-200
+          ${
+            active
+              ? "text-primary bg-primary/10 border-r-2 border-primary font-semibold"
+              : "text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low"
+          }`}
+      >
+        <span
+          className="material-symbols-outlined"
+          style={{
+            fontSize: "20px",
+            fontVariationSettings: active ? "'FILL' 1" : "'FILL' 0",
+          }}
+        >
+          {item.icon}
+        </span>
+        <span className="font-button-text text-button-text">{item.label}</span>
+      </Link>
+    );
+  };
 
   return (
     <>
@@ -74,50 +102,32 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                 RaksHex
               </div>
               <div className="text-[10px] uppercase tracking-[0.2em] text-on-surface-variant font-semibold mt-1">
-                Elite API Security
+                AI &amp; API security
               </div>
             </div>
           </Link>
 
           <nav className="flex flex-col gap-1">
-            {visibleItems.map((item) => {
-              const active = isActive(item.href);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={onClose}
-                  className={`flex items-center gap-3 px-4 py-3 rounded transition-all duration-200
-                    ${
-                      active
-                        ? "text-primary bg-primary/10 border-r-2 border-primary font-semibold"
-                        : "text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low"
-                    }`}
-                >
-                  <span
-                    className="material-symbols-outlined"
-                    style={{
-                      fontSize: "20px",
-                      fontVariationSettings: active ? "'FILL' 1" : "'FILL' 0",
-                    }}
-                  >
-                    {item.icon}
-                  </span>
-                  <span className="font-button-text text-button-text">{item.label}</span>
-                </Link>
-              );
-            })}
+            {primaryItems.map(renderItem)}
+            <details className="mt-2" open={advancedIsActive}>
+              <summary className="cursor-pointer list-none px-4 py-2 text-xs font-semibold uppercase tracking-wider text-on-surface-variant hover:text-on-surface">
+                More tools
+              </summary>
+              <div className="mt-1 flex flex-col gap-1 border-l border-glass pl-1">
+                {visibleAdvancedItems.map(renderItem)}
+              </div>
+            </details>
           </nav>
         </div>
 
         <div className="p-6 flex flex-col gap-1 border-t border-glass bg-surface-base/50">
           {user && (
             <Link
-              href="/billing"
+              href="/workspace"
               onClick={onClose}
               className="w-full py-3 mb-4 bg-primary text-on-primary font-bold rounded text-sm hover:brightness-110 active:scale-[0.98] transition-all text-center block"
             >
-              Upgrade Protection
+              Manage plan
             </Link>
           )}
 

@@ -1,37 +1,33 @@
 import "./globals-insforge.css";
 import "./globals.css";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import { AuthProvider } from "../components/AuthProvider";
 import { CookieConsent } from "../components/CookieConsent";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { OfflineBanner } from "../components/OfflineBanner";
-import { ServiceWorkerRegister } from "../components/ServiceWorkerRegister";
 import { TRPCProvider } from "@/lib/providers";
 import AppShell from "@/components/AppShell";
 import { ToastProvider } from "@/components/Toast";
 import { TrialBanner } from "@/app/components/TrialBanner";
 import { CrispChat } from "@/components/CrispChat";
 
-// Inter kept for fallback but primary fonts loaded via CSS
-const inter = Inter({ subsets: ["latin"] });
-
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.rakshex.in";
 
 export const metadata: Metadata = {
-  title: "RakshEx | AI Control Plane for Security, Cost, and Access",
+  title: {
+    default: "RaksHex — AI Runtime Governance, Prompt Injection & LLM Cost Control",
+    template: "%s | RaksHex",
+  },
   description:
-    "Discover AI accounts, credentials, subscriptions, usage, risk, and policy in one control plane without retaining raw prompts by default.",
-  generator: "RaksHex",
+    "India's AI Runtime Governance platform. Block prompt injection, control LLM costs, discover shadow APIs, and generate compliance reports in one place.",
   keywords: [
-    "AI control plane",
-    "AI governance",
-    "AI credential inventory",
-    "AI subscription governance",
-    "LLM gateway policy",
-    "prompt injection detection",
-    "shadow AI discovery",
-    "AI cost controls",
+    "AI runtime governance",
+    "prompt injection blocking",
+    "LLM cost control",
+    "shadow API discovery",
+    "AI agent security",
+    "MCP governance",
+    "OWASP AI Top 10",
     "RakshEx",
   ],
   metadataBase: new URL(SITE_URL),
@@ -48,9 +44,9 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
   },
   openGraph: {
-    title: "RakshEx | AI Control Plane for Security, Cost, and Access",
+    title: "RaksHex – AI Runtime Governance & Prompt Injection Protection",
     description:
-      "Discover AI access, govern credentials and subscriptions, enforce gateway policy, and export audit evidence.",
+      "India’s first AI Runtime Governance platform. Block prompt injection, control LLM costs, discover shadow APIs, and generate compliance reports.",
     type: "website",
     siteName: "RaksHex",
     locale: "en_US",
@@ -64,10 +60,8 @@ export const metadata: Metadata = {
     ],
   },
   twitter: {
-    card: "summary_large_image",
-    title: "RakshEx | AI Control Plane",
-    description:
-      "AI security, access governance, cost controls, and audit evidence in one workspace.",
+    title: "RaksHex – AI Runtime Governance",
+    description: "Block prompt injection, control LLM costs, and govern AI agents with RaksHex.",
     creator: "@rakshexhq",
     images: ["/og-image.png"],
   },
@@ -110,8 +104,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="twitter:image" content={`${SITE_URL}/og-image.png`} />
         <meta name="twitter:image:alt" content="RaksHex — AI Runtime Governance Platform" />
       </head>
-      <body className={inter.className}>
-        <ServiceWorkerRegister />
+      <body>
         <TRPCProvider>
           <AuthProvider>
             <TrialBanner />

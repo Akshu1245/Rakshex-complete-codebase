@@ -108,8 +108,53 @@ vi.mock("./db", async () => {
   const mockPayments: any[] = [];
 
   return {
+    getPersonalWorkspaceForUser: vi.fn(async (userId: number) => ({
+      id: userId,
+      slug: `user-${userId}`,
+      name: "Test Workspace",
+      ownerUserId: userId,
+      isPersonal: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })),
+    getWorkspaceMembership: vi.fn(async (workspaceId: number, userId: number) => ({
+      id: userId,
+      workspaceId,
+      userId,
+      role: "owner",
+      active: true,
+      invitedBy: null,
+      invitedAt: null,
+      joinedAt: new Date(),
+    })),
+    setCollectionWorkspaceId: vi.fn(async (id: string, workspaceId: number) => {
+      const col = mockCollections.find((c) => c.id === id);
+      if (col) col.workspaceId = workspaceId;
+    }),
+    setFindingWorkspaceId: vi.fn(async (id: string, workspaceId: number) => {
+      const finding = mockFindings.find((f) => f.id === id);
+      if (finding) finding.workspaceId = workspaceId;
+    }),
     getCollectionsByUserId: vi.fn(async (userId: number) =>
       mockCollections.filter((c) => c.userId === userId),
+    ),
+    listCollectionsPage: vi.fn(
+      async ({
+        workspaceId,
+        userId,
+        limit,
+        offset,
+      }: {
+        workspaceId: number;
+        userId: number;
+        limit: number;
+        offset: number;
+      }) => {
+        const scoped = mockCollections.filter(
+          (c) => c.workspaceId === workspaceId || (c.workspaceId == null && c.userId === userId),
+        );
+        return { items: scoped.slice(offset, offset + limit), total: scoped.length };
+      },
     ),
     getCollectionById: vi.fn(
       async (id: string) => mockCollections.find((c) => c.id === id) ?? null,
@@ -371,27 +416,6 @@ vi.mock("./db", async () => {
     getTeamMembersByUserId: vi.fn(async (userId: number) =>
       mockTeamMembers.filter((m) => m.userId === userId),
     ),
-    // Tenant-access resolution (personal workspace + membership) used by
-    // requireCollectionAccess / requireFindingAccess.
-    getPersonalWorkspaceForUser: vi.fn(async (userId: number) => ({
-      id: 1,
-      ownerUserId: userId,
-      isPersonal: true,
-      name: "Personal",
-      slug: `user-${userId}`,
-    })),
-    getWorkspaceMembership: vi.fn(async (workspaceId: number, userId: number) => ({
-      workspaceId,
-      userId,
-      role: "owner",
-      active: true,
-    })),
-    setCollectionWorkspaceId: vi.fn(async () => {}),
-    setFindingWorkspaceId: vi.fn(async () => {}),
-    listCollectionsPage: vi.fn(async ({ userId, limit, offset }: any) => {
-      const all = mockCollections.filter((c) => c.userId === userId);
-      return { items: all.slice(offset ?? 0, (offset ?? 0) + (limit ?? 20)), total: all.length };
-    }),
     updateTeamMemberRole: vi.fn(async (id: string, role: string) => {
       const m = mockTeamMembers.find((m) => m.id === id);
       if (m) m.role = role;
@@ -870,30 +894,24 @@ describe("onboarding", () => {
     expect(progress.currentStep).toBe(1);
   });
 
-  it("allows manual attestation of setupCompliance", async () => {
-    // Onboarding is event-backed: only steps without a hard event signal
-    // (setupCompliance) can be manually attested.
+  it("does not allow manual completion of an event-backed step", async () => {
     const { ctx } = createAuthContext({ id: 400 });
     const caller = appRouter.createCaller(ctx);
-    const result = await caller.onboarding.completeStep({ step: "setupCompliance" });
-    expect(result.success).toBe(true);
-  });
-
-  it("does not mark event-backed steps without evidence", async () => {
-    const { ctx } = createAuthContext({ id: 400 });
-    const caller = appRouter.createCaller(ctx);
-    const result = await caller.onboarding.completeStep({ step: "importCollection" });
-    // No collection imported for this user → soft no-op, not marked complete.
+    const result = await caller.onboarding.completeStep({
+      step: "importCollection",
+    });
     expect(result.success).toBe(false);
-    const progress = await caller.onboarding.getProgress();
-    expect(progress.importCollectionCompleted).toBe(false);
+    expect(result.reason).toBe("complete_via_product_action");
   });
 
-  it("persists manual setupCompliance completion", async () => {
+  it("marks import complete after a real collection is created", async () => {
+    const db = await import("./db");
+    await db.createCollection(400, "Imported Collection", "postman", { item: [] });
     const { ctx } = createAuthContext({ id: 400 });
     const caller = appRouter.createCaller(ctx);
     const progress = await caller.onboarding.getProgress();
-    expect(progress.setupComplianceCompleted).toBe(true);
+    expect(progress.importCollectionCompleted).toBe(true);
+    expect(progress.currentStep).toBe(2);
   });
 });
 

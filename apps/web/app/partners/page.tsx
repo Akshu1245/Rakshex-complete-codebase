@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Partner Program — DevPulse",
+  title: "Partner Program — Rakshex",
   description:
-    "Join the DevPulse partner ecosystem. Technology, Reseller, and Research partnership opportunities for API security and AI governance.",
+    "Join the Rakshex partner ecosystem. Technology, Reseller, and Research partnership opportunities for API security and AI governance.",
   alternates: { canonical: "/partners" },
 };
 
@@ -11,15 +11,15 @@ export default function PartnersPage() {
   const partnerTypes = [
     {
       title: "Technology Partners",
-      desc: "Integrate DevPulse's AI runtime firewalls, secret scanning, and cost attribution directly into your developer platform, LLM gateway, or DevOps toolkit.",
+      desc: "Integrate Rakshex's AI runtime firewalls, secret scanning, and cost attribution directly into your developer platform, LLM gateway, or DevOps toolkit.",
     },
     {
       title: "Reseller Partners",
-      desc: "Distribute DevPulse licenses and compliance auditing packages to your client network, backed by dedicated technical support and co-branded collateral.",
+      desc: "Distribute Rakshex licenses and compliance auditing packages to your client network, backed by dedicated technical support and co-branded collateral.",
     },
     {
       title: "Research Partners",
-      desc: "Collaborate with DevPulse to identify new prompt injection vectors, expand our open-source OWASP AI Top 10 rulesets, and publish joint research.",
+      desc: "Collaborate with Rakshex to identify new prompt injection vectors, expand our open-source OWASP AI Top 10 rulesets, and publish joint research.",
     },
   ];
 
@@ -53,14 +53,14 @@ export default function PartnersPage() {
             🤝 Partner Ecosystem
           </span>
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white">
-            Partner with DevPulse
+            Partner with Rakshex
           </h1>
           <p className="text-slate-400 text-lg mt-3 max-w-2xl mx-auto">
             We are actively building programs for platform builders, consulting firms, and security
             researchers. Reach out today to start the conversation.
           </p>
           <a
-            href="mailto:akshay@devpulse.ai?subject=Partnership%20Inquiry"
+            href="mailto:akshay@rakshex.in?subject=Partnership%20Inquiry"
             className="inline-block mt-6 px-6 py-3 bg-white text-black rounded-lg font-semibold hover:bg-gray-200"
           >
             Contact Partnerships Team
@@ -83,7 +83,7 @@ export default function PartnersPage() {
                   <p className="text-slate-400 text-xs leading-relaxed mb-6">{p.desc}</p>
                 </div>
                 <a
-                  href={`mailto:akshay@devpulse.ai?subject=Expressing Interest: ${encodeURIComponent(p.title)}`}
+                  href={`mailto:akshay@rakshex.in?subject=Expressing Interest: ${encodeURIComponent(p.title)}`}
                   className="text-sm text-blue-400 hover:underline mt-auto"
                 >
                   Get in touch →

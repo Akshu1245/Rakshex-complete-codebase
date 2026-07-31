@@ -11,7 +11,7 @@ function KillSwitch() {
   const [currentSpend, setCurrentSpend] = React.useState(0);
 
   React.useEffect(() => {
-    fetchSettings();
+    void fetchSettings();
   }, []);
 
   const fetchSettings = async () => {
@@ -27,7 +27,7 @@ function KillSwitch() {
       method: "POST",
       body: JSON.stringify({ budgetLimitUSD: budget }),
     });
-    fetchSettings();
+    await fetchSettings();
   };
 
   return (
@@ -94,20 +94,23 @@ describe("KillSwitch", () => {
     render(<KillSwitch />);
 
     await waitFor(() => {
-      expect(screen.getByTestId("budget-input")).toBeInTheDocument();
+      expect(screen.getByTestId("current-spend")).toHaveTextContent("Current Spend: $45");
     });
 
     await user.clear(screen.getByTestId("budget-input"));
     await user.type(screen.getByTestId("budget-input"), "250");
     await user.click(screen.getByTestId("set-budget-btn"));
 
-    expect(global.fetch).toHaveBeenCalledWith(
-      "/api/killswitch/budget",
-      expect.objectContaining({
-        method: "POST",
-        body: JSON.stringify({ budgetLimitUSD: 250 }),
-      }),
-    );
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/killswitch/budget",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ budgetLimitUSD: 250 }),
+        }),
+      );
+      expect(screen.getByTestId("current-budget")).toHaveTextContent("Budget: $100");
+    });
   });
 
   it("shows auto-trigger status", async () => {

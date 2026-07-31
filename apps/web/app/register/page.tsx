@@ -121,6 +121,18 @@ export default function RegisterPage() {
           </a>
         </div>
 
+        <p className="mt-5 text-center text-xs text-neutral-600">
+          By creating an account, you agree to the{" "}
+          <Link href="/terms" className="underline hover:text-neutral-400">
+            Terms
+          </Link>{" "}
+          and acknowledge the{" "}
+          <Link href="/privacy" className="underline hover:text-neutral-400">
+            Privacy Policy
+          </Link>
+          .
+        </p>
+
         <p className="text-center text-neutral-500 text-sm mt-6">
           Already have an account?{" "}
           <Link href="/login" className="text-teal-400">

@@ -481,7 +481,7 @@ export default function HomePage() {
     },
     {
       title: "Compliance Reports",
-      description: "SOC2, PCI DSS, OWASP. Vanta/Drata ready.",
+      description: "SOC 2, PCI DSS, and OWASP-mapped evidence exports.",
       link: "/features#compliance",
       icon: FileText,
       hoverClass: "hover-draw-check text-teal-accent",

@@ -217,7 +217,7 @@ export function PublicHeader() {
                             Thinking Token Attribution
                           </p>
                           <p className="text-slate-400 text-[11px] leading-relaxed mt-0.5">
-                            World-first reasoning token isolation
+                            Reasoning-token cost visibility
                           </p>
                         </div>
                       </Link>

@@ -19,12 +19,13 @@
 
 import crypto from "crypto";
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 
 import * as db from "../db";
 import type { WorkspaceRow } from "@rakshex/database";
 import { ValidationError } from "../_core/errors";
-import { logger } from "../_core/logger";
 import { protectedProcedure, router } from "../_core/trpc";
+import { getPlanLimits } from "../payments";
 import { sendTeamInviteEmail } from "../email";
 import { type WorkspaceRole, PermissionDeniedError, summarisePermissions } from "../services/rbac";
 import {
@@ -46,14 +47,6 @@ const roleEnumWritable = z.enum([
   /** @deprecated alias for developer */
   "editor",
 ]);
-
-function mapInviteRoleForEmail(
-  role: z.infer<typeof roleEnumWritable> | "owner",
-): "admin" | "editor" | "viewer" {
-  if (role === "admin" || role === "owner") return "admin";
-  if (role === "viewer" || role === "analyst" || role === "billing_admin") return "viewer";
-  return "editor";
-}
 
 function normaliseSlug(input: string): string {
   return input
@@ -115,16 +108,19 @@ export const workspacesRouter = router({
       if (await db.getWorkspaceBySlug(slug)) {
         throw new ValidationError("a workspace with this slug already exists");
       }
-      // Atomic workspace + owner membership (Postgres `.returning()`, not insertId).
-      const id = await db.createWorkspaceWithOwner(
-        {
-          slug,
-          name: input.name.trim(),
-          ownerUserId: ctx.user.id,
-          isPersonal: false,
-        },
-        ctx.user.id,
-      );
+      const id = await db.createWorkspace({
+        slug,
+        name: input.name.trim(),
+        ownerUserId: ctx.user.id,
+        isPersonal: false,
+      });
+      await db.addWorkspaceMember({
+        workspaceId: id,
+        userId: ctx.user.id,
+        role: "owner",
+        active: true,
+        joinedAt: new Date(),
+      });
       return { id, slug };
     }),
 
@@ -162,7 +158,7 @@ export const workspacesRouter = router({
     .input(z.object({ workspaceId: z.number().int().positive() }))
     .query(async ({ ctx, input }) => {
       await assertWorkspacePermission(input.workspaceId, ctx.user.id, "members", "read");
-      return db.listWorkspaceMembers(input.workspaceId);
+      return db.listWorkspaceMembersDetailed(input.workspaceId);
     }),
 
   inviteMember: protectedProcedure
@@ -175,10 +171,50 @@ export const workspacesRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       await assertWorkspacePermission(input.workspaceId, ctx.user.id, "members", "write");
+      const [workspace, subscription, reservedSeats] = await Promise.all([
+        db.getWorkspaceById(input.workspaceId),
+        db.getWorkspaceSubscription(input.workspaceId),
+        db.countReservedWorkspaceSeats(input.workspaceId),
+      ]);
+      if (!workspace) throw new ValidationError("workspace not found");
+      const normalizedEmail = input.email.toLowerCase();
+      const [existingUser, pendingInvitations] = await Promise.all([
+        db.getUserByEmail(normalizedEmail),
+        db.listWorkspaceInvitations(input.workspaceId),
+      ]);
+      if (
+        existingUser &&
+        (await db.getWorkspaceMembership(input.workspaceId, existingUser.id))?.active
+      ) {
+        throw new ValidationError("this user is already an active workspace member");
+      }
+      if (
+        pendingInvitations.some(
+          (invitation) =>
+            invitation.email === normalizedEmail && invitation.expiresAt.getTime() > Date.now(),
+        )
+      ) {
+        throw new ValidationError("an active invitation already exists for this email");
+      }
+
+      const paidWorkspaceSubscription =
+        subscription && ["pending", "active", "paused", "past_due"].includes(subscription.status)
+          ? subscription
+          : null;
+      const fallbackPlan = await db.getEffectivePlan(workspace.ownerUserId);
+      const seatLimit =
+        paidWorkspaceSubscription?.seatCount ?? getPlanLimits(fallbackPlan).maxTeamMembers;
+      if (reservedSeats >= seatLimit) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: `All ${seatLimit} workspace seats are reserved. Increase the seat allocation before inviting another member.`,
+        });
+      }
+
       const token = crypto.randomBytes(24).toString("base64url");
       const id = await db.createWorkspaceInvitation({
         workspaceId: input.workspaceId,
-        email: input.email.toLowerCase(),
+        email: normalizedEmail,
         role: input.role,
         token,
         invitedBy: ctx.user.id,
@@ -186,14 +222,24 @@ export const workspacesRouter = router({
       });
       try {
         await sendTeamInviteEmail({
-          toEmail: input.email.toLowerCase(),
-          inviterName: ctx.user.name ?? "A Rakshex user",
-          role: mapInviteRoleForEmail(input.role),
+          toEmail: normalizedEmail,
+          inviterName: ctx.user.name || ctx.user.email || "A Rakshex workspace owner",
+          role: input.role,
           token,
         });
-      } catch (err) {
-        logger.warn({ err, invitationId: id }, "[workspaces] invite email failed");
+      } catch (error) {
+        await db.deleteWorkspaceInvitationForWorkspace(id, input.workspaceId);
+        throw error;
       }
+      await db.createAuditLogEntry(ctx.user.id, "workspace.member_invited", {
+        entityType: "workspace",
+        entityId: String(input.workspaceId),
+        metadata: {
+          invitationId: id,
+          inviteeEmail: normalizedEmail,
+          role: input.role,
+        },
+      });
       return { id, token };
     }),
 
@@ -201,7 +247,34 @@ export const workspacesRouter = router({
     .input(z.object({ workspaceId: z.number().int().positive() }))
     .query(async ({ ctx, input }) => {
       await assertWorkspacePermission(input.workspaceId, ctx.user.id, "members", "read");
-      return db.listWorkspaceInvitations(input.workspaceId);
+      const invitations = await db.listWorkspaceInvitations(input.workspaceId);
+      return invitations.map(({ token: _token, ...invitation }) => invitation);
+    }),
+
+  resendInvitation: protectedProcedure
+    .input(
+      z.object({
+        workspaceId: z.number().int().positive(),
+        invitationId: z.number().int().positive(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      await assertWorkspacePermission(input.workspaceId, ctx.user.id, "members", "write");
+      const invitation = await db.getWorkspaceInvitationForWorkspace(
+        input.invitationId,
+        input.workspaceId,
+      );
+      if (!invitation) throw new ValidationError("invitation not found");
+      if (invitation.expiresAt.getTime() < Date.now()) {
+        throw new ValidationError("invitation expired; cancel it and create a new invitation");
+      }
+      await sendTeamInviteEmail({
+        toEmail: invitation.email,
+        inviterName: ctx.user.name || ctx.user.email || "A Rakshex workspace owner",
+        role: invitation.role,
+        token: invitation.token,
+      });
+      return { ok: true };
     }),
 
   cancelInvitation: protectedProcedure
@@ -213,7 +286,7 @@ export const workspacesRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       await assertWorkspacePermission(input.workspaceId, ctx.user.id, "members", "delete");
-      await db.deleteWorkspaceInvitation(input.invitationId);
+      await db.deleteWorkspaceInvitationForWorkspace(input.invitationId, input.workspaceId);
       return { ok: true };
     }),
 
@@ -257,7 +330,7 @@ export const workspacesRouter = router({
       z.object({
         workspaceId: z.number().int().positive(),
         userId: z.number().int().positive(),
-        role: z.enum(["owner", "admin", "editor", "viewer"]),
+        role: z.union([z.literal("owner"), roleEnumWritable]),
       }),
     )
     .mutation(async ({ ctx, input }) => {

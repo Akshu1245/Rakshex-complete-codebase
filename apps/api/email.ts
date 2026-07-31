@@ -11,7 +11,15 @@ import { ENV } from "./_core/env";
 interface TeamInviteEmailOptions {
   toEmail: string;
   inviterName: string;
-  role: "admin" | "editor" | "viewer";
+  role:
+    | "owner"
+    | "admin"
+    | "security_lead"
+    | "developer"
+    | "analyst"
+    | "viewer"
+    | "billing_admin"
+    | "editor";
 }
 
 interface PasswordResetEmailOptions {
@@ -695,7 +703,7 @@ export async function sendWaitlistConfirmationEmail(toEmail: string, plan: strin
           Website: <a href="https://rakshex.in" style="color:#60a5fa; text-decoration:none;">rakshex.in</a>
         </p>
         <p style="font-size:14px; color:#9ca3af; margin:0;">
-          For direct inquiries, feel free to reach out to Akshay Kammar at <a href="mailto:akshay@devpulse.ai" style="color:#60a5fa; text-decoration:none;">akshay@devpulse.ai</a>.
+          For direct inquiries, feel free to reach out to Akshay Kammar at <a href="mailto:akshay@rakshex.in" style="color:#60a5fa; text-decoration:none;">akshay@rakshex.in</a>.
         </p>
       </div>
     </div>
@@ -730,7 +738,7 @@ export async function sendWaitlistConfirmationEmail(toEmail: string, plan: strin
     throw err;
   }
 
-  // Send internal notification to akshay@devpulse.ai
+  // Send internal notification to akshay@rakshex.in
   const internalSubject = `New RakshEx waitlist signup: ${toEmail} - ${plan}`;
   const internalHtml = `
 <!DOCTYPE html>
@@ -748,11 +756,11 @@ export async function sendWaitlistConfirmationEmail(toEmail: string, plan: strin
   try {
     await config.transport.sendMail({
       from: `"RakshEx System" <${config.from}>`,
-      to: "akshay@devpulse.ai",
+      to: "akshay@rakshex.in",
       subject: internalSubject,
       html: internalHtml,
     });
-    logger.info(`[Email] Waitlist internal notification sent to akshay@devpulse.ai`);
+    logger.info(`[Email] Waitlist internal notification sent to akshay@rakshex.in`);
   } catch (err) {
     logger.error({ err }, `[Email] Failed to send waitlist internal notification for ${toEmail}`);
     throw err;

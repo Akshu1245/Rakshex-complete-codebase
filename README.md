@@ -2,29 +2,33 @@
 
 AI agent and API security platform — monorepo for scanning, governance, AgentGuard telemetry, and control-plane tooling.
 
-**Status:** Active development. Feature maturity is marked below. Passing automated checks does **not** by itself mean the product is market-ready; see [docs/market-readiness-audit.md](docs/market-readiness-audit.md).
+**Status:** **Deployable release candidate** as of 2026-07-30. Private beta
+requires the production worker, SMTP, exact origins, monitoring, and a signed
+HTTPS buyer journey. Paid GA additionally requires live billing exercises,
+tax/legal approval, and named operational owners. Start with
+[release/README_START_HERE.md](release/README_START_HERE.md).
 
 ## Feature maturity
 
-| Area                                     | Status        | Notes                                              |
-| ---------------------------------------- | ------------- | -------------------------------------------------- |
-| Auth (email, sessions, OAuth PKCE, TOTP) | **Available** | Argon2id passwords; workspace RBAC                 |
-| Workspaces / API keys / projects         | **Available** | Hashed keys; tenant isolation helpers              |
-| Collection import + secure parse         | **Available** | YAML/JSON bomb limits                              |
-| Scanner core (API + AI rules)            | **Available** | Deterministic rules in `@rakshex/scanner-core`     |
-| Findings lifecycle                       | **Available** | Open → resolved / false positive / etc.            |
-| Web dashboard                            | **Beta**      | Real backend wiring; UI polish ongoing             |
-| CLI offline scan                         | **Available** | `@rakshex/cli`                                     |
-| VS Code extension                        | **Beta**      | SecretStorage; scan workspace commands             |
-| GitHub Action / App                      | **Beta**      | Needs live credentials for full CI path            |
-| AgentGuard Node/Python SDKs              | **Available** | Metadata-only privacy by default                   |
-| Gateway kill switch / enforcement        | **Beta**      | Redis + PG; unit-tested core                       |
-| Policy-as-code                           | **Available** | YAML schema, dry-run, immutability                 |
-| Pricing engine                           | **Available** | Versioned catalog; estimates labeled               |
-| Billing (Stripe/Razorpay)                | **Beta**      | Abstraction + existing routers; live keys required |
-| MCP security inventory                   | **Beta**      | Scan package + API governance                      |
-| Compliance report mapping                | **Available** | Evidence-based; **not a certification**            |
-| Observability (OTel, health)             | **Beta**      | Health/ready; secret redaction in logs             |
+| Area                                     | Status        | Notes                                            |
+| ---------------------------------------- | ------------- | ------------------------------------------------ |
+| Auth (email, sessions, OAuth PKCE, TOTP) | **Available** | Argon2id passwords; workspace RBAC               |
+| Workspaces / API keys / projects         | **Available** | Hashed keys; tenant isolation helpers            |
+| Collection import + secure parse         | **Available** | YAML/JSON bomb limits                            |
+| Scanner core (API + AI rules)            | **Available** | Deterministic rules in `@rakshex/scanner-core`   |
+| Findings lifecycle                       | **Available** | Open → resolved / false positive / etc.          |
+| Web dashboard                            | **Available** | Real backend wiring                              |
+| CLI offline scan                         | **Available** | `@rakshex/cli`                                   |
+| VS Code extension                        | **Available** | SecretStorage; scan workspace commands           |
+| GitHub Action / App                      | **Available** | Live credentials required for production CI path |
+| AgentGuard Node/Python SDKs              | **Available** | Metadata-only privacy by default                 |
+| Gateway kill switch / enforcement        | **Available** | Redis + PG; unit-tested core                     |
+| Policy-as-code                           | **Available** | YAML schema, dry-run, immutability               |
+| Pricing engine                           | **Available** | Versioned catalog; estimates labeled             |
+| Billing (Stripe/Razorpay)                | **Available** | Code + webhooks; live keys required for paid     |
+| MCP security inventory                   | **Available** | Scan package + API governance                    |
+| Compliance report mapping                | **Available** | Evidence-based; **not a certification**          |
+| Observability (OTel, health)             | **Available** | Health/ready; secret redaction in logs           |
 
 ### Explicit non-claims
 
@@ -32,7 +36,7 @@ This repository does **not** claim:
 
 - SOC 2 / ISO / GDPR / EU AI Act **certification** (mapping only)
 - Patent status
-- “Fully production-ready for every customer” without operator validation
+- “Fully production-ready for every regulated customer” without operator validation
 - Exact test counts as a marketing metric
 - Encryption or HSM features beyond what the code implements (verify in code)
 
@@ -56,8 +60,8 @@ This repository does **not** claim:
 ### Steps
 
 ```bash
-git clone <your-fork-or-remote>
-cd DevPulse_Complete_Codebase   # or repo root name
+git clone https://github.com/Akshu1245/Rakshex-complete-codebase.git
+cd Rakshex-complete-codebase
 
 pnpm install --frozen-lockfile
 
@@ -66,7 +70,7 @@ pnpm db:up
 # equivalent: docker compose up -d postgres redis
 
 cp .env.example .env
-# Set at least: DATABASE_URL, JWT_SECRET (≥32 chars), REDIS_URL
+# Set at least: DATABASE_URL, JWT_SECRET (≥32 chars), REDIS_URL, RAKSHEX_VAULT_KEY (≥32 chars)
 
 pnpm db:migrate
 pnpm dev
@@ -98,29 +102,34 @@ pnpm smoke:test   # requires API reachable; set API_URL if needed
 | `pnpm test:integration`            | Integration-oriented API + DB tests      |
 | `pnpm test:security`               | Authz, kill-switch, privacy, parse bombs |
 | `pnpm build`                       | Package builds                           |
-| `pnpm test:e2e`                    | Playwright smoke (`Smoke` tag)           |
+| `pnpm test:e2e`                    | Complete Playwright journey suite        |
+| `pnpm test:e2e:smoke`              | Fast Playwright smoke subset             |
 | `pnpm smoke:test`                  | Live HTTP health against running API     |
+| `pnpm market:check`                | Market readiness helper                  |
 | `pnpm db:backup` / restore scripts | Postgres dump + restore verification     |
 
 CI stages: install → format → lint → typecheck → unit → integration → security → build → docker → migration → e2e → audit → secret scan → SBOM → container scan. **Failures block release.**
 
 ## Documentation
 
-| Doc                                                              | Description                               |
-| ---------------------------------------------------------------- | ----------------------------------------- |
-| [GETTING_STARTED.md](GETTING_STARTED.md)                         | Local setup                               |
-| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)                         | Staging, rollback, versioning             |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)                     | System architecture                       |
-| [docs/SECURITY.md](docs/SECURITY.md)                             | Security posture                          |
-| [docs/PRIVACY.md](docs/PRIVACY.md)                               | Privacy / retention                       |
-| [docs/API.md](docs/API.md)                                       | API overview                              |
-| [docs/CLI.md](docs/CLI.md)                                       | CLI                                       |
-| [docs/EXTENSION.md](docs/EXTENSION.md)                           | VS Code extension                         |
-| [docs/SDK.md](docs/SDK.md)                                       | AgentGuard SDKs                           |
-| [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)               | Common failures                           |
-| [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md)           | Release gate checklist                    |
-| [docs/FEATURE_MATURITY.md](docs/FEATURE_MATURITY.md)             | Available / Beta / Experimental / Planned |
-| [docs/market-readiness-audit.md](docs/market-readiness-audit.md) | Audit findings                            |
+| Doc                                                                                                  | Description                               |
+| ---------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| [GETTING_STARTED.md](GETTING_STARTED.md)                                                             | Local setup                               |
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)                                                             | Staging, rollback, versioning             |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)                                                         | System architecture                       |
+| [docs/SECURITY.md](docs/SECURITY.md)                                                                 | Security posture                          |
+| [docs/PRIVACY.md](docs/PRIVACY.md)                                                                   | Privacy / retention                       |
+| [docs/API.md](docs/API.md)                                                                           | API overview                              |
+| [docs/CLI.md](docs/CLI.md)                                                                           | CLI                                       |
+| [docs/EXTENSION.md](docs/EXTENSION.md)                                                               | VS Code extension                         |
+| [docs/SDK.md](docs/SDK.md)                                                                           | AgentGuard SDKs                           |
+| [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)                                                   | Common failures                           |
+| [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md)                                               | Release gate checklist                    |
+| [docs/FEATURE_MATURITY.md](docs/FEATURE_MATURITY.md)                                                 | Available / Beta / Experimental / Planned |
+| [release/README_START_HERE.md](release/README_START_HERE.md)                                         | Canonical release entry point             |
+| [docs/operations/PRODUCTION_DEPLOYMENT_RUNBOOK.md](docs/operations/PRODUCTION_DEPLOYMENT_RUNBOOK.md) | Production deployment                     |
+| [docs/market-readiness-audit.md](docs/market-readiness-audit.md)                                     | Historical audit findings                 |
+| [docs/GAP_INVENTORY.md](docs/GAP_INVENTORY.md)                                                       | Closed product gaps                       |
 
 SDK package READMEs: `packages/agentguard-sdk`, `packages/agentguard-python`.
 

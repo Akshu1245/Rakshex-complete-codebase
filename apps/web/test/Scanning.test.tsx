@@ -28,6 +28,8 @@ function Scanning() {
 
     const res = await fetch("/api/scan", { method: "POST" });
     const data = await res.json();
+    clearInterval(interval);
+    setProgress(100);
     setResults(data);
     setScanning(false);
   };
@@ -91,7 +93,10 @@ describe("Scanning", () => {
 
     await user.click(screen.getByTestId("scan-btn"));
 
-    expect(global.fetch).toHaveBeenCalledWith("/api/scan", expect.any(Object));
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith("/api/scan", expect.any(Object));
+      expect(screen.getByTestId("results")).toBeInTheDocument();
+    });
   });
 
   it("displays progress during scan", async () => {
@@ -121,6 +126,9 @@ describe("Scanning", () => {
 
     await waitFor(() => {
       expect(screen.getByTestId("progress-value")).toHaveTextContent(/\d+%/);
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId("results")).toBeInTheDocument();
     });
   });
 

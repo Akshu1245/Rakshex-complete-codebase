@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { eq, and, or, isNull, desc, gte, lt, sql } from "drizzle-orm";
+import { eq, and, or, inArray, isNull, desc, gte, lt, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
@@ -22,6 +22,7 @@ import {
   teamMembers,
   onboardingProgress,
   subscriptions,
+  workspaceSubscriptions,
   payments,
   passwordResetTokens,
   userSessions,
@@ -73,6 +74,8 @@ import {
   type InsertWorkspaceMemberRow,
   type WorkspaceInvitationRow,
   type InsertWorkspaceInvitationRow,
+  type WorkspaceSubscription,
+  type InsertWorkspaceSubscription,
   type WebhookEndpoint,
   type InsertWebhookEndpoint,
   type InsertWebhookDelivery,
@@ -227,9 +230,6 @@ export async function upsertUser(user: InsertUser): Promise<{ isNew: boolean }> 
     } else if (user.openId === ENV.ownerOpenId) {
       values.role = "admin";
       updateSet.role = "admin";
-    } else if (isNewUser) {
-      // New OAuth/SSO users get editor (least privilege above default "user").
-      values.role = "editor";
     }
 
     if (!values.lastSignedIn) {
@@ -759,142 +759,6 @@ export async function getScanById(id: string) {
   return result.length > 0 ? result[0] : null;
 }
 
-export async function getScansPageByCollectionId(opts: {
-  collectionId: string;
-  scanType?: string;
-  limit: number;
-  offset: number;
-}): Promise<{ items: any[]; total: number }> {
-  const db = await getDb();
-  if (!db) {
-    logger.warn("[Database] Cannot list scans page: database not available");
-    return { items: [], total: 0 };
-  }
-
-  const conditions = [eq(scans.collectionId, opts.collectionId)];
-  if (opts.scanType && opts.scanType !== "all") {
-    conditions.push(eq(scans.scanType, opts.scanType as any));
-  }
-
-  const [countRow] = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(scans)
-    .where(and(...conditions));
-
-  const items = await db
-    .select()
-    .from(scans)
-    .where(and(...conditions))
-    .orderBy(desc(scans.createdAt))
-    .limit(opts.limit)
-    .offset(opts.offset);
-
-  return { items, total: countRow?.count ?? 0 };
-}
-
-export async function saveScanWithFindings(opts: {
-  userId: number;
-  collectionId: string;
-  scanType: "full" | "quick" | "shadow_api" | "prompt_injection";
-  riskScore: number;
-  riskLevel: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
-  findings: any[];
-  workspaceId?: number;
-}): Promise<{ id: string }> {
-  const db = await getDb();
-  assertDb(db);
-
-  return db.transaction(async (tx) => {
-    // 1. Reactivate expired suppressions
-    await tx
-      .update(findings)
-      .set({ status: "open" as any, suppressionExpiresAt: null, updatedAt: new Date() })
-      .where(
-        and(
-          eq(findings.userId, opts.userId),
-          eq(findings.status, "suppressed" as any),
-          sql`${findings.suppressionExpiresAt} IS NOT NULL`,
-          lt(findings.suppressionExpiresAt, new Date()),
-        ),
-      );
-
-    // 2. Fetch prior findings to carry over suppression / accepted risk status
-    const priorOpen = await tx
-      .select()
-      .from(findings)
-      .where(and(eq(findings.userId, opts.userId), eq(findings.collectionId, opts.collectionId)))
-      .orderBy(desc(findings.createdAt))
-      .limit(500);
-
-    const byFp = new Map(
-      priorOpen.filter((f) => f.fingerprint).map((f) => [f.fingerprint as string, f]),
-    );
-
-    // 3. Insert scan
-    const scanId = secureId("scan");
-    await tx.insert(scans).values({
-      id: scanId,
-      userId: opts.userId,
-      collectionId: opts.collectionId,
-      scanType: opts.scanType,
-      status: "completed",
-      riskScore: opts.riskScore.toString(),
-      riskLevel: opts.riskLevel,
-      totalFindings: opts.findings.length,
-      findingsData: opts.findings,
-      workspaceId: opts.workspaceId ?? null,
-      completedAt: new Date(),
-    });
-
-    // 4. Insert individual findings
-    for (const finding of opts.findings) {
-      const fp = finding.fingerprint;
-      const prior = fp ? byFp.get(fp) : undefined;
-
-      if (
-        prior &&
-        prior.status === ("suppressed" as any) &&
-        prior.suppressionExpiresAt &&
-        new Date(prior.suppressionExpiresAt) > new Date()
-      ) {
-        continue;
-      }
-
-      const status =
-        prior?.status === ("accepted_risk" as any)
-          ? ("accepted_risk" as const)
-          : prior && prior.status === ("false_positive" as any)
-            ? ("false_positive" as const)
-            : ("open" as const);
-
-      const findingId = secureId("finding");
-      await tx.insert(findings).values({
-        id: findingId,
-        scanId,
-        collectionId: opts.collectionId,
-        userId: opts.userId,
-        title: finding.title,
-        severity: finding.severity,
-        description: finding.description || null,
-        category: finding.category || null,
-        remediation: finding.remediation || null,
-        cweId: finding.cweId || null,
-        ruleId: finding.ruleId || null,
-        confidence: finding.confidence || null,
-        fingerprint: fp || null,
-        endpoint: finding.endpoint || null,
-        method: finding.method || null,
-        evidence: finding.evidence || null,
-        workspaceId: opts.workspaceId ?? null,
-        status,
-        duplicateOf: prior && prior.scanId !== scanId ? prior.id : null,
-      });
-    }
-
-    return { id: scanId };
-  });
-}
-
 // ============================================================================
 // FINDINGS
 // ============================================================================
@@ -1153,7 +1017,6 @@ export async function recordTokenUsage(
   completionTokens: number,
   thinkingTokens: number,
   costUSD: number,
-  attribution?: { endpoint?: string | null; feature?: string | null },
 ) {
   const db = await getDb();
   assertDb(db);
@@ -1170,8 +1033,6 @@ export async function recordTokenUsage(
     thinkingTokens,
     totalTokens,
     costUSD: costUSD.toString(),
-    endpoint: attribution?.endpoint ?? null,
-    feature: attribution?.feature ?? null,
   });
 
   // Auto-increment currentSpendUSD in killSwitchSettings
@@ -1739,7 +1600,32 @@ export async function getTrialStatus(userId: number): Promise<{
 
 export async function getEffectivePlan(userId: number): Promise<"free" | "pro" | "enterprise"> {
   const plan = await getUserPlan(userId);
-  if (plan !== "free") return plan as "free" | "pro" | "enterprise";
+  if (plan === "enterprise") return "enterprise";
+
+  // A paid workspace subscription grants the plan to every active member of
+  // that workspace. This prevents invited teammates from being incorrectly
+  // evaluated as Free while working inside a paid organisation.
+  const db = await getDb();
+  if (db) {
+    const workspacePlans = await db
+      .select({ plan: workspaceSubscriptions.plan })
+      .from(workspaceMembers)
+      .innerJoin(
+        workspaceSubscriptions,
+        eq(workspaceSubscriptions.workspaceId, workspaceMembers.workspaceId),
+      )
+      .where(
+        and(
+          eq(workspaceMembers.userId, userId),
+          eq(workspaceMembers.active, true),
+          eq(workspaceSubscriptions.status, "active"),
+        ),
+      );
+    if (workspacePlans.some((row) => row.plan === "enterprise")) return "enterprise";
+    if (plan === "pro" || workspacePlans.some((row) => row.plan === "pro")) return "pro";
+  } else if (plan === "pro") {
+    return "pro";
+  }
 
   const trial = await getTrialStatus(userId);
   return trial.isTrial ? "pro" : "free";
@@ -2135,47 +2021,6 @@ export async function getAuditLogForUser(userId: number, limit: number = 50) {
     .limit(limit);
 }
 
-export async function getAuditLogForUserPage(opts: {
-  userId: number;
-  limit: number;
-  offset: number;
-  action?: string;
-  startDate?: Date;
-  endDate?: Date;
-}): Promise<{ items: any[]; total: number }> {
-  const db = await getDb();
-  if (!db) {
-    logger.warn("[Database] Cannot get audit log page: database not available");
-    return { items: [], total: 0 };
-  }
-
-  const conditions = [eq(auditLog.userId, opts.userId)];
-  if (opts.action) {
-    conditions.push(eq(auditLog.action, opts.action));
-  }
-  if (opts.startDate) {
-    conditions.push(gte(auditLog.createdAt, opts.startDate));
-  }
-  if (opts.endDate) {
-    conditions.push(lt(auditLog.createdAt, opts.endDate));
-  }
-
-  const [countRow] = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(auditLog)
-    .where(and(...conditions));
-
-  const items = await db
-    .select()
-    .from(auditLog)
-    .where(and(...conditions))
-    .orderBy(desc(auditLog.createdAt))
-    .limit(opts.limit)
-    .offset(opts.offset);
-
-  return { items, total: countRow?.count ?? 0 };
-}
-
 // ============================================================================
 // USER PROFILE MANAGEMENT
 // ============================================================================
@@ -2289,7 +2134,6 @@ export async function createLocalUser(data: {
   email: string;
   name: string;
   passwordHash: string;
-  role?: "user" | "editor" | "admin";
 }): Promise<{ id: number; openId: string }> {
   const db = await getDb();
   assertDb(db);
@@ -2302,7 +2146,6 @@ export async function createLocalUser(data: {
     name: data.name,
     loginMethod: "email",
     passwordHash: data.passwordHash,
-    role: data.role ?? "editor",
     lastSignedIn: new Date(),
   });
 
@@ -2519,6 +2362,98 @@ export async function updateSubscriptionStatus(
     .where(eq(subscriptions.id, id));
 }
 
+export async function upsertWorkspaceSubscription(
+  data: InsertWorkspaceSubscription,
+): Promise<WorkspaceSubscription> {
+  const db = await getDb();
+  assertDb(db);
+  const rows = await db
+    .insert(workspaceSubscriptions)
+    .values(data)
+    .onConflictDoUpdate({
+      target: workspaceSubscriptions.workspaceId,
+      set: {
+        billingOwnerUserId: data.billingOwnerUserId,
+        plan: data.plan,
+        seatCount: data.seatCount,
+        unitAmountMinor: data.unitAmountMinor,
+        totalAmountMinor: data.totalAmountMinor,
+        currency: data.currency,
+        provider: data.provider,
+        providerSubscriptionId: data.providerSubscriptionId,
+        providerCustomerId: data.providerCustomerId,
+        status: data.status,
+        currentPeriodStart: data.currentPeriodStart,
+        currentPeriodEnd: data.currentPeriodEnd,
+        cancelAtPeriodEnd: data.cancelAtPeriodEnd,
+        cancelledAt: data.cancelledAt,
+        updatedAt: new Date(),
+      },
+    })
+    .returning();
+  if (!rows[0]) throw new InternalError("Workspace subscription write returned no row");
+  return rows[0];
+}
+
+export async function getWorkspaceSubscription(
+  workspaceId: number,
+): Promise<WorkspaceSubscription | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db
+    .select()
+    .from(workspaceSubscriptions)
+    .where(eq(workspaceSubscriptions.workspaceId, workspaceId))
+    .limit(1);
+  return rows[0];
+}
+
+export async function getWorkspaceSubscriptionByProviderId(
+  providerSubscriptionId: string,
+): Promise<WorkspaceSubscription | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db
+    .select()
+    .from(workspaceSubscriptions)
+    .where(eq(workspaceSubscriptions.providerSubscriptionId, providerSubscriptionId))
+    .limit(1);
+  return rows[0];
+}
+
+export async function updateWorkspaceSubscription(
+  id: string,
+  patch: Partial<WorkspaceSubscription>,
+): Promise<void> {
+  const db = await getDb();
+  assertDb(db);
+  await db
+    .update(workspaceSubscriptions)
+    .set({ ...patch, updatedAt: new Date() })
+    .where(eq(workspaceSubscriptions.id, id));
+}
+
+export async function countReservedWorkspaceSeats(workspaceId: number): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+  const [members, invitations] = await Promise.all([
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(workspaceMembers)
+      .where(and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.active, true))),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(workspaceInvitations)
+      .where(
+        and(
+          eq(workspaceInvitations.workspaceId, workspaceId),
+          gte(workspaceInvitations.expiresAt, new Date()),
+        ),
+      ),
+  ]);
+  return Number(members[0]?.count ?? 0) + Number(invitations[0]?.count ?? 0);
+}
+
 export async function updateUserSubscriptionId(userId: number, subscriptionId: string | null) {
   // Subscription link is in subscriptions table
 }
@@ -2546,7 +2481,8 @@ export async function createOrUpdatePayment(data: {
   subscriptionId?: string;
   razorpayPaymentId: string;
   razorpayOrderId?: string;
-  amount: number;
+  /** Canonical provider amount in paise/cents. */
+  amountMinor: number;
   currency: string;
   status: PaymentStatus;
   receipt?: string;
@@ -2568,7 +2504,8 @@ export async function createOrUpdatePayment(data: {
       .update(payments)
       .set({
         status: data.status,
-        amount: data.amount.toString(),
+        amountMinor: data.amountMinor,
+        amount: (data.amountMinor / 100).toFixed(2),
         updatedAt: new Date(),
       })
       .where(eq(payments.id, existing[0].id));
@@ -2581,7 +2518,8 @@ export async function createOrUpdatePayment(data: {
       subscriptionId: data.subscriptionId || null,
       razorpayPaymentId: data.razorpayPaymentId,
       razorpayOrderId: data.razorpayOrderId || null,
-      amount: data.amount.toString(),
+      amountMinor: data.amountMinor,
+      amount: (data.amountMinor / 100).toFixed(2),
       currency: data.currency,
       status: data.status,
       receipt: data.receipt || null,
@@ -2636,12 +2574,23 @@ export async function getUserByApiKey(apiKey: string) {
     return undefined;
   }
 
-  const { hashApiKey, verifyApiKeyHash } = await import("./utils/crypto");
+  const { apiKeyHashCandidates, hashApiKey, verifyApiKeyHash } = await import("./utils/crypto");
   const hashed = hashApiKey(apiKey);
+  const hashCandidates = apiKeyHashCandidates(apiKey);
 
-  // Primary lookup: hashed-at-rest keys
-  let result = await db.select().from(users).where(eq(users.apiKey, hashed)).limit(1);
-  if (result.length > 0) return result[0];
+  // Primary lookup accepts the former digest during a rolling migration.
+  let result = await db.select().from(users).where(inArray(users.apiKey, hashCandidates)).limit(1);
+  if (result.length > 0) {
+    const user = result[0]!;
+    if (user.apiKey !== hashed) {
+      await db
+        .update(users)
+        .set({ apiKey: hashed, updatedAt: new Date() })
+        .where(and(eq(users.id, user.id), eq(users.apiKey, user.apiKey!)));
+      return { ...user, apiKey: hashed };
+    }
+    return user;
+  }
 
   // Legacy fallback: plaintext keys stored before migration (dp_ prefix)
   if (apiKey.startsWith("dp_")) {
@@ -2649,7 +2598,11 @@ export async function getUserByApiKey(apiKey: string) {
     if (result.length > 0) {
       const user = result[0]!;
       if (verifyApiKeyHash(apiKey, user.apiKey ?? "") || user.apiKey === apiKey) {
-        return user;
+        await db
+          .update(users)
+          .set({ apiKey: hashed, updatedAt: new Date() })
+          .where(and(eq(users.id, user.id), eq(users.apiKey, user.apiKey!)));
+        return { ...user, apiKey: hashed };
       }
     }
   }
@@ -2989,8 +2942,6 @@ export async function getRecentFindingsForUser(userId: number, limit = 5) {
 
 interface GatewayAuditPayload {
   tenantId?: string;
-  /** Optional workspace tenancy (migration 0020). Resolved from personal WS if omitted. */
-  workspaceId?: number;
   requestId?: string;
   model?: string;
   provider?: string;
@@ -3067,18 +3018,8 @@ export async function recordGatewayAudit(payload: GatewayAuditPayload): Promise<
 
   const latencyMs =
     payload.startedAt && payload.endedAt ? Math.max(0, payload.endedAt - payload.startedAt) : null;
-  let workspaceId = payload.workspaceId ?? null;
-  if (workspaceId == null) {
-    try {
-      const personal = await getPersonalWorkspaceForUser(userId);
-      workspaceId = personal?.id ?? null;
-    } catch {
-      workspaceId = null;
-    }
-  }
   const row: InsertGatewayAuditRow = {
     userId,
-    workspaceId,
     requestId: payload.requestId ?? crypto.randomUUID(),
     model,
     decision: payload.decision,
@@ -3436,7 +3377,8 @@ export async function createTenantPolicy(row: InsertTenantPolicyRow): Promise<nu
     .insert(tenantPolicies)
     .values(row)
     .returning({ id: tenantPolicies.id });
-  return created?.id ?? 0;
+  if (!created) throw new Error("failed to create tenant policy");
+  return created.id;
 }
 
 export async function listTenantPolicies(userId: number): Promise<TenantPolicyRow[]> {
@@ -3487,7 +3429,8 @@ export async function createAlertRule(row: InsertAlertRuleRow): Promise<number> 
   const db = await getDb();
   assertDb(db);
   const [created] = await db.insert(alertRules).values(row).returning({ id: alertRules.id });
-  return created?.id ?? 0;
+  if (!created) throw new Error("failed to create alert rule");
+  return created.id;
 }
 
 export async function listAlertRules(userId: number): Promise<AlertRuleRow[]> {
@@ -3562,7 +3505,8 @@ export async function createSsoProvider(row: InsertSsoProviderRow): Promise<numb
   const db = await getDb();
   assertDb(db);
   const [created] = await db.insert(ssoProviders).values(row).returning({ id: ssoProviders.id });
-  return created?.id ?? 0;
+  if (!created) throw new Error("failed to create SSO provider");
+  return created.id;
 }
 
 export async function listSsoProviders(userId: number): Promise<SsoProviderRow[]> {
@@ -3651,7 +3595,7 @@ export async function reapExpiredSsoLoginRequests(): Promise<number> {
   const result = await db
     .delete(ssoLoginRequests)
     .where(lt(ssoLoginRequests.expiresAt, new Date()));
-  return Number((result as unknown as { affectedRows?: number }).affectedRows ?? 0);
+  return Number((result as unknown as { rowCount?: number }).rowCount ?? 0);
 }
 
 // ── Workspaces + RBAC (Sprint 6 / Domain 6) ──────────────────────────────────
@@ -3660,36 +3604,8 @@ export async function createWorkspace(row: InsertWorkspaceRow): Promise<number> 
   const db = await getDb();
   assertDb(db);
   const [created] = await db.insert(workspaces).values(row).returning({ id: workspaces.id });
-  return created?.id ?? 0;
-}
-
-/**
- * Atomically create a workspace AND its owner membership row in a single
- * transaction. Prevents the partial-state failure mode where a workspace is
- * created but the owner membership insert fails (leaving an orphan workspace
- * the owner can't access).
- */
-export async function createWorkspaceWithOwner(
-  row: InsertWorkspaceRow,
-  ownerUserId: number,
-): Promise<number> {
-  const db = await getDb();
-  assertDb(db);
-  return db.transaction(async (tx) => {
-    const [created] = await tx.insert(workspaces).values(row).returning({ id: workspaces.id });
-    const workspaceId = created?.id ?? 0;
-    if (!workspaceId) {
-      throw new InternalError("Failed to create workspace");
-    }
-    await tx.insert(workspaceMembers).values({
-      workspaceId,
-      userId: ownerUserId,
-      role: "owner",
-      active: true,
-      joinedAt: new Date(),
-    });
-    return workspaceId;
-  });
+  if (!created) throw new Error("failed to create workspace");
+  return created.id;
 }
 
 export async function getWorkspaceById(id: number): Promise<WorkspaceRow | null> {
@@ -3811,6 +3727,28 @@ export async function listWorkspaceMembers(workspaceId: number): Promise<Workspa
     .orderBy(desc(workspaceMembers.joinedAt));
 }
 
+export async function listWorkspaceMembersDetailed(workspaceId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select({
+      id: workspaceMembers.id,
+      workspaceId: workspaceMembers.workspaceId,
+      userId: workspaceMembers.userId,
+      role: workspaceMembers.role,
+      active: workspaceMembers.active,
+      invitedBy: workspaceMembers.invitedBy,
+      invitedAt: workspaceMembers.invitedAt,
+      joinedAt: workspaceMembers.joinedAt,
+      email: users.email,
+      name: users.name,
+    })
+    .from(workspaceMembers)
+    .innerJoin(users, eq(workspaceMembers.userId, users.id))
+    .where(eq(workspaceMembers.workspaceId, workspaceId))
+    .orderBy(desc(workspaceMembers.joinedAt));
+}
+
 export async function updateWorkspaceMember(
   workspaceId: number,
   userId: number,
@@ -3887,7 +3825,8 @@ export async function createWorkspaceInvitation(
     .insert(workspaceInvitations)
     .values(row)
     .returning({ id: workspaceInvitations.id });
-  return created?.id ?? 0;
+  if (!created) throw new Error("failed to create workspace invitation");
+  return created.id;
 }
 
 export async function getWorkspaceInvitationByToken(
@@ -3899,6 +3838,20 @@ export async function getWorkspaceInvitationByToken(
     .select()
     .from(workspaceInvitations)
     .where(eq(workspaceInvitations.token, token))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+export async function getWorkspaceInvitationForWorkspace(
+  id: number,
+  workspaceId: number,
+): Promise<WorkspaceInvitationRow | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db
+    .select()
+    .from(workspaceInvitations)
+    .where(and(eq(workspaceInvitations.id, id), eq(workspaceInvitations.workspaceId, workspaceId)))
     .limit(1);
   return rows[0] ?? null;
 }
@@ -3919,6 +3872,17 @@ export async function deleteWorkspaceInvitation(id: number): Promise<void> {
   const db = await getDb();
   assertDb(db);
   await db.delete(workspaceInvitations).where(eq(workspaceInvitations.id, id));
+}
+
+export async function deleteWorkspaceInvitationForWorkspace(
+  id: number,
+  workspaceId: number,
+): Promise<void> {
+  const db = await getDb();
+  assertDb(db);
+  await db
+    .delete(workspaceInvitations)
+    .where(and(eq(workspaceInvitations.id, id), eq(workspaceInvitations.workspaceId, workspaceId)));
 }
 
 export async function reapExpiredWorkspaceInvitations(): Promise<number> {

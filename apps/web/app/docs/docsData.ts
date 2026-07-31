@@ -276,9 +276,9 @@ app.post('/api/chat', RaksHex.middleware(), async (req, res) => {
       
       <h2>Developer Channels</h2>
       <ul>
-        <li><strong>Slack Community:</strong> Join over 1,200 developers building secure AI systems. <a href="mailto:support@devpulse.ai">Email us for an invite link</a>.</li>
+        <li><strong>Community access:</strong> Connect with other teams building secure AI systems. <a href="mailto:support@rakshex.in">Email us to request access</a>.</li>
         <li><strong>GitHub:</strong> Star our SDK and CLI repositories, read code, or submit pull requests. <a href="https://github.com/rakshex-hq" target="_blank">View GitHub Organisation</a>.</li>
-        <li><strong>Support Email:</strong> For direct assistance or plan inquiries, contact <code>support@devpulse.ai</code>.</li>
+        <li><strong>Support Email:</strong> For direct assistance or plan inquiries, contact <code>support@rakshex.in</code>.</li>
       </ul>
     `,
   },
@@ -394,7 +394,7 @@ response = wrapped_client.messages.create(
       <p>Add route security checks and telemetry auditing to your FastAPI backend using our official python client package.</p>
       <h2>Integration</h2>
       <pre><code>from fastapi import FastAPI
-from devpulse.aitegrations.fastapi import RakshexMiddleware
+from rakshex.integrations.fastapi import RakshexMiddleware
 
 app = FastAPI()
 
@@ -458,7 +458,7 @@ RaksHex = {
       <p>Monitor flask router calls and validate LLM prompt payloads at runtime.</p>
       <h2>Integration</h2>
       <pre><code>from flask import Flask
-from devpulse.aitegrations.flask import Rakshex
+from rakshex.integrations.flask import Rakshex
 
 app = Flask(__name__)
 RaksHex = RaksHex(app, api_key="ik_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxx")

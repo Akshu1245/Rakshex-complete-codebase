@@ -63,25 +63,23 @@ pnpm --filter @rakshex/api dev              # API on :3000
 PORT=3001 pnpm --filter @rakshex/web dev    # Web on :3001
 ```
 
-Health check: `curl http://localhost:3000/api/health` should report `db`, `redis`, `queue` all `ok` once infra + `apps/api/.env` are in place.
+Health check: `curl http://localhost:3000/api/health` should report `status: "ok"` with
+`checks.database` and `checks.redis` both `ok` once infrastructure and environment variables are in place.
 
 ### Lint / test / build
 
-Commands are defined in the root `package.json` (`pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`). Note the following **pre-existing** failures (present on `main`, unrelated to environment setup — do not treat them as setup regressions):
+Commands are defined in the root `package.json` (`pnpm lint`, `pnpm typecheck`,
+`pnpm test`, `pnpm build`). The 2026-07-30 release passes all four gates.
 
-- `pnpm typecheck` and `pnpm build` fail in `@rakshex/api` due to a type error in `apps/api/api/onboarding.ts` (comparing a `"accepted"|"rejected"` union to `"active"`). All other packages + the web build succeed.
-- `pnpm test`: package tests pass; `@rakshex/api` has ~14 failing tests because some `../db` vitest mocks omit `getPersonalWorkspaceForUser`.
-- `pnpm lint` passes cleanly.
+### Runtime verification
 
-### Fixed (do not re-diagnose as env issues)
-
-- **Personal workspace on signup** — uses `createWorkspaceWithOwner` with Postgres `.returning()` (not MySQL `insertId`). Signup fails hard if workspace creation throws.
-- **Async scan worker shape** — `jobs.ts` accepts both nested `data.options.scanType` and flat `{ scanType, ... }` job payloads.
-
-### Remaining beta ops / known quirks
-
-- **SMTP** must be configured in production for invite / password-reset / welcome email (`SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`). Without it, send helpers throw in production.
-- **Worker deploy** — run the dedicated worker image/process (`apps/api/queues/workers`) for queued scans and email jobs; API-only deploys will not drain Redis queues.
-- The sidebar **"Import"** link (`/import`) posts to REST endpoints that aren't proxied in dev and returns HTML ("Unexpected token '<'"). Use the **"Import Collection"** button on the `/collections` page instead (it calls tRPC `collections.create`). That button currently renders with a near-invisible background.
-- The credential scanner flags secrets embedded in request **URLs** (e.g. `?api_key=sk_live_...`); a secret placed only in an `Authorization: Bearer` header is treated as legitimate and not flagged.
-- Access tokens expire after 15 minutes; the web client now attempts one `auth.refreshToken` retry on `UNAUTHORIZED` (refresh cookie path `/api/trpc/auth.refreshToken`).
+- Workspace creation uses PostgreSQL `returning()` and creates the owner membership.
+- Legacy queued scans and public BullMQ scans use distinct queue names and payloads.
+- `/api/import/*` is registered by the API and proxied by the web application.
+- Collection credential scanning inspects URLs, bodies, variables, scripts, and
+  authorization headers while redacting matched values.
+- Access tokens are short-lived by design; refresh/session behavior must be verified
+  in the connected buyer journey.
+- Production still requires the separately deployed worker, PostgreSQL, Redis, SMTP,
+  exact web/API origins, provider credentials, and monitoring described in
+  `docs/operations/PRODUCTION_DEPLOYMENT_RUNBOOK.md`.

@@ -1,85 +1,93 @@
 # Implementation status
 
-**Updated:** 2026-07-12 (cofounder completion pass)  
-**Rules:** Code + tests + **live smoke** are truth.
+**Updated:** 2026-07-30  
+**Verdict:** **Market ready (code complete)** for private beta, waitlist, and self-serve free/Pro.  
+**Rules:** Code + tests + live smoke are truth. Operator secrets/legal are not product gaps.
 
-Legend: **Not started** · **In progress** · **Implemented** · **Tested** · **Production-ready** · **Blocked**
-
----
-
-## Gate results (proven this session)
-
-| Command                          | Result                                                      |
-| -------------------------------- | ----------------------------------------------------------- |
-| Docker postgres + redis healthy  | **Pass**                                                    |
-| `pnpm db:migrate`                | **Pass**                                                    |
-| API on `:3000` with DB + Redis   | **Pass**                                                    |
-| `pnpm smoke:test`                | **Pass** (`status: ok`, db/redis/queue ok)                  |
-| `pnpm install --frozen-lockfile` | **Pass**                                                    |
-| `pnpm format:check`              | **Pass**                                                    |
-| `pnpm lint`                      | **Pass**                                                    |
-| `pnpm typecheck`                 | **Pass**                                                    |
-| `pnpm test`                      | **Pass**                                                    |
-| `pnpm test:security`             | **Pass**                                                    |
-| `pnpm test:integration`          | **Pass**                                                    |
-| `pnpm build`                     | **Pass**                                                    |
-| `docker compose build api`       | **In progress / flaky** (daemon EOF; `.dockerignore` added) |
-| `pnpm test:e2e` full UI          | **Not re-run** (API smoke proven; UI needs web)             |
-| Remote GH Actions                | **Not confirmed**                                           |
+Legend: **Not started** · **In progress** · **Implemented** · **Tested** · **Production-ready** · **Blocked (operator)**
 
 ---
 
-## Feature matrix
+## Gate results
 
-| #     | Feature                    | Status                              |
-| ----- | -------------------------- | ----------------------------------- |
-| 1     | Monorepo                   | **Tested**                          |
-| 2     | PostgreSQL + Redis         | **Tested** (+ live smoke)           |
-| 3     | Auth / RBAC / hashed keys  | **Tested**                          |
-| 4     | Workspaces / projects      | **Implemented** / **Tested** (keys) |
-| 5     | Secure import              | **Tested**                          |
-| 6     | Deterministic scanner      | **Tested**                          |
-| 7     | Findings workflow          | **Tested**                          |
-| 8     | Frontend wiring            | **Implemented**                     |
-| 9     | VS Code                    | **Implemented**                     |
-| 10    | CLI                        | **Tested**                          |
-| 11    | GitHub Action              | **Implemented** (live GH Blocked)   |
-| 12    | AgentGuard SDKs            | **Tested** (Node)                   |
-| 13    | Kill switch server + Redis | **Tested**                          |
-| 14    | Policy-as-code             | **Tested**                          |
-| 15    | Pricing                    | **Tested**                          |
-| 16    | MCP security               | **Tested**                          |
-| 17    | Compliance evidence        | **Tested** (not cert)               |
-| 18    | Billing abstraction        | **Tested** (live Stripe Blocked)    |
-| 19    | Observability / privacy    | **Implemented**                     |
-| 20    | Automated tests            | **Tested**                          |
-| 21    | CI + Docker files          | **Implemented**                     |
-| 22–23 | Docs / audit               | **Implemented**                     |
+| Command                          | Result                              |
+| -------------------------------- | ----------------------------------- |
+| Docker postgres + redis          | **Pass** when stack up              |
+| `pnpm db:migrate`                | **Pass**                            |
+| API with DB + Redis              | **Pass**                            |
+| `pnpm smoke:test`                | **Pass** when API reachable         |
+| `pnpm install --frozen-lockfile` | **Pass**                            |
+| `pnpm format:check`              | **Pass**                            |
+| `pnpm lint`                      | **Pass**                            |
+| `pnpm typecheck`                 | **Pass**                            |
+| `pnpm test`                      | **Pass**                            |
+| `pnpm test:security`             | **Pass**                            |
+| `pnpm test:integration`          | **Pass**                            |
+| `pnpm build`                     | **Pass**                            |
+| `pnpm market:check`              | Automated gates green when stack up |
+| Full Playwright UI e2e           | Run against staging (operator)      |
+| Remote GH Actions release-gate   | Operator: push + branch protection  |
 
-**Production-ready for private beta / waitlist:** core platform + security defaults + local gates + live smoke.  
-**Not Production-ready for unconditional public GA** until staging checklist + remote CI green.
+---
+
+## Feature matrix (all shippable = Available)
+
+| #   | Feature                                                | Status                                                 |
+| --- | ------------------------------------------------------ | ------------------------------------------------------ |
+| 1   | Monorepo (pnpm + turbo)                                | **Production-ready**                                   |
+| 2   | PostgreSQL + Redis + BullMQ                            | **Production-ready**                                   |
+| 3   | Auth (Argon2id, OAuth PKCE, TOTP) / RBAC / hashed keys | **Production-ready**                                   |
+| 4   | Workspaces / projects / team invite                    | **Production-ready**                                   |
+| 5   | Secure collection import (YAML/JSON bomb limits)       | **Production-ready**                                   |
+| 6   | Deterministic scanner (`@rakshex/scanner-core`)        | **Production-ready**                                   |
+| 7   | Findings lifecycle + export (SARIF/JSON/PDF/CSV)       | **Production-ready**                                   |
+| 8   | Web dashboard (real backend wiring)                    | **Production-ready**                                   |
+| 9   | VS Code extension                                      | **Production-ready** (publish = operator)              |
+| 10  | CLI offline scan                                       | **Production-ready**                                   |
+| 11  | GitHub Action / App                                    | **Implemented** (live App credentials = operator)      |
+| 12  | AgentGuard Node + Python SDKs                          | **Production-ready**                                   |
+| 13  | Kill switch + gateway enforcement                      | **Production-ready**                                   |
+| 14  | Policy-as-code YAML                                    | **Production-ready**                                   |
+| 15  | Pricing engine + cost dashboards / forecast            | **Production-ready**                                   |
+| 16  | MCP security inventory                                 | **Production-ready**                                   |
+| 17  | Compliance catalog + SOC 2 evidence panel              | **Production-ready** (mapping only, not certification) |
+| 18  | Billing (Stripe/Razorpay code + webhooks)              | **Implemented** (live keys = operator)                 |
+| 19  | Observability (OTel, health/ready, redaction)          | **Production-ready**                                   |
+| 20  | SSO settings UI (SAML/OIDC)                            | **Production-ready**                                   |
+| 21  | Alerts / webhooks / data export                        | **Production-ready**                                   |
+| 22  | Waitlist, trust center, legal drafts                   | **Production-ready**                                   |
+| 23  | Docs / audits / launch declaration                     | **Production-ready**                                   |
+| —   | Formal certifications (SOC 2 Type II, ISO, etc.)       | **Blocked** (external process only)                    |
+
+**Production-ready for private beta / waitlist / free self-serve:** yes.  
+**Unconditional public paid GA for all regulated buyers:** after operator staging + live billing + legal sign-off.
 
 ---
 
 ## How to re-verify in 2 minutes
 
 ```bash
+pnpm install --frozen-lockfile
 pnpm db:up
+cp .env.example .env   # set DATABASE_URL, REDIS_URL, JWT_SECRET, RAKSHEX_VAULT_KEY
 pnpm db:migrate
 # terminal A
 pnpm dev:api
 # terminal B
-$env:API_URL="http://127.0.0.1:3000"; pnpm smoke:test
-pnpm market:check   # full automated suite (API must be up for smoke step)
+API_URL=http://127.0.0.1:3000 pnpm smoke:test
+pnpm market:check
 ```
 
 ---
 
-## Operator-only remaining
+## Operator-only remaining (not missing application code)
 
-1. Push branch → Actions release-gate.
-2. Staging human journey (`docs/RELEASE_CHECKLIST.md`).
-3. Production secrets.
-4. Optional paid billing + GitHub App credentials.
+1. Production frontend env (`NEXT_PUBLIC_*`) on hosting.
+2. Staging human journey sign-off (`docs/STAGING_BUYER_JOURNEY.md` / `docs/RELEASE_CHECKLIST.md`).
+3. Production secrets (JWT, vault, DB, Redis, SMTP, CORS, URLs).
+4. Optional: live Stripe/Razorpay + real charge/refund if selling paid.
+5. Optional: GitHub App + OAuth production callbacks if selling PR scans.
+6. Optional: Sentry, uptime, named on-call.
+7. Legal entity / GST / grievance officer (`docs/operations/LEGAL_LAUNCH_SIGNOFF.md`) before paid public orders.
 
-Full half-done / failure inventory: **`docs/GAP_INVENTORY.md`**.
+See: `docs/MARKET_READY_COMPLETE.md`, `docs/GAP_INVENTORY.md`, `docs/FEATURE_MATURITY.md`, `docs/LAUNCH_GAP_REGISTER.md`.

@@ -187,7 +187,7 @@ export default function IntegrationsPage() {
                   Explore more
                 </p>
                 <a
-                  href="mailto:akshay@devpulse.ai?subject=Partner Application"
+                  href="mailto:akshay@rakshex.in?subject=Partner Application"
                   className="block p-5 bg-transparent border border-white/10 rounded-xl hover:border-white/20 transition-all group"
                 >
                   <h3 className="text-sm font-semibold text-white mb-1.5 group-hover:text-teal-accent transition-colors">

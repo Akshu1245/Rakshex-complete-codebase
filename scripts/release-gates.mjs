@@ -20,7 +20,9 @@ const PACKAGE_TESTS = [
 ];
 
 function run(cmd, args, cwd = root) {
-  const r = spawnSync(cmd, args, {
+  const executable = cmd === "pnpm" ? "corepack" : cmd;
+  const finalArgs = cmd === "pnpm" ? ["pnpm", ...args] : args;
+  const r = spawnSync(executable, finalArgs, {
     cwd,
     stdio: "inherit",
     shell: process.platform === "win32",

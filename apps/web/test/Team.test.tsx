@@ -12,7 +12,7 @@ function Team() {
   const [invited, setInvited] = React.useState(false);
 
   React.useEffect(() => {
-    fetchMembers();
+    void fetchMembers();
   }, []);
 
   const fetchMembers = async () => {
@@ -29,7 +29,7 @@ function Team() {
     });
     setEmail("");
     setInvited(true);
-    fetchMembers();
+    await fetchMembers();
   };
 
   const updateRole = async (memberId: string, newRole: string) => {
@@ -37,7 +37,7 @@ function Team() {
       method: "PUT",
       body: JSON.stringify({ role: newRole }),
     });
-    fetchMembers();
+    await fetchMembers();
   };
 
   return (
@@ -109,7 +109,7 @@ describe("Team", () => {
     render(<Team />);
 
     await waitFor(() => {
-      expect(screen.getByTestId("invite-form")).toBeInTheDocument();
+      expect(screen.getByTestId("member-m1")).toBeInTheDocument();
     });
 
     expect(screen.getByTestId("email-input")).toBeInTheDocument();
@@ -121,20 +121,23 @@ describe("Team", () => {
     render(<Team />);
 
     await waitFor(() => {
-      expect(screen.getByTestId("email-input")).toBeInTheDocument();
+      expect(screen.getByTestId("member-m1")).toBeInTheDocument();
     });
 
     await user.type(screen.getByTestId("email-input"), "new@example.com");
     await user.selectOptions(screen.getByTestId("role-select"), "editor");
     await user.click(screen.getByTestId("invite-btn"));
 
-    expect(global.fetch).toHaveBeenCalledWith(
-      "/api/team/invite",
-      expect.objectContaining({
-        method: "POST",
-        body: JSON.stringify({ email: "new@example.com", role: "editor" }),
-      }),
-    );
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/team/invite",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ email: "new@example.com", role: "editor" }),
+        }),
+      );
+      expect(screen.getByTestId("success-msg")).toBeInTheDocument();
+    });
   });
 
   it("shows success message after invite", async () => {
@@ -142,7 +145,7 @@ describe("Team", () => {
     render(<Team />);
 
     await waitFor(() => {
-      expect(screen.getByTestId("email-input")).toBeInTheDocument();
+      expect(screen.getByTestId("member-m1")).toBeInTheDocument();
     });
 
     await user.type(screen.getByTestId("email-input"), "new@example.com");
@@ -157,7 +160,7 @@ describe("Team", () => {
     render(<Team />);
 
     await waitFor(() => {
-      expect(screen.getByTestId("members-list")).toBeInTheDocument();
+      expect(screen.getByTestId("member-m1")).toBeInTheDocument();
     });
 
     expect(screen.getByTestId("member-m1")).toHaveTextContent("alice@example.com");
@@ -174,12 +177,18 @@ describe("Team", () => {
 
     await user.selectOptions(screen.getByTestId("role-update-m2"), "editor");
 
-    expect(global.fetch).toHaveBeenCalledWith(
-      "/api/team/m2/role",
-      expect.objectContaining({
-        method: "PUT",
-        body: JSON.stringify({ role: "editor" }),
-      }),
-    );
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/team/m2/role",
+        expect.objectContaining({
+          method: "PUT",
+          body: JSON.stringify({ role: "editor" }),
+        }),
+      );
+      expect(
+        (global.fetch as ReturnType<typeof vi.fn>).mock.calls.filter(([url]) => url === "/api/team")
+          .length,
+      ).toBeGreaterThanOrEqual(2);
+    });
   });
 });

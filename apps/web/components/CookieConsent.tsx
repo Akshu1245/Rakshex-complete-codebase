@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { setConsent } from "@/lib/consent";
 
-const COOKIE_KEY = "devpulse-cookie-consent";
+const COOKIE_KEY = "rakshex-cookie-consent";
 
 /**
  * Cookie-consent banner with accept/reject options. Because RakshEx only sets

@@ -10,7 +10,7 @@ export default function NonameSecurityCompare() {
           ← All Comparisons
         </Link>
 
-        <h1 className="text-4xl font-bold mb-2">DevPulse vs Noname Security</h1>
+        <h1 className="text-4xl font-bold mb-2">Rakshex vs Noname Security</h1>
         <p className="text-gray-400 mb-10">
           Real-time API security + AI governance vs traditional API discovery and posture
           management.
@@ -18,7 +18,7 @@ export default function NonameSecurityCompare() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800">
-            <h2 className="text-2xl font-semibold mb-4 text-blue-400">DevPulse</h2>
+            <h2 className="text-2xl font-semibold mb-4 text-blue-400">Rakshex</h2>
             <ul className="space-y-3 text-sm">
               <li>✅ Real-time PR scanning with secret detection + code heuristics</li>
               <li>✅ LLM cost monitoring, kill-switch, and shadow AI detection</li>
@@ -52,7 +52,7 @@ export default function NonameSecurityCompare() {
             href="/dashboard"
             className="px-8 py-3 bg-blue-600 hover:bg-blue-500 rounded-lg font-medium"
           >
-            Try DevPulse Free
+            Try Rakshex Free
           </Link>
         </div>
       </div>

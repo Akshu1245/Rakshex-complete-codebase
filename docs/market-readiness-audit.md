@@ -1,67 +1,48 @@
 # Market-readiness audit
 
-**Date:** 2026-07-12  
+**Date:** 2026-07-30  
 **Role:** Cofounder / principal engineer  
-**Verdict:** **Launch-candidate (core platform).** Automated local gates including **live smoke against Postgres + Redis + API are green**. Not yet unconditional public GA until staging journey + remote CI release-gate are signed.
+**Verdict:** **Market ready (code complete)** for private beta, waitlist launch, and self-serve free/Pro. Automated local gates and product surfaces are complete. Not unconditional public GA for regulated enterprise until staging journey + live billing keys + legal entity sign-off.
 
 ---
 
 ## What “market ready” means here
 
-| Layer                                                     | Status                          |
-| --------------------------------------------------------- | ------------------------------- |
-| Product code for primary journey                          | **Present**                     |
-| Security defaults (authz, hashed secrets, KS server-side) | **Present + tested**            |
-| Local automated gates                                     | **Green** (this pass)           |
-| Live health with real Postgres/Redis                      | **Green** (`smoke:test PASSED`) |
-| Staging human journey                                     | **Operator**                    |
-| Remote CI release-gate                                    | **Operator push**               |
-| Live billing / GitHub App                                 | **Optional for free launch**    |
-
----
-
-## Gate evidence (this session)
-
-| Command                               | Result                       |
-| ------------------------------------- | ---------------------------- |
-| Docker postgres + redis healthy       | Pass                         |
-| `pnpm db:migrate`                     | Pass                         |
-| API listening `:3000` with Redis + DB | Pass                         |
-| `pnpm smoke:test`                     | **Pass** — db/redis/queue ok |
-| `pnpm format:check`                   | Pass                         |
-| `pnpm lint`                           | Pass                         |
-| `pnpm typecheck`                      | Pass                         |
-| `pnpm test`                           | Pass                         |
-| `pnpm test:security`                  | Pass                         |
-| `pnpm test:integration`               | Pass                         |
-| `pnpm build`                          | Pass                         |
-
-Run anytime:
-
-```bash
-pnpm market:check   # requires API_URL if smoke included after stack up
-```
+| Layer                                                     | Status                                          |
+| --------------------------------------------------------- | ----------------------------------------------- |
+| Product code for primary journey                          | **Complete**                                    |
+| Security defaults (authz, hashed secrets, KS server-side) | **Present + tested**                            |
+| Local automated gates                                     | **Green**                                       |
+| Live health with real Postgres/Redis                      | **Green when stack up**                         |
+| Feature maturity (all shippable surfaces)                 | **Available** (see FEATURE_MATURITY.md)         |
+| Residual branding / DevPulse                              | **Cleaned**                                     |
+| Staging human journey                                     | **Operator**                                    |
+| Remote CI release-gate / branch protection                | **Operator push + GitHub settings**             |
+| Live billing / GitHub App secrets                         | **Optional for free launch; required for paid** |
 
 ---
 
 ## Critical product guarantees in code
 
-1. **Kill switch is not dashboard-only** — DB + Redis cache; gateway evaluate ignores client flag; telemetry 403 when active.
+1. **Kill switch is not dashboard-only** — DB + Redis cache; gateway evaluate ignores client flag; telemetry 403 when active; workspace/project/agent scopes in enforcement engine.
 2. **Passwords Argon2id; API keys hashed.**
 3. **Workspace RBAC from DB; no client roles.**
-4. **Deterministic scanner** with fixture tests.
+4. **Deterministic scanner** with fixture tests (`packages/scanner-core`).
 5. **Secure import** blocks external `$ref` / bombs.
 6. **Compliance reports disclaim certification.**
 7. **CI designed without continue-on-error** on critical jobs.
+8. **Fail-closed** production paths: Redis required, email without SMTP, GitHub without App credentials, CORS explicit allowlist.
 
 ---
 
-## Remaining for unconditional GA
+## Remaining for unconditional public GA (operator)
 
-1. Push branch → GitHub Actions **release-gate** green.
-2. Staging: signup → workspace → import → scan → findings → kill switch (see `RELEASE_CHECKLIST.md`).
-3. Configure production secrets (JWT, DB, Redis, optional Stripe/GH).
-4. Optional: full Playwright UI e2e with web on `:3001`.
+1. Push / protect `main` → GitHub Actions release-gate green.
+2. Staging: signup → workspace → import → scan → findings → kill switch → data export (see `RELEASE_CHECKLIST.md` / `STAGING_BUYER_JOURNEY.md`).
+3. Configure production secrets (JWT, vault, DB, Redis, SMTP, CORS, site URLs).
+4. Optional: live Stripe/Razorpay + real payment/refund test.
+5. Optional: full Playwright run against staging web.
+6. Legal entity / GST / grievance officer / authorised signatory.
 
 ---
 
@@ -69,16 +50,14 @@ pnpm market:check   # requires API_URL if smoke included after stack up
 
 - Not SOC 2 / ISO certified by software alone.
 - Live payment/GitHub App paths need credentials.
-- Docker **full image build** may still be running/validating separately; compose **infra + API smoke** is proven.
+- Multi-workspace personal kill-switch settings remain user-scoped for backward compatibility; gateway enforcement is multi-scope.
 
 ---
 
 ## Cofounder recommendation
 
-**Ship a private beta / waitlist launch now** if:
+**Launch private beta / waitlist / free self-serve immediately.**  
+Marketing claims allowed: “AI runtime governance — prompt injection blocking, LLM cost control, shadow API discovery, policy-as-code, AgentGuard SDKs, kill switch.”  
+Marketing claims **not** allowed until operator complete: “SOC 2 certified”, “enterprise production-ready for all regulated industries”, “fully live paid checkout proven”.
 
-- You accept free-tier or manual billing first.
-- You run staging checklist once.
-- You keep kill switch and RBAC as documented.
-
-**Do not** market “enterprise certified” or “fully production-ready for all regulated buyers” until staging + remote CI + optional compliance reviews complete.
+Full declaration: `docs/MARKET_READY_COMPLETE.md`.

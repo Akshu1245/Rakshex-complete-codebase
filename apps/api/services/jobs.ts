@@ -31,7 +31,11 @@ import {
 import { sendWeeklyDigestEmail } from "../email";
 import * as db from "../db";
 
-export const QUEUE_SCAN = "scan" as const;
+// This queue intentionally has a distinct name from the public BullMQ "scan"
+// queue consumed by apps/api/queues/workers/scanWorker.ts. The two worker
+// implementations use different payload contracts; sharing a queue lets either
+// worker receive an incompatible job and fail it nondeterministically.
+export const QUEUE_SCAN = "background-scan" as const;
 export const QUEUE_WEBHOOK_DELIVERY = "webhook-delivery" as const;
 export const QUEUE_WEBHOOK_RETRY = "webhook_retry" as const;
 export const QUEUE_WEEKLY_DIGEST = "weekly-digest" as const;

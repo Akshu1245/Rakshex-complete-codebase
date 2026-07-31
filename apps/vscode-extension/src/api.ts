@@ -2,8 +2,8 @@
  * Thin fetch wrapper around the Rakshex tRPC `vscodeExtension.*` router.
  *
  * tRPC v11 wire format:
- *   Query:    GET  /trpc/<path>?input=<urlencoded-json>
- *   Mutation: POST /trpc/<path>   body: { input: <json> }
+ *   Query:    GET  /api/trpc/<path>?input={"json":<input>}
+ *   Mutation: POST /api/trpc/<path>   body: {"json":<input>}
  *
  * Responses are wrapped as `{ result: { data: <payload> } }` (tRPC serializes
  * through superjson on the server; for the shapes we consume here the JSON
@@ -36,34 +36,6 @@ export interface Collection {
   id: string;
   name: string;
   isShared?: boolean;
-  format?: string;
-  totalRequests?: number;
-}
-
-/** Full collection row from `collections.get` (includes raw import data). */
-export interface CollectionDetail extends Collection {
-  description?: string | null;
-  data?: unknown;
-}
-
-export interface ComplianceReportSummary {
-  id: string;
-  reportType: string;
-  complianceScore: number;
-  totalRequirements?: number;
-  metRequirements?: number;
-  createdAt: string;
-}
-
-export interface ComplianceScoreSnapshot {
-  score: number;
-  createdAt: string;
-  reportType: string;
-}
-
-export interface LatestComplianceScores {
-  owasp: ComplianceScoreSnapshot | null;
-  pci: ComplianceScoreSnapshot | null;
 }
 
 export interface ControlPlaneSummary {
@@ -139,63 +111,8 @@ export class RakshexApi {
   }
 
   async listCollections(): Promise<Collection[]> {
-    // `collections.list` returns a paginated object; older shapes may be a bare array.
-    const result = await this.query<
-      Collection[] | { collections?: Collection[]; items?: Collection[] }
-    >("collections.list");
-    if (Array.isArray(result)) return result;
-    return result.collections ?? result.items ?? [];
-  }
-
-  async getCollection(id: string): Promise<CollectionDetail> {
-    return this.query<CollectionDetail>("collections.get", { id });
-  }
-
-  async listComplianceReports(
-    collectionId: string,
-    page = 1,
-    pageSize = 20,
-  ): Promise<{ reports: ComplianceReportSummary[] }> {
-    return this.query<{ reports: ComplianceReportSummary[] }>("compliance.listReports", {
-      collectionId,
-      page,
-      pageSize,
-    });
-  }
-
-  /**
-   * Fetch latest OWASP / PCI DSS compliance scores across the user's
-   * first few collections. Returns nulls when no reports exist yet.
-   */
-  async getLatestComplianceScores(maxCollections = 5): Promise<LatestComplianceScores> {
-    const collections = await this.listCollections();
-    let owasp: ComplianceScoreSnapshot | null = null;
-    let pci: ComplianceScoreSnapshot | null = null;
-
-    for (const c of collections.slice(0, maxCollections)) {
-      try {
-        const { reports } = await this.listComplianceReports(c.id, 1, 20);
-        for (const r of reports ?? []) {
-          const snap: ComplianceScoreSnapshot = {
-            score: Number(r.complianceScore) || 0,
-            createdAt: String(r.createdAt ?? ""),
-            reportType: r.reportType,
-          };
-          const newer = (prev: ComplianceScoreSnapshot | null) =>
-            !prev ||
-            (snap.createdAt &&
-              prev.createdAt &&
-              new Date(snap.createdAt).getTime() > new Date(prev.createdAt).getTime());
-
-          if (r.reportType === "owasp" && newer(owasp)) owasp = snap;
-          if (r.reportType === "pci_dss" && newer(pci)) pci = snap;
-        }
-      } catch {
-        // Skip collections the key cannot read or that have no reports.
-      }
-    }
-
-    return { owasp, pci };
+    // `collections.list` is the canonical list endpoint on the server.
+    return this.query<Collection[]>("collections.list");
   }
 
   async triggerScan(collectionId: string): Promise<{ scanId: string; status: string }> {
@@ -276,6 +193,15 @@ export class RakshexApi {
     return this.isOnline;
   }
 
+  getConfiguredApiUrl(): string {
+    return this.getBaseUrl().replace(/\/+$/, "");
+  }
+
+  getHealthUrl(): string {
+    const base = this.getConfiguredApiUrl();
+    return `${base.endsWith("/api") ? base : `${base}/api`}/health`;
+  }
+
   /**
    * Resilient fetch with timeout, retry, and offline detection.
    * Never blocks the UI — returns clear errors for callers to handle.
@@ -322,7 +248,7 @@ export class RakshexApi {
   private async query<T>(path: string, input?: unknown): Promise<T> {
     const url = new URL(`${this.trpcBase()}/${path}`);
     if (input !== undefined) {
-      url.searchParams.set("input", JSON.stringify(input));
+      url.searchParams.set("input", JSON.stringify({ json: input }));
     }
     const res = await this.resilientFetch(url.toString(), {
       method: "GET",
@@ -372,7 +298,7 @@ export class RakshexApi {
     opts: { apiKeyOverride?: string } = {},
   ): Promise<T> {
     const url = `${this.trpcBase()}/${path}`;
-    const body = input === undefined ? {} : { input };
+    const body = input === undefined ? {} : { json: input };
     const res = await this.resilientFetch(
       url,
       {
@@ -399,8 +325,8 @@ export class RakshexApi {
   }
 
   private trpcBase(): string {
-    const base = this.getBaseUrl().replace(/\/+$/, "");
-    return `${base}/trpc`;
+    const base = this.getConfiguredApiUrl();
+    return `${base.endsWith("/api") ? base : `${base}/api`}/trpc`;
   }
 
   private async handleResponse<T>(res: Response): Promise<T> {
@@ -416,6 +342,8 @@ export class RakshexApi {
 
     if (!res.ok) {
       const errMsg =
+        (parsed as { error?: { message?: string; json?: { message?: string } } } | undefined)?.error
+          ?.json?.message ??
         (parsed as { error?: { message?: string } } | undefined)?.error?.message ??
         (parsed as { message?: string } | undefined)?.message ??
         rawText ??
@@ -439,5 +367,5 @@ export class RakshexApi {
 export function getConfiguredBaseUrl(): string {
   return vscode.workspace
     .getConfiguration("rakshex")
-    .get<string>("apiUrl", "http://localhost:3000");
+    .get<string>("apiUrl", "https://api.rakshex.in");
 }

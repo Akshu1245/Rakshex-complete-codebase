@@ -1,8 +1,8 @@
 /**
  * Competitor Import System — Migrate from any AI governance tool to Rakshex.
  *
- * Supports: Helicone, Portkey, Lakera Guard, LangSmith, Postman, Swagger/OpenAPI,
- *           Insomnia, Bruno, and universal CSV/JSON with column mapping.
+ * Supports: Helicone, Portkey, Lakera Guard, LangSmith, and universal CSV/JSON.
+ * CSV imports require an explicit column mapping.
  */
 
 import * as db from "../db";
@@ -15,16 +15,7 @@ import { ensurePersonalWorkspace } from "./workspaceContext";
 // ── Types ────────────────────────────────────────────────────────────────────
 
 export type ImportSource =
-  | "helicone"
-  | "portkey"
-  | "lakera"
-  | "langsmith"
-  | "postman"
-  | "openapi"
-  | "insomnia"
-  | "bruno"
-  | "universal_csv"
-  | "universal_json";
+  "helicone" | "portkey" | "lakera" | "langsmith" | "universal_csv" | "universal_json";
 
 export interface ImportResult {
   source: ImportSource;

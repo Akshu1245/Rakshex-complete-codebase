@@ -20,6 +20,13 @@ import {
   processRefund,
 } from "../payments";
 import { computePlanUtilization } from "../utils/planLimits";
+import { assertWorkspacePermission } from "../services/authorization";
+
+const workspacePlanSchema = z.enum(["pro", "enterprise"]);
+
+function includedSeats(plan: "pro" | "enterprise"): number {
+  return PLAN_CONFIG[plan].limits.maxTeamMembers;
+}
 
 export const paymentsRouter = router({
   createSubscription: protectedProcedure
@@ -51,6 +58,191 @@ export const paymentsRouter = router({
         shortUrl: result.shortUrl,
         keyId: result.keyId,
       };
+    }),
+
+  /**
+   * Start a Rakshex subscription for an organisation workspace. The selected
+   * seat count is an enforced allocation within the plan's included capacity;
+   * it is not confused with third-party Copilot/Claude seat inventory.
+   */
+  createWorkspaceSubscription: protectedProcedure
+    .input(
+      z.object({
+        workspaceId: z.number().int().positive(),
+        plan: workspacePlanSchema,
+        seatCount: z.number().int().min(1).max(500),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      await assertWorkspacePermission(input.workspaceId, ctx.user.id, "billing", "write");
+      const maxSeats = includedSeats(input.plan);
+      if (input.seatCount > maxSeats) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `${PLAN_CONFIG[input.plan].name} includes up to ${maxSeats} seats`,
+        });
+      }
+
+      const reservedSeats = await db.countReservedWorkspaceSeats(input.workspaceId);
+      if (input.seatCount < reservedSeats) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `This workspace already reserves ${reservedSeats} seats`,
+        });
+      }
+
+      const existing = await db.getWorkspaceSubscription(input.workspaceId);
+      if (existing && ["pending", "active", "paused", "past_due"].includes(existing.status)) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "This workspace already has a subscription",
+        });
+      }
+
+      const result = await createSubscription(
+        ctx.user.id,
+        ctx.user.email || "",
+        input.plan,
+        ctx.user.name || undefined,
+      );
+      const planConfig = PLAN_CONFIG[input.plan];
+      const record = await db.upsertWorkspaceSubscription({
+        id: existing?.id ?? `wsub_${nanoid()}`,
+        workspaceId: input.workspaceId,
+        billingOwnerUserId: ctx.user.id,
+        plan: input.plan,
+        seatCount: input.seatCount,
+        unitAmountMinor: planConfig.amount,
+        totalAmountMinor: planConfig.amount,
+        currency: planConfig.currency,
+        provider: "razorpay",
+        providerSubscriptionId: result.subscriptionId,
+        providerCustomerId: result.customerId,
+        status: "pending",
+        cancelAtPeriodEnd: false,
+        cancelledAt: null,
+      });
+
+      await db.createAuditLogEntry(ctx.user.id, "workspace_subscription_created", {
+        workspaceId: input.workspaceId,
+        workspaceSubscriptionId: record.id,
+        plan: input.plan,
+        seatCount: input.seatCount,
+      });
+
+      return {
+        workspaceSubscriptionId: record.id,
+        subscriptionId: result.subscriptionId,
+        customerId: result.customerId,
+        shortUrl: result.shortUrl,
+        keyId: result.keyId,
+        plan: input.plan,
+        seatCount: input.seatCount,
+        amountMinor: planConfig.amount,
+        currency: planConfig.currency,
+      };
+    }),
+
+  getWorkspaceSubscription: protectedProcedure
+    .input(z.object({ workspaceId: z.number().int().positive() }))
+    .query(async ({ input, ctx }) => {
+      await assertWorkspacePermission(input.workspaceId, ctx.user.id, "billing", "read");
+      const subscription = await db.getWorkspaceSubscription(input.workspaceId);
+      const reservedSeats = await db.countReservedWorkspaceSeats(input.workspaceId);
+      if (!subscription) {
+        return {
+          subscription: null,
+          reservedSeats,
+          availablePlans: (["pro", "enterprise"] as const).map((plan) => ({
+            plan,
+            name: PLAN_CONFIG[plan].name,
+            amountMinor: PLAN_CONFIG[plan].amount,
+            currency: PLAN_CONFIG[plan].currency,
+            includedSeats: includedSeats(plan),
+          })),
+        };
+      }
+      return {
+        subscription: {
+          id: subscription.id,
+          plan: subscription.plan,
+          status: subscription.status,
+          seatCount: subscription.seatCount,
+          reservedSeats,
+          amountMinor: subscription.totalAmountMinor,
+          currency: subscription.currency,
+          currentPeriodStart: subscription.currentPeriodStart,
+          currentPeriodEnd: subscription.currentPeriodEnd,
+          cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+        },
+        reservedSeats,
+        availablePlans: (["pro", "enterprise"] as const).map((plan) => ({
+          plan,
+          name: PLAN_CONFIG[plan].name,
+          amountMinor: PLAN_CONFIG[plan].amount,
+          currency: PLAN_CONFIG[plan].currency,
+          includedSeats: includedSeats(plan),
+        })),
+      };
+    }),
+
+  updateWorkspaceSeats: protectedProcedure
+    .input(
+      z.object({
+        workspaceId: z.number().int().positive(),
+        seatCount: z.number().int().min(1).max(500),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      await assertWorkspacePermission(input.workspaceId, ctx.user.id, "billing", "write");
+      const subscription = await db.getWorkspaceSubscription(input.workspaceId);
+      if (!subscription) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Workspace subscription not found" });
+      }
+      const maxSeats = includedSeats(subscription.plan as "pro" | "enterprise");
+      const reservedSeats = await db.countReservedWorkspaceSeats(input.workspaceId);
+      if (input.seatCount < reservedSeats || input.seatCount > maxSeats) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Seats must be between ${reservedSeats} and ${maxSeats}`,
+        });
+      }
+      await db.updateWorkspaceSubscription(subscription.id, { seatCount: input.seatCount });
+      await db.createAuditLogEntry(ctx.user.id, "workspace_seats_updated", {
+        workspaceId: input.workspaceId,
+        previousSeatCount: subscription.seatCount,
+        seatCount: input.seatCount,
+      });
+      return { success: true, seatCount: input.seatCount, reservedSeats };
+    }),
+
+  cancelWorkspaceSubscription: protectedProcedure
+    .input(
+      z.object({
+        workspaceId: z.number().int().positive(),
+        immediately: z.boolean().default(false),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      await assertWorkspacePermission(input.workspaceId, ctx.user.id, "billing", "delete");
+      const subscription = await db.getWorkspaceSubscription(input.workspaceId);
+      if (!subscription?.providerSubscriptionId) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Workspace subscription not found" });
+      }
+      const result = await cancelSubscription(
+        subscription.providerSubscriptionId,
+        !input.immediately,
+      );
+      await db.updateWorkspaceSubscription(subscription.id, {
+        status: input.immediately ? "cancelled" : subscription.status,
+        cancelAtPeriodEnd: !input.immediately,
+        ...(input.immediately ? { cancelledAt: new Date() } : {}),
+      });
+      await db.createAuditLogEntry(ctx.user.id, "workspace_subscription_cancelled", {
+        workspaceId: input.workspaceId,
+        immediately: input.immediately,
+      });
+      return { success: true, status: result.status };
     }),
 
   cancel: protectedProcedure
@@ -103,7 +295,7 @@ export const paymentsRouter = router({
           subscriptionId: subscription.id,
           razorpayPaymentId: invoice.payment_id,
           razorpayOrderId: invoice.order_id,
-          amount: invoice.amount / 100,
+          amountMinor: invoice.amount,
           currency: invoice.currency || "INR",
           status: invoice.status === "paid" ? "captured" : "created",
           receipt: invoice.receipt_number,
@@ -160,6 +352,15 @@ export const paymentsRouter = router({
           if (sub) {
             await db.updateSubscriptionStatus(sub.id, "active");
             await db.updateUserPlan(sub.userId, sub.plan);
+          } else {
+            const workspaceSub = await db.getWorkspaceSubscriptionByProviderId(
+              event.subscriptionId,
+            );
+            if (workspaceSub) {
+              await db.updateWorkspaceSubscription(workspaceSub.id, {
+                status: "active",
+              });
+            }
           }
         }
         break;
@@ -175,11 +376,29 @@ export const paymentsRouter = router({
               subscriptionId: sub.id,
               razorpayPaymentId: payment.id,
               razorpayOrderId: payment.order_id,
-              amount: payment.amount / 100,
+              amountMinor: payment.amount,
               currency: payment.currency,
               status: "captured",
               createdAt: new Date(payment.created_at * 1000),
             });
+          } else {
+            const workspaceSub = await db.getWorkspaceSubscriptionByProviderId(
+              payment.subscription_id,
+            );
+            if (workspaceSub) {
+              await db.createPayment({
+                id: nanoid(),
+                userId: workspaceSub.billingOwnerUserId,
+                subscriptionId: workspaceSub.id,
+                razorpayPaymentId: payment.id,
+                razorpayOrderId: payment.order_id,
+                amountMinor: payment.amount,
+                currency: payment.currency,
+                status: "captured",
+                description: `Rakshex workspace ${workspaceSub.workspaceId} subscription`,
+                createdAt: new Date(payment.created_at * 1000),
+              });
+            }
           }
         }
         break;
@@ -191,6 +410,35 @@ export const paymentsRouter = router({
             await db.updateSubscriptionStatus(sub.id, "cancelled");
             await db.updateUserPlan(sub.userId, "free");
             await db.updateUserSubscriptionId(sub.userId, null);
+          } else {
+            const workspaceSub = await db.getWorkspaceSubscriptionByProviderId(
+              event.subscriptionId,
+            );
+            if (workspaceSub) {
+              await db.updateWorkspaceSubscription(workspaceSub.id, {
+                status: "cancelled",
+                cancelAtPeriodEnd: false,
+                cancelledAt: new Date(),
+              });
+            }
+          }
+        }
+        break;
+
+      case "subscription.paused":
+      case "subscription.halted":
+      case "subscription.resumed":
+        if (event.subscriptionId) {
+          const workspaceSub = await db.getWorkspaceSubscriptionByProviderId(event.subscriptionId);
+          if (workspaceSub) {
+            await db.updateWorkspaceSubscription(workspaceSub.id, {
+              status:
+                event.event === "subscription.resumed"
+                  ? "active"
+                  : event.event === "subscription.paused"
+                    ? "paused"
+                    : "halted",
+            });
           }
         }
         break;
@@ -386,7 +634,7 @@ export const paymentsRouter = router({
           userId: ctx.user.id,
           razorpayPaymentId: input.razorpay_payment_id,
           razorpayOrderId: input.razorpay_order_id,
-          amount: Number(paymentDetails.amount) / 100,
+          amountMinor: Number(paymentDetails.amount),
           currency: paymentDetails.currency,
           status: "captured",
           description: paymentDetails.description || "Razorpay Standard Web Checkout",

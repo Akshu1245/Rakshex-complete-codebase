@@ -612,6 +612,57 @@ export type Subscription = typeof subscriptions.$inferSelect;
 export type InsertSubscription = typeof subscriptions.$inferInsert;
 
 /**
+ * Workspace subscriptions — the commercial Rakshex plan assigned to an
+ * organisation workspace. This is intentionally distinct from:
+ *   1. legacy per-user subscriptions above; and
+ *   2. aiSubscriptions, which inventory third-party Copilot/Claude seats.
+ *
+ * Monetary values are stored in the payment provider's smallest unit
+ * (paise/cents) to avoid float rounding and reconciliation drift.
+ */
+export const workspaceSubscriptions = pgTable(
+  "workspace_subscriptions",
+  {
+    id: varchar("id", { length: 64 }).primaryKey(),
+    workspaceId: integer("workspace_id").notNull().unique(),
+    billingOwnerUserId: integer("billing_owner_user_id").notNull(),
+    plan: subscriptionPlanEnum("plan").default("pro").notNull(),
+    seatCount: integer("seat_count").default(1).notNull(),
+    unitAmountMinor: integer("unit_amount_minor").default(0).notNull(),
+    totalAmountMinor: integer("total_amount_minor").default(0).notNull(),
+    currency: varchar("currency", { length: 3 }).default("INR").notNull(),
+    provider: varchar("provider", { length: 32 }).default("razorpay").notNull(),
+    providerSubscriptionId: varchar("provider_subscription_id", {
+      length: 255,
+    }).unique(),
+    providerCustomerId: varchar("provider_customer_id", { length: 255 }),
+    status: subscriptionStatusEnum("status").default("pending").notNull(),
+    currentPeriodStart: timestamp("current_period_start"),
+    currentPeriodEnd: timestamp("current_period_end"),
+    cancelledAt: timestamp("cancelled_at"),
+    cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false).notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdateFn(() => new Date())
+      .notNull(),
+  },
+  (table) => ({
+    workspaceIdx: index("workspace_subscriptions_workspace_idx").on(table.workspaceId),
+    billingOwnerIdx: index("workspace_subscriptions_billing_owner_idx").on(
+      table.billingOwnerUserId,
+    ),
+    providerSubscriptionIdx: index("workspace_subscriptions_provider_subscription_idx").on(
+      table.providerSubscriptionId,
+    ),
+    statusIdx: index("workspace_subscriptions_status_idx").on(table.status),
+  }),
+);
+
+export type WorkspaceSubscription = typeof workspaceSubscriptions.$inferSelect;
+export type InsertWorkspaceSubscription = typeof workspaceSubscriptions.$inferInsert;
+
+/**
  * Payments - Razorpay payment records and invoices
  */
 export const payments = pgTable(
@@ -622,6 +673,8 @@ export const payments = pgTable(
     subscriptionId: varchar("subscriptionId", { length: 64 }),
     razorpayPaymentId: varchar("razorpayPaymentId", { length: 255 }).notNull().unique(),
     razorpayOrderId: varchar("razorpayOrderId", { length: 255 }),
+    /** Canonical amount in paise/cents. `amount` remains a display-compatible major-unit value. */
+    amountMinor: integer("amount_minor").default(0).notNull(),
     amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
     currency: varchar("currency", { length: 3 }).default("INR").notNull(),
     status: paymentStatusEnum("status").default("created").notNull(),

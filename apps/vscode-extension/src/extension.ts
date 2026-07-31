@@ -247,7 +247,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
           "Paste your Rakshex API key (generate one from Settings → API Keys on your dashboard).",
         password: true,
         ignoreFocusOut: true,
-        placeHolder: "dp_...",
+        placeHolder: "rk_live_... (legacy dp_ keys are also accepted)",
         validateInput: (v) => (v.trim().length < 8 ? "API key looks too short" : null),
       });
       if (!entered) return;
@@ -320,8 +320,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     }),
 
     vscode.commands.registerCommand("rakshex.openDashboard", async () => {
-      const base = getConfiguredBaseUrl().replace(/\/+$/, "");
-      void vscode.env.openExternal(vscode.Uri.parse(base));
+      const dashboardUrl = vscode.workspace
+        .getConfiguration("rakshex")
+        .get<string>("dashboardUrl", "https://www.rakshex.in/dashboard");
+      void vscode.env.openExternal(vscode.Uri.parse(dashboardUrl));
     }),
 
     vscode.commands.registerCommand("rakshex.runScan", async () => {

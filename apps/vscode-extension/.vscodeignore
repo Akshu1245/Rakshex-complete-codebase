@@ -2,6 +2,7 @@
 node_modules
 src
 .vscode
+.turbo
 tests
 *.ts
 !src/types/*.d.ts
@@ -10,10 +11,7 @@ vitest.config.ts
 .gitignore
 .eslintrc*
 .prettierrc*
-# tsc emit — runtime is esbuild dist/ only
-out
-.turbo
-scripts
 PUBLISHING.md
-MARKETPLACE_PUBLISH_PREP.md
+dist/**/*.map
+dist/**/*.test.js
 *.vsix

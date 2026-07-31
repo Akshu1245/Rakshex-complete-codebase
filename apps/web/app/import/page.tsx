@@ -3,31 +3,25 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { EmptyState } from "@/components/EmptyState";
+import { getCsrfTokenFromCookie } from "@/lib/providers";
 
-type ImportSource =
-  | "helicone"
-  | "portkey"
-  | "lakera"
-  | "langsmith"
-  | "postman"
-  | "openapi"
-  | "insomnia"
-  | "bruno"
-  | "csv"
-  | "json";
+type ImportSource = "helicone" | "portkey" | "lakera" | "langsmith" | "universal_json";
 
 const SOURCES: { value: ImportSource; label: string; description: string }[] = [
   { value: "helicone", label: "Helicone", description: "AI observability platform" },
   { value: "portkey", label: "Portkey", description: "LLM gateway and router" },
   { value: "lakera", label: "Lakera Guard", description: "AI security platform" },
   { value: "langsmith", label: "LangSmith", description: "LangChain observability" },
-  { value: "postman", label: "Postman", description: "API platform" },
-  { value: "openapi", label: "OpenAPI/Swagger", description: "API specification" },
-  { value: "insomnia", label: "Insomnia", description: "API client" },
-  { value: "bruno", label: "Bruno", description: "Open-source API client" },
-  { value: "csv", label: "Universal CSV", description: "Any tabular data" },
-  { value: "json", label: "Universal JSON", description: "Any structured data" },
+  { value: "universal_json", label: "Universal JSON", description: "Structured request data" },
 ];
+
+function authenticatedHeaders(): HeadersInit {
+  const csrfToken = getCsrfTokenFromCookie();
+  return {
+    "Content-Type": "application/json",
+    ...(csrfToken ? { "x-csrf-token": csrfToken } : {}),
+  };
+}
 
 export default function ImportPage() {
   const searchParams = useSearchParams();
@@ -53,8 +47,8 @@ export default function ImportPage() {
     try {
       const res = await fetch("/api/import/preview", {
         method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: authenticatedHeaders(),
+        credentials: "same-origin",
         body: JSON.stringify({ source, data: JSON.parse(data) }),
       });
       if (!res.ok) throw new Error((await res.json()).error || "Preview failed");
@@ -73,30 +67,13 @@ export default function ImportPage() {
     try {
       const res = await fetch("/api/import/execute", {
         method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: authenticatedHeaders(),
+        credentials: "same-origin",
         body: JSON.stringify({ source, data: JSON.parse(data) }),
       });
       if (!res.ok) throw new Error((await res.json()).error || "Import failed");
       const r = await res.json();
-      const parts: string[] = [];
-      if (r.collectionsCreated) {
-        parts.push(
-          `${r.collectionsCreated} collection${r.collectionsCreated === 1 ? "" : "s"}` +
-            (r.recordsImported ? ` (${r.recordsImported} endpoints)` : ""),
-        );
-        if (r.credentialFindings) parts.push(`${r.credentialFindings} exposed credential(s)`);
-        if (r.gatewayFindings) parts.push(`${r.gatewayFindings} gateway risk(s)`);
-      } else if (r.gatewayLogsImported) {
-        parts.push(`${r.gatewayLogsImported} gateway log(s)`);
-        if (r.tokenUsageImported) parts.push(`${r.tokenUsageImported} token-usage record(s)`);
-      } else if (r.policiesImported) {
-        parts.push(`${r.policiesImported} policy(ies)`);
-      } else {
-        parts.push(`${r.recordsImported ?? 0} record(s)`);
-      }
-      const skipped = r.recordsSkipped ? ` · ${r.recordsSkipped} skipped` : "";
-      setResult(`Imported ${parts.join(" · ")}${skipped}.`);
+      setResult(`Imported ${r.collections ?? r.endpoints ?? "N/A"} items successfully.`);
       setPreview(null);
       setData("");
     } catch (err) {

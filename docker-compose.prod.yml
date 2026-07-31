@@ -20,20 +20,20 @@ services:
       DATABASE_URL: postgresql://rakshex:${POSTGRES_PASSWORD}@postgres:5432/rakshex
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
-      APP_URL: ${APP_URL:-https://api.rakshex.in}
-      FRONTEND_URL: ${FRONTEND_URL:-https://www.rakshex.in}
-      CORS_ORIGINS: ${CORS_ORIGINS:-https://www.rakshex.in,https://rakshex.in,https://yc7y9pq9.insforge.site}
-      METRICS_TOKEN: ${METRICS_TOKEN:-dev-metrics-token-12345}
-      SMTP_HOST: ${SMTP_HOST:-}
+      APP_URL: ${APP_URL:?APP_URL is required}
+      FRONTEND_URL: ${FRONTEND_URL:-https://app.rakshex.in}
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
+      METRICS_TOKEN: ${METRICS_TOKEN:?METRICS_TOKEN is required}
+      SMTP_HOST: ${SMTP_HOST:?SMTP_HOST is required}
       SMTP_PORT: ${SMTP_PORT:-587}
-      SMTP_USER: ${SMTP_USER:-}
-      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_USER: ${SMTP_USER:?SMTP_USER is required}
+      SMTP_PASS: ${SMTP_PASS:?SMTP_PASS is required}
       SMTP_FROM: ${SMTP_FROM:-noreply@rakshex.in}
       SENTRY_DSN: ${SENTRY_DSN:-}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-}
       RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
-      GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET:-dev-webhook-secret-12345}
+      GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET:?GITHUB_WEBHOOK_SECRET is required}
       GITHUB_APP_ID: ${GITHUB_APP_ID:-}
       GITHUB_APP_PRIVATE_KEY: ${GITHUB_APP_PRIVATE_KEY:-}
 
@@ -52,24 +52,5 @@ services:
     restart: always
     environment:
       NODE_ENV: production
-      NEXT_PUBLIC_TS_API_URL: ${NEXT_PUBLIC_TS_API_URL:-https://api.rakshex.in}
+      NEXT_PUBLIC_TS_API_URL: ${NEXT_PUBLIC_TS_API_URL:-${APP_URL}}
       NEXT_PUBLIC_SANDBOX_MODE: "false"
-
-  caddy:
-    image: caddy:2-alpine
-    restart: always
-    container_name: rakshex-caddy
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      - web
-      - api
-
-volumes:
-  caddy_data:
-  caddy_config:

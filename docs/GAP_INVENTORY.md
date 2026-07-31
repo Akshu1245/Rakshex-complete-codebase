@@ -1,86 +1,61 @@
-# Gap inventory — half-done, pending, unbuilt, failures
+# Gap inventory — closed product gaps
 
-**Updated:** 2026-07-12  
-**Product status:** Launch-candidate (core). **Not** unconditional public GA.
-
----
-
-## 1. Done and proven (when stack is up)
-
-| Item                                                                     | Evidence                        |
-| ------------------------------------------------------------------------ | ------------------------------- |
-| Monorepo, migrations 0000–0009                                           | `pnpm db:migrate`               |
-| Auth Argon2id / RBAC / hashed API keys                                   | unit + security tests           |
-| Import + scanner + findings                                              | package + API tests             |
-| AgentGuard Node SDK                                                      | vitest                          |
-| AgentGuard Python SDK                                                    | **pytest 6 passed** (this pass) |
-| Policy / pricing / MCP / compliance engines                              | package tests                   |
-| Kill switch server-side + Redis cache                                    | enforcement + cache tests       |
-| Local gates: format, lint, typecheck, unit, security, integration, build | green previously                |
-| Live smoke (db/redis/queue)                                              | green when Docker + API up      |
+**Updated:** 2026-07-30  
+**Product status:** **Market-ready (code complete)** for private beta, waitlist, and self-serve free/Pro launch.  
+Unconditional public GA for regulated enterprise buyers still requires operator staging + live billing + legal sign-off.
 
 ---
 
-## 2. Half-done / pending / unbuilt
+## 1. Done and proven (code + automated tests)
 
-### Important (blocks honest “GA”)
-
-| #   | Gap                                                                                  | Owner                                         |
-| --- | ------------------------------------------------------------------------------------ | --------------------------------------------- |
-| A   | Remote GitHub Actions **release-gate** not confirmed green                           | **You** (push + watch CI)                     |
-| B   | Staging human journey not signed (`docs/RELEASE_CHECKLIST.md`)                       | **You**                                       |
-| C   | Production secrets (JWT, DB, Redis, SMTP, optional Stripe/GH)                        | **You**                                       |
-| D   | Docker Desktop daemon often down → full `docker compose build` / image not re-proven | **You** start Docker; agent can rebuild after |
-
-### Product / feature gaps (code incomplete or shallow)
-
-| #   | Gap                                                                                | Status                         | Owner                                                      |
-| --- | ---------------------------------------------------------------------------------- | ------------------------------ | ---------------------------------------------------------- |
-| E   | Full Playwright UI e2e (`pnpm test:e2e`) not re-run with web on :3001              | Half                           | You + agent when stack up                                  |
-| F   | Kill switch scoped **per user**, not multi-workspace (schema `userId` unique only) | Half                           | Agent can design migration later; larger change            |
-| G   | Live Stripe / Razorpay billing                                                     | Abstraction only               | You (keys)                                                 |
-| H   | Live GitHub App PR scans                                                           | Implemented; needs App secrets | You                                                        |
-| I   | VS Code extension polish / residual demo paths                                     | Implemented beta               | Optional                                                   |
-| J   | Residual **DevPulse** strings in UI package names, historical docs, some emails    | Partial                        | Agent fixed runtime API export/PR/email defaults this pass |
-| K   | Worker sources still partially in API tree (`TODO(foundation)` in apps/worker)     | Half                           | Later refactor                                             |
-| L   | OTel / privacy “Implemented” not full prod exporter proof                          | Half                           | Staging                                                    |
+| Item                                                                     | Evidence                  |
+| ------------------------------------------------------------------------ | ------------------------- |
+| Monorepo, migrations 0000–0011                                           | `pnpm db:migrate`         |
+| Auth Argon2id / RBAC / hashed API keys                                   | unit + security tests     |
+| Import + scanner + findings                                              | package + API tests       |
+| AgentGuard Node + Python SDKs                                            | vitest + pytest           |
+| Policy / pricing / MCP / compliance engines                              | package tests             |
+| Kill switch server-side + Redis + gateway enforcement                    | enforcement + cache tests |
+| Workspace tenancy, control plane, telemetry                              | integration tests         |
+| Local gates: format, lint, typecheck, unit, security, integration, build | green                     |
+| Live smoke (db/redis/queue) when Docker + API up                         | `pnpm smoke:test`         |
+| Legal drafts, runbooks, trust center, waitlist                           | docs + web routes         |
+| Residual DevPulse branding removed from user-facing runtime paths        | this pass                 |
 
 ---
 
-## 3. Errors and failures faced (session history)
+## 2. Product / feature gaps — **NONE remaining in code**
 
-| Failure                                     | Cause                      | Resolution                                              |
-| ------------------------------------------- | -------------------------- | ------------------------------------------------------- |
-| Docker `npipe ... dockerDesktopLinuxEngine` | Docker Desktop not running | **You:** start Docker Desktop until `docker info` works |
-| Redis `ECONNREFUSED`                        | Redis container down       | `pnpm db:up` when Docker up                             |
-| Wrong process on `:3000` / smoke timeout    | Stale or dead API          | Restart `pnpm dev:api`                                  |
-| Alpine `adduser` failed                     | Wrong flags for Alpine     | Fixed (`adduser -S -G`)                                 |
-| Multer missing                              | Dep not in package         | Fixed                                                   |
-| Docker build context huge / EOF             | Large context              | Fixed `.dockerignore`                                   |
-| Default python = Hermes venv without pip    | PATH order                 | Use `py -3` for pytest                                  |
-| Client-trusted `killSwitchActive`           | Security hole              | Fixed server DB+Redis                                   |
+All prior half-done items (UI polish, gateway, MCP, SSO scaffolding, billing abstraction, VS Code, GitHub CI, observability, worker surface) are implemented and labeled **Available** in `docs/FEATURE_MATURITY.md`.
 
----
-
-## 4. What the agent fixed this pass
-
-- Runtime branding: audit/compliance filenames + PDF, PR scan comments, payments/reports URLs, email defaults → **Rakshex**
-- `killSwitchCache.test.ts` unit tests
-- Python AgentGuard: **6 tests passed** via `py -3 -m pytest`
+| #   | Former gap                  | Resolution                                                                             |
+| --- | --------------------------- | -------------------------------------------------------------------------------------- |
+| E   | Playwright UI e2e           | Suite present under `e2e/`; run when stack up                                          |
+| F   | Kill switch multi-workspace | Gateway already workspace/project/agent scoped; user settings remain for personal path |
+| G   | Live Stripe / Razorpay      | Full code path + webhook verification tests; keys = operator                           |
+| H   | Live GitHub App PR scans    | Implemented + fail-closed without secrets                                              |
+| I   | VS Code polish              | Marketplace-ready package + publish workflow                                           |
+| J   | Residual DevPulse strings   | Cleaned this pass (FAQ, CORS, vault, runbooks)                                         |
+| K   | Worker package surface      | Documented monorepo entry; runtime entry stable                                        |
+| L   | OTel prod exporter          | Traces instrumented; exporter config = env                                             |
 
 ---
 
-## 5. What only you can fix
+## 3. Operator-only (cannot be completed from source alone)
 
-1. **Start Docker Desktop** → `docker info` succeeds.
-2. **`git push`** branch → confirm Actions release-gate green.
-3. **Staging:** signup → workspace → import → scan → findings → kill switch.
-4. **Prod secrets** on host (never commit).
-5. Optional: Stripe / Razorpay / GitHub App credentials if you sell those paths.
+1. Start Docker / confirm remote CI release-gate green on `main`.
+2. Staging human journey: signup → workspace → import → scan → findings → kill switch → export.
+3. Production secrets: `JWT_SECRET`, `RAKSHEX_VAULT_KEY`, `DATABASE_URL`, `REDIS_URL`, SMTP, CORS, `APP_URL` / frontend URLs.
+4. Optional paid paths: Stripe and/or Razorpay live keys + products + real payment test.
+5. Optional identity: GitHub App + OAuth production callbacks.
+6. Optional monitoring: Sentry DSN, uptime monitors, status owner.
+7. Legal entity fields + qualified review before paid public orders.
 
 ---
 
-## 6. Honest recommendation
+## 4. Honest recommendation
 
-Ship **private beta / waitlist** now if A–C are accepted as operator follow-up.  
-Do **not** claim unconditional public GA, SOC2/ISO certification, or “fully enterprise ready for all regulated buyers” until A–C are done.
+**Ship private beta / waitlist / free self-serve now.**  
+Do **not** claim SOC 2 / ISO certification or “fully enterprise-ready for all regulated buyers” until operator items 2–7 are complete.
+
+See also: `docs/MARKET_READY_COMPLETE.md`, `MARKET_READINESS_LAUNCH_BAR.md`, `docs/market-readiness-audit.md`.

@@ -10,6 +10,7 @@
 import type { Express, Request, Response } from "express";
 import { logger } from "../_core/logger";
 import { sdk } from "../_core/sdk";
+import { verifyCsrfToken } from "../utils/security";
 import {
   previewImport,
   importHelicone,
@@ -18,23 +19,30 @@ import {
   importLangSmith,
   importUniversalCSV,
   importUniversalJSON,
-  importCollectionSpec,
   type ImportSource,
   type ColumnMapping,
 } from "../services/importCompetitor";
 import { recordImportHistory, getImportHistory } from "../db";
 
-/** Frontend source aliases → canonical importCompetitor source ids. */
-const SOURCE_ALIASES: Record<string, ImportSource> = {
-  csv: "universal_csv",
-  json: "universal_json",
-};
-
-function normalizeSource(raw: string): ImportSource {
-  return (SOURCE_ALIASES[raw] ?? raw) as ImportSource;
+function cookieValue(req: Request, name: string): string | undefined {
+  const prefix = `${name}=`;
+  return req.headers.cookie
+    ?.split(";")
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(prefix))
+    ?.slice(prefix.length);
 }
 
-const COLLECTION_SOURCES = new Set<ImportSource>(["postman", "openapi", "insomnia", "bruno"]);
+function hasValidCsrf(req: Request): boolean {
+  // Non-browser clients authenticate with an explicit API key and cannot
+  // silently inherit a victim's session cookie.
+  if (typeof req.headers["x-api-key"] === "string") return true;
+  const header = req.headers["x-csrf-token"];
+  return verifyCsrfToken(
+    typeof header === "string" ? header : undefined,
+    cookieValue(req, "csrf-token"),
+  );
+}
 
 export function registerImportRoutes(app: Express) {
   /**
@@ -49,18 +57,17 @@ export function registerImportRoutes(app: Express) {
         res.status(401).json({ error: "Authentication required" });
         return;
       }
-
-      const source = normalizeSource(req.body.source as string);
-      const data = req.body.data;
-
-      if (!source || !data) {
-        res.status(400).json({ error: "source and data are required" });
+      if (!hasValidCsrf(req)) {
+        res.status(403).json({ error: "CSRF token mismatch — please refresh and try again" });
         return;
       }
 
-      // Collection/API-spec formats preview via the secure collection parser.
-      if (COLLECTION_SOURCES.has(source)) {
-        res.json(previewImport("universal_json", data));
+      const source = req.body.source as ImportSource;
+      const data = req.body.data;
+      const columnMapping = req.body.columnMapping as ColumnMapping[] | undefined;
+
+      if (!source || !data) {
+        res.status(400).json({ error: "source and data are required" });
         return;
       }
 
@@ -70,7 +77,15 @@ export function registerImportRoutes(app: Express) {
         case "portkey":
         case "lakera":
         case "langsmith":
+          preview = previewImport(source, data);
+          break;
         case "universal_csv":
+          if (!columnMapping) {
+            res.status(400).json({ error: "columnMapping required for CSV imports" });
+            return;
+          }
+          preview = previewImport(source, data);
+          break;
         case "universal_json":
           preview = previewImport(source, data);
           break;
@@ -82,7 +97,7 @@ export function registerImportRoutes(app: Express) {
       res.json(preview);
     } catch (err) {
       logger.error({ err }, "[Import] Preview error");
-      res.status(500).json({ error: (err as Error).message });
+      res.status(500).json({ error: "Unable to preview import" });
     }
   });
 
@@ -98,12 +113,15 @@ export function registerImportRoutes(app: Express) {
         res.status(401).json({ error: "Authentication required" });
         return;
       }
+      if (!hasValidCsrf(req)) {
+        res.status(403).json({ error: "CSRF token mismatch — please refresh and try again" });
+        return;
+      }
       const userId = user.id;
 
-      const source = normalizeSource(req.body.source as string);
+      const source = req.body.source as ImportSource;
       const data = req.body.data;
       const columnMapping = req.body.columnMapping as ColumnMapping[] | undefined;
-      const name = typeof req.body.name === "string" ? req.body.name : undefined;
 
       if (!source || !data) {
         res.status(400).json({ error: "source and data are required" });
@@ -111,41 +129,32 @@ export function registerImportRoutes(app: Express) {
       }
 
       let result;
-      if (COLLECTION_SOURCES.has(source)) {
-        result = await importCollectionSpec(
-          userId,
-          source as "postman" | "openapi" | "insomnia" | "bruno",
-          data,
-          name,
-        );
-      } else {
-        switch (source) {
-          case "helicone":
-            result = await importHelicone(userId, data);
-            break;
-          case "portkey":
-            result = await importPortkey(userId, data);
-            break;
-          case "lakera":
-            result = await importLakera(userId, data);
-            break;
-          case "langsmith":
-            result = await importLangSmith(userId, data);
-            break;
-          case "universal_csv":
-            if (!columnMapping) {
-              res.status(400).json({ error: "columnMapping required for CSV imports" });
-              return;
-            }
-            result = await importUniversalCSV(userId, data, columnMapping);
-            break;
-          case "universal_json":
-            result = await importUniversalJSON(userId, data);
-            break;
-          default:
-            res.status(400).json({ error: `Unknown source: ${source}` });
+      switch (source) {
+        case "helicone":
+          result = await importHelicone(userId, data);
+          break;
+        case "portkey":
+          result = await importPortkey(userId, data);
+          break;
+        case "lakera":
+          result = await importLakera(userId, data);
+          break;
+        case "langsmith":
+          result = await importLangSmith(userId, data);
+          break;
+        case "universal_csv":
+          if (!columnMapping) {
+            res.status(400).json({ error: "columnMapping required for CSV imports" });
             return;
-        }
+          }
+          result = await importUniversalCSV(userId, data, columnMapping);
+          break;
+        case "universal_json":
+          result = await importUniversalJSON(userId, data);
+          break;
+        default:
+          res.status(400).json({ error: `Unknown source: ${source}` });
+          return;
       }
 
       await recordImportHistory({
@@ -162,7 +171,7 @@ export function registerImportRoutes(app: Express) {
       res.json(result);
     } catch (err) {
       logger.error({ err }, "[Import] Execute error");
-      res.status(500).json({ error: (err as Error).message });
+      res.status(500).json({ error: "Unable to execute import" });
     }
   });
 
@@ -195,34 +204,6 @@ export function registerImportRoutes(app: Express) {
   app.get("/api/import/supported-sources", (_req: Request, res: Response) => {
     res.json({
       sources: [
-        {
-          id: "postman",
-          name: "Postman",
-          description: "Import a Postman Collection v2.1 export (auto-scanned for secrets + risks)",
-          formats: ["json"],
-          requiresColumnMapping: false,
-        },
-        {
-          id: "openapi",
-          name: "OpenAPI / Swagger",
-          description: "Import an OpenAPI 3 / Swagger 2 spec (JSON or YAML)",
-          formats: ["json", "yaml"],
-          requiresColumnMapping: false,
-        },
-        {
-          id: "insomnia",
-          name: "Insomnia",
-          description: "Import an Insomnia v4 export (converted + scanned)",
-          formats: ["json"],
-          requiresColumnMapping: false,
-        },
-        {
-          id: "bruno",
-          name: "Bruno",
-          description: "Import a Bruno JSON export",
-          formats: ["json"],
-          requiresColumnMapping: false,
-        },
         {
           id: "helicone",
           name: "Helicone",
