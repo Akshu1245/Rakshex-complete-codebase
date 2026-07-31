@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "FAQ — RaksHex AI Governance Platform",
+  title: "RaksHex FAQ – AI Runtime Governance Questions Answered",
   description:
-    "Frequently asked questions about RaksHex pricing, security, compliance, setup, and enterprise features.",
+    "Frequently asked questions about RaksHex. Learn how it blocks prompt injection, controls LLM costs, discovers shadow APIs, and helps with compliance.",
   alternates: { canonical: "/faq" },
 };
 
