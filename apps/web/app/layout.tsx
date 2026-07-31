@@ -14,19 +14,20 @@ import { CrispChat } from "@/components/CrispChat";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.rakshex.in";
 
 export const metadata: Metadata = {
-  title: "RakshEx | AI Control Plane for Security, Cost, and Access",
+  title: {
+    default: "RaksHex — AI Runtime Governance, Prompt Injection & LLM Cost Control",
+    template: "%s | RaksHex",
+  },
   description:
-    "Discover AI accounts, credentials, subscriptions, usage, risk, and policy in one control plane without retaining raw prompts by default.",
-  generator: "RaksHex",
+    "India's AI Runtime Governance platform. Block prompt injection, control LLM costs, discover shadow APIs, and generate compliance reports in one place.",
   keywords: [
-    "AI control plane",
-    "AI governance",
-    "AI credential inventory",
-    "AI subscription governance",
-    "LLM gateway policy",
-    "prompt injection detection",
-    "shadow AI discovery",
-    "AI cost controls",
+    "AI runtime governance",
+    "prompt injection blocking",
+    "LLM cost control",
+    "shadow API discovery",
+    "AI agent security",
+    "MCP governance",
+    "OWASP AI Top 10",
     "RakshEx",
   ],
   metadataBase: new URL(SITE_URL),
