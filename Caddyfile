@@ -1,0 +1,25 @@
+# Reverse proxy & automatic HTTPS SSL configuration for Rakshex (https://rakshex.in)
+
+# Web Dashboard (Frontend)
+rakshex.in, www.rakshex.in, yc7y9pq9.insforge.site {
+    reverse_proxy web:3000
+
+    encode gzip zstd
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+}
+
+# API Backend (Express + tRPC)
+api.rakshex.in {
+    reverse_proxy api:3000
+
+    encode gzip zstd
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+    }
+}
