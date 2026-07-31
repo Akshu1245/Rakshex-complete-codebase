@@ -43,10 +43,10 @@ export const metadata: Metadata = {
     ],
     apple: "/apple-touch-icon.png",
   },
-  openGraph: {
-    title: "RakshEx | AI Control Plane for Security, Cost, and Access",
-    description:
-      "Discover AI access, govern credentials and subscriptions, enforce gateway policy, and export audit evidence.",
+openGraph: {
+  title: "RaksHex – AI Runtime Governance & Prompt Injection Protection",
+  description:
+    "India’s first AI Runtime Governance platform. Block prompt injection, control LLM costs, discover shadow APIs, and generate compliance reports.",
     type: "website",
     siteName: "RaksHex",
     locale: "en_US",
@@ -60,10 +60,9 @@ export const metadata: Metadata = {
     ],
   },
   twitter: {
-    card: "summary_large_image",
-    title: "RakshEx | AI Control Plane",
-    description:
-      "AI security, access governance, cost controls, and audit evidence in one workspace.",
+  title: "RaksHex – AI Runtime Governance",
+  description:
+    "Block prompt injection, control LLM costs, and govern AI agents with RaksHex.",
     creator: "@rakshexhq",
     images: ["/og-image.png"],
   },
