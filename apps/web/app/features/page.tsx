@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Features — RaksHex AI Runtime Governance",
+  title: "RaksHex Features – Prompt Injection Blocking & LLM Cost Control",
   description:
-    "Feature breakdown of RaksHex: API security scanning, LLM cost monitoring, compliance scoring, shadow API detection, kill switch, and workspace controls.",
+    "Explore RaksHex features: prompt injection protection, LLM cost monitoring, shadow API discovery, kill switch, compliance reports, and MCP governance.",
   alternates: { canonical: "/features" },
 };
 
