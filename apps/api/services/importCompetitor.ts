@@ -14,11 +14,24 @@ import { ensurePersonalWorkspace } from "./workspaceContext";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
+/** Observability/guardrail tools we import telemetry from. */
 export type ImportSource =
   "helicone" | "portkey" | "lakera" | "langsmith" | "universal_csv" | "universal_json";
 
+/**
+ * API collection / spec formats. Deliberately a separate union from
+ * ImportSource: both kinds of import produce an ImportResult, but only
+ * ImportSource values are valid input to previewImport, which switches on
+ * the observability formats. Merging the two would let a caller pass
+ * "postman" to a function that cannot parse it.
+ */
+export type CollectionSpecSource = "postman" | "openapi" | "insomnia" | "bruno";
+
+/** Either kind of import, as recorded on the result. */
+export type AnyImportSource = ImportSource | CollectionSpecSource;
+
 export interface ImportResult {
-  source: ImportSource;
+  source: AnyImportSource;
   recordsImported: number;
   recordsSkipped: number;
   errors: string[];
@@ -47,7 +60,7 @@ export interface ImportPreview {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function emptyResult(source: ImportSource): ImportResult {
+function emptyResult(source: AnyImportSource): ImportResult {
   return {
     source,
     recordsImported: 0,
@@ -591,7 +604,7 @@ const COLLECTION_STORAGE_FORMATS = new Set(["postman", "openapi", "bruno"]);
  */
 export async function importCollectionSpec(
   userId: number,
-  source: "postman" | "openapi" | "insomnia" | "bruno",
+  source: CollectionSpecSource,
   raw: string | object,
   name?: string,
 ): Promise<ImportResult> {

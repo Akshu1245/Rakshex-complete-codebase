@@ -48,7 +48,7 @@ Migrations run on API pre-deploy: `pnpm --filter @rakshex/database db:migrate` (
 | `FRONTEND_URL`                                                        | Vercel production URL (e.g. `https://app.rakshex.in`)                                                                         |
 | `CORS_ORIGINS`                                                        | Exact origins, comma-separated — **no** `*.vercel.app` wildcards. Include production web + optional preview URLs you control. |
 | `METRICS_TOKEN`                                                       | Random bearer for `/metrics`                                                                                                  |
-| `RAKSHEX_VAULT_KEY`                                                   | 32-byte key for secret encryption (if required by env schema)                                                                 |
+| `RAKSHEX_VAULT_KEY`                                                   | **Required** — 32-byte key for secret encryption; API/worker fail closed at startup without it                               |
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `SMTP_FROM`   | Required in production                                                                                                        |
 | `SENTRY_DSN`                                                          | Optional but recommended                                                                                                      |
 | `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` / `RAZORPAY_WEBHOOK_SECRET` | **or** Stripe equivalents — at least one payment rail for beta                                                                |

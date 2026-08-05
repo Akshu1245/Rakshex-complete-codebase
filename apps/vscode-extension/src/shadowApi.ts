@@ -52,6 +52,18 @@ export async function runShadowApiScan(): Promise<DetectedWithUri[]> {
 
 export interface ShadowApiOptions {
   isTrusted: () => boolean;
+  /**
+   * Supplied by the activation site. Not currently consumed here — shadow API
+   * scanning is local/static — but typed so the caller can pass the same
+   * options object it builds for the other commands.
+   */
+  api?: unknown;
+  /**
+   * Present for parity with the other command registrations. Note this is
+   * accepted but NOT enforced: shadow API scanning runs offline and does not
+   * require a signed-in session today.
+   */
+  isSignedIn?: () => boolean;
 }
 
 export function registerShadowApiCommand(

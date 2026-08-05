@@ -197,3 +197,9 @@ repomix-output.txt
 **/*.egg-info/
 *.pyc
 
+# Local dev scratch — ad-hoc SQL and experiments. Deliberately ignored: loose
+# .sql files outside packages/database/drizzle are easy to mistake for real
+# migrations, and migrations here are driven by the hardcoded MIGRATION_ORDER
+# array in packages/database/src/migrate.ts, not by file discovery.
+scratch/
+

@@ -924,6 +924,14 @@ export const mcpServers = pgTable(
     url: varchar("url", { length: 1024 }),
     transport: mcpTransportEnum("transport").notNull(),
     /**
+     * Launch command for stdio-transport servers, e.g. ["npx", "-y",
+     * "@some/mcp-server"]. Null for streamable-http / sse servers, which
+     * carry their endpoint in `url` instead. Validated against an
+     * allowlist (see validateStdioCommand) before every spawn, not just
+     * at registration time.
+     */
+    command: json("command").$type<string[]>(),
+    /**
      * Capability fingerprint — JSON snapshot of the tool list the server
      * advertised at last discovery, used to detect drift / capability
      * additions that may need re-review.
@@ -965,6 +973,16 @@ export const mcpTools = pgTable(
     /** Schema for input parameters (JSON Schema). */
     inputSchema: json("inputSchema"),
     isApproved: boolean("isApproved").default(false).notNull(),
+    /**
+     * Adversarial-intent findings from @rakshex/mcp-security's
+     * scanToolForThreats() — typosquatting, hidden/zero-width Unicode
+     * instructions, and prompt-injection-shaped ("rug pull") descriptions.
+     * Distinct from `riskClass`, which only measures blast radius (what
+     * the tool can do if used as advertised), not whether the tool
+     * definition itself is lying or hiding something. Null until the
+     * first scan runs (pre-existing rows from before this column existed).
+     */
+    securityFindings: json("securityFindings"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
   (table) => ({

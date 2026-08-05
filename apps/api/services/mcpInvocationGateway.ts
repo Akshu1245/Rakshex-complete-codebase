@@ -15,7 +15,7 @@ import crypto from "crypto";
 import * as db from "../db";
 import { logger } from "../_core/logger";
 import { logSecurityEvent } from "./securityEvents";
-import { discoverMcpTools } from "./mcpTransport";
+import { invokeToolViaStdio } from "./mcpTransport";
 
 /* ─── Types ────────────────────────────────────────────────────────────── */
 
@@ -30,7 +30,7 @@ export interface InvocationResult {
   status: "completed" | "pending_approval" | "blocked" | "errored";
   result?: unknown;
   error?: string;
-  approvalId?: number;
+  approvalId?: string;
   auditId?: number;
   durationMs?: number;
 }
@@ -78,7 +78,7 @@ export async function invokeMCPTool(req: InvocationRequest): Promise<InvocationR
   let serverRow: Record<string, any> | null = null;
 
   for (const srv of servers) {
-    const tool = await db.getMcpToolByName(Number(srv.id), req.toolName);
+    const tool = await db.getMcpToolByName(srv.id, req.toolName);
     if (tool) {
       toolRow = tool;
       serverRow = srv;
@@ -94,7 +94,7 @@ export async function invokeMCPTool(req: InvocationRequest): Promise<InvocationR
   if (!toolRow.isApproved) {
     return {
       status: "pending_approval",
-      approvalId: Number(toolRow.id),
+      approvalId: String(toolRow.id),
     };
   }
 
@@ -113,6 +113,7 @@ export async function invokeMCPTool(req: InvocationRequest): Promise<InvocationR
       serverRow.transport as "stdio" | "streamable-http",
       req.toolName,
       req.args,
+      (serverRow.command as string[] | null) ?? undefined,
     );
 
     const durationMs = Date.now() - startedAt;
@@ -120,8 +121,8 @@ export async function invokeMCPTool(req: InvocationRequest): Promise<InvocationR
     // 4. Record audit entry
     await db.recordMcpInvocation({
       userId: req.userId,
-      serverId: Number(serverRow.id),
-      toolId: Number(toolRow.id),
+      serverId: String(serverRow.id),
+      toolId: String(toolRow.id),
       requestId: `mcp_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`,
       argsFingerprint: crypto.createHash("sha256").update(JSON.stringify(req.args)).digest("hex"),
       decision: "allowed",
@@ -139,8 +140,8 @@ export async function invokeMCPTool(req: InvocationRequest): Promise<InvocationR
 
     await db.recordMcpInvocation({
       userId: req.userId,
-      serverId: Number(serverRow.id),
-      toolId: Number(toolRow.id),
+      serverId: String(serverRow.id),
+      toolId: String(toolRow.id),
       requestId: `mcp_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`,
       argsFingerprint: crypto.createHash("sha256").update(JSON.stringify(req.args)).digest("hex"),
       decision: "errored",
@@ -249,15 +250,19 @@ async function executeToolCall(
   transport: "stdio" | "streamable-http",
   toolName: string,
   args: Record<string, unknown>,
+  command?: string[],
 ): Promise<unknown> {
   if (transport === "streamable-http") {
     validateMcpUrl(url);
     return executeHttpToolCall(url, toolName, args);
   }
-  // stdio transport requires command execution via spawn — not yet implemented.
-  // After RCE-001 fix, stdio commands are validated but actual invocation
-  // needs a secured subprocess wrapper (tracked as future work).
-  throw new Error("stdio tool invocation is not yet implemented — use streamable-http");
+  // stdio: reuses the same allowlisted-binary / no-shell spawn wrapper as
+  // discovery (see mcpTransport.validateStdioCommand) rather than a new,
+  // separately-audited code path. Fixed post RCE-001.
+  if (!command || command.length === 0) {
+    throw new Error("stdio server has no stored launch command — re-register the server");
+  }
+  return invokeToolViaStdio(command, toolName, args);
 }
 
 async function executeHttpToolCall(

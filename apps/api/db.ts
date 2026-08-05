@@ -734,6 +734,114 @@ export async function createScan(
   return { id };
 }
 
+/**
+ * Paginated, filterable scan list for a collection.
+ *
+ * The non-paginated `getScansByCollectionId` loads every scan for a
+ * collection, which is fine for a detail view but not for the scan history
+ * table, which passes page/pageSize. Returns `total` alongside the page so
+ * the caller can render page counts without a second round trip.
+ */
+export async function getScansPageByCollectionId(params: {
+  collectionId: string;
+  /** `"all"` (or omitted) returns every scan type. */
+  scanType?: "full" | "quick" | "shadow_api" | "prompt_injection" | "all";
+  limit: number;
+  offset: number;
+}): Promise<{ items: (typeof scans.$inferSelect)[]; total: number }> {
+  const db = await getDb();
+  if (!db) {
+    logger.warn("[Database] Cannot list scans: database not available");
+    return { items: [], total: 0 };
+  }
+
+  const typeFilter = params.scanType && params.scanType !== "all" ? params.scanType : undefined;
+  const where = typeFilter
+    ? and(eq(scans.collectionId, params.collectionId), eq(scans.scanType, typeFilter))
+    : eq(scans.collectionId, params.collectionId);
+
+  const [items, totalRows] = await Promise.all([
+    db
+      .select()
+      .from(scans)
+      .where(where)
+      .orderBy(desc(scans.createdAt))
+      .limit(params.limit)
+      .offset(params.offset),
+    db.select({ value: sql<number>`count(*)` }).from(scans).where(where),
+  ]);
+
+  return { items, total: Number(totalRows[0]?.value ?? 0) };
+}
+
+/**
+ * Create a scan and all of its findings in one transaction.
+ *
+ * Without the transaction a mid-insert failure leaves a scan row claiming N
+ * findings with fewer than N actually written — the risk score and the
+ * evidence behind it disagree, and nothing surfaces the inconsistency. The
+ * call site in scanService has always documented this as atomic; this makes
+ * it true.
+ */
+export async function saveScanWithFindings(input: {
+  userId: number;
+  collectionId: string;
+  scanType: "full" | "quick" | "shadow_api" | "prompt_injection";
+  riskScore: number;
+  riskLevel: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+  findings: Array<{
+    title: string;
+    severity: "Critical" | "High" | "Medium" | "Low";
+    description?: string;
+    category?: string;
+    remediation?: string;
+    cweId?: string;
+  }>;
+  workspaceId?: number;
+}): Promise<{ id: string }> {
+  const db = await getDb();
+  assertDb(db);
+
+  const scanId = secureId("scan");
+
+  await db.transaction(async (tx) => {
+    await tx.insert(scans).values({
+      id: scanId,
+      userId: input.userId,
+      collectionId: input.collectionId,
+      scanType: input.scanType,
+      status: "completed",
+      riskScore: input.riskScore.toString(),
+      riskLevel: input.riskLevel,
+      totalFindings: input.findings.length,
+      findingsData: input.findings as unknown as never,
+      workspaceId: input.workspaceId ?? null,
+      completedAt: new Date(),
+    });
+
+    if (input.findings.length > 0) {
+      await tx.insert(findings).values(
+        input.findings.map((finding) => ({
+          id: secureId("finding"),
+          scanId,
+          collectionId: input.collectionId,
+          userId: input.userId,
+          title: finding.title,
+          severity: finding.severity,
+          description: finding.description,
+          category: finding.category,
+          remediation: finding.remediation,
+          cweId: finding.cweId,
+          workspaceId: input.workspaceId,
+          status: "open" as const,
+        })),
+      );
+    }
+  });
+
+  return { id: scanId };
+}
+
 export async function getScansByCollectionId(collectionId: string) {
   const db = await getDb();
   if (!db) {
@@ -1017,6 +1125,14 @@ export async function recordTokenUsage(
   completionTokens: number,
   thinkingTokens: number,
   costUSD: number,
+  /**
+   * Optional cost-attribution dimensions. The columns and their indexes have
+   * existed since migration 0013 and the tRPC caller has always passed this,
+   * but the parameter was missing here — so every attribution value was
+   * silently discarded and the per-endpoint/per-feature spend views had
+   * nothing to read.
+   */
+  attribution?: { endpoint?: string; feature?: string },
 ) {
   const db = await getDb();
   assertDb(db);
@@ -1033,6 +1149,8 @@ export async function recordTokenUsage(
     thinkingTokens,
     totalTokens,
     costUSD: costUSD.toString(),
+    endpoint: attribution?.endpoint,
+    feature: attribution?.feature,
   });
 
   // Auto-increment currentSpendUSD in killSwitchSettings
@@ -1284,6 +1402,43 @@ export async function getComplianceReportsByCollectionId(collectionId: string) {
     .from(complianceReports)
     .where(eq(complianceReports.collectionId, collectionId))
     .orderBy(desc(complianceReports.createdAt));
+}
+
+/**
+ * Most recent compliance score per report type for a user.
+ *
+ * Powers the IDE panel's compliance tiles, which want "where do I stand right
+ * now" across all collections rather than a per-collection history.
+ */
+export async function getLatestComplianceScoresForUser(
+  userId: number,
+): Promise<Record<string, { score: number; collectionId: string; createdAt: Date } | null>> {
+  const db = await getDb();
+  if (!db) return {};
+
+  const rows = await db
+    .select({
+      reportType: complianceReports.reportType,
+      complianceScore: complianceReports.complianceScore,
+      collectionId: complianceReports.collectionId,
+      createdAt: complianceReports.createdAt,
+    })
+    .from(complianceReports)
+    .where(eq(complianceReports.userId, userId))
+    .orderBy(desc(complianceReports.createdAt));
+
+  // Rows arrive newest-first, so the first occurrence of each type is latest.
+  const latest: Record<string, { score: number; collectionId: string; createdAt: Date } | null> =
+    {};
+  for (const row of rows) {
+    if (latest[row.reportType]) continue;
+    latest[row.reportType] = {
+      score: Number(row.complianceScore ?? 0),
+      collectionId: row.collectionId,
+      createdAt: row.createdAt,
+    };
+  }
+  return latest;
 }
 
 export async function getComplianceReportById(id: string) {
@@ -2007,6 +2162,44 @@ export async function createAuditLogEntry(
     ipAddress: ipAddress || null,
     userAgent: userAgent || null,
   });
+}
+
+/**
+ * Paginated audit log with optional action and date-range filters.
+ *
+ * Audit history is the one view that must stay complete and navigable under
+ * compliance review, so it needs a real page/total rather than the capped
+ * `getAuditLogForUser` list.
+ */
+export async function getAuditLogForUserPage(params: {
+  userId: number;
+  limit: number;
+  offset: number;
+  action?: string;
+  startDate?: Date;
+  endDate?: Date;
+}): Promise<{ items: (typeof auditLog.$inferSelect)[]; total: number }> {
+  const db = await getDb();
+  if (!db) return { items: [], total: 0 };
+
+  const filters = [eq(auditLog.userId, params.userId)];
+  if (params.action) filters.push(eq(auditLog.action, params.action));
+  if (params.startDate) filters.push(gte(auditLog.createdAt, params.startDate));
+  if (params.endDate) filters.push(lt(auditLog.createdAt, params.endDate));
+  const where = filters.length === 1 ? filters[0] : and(...filters);
+
+  const [items, totalRows] = await Promise.all([
+    db
+      .select()
+      .from(auditLog)
+      .where(where)
+      .orderBy(desc(auditLog.createdAt))
+      .limit(params.limit)
+      .offset(params.offset),
+    db.select({ value: sql<number>`count(*)` }).from(auditLog).where(where),
+  ]);
+
+  return { items, total: Number(totalRows[0]?.value ?? 0) };
 }
 
 export async function getAuditLogForUser(userId: number, limit: number = 50) {
@@ -3608,6 +3801,38 @@ export async function createWorkspace(row: InsertWorkspaceRow): Promise<number> 
   return created.id;
 }
 
+/**
+ * Create a workspace and its owner membership in one transaction.
+ *
+ * If the membership insert fails after the workspace row commits, the result
+ * is a workspace nobody — including its owner — has access to, and which the
+ * slug uniqueness check will then block the user from recreating. That is an
+ * unrecoverable state for the account, so both rows go in together or
+ * neither does.
+ */
+export async function createWorkspaceWithOwner(
+  row: InsertWorkspaceRow,
+  ownerUserId: number,
+): Promise<number> {
+  const db = await getDb();
+  assertDb(db);
+
+  return await db.transaction(async (tx) => {
+    const [created] = await tx.insert(workspaces).values(row).returning({ id: workspaces.id });
+    if (!created) throw new Error("failed to create workspace");
+
+    await tx.insert(workspaceMembers).values({
+      workspaceId: created.id,
+      userId: ownerUserId,
+      role: "owner",
+      active: true,
+      joinedAt: new Date(),
+    });
+
+    return created.id;
+  });
+}
+
 export async function getWorkspaceById(id: number): Promise<WorkspaceRow | null> {
   const db = await getDb();
   if (!db) return null;
@@ -3966,7 +4191,7 @@ export async function listMcpServers(userId: number): Promise<McpServer[]> {
 }
 
 export async function getMcpToolByName(
-  serverId: number,
+  serverId: string,
   toolName: string,
 ): Promise<McpTool | null> {
   const db = await getDb();
@@ -3981,8 +4206,8 @@ export async function getMcpToolByName(
 
 export async function recordMcpInvocation(row: {
   userId: number;
-  serverId: number;
-  toolId: number;
+  serverId: string;
+  toolId: string;
   requestId: string;
   argsFingerprint: string;
   decision: "allowed" | "blocked" | "errored";

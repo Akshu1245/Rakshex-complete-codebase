@@ -10,7 +10,12 @@ function sourceFiles(directory: string): string[] {
   return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const target = path.join(directory, entry.name);
     if (entry.isDirectory()) {
-      if (["node_modules", ".next", "dist", "scratch", "test"].includes(entry.name)) return [];
+      // .vercel holds gitignored deploy artifacts (project.json carries the
+      // old project slug); scanning them reports violations for files that
+      // are never shipped and cannot be edited meaningfully.
+      if (["node_modules", ".next", ".vercel", "dist", "scratch", "test"].includes(entry.name)) {
+        return [];
+      }
       return sourceFiles(target);
     }
     if (!/\.(ts|tsx|js|jsx|json|svg)$/.test(entry.name) || /\.test\./.test(entry.name)) return [];

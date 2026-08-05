@@ -19,7 +19,18 @@ export type SecurityEventType =
   | "password_reset_attempt"
   | "mcp_registration_rate_limited"
   | "collection_data_size_exceeded"
-  | "webhook_delivery_dead_letter";
+  | "webhook_delivery_dead_letter"
+  // MCP governance
+  | "mcp_tool_invocation_blocked"
+  // Credential mediation — every event where a real provider secret was
+  // involved or was refused. These are the highest-signal events in the
+  // system: a denial or replay here means something tried to spend an
+  // authorization it did not hold.
+  | "brokered_credential_created"
+  | "brokered_credential_revoked"
+  | "credential_broker_denied"
+  | "credential_broker_replay_blocked"
+  | "credential_broker_headers_dropped";
 
 export interface SecurityEvent {
   id: string;

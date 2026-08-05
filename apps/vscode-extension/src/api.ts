@@ -38,6 +38,18 @@ export interface Collection {
   isShared?: boolean;
 }
 
+/** One framework's most recent compliance result, or null if never scanned. */
+export interface ComplianceScoreSnapshot {
+  score: number;
+  collectionId: string;
+  createdAt: string;
+}
+
+export interface LatestComplianceScores {
+  owasp: ComplianceScoreSnapshot | null;
+  pci: ComplianceScoreSnapshot | null;
+}
+
 export interface ControlPlaneSummary {
   providers: number;
   credentials: number;
@@ -108,6 +120,15 @@ export class RakshexApi {
     return this.query<Finding[]>("vscodeExtension.getRecentFindings", {
       limit,
     });
+  }
+
+  /**
+   * Latest compliance score per framework. Either field is null when that
+   * framework has never been scanned, so callers should render an empty
+   * state rather than treating null as a zero score.
+   */
+  async getLatestComplianceScores(): Promise<LatestComplianceScores> {
+    return this.query<LatestComplianceScores>("compliance.latestScores");
   }
 
   async listCollections(): Promise<Collection[]> {

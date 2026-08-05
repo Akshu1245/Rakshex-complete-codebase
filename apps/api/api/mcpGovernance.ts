@@ -12,7 +12,8 @@ import { getDb } from "../db";
 import { eq, desc, and } from "drizzle-orm";
 import { mcpServers, mcpTools, mcpInvocationLog } from "@rakshex/database";
 import { discoverMcpTools, classifyToolRisk, type McpTransport } from "../services/mcpTransport";
-import { validateMcpUrl } from "../services/mcpInvocationGateway";
+import { validateMcpUrl, invokeMCPTool } from "../services/mcpInvocationGateway";
+import { scanToolForThreats, type PermissionFinding } from "@rakshex/mcp-security";
 import { logger } from "../_core/logger";
 import { TRPCError } from "@trpc/server";
 import { logSecurityEvent } from "../services/securityEvents";
@@ -21,6 +22,40 @@ import { logSecurityEvent } from "../services/securityEvents";
 const mcpRegAttempts = new Map<number, { count: number; resetAt: number }>();
 const MCP_REG_LIMIT = 10;
 const MCP_REG_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+
+/**
+ * Merges the existing blast-radius classifier (classifyToolRisk — "what can
+ * this tool do if used as advertised?") with the adversarial-intent scanner
+ * (scanToolForThreats — "is this tool lying about what it does?"). A tool
+ * that looks capability-safe (a plain search tool) but carries a hidden
+ * zero-width instruction or a typosquatted name is not safe, so a critical
+ * threat finding overrides the blast-radius classification rather than
+ * just adding to a score the two would otherwise compute independently.
+ */
+function classifyToolWithThreats(tool: {
+  name: string;
+  description?: string;
+  inputSchema: Record<string, unknown>;
+}): {
+  riskClass: ReturnType<typeof classifyToolRisk>;
+  findings: PermissionFinding[];
+  riskScoreDelta: number;
+} {
+  const baseRiskClass = classifyToolRisk(tool);
+  const findings = scanToolForThreats(tool);
+  const hasCritical = findings.some((f) => f.severity === "critical");
+  const hasHigh = findings.some((f) => f.severity === "high");
+
+  let riskClass = baseRiskClass;
+  if (hasCritical) riskClass = "unsafe";
+  else if (hasHigh && baseRiskClass === "safe") riskClass = "elevated";
+
+  let riskScoreDelta = riskClass === "unsafe" ? 10 : riskClass === "elevated" ? 5 : 0;
+  if (hasCritical) riskScoreDelta += 15;
+  else if (hasHigh) riskScoreDelta += 8;
+
+  return { riskClass, findings, riskScoreDelta };
+}
 
 function checkMcpRegistrationLimit(userId: number): boolean {
   const now = Date.now();
@@ -200,6 +235,7 @@ export const mcpGovernanceRouter = router({
         name: input.name,
         url: input.url ?? null,
         transport: input.transport,
+        command: input.transport === "stdio" ? (input.command ?? null) : null,
         riskScore: 0,
         isActive: true,
         discoveredAt: new Date(),
@@ -238,10 +274,14 @@ export const mcpGovernanceRouter = router({
         // re-discover later.
       }
 
-      // Persist discovered tools
+      // Persist discovered tools — blast-radius classification plus the
+      // adversarial-intent scan (typosquatting, hidden Unicode, rug-pull
+      // descriptions). See classifyToolWithThreats().
       let riskScore = 0;
+      const classifiedTools = new Map<string, ReturnType<typeof classifyToolWithThreats>>();
       for (const tool of tools) {
-        const riskClass = classifyToolRisk(tool);
+        const classified = classifyToolWithThreats(tool);
+        classifiedTools.set(tool.name, classified);
         const toolId = `mcp_t_${crypto.randomBytes(8).toString("hex")}`;
 
         await db.insert(mcpTools).values({
@@ -249,14 +289,16 @@ export const mcpGovernanceRouter = router({
           serverId,
           name: tool.name,
           description: tool.description ?? null,
-          riskClass,
+          riskClass: classified.riskClass,
           inputSchema: tool.inputSchema ?? {},
-          isApproved: riskClass === "safe", // auto-approve safe tools
+          securityFindings: classified.findings.length > 0 ? classified.findings : null,
+          // Auto-approve only if both the blast-radius classifier and the
+          // adversarial-intent scanner are clean.
+          isApproved: classified.riskClass === "safe" && classified.findings.length === 0,
           createdAt: new Date(),
         });
 
-        if (riskClass === "unsafe") riskScore += 10;
-        else if (riskClass === "elevated") riskScore += 5;
+        riskScore += classified.riskScoreDelta;
       }
 
       // Update risk score based on tool classification
@@ -269,7 +311,8 @@ export const mcpGovernanceRouter = router({
         toolCount: tools.length,
         tools: tools.map((t) => ({
           name: t.name,
-          riskClass: classifyToolRisk(t),
+          riskClass: classifiedTools.get(t.name)?.riskClass ?? classifyToolRisk(t),
+          threats: classifiedTools.get(t.name)?.findings.map((f) => f.code) ?? [],
         })),
       };
     }),
@@ -299,7 +342,11 @@ export const mcpGovernanceRouter = router({
       }>;
 
       try {
-        const result = await discoverMcpTools(srv.transport as McpTransport, srv.url ?? "");
+        const result = await discoverMcpTools(
+          srv.transport as McpTransport,
+          srv.url ?? "",
+          (srv.command as string[] | null) ?? undefined,
+        );
         tools = result.tools;
 
         await db
@@ -327,7 +374,7 @@ export const mcpGovernanceRouter = router({
 
       let riskScore = 0;
       for (const tool of tools) {
-        const riskClass = classifyToolRisk(tool);
+        const classified = classifyToolWithThreats(tool);
         const toolId = `mcp_t_${crypto.randomBytes(8).toString("hex")}`;
 
         await db.insert(mcpTools).values({
@@ -335,14 +382,14 @@ export const mcpGovernanceRouter = router({
           serverId: input.serverId,
           name: tool.name,
           description: tool.description ?? null,
-          riskClass,
+          riskClass: classified.riskClass,
           inputSchema: tool.inputSchema ?? {},
-          isApproved: riskClass === "safe",
+          securityFindings: classified.findings.length > 0 ? classified.findings : null,
+          isApproved: classified.riskClass === "safe" && classified.findings.length === 0,
           createdAt: new Date(),
         });
 
-        if (riskClass === "unsafe") riskScore += 10;
-        else if (riskClass === "elevated") riskScore += 5;
+        riskScore += classified.riskScoreDelta;
       }
 
       if (riskScore > 0) {
@@ -421,5 +468,39 @@ export const mcpGovernanceRouter = router({
         .where(eq(mcpTools.id, input.toolId));
 
       return { success: true };
+    }),
+
+  /**
+   * Invoke an approved MCP tool. This is the missing leg of the documented
+   * "register → discover → approve/deny → invoke → audit" lifecycle —
+   * invokeMCPTool existed in services/mcpInvocationGateway but was never
+   * reachable from any route.
+   */
+  invokeTool: protectedProcedure
+    .input(
+      z.object({
+        toolName: z.string().min(1).max(256),
+        args: z.record(z.string(), z.unknown()).default({}),
+        sessionId: z.string().min(1).max(128).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const result = await invokeMCPTool({
+        sessionId: input.sessionId ?? `session_${crypto.randomBytes(8).toString("hex")}`,
+        toolName: input.toolName,
+        args: input.args,
+        userId: ctx.user.id,
+      });
+
+      if (result.status === "blocked") {
+        logSecurityEvent(
+          "mcp_tool_invocation_blocked",
+          { toolName: input.toolName, reason: result.error },
+          { userId: ctx.user.id, ip: ctx.req.ip, userAgent: ctx.req.headers["user-agent"] as string },
+        );
+        throw new TRPCError({ code: "FORBIDDEN", message: result.error ?? "Tool invocation blocked" });
+      }
+
+      return result;
     }),
 });
