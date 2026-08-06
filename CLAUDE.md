@@ -1,6 +1,6 @@
 # RaksHex — agent handoff
 
-**Last verified:** 2026-08-05 (every claim below was executed, not inferred)
+**Last verified:** 2026-08-06 (every claim below was executed, not inferred)
 
 Read this file first. It exists so you don't have to re-derive the state of the repo by
 reading 10,000 files. Where a claim is unverified, it says so explicitly — trust the
@@ -36,7 +36,7 @@ pnpm install
 pnpm lint          # clean, --max-warnings=0
 pnpm typecheck     # 18/18 packages
 pnpm build         # 18/18
-pnpm test:api      # 831 tests, 78 files
+pnpm test:api      # 872 tests, 81 files (was 831 — +policy differential corpus, +SIEM export)
 pnpm test:packages # 158 tests
 ```
 
@@ -45,7 +45,7 @@ With Postgres + Redis running (`docker compose up -d postgres redis`):
 ```bash
 pnpm db:migrate       # 26 migrations
 pnpm test:integration # 57 tests
-pnpm test:db          # SEE §5 — not verified, needs real Postgres
+pnpm test:db          # VERIFIED 2026-08-06 on real Postgres 18.4 — 10/10 pass, see §5 item 1
 pnpm test:e2e         # NOT VERIFIED — needs API + web up
 ```
 
@@ -200,11 +200,13 @@ despite the columns existing since migration 0013.
    do not switch call sites and assume parity. The migration itself has
    **not** been started.
 
-1. **`pnpm test:db` / `foundation.test.ts` — UNVERIFIED.** 6 tests fail under PGlite
-   with `Received unexpected rowDescription message from backend`. That is a
-   **PGlite wire-protocol emulation bug, not a schema defect** — the connection dies
-   and the rest cascade. Needs real Postgres. *This is the highest-value 10 minutes
-   available to you.*
+1. ~~`pnpm test:db` / `foundation.test.ts` — UNVERIFIED.~~ **VERIFIED 2026-08-06 on
+   real Postgres 18.4 — 10/10 pass.** The earlier 6 PGlite failures
+   (`Received unexpected rowDescription message from backend`) were confirmed as a
+   **PGlite wire-protocol emulation bug**, not a schema defect: same migrations, same
+   seed, same test file, zero failures under real Postgres. See §6 for how to get a
+   real (non-WASM) Postgres in a sandbox with no root and no Docker — the
+   `embedded-postgres` npm package ships native binaries and needs neither.
 2. **No authenticated end-to-end broker call.** Route existence and anonymous
    rejection are proven; the full path (sign in → store credential → evaluate → broker
    → egress row) is not. Needs user/workspace/session seeding.
@@ -243,12 +245,24 @@ it. Wired into `.env.example`, `render.yaml`, `docker-compose.prod.yml`.
 - Bulk `rsync`/`cp` of the whole repo over a mounted FS times out.
   `tar cf - --exclude=node_modules | tar xf -` into `/tmp` works.
 - turbo needs `pnpm` on `PATH`; a `corepack pnpm@10.32.1 "$@"` shim works.
-- No root, so no apt Postgres. **`@electric-sql/pglite` gives you real Postgres 18 in
-  WASM**, and `@electric-sql/pglite-socket` exposes it over TCP so the real `pg`
-  driver connects. Good enough for migrations and integration tests; **not** good
-  enough for `foundation.test.ts` (see §5).
+- No root, so no apt Postgres. Two options, and they are not interchangeable:
+  - **`@electric-sql/pglite`** gives you Postgres 18 compiled to **WASM**, and
+    `@electric-sql/pglite-socket` exposes it over TCP so the real `pg` driver
+    connects. Good enough for migrations and most integration tests. **Not** good
+    enough for `foundation.test.ts` — 6 tests fail with
+    `Received unexpected rowDescription message from backend`, a wire-protocol
+    emulation gap in PGlite itself.
+  - **`embedded-postgres`** (npm) ships **real native Postgres binaries** per
+    platform and runs `initdb`/`pg_ctl` as the current user — no root, no Docker.
+    This is what actually resolved `foundation.test.ts` (see §5 item 1, verified
+    2026-08-06): `new EmbeddedPostgres({ databaseDir, user, password, port,
+    persistent: false }); await pg.initialise(); await pg.start();` then point
+    `DATABASE_URL` at it. Prefer this over PGlite whenever a test's failure mode
+    is ambiguous between "real bug" and "emulator gap" — it removes the emulator
+    as a variable entirely.
 - Each bash call is a fresh PID namespace — background servers do not survive between
-  calls. Start the server and run the tests in **one** invocation.
+  calls. Start the server and run the tests in **one** invocation (wrap start →
+  migrate/test → `pg.stop()` in a single Node script, not separate bash calls).
 - The API boots in dev with `REDIS_URL=""` (falls back to in-memory MockRedis).
   Required env to boot: `DATABASE_URL`, `JWT_SECRET` (32+ chars), `RAKSHEX_VAULT_KEY`.
 
