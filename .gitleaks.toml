@@ -16,6 +16,20 @@ paths = [
   '''(?i).*/fixtures/.*''',
   '''packages/database/src/migrate\.ts''',
   '''(?i)^server/.*''',
+  # Python tests live under tests/ and are named test_*.py — the .ts/.tsx/.spec
+  # patterns above never matched them. packages/agentguard-python/tests/test_client.py
+  # asserts on an intentionally fake, alphabet-sequence OpenAI-shaped key
+  # (sk-abcdefghijklmnopqrstuvwxyz123456) used to test the redaction logic itself.
+  '''(?i)(^|/)tests?/.*\.py$''',
+  '''(?i)(^|/)test_[^/]+\.py$''',
+  # The product's own zero-auth demo page. Its entire purpose is showing what
+  # the scanner catches: it embeds an obviously-fake OpenAI key, an obviously-fake
+  # Google key, and the well-known Stripe test card number 4242-4242-4242-4242 as
+  # sample "leaked" data for a Postman collection the visitor drops in. This is
+  # the actual source of the gitleaks CI failure — same class of false positive
+  # as the other entries above, just not caught by the .ts test-file patterns
+  # because this is application code, not a test.
+  '''apps/web/app/demo/page\.tsx$''',
 ]
 
 regexes = [
