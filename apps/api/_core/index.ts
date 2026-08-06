@@ -652,7 +652,13 @@ async function startServer() {
   // network probe and runs them through the shadow-AI detector. This is the
   // entry point that lets us surface "rogue LLM API traffic" without an eBPF
   // probe — any sufficiently rich log stream can feed it.
-  app.post("/api/internal/shadow-ai-events", express.json({ limit: "1mb" }), async (req, res) => {
+  const shadowAiEventsLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 120,
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+  app.post("/api/internal/shadow-ai-events", shadowAiEventsLimiter, express.json({ limit: "1mb" }), async (req, res) => {
     if (!gatewayAuthOk(req)) {
       res.status(401).json({ error: "unauthorised" });
       return;
