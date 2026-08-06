@@ -13,6 +13,8 @@
         sync: false
       - key: JWT_SECRET
         sync: false
+      - key: RAKSHEX_VAULT_KEY
+        sync: false
       - key: APP_URL
         sync: false
       - key: FRONTEND_URL

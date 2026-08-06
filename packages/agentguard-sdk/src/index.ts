@@ -37,3 +37,11 @@ export {
   instrumentProviderCall,
 } from "./providers/index.js";
 export type { WrapOptions } from "./providers/index.js";
+
+export { AgentFirewallClient, FirewallDeniedError, createAgentFirewallClient } from "./firewall.js";
+export type {
+  BrokeredResponse,
+  FirewallAction,
+  FirewallClientOptions,
+  FirewallDecision,
+} from "./firewall.js";

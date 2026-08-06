@@ -1,0 +1,10 @@
+DROP TABLE IF EXISTS action_approvals;
+DROP TABLE IF EXISTS action_ledger;
+DROP TABLE IF EXISTS delegated_authorities;
+DROP TABLE IF EXISTS agent_identities;
+DROP TABLE IF EXISTS pending_approvals;
+DROP TYPE IF EXISTS action_approval_status;
+DROP TYPE IF EXISTS action_effective_decision;
+DROP TYPE IF EXISTS action_decision;
+DROP TYPE IF EXISTS agent_firewall_mode;
+DROP TYPE IF EXISTS agent_identity_status;

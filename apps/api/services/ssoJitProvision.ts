@@ -129,11 +129,12 @@ export async function jitProvisionUser(
   }
 
   // 3. Create (editor by default; re-assert in case schema default drifts).
+  // createLocalUser does not take a role; the explicit updateUser below is
+  // what actually assigns it (and is the re-assertion the comment refers to).
   const created = await db.createLocalUser({
     email,
     name,
     passwordHash: placeholderPasswordHash(),
-    role: "editor",
   });
   await db.updateUser(created.id, { role: "editor" });
   return {

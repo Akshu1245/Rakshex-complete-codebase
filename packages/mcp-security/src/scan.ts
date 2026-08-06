@@ -14,6 +14,152 @@ const NET_TOOLS = /^(http|fetch|request|browse|web_|curl|wget)/i;
 const SECRET_TOOLS = /^(get_secret|read_env|vault|credential|api_key)/i;
 const INJECTION_HINTS = /eval|exec|untrusted|raw_prompt|user_content/i;
 
+/**
+ * Adversarial-intent checks — distinct from the capability-class checks
+ * above. Those answer "what can this tool do if used as advertised?".
+ * These answer "is this tool lying about what it does, or hiding something
+ * in its own definition?" A tool can be capability-"safe" (a plain search
+ * tool) and still be malicious via typosquatting, hidden instructions, or
+ * a bait-and-switch description. Zero-width/invisible characters and
+ * well-known-tool-name impersonation don't show up in a keyword scan of
+ * visible text, so they need their own detectors.
+ */
+// Explicit \u escapes rather than literal invisible glyphs in source —
+// zero-width space, zero-width non-joiner/joiner, word joiner, BOM,
+// Mongolian vowel separator.
+const ZERO_WIDTH_CHARS = /\u200B|\u200C|\u200D|\u2060|\uFEFF|\u180E/;
+// A conservative homoglyph set — Cyrillic/Greek characters that render
+// identically to Latin ones in most fonts, commonly used to impersonate
+// a trusted tool name (e.g. "read_file" with a Cyrillic "е" in place of
+// the Latin one). Range covers Cyrillic (U+0400–U+04FF) and Greek
+// (U+0370–U+03FF).
+const HOMOGLYPH_CHARS = /[\u0400-\u04FF\u0370-\u03FF]/;
+
+const PROMPT_INJECTION_PATTERNS = [
+  /<system>/i,
+  /ignore (all )?(previous|prior|above) instructions/i,
+  /disregard (all )?(previous|prior|above)/i,
+  /you must (always|never)/i,
+  /do not (tell|inform|notify) the user/i,
+  /this is (a )?system (message|instruction)/i,
+];
+
+// Names of widely-used MCP/agent tools, used as the typosquatting
+// reference set. Kept intentionally small and high-confidence rather than
+// exhaustive — false positives on an edit-distance check erode trust in
+// the scanner fast.
+const WELL_KNOWN_TOOL_NAMES = [
+  "read_file",
+  "write_file",
+  "list_directory",
+  "list_dir",
+  "delete_file",
+  "execute_command",
+  "run_command",
+  "fetch",
+  "http_request",
+  "web_search",
+  "browser_navigate",
+  "send_email",
+  "get_secret",
+  "read_env",
+  "search_web",
+  "run_python",
+  "shell",
+  "bash",
+];
+
+function levenshtein(a: string, b: string): number {
+  const m = a.length;
+  const n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  const dp: number[][] = Array.from({ length: m + 1 }, () => new Array<number>(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i]![0] = i;
+  for (let j = 0; j <= n; j++) dp[0]![j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      dp[i]![j] = Math.min(dp[i - 1]![j]! + 1, dp[i]![j - 1]! + 1, dp[i - 1]![j - 1]! + cost);
+    }
+  }
+  return dp[m]![n]!;
+}
+
+/** Adversarial-intent scan — hidden characters, name impersonation, prompt-injection-shaped descriptions. */
+export function scanToolForThreats(tool: McpToolDef, serverName?: string): PermissionFinding[] {
+  const findings: PermissionFinding[] = [];
+  const name = tool.name ?? "";
+  const description = tool.description ?? "";
+  const combined = `${name} ${description}`;
+
+  if (ZERO_WIDTH_CHARS.test(combined)) {
+    findings.push({
+      code: "hidden_instruction",
+      severity: "critical",
+      message: `Tool ${name} definition contains zero-width/invisible Unicode characters`,
+      evidence: [JSON.stringify(combined)],
+      toolName: name,
+      serverName,
+    });
+  }
+  if (HOMOGLYPH_CHARS.test(name)) {
+    findings.push({
+      code: "hidden_instruction",
+      severity: "high",
+      message: `Tool ${name} name contains non-Latin characters that may be homoglyph impersonation`,
+      evidence: [name],
+      toolName: name,
+      serverName,
+    });
+  }
+
+  const lowerName = name.toLowerCase();
+  for (const known of WELL_KNOWN_TOOL_NAMES) {
+    if (lowerName === known) continue;
+    const distance = levenshtein(lowerName, known);
+    if (distance > 0 && distance <= 2 && Math.abs(lowerName.length - known.length) <= 2) {
+      findings.push({
+        code: "typosquatting",
+        severity: "high",
+        message: `Tool name "${name}" is suspiciously close to well-known tool "${known}" (edit distance ${distance})`,
+        evidence: [name, known],
+        toolName: name,
+        serverName,
+      });
+      break;
+    }
+  }
+
+  for (const pattern of PROMPT_INJECTION_PATTERNS) {
+    if (pattern.test(description)) {
+      findings.push({
+        code: "rug_pull",
+        severity: "critical",
+        message: `Tool ${name} description contains instruction-like language aimed at the calling model, not the user`,
+        evidence: [description],
+        toolName: name,
+        serverName,
+      });
+      break;
+    }
+  }
+  // Abnormally long descriptions are a common rug-pull vector — extra text
+  // buried past what a human reviewer reads in the approval UI.
+  if (description.length > 1200) {
+    findings.push({
+      code: "rug_pull",
+      severity: "medium",
+      message: `Tool ${name} has an unusually long description (${description.length} chars) — review in full before approving`,
+      evidence: [`${description.length} characters`],
+      toolName: name,
+      serverName,
+    });
+  }
+
+  return findings;
+}
+
 export function scanMcpServer(server: McpServerConfig): PermissionFinding[] {
   const findings: PermissionFinding[] = [];
   const tools = server.tools ?? [];
@@ -80,7 +226,7 @@ export function scanMcpServer(server: McpServerConfig): PermissionFinding[] {
   }
 
   for (const tool of tools) {
-    findings.push(...scanTool(tool, server.name));
+    findings.push(...scanTool(tool, server.name), ...scanToolForThreats(tool, server.name));
   }
 
   return findings;

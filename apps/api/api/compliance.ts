@@ -199,6 +199,21 @@ export const complianceRouter = router({
       };
     }),
 
+  /**
+   * Latest compliance score per report type for the signed-in user. Drives
+   * the IDE panel's compliance tiles; returns nulls rather than erroring when
+   * a framework has never been scanned, so the client can render an empty
+   * state without special-casing.
+   */
+  latestScores: protectedProcedure.query(async ({ ctx }) => {
+    const latest = await db.getLatestComplianceScoresForUser(ctx.user.id);
+    // Keys must match the report_type enum values ("pci_dss", not "pci").
+    return {
+      owasp: latest["owasp"] ?? null,
+      pci: latest["pci_dss"] ?? null,
+    };
+  }),
+
   getReport: protectedProcedure
     .input(z.object({ reportId: z.string() }))
     .query(async ({ input, ctx }) => {

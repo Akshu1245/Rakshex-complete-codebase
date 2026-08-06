@@ -46,7 +46,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "RaksHex – AI Runtime Governance & Prompt Injection Protection",
     description:
-      "India’s first AI Runtime Governance platform. Block prompt injection, control LLM costs, discover shadow APIs, and generate compliance reports.",
+      "AI Runtime Governance for Indian teams. Block prompt injection, control LLM costs, discover shadow APIs, and generate compliance reports.",
     type: "website",
     siteName: "RaksHex",
     locale: "en_US",

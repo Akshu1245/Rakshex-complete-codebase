@@ -8,4 +8,11 @@ export type {
   RiskScore,
 } from "./types.js";
 
-export { scanMcpServer, scanTool, scoreFindings, buildInventory, isToolAllowed } from "./scan.js";
+export {
+  scanMcpServer,
+  scanTool,
+  scanToolForThreats,
+  scoreFindings,
+  buildInventory,
+  isToolAllowed,
+} from "./scan.js";

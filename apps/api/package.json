@@ -25,6 +25,7 @@
     "@opentelemetry/resources": "^2.7.1",
     "@opentelemetry/sdk-node": "^0.221.0",
     "@opentelemetry/sdk-trace-base": "^2.7.1",
+    "@rakshex/action-control": "workspace:*",
     "@rakshex/agentguard-sdk": "workspace:*",
     "@rakshex/config": "workspace:*",
     "@rakshex/database": "workspace:*",

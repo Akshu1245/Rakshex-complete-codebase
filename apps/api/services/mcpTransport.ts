@@ -105,7 +105,18 @@ function validateStdioCommand(command: string[]): void {
   }
 }
 
-async function discoverViaStdio(command: string[]): Promise<McpDiscoverResult> {
+/**
+ * Spawn an MCP stdio server, complete the initialize handshake, and hand
+ * control to `onReady` with a live session. The process is always killed
+ * before this resolves/rejects — stdio sessions are short-lived, one call
+ * (or one discovery pass) at a time, never held open across requests.
+ */
+function withStdioSession<T>(
+  command: string[],
+  timeoutMs: number,
+  timeoutMessage: string,
+  onReady: (session: StdioSession) => Promise<T>,
+): Promise<T> {
   validateStdioCommand(command);
 
   const proc = spawn(command[0], command.slice(1), {
@@ -123,11 +134,19 @@ async function discoverViaStdio(command: string[]): Promise<McpDiscoverResult> {
 
   let stderr = "";
 
-  const resultPromise = new Promise<McpDiscoverResult>((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      reject(new Error("MCP stdio discovery timed out after 15s"));
+  return new Promise<T>((resolve, reject) => {
+    let settled = false;
+    const finish = (fn: () => void) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
       proc.kill();
-    }, 15_000);
+      fn();
+    };
+
+    const timeout = setTimeout(() => {
+      finish(() => reject(new Error(timeoutMessage)));
+    }, timeoutMs);
 
     proc.stdout?.on("data", (chunk: Buffer) => {
       session.buffer += chunk.toString("utf-8");
@@ -166,56 +185,74 @@ async function discoverViaStdio(command: string[]): Promise<McpDiscoverResult> {
     });
 
     proc.on("error", (err) => {
-      clearTimeout(timeout);
-      reject(err);
+      finish(() => reject(err));
     });
 
     proc.on("close", (code) => {
-      clearTimeout(timeout);
       for (const [, p] of session.pending) {
         p.reject(new Error(`MCP server exited with code ${code}${stderr ? ": " + stderr : ""}`));
       }
       session.pending.clear();
+      finish(() => reject(new Error(`MCP server exited with code ${code}`)));
     });
 
-    // Handshake sequence
+    // Handshake sequence, then hand off to the caller.
     stdioRequest(session, "initialize", {
       protocolVersion: "2024-11-05",
       capabilities: {},
       clientInfo: { name: "rakshex", version: "1.0.0" },
     })
-      .then(() => {
-        // Send initialized notification
-        return writeStdioLine(session, {
+      .then(() =>
+        writeStdioLine(session, {
           jsonrpc: "2.0",
           method: "notifications/initialized",
-        }).then(() => stdioRequest(session, "tools/list"));
-      })
-      .then((result) => {
-        clearTimeout(timeout);
-        proc.kill();
-
-        const tools = Array.isArray((result as { tools?: McpToolDef[] }).tools)
-          ? (result as { tools: McpToolDef[] }).tools
-          : [];
-
-        resolve({
-          server: { name: command.join(" "), version: "unknown" },
-          tools: tools.map((t) => ({
-            name: t.name,
-            description: t.description,
-            inputSchema: t.inputSchema ?? {},
-          })),
-        });
-      })
-      .catch((err) => {
-        clearTimeout(timeout);
-        proc.kill();
-        reject(err);
-      });
+        }),
+      )
+      .then(() => onReady(session))
+      .then((value) => finish(() => resolve(value)))
+      .catch((err) => finish(() => reject(err)));
   });
+}
 
-  return resultPromise;
+async function discoverViaStdio(command: string[]): Promise<McpDiscoverResult> {
+  return withStdioSession(command, 15_000, "MCP stdio discovery timed out after 15s", async (session) => {
+    const result = (await stdioRequest(session, "tools/list")) as { tools?: McpToolDef[] };
+    const tools = Array.isArray(result.tools) ? result.tools : [];
+
+    return {
+      server: { name: command.join(" "), version: "unknown" },
+      tools: tools.map((t) => ({
+        name: t.name,
+        description: t.description,
+        inputSchema: t.inputSchema ?? {},
+      })),
+    };
+  });
+}
+
+/**
+ * Invoke a single tool on a stdio MCP server. Spawns the server fresh,
+ * completes the handshake, sends `tools/call`, and tears the process down —
+ * mirrors discoverViaStdio's security posture (allowlisted binaries, no
+ * shell, blocked metacharacters) rather than introducing a new code path.
+ */
+export async function invokeToolViaStdio(
+  command: string[],
+  toolName: string,
+  args: Record<string, unknown>,
+): Promise<unknown> {
+  return withStdioSession(
+    command,
+    30_000,
+    "MCP stdio tool invocation timed out after 30s",
+    async (session) => {
+      const result = await stdioRequest(session, "tools/call", {
+        name: toolName,
+        arguments: args,
+      });
+      return (result as { content?: unknown })?.content ?? result ?? { ok: true };
+    },
+  );
 }
 
 /* ─── Streamable HTTP transport ────────────────────────────────────────── */

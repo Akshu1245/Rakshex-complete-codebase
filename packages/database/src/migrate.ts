@@ -27,7 +27,23 @@ const MIGRATION_ORDER = [
   "0009_findings_lifecycle.sql",
   "0010_p1_workspace_tenancy.sql",
   "0011_p3_hot_path_indexes.sql",
+  // 0012_compliance_report_types predates 0012_workspace_subscriptions
+  // (2026-07-22 vs 2026-07-31) but both landed under the same numeric
+  // prefix. Neither depends on the other; ordered by authorship date.
+  "0012_compliance_report_types.sql",
   "0012_workspace_subscriptions.sql",
+  "0013_token_usage_attribution.sql",
+  "0014_team_ai_governance.sql",
+  "0015_governance_extensions.sql",
+  "0016_shadow_key_lifecycle.sql",
+  "0017_secure_scan_reports.sql",
+  "0018_gateway_key_bindings.sql",
+  "0019_workspace_webhooks.sql",
+  "0020_gateway_audit_workspace.sql",
+  "0021_mcp_server_command.sql",
+  "0022_agent_firewall.sql",
+  "0023_mcp_tool_security_findings.sql",
+  "0024_credential_mediation.sql",
 ];
 
 export async function migrate(databaseUrl?: string): Promise<string[]> {
