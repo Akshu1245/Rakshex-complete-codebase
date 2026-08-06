@@ -166,6 +166,40 @@ despite the columns existing since migration 0013.
    sites, ideally with a test that asserts both paths agree on a shared
    corpus of policies before either is removed.
 
+   **Update 2026-08-06 — the corpus test now exists:**
+   `apps/api/engines/policyEngine.differential.test.ts` runs 10 policy
+   intents through both engines and normalizes the results through
+   `services/policyDecisionCompat.ts`. **7 of 10 agree. 3 are asserted
+   divergences**, and they are the actual scope of the migration, not a
+   footnote:
+
+   - **Network destination policy is unenforceable in the app engine.**
+     `AIEventContext` has no field a rule can match a destination against —
+     `getFieldValue()` falls through to `""` for any unrecognised field. A
+     domain block that works via the package engine is a silent no-op via
+     the app engine.
+   - **Prompt threat level is unenforceable in the package engine.**
+     `PolicyDocument` has no threat-level concept anywhere in its schema. A
+     rule that blocks on the MCP adversarial-intent scanner's threat level
+     cannot be represented as a `PolicyDocument` at all.
+   - **Cross-category precedence is not the same relation.** The app engine
+     lets a per-rule `priority` beat another rule regardless of category (a
+     tool rule ranked above a model rule wins). The package engine hardcodes
+     category order (models before tools, no override). Identical facts,
+     opposite decision, depending only on which engine handles the request —
+     this is the fail-open hazard from the paragraph above, demonstrated
+     rather than asserted.
+
+   **What this means for "migrate to one engine":** it is not a rename.
+   The package engine's schema has no slot for threat-level or free-form
+   telemetry conditions, and no per-rule priority. Migrating the app
+   engine's call sites onto the package engine today would silently drop
+   both threat-level policies and any priority-based rule that currently
+   overrides a category. Either extend `PolicyDocument`'s schema first, or
+   accept and document the loss explicitly before switching call sites —
+   do not switch call sites and assume parity. The migration itself has
+   **not** been started.
+
 1. **`pnpm test:db` / `foundation.test.ts` — UNVERIFIED.** 6 tests fail under PGlite
    with `Received unexpected rowDescription message from backend`. That is a
    **PGlite wire-protocol emulation bug, not a schema defect** — the connection dies
