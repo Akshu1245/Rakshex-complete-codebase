@@ -141,6 +141,31 @@ despite the columns existing since migration 0013.
 
 ## 5. Known gaps — start here
 
+0. **TWO POLICY ENGINES ARE LIVE AT ONCE.** Found 2026-08-06. There are two
+   different functions both called `evaluatePolicy`, with incompatible data
+   models, both in active use on different request paths:
+
+   - `apps/api/engines/policyEngine.ts` — `(event: AIEventContext, rules: PolicyRule[])`,
+     a priority-sorted rule list where first match wins. Used by
+     `middleware/policyEnforcement.ts`, `services/policyCache.ts`, `api/policies.ts`.
+   - `packages/policy-engine` — `(policy: PolicyDocument | CompiledPolicy, ctx)`,
+     a compiled policy document. Used by `services/gateway/enforcement.ts`
+     and `services/policyAsCode.ts`.
+
+   For a security product this is the most serious structural problem in the
+   repo: **a policy authored in one model is invisible to the other**, so the
+   answer to "is this action allowed?" depends on which entry point the
+   request happened to take. A customer configuring a rule in the dashboard
+   has no reason to expect it not to apply at the gateway. Nothing currently
+   detects the divergence — both engines are individually tested and both
+   pass.
+
+   Do not "fix" this by deleting one at random; they encode different
+   semantics and each has live call sites. It needs a deliberate decision
+   about which model is canonical, then a migration of the other's call
+   sites, ideally with a test that asserts both paths agree on a shared
+   corpus of policies before either is removed.
+
 1. **`pnpm test:db` / `foundation.test.ts` — UNVERIFIED.** 6 tests fail under PGlite
    with `Received unexpected rowDescription message from backend`. That is a
    **PGlite wire-protocol emulation bug, not a schema defect** — the connection dies
