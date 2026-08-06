@@ -257,15 +257,15 @@ describe("originOf", () => {
 
 describe("buildAuthHeader", () => {
   it("builds a bearer header", () => {
-    expect(buildAuthHeader("bearer", null, "sk_test_123")).toEqual({
+    expect(buildAuthHeader("bearer", null, "fixture-basic-auth-secret")).toEqual({
       name: "authorization",
-      value: "Bearer sk_test_123",
+      value: "Bearer fixture-basic-auth-secret",
     });
   });
 
   it("builds a basic header with an empty password", () => {
-    const { value } = buildAuthHeader("basic", null, "sk_test_123");
-    expect(Buffer.from(value.replace("Basic ", ""), "base64").toString()).toBe("sk_test_123:");
+    const { value } = buildAuthHeader("basic", null, "fixture-basic-auth-secret");
+    expect(Buffer.from(value.replace("Basic ", ""), "base64").toString()).toBe("fixture-basic-auth-secret:");
   });
 
   it("builds a custom header, lowercased", () => {
@@ -315,14 +315,14 @@ describe("sanitizeResponseHeaders", () => {
 
 describe("redactSecret", () => {
   it("redacts a credential echoed back by the provider", () => {
-    const out = redactSecret({ error: { message: "Invalid key sk_live_abcdef123" } }, "sk_live_abcdef123");
-    expect(JSON.stringify(out)).not.toContain("sk_live_abcdef123");
+    const out = redactSecret({ error: { message: "Invalid key fixture-echoed-secret-value" } }, "fixture-echoed-secret-value");
+    expect(JSON.stringify(out)).not.toContain("fixture-echoed-secret-value");
     expect(JSON.stringify(out)).toContain("[REDACTED]");
   });
 
   it("leaves an unrelated body untouched", () => {
     const body = { ok: true };
-    expect(redactSecret(body, "sk_live_abcdef123")).toBe(body);
+    expect(redactSecret(body, "fixture-echoed-secret-value")).toBe(body);
   });
 
   it("ignores implausibly short secrets", () => {
@@ -343,7 +343,7 @@ describe("executeBrokeredCall", () => {
     await executeBrokeredCall({
       targetUrl: "https://api.stripe.com/v1/refunds",
       method: "post",
-      secret: "sk_live_1",
+      secret: "fixture-secret-1",
       injection: "bearer",
       headerName: null,
       headers: { Authorization: "Bearer attacker", "Idempotency-Key": "k1" },
@@ -353,7 +353,7 @@ describe("executeBrokeredCall", () => {
     const [url, init] = fetchImpl.mock.calls[0];
     expect(url).toBe("https://api.stripe.com/v1/refunds");
     expect(init.method).toBe("POST");
-    expect(init.headers.authorization).toBe("Bearer sk_live_1");
+    expect(init.headers.authorization).toBe("Bearer fixture-secret-1");
     expect(init.headers["idempotency-key"]).toBe("k1");
     expect(init.body).toBe(JSON.stringify({ amount: 100 }));
   });
@@ -363,7 +363,7 @@ describe("executeBrokeredCall", () => {
     await executeBrokeredCall({
       targetUrl: "https://api.stripe.com/v1/refunds",
       method: "get",
-      secret: "sk_live_1",
+      secret: "fixture-secret-1",
       injection: "bearer",
       headerName: null,
       fetchImpl: fetchImpl as unknown as typeof fetch,
@@ -376,7 +376,7 @@ describe("executeBrokeredCall", () => {
     await executeBrokeredCall({
       targetUrl: "https://api.stripe.com/v1/refunds",
       method: "GET",
-      secret: "sk_live_1",
+      secret: "fixture-secret-1",
       injection: "bearer",
       headerName: null,
       body: { nope: true },
@@ -395,7 +395,7 @@ describe("executeBrokeredCall", () => {
     const r = await executeBrokeredCall({
       targetUrl: "https://api.stripe.com/v1/refunds",
       method: "post",
-      secret: "sk_live_1",
+      secret: "fixture-secret-1",
       injection: "bearer",
       headerName: null,
       fetchImpl: fetchImpl as unknown as typeof fetch,
@@ -411,7 +411,7 @@ describe("executeBrokeredCall", () => {
     const r = await executeBrokeredCall({
       targetUrl: "https://api.stripe.com/v1/refunds",
       method: "get",
-      secret: "sk_live_1",
+      secret: "fixture-secret-1",
       injection: "bearer",
       headerName: null,
       fetchImpl: fetchImpl as unknown as typeof fetch,

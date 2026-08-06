@@ -54,10 +54,16 @@ pnpm test:e2e         # NOT VERIFIED — needs API + web up
 
 > **Important history:** before 2026-08-05 this repo **did not typecheck** — 7
 > pre-existing errors, including four calls to DB functions that did not exist. That
-> means the CI typecheck gate was not being enforced. Several docs in this repo
-> (`docs/FEATURE_MATURITY.md`, `MARKET_READY.md`, and others dated 2026-07-30) assert
-> "code-complete and test-covered"; those were written while the build was broken.
-> **Treat pre-August-2026 status docs as marketing, not evidence.**
+> means the CI typecheck gate was not being enforced. Several status docs asserted
+> "code-complete and test-covered" while the build was broken. Seven of them were
+> **deleted on 2026-08-05** (`MARKET_READY.md`, `MARKET_READINESS_LAUNCH_BAR.md`,
+> `LAUNCH_BAR.md`, `PRODUCTION_READINESS_REPORT_2026-07-30.md`,
+> `rakshex_verification_report.md`, `docs/MARKET_READY_COMPLETE.md`,
+> `ARCHITECTURE_AUDIT.md`) because a future reader inheriting their false baseline is
+> worse than having no status doc at all. **This file is now the only status doc.**
+> `docs/FEATURE_MATURITY.md` and `docs/GAP_INVENTORY.md` survive but are still dated
+> 2026-07-30 — treat them as marketing, not evidence. Some docs still contain dangling
+> links to the deleted files; harmless, but fix on sight.
 
 ---
 
