@@ -32,6 +32,7 @@ import {
 } from "../services/credentialBroker";
 import { decryptSecret, encryptSecret, isVaultConfigured } from "../services/vault";
 import { logSecurityEvent } from "../services/securityEvents";
+import { exportLedgerToSiem } from "../services/ledgerSiemExport";
 
 type ApiKeyAuthContext = { workspaceId: number; scopes: string[] };
 
@@ -610,6 +611,56 @@ export const agentFirewallRouter = router({
           amountMinor: row.amountMinor == null ? null : numeric(row.amountMinor),
         }));
       }),
+    /**
+     * Export ledger records in a SIEM-native format.
+     *
+     * Enterprises will not accept evidence that only lives in our dashboard —
+     * it has to reach their SIEM, where their detection rules and retention
+     * already are. Supports CEF (ArcSight/QRadar), RFC 5424 syslog, Splunk
+     * HEC, and NDJSON.
+     *
+     * Returns the formatted body plus its content type so a caller can stream
+     * it straight to a collector. Read-only and audit-scoped: this is evidence
+     * export, so it uses the same permission as reading the audit log rather
+     * than the looser membership check.
+     */
+    exportSiem: protectedProcedure
+      .input(
+        workspaceInput.extend({
+          format: z.enum(["ndjson", "cef", "syslog", "splunk_hec"]).default("ndjson"),
+          agentId: z.string().min(1).max(64).optional(),
+          since: z.string().datetime().optional(),
+          limit: z.number().int().min(1).max(5000).default(1000),
+        }),
+      )
+      .query(async ({ ctx, input }) => {
+        await requireWorkspacePermission(input.workspaceId, ctx.user.id, "audit", "read");
+        const database = requireDb(await db.getDb());
+
+        const filters = [eq(actionLedger.workspaceId, input.workspaceId)];
+        if (input.agentId) filters.push(eq(actionLedger.agentId, input.agentId));
+        if (input.since) filters.push(gte(actionLedger.occurredAt, new Date(input.since)));
+
+        const rows = await database
+          .select()
+          .from(actionLedger)
+          .where(filters.length === 1 ? filters[0] : and(...filters))
+          .orderBy(desc(actionLedger.occurredAt))
+          .limit(input.limit);
+
+        const result = exportLedgerToSiem(rows, input.format);
+        logSecurityEvent(
+          "siem_export_generated",
+          {
+            workspaceId: input.workspaceId,
+            format: input.format,
+            recordCount: result.recordCount,
+          },
+          { userId: ctx.user.id },
+        );
+        return result;
+      }),
+
     outcome: protectedProcedure
       .input(
         workspaceInput.extend({

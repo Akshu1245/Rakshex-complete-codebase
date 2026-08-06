@@ -30,7 +30,9 @@ export type SecurityEventType =
   | "brokered_credential_revoked"
   | "credential_broker_denied"
   | "credential_broker_replay_blocked"
-  | "credential_broker_headers_dropped";
+  | "credential_broker_headers_dropped"
+  // Evidence export — worth recording who pulled the audit trail out.
+  | "siem_export_generated";
 
 export interface SecurityEvent {
   id: string;
