@@ -427,6 +427,56 @@ async function startServer() {
     return { db: dbStatus, redis: redisStatus, queue: redisStatus };
   }
 
+  // ── Per-route rate limits ────────────────────────────────────────────────
+  // `globalLimiter` above already covers every route, but CodeQL's
+  // js/missing-rate-limiting query only recognises limiters attached at the
+  // route, so a global `app.use` reads as unprotected. These are not purely
+  // to satisfy the scanner: each endpoint below does DB, filesystem or crypto
+  // work and several are unauthenticated or token-authenticated rather than
+  // session-authenticated, so they warrant a tighter budget than the generous
+  // global one.
+  const internalReadLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 120,
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+  const internalWriteLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 240,
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+  // Webhooks come from GitHub, which retries; keep this generous enough not to
+  // drop legitimate redeliveries but bounded against a forged-signature flood.
+  const webhookLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 300,
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+  // Uploads are the most expensive unauthenticated-ish path (multipart parse
+  // + parse of untrusted collection JSON), so this is deliberately tight.
+  const uploadLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 20,
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+  // Single-use token endpoints: a low ceiling also blunts token brute-forcing.
+  const tokenLinkLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 30,
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+  const metricsLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 60,
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
   app.get("/api/health", async (_req, res) => {
     const checks = await runDependencyHealth();
     const allOk = checks.db === "ok" && checks.redis === "ok";
@@ -475,7 +525,7 @@ async function startServer() {
   });
 
   // ── Prometheus metrics endpoint (bearer-token protected) ──────────────────
-  app.get("/metrics", async (req, res) => {
+  app.get("/metrics", metricsLimiter, async (req, res) => {
     const expected = ENV.metricsToken;
     if (ENV.isProduction || expected) {
       const auth = req.headers.authorization;
@@ -494,7 +544,7 @@ async function startServer() {
   });
 
   // ── GitHub App webhook endpoint ───────────────────────────────────────────
-  app.post("/webhooks/github", express.json({ limit: "2mb" }), async (req, res) => {
+  app.post("/webhooks/github", webhookLimiter, express.json({ limit: "2mb" }), async (req, res) => {
     const signature = (req.headers["x-hub-signature-256"] as string) || "";
     const deliveryId = (req.headers["x-github-delivery"] as string) || undefined;
     // Fork PRs: still accept; worker uses installation token only for allowed repos
@@ -522,7 +572,7 @@ async function startServer() {
   }
 
   // One-time data export download (token from dataExport.prepare). Auth = token possession.
-  app.get("/api/internal/data-export/:token", async (req, res) => {
+  app.get("/api/internal/data-export/:token", tokenLinkLimiter, async (req, res) => {
     try {
       const { buildExportFromToken } = await import("../api/dataExport");
       const token = String(req.params.token || "");
@@ -548,7 +598,7 @@ async function startServer() {
     }
   });
 
-  app.get("/api/internal/kill-switch/:tenantId", async (req, res) => {
+  app.get("/api/internal/kill-switch/:tenantId", internalReadLimiter, async (req, res) => {
     if (!gatewayAuthOk(req)) {
       res.status(401).json({ error: "unauthorised" });
       return;
@@ -571,7 +621,7 @@ async function startServer() {
     });
   });
 
-  app.post("/api/internal/gateway-audit", express.json(), async (req, res) => {
+  app.post("/api/internal/gateway-audit", internalWriteLimiter, express.json(), async (req, res) => {
     if (!gatewayAuthOk(req)) {
       res.status(401).json({ error: "unauthorised" });
       return;
@@ -632,7 +682,7 @@ async function startServer() {
   // ── Token-budget query (gateway -> server) ─────────────────────────────────
   // Returns the tenant's quota for the current UTC day plus current usage.
   // Used by the gateway's token-budget policy to enforce hard caps inline.
-  app.get("/api/internal/token-budget/:tenantId", async (req, res) => {
+  app.get("/api/internal/token-budget/:tenantId", internalReadLimiter, async (req, res) => {
     if (!gatewayAuthOk(req)) {
       res.status(401).json({ error: "unauthorised" });
       return;
@@ -675,7 +725,7 @@ async function startServer() {
   });
 
   // ── Email unsubscribe endpoint ───────────────────────────────────────────
-  app.get("/unsubscribe", async (req, res) => {
+  app.get("/unsubscribe", tokenLinkLimiter, async (req, res) => {
     const token = req.query.token as string;
 
     if (!token) {
@@ -978,7 +1028,7 @@ async function startServer() {
     },
   });
 
-  app.post("/api/upload/collection", upload.single("file"), async (req, res) => {
+  app.post("/api/upload/collection", uploadLimiter, upload.single("file"), async (req, res) => {
     try {
       // Require authentication for file uploads
       let user: any = null;
@@ -1049,7 +1099,7 @@ async function startServer() {
   // ── GitHub Webhook (legacy) ────────────────────────────────────────────────
   // Always reject when GITHUB_WEBHOOK_SECRET is missing — never process
   // unsigned webhooks in any environment.
-  app.post("/api/webhooks/github", express.raw({ type: "application/json" }), async (req, res) => {
+  app.post("/api/webhooks/github", webhookLimiter, express.raw({ type: "application/json" }), async (req, res) => {
     const signature = req.headers["x-hub-signature-256"] as string;
     const githubSecret = ENV.githubWebhookSecret || "";
 
