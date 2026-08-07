@@ -293,27 +293,28 @@ async function startServer() {
 
   app.use(
     helmet({
-      contentSecurityPolicy: ENV.isProduction
-        ? {
-            directives: {
-              defaultSrc: ["'self'"],
-              scriptSrc: [
-                "'self'",
-                (_req: unknown, res: unknown) =>
-                  `'nonce-${(res as { locals: { cspNonce: string } }).locals.cspNonce}'`,
-              ],
-              styleSrc: ["'self'", "'unsafe-inline'"],
-              imgSrc: ["'self'", "data:", "blob:", "https:"],
-              connectSrc: ["'self'", "ws:", "wss:"],
-              fontSrc: ["'self'", "data:"],
-              objectSrc: ["'none'"],
-              mediaSrc: ["'self'"],
-              frameSrc: ["'none'"],
-              upgradeInsecureRequests: [],
-            },
-          }
-        : false,
-      frameguard: ENV.isProduction ? { action: "sameorigin" } : false,
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: [
+            "'self'",
+            (_req: unknown, res: unknown) =>
+              `'nonce-${(res as { locals: { cspNonce: string } }).locals.cspNonce}'`,
+            ...(ENV.isProduction ? [] : ["'unsafe-eval'"]),
+          ],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          imgSrc: ["'self'", "data:", "blob:", "https:"],
+          connectSrc: ENV.isProduction
+            ? ["'self'", "ws:", "wss:"]
+            : ["'self'", "ws:", "wss:", "http://localhost:*", "https://localhost:*"],
+          fontSrc: ["'self'", "data:"],
+          objectSrc: ["'none'"],
+          mediaSrc: ["'self'"],
+          frameSrc: ["'none'"],
+          ...(ENV.isProduction ? { upgradeInsecureRequests: [] } : {}),
+        },
+      },
+      frameguard: { action: "sameorigin" },
       hsts: ENV.isProduction ? { maxAge: 31536000, includeSubDomains: true, preload: true } : false,
       // Modern isolation headers. Prevents our origin from being
       // coerced into cross-origin popup attacks and leaks timing info
