@@ -35,7 +35,12 @@ export type RbacResource =
   | "projects"
   | "repositories"
   | "security"
-  | "audit";
+  | "audit"
+  | "connectors"
+  | "usage"
+  | "budgets"
+  | "kill_switches"
+  | "provider_health";
 
 /**
  * Numeric rank for hierarchy comparisons.
@@ -133,6 +138,31 @@ const PERMISSIONS_MATRIX: Record<RbacResource, Record<RbacAction, WorkspaceRole>
     read: "security_lead",
     write: "admin",
     delete: "owner",
+  },
+  connectors: {
+    read: "security_lead",
+    write: "security_lead",
+    delete: "admin",
+  },
+  usage: {
+    read: "analyst",
+    write: "developer",
+    delete: "admin",
+  },
+  budgets: {
+    read: "billing_admin",
+    write: "billing_admin",
+    delete: "owner",
+  },
+  kill_switches: {
+    read: "security_lead",
+    write: "security_lead",
+    delete: "owner",
+  },
+  provider_health: {
+    read: "viewer",
+    write: "admin",
+    delete: "admin",
   },
 };
 

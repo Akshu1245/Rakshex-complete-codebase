@@ -2,9 +2,9 @@ import Link from "next/link";
 import { FileCheck2, KeyRound, ShieldCheck, Trash2 } from "lucide-react";
 
 export const metadata = {
-  title: "Trust Center | RakshEx",
+  title: "Trust Center | RaksHex",
   description:
-    "RakshEx security architecture, data-handling commitments, and responsible disclosure process.",
+    "RaksHex security architecture, data-handling commitments, and responsible disclosure process.",
   alternates: { canonical: "/trust" },
 };
 
@@ -27,7 +27,7 @@ const commitments = [
   {
     icon: FileCheck2,
     title: "Evidence, not badges",
-    body: "RakshEx maps product controls to common frameworks and produces evidence. We do not claim a certification or independent audit until that assessment is complete and published.",
+    body: "RaksHex maps product controls to common frameworks and produces evidence. We do not claim a certification or independent audit until that assessment is complete and published.",
   },
 ];
 
@@ -43,7 +43,7 @@ export default function TrustCenter() {
             Security claims you can verify.
           </h1>
           <p className="mt-5 text-lg leading-8 text-slate-400">
-            RakshEx is built to give teams control over AI access without turning customer prompts
+            RaksHex is built to give teams control over AI access without turning customer prompts
             and provider keys into another source of risk.
           </p>
         </header>
@@ -99,7 +99,7 @@ export default function TrustCenter() {
 
         <p className="mt-8 text-sm leading-6 text-slate-500">
           For a DPA, security questionnaire, architecture review, or private deployment
-          requirements, contact the RakshEx team before connecting production accounts.
+          requirements, contact the RaksHex team before connecting production accounts.
         </p>
       </div>
     </main>

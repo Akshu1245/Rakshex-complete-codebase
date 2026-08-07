@@ -135,7 +135,7 @@ export const docsData: Record<string, DocPage> = {
       
       <h2>How It Works</h2>
       <p>When an API gateway call is initiated, the RaksHex middleware evaluates the request context against your active workspace rules:</p>
-      <pre><code>import { Rakshex } from '@rakshex/sdk';
+      <pre><code>import { RaksHex } from '@rakshex/sdk';
 
 const RaksHex = new RaksHex({ apiKey: process.env.RAKSHEX_API_KEY });
 
@@ -293,7 +293,7 @@ app.post('/api/chat', RaksHex.middleware(), async (req, res) => {
       <p>Install via npm:</p>
       <pre><code>npm install @rakshex/sdk</code></pre>
       <p>Usage example with OpenAI:</p>
-      <pre><code>import { Rakshex } from '@rakshex/sdk';
+      <pre><code>import { RaksHex } from '@rakshex/sdk';
 import OpenAI from 'openai';
 
 const RaksHex = new RaksHex({ apiKey: process.env.RAKSHEX_API_KEY });
@@ -311,7 +311,7 @@ const response = await openai.chat.completions.create({
       <p>Install via pip:</p>
       <pre><code>pip install RaksHex-sdk</code></pre>
       <p>Usage example with Anthropic:</p>
-      <pre><code>from rakshex import Rakshex
+      <pre><code>from rakshex import RaksHex
 from anthropic import Anthropic
 
 RaksHex = RaksHex(api_key="your_api_key")
@@ -418,7 +418,7 @@ async def generate_response(prompt: str):
       <p>Add route security auditing, shadow API discovery, and token budgets to Node.js express apps.</p>
       <h2>Integration</h2>
       <pre><code>const express = require('express');
-const { Rakshex } = require('@rakshex/sdk');
+const { RaksHex } = require('@rakshex/sdk');
 
 const app = express();
 const RaksHex = new RaksHex({ apiKey: process.env.RAKSHEX_API_KEY });
@@ -458,7 +458,7 @@ RaksHex = {
       <p>Monitor flask router calls and validate LLM prompt payloads at runtime.</p>
       <h2>Integration</h2>
       <pre><code>from flask import Flask
-from rakshex.integrations.flask import Rakshex
+from rakshex.integrations.flask import RaksHex
 
 app = Flask(__name__)
 RaksHex = RaksHex(app, api_key="ik_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxx")

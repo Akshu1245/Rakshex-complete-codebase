@@ -29,7 +29,7 @@
     "@rakshex/agentguard-sdk": "workspace:*",
     "@rakshex/config": "workspace:*",
     "@rakshex/database": "workspace:*",
-    "@rakshex/compliance-engine": "workspace:*",
+    "@rakshex/siem-export": "workspace:*",
     "@rakshex/mcp-security": "workspace:*",
     "@rakshex/policy-engine": "workspace:*",
     "@rakshex/pricing-engine": "workspace:*",

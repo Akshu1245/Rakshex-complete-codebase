@@ -115,6 +115,20 @@ export function shadowAPIGatedError(plan: PlanType): TRPCError {
   });
 }
 
+export function seatLimitError(plan: PlanType, used: number, limit: number): TRPCError {
+  const suggested = nextPlan(plan);
+  return planLimitError({
+    feature: "maxTeamMembers",
+    currentPlan: plan,
+    suggestedPlan: suggested,
+    severity: "error",
+    title: "Workspace seat limit reached",
+    description: `Your ${plan} plan includes ${limit} seats and ${used} are reserved (members + pending invites). Upgrade to ${suggested} for more seats.`,
+    upsellCta: { label: `Upgrade to ${suggested}`, href: UPSELL_HREF },
+    usage: { used, limit },
+  });
+}
+
 /**
  * Narrow the cause of an unknown error to a PlanLimitCause, returning null
  * if it isn't one. Safe to use at module boundaries where the error might

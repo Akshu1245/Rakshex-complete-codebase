@@ -280,7 +280,10 @@ export async function enforceRequest(
 }
 
 /** Redis key helpers for fast kill-switch propagation */
-export function killSwitchRedisKey(scope: "workspace" | "project" | "agent", id: string): string {
+export function killSwitchRedisKey(
+  scope: "workspace" | "identity" | "project" | "agent",
+  id: string,
+): string {
   return `ag:kill:${scope}:${id}`;
 }
 

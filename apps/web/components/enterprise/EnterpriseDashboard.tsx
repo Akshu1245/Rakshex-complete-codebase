@@ -5,6 +5,7 @@ import { OverviewTab } from "./OverviewTab";
 import { KeyInventoryTab } from "./KeyInventoryTab";
 import { SecurityRisksTab } from "./SecurityRisksTab";
 import { CopilotGovernanceTab } from "./CopilotGovernanceTab";
+import { TeamGovernanceTab } from "./TeamGovernanceTab";
 import { AzureConnectionsTab } from "./AzureConnectionsTab";
 import { AgentGuardTab } from "./AgentGuardTab";
 import { ComplianceTab } from "./ComplianceTab";
@@ -14,6 +15,7 @@ const tabs = [
   { id: "overview", label: "Overview", icon: "dashboard" },
   { id: "keys", label: "Key Inventory", icon: "vpn_key" },
   { id: "security", label: "Security Risks", icon: "gpp_bad" },
+  { id: "team", label: "Team & Usage", icon: "groups" },
   { id: "copilot", label: "Copilot Governance", icon: "smart_toy" },
   { id: "azure", label: "Azure Connections", icon: "cloud" },
   { id: "agentguard", label: "AgentGuard", icon: "security" },
@@ -35,6 +37,8 @@ function DashboardInner() {
         return <SecurityRisksTab />;
       case "copilot":
         return <CopilotGovernanceTab />;
+      case "team":
+        return <TeamGovernanceTab />;
       case "azure":
         return <AzureConnectionsTab />;
       case "agentguard":
@@ -56,7 +60,7 @@ function DashboardInner() {
           </div>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-white">Rakshex Enterprise</h1>
+              <h1 className="text-2xl font-bold text-white">RaksHex Enterprise</h1>
               <span className="px-2 py-0.5 bg-[#14b8a6]/10 border border-[#14b8a6]/30 rounded text-[#14b8a6] text-xs font-mono">
                 WS-{workspaceId}
               </span>

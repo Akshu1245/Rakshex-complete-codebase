@@ -101,6 +101,9 @@ import {
   type McpInvocation,
   type InsertMcpInvocation,
   waitlist,
+  apiKeys,
+  scanReports,
+  workspaceEntitlements,
   type WaitlistRow,
   type InsertWaitlistRow,
 } from "@rakshex/database";
@@ -1220,6 +1223,21 @@ export async function recordTokenUsage(
       // Auto-trigger kill switch if budget exceeded and not already active
       if (updatedSpend >= budgetLimit && !ksSettings.isActive) {
         await updateKillSwitchSettings(userId, undefined, true);
+        // Publish to Redis immediately so gateway.evaluate sees the new state without
+        // waiting for the 24-hour TTL to expire (fixes stale-cache on auto-trigger).
+        try {
+          const { publishKillSwitchState } = await import("./services/gateway/killSwitchCache");
+          await publishKillSwitchState(userId, {
+            isActive: true,
+            budgetLimitUsd: budgetLimit,
+            currentSpendUsd: updatedSpend,
+          });
+        } catch (cacheErr) {
+          logger.warn(
+            { err: cacheErr, userId },
+            "[KillSwitch] Redis cache publish failed on auto-trigger — PG is source of truth",
+          );
+        }
         await createKillSwitchEvent(
           userId,
           "auto_triggered",
@@ -2438,25 +2456,38 @@ export async function deleteUserAccount(
         .where(eq(scans.userId, userId));
       const scanIds = userScans.map((s) => s.id);
       if (scanIds.length > 0) {
-        await tx.delete(findings).where(sql`${findings.scanId} IN (${scanIds.join(",")})`);
-        await tx.delete(shadowAPIs).where(sql`${shadowAPIs.scanId} IN (${scanIds.join(",")})`);
+        await tx.delete(findings).where(inArray(findings.scanId, scanIds));
+        await tx.delete(shadowAPIs).where(inArray(shadowAPIs.scanId, scanIds));
       }
 
       await tx.delete(scans).where(eq(scans.userId, userId));
       await tx.delete(collections).where(eq(collections.userId, userId));
       await tx.delete(subscriptions).where(eq(subscriptions.userId, userId));
       await tx.delete(payments).where(eq(payments.userId, userId));
+      await tx.delete(scanReports).where(eq(scanReports.ownerUserId, userId));
+      await tx.delete(webhookEndpoints).where(eq(webhookEndpoints.userId, userId));
+      await tx.delete(gatewayAudit).where(eq(gatewayAudit.userId, userId));
+      await tx.delete(shadowAiEvents).where(eq(shadowAiEvents.userId, userId));
+      await tx.delete(aiAllowlist).where(eq(aiAllowlist.userId, userId));
 
       // Workspace tenancy cleanup — leave shared workspaces; delete personal ones
-      await tx.delete(workspaceInvitations).where(
-        sql`${workspaceInvitations.workspaceId} IN (
-          SELECT id FROM workspaces WHERE "ownerUserId" = ${userId}
-        )`,
-      );
-      await tx.delete(workspaceMembers).where(eq(workspaceMembers.userId, userId));
-      await tx
-        .delete(workspaces)
+      const ownedPersonal = await tx
+        .select({ id: workspaces.id })
+        .from(workspaces)
         .where(and(eq(workspaces.ownerUserId, userId), eq(workspaces.isPersonal, true)));
+      const personalIds = ownedPersonal.map((row) => row.id);
+      if (personalIds.length > 0) {
+        await tx.delete(apiKeys).where(inArray(apiKeys.workspaceId, personalIds));
+        await tx
+          .delete(workspaceEntitlements)
+          .where(inArray(workspaceEntitlements.workspaceId, personalIds));
+        await tx
+          .delete(workspaceInvitations)
+          .where(inArray(workspaceInvitations.workspaceId, personalIds));
+        await tx.delete(workspaceMembers).where(inArray(workspaceMembers.workspaceId, personalIds));
+        await tx.delete(workspaces).where(inArray(workspaces.id, personalIds));
+      }
+      await tx.delete(workspaceMembers).where(eq(workspaceMembers.userId, userId));
 
       await tx.delete(users).where(eq(users.id, userId));
 
@@ -2945,10 +2976,36 @@ export async function listWebhookEndpointsByUserId(userId: number): Promise<Webh
     .orderBy(desc(webhookEndpoints.createdAt));
 }
 
+export async function listWebhookEndpointsByWorkspaceId(
+  workspaceId: number,
+): Promise<WebhookEndpoint[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(webhookEndpoints)
+    .where(eq(webhookEndpoints.workspaceId, workspaceId))
+    .orderBy(desc(webhookEndpoints.createdAt));
+}
+
 export async function getWebhookEndpointById(id: string): Promise<WebhookEndpoint | null> {
   const db = await getDb();
   if (!db) return null;
   const rows = await db.select().from(webhookEndpoints).where(eq(webhookEndpoints.id, id)).limit(1);
+  return rows[0] ?? null;
+}
+
+export async function getWebhookEndpointByWorkspaceId(
+  id: string,
+  workspaceId: number,
+): Promise<WebhookEndpoint | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db
+    .select()
+    .from(webhookEndpoints)
+    .where(and(eq(webhookEndpoints.id, id), eq(webhookEndpoints.workspaceId, workspaceId)))
+    .limit(1);
   return rows[0] ?? null;
 }
 
@@ -2973,10 +3030,37 @@ export async function getActiveWebhookEndpoints(
   });
 }
 
+export async function getActiveWebhookEndpointsByWorkspace(
+  workspaceId: number,
+  event: string,
+): Promise<WebhookEndpoint[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db
+    .select()
+    .from(webhookEndpoints)
+    .where(and(eq(webhookEndpoints.workspaceId, workspaceId), eq(webhookEndpoints.isActive, true)));
+  return rows.filter((row) => {
+    const events = Array.isArray(row.events) ? row.events : [];
+    return events.includes(event);
+  });
+}
+
 export async function deleteWebhookEndpoint(id: string): Promise<void> {
   const db = await getDb();
   assertDb(db);
   await db.delete(webhookEndpoints).where(eq(webhookEndpoints.id, id));
+}
+
+export async function deleteWebhookEndpointForWorkspace(
+  id: string,
+  workspaceId: number,
+): Promise<void> {
+  const db = await getDb();
+  assertDb(db);
+  await db
+    .delete(webhookEndpoints)
+    .where(and(eq(webhookEndpoints.id, id), eq(webhookEndpoints.workspaceId, workspaceId)));
 }
 
 export async function updateWebhookEndpointActive(id: string, isActive: boolean): Promise<void> {
@@ -2986,6 +3070,19 @@ export async function updateWebhookEndpointActive(id: string, isActive: boolean)
     .update(webhookEndpoints)
     .set({ isActive, updatedAt: new Date() })
     .where(eq(webhookEndpoints.id, id));
+}
+
+export async function updateWebhookEndpointActiveForWorkspace(
+  id: string,
+  workspaceId: number,
+  isActive: boolean,
+): Promise<void> {
+  const db = await getDb();
+  assertDb(db);
+  await db
+    .update(webhookEndpoints)
+    .set({ isActive, updatedAt: new Date() })
+    .where(and(eq(webhookEndpoints.id, id), eq(webhookEndpoints.workspaceId, workspaceId)));
 }
 
 export async function recordWebhookSuccess(id: string, status: number): Promise<void> {
@@ -3067,8 +3164,11 @@ export async function markWebhookEventProcessed(
 ): Promise<boolean> {
   const db = await getDb();
   if (!db) {
-    // No DB available (local tooling). Be permissive — the operator
-    // sees the alert via Sentry and the dev environment can move on.
+    // Fail closed in production — marking "processed" without persistence
+    // would skip retries after a crash and lose plan upgrades.
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("Database unavailable — cannot acknowledge webhook");
+    }
     return true;
   }
   const id = `${provider}:${eventId}`;
@@ -3100,6 +3200,18 @@ export async function isWebhookEventProcessed(provider: string, eventId: string)
     .where(eq(processedWebhookEvents.id, id))
     .limit(1);
   return rows.length > 0;
+}
+
+/**
+ * Release a claim so a crashed webhook handler can retry. Only used when
+ * side effects fail after `markWebhookEventProcessed` already won the insert.
+ */
+export async function releaseWebhookEventClaim(provider: string, eventId: string): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .delete(processedWebhookEvents)
+    .where(eq(processedWebhookEvents.id, `${provider}:${eventId}`));
 }
 
 export async function getRecentFindingsForUser(userId: number, limit = 5) {
@@ -3135,6 +3247,7 @@ export async function getRecentFindingsForUser(userId: number, limit = 5) {
 
 interface GatewayAuditPayload {
   tenantId?: string;
+  workspaceId?: number;
   requestId?: string;
   model?: string;
   provider?: string;
@@ -3213,6 +3326,7 @@ export async function recordGatewayAudit(payload: GatewayAuditPayload): Promise<
     payload.startedAt && payload.endedAt ? Math.max(0, payload.endedAt - payload.startedAt) : null;
   const row: InsertGatewayAuditRow = {
     userId,
+    workspaceId: payload.workspaceId ?? null,
     requestId: payload.requestId ?? crypto.randomUUID(),
     model,
     decision: payload.decision,
@@ -3919,7 +4033,19 @@ export async function updateWorkspace(id: number, patch: Partial<WorkspaceRow>):
 export async function deleteWorkspace(id: number): Promise<void> {
   const db = await getDb();
   assertDb(db);
-  await db.delete(workspaces).where(eq(workspaces.id, id));
+  await db.transaction(async (tx) => {
+    await tx.delete(apiKeys).where(eq(apiKeys.workspaceId, id));
+    await tx.delete(workspaceEntitlements).where(eq(workspaceEntitlements.workspaceId, id));
+    await tx.delete(scanReports).where(eq(scanReports.workspaceId, id));
+    await tx.delete(webhookEndpoints).where(eq(webhookEndpoints.workspaceId, id));
+    await tx.delete(workspaceInvitations).where(eq(workspaceInvitations.workspaceId, id));
+    await tx.delete(workspaceMembers).where(eq(workspaceMembers.workspaceId, id));
+    await tx.delete(githubInstallations).where(eq(githubInstallations.workspaceId, id));
+    await tx.delete(collections).where(eq(collections.workspaceId, id));
+    await tx.delete(scans).where(eq(scans.workspaceId, id));
+    await tx.delete(findings).where(eq(findings.workspaceId, id));
+    await tx.delete(workspaces).where(eq(workspaces.id, id));
+  });
 }
 
 export async function addWorkspaceMember(row: InsertWorkspaceMemberRow): Promise<void> {

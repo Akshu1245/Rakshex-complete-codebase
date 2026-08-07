@@ -38,7 +38,7 @@ const FEATURES = [
     items: [
       {
         title: "Per-Request Cost Tracking",
-        desc: "Track token usage and estimated spend across supported LLM providers when traffic flows through the RakshEx gateway or instrumented paths.",
+        desc: "Track token usage and estimated spend across supported LLM providers when traffic flows through the RaksHex gateway or instrumented paths.",
       },
       {
         title: "Spend Forecasting",
@@ -96,7 +96,7 @@ const FEATURES = [
       },
       {
         title: "HTTP / tRPC API",
-        desc: "Programmatic access to collections, scans, and findings via the RakshEx API. Dedicated public SDKs are on the roadmap.",
+        desc: "Programmatic access to collections, scans, and findings via the RaksHex API. Dedicated public SDKs are on the roadmap.",
       },
       {
         title: "OpenAPI / Postman Import",
@@ -129,7 +129,7 @@ const FEATURES = [
       },
       {
         title: "Self-Hosted Deploy",
-        desc: "Docker Compose and container-based self-host paths for teams that need to run RakshEx in their own cloud.",
+        desc: "Docker Compose and container-based self-host paths for teams that need to run RaksHex in their own cloud.",
       },
     ],
   },
@@ -139,7 +139,7 @@ export default function FeaturesPage() {
   return (
     <div className="min-h-screen bg-transparent text-white">
       <div className="text-center py-20 px-4 border-b border-gray-800">
-        <h1 className="text-4xl md:text-5xl font-bold mb-4">Features that ship with RakshEx</h1>
+        <h1 className="text-4xl md:text-5xl font-bold mb-4">Features that ship with RaksHex</h1>
         <p className="text-gray-400 max-w-2xl mx-auto text-lg">
           Honest product surface: security scanning, cost governance, compliance scoring, and
           GitHub/Slack integrations that are available today — without claiming unshipped

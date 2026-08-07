@@ -100,6 +100,13 @@ vi.mock("../db", async () => ({
   getEffectivePlan: vi.fn(async (userId: number) => "free"),
   getTrialStatus: vi.fn(async (userId: number) => ({ active: false, remainingDays: 0 })),
   markWebhookEventProcessed: vi.fn(async () => true),
+  listWorkspacesForUser: vi.fn(async (userId: number) => [
+    { id: 1, ownerUserId: userId },
+  ]),
+}));
+
+vi.mock("../db/workspaceSeats", () => ({
+  upsertWorkspaceEntitlement: vi.fn(async () => {}),
 }));
 
 function createAuthContext(userId: number = 1) {
@@ -408,6 +415,8 @@ describe("payments webhook security", () => {
       payload: { subscription: { entity: { id: "sub_test_123" } } },
     });
 
-    expect(result).toEqual({ received: true });
+    expect(result).toEqual(
+      expect.objectContaining({ received: true, event: "subscription.activated" }),
+    );
   });
 });

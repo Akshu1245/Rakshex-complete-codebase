@@ -28,8 +28,6 @@
       "@rakshex/config": ["packages/config/src/index.ts"],
       "@rakshex/pricing-engine": ["packages/pricing-engine/src/index.ts"],
       "@rakshex/agentguard-sdk": ["packages/agentguard-sdk/src/index.ts"],
-      "@rakshex/risk-baseline": ["packages/risk-baseline/src/index.ts"],
-      "@rakshex/agent-graph": ["packages/agent-graph/src/index.ts"],
       "@rakshex/siem-export": ["packages/siem-export/src/index.ts"],
       "@rakshex/action-control": ["packages/action-control/src/index.ts"],
       "@rakshex/mcp-security": ["packages/mcp-security/src/index.ts"],

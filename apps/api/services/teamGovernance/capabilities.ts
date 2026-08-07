@@ -1,0 +1,128 @@
+import type { GovernanceCapabilities, GovernanceProvider } from "./types";
+
+const GATEWAY_NOTE =
+  "Hard blocks apply only to traffic routed through the RakshEx gateway. Personal consumer accounts are not controllable.";
+
+export const GOVERNANCE_CAPABILITIES: Record<GovernanceProvider, GovernanceCapabilities> = {
+  openai: {
+    seatSync: false,
+    usageSync: false,
+    providerNativeLimit: false,
+    gatewayHardLimit: true,
+    personalAccountSupported: false,
+    implementationStatus: "monitor_only",
+    note: `OpenAI Enterprise seat/usage sync is not live yet; import admin exports via CSV. ${GATEWAY_NOTE}`,
+  },
+  anthropic: {
+    seatSync: false,
+    usageSync: false,
+    providerNativeLimit: false,
+    gatewayHardLimit: true,
+    personalAccountSupported: false,
+    implementationStatus: "monitor_only",
+    note: `Claude Enterprise admin APIs are not wired for live sync; accept CSV/manual inventory. ${GATEWAY_NOTE}`,
+  },
+  azure_openai: {
+    seatSync: false,
+    usageSync: false,
+    providerNativeLimit: false,
+    gatewayHardLimit: true,
+    personalAccountSupported: false,
+    implementationStatus: "monitor_only",
+    note: `Azure OpenAI cost/seat attribution uses cloud billing exports when connected; otherwise monitor-only. ${GATEWAY_NOTE}`,
+  },
+  bedrock: {
+    seatSync: false,
+    usageSync: false,
+    providerNativeLimit: false,
+    gatewayHardLimit: true,
+    personalAccountSupported: false,
+    implementationStatus: "monitor_only",
+    note: `Bedrock per-principal attribution requires CUR/principal tags; not auto-synced in this slice. ${GATEWAY_NOTE}`,
+  },
+  vertex: {
+    seatSync: false,
+    usageSync: false,
+    providerNativeLimit: false,
+    gatewayHardLimit: true,
+    personalAccountSupported: false,
+    implementationStatus: "monitor_only",
+    note: `Vertex usage requires GCP billing export; not live in this slice. ${GATEWAY_NOTE}`,
+  },
+  github_copilot: {
+    seatSync: true,
+    usageSync: true,
+    providerNativeLimit: false,
+    gatewayHardLimit: false,
+    personalAccountSupported: false,
+    implementationStatus: "live",
+    note: "Copilot org admin token syncs seats and usage metrics. No provider-native per-user hard spend limit API; enforcementMode stays monitor_only unless gateway-routed.",
+  },
+  claude_teams: {
+    seatSync: false,
+    usageSync: false,
+    providerNativeLimit: false,
+    gatewayHardLimit: false,
+    personalAccountSupported: false,
+    implementationStatus: "import_only",
+    note: "Claude Teams/Enterprise seats are subscription memberships, not API keys. Sync via CSV/admin export; hard blocks are not claimed.",
+  },
+  cursor: {
+    seatSync: true,
+    usageSync: true,
+    providerNativeLimit: true,
+    gatewayHardLimit: false,
+    personalAccountSupported: false,
+    implementationStatus: "live",
+    note: "Cursor Admin API syncs members/spend and can set user spend limits (provider_native). Personal Cursor accounts are unsupported.",
+  },
+  windsurf: {
+    seatSync: false,
+    usageSync: false,
+    providerNativeLimit: false,
+    gatewayHardLimit: false,
+    personalAccountSupported: false,
+    implementationStatus: "import_only",
+    note: "Windsurf Enterprise analytics exist officially, but this slice does not implement live HTTP sync yet. Import admin/CSV exports; enforcementMode=monitor_only.",
+  },
+  ollama: {
+    seatSync: false,
+    usageSync: false,
+    providerNativeLimit: false,
+    gatewayHardLimit: true,
+    personalAccountSupported: false,
+    implementationStatus: "monitor_only",
+    note: "Self-hosted. Observe via gateway/OTEL only.",
+  },
+  vllm: {
+    seatSync: false,
+    usageSync: false,
+    providerNativeLimit: false,
+    gatewayHardLimit: true,
+    personalAccountSupported: false,
+    implementationStatus: "monitor_only",
+    note: "Self-hosted. Observe via gateway/OTEL only.",
+  },
+  lm_studio: {
+    seatSync: false,
+    usageSync: false,
+    providerNativeLimit: false,
+    gatewayHardLimit: true,
+    personalAccountSupported: false,
+    implementationStatus: "monitor_only",
+    note: "Self-hosted. Observe via gateway/OTEL only.",
+  },
+  openai_compatible: {
+    seatSync: false,
+    usageSync: false,
+    providerNativeLimit: false,
+    gatewayHardLimit: true,
+    personalAccountSupported: false,
+    implementationStatus: "monitor_only",
+    note: `OpenAI-compatible endpoints are gateway-governed when traffic is routed through RakshEx. ${GATEWAY_NOTE}`,
+  },
+};
+
+export function getGovernanceCapabilities(provider: GovernanceProvider): GovernanceCapabilities {
+  return GOVERNANCE_CAPABILITIES[provider];
+}

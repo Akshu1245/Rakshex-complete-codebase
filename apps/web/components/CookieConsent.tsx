@@ -7,7 +7,7 @@ import { setConsent } from "@/lib/consent";
 const COOKIE_KEY = "rakshex-cookie-consent";
 
 /**
- * Cookie-consent banner with accept/reject options. Because RakshEx only sets
+ * Cookie-consent banner with accept/reject options. Because RaksHex only sets
  * first-party strictly-necessary cookies (session + CSRF), the informational
  * notice covers the ePrivacy art. 5(3) exemption. If you later add analytics
  * or marketing cookies, they are gated behind the acceptance state.
@@ -46,7 +46,7 @@ export function CookieConsent() {
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="leading-relaxed">
-          RakshEx uses strictly necessary first-party cookies for authentication and security. No
+          RaksHex uses strictly necessary first-party cookies for authentication and security. No
           advertising cookies are enabled by default. See our{" "}
           <Link href="/cookies" className="text-blue-400 underline hover:text-blue-300">
             Cookie Policy

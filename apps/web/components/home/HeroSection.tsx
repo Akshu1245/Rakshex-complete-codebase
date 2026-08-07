@@ -45,7 +45,7 @@ export function HeroSection({ antiGravity, setAntiGravity }: HeroSectionProps) {
 
           {/* Subtext */}
           <p className="hero-subtext font-sans text-lg max-w-[480px] text-[#9CA3AF] mb-10 leading-[1.6] font-medium">
-            RakshEx gives engineering and security teams one control plane for AI discovery,
+            RaksHex gives engineering and security teams one control plane for AI discovery,
             credentials, subscriptions, gateway policy, cost controls, and audit evidence. Start
             with a local scan. Keep prompts out of the inventory by default.
           </p>

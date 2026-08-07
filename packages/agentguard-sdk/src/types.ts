@@ -113,3 +113,25 @@ export interface TransportResult {
   /** true when event was queued offline instead of dropped */
   queuedOffline?: boolean;
 }
+
+/** OpenAI-compatible request routed through Rakshex enforcement. */
+export interface GatewayChatCompletionRequest {
+  model: string;
+  messages: Array<Record<string, unknown>>;
+  max_tokens?: number;
+  tools?: Array<Record<string, unknown>>;
+  tool_choice?: unknown;
+  response_format?: unknown;
+  /** Use the OpenAI SDK with the Rakshex base URL for streaming responses. */
+  stream?: false;
+  [key: string]: unknown;
+}
+
+export interface GatewayChatCompletionOptions {
+  provider?: "openai" | "openai_compatible";
+  providerAccountId?: number;
+  identityId?: number;
+  projectId?: string;
+  agentId?: string;
+  signal?: AbortSignal;
+}

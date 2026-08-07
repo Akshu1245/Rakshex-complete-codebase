@@ -33,7 +33,7 @@ export function BenchmarkSection() {
           Security, FinOps, and developer access should agree on what AI is running.
         </h2>
         <p className="mt-4 text-base leading-7 text-neutral-400">
-          Point tools solve isolated pieces. RakshEx connects discovery, ownership, policy, and
+          Point tools solve isolated pieces. RaksHex connects discovery, ownership, policy, and
           evidence so the same answer holds up in an engineering review, a finance review, and an
           audit.
         </p>

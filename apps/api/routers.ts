@@ -82,6 +82,7 @@ import { authProvidersRouter } from "./api/authProviders";
 import { enterpriseRouter } from "./api/enterprise";
 import { controlPlaneRouter } from "./api/controlPlane";
 import { agentFirewallRouter } from "./api/agentFirewall";
+import { teamGovernanceRouter } from "./api/teamGovernance";
 import { ensurePersonalWorkspace } from "./services/workspaceContext";
 import { logger } from "./_core/logger";
 
@@ -769,6 +770,7 @@ export const appRouter = router({
 
   // ─── Agent Firewall (runtime authorization control plane) ────────────
   agentFirewall: agentFirewallRouter,
+  teamGovernance: teamGovernanceRouter,
 });
 
 // Register the appRouter with the apiDocs introspector so its `spec`

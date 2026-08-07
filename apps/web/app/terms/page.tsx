@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Terms of Service | RakshEx",
-  description: "Terms governing access to the RakshEx AI governance platform.",
+  title: "Terms of Service | RaksHex",
+  description: "Terms governing access to the RaksHex AI governance platform.",
   alternates: { canonical: "/terms" },
 };
 
@@ -18,7 +18,7 @@ export default function Terms() {
           <section>
             <h2 className="text-xl font-semibold text-white">Acceptance and authority</h2>
             <p className="mt-3">
-              These terms govern RakshEx websites, hosted services, software, APIs, extensions,
+              These terms govern RaksHex websites, hosted services, software, APIs, extensions,
               private relays, and support. By using the Service, you agree to them. If you use it
               for an organisation, you represent that you can bind that organisation.
             </p>
@@ -26,7 +26,7 @@ export default function Terms() {
           <section>
             <h2 className="text-xl font-semibold text-white">Authorised use</h2>
             <p className="mt-3">
-              Use RakshEx only for systems, repositories, accounts, credentials, and data you own or
+              Use RaksHex only for systems, repositories, accounts, credentials, and data you own or
               are authorised to access. You must comply with provider terms and our Acceptable Use
               Policy. Do not use the Service to scan or disrupt systems without permission.
             </p>
@@ -34,7 +34,7 @@ export default function Terms() {
           <section>
             <h2 className="text-xl font-semibold text-white">Customer data and AI providers</h2>
             <p className="mt-3">
-              You retain Customer Data. RakshEx processes it only to provide, secure, support, and
+              You retain Customer Data. RaksHex processes it only to provide, secure, support, and
               improve the Service as described in the Privacy Policy and, where applicable, the Data
               Processing Addendum. Provider subscriptions and accounts remain subject to the
               provider&apos;s own terms, availability, permissions, and charges.
@@ -63,7 +63,7 @@ export default function Terms() {
             </h2>
             <p className="mt-3">
               Each party must protect the other&apos;s confidential information with reasonable
-              care. RakshEx maintains reasonable security measures, but no service is risk-free. The
+              care. RaksHex maintains reasonable security measures, but no service is risk-free. The
               full terms contain the applicable warranty, indemnity, and liability provisions.
               Mandatory consumer rights are not excluded.
             </p>
@@ -82,7 +82,7 @@ export default function Terms() {
           The complete contract pack, including the Data Processing Addendum, enterprise SLA,
           Acceptable Use Policy, and refund policy, is available in the{" "}
           <Link className="font-semibold text-[#14B8A6] hover:underline" href="/legal">
-            RakshEx Legal Center
+            RaksHex Legal Center
           </Link>
           .
         </div>

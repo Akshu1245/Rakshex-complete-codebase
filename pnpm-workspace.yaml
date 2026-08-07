@@ -21,6 +21,11 @@ overrides:
   sharp: "0.35.3"
   "@opentelemetry/core": "2.9.0"
   "@napi-rs/wasm-runtime": "1.1.6"
-  "brace-expansion@2.1.3": "5.0.8"
-  "brace-expansion@>=3.0.0": "5.0.8"
-  "fast-uri@>=3.0.0": "4.1.1"
+  # GHSA-rgw5-rvv9-x895 — DoS via unbounded intermediate arrays, which
+  # bypasses the earlier CVE-2026-14257 mitigation. Vulnerable <5.0.9, so the
+  # previous 5.0.8 pin was one patch short and still flagged high by both
+  # `pnpm audit --prod` (a CI gate) and Dependabot.
+  "brace-expansion@2.1.3": "5.0.9"
+  "brace-expansion@>=3.0.0": "5.0.9"
+  # GHSA-7p8r-x3mc-p8w7 — patched in 4.1.2; 4.1.1 was likewise one short.
+  "fast-uri@>=3.0.0": "4.1.2"

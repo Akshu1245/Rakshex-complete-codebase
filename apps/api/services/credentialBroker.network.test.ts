@@ -51,7 +51,7 @@ beforeAll(async () => {
       if (req.url === "/echo-key") {
         // Simulates a provider echoing the credential back in an error body.
         res.writeHead(400, { "content-type": "application/json" });
-        res.end(JSON.stringify({ error: "Invalid API key: sk_live_supersecret123" }));
+        res.end(JSON.stringify({ error: "Invalid API key: fixture-broker-secret-not-a-real-key" }));
         return;
       }
       if (req.url === "/text") {
@@ -80,7 +80,7 @@ const call = (path: string, over: Partial<Parameters<typeof executeBrokeredCall>
   executeBrokeredCall({
     targetUrl: `${baseUrl}${path}`,
     method: "POST",
-    secret: "sk_live_supersecret123",
+    secret: "fixture-broker-secret-not-a-real-key",
     injection: "bearer",
     headerName: null,
     body: { amount: 500 },
@@ -97,7 +97,7 @@ describe("executeBrokeredCall over a real socket", () => {
     const result = await call("/v1/refunds");
     expect(result.status).toBe(200);
     expect(result.body).toEqual({ ok: true, id: "re_123" });
-    expect(captured[0]!.headers.authorization).toBe("Bearer sk_live_supersecret123");
+    expect(captured[0]!.headers.authorization).toBe("Bearer fixture-broker-secret-not-a-real-key");
     expect(captured[0]!.method).toBe("POST");
     expect(captured[0]!.body).toBe(JSON.stringify({ amount: 500 }));
     expect(captured[0]!.headers["content-type"]).toBe("application/json");
@@ -106,7 +106,7 @@ describe("executeBrokeredCall over a real socket", () => {
   it("delivers a custom header credential", async () => {
     captured = [];
     await call("/v1/refunds", { injection: "header", headerName: "X-Api-Key" });
-    expect(captured[0]!.headers["x-api-key"]).toBe("sk_live_supersecret123");
+    expect(captured[0]!.headers["x-api-key"]).toBe("fixture-broker-secret-not-a-real-key");
     expect(captured[0]!.headers.authorization).toBeUndefined();
   });
 
@@ -115,7 +115,7 @@ describe("executeBrokeredCall over a real socket", () => {
     await call("/v1/refunds", { injection: "basic" });
     const header = String(captured[0]!.headers.authorization);
     expect(Buffer.from(header.replace("Basic ", ""), "base64").toString()).toBe(
-      "sk_live_supersecret123:",
+      "fixture-broker-secret-not-a-real-key:",
     );
   });
 
@@ -125,7 +125,7 @@ describe("executeBrokeredCall over a real socket", () => {
       headers: { Authorization: "Bearer attacker-token", "X-Trace": "t1" },
     });
     // Only the broker's own credential is present, and the benign header survived.
-    expect(captured[0]!.headers.authorization).toBe("Bearer sk_live_supersecret123");
+    expect(captured[0]!.headers.authorization).toBe("Bearer fixture-broker-secret-not-a-real-key");
     expect(captured[0]!.headers["x-trace"]).toBe("t1");
   });
 
@@ -156,7 +156,7 @@ describe("executeBrokeredCall over a real socket", () => {
     // the router via redactSecret. This asserts the echo really happens over
     // the wire, which is what makes that redaction step necessary.
     const result = await call("/echo-key");
-    expect(JSON.stringify(result.body)).toContain("sk_live_supersecret123");
+    expect(JSON.stringify(result.body)).toContain("fixture-broker-secret-not-a-real-key");
   });
 
   it("aborts a hung upstream instead of hanging forever", async () => {

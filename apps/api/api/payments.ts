@@ -13,7 +13,6 @@ import {
   getSubscriptionDetails,
   getSubscriptionInvoices,
   verifyWebhookSignature,
-  handleWebhookEvent,
   getPlanLimits,
   PLAN_CONFIG,
   type RazorpayWebhookPayload,
@@ -21,6 +20,7 @@ import {
 } from "../payments";
 import { computePlanUtilization } from "../utils/planLimits";
 import { assertWorkspacePermission } from "../services/authorization";
+import { applyPlanEntitlement } from "../services/billing/entitlements";
 
 const workspacePlanSchema = z.enum(["pro", "enterprise"]);
 
@@ -33,6 +33,7 @@ export const paymentsRouter = router({
     .input(
       z.object({
         plan: z.enum(["pro", "enterprise"]),
+        workspaceId: z.number().int().positive().optional(),
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -41,7 +42,18 @@ export const paymentsRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid plan" });
       }
 
-      const result = await createSubscription(ctx.user.id, ctx.user.email || "", input.plan);
+      if (input.workspaceId) {
+        const { requireWorkspacePermission } = await import("../services/authorization");
+        await requireWorkspacePermission(input.workspaceId, ctx.user.id, "billing", "write");
+      }
+
+      const result = await createSubscription(
+        ctx.user.id,
+        ctx.user.email || "",
+        input.plan,
+        undefined,
+        input.workspaceId,
+      );
 
       await db.createSubscription({
         id: nanoid(),
@@ -272,7 +284,13 @@ export const paymentsRouter = router({
       );
 
       if (input.immediately) {
-        await db.updateUserPlan(ctx.user.id, "free");
+        await applyPlanEntitlement({
+          userId: ctx.user.id,
+          plan: "free",
+          status: "canceled",
+          billingProvider: "razorpay",
+          billingSubscriptionId: subscription.razorpaySubscriptionId,
+        });
         await db.updateUserSubscriptionId(ctx.user.id, null);
       }
 
@@ -322,6 +340,8 @@ export const paymentsRouter = router({
   }),
 
   handleWebhook: publicProcedure.input(z.any()).mutation(async ({ input, ctx }) => {
+    // Prefer POST /api/webhooks/razorpay. This tRPC path remains for
+    // backwards compatibility and delegates to the same processor.
     const signature = ctx.req.headers["x-razorpay-signature"] as string;
     const payload = JSON.stringify(input);
 
@@ -332,165 +352,14 @@ export const paymentsRouter = router({
       });
     }
 
-    const webhookPayload = input as RazorpayWebhookPayload;
-    const event = handleWebhookEvent(webhookPayload);
-
-    // Idempotency: deduplicate webhook events that Razorpay retries for ~24 hours
-    const eventId =
-      event.data?.payload?.payment?.entity?.id ||
-      event.data?.payload?.subscription?.entity?.id ||
-      event.event;
-    const isNew = await db.markWebhookEventProcessed("razorpay", eventId, event.event);
-    if (!isNew) {
-      return { received: true, deduplicated: true };
-    }
-
-    switch (event.event) {
-      case "subscription.activated":
-        if (event.subscriptionId) {
-          const sub = await db.getSubscriptionByRazorpayId(event.subscriptionId);
-          if (sub) {
-            await db.updateSubscriptionStatus(sub.id, "active");
-            await db.updateUserPlan(sub.userId, sub.plan);
-          } else {
-            const workspaceSub = await db.getWorkspaceSubscriptionByProviderId(
-              event.subscriptionId,
-            );
-            if (workspaceSub) {
-              await db.updateWorkspaceSubscription(workspaceSub.id, {
-                status: "active",
-              });
-            }
-          }
-        }
-        break;
-
-      case "subscription.charged":
-        if (event.data.payload.payment?.entity) {
-          const payment = event.data.payload.payment.entity;
-          const sub = await db.getSubscriptionByRazorpayId(payment.subscription_id);
-          if (sub) {
-            await db.createPayment({
-              id: nanoid(),
-              userId: sub.userId,
-              subscriptionId: sub.id,
-              razorpayPaymentId: payment.id,
-              razorpayOrderId: payment.order_id,
-              amountMinor: payment.amount,
-              currency: payment.currency,
-              status: "captured",
-              createdAt: new Date(payment.created_at * 1000),
-            });
-          } else {
-            const workspaceSub = await db.getWorkspaceSubscriptionByProviderId(
-              payment.subscription_id,
-            );
-            if (workspaceSub) {
-              await db.createPayment({
-                id: nanoid(),
-                userId: workspaceSub.billingOwnerUserId,
-                subscriptionId: workspaceSub.id,
-                razorpayPaymentId: payment.id,
-                razorpayOrderId: payment.order_id,
-                amountMinor: payment.amount,
-                currency: payment.currency,
-                status: "captured",
-                description: `Rakshex workspace ${workspaceSub.workspaceId} subscription`,
-                createdAt: new Date(payment.created_at * 1000),
-              });
-            }
-          }
-        }
-        break;
-
-      case "subscription.cancelled":
-        if (event.subscriptionId) {
-          const sub = await db.getSubscriptionByRazorpayId(event.subscriptionId);
-          if (sub) {
-            await db.updateSubscriptionStatus(sub.id, "cancelled");
-            await db.updateUserPlan(sub.userId, "free");
-            await db.updateUserSubscriptionId(sub.userId, null);
-          } else {
-            const workspaceSub = await db.getWorkspaceSubscriptionByProviderId(
-              event.subscriptionId,
-            );
-            if (workspaceSub) {
-              await db.updateWorkspaceSubscription(workspaceSub.id, {
-                status: "cancelled",
-                cancelAtPeriodEnd: false,
-                cancelledAt: new Date(),
-              });
-            }
-          }
-        }
-        break;
-
-      case "subscription.paused":
-      case "subscription.halted":
-      case "subscription.resumed":
-        if (event.subscriptionId) {
-          const workspaceSub = await db.getWorkspaceSubscriptionByProviderId(event.subscriptionId);
-          if (workspaceSub) {
-            await db.updateWorkspaceSubscription(workspaceSub.id, {
-              status:
-                event.event === "subscription.resumed"
-                  ? "active"
-                  : event.event === "subscription.paused"
-                    ? "paused"
-                    : "halted",
-            });
-          }
-        }
-        break;
-
-      case "payment.failed":
-        if (event.data.payload.payment?.entity) {
-          const payment = event.data.payload.payment.entity;
-          const sub = await db.getSubscriptionByRazorpayId(payment.subscription_id);
-          if (sub) {
-            await db.updateSubscriptionStatus(sub.id, "past_due");
-
-            // Dunning: send retry email on first failure, downgrade after 3 failures
-            const user = await db.getUserById(sub.userId);
-            const failureCount = (await db.getPaymentsByUserId(sub.userId)).filter(
-              (p) =>
-                p.status === "failed" &&
-                p.createdAt > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-            ).length;
-
-            if (user?.email) {
-              const { sendPaymentFailedEmail } = await import("../email");
-              await sendPaymentFailedEmail({
-                toEmail: user.email,
-                userName: user.name ?? "",
-                amount: payment.amount / 100,
-                currency: payment.currency,
-                retryUrl: `${process.env.APP_URL || "https://rakshex.in"}/billing?retry=1`,
-                downgradeWarning: failureCount >= 2,
-              }).catch((err: unknown) => logger.warn({ err }, "[Payments] Dunning email failed"));
-            }
-
-            if (failureCount >= 3) {
-              await db.updateUserPlan(sub.userId, "free");
-              await db.updateSubscriptionStatus(sub.id, "cancelled");
-              logger.info(
-                { userId: sub.userId, subId: sub.id },
-                "[Payments] Downgraded to free after 3 failed payments",
-              );
-            }
-          }
-        }
-        break;
-
-      case "refund.processed":
-        if (event.data.payload.refund?.entity) {
-          const refund = event.data.payload.refund.entity;
-          await db.updatePaymentRefundStatus(refund.payment_id, refund.amount / 100, "full");
-        }
-        break;
-    }
-
-    return { received: true };
+    const { processRazorpayWebhook } = await import("../services/billing/razorpayWebhook");
+    const result = await processRazorpayWebhook(input as RazorpayWebhookPayload);
+    return {
+      received: true,
+      deduplicated: result.status === "duplicate",
+      status: result.status,
+      event: result.event,
+    };
   }),
 
   getPlans: publicProcedure.query(() => {
@@ -498,6 +367,7 @@ export const paymentsRouter = router({
       id: key,
       name: config.name,
       amount: config.amount,
+      usdAmount: config.usdAmount,
       currency: config.currency,
       interval: config.interval,
       features: [...config.features],

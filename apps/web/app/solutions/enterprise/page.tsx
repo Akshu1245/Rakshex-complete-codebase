@@ -109,7 +109,7 @@ export default function EnterpriseSolutionPage() {
             to request a custom security SLA.
           </p>
           <a
-            href="mailto:akshay@rakshex.in?subject=RakshEx Enterprise Inquiry"
+            href="mailto:akshay@rakshex.in?subject=RaksHex Enterprise Inquiry"
             className="inline-block bg-purple-600 hover:bg-purple-500 text-white font-bold text-sm py-3 px-8 rounded-lg transition-colors shadow-lg shadow-purple-500/20"
           >
             Contact akshay@rakshex.in

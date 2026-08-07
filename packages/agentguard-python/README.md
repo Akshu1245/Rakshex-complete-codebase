@@ -36,6 +36,28 @@ guard.flush()
 guard.close()
 ```
 
+## Enforced gateway calls (no employee provider key)
+
+Connect a centrally managed OpenAI or OpenAI-compatible inference credential
+in Rakshex, then issue employees a workspace key restricted to
+`gateway:invoke`.
+
+```python
+result = guard.gateway_chat_completions(
+    {
+        "model": "gpt-4o-mini",
+        "messages": [{"role": "user", "content": "Summarize this incident"}],
+    },
+    identity_id=42,
+    project_id="security-automation",
+)
+```
+
+Gateway calls are always fail-closed even when `fail_open=True`; that option
+only controls telemetry delivery. Kill switches, hard gateway budgets,
+invalid credentials, or unavailable enforcement state block before the
+provider request.
+
 ## Privacy modes
 
 Same contract as the Node SDK: `metadata_only` (default), `redacted_content`, `full_content`, `local_only`, `zero_retention`.

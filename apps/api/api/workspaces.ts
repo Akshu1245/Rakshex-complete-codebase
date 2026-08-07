@@ -19,13 +19,11 @@
 
 import crypto from "crypto";
 import { z } from "zod";
-import { TRPCError } from "@trpc/server";
 
 import * as db from "../db";
 import type { WorkspaceRow } from "@rakshex/database";
 import { ValidationError } from "../_core/errors";
 import { protectedProcedure, router } from "../_core/trpc";
-import { getPlanLimits } from "../payments";
 import { sendTeamInviteEmail } from "../email";
 import { type WorkspaceRole, PermissionDeniedError, summarisePermissions } from "../services/rbac";
 import {
@@ -33,6 +31,14 @@ import {
   getWorkspaceRole,
   invalidateMembershipCache,
 } from "../services/workspaceContext";
+import * as seats from "../db/workspaceSeats";
+import { seatLimitError } from "../utils/planLimits";
+import type { PlanType } from "../payments";
+
+function planFromEntitlement(plan: string | undefined): PlanType {
+  if (plan === "pro" || plan === "enterprise") return plan;
+  return "free";
+}
 
 const INVITE_TTL_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
 const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{1,62}[a-z0-9])?$/;
@@ -171,12 +177,6 @@ export const workspacesRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       await assertWorkspacePermission(input.workspaceId, ctx.user.id, "members", "write");
-      const [workspace, subscription, reservedSeats] = await Promise.all([
-        db.getWorkspaceById(input.workspaceId),
-        db.getWorkspaceSubscription(input.workspaceId),
-        db.countReservedWorkspaceSeats(input.workspaceId),
-      ]);
-      if (!workspace) throw new ValidationError("workspace not found");
       const normalizedEmail = input.email.toLowerCase();
       const [existingUser, pendingInvitations] = await Promise.all([
         db.getUserByEmail(normalizedEmail),
@@ -197,20 +197,14 @@ export const workspacesRouter = router({
         throw new ValidationError("an active invitation already exists for this email");
       }
 
-      const paidWorkspaceSubscription =
-        subscription && ["pending", "active", "paused", "past_due"].includes(subscription.status)
-          ? subscription
-          : null;
-      const fallbackPlan = await db.getEffectivePlan(workspace.ownerUserId);
-      const seatLimit =
-        paidWorkspaceSubscription?.seatCount ?? getPlanLimits(fallbackPlan).maxTeamMembers;
-      if (reservedSeats >= seatLimit) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: `All ${seatLimit} workspace seats are reserved. Increase the seat allocation before inviting another member.`,
-        });
+      try {
+        await seats.assertSeatAvailable(input.workspaceId);
+      } catch {
+        const ent = await seats.getWorkspaceEntitlement(input.workspaceId);
+        const used = await seats.countReservedSeats(input.workspaceId);
+        const limit = ent ? seats.effectiveSeatLimit(ent) : 1;
+        throw seatLimitError(planFromEntitlement(ent?.plan), used, limit);
       }
-
       const token = crypto.randomBytes(24).toString("base64url");
       const id = await db.createWorkspaceInvitation({
         workspaceId: input.workspaceId,
@@ -219,6 +213,8 @@ export const workspacesRouter = router({
         token,
         invitedBy: ctx.user.id,
         expiresAt: new Date(Date.now() + INVITE_TTL_MS),
+        status: "pending",
+        seatReservedAt: new Date(),
       });
       try {
         await sendTeamInviteEmail({
@@ -304,6 +300,16 @@ export const workspacesRouter = router({
         throw new ValidationError("this invitation was sent to a different email address");
       }
       const existing = await db.getWorkspaceMembership(inv.workspaceId, ctx.user.id);
+      if (!existing) {
+        try {
+          await seats.assertSeatAvailable(inv.workspaceId);
+        } catch {
+          const ent = await seats.getWorkspaceEntitlement(inv.workspaceId);
+          const used = await seats.countReservedSeats(inv.workspaceId);
+          const limit = ent ? seats.effectiveSeatLimit(ent) : 1;
+          throw seatLimitError(planFromEntitlement(ent?.plan), used, limit);
+        }
+      }
       if (existing) {
         await db.updateWorkspaceMember(inv.workspaceId, ctx.user.id, {
           role: inv.role,

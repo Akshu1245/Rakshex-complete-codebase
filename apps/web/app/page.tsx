@@ -481,7 +481,7 @@ export default function HomePage() {
     },
     {
       title: "Compliance Reports",
-      description: "SOC 2, PCI DSS, and OWASP-mapped evidence exports.",
+      description: "SOC 2 / PCI DSS / OWASP evidence packs for auditor workflows.",
       link: "/features#compliance",
       icon: FileText,
       hoverClass: "hover-draw-check text-teal-accent",
@@ -497,34 +497,34 @@ export default function HomePage() {
 
   const faqs = [
     {
-      question: "What is RakshEx?",
+      question: "What is RaksHex?",
       answer:
-        "RakshEx is an AI control plane for engineering, security, and finance teams. It discovers AI access, protects credentials, tracks subscriptions and usage, and enforces runtime policy without retaining raw prompts by default.",
+        "RaksHex is an AI control plane for engineering, security, and finance teams. It discovers AI access, protects credentials, tracks subscriptions and usage, and enforces runtime policy without retaining raw prompts by default.",
     },
     {
-      question: "What AI frameworks does RakshEx support?",
+      question: "What AI frameworks does RaksHex support?",
       answer:
         "The inventory supports OpenAI, Anthropic, Azure OpenAI, AWS Bedrock, Google Vertex/Gemini, GitHub Copilot, Claude Teams, Cursor, self-hosted models, and OpenAI-compatible endpoints. Each provider shows whether data is connected, imported, estimated, or unavailable.",
     },
     {
-      question: "What security checks does RakshEx perform?",
+      question: "What security checks does RaksHex perform?",
       answer:
-        "RakshEx scans for exposed credentials, API security weaknesses, shadow endpoints, and AI configuration risk. At runtime, it can apply provider and model policy, budget checks, PII redaction, prompt-injection signals, tool restrictions, and a kill switch.",
+        "RaksHex scans for exposed credentials, API security weaknesses, shadow endpoints, and AI configuration risk. At runtime, it can apply provider and model policy, budget checks, PII redaction, prompt-injection signals, tool restrictions, and a kill switch.",
     },
     {
-      question: "Who should use RakshEx?",
+      question: "Who should use RaksHex?",
       answer:
         "Any team building with AI agents, LLMs, or AI-powered APIs who needs security visibility, cost control, and compliance evidence.",
     },
     {
-      question: "Is RakshEx open source?",
+      question: "Is RaksHex open source?",
       answer:
-        "RakshEx is commercial software. The product includes a free starting path for local discovery; commercial plans add shared governance, gateway controls, audit evidence, and private deployment options.",
+        "RaksHex is commercial software. The product includes a free starting path for local discovery; commercial plans add shared governance, gateway controls, audit evidence, and private deployment options.",
     },
     {
-      question: "How is RakshEx different from Snyk or Datadog?",
+      question: "How is RaksHex different from Snyk or Datadog?",
       answer:
-        "RakshEx complements code scanners and observability tools by connecting AI identity, entitlement, runtime policy, cost, and evidence in the same workspace.",
+        "RaksHex complements code scanners and observability tools by connecting AI identity, entitlement, runtime policy, cost, and evidence in the same workspace.",
     },
     {
       question: "What does the kill switch actually do?",
@@ -621,7 +621,7 @@ export default function HomePage() {
           </h2>
           <div className="flex gap-4">
             <a
-              href="https://github.com/Akshu1245/Rakshex-complete-codebase/discussions"
+              href="https://github.com/Akshu1245/RaksHex-complete-codebase/discussions"
               target="_blank"
               rel="noopener noreferrer"
               className="bg-transparent hover:bg-[#14B8A6]/10 text-white border-2 border-[#14B8A6] text-xs font-mono tracking-wider px-5 py-2.5 rounded-[6px] font-semibold hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_4px_12px_rgba(20,184,166,0.1)] transition-all duration-200 transform"

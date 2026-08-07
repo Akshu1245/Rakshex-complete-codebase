@@ -1,6 +1,6 @@
 # RaksHex — agent handoff
 
-**Last verified:** 2026-08-05 (every claim below was executed, not inferred)
+**Last verified:** 2026-08-06 (every claim below was executed, not inferred)
 
 Read this file first. It exists so you don't have to re-derive the state of the repo by
 reading 10,000 files. Where a claim is unverified, it says so explicitly — trust the
@@ -36,7 +36,7 @@ pnpm install
 pnpm lint          # clean, --max-warnings=0
 pnpm typecheck     # 18/18 packages
 pnpm build         # 18/18
-pnpm test:api      # 831 tests, 78 files
+pnpm test:api      # 872 tests, 81 files (was 831 — +policy differential corpus, +SIEM export)
 pnpm test:packages # 158 tests
 ```
 
@@ -45,7 +45,7 @@ With Postgres + Redis running (`docker compose up -d postgres redis`):
 ```bash
 pnpm db:migrate       # 26 migrations
 pnpm test:integration # 57 tests
-pnpm test:db          # SEE §5 — not verified, needs real Postgres
+pnpm test:db          # VERIFIED 2026-08-06 on real Postgres 18.4 — 10/10 pass, see §5 item 1
 pnpm test:e2e         # NOT VERIFIED — needs API + web up
 ```
 
@@ -54,10 +54,16 @@ pnpm test:e2e         # NOT VERIFIED — needs API + web up
 
 > **Important history:** before 2026-08-05 this repo **did not typecheck** — 7
 > pre-existing errors, including four calls to DB functions that did not exist. That
-> means the CI typecheck gate was not being enforced. Several docs in this repo
-> (`docs/FEATURE_MATURITY.md`, `MARKET_READY.md`, and others dated 2026-07-30) assert
-> "code-complete and test-covered"; those were written while the build was broken.
-> **Treat pre-August-2026 status docs as marketing, not evidence.**
+> means the CI typecheck gate was not being enforced. Several status docs asserted
+> "code-complete and test-covered" while the build was broken. Seven of them were
+> **deleted on 2026-08-05** (`MARKET_READY.md`, `MARKET_READINESS_LAUNCH_BAR.md`,
+> `LAUNCH_BAR.md`, `PRODUCTION_READINESS_REPORT_2026-07-30.md`,
+> `rakshex_verification_report.md`, `docs/MARKET_READY_COMPLETE.md`,
+> `ARCHITECTURE_AUDIT.md`) because a future reader inheriting their false baseline is
+> worse than having no status doc at all. **This file is now the only status doc.**
+> `docs/FEATURE_MATURITY.md` and `docs/GAP_INVENTORY.md` survive but are still dated
+> 2026-07-30 — treat them as marketing, not evidence. Some docs still contain dangling
+> links to the deleted files; harmless, but fix on sight.
 
 ---
 
@@ -135,11 +141,72 @@ despite the columns existing since migration 0013.
 
 ## 5. Known gaps — start here
 
-1. **`pnpm test:db` / `foundation.test.ts` — UNVERIFIED.** 6 tests fail under PGlite
-   with `Received unexpected rowDescription message from backend`. That is a
-   **PGlite wire-protocol emulation bug, not a schema defect** — the connection dies
-   and the rest cascade. Needs real Postgres. *This is the highest-value 10 minutes
-   available to you.*
+0. **TWO POLICY ENGINES ARE LIVE AT ONCE.** Found 2026-08-06. There are two
+   different functions both called `evaluatePolicy`, with incompatible data
+   models, both in active use on different request paths:
+
+   - `apps/api/engines/policyEngine.ts` — `(event: AIEventContext, rules: PolicyRule[])`,
+     a priority-sorted rule list where first match wins. Used by
+     `middleware/policyEnforcement.ts`, `services/policyCache.ts`, `api/policies.ts`.
+   - `packages/policy-engine` — `(policy: PolicyDocument | CompiledPolicy, ctx)`,
+     a compiled policy document. Used by `services/gateway/enforcement.ts`
+     and `services/policyAsCode.ts`.
+
+   For a security product this is the most serious structural problem in the
+   repo: **a policy authored in one model is invisible to the other**, so the
+   answer to "is this action allowed?" depends on which entry point the
+   request happened to take. A customer configuring a rule in the dashboard
+   has no reason to expect it not to apply at the gateway. Nothing currently
+   detects the divergence — both engines are individually tested and both
+   pass.
+
+   Do not "fix" this by deleting one at random; they encode different
+   semantics and each has live call sites. It needs a deliberate decision
+   about which model is canonical, then a migration of the other's call
+   sites, ideally with a test that asserts both paths agree on a shared
+   corpus of policies before either is removed.
+
+   **Update 2026-08-06 — the corpus test now exists:**
+   `apps/api/engines/policyEngine.differential.test.ts` runs 10 policy
+   intents through both engines and normalizes the results through
+   `services/policyDecisionCompat.ts`. **7 of 10 agree. 3 are asserted
+   divergences**, and they are the actual scope of the migration, not a
+   footnote:
+
+   - **Network destination policy is unenforceable in the app engine.**
+     `AIEventContext` has no field a rule can match a destination against —
+     `getFieldValue()` falls through to `""` for any unrecognised field. A
+     domain block that works via the package engine is a silent no-op via
+     the app engine.
+   - **Prompt threat level is unenforceable in the package engine.**
+     `PolicyDocument` has no threat-level concept anywhere in its schema. A
+     rule that blocks on the MCP adversarial-intent scanner's threat level
+     cannot be represented as a `PolicyDocument` at all.
+   - **Cross-category precedence is not the same relation.** The app engine
+     lets a per-rule `priority` beat another rule regardless of category (a
+     tool rule ranked above a model rule wins). The package engine hardcodes
+     category order (models before tools, no override). Identical facts,
+     opposite decision, depending only on which engine handles the request —
+     this is the fail-open hazard from the paragraph above, demonstrated
+     rather than asserted.
+
+   **What this means for "migrate to one engine":** it is not a rename.
+   The package engine's schema has no slot for threat-level or free-form
+   telemetry conditions, and no per-rule priority. Migrating the app
+   engine's call sites onto the package engine today would silently drop
+   both threat-level policies and any priority-based rule that currently
+   overrides a category. Either extend `PolicyDocument`'s schema first, or
+   accept and document the loss explicitly before switching call sites —
+   do not switch call sites and assume parity. The migration itself has
+   **not** been started.
+
+1. ~~`pnpm test:db` / `foundation.test.ts` — UNVERIFIED.~~ **VERIFIED 2026-08-06 on
+   real Postgres 18.4 — 10/10 pass.** The earlier 6 PGlite failures
+   (`Received unexpected rowDescription message from backend`) were confirmed as a
+   **PGlite wire-protocol emulation bug**, not a schema defect: same migrations, same
+   seed, same test file, zero failures under real Postgres. See §6 for how to get a
+   real (non-WASM) Postgres in a sandbox with no root and no Docker — the
+   `embedded-postgres` npm package ships native binaries and needs neither.
 2. **No authenticated end-to-end broker call.** Route existence and anonymous
    rejection are proven; the full path (sign in → store credential → evaluate → broker
    → egress row) is not. Needs user/workspace/session seeding.
@@ -178,12 +245,24 @@ it. Wired into `.env.example`, `render.yaml`, `docker-compose.prod.yml`.
 - Bulk `rsync`/`cp` of the whole repo over a mounted FS times out.
   `tar cf - --exclude=node_modules | tar xf -` into `/tmp` works.
 - turbo needs `pnpm` on `PATH`; a `corepack pnpm@10.32.1 "$@"` shim works.
-- No root, so no apt Postgres. **`@electric-sql/pglite` gives you real Postgres 18 in
-  WASM**, and `@electric-sql/pglite-socket` exposes it over TCP so the real `pg`
-  driver connects. Good enough for migrations and integration tests; **not** good
-  enough for `foundation.test.ts` (see §5).
+- No root, so no apt Postgres. Two options, and they are not interchangeable:
+  - **`@electric-sql/pglite`** gives you Postgres 18 compiled to **WASM**, and
+    `@electric-sql/pglite-socket` exposes it over TCP so the real `pg` driver
+    connects. Good enough for migrations and most integration tests. **Not** good
+    enough for `foundation.test.ts` — 6 tests fail with
+    `Received unexpected rowDescription message from backend`, a wire-protocol
+    emulation gap in PGlite itself.
+  - **`embedded-postgres`** (npm) ships **real native Postgres binaries** per
+    platform and runs `initdb`/`pg_ctl` as the current user — no root, no Docker.
+    This is what actually resolved `foundation.test.ts` (see §5 item 1, verified
+    2026-08-06): `new EmbeddedPostgres({ databaseDir, user, password, port,
+    persistent: false }); await pg.initialise(); await pg.start();` then point
+    `DATABASE_URL` at it. Prefer this over PGlite whenever a test's failure mode
+    is ambiguous between "real bug" and "emulator gap" — it removes the emulator
+    as a variable entirely.
 - Each bash call is a fresh PID namespace — background servers do not survive between
-  calls. Start the server and run the tests in **one** invocation.
+  calls. Start the server and run the tests in **one** invocation (wrap start →
+  migrate/test → `pg.stop()` in a single Node script, not separate bash calls).
 - The API boots in dev with `REDIS_URL=""` (falls back to in-memory MockRedis).
   Required env to boot: `DATABASE_URL`, `JWT_SECRET` (32+ chars), `RAKSHEX_VAULT_KEY`.
 

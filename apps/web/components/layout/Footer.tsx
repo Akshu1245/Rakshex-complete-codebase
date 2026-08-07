@@ -27,7 +27,7 @@ export function Footer() {
                     />
                   </svg>
                   <span className="text-xl font-bold font-manrope tracking-tight text-white">
-                    RakshEx
+                    RaksHex
                   </span>
                 </div>
               </Link>
@@ -38,7 +38,7 @@ export function Footer() {
               <div className="flex flex-row gap-4 items-center justify-start text-neutral-400">
                 {/* Discord */}
                 <a
-                  aria-label="Click to visit RakshEx's discord page"
+                  aria-label="Click to visit RaksHex's discord page"
                   className="flex items-center justify-center cursor-pointer hover:text-white transition-colors duration-200"
                   href="https://discord.gg/rakshex"
                   rel="noopener noreferrer"
@@ -57,7 +57,7 @@ export function Footer() {
 
                 {/* GitHub */}
                 <a
-                  aria-label="Click to visit RakshEx's github page"
+                  aria-label="Click to visit RaksHex's github page"
                   className="flex items-center justify-center cursor-pointer hover:text-white transition-colors duration-200"
                   href="https://github.com/rakshex-hq"
                   rel="noopener noreferrer"
@@ -80,7 +80,7 @@ export function Footer() {
 
                 {/* Twitter */}
                 <a
-                  aria-label="Click to visit RakshEx's x page"
+                  aria-label="Click to visit RaksHex's x page"
                   className="flex items-center justify-center cursor-pointer hover:text-white transition-colors duration-200"
                   href="https://twitter.com/rakshexhq"
                   rel="noopener noreferrer"
@@ -156,7 +156,7 @@ export function Footer() {
         {/* Bottom Section: Operational dot and copyright */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-t border-white/8 pt-6">
           <p className="text-sm font-normal text-neutral-400 font-manrope text-left order-2 md:order-1">
-            © 2026 RakshEx by Rashi Technologies. Bengaluru, India.
+            © 2026 RaksHex by Rashi Technologies. Bengaluru, India.
           </p>
           <Link
             href="/status"

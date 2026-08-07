@@ -342,7 +342,7 @@ textarea:focus,
   background: #6ee7b7;
 }
 
-/* Custom Rakshex Animations & Classes */
+/* Custom RaksHex Animations & Classes */
 .emerald-glow {
   border: 1px solid #14b8a6;
 }
@@ -425,7 +425,7 @@ textarea:focus,
   animation: logo-scroll-anim 35s linear infinite;
 }
 
-/* RakshEx Hover Animations */
+/* RaksHex Hover Animations */
 .group:hover .animate-pulse-shield {
   animation: shield-pulse-anim 1.5s infinite ease-in-out;
 }
@@ -819,7 +819,7 @@ textarea:focus,
   height: 260px;
 }
 
-/* CARD 2 — RakshEx main */
+/* CARD 2 — RaksHex main */
 .card-main {
   flex: 1;
   border-color: rgba(20, 184, 166, 0.5) !important;
@@ -1748,7 +1748,11 @@ textarea:focus,
 
 /* Login page wave dot grid background */
 .login-wave-bg {
-  background: #0a0a0a;
+  /* Matches the radial teal glow used in the hero section and the site
+     header, so the auth screens don't read as a flat, disconnected panel. */
+  background:
+    radial-gradient(circle at 50% 25%, rgba(20, 184, 166, 0.1), transparent 65%),
+    #0a0a0a;
   position: relative;
   overflow: hidden;
 }

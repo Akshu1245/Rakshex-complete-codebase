@@ -95,7 +95,8 @@ export function FeatureCards() {
     },
     {
       title: "Compliance Reports",
-      description: "SOC 2, PCI DSS, and OWASP-mapped evidence in JSON, CSV, and PDF.",
+      description:
+        "SOC 2 / PCI DSS / OWASP evidence packs — export JSON, CSV, and PDF for your auditors.",
       link: "/features#compliance",
       icon: FileText,
       animClass: "animate-draw-check",

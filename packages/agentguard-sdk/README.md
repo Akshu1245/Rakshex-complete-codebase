@@ -39,6 +39,31 @@ await guard.flush();
 await guard.close();
 ```
 
+## Enforced gateway calls (no employee provider key)
+
+Create a workspace API key with the `gateway:invoke` scope and connect an
+`api_key` or `inference_api_key` credential to an OpenAI/OpenAI-compatible
+provider account in the Rakshex control plane. Employees receive only the
+Rakshex workspace key.
+
+```ts
+const result = await guard.gatewayChatCompletions({
+  model: "gpt-4o-mini",
+  messages: [{ role: "user", content: "Summarize this incident" }],
+});
+```
+
+This method is always fail-closed. Active workspace/project/identity/agent
+kill switches, hard gateway budgets, authentication failures, and governance
+store outages block before the provider call. The `failOpen` option applies
+only to telemetry delivery.
+
+Existing OpenAI-compatible clients can use
+`https://api.rakshex.com/v1/chat/completions` as their base endpoint to retain
+streaming support. Send optional `X-Rakshex-Project-Id`,
+`X-Rakshex-Agent-Id`, and `X-Rakshex-Identity-Id` headers for scoped controls
+and attribution.
+
 ## Privacy modes
 
 | Mode                      | Prompt/response content | Network |
@@ -62,7 +87,8 @@ await guard.close();
 
 ## Resilience
 
-- **Fail-open** (default): provider calls always complete; telemetry failures queue offline.
+- **Fail-open telemetry** (default): telemetry failures queue offline.
+- **Fail-closed enforcement**: gateway model calls never bypass policy or fall back to direct provider traffic.
 - **Batching**: `batchSize` + `flushIntervalMs`.
 - **Retry** with exponential backoff on 5xx / network errors.
 - **Offline queue**: memory and optional `offlineQueuePath` JSONL file.

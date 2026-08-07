@@ -100,7 +100,8 @@ export type WebhookEvent =
   | "finding.discovered"
   | "quota.warning"
   | "kill_switch.triggered"
-  | "subscription.updated";
+  | "subscription.updated"
+  | "alert.fired";
 
 export interface WebhookPayload {
   id: string; // Unique delivery id, stable across retries
@@ -168,6 +169,30 @@ export async function deliver(
     return [];
   }
 
+  return deliverToEndpoints(endpoints, event, data);
+}
+
+/** Workspace-scoped delivery path for all new tenant-aware lifecycle events. */
+export async function deliverToWorkspace(
+  workspaceId: number,
+  event: WebhookEvent,
+  data: Record<string, unknown>,
+): Promise<DeliveryResult[]> {
+  let endpoints: WebhookEndpoint[];
+  try {
+    endpoints = await db.getActiveWebhookEndpointsByWorkspace(workspaceId, event);
+  } catch (err) {
+    logger.warn({ err, workspaceId }, "[webhookDelivery] failed to list workspace endpoints");
+    return [];
+  }
+  return deliverToEndpoints(endpoints, event, { ...data, workspaceId });
+}
+
+async function deliverToEndpoints(
+  endpoints: WebhookEndpoint[],
+  event: WebhookEvent,
+  data: Record<string, unknown>,
+): Promise<DeliveryResult[]> {
   if (endpoints.length === 0) return [];
 
   const payload: WebhookPayload = {

@@ -56,7 +56,7 @@ export default function AcceptInvitePage() {
         <div>
           <h1 className="text-2xl font-bold text-blue-400">Join workspace</h1>
           <p className="text-gray-400 mt-2">
-            You&apos;ve been invited to a Rakshex workspace. Accept to join with the email on your
+            You&apos;ve been invited to a RaksHex workspace. Accept to join with the email on your
             account.
           </p>
         </div>

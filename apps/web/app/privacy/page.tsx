@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Privacy Policy | RakshEx",
-  description: "How RakshEx handles account, workspace, and AI governance data.",
+  title: "Privacy Policy | RaksHex",
+  description: "How RaksHex handles account, workspace, and AI governance data.",
   alternates: { canonical: "/privacy" },
 };
 
@@ -18,9 +18,9 @@ export default function PrivacyPolicy() {
           <section>
             <h2 className="text-xl font-semibold text-white">Roles</h2>
             <p className="mt-3">
-              Rashi Technologies operates RakshEx from Bengaluru, India. We act as controller or
+              Rashi Technologies operates RaksHex from Bengaluru, India. We act as controller or
               data fiduciary for our website, account, billing, security, and sales data. For
-              Customer Data in a workspace, the Customer controls the purpose and RakshEx acts as a
+              Customer Data in a workspace, the Customer controls the purpose and RaksHex acts as a
               processor or service provider under the applicable DPA.
             </p>
           </section>
@@ -74,7 +74,7 @@ export default function PrivacyPolicy() {
           Read the detailed policy, Data Processing Addendum, retention schedule, and subprocessor
           register in the{" "}
           <Link className="font-semibold text-[#14B8A6] hover:underline" href="/legal">
-            RakshEx Legal Center
+            RaksHex Legal Center
           </Link>
           .
         </div>

@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Cookie Policy | RakshEx",
-  description: "How RakshEx uses essential cookies and optional support technologies.",
+  title: "Cookie Policy | RaksHex",
+  description: "How RaksHex uses essential cookies and optional support technologies.",
   alternates: { canonical: "/cookies" },
 };
 
@@ -18,7 +18,7 @@ export default function CookiePolicy() {
           <section>
             <h2 className="text-xl font-semibold text-white">Essential technologies</h2>
             <p className="mt-3">
-              RakshEx uses first-party session, authentication, CSRF, security, and preference
+              RaksHex uses first-party session, authentication, CSRF, security, and preference
               technologies needed to operate the website and dashboard. Disabling them can prevent
               sign-in or core functionality.
             </p>
@@ -67,7 +67,7 @@ export default function CookiePolicy() {
           <section>
             <h2 className="text-xl font-semibold text-white">Your controls</h2>
             <p className="mt-3">
-              You can remove site data through your browser settings. Clearing RakshEx site data
+              You can remove site data through your browser settings. Clearing RaksHex site data
               also withdraws optional consent. Questions can be sent to privacy@rakshex.in.
             </p>
           </section>
