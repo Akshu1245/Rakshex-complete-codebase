@@ -401,26 +401,21 @@ async function startServer() {
   app.use(globalLimiter);
 
   // Per-route limiters: apply more restrictive buckets on top
-  app.use("/api/trpc", globalLimiter, (req, res, next) => {
-    const url = req.originalUrl || req.url || "";
+  const trpcLimiterRouter = express.Router();
 
-    // Auth routes: 20/15min per IP
-    if (AUTH_ROUTE_PATTERNS.some((p) => url.includes(p))) {
-      return authLimiter(req, res, next);
-    }
+  // Auth routes: 20/15min per IP
+  trpcLimiterRouter.use(AUTH_ROUTE_PATTERNS, authLimiter);
 
-    // Scan trigger routes: 100/hour per userId
-    if (SCAN_ROUTE_PATTERNS.some((p) => url.includes(p))) {
-      return scanLimiter(req, res, next);
-    }
+  // Scan trigger routes: 100/hour per userId
+  trpcLimiterRouter.use(SCAN_ROUTE_PATTERNS, scanLimiter);
 
-    // SDK ingest routes: 500/min per API key
-    if (API_KEY_ROUTE_PATTERNS.some((p) => url.includes(p))) {
-      return apiKeyLimiter(req, res, next);
-    }
+  // SDK ingest routes: 500/min per API key
+  trpcLimiterRouter.use(API_KEY_ROUTE_PATTERNS, apiKeyLimiter);
 
-    return next();
-  });
+  // Fallback: keep global protection on all other /api/trpc routes
+  trpcLimiterRouter.use(globalLimiter);
+
+  app.use("/api/trpc", trpcLimiterRouter);
 
   app.use("/api/oauth", authLimiter);
 
