@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc";
 import { PasswordField } from "@/components/PasswordField";
+import { WaveDotsCanvas } from "@/components/WaveDotsCanvas";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -21,6 +22,14 @@ export default function RegisterPage() {
     onError: (err) => setError(err.message),
   });
 
+  // Same defensive pattern as /login: only render OAuth buttons for
+  // providers actually configured on the backend, so we never show a
+  // signup button that 404s or errors when a provider's env vars are unset.
+  const { data: providers } = trpc.authProviders.list.useQuery(undefined, {
+    staleTime: 5 * 60 * 1000,
+  });
+  const hasOAuth = providers?.github || providers?.google;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -32,113 +41,134 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white flex items-center justify-center p-8">
-      <div className="w-full max-w-[400px]">
-        <Link
-          href="/"
-          className="text-sm text-neutral-500 hover:text-neutral-300 mb-8 inline-block"
-        >
-          ← Home
-        </Link>
-        <h1 className="text-2xl font-semibold mb-1">Create your account</h1>
-        <p className="text-neutral-500 text-sm mb-6">Email and password, secured with Argon2id</p>
-
-        {error && (
-          <div className="mb-4 p-3 bg-red-900/30 border border-red-500/40 rounded-md text-sm text-red-300">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <div>
-            <label className="block text-xs text-neutral-400 mb-1" htmlFor="name">
-              Name
-            </label>
-            <input
-              id="name"
-              required
-              maxLength={120}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2.5 bg-neutral-900 border border-neutral-700 rounded-md text-sm"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-neutral-400 mb-1" htmlFor="email">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              required
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2.5 bg-neutral-900 border border-neutral-700 rounded-md text-sm"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-neutral-400 mb-1" htmlFor="password">
-              Password
-            </label>
-            <PasswordField
-              id="password"
-              name="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="new-password"
-              required
-              minLength={8}
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={signup.isPending}
-            className="w-full py-3 bg-teal-600 hover:bg-teal-500 rounded-md text-sm font-medium disabled:opacity-50"
+    <div className="min-h-screen bg-[#0a0a0a] text-white flex">
+      <div className="w-full lg:w-[480px] flex flex-col items-center justify-center p-8">
+        <div className="w-full max-w-[400px]">
+          <Link
+            href="/"
+            className="text-sm text-neutral-500 hover:text-neutral-300 mb-8 inline-block"
           >
-            {signup.isPending ? "Creating…" : "Create account"}
-          </button>
-        </form>
-
-        <div className="my-6 flex items-center gap-3">
-          <div className="flex-1 border-t border-neutral-800" />
-          <span className="text-xs text-neutral-600">or</span>
-          <div className="flex-1 border-t border-neutral-800" />
-        </div>
-
-        <div className="space-y-2">
-          <a
-            href="/api/oauth/github"
-            className="block w-full text-center py-2.5 bg-white text-black text-sm rounded-md font-medium"
-          >
-            Sign up with GitHub
-          </a>
-          <a
-            href="/api/oauth/google"
-            className="block w-full text-center py-2.5 border border-neutral-700 text-sm rounded-md"
-          >
-            Sign up with Google
-          </a>
-        </div>
-
-        <p className="mt-5 text-center text-xs text-neutral-600">
-          By creating an account, you agree to the{" "}
-          <Link href="/terms" className="underline hover:text-neutral-400">
-            Terms
-          </Link>{" "}
-          and acknowledge the{" "}
-          <Link href="/privacy" className="underline hover:text-neutral-400">
-            Privacy Policy
+            ← Home
           </Link>
-          .
-        </p>
+          <h1 className="text-2xl font-semibold mb-1">Create your account</h1>
+          <p className="text-neutral-500 text-sm mb-6">
+            Email and password, secured with Argon2id
+          </p>
 
-        <p className="text-center text-neutral-500 text-sm mt-6">
-          Already have an account?{" "}
-          <Link href="/login" className="text-teal-400">
-            Sign in
-          </Link>
-        </p>
+          {error && (
+            <div className="mb-4 p-3 bg-red-900/30 border border-red-500/40 rounded-md text-sm text-red-300">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <div>
+              <label className="block text-xs text-neutral-400 mb-1" htmlFor="name">
+                Name
+              </label>
+              <input
+                id="name"
+                required
+                maxLength={120}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full px-3 py-2.5 bg-neutral-900 border border-neutral-700 rounded-md text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-neutral-400 mb-1" htmlFor="email">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                required
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-3 py-2.5 bg-neutral-900 border border-neutral-700 rounded-md text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-neutral-400 mb-1" htmlFor="password">
+                Password
+              </label>
+              <PasswordField
+                id="password"
+                name="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
+                required
+                minLength={8}
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={signup.isPending}
+              className="w-full py-3 bg-teal-600 hover:bg-teal-500 rounded-md text-sm font-medium disabled:opacity-50"
+            >
+              {signup.isPending ? "Creating…" : "Create account"}
+            </button>
+          </form>
+
+          {hasOAuth && (
+            <>
+              <div className="my-6 flex items-center gap-3">
+                <div className="flex-1 border-t border-neutral-800" />
+                <span className="text-xs text-neutral-600">or</span>
+                <div className="flex-1 border-t border-neutral-800" />
+              </div>
+
+              <div className="space-y-2">
+                {providers?.github && (
+                  <a
+                    href="/api/oauth/github"
+                    className="block w-full text-center py-2.5 bg-white text-black text-sm rounded-md font-medium"
+                  >
+                    Sign up with GitHub
+                  </a>
+                )}
+                {providers?.google && (
+                  <a
+                    href="/api/oauth/google"
+                    className="block w-full text-center py-2.5 border border-neutral-700 text-sm rounded-md"
+                  >
+                    Sign up with Google
+                  </a>
+                )}
+              </div>
+            </>
+          )}
+
+          <p className="mt-5 text-center text-xs text-neutral-600">
+            By creating an account, you agree to the{" "}
+            <Link href="/terms" className="underline hover:text-neutral-400">
+              Terms
+            </Link>{" "}
+            and acknowledge the{" "}
+            <Link href="/privacy" className="underline hover:text-neutral-400">
+              Privacy Policy
+            </Link>
+            .
+          </p>
+
+          <p className="text-center text-neutral-500 text-sm mt-6">
+            Already have an account?{" "}
+            <Link href="/login" className="text-teal-400">
+              Sign in
+            </Link>
+          </p>
+        </div>
+      </div>
+
+      <div className="hidden lg:flex lg:flex-1 items-center justify-center relative overflow-hidden login-wave-bg">
+        <WaveDotsCanvas />
+        <div className="relative z-10 text-center">
+          <h2 className="text-[42px] font-semibold text-white leading-tight">
+            Ship <span className="text-[#14B8A6]">Securely</span>
+          </h2>
+        </div>
       </div>
     </div>
   );

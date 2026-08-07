@@ -1748,7 +1748,11 @@ textarea:focus,
 
 /* Login page wave dot grid background */
 .login-wave-bg {
-  background: #0a0a0a;
+  /* Matches the radial teal glow used in the hero section and the site
+     header, so the auth screens don't read as a flat, disconnected panel. */
+  background:
+    radial-gradient(circle at 50% 25%, rgba(20, 184, 166, 0.1), transparent 65%),
+    #0a0a0a;
   position: relative;
   overflow: hidden;
 }
