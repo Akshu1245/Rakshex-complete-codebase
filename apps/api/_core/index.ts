@@ -401,7 +401,7 @@ async function startServer() {
   app.use(globalLimiter);
 
   // Per-route limiters: apply more restrictive buckets on top
-  app.use("/api/trpc", (req, res, next) => {
+  app.use("/api/trpc", globalLimiter, (req, res, next) => {
     const url = req.originalUrl || req.url || "";
 
     // Auth routes: 20/15min per IP
