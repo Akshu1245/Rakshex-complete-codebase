@@ -1,10 +1,12 @@
-import { Counter, Gauge, Histogram, Registry } from "prom-client";
+import { Counter, Gauge, Histogram, Registry, collectDefaultMetrics } from "prom-client";
 
 export const register = new Registry();
 
 register.setDefaultLabels({
   app: "rakshex",
 });
+
+collectDefaultMetrics({ register });
 
 export const httpRequestsTotal = new Counter({
   name: "http_requests_total",

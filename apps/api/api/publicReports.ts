@@ -1,23 +1,23 @@
 /**
- * Public Report API — share scan results without authentication.
+ * Authenticated scan preview API.
  *
- * Anyone with the link can view the report. No sign-up required.
- * This is the viral loop: user scans → finds issues → shares link →
- * viewer sees value → signs up to scan their own APIs.
+ * Public sharing is handled exclusively by `reports.getById`, which reads an
+ * expiring, revocable, server-derived snapshot. A raw scan ID is not a share
+ * token and must never grant public access.
  */
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { router, publicProcedure } from "../_core/trpc";
+import { router, protectedProcedure } from "../_core/trpc";
 import * as db from "../db";
+import { requireCollectionAccess } from "../services/tenantAccess";
 
 export const publicReportsRouter = router({
   /**
-   * Get a public scan report by scan ID.
-   * No authentication required — the scan ID acts as an unguessable token.
+   * Get a scan preview after workspace authorization.
    */
-  getByScanId: publicProcedure
+  getByScanId: protectedProcedure
     .input(z.object({ scanId: z.string().min(1) }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       const scan = await db.getScanById(input.scanId);
       if (!scan) {
         throw new TRPCError({
@@ -34,6 +34,13 @@ export const publicReportsRouter = router({
         });
       }
 
+      await requireCollectionAccess(
+        scan.collectionId,
+        ctx.user.id,
+        "collections",
+        "read",
+        ctx.user.name,
+      );
       const findings = await db.getFindingsByScanId(input.scanId);
       const collection = await db.getCollectionById(scan.collectionId);
 

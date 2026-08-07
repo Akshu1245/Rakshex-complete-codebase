@@ -46,6 +46,9 @@ import { verifyWebhookSignature } from "../utils/security";
 import { handleGitHubWebhook } from "../api/github";
 import { redis } from "./cache";
 import { getDb } from "../db";
+import { registerOpenAiGatewayRoutes } from "../services/gateway/openAiProxy";
+import { registerAnthropicGatewayRoutes } from "../services/gateway/anthropicProxy";
+import { incrementHttpRequest, observeHttpRequestDuration } from "./metrics";
 
 // ============================================================================
 // CORS ORIGIN ALLOWLIST
@@ -212,6 +215,26 @@ async function startServer() {
   // Must be the very first middleware so every other handler (including
   // CORS / helmet errors) can reference req.id when something goes wrong.
   app.use(requestIdMiddleware());
+
+  // Prometheus HTTP metrics (low-cardinality: method + status + route template)
+  app.use((req, res, next) => {
+    const started = process.hrtime.bigint();
+    res.on("finish", () => {
+      const elapsedNs = Number(process.hrtime.bigint() - started);
+      const durationSec = elapsedNs / 1e9;
+      const route =
+        (req.route && typeof req.route.path === "string" ? req.route.path : undefined) ||
+        req.path.split("?")[0] ||
+        "unknown";
+      // Collapse high-cardinality id segments
+      const normalized = route
+        .replace(/\/[0-9a-f]{8}-[0-9a-f-]{27,}/gi, "/:id")
+        .replace(/\/\d+/g, "/:id");
+      incrementHttpRequest(req.method, normalized, res.statusCode);
+      observeHttpRequestDuration(req.method, normalized, res.statusCode, durationSec);
+    });
+    next();
+  });
 
   // ── CORS allowlist (must run before helmet) ──────────────────────────────
   // The Next.js dashboard (rakshex-frontend) is deployed on a different
@@ -400,6 +423,11 @@ async function startServer() {
 
   app.use("/api/oauth", authLimiter);
 
+  // Public data-plane route. Authentication is a workspace API key and every
+  // request is evaluated fail-closed before centrally managed provider access.
+  registerOpenAiGatewayRoutes(app);
+  registerAnthropicGatewayRoutes(app);
+
   // ── Health / readiness (mounted early; never behind SPA catch-all) ─────────
   async function runDependencyHealth(): Promise<{
     db: "ok" | "error";
@@ -477,6 +505,16 @@ async function startServer() {
     legacyHeaders: false,
   });
 
+  app.get("/api/health/live", (_req, res) => {
+    // Shallow liveness — process is up. Do NOT check DB/Redis here or
+    // orchestrators will restart-loop during dependency blips.
+    res.status(200).json({
+      status: "ok",
+      timestamp: new Date().toISOString(),
+      uptime: Math.round(process.uptime()),
+    });
+  });
+
   app.get("/api/health", async (_req, res) => {
     const checks = await runDependencyHealth();
     const allOk = checks.db === "ok" && checks.redis === "ok";
@@ -519,6 +557,9 @@ async function startServer() {
   // Alias for probes that hit /health
   app.get("/health", (_req, res) => {
     res.redirect(307, "/api/health");
+  });
+  app.get("/health/live", (_req, res) => {
+    res.redirect(307, "/api/health/live");
   });
   app.get("/health/ready", (_req, res) => {
     res.redirect(307, "/api/health/ready");
@@ -854,58 +895,10 @@ async function startServer() {
       }
 
       try {
-        const event = JSON.parse(req.body);
-
-        // Idempotency: Razorpay retries the same event for ~24h until we
-        // ack with 2xx. Without dedup, a delayed/dropped response would
-        // re-upgrade plans and fire side effects multiple times. We
-        // record `evt_*` ids in the `processed_webhook_events` table.
-        const eventId = typeof event.id === "string" && event.id.length > 0 ? event.id : null;
-        if (eventId) {
-          const db = await import("../db");
-          const isFirstTime = await db.markWebhookEventProcessed("razorpay", eventId, event.event);
-          if (!isFirstTime) {
-            logger.info({ eventId, event: event.event }, "[Razorpay] duplicate webhook, skipping");
-            res.json({ status: "duplicate", event: event.event });
-            return;
-          }
-        }
-
-        if (event.event === "payment.captured") {
-          const paymentEntity = event.payload.payment.entity;
-          const notes = paymentEntity.notes || {};
-          const userId = parseInt(notes.userId || "0");
-          const plan = notes.plan || "pro";
-
-          if (userId > 0) {
-            // Import db dynamically to avoid circular deps
-            const db = await import("../db");
-            await db.updateUserPlan(userId, plan as "pro" | "enterprise");
-            logger.info({ userId, plan }, "[Razorpay] payment captured, plan upgraded");
-          }
-
-          res.json({ status: "ok" });
-        } else if (event.event === "payment.failed") {
-          logger.warn(
-            { orderId: event.payload.payment.entity.order_id },
-            "[Razorpay] payment failed",
-          );
-          res.json({ status: "ok" });
-        } else if (event.event === "subscription.cancelled") {
-          const subEntity = event.payload.subscription.entity;
-          const notes = subEntity.notes || {};
-          const userId = parseInt(notes.userId || "0");
-
-          if (userId > 0) {
-            const db = await import("../db");
-            await db.updateUserPlan(userId, "free");
-            logger.info({ userId }, "[Razorpay] subscription cancelled, plan downgraded to free");
-          }
-
-          res.json({ status: "ok" });
-        } else {
-          res.json({ status: "ignored", event: event.event });
-        }
+        const { processRazorpayWebhook } = await import("../services/billing/razorpayWebhook");
+        const event = JSON.parse(req.body.toString("utf8"));
+        const result = await processRazorpayWebhook(event);
+        res.json(result);
       } catch (error) {
         logger.error({ err: error }, "[Razorpay] webhook processing error");
         res.status(500).json({ error: "Webhook processing failed" });
@@ -948,9 +941,78 @@ async function startServer() {
 
           try {
             const dbMod = await import("../db");
+            const { applyStripeCheckoutEntitlement, applyStripeCancellation } =
+              await import("../services/billing/razorpayWebhook");
 
-            // Idempotency: Stripe replays events on transient errors.
-            // Same dedup table as Razorpay; namespaced by provider.
+            switch (event.type) {
+              case "checkout.session.completed": {
+                const session = event.data.object as import("stripe").Stripe.Checkout.Session;
+                const userId = parseInt(session.metadata?.userId ?? "0", 10);
+                const plan = session.metadata?.plan ?? "pro";
+                if (userId > 0) {
+                  await applyStripeCheckoutEntitlement({
+                    userId,
+                    plan,
+                    workspaceId: session.metadata?.workspaceId,
+                    customerId:
+                      typeof session.customer === "string"
+                        ? session.customer
+                        : session.customer?.id,
+                    subscriptionId:
+                      typeof session.subscription === "string"
+                        ? session.subscription
+                        : session.subscription?.id,
+                  });
+                  logger.info({ userId, plan }, "[Stripe] checkout completed, entitlement applied");
+                }
+                break;
+              }
+              case "customer.subscription.deleted": {
+                const sub = event.data.object as import("stripe").Stripe.Subscription;
+                const userId = parseInt(sub.metadata?.userId ?? "0", 10);
+                if (userId > 0) {
+                  await applyStripeCancellation({
+                    userId,
+                    workspaceId: sub.metadata?.workspaceId,
+                    subscriptionId: sub.id,
+                  });
+                  logger.info({ userId }, "[Stripe] subscription deleted, entitlement cleared");
+                }
+                break;
+              }
+              case "invoice.payment_failed": {
+                const inv = event.data.object as import("stripe").Stripe.Invoice;
+                const userId = parseInt(inv.metadata?.userId ?? "0", 10);
+                const workspaceIdRaw = inv.metadata?.workspaceId;
+                if (userId > 0) {
+                  const { resolveBillingWorkspaceId, includedSeatsForPlan, normalizeBillablePlan } =
+                    await import("../services/billing/entitlements");
+                  const { upsertWorkspaceEntitlement } = await import("../db/workspaceSeats");
+                  const workspaceId = await resolveBillingWorkspaceId({
+                    userId,
+                    workspaceId: workspaceIdRaw,
+                  });
+                  if (workspaceId) {
+                    const plan = normalizeBillablePlan(inv.metadata?.plan ?? "pro");
+                    await upsertWorkspaceEntitlement({
+                      workspaceId,
+                      plan,
+                      status: "past_due",
+                      includedSeats: includedSeatsForPlan(plan),
+                      purchasedSeats: 0,
+                      billingProvider: "stripe",
+                      graceExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+                    });
+                  }
+                }
+                logger.warn({ invoiceId: inv.id }, "[Stripe] invoice.payment_failed → past_due");
+                break;
+              }
+              default:
+                break;
+            }
+
+            // Mark after successful side effects so retries recover mid-failure.
             if (typeof event.id === "string" && event.id.length > 0) {
               const isFirstTime = await dbMod.markWebhookEventProcessed(
                 "stripe",
@@ -960,42 +1022,13 @@ async function startServer() {
               if (!isFirstTime) {
                 logger.info(
                   { eventId: event.id, type: event.type },
-                  "[Stripe] duplicate webhook, skipping",
+                  "[Stripe] duplicate webhook after processing",
                 );
                 res.json({ received: true, duplicate: true });
                 return;
               }
             }
 
-            switch (event.type) {
-              case "checkout.session.completed": {
-                const session = event.data.object as import("stripe").Stripe.Checkout.Session;
-                const userId = parseInt(session.metadata?.userId ?? "0", 10);
-                const plan = (session.metadata?.plan ?? "pro") as "pro" | "enterprise";
-                if (userId > 0) {
-                  await dbMod.updateUserPlan(userId, plan);
-                  logger.info({ userId, plan }, "[Stripe] checkout completed, plan upgraded");
-                }
-                break;
-              }
-              case "customer.subscription.deleted": {
-                const sub = event.data.object as import("stripe").Stripe.Subscription;
-                const userId = parseInt(sub.metadata?.userId ?? "0", 10);
-                if (userId > 0) {
-                  await dbMod.updateUserPlan(userId, "free");
-                  logger.info({ userId }, "[Stripe] subscription deleted, plan downgraded to free");
-                }
-                break;
-              }
-              case "invoice.payment_failed": {
-                const inv = event.data.object as import("stripe").Stripe.Invoice;
-                logger.warn({ invoiceId: inv.id }, "[Stripe] invoice.payment_failed");
-                break;
-              }
-              default:
-                // ignore other event types
-                break;
-            }
             res.json({ received: true, type: event.type });
           } catch (err) {
             logger.error({ err }, "[Stripe] webhook processing error");
@@ -1146,10 +1179,12 @@ async function startServer() {
   }
 
   // ── Start listening ────────────────────────────────────────────────────────
-  const preferredPort = parseInt(process.env.PORT || "3000");
-  const port = await findAvailablePort(preferredPort);
+  const preferredPort = parseInt(process.env.PORT || "3000", 10);
+  // In production, bind exactly PORT so container HEALTHCHECK / Render probes
+  // never miss the process. Port scanning is a local-dev convenience only.
+  const port = ENV.isProduction ? preferredPort : await findAvailablePort(preferredPort);
 
-  if (port !== preferredPort) {
+  if (!ENV.isProduction && port !== preferredPort) {
     logger.warn({ preferredPort, port }, "[Server] Preferred port busy, using fallback");
   }
 
@@ -1173,6 +1208,14 @@ async function startServer() {
       startRedTeamScheduler(60_000);
       logger.info("[Server] Continuous red-team scheduler started");
     }
+  });
+
+  server.on("error", (err: NodeJS.ErrnoException) => {
+    if (ENV.isProduction && err.code === "EADDRINUSE") {
+      logger.error({ port: preferredPort, err }, "[Server] PORT already in use — exiting");
+      process.exit(1);
+    }
+    throw err;
   });
 
   // ── Graceful shutdown ──────────────────────────────────────────────────────

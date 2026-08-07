@@ -5,6 +5,8 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
+import { and, eq } from "drizzle-orm";
+import { projects } from "@rakshex/database";
 import * as db from "../db";
 import { logger } from "../_core/logger";
 import { requireWorkspacePermission } from "../services/authorization";
@@ -16,6 +18,7 @@ import {
   validateWorkspaceApiKey,
   getApiKeyById,
 } from "../services/workspaceApiKeys";
+import { resolveWorkspaceIdentityId } from "../services/teamGovernance";
 
 const scopeEnum = z.enum([
   "scan:read",
@@ -23,6 +26,7 @@ const scopeEnum = z.enum([
   "collections:read",
   "collections:write",
   "projects:read",
+  "gateway:invoke",
   "admin",
   "*",
 ]);
@@ -39,10 +43,38 @@ export const apiKeysRouter = router({
         allowedIps: z.array(z.string().max(45)).max(32).optional(),
         allowedRepositories: z.array(z.string().max(255)).max(64).optional(),
         projectId: z.string().max(64).optional(),
+        identityId: z.number().int().positive().optional(),
+        agentId: z
+          .string()
+          .min(1)
+          .max(128)
+          .regex(/^[A-Za-z0-9._:/-]+$/)
+          .optional(),
       }),
     )
     .mutation(async ({ input, ctx }) => {
       await requireWorkspacePermission(input.workspaceId, ctx.user.id, "api_keys", "write");
+
+      if (input.identityId) {
+        const identityId = await resolveWorkspaceIdentityId(input.workspaceId, input.identityId);
+        if (!identityId) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Identity not found in workspace" });
+        }
+      }
+      if (input.projectId) {
+        const database = await db.getDb();
+        if (!database) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+        }
+        const [project] = await database
+          .select({ id: projects.id })
+          .from(projects)
+          .where(and(eq(projects.id, input.projectId), eq(projects.workspaceId, input.workspaceId)))
+          .limit(1);
+        if (!project) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Project not found in workspace" });
+        }
+      }
 
       const { rawKey, key } = await createWorkspaceApiKey({
         workspaceId: input.workspaceId,
@@ -54,6 +86,8 @@ export const apiKeysRouter = router({
         allowedIps: input.allowedIps,
         allowedRepositories: input.allowedRepositories,
         projectId: input.projectId,
+        identityId: input.identityId,
+        agentId: input.agentId,
       });
 
       await db.createAuditLogEntry(

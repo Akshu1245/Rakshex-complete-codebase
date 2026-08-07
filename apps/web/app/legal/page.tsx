@@ -27,6 +27,7 @@ const documents = [
     title: "Data Processing Addendum",
     description:
       "Controller-to-processor obligations, security measures, subprocessors, and transfer terms.",
+    href: "/legal/dpa",
     download: "/legal/rakshex-data-processing-addendum.docx",
     icon: FileText,
   },
@@ -34,6 +35,7 @@ const documents = [
     title: "Enterprise SLA",
     description:
       "Order-form SLA with availability target, support response targets, exclusions, and credits.",
+    href: "/legal/sla",
     download: "/legal/rakshex-enterprise-sla.docx",
     icon: FileText,
   },

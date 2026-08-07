@@ -12,6 +12,30 @@ const STEP_ACTIONS: Record<StepKey, { href: string; cta: string; auto: boolean }
   setupCompliance: { href: "/compliance", cta: "Open compliance", auto: false },
 };
 
+const GATEWAY_STEPS = [
+  {
+    title: "Connect a provider credential",
+    description:
+      "Store an OpenAI or OpenAI-compatible inference key in the control plane. Employees never see it.",
+    href: "/control-plane",
+    cta: "Open control plane",
+  },
+  {
+    title: "Create a gateway API key",
+    description:
+      "Mint a workspace key with gateway:invoke only. Point SDKs at POST /v1/chat/completions.",
+    href: "/api-keys",
+    cta: "Create API key",
+  },
+  {
+    title: "Set budgets and kill switches",
+    description:
+      "Configure per-identity or workspace hard limits. Hard blocks apply only to RakshEx-routed traffic.",
+    href: "/enterprise",
+    cta: "Open team governance",
+  },
+] as const;
+
 export default function OnboardingPage() {
   const utils = trpc.useUtils();
   const progressQuery = trpc.onboarding.getProgress.useQuery();
@@ -63,6 +87,16 @@ export default function OnboardingPage() {
 
   const isStepDone = (key: keyof NonNullable<typeof progress>) => !!(progress && progress[key]);
 
+  const apiBase =
+    typeof window !== "undefined"
+      ? process.env.NEXT_PUBLIC_API_URL || window.location.origin.replace(/:\d+$/, ":3000")
+      : process.env.NEXT_PUBLIC_API_URL || "https://api.rakshex.in";
+
+  const curlSnippet = `curl -sS ${apiBase}/v1/chat/completions \\
+  -H "Authorization: Bearer rk_live_YOUR_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"model":"gpt-4o-mini","messages":[{"role":"user","content":"ping"}]}'`;
+
   return (
     <div className="text-white p-8">
       <div className="max-w-4xl mx-auto">
@@ -77,6 +111,41 @@ export default function OnboardingPage() {
             &larr; Dashboard
           </Link>
         </div>
+
+        <section className="mb-10 p-6 rounded-lg border border-teal-500/30 bg-teal-950/20">
+          <h2 className="text-xl font-semibold text-teal-300 mb-2">Activate the LLM gateway</h2>
+          <p className="text-sm text-gray-400 mb-4">
+            Route team traffic through RakshEx so budgets and kill switches can hard-block. Direct
+            provider SDK calls remain observation-only unless they use this endpoint.
+          </p>
+          <div className="space-y-4 mb-6">
+            {GATEWAY_STEPS.map((step) => (
+              <div
+                key={step.href}
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg border border-gray-700 bg-black/40"
+              >
+                <div>
+                  <h3 className="font-medium text-white">{step.title}</h3>
+                  <p className="text-sm text-gray-400 mt-1">{step.description}</p>
+                </div>
+                <Link
+                  href={step.href}
+                  className="shrink-0 px-4 py-2 bg-teal-600 hover:bg-teal-500 rounded-lg font-medium text-center text-sm"
+                >
+                  {step.cta}
+                </Link>
+              </div>
+            ))}
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-gray-500 mb-2 font-mono">
+              Test request
+            </p>
+            <pre className="text-xs text-gray-300 bg-black/60 border border-gray-800 rounded-lg p-4 overflow-x-auto whitespace-pre-wrap font-mono">
+              {curlSnippet}
+            </pre>
+          </div>
+        </section>
 
         {loading ? (
           <p className="text-gray-400">Loading...</p>

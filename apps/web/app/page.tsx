@@ -481,7 +481,7 @@ export default function HomePage() {
     },
     {
       title: "Compliance Reports",
-      description: "SOC 2, PCI DSS, and OWASP-mapped evidence exports.",
+      description: "SOC 2 / PCI DSS / OWASP evidence packs for auditor workflows.",
       link: "/features#compliance",
       icon: FileText,
       hoverClass: "hover-draw-check text-teal-accent",

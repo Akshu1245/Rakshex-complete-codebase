@@ -99,7 +99,7 @@ const PLAN_CONFIG = {
     },
   },
   enterprise: {
-    name: "Rakshex Business",
+    name: "Rakshex Enterprise",
     amount: 4159900, // ₹41,599/mo (≈ $499 USD)
     usdAmount: 49900, // $499/mo in cents
     currency: "INR",
@@ -359,6 +359,7 @@ export async function createSubscription(
   userEmail: string,
   plan: Exclude<PlanType, "free">,
   name?: string,
+  workspaceId?: number,
 ): Promise<{
   subscriptionId: string;
   customerId: string;
@@ -391,6 +392,7 @@ export async function createSubscription(
         userId: userId.toString(),
         userEmail,
         plan,
+        ...(workspaceId ? { workspaceId: String(workspaceId) } : {}),
       },
     }),
   });

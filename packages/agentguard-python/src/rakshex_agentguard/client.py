@@ -196,6 +196,85 @@ class AgentGuardClient:
             )
             raise
 
+    def gateway_chat_completions(
+        self,
+        request: dict[str, Any],
+        *,
+        provider: str = "openai",
+        provider_account_id: int | None = None,
+        identity_id: int | None = None,
+        project_id: str | None = None,
+        agent_id: str | None = None,
+        timeout: float = 120.0,
+    ) -> dict[str, Any]:
+        """Invoke an OpenAI-compatible model through Rakshex enforcement.
+
+        This data-plane method is always fail-closed. ``fail_open`` applies
+        only to telemetry delivery and never bypasses a policy decision or a
+        gateway outage. For streaming, configure an OpenAI-compatible client
+        with ``gateway_url`` as its base URL.
+        """
+        if request.get("stream"):
+            raise ValueError(
+                "gateway_chat_completions returns JSON only; use an OpenAI-compatible "
+                "client with the Rakshex base URL for streaming"
+            )
+        if not isinstance(request.get("model"), str) or not request["model"]:
+            raise ValueError("request.model is required")
+        if not isinstance(request.get("messages"), list) or not request["messages"]:
+            raise ValueError("request.messages is required")
+        if provider not in ("openai", "openai_compatible"):
+            raise ValueError("provider must be openai or openai_compatible")
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}",
+            "X-Rakshex-Provider": provider,
+            "X-Rakshex-Sdk": "agentguard-python",
+        }
+        resolved_project = project_id or self.project_id
+        resolved_agent = agent_id or self.agent_id
+        if resolved_project:
+            headers["X-Rakshex-Project-Id"] = resolved_project
+        if resolved_agent:
+            headers["X-Rakshex-Agent-Id"] = resolved_agent
+        if identity_id is not None:
+            headers["X-Rakshex-Identity-Id"] = str(identity_id)
+        if provider_account_id is not None:
+            headers["X-Rakshex-Provider-Account-Id"] = str(provider_account_id)
+
+        payload = json.dumps({**request, "stream": False}).encode("utf-8")
+        req = urllib.request.Request(
+            f"{self.gateway_url}/v1/chat/completions",
+            data=payload,
+            method="POST",
+            headers=headers,
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                raw = resp.read().decode("utf-8")
+                parsed = json.loads(raw)
+                if not isinstance(parsed, dict):
+                    raise RuntimeError("Rakshex gateway returned an invalid response")
+                return parsed
+        except urllib.error.HTTPError as exc:
+            message = f"Rakshex gateway request failed ({exc.code})"
+            code: str | None = None
+            try:
+                parsed_error = json.loads(exc.read().decode("utf-8"))
+                detail = parsed_error.get("error", {})
+                if isinstance(detail, dict):
+                    message = str(detail.get("message") or message)
+                    code = str(detail.get("code")) if detail.get("code") else None
+            except Exception:
+                pass
+            error = RuntimeError(message)
+            setattr(error, "status", exc.code)
+            setattr(error, "code", code)
+            raise error from exc
+        except urllib.error.URLError as exc:
+            raise RuntimeError(f"Rakshex enforcement gateway unavailable: {exc.reason}") from exc
+
     def flush(self) -> dict[str, Any]:
         if self._closed or self.privacy_mode in ("local_only", "zero_retention"):
             return {"ok": True}

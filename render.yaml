@@ -3,14 +3,21 @@
     name: rakshex-backend
     env: docker
     dockerfilePath: ./Dockerfile.prod
-    healthCheckPath: /api/health
+    dockerCommand: node --import tsx apps/api/_core/index.ts
+    healthCheckPath: /api/health/live
+    preDeployCommand: pnpm --filter @rakshex/database db:migrate
     envVars:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
-        sync: false
+        fromDatabase:
+          name: rakshex-db
+          property: connectionString
       - key: REDIS_URL
-        sync: false
+        fromService:
+          type: redis
+          name: rakshex-redis
+          property: connectionString
       - key: JWT_SECRET
         sync: false
       - key: RAKSHEX_VAULT_KEY
@@ -47,5 +54,55 @@
         sync: false
       - key: RAZORPAY_KEY_SECRET
         sync: false
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false
+      - key: GATEWAY_SERVICE_TOKEN
+        sync: false
+      - key: INTERNAL_SERVICE_SECRET
+        sync: false
       - key: SENTRY_DSN
         sync: false
+
+  - type: worker
+    name: rakshex-worker
+    env: docker
+    dockerfilePath: ./Dockerfile.prod
+    dockerCommand: node --import tsx apps/api/queues/workers/index.ts
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: rakshex-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: rakshex-redis
+          property: connectionString
+      - key: JWT_SECRET
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      - key: GITHUB_WEBHOOK_SECRET
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+
+databases:
+  - name: rakshex-db
+    plan: basic-256mb
+    databaseName: rakshex
+    user: rakshex
+
+# Redis: create a Render Key Value instance named `rakshex-redis` and
+# wire REDIS_URL via the dashboard if `fromService` redis is unavailable
+# on your Render plan. The API fails closed without REDIS_URL in production.

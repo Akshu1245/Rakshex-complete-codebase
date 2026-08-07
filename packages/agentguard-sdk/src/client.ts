@@ -5,6 +5,8 @@ import { sendBatch } from "./transport.js";
 import type {
   AgentGuardClientOptions,
   CaptureContext,
+  GatewayChatCompletionOptions,
+  GatewayChatCompletionRequest,
   PrivacyMode,
   TransportResult,
   UsageEvent,
@@ -195,6 +197,63 @@ export class AgentGuardClient {
       });
       throw err;
     }
+  }
+
+  /**
+   * Invoke an OpenAI-compatible model through the Rakshex enforcement gateway.
+   * This path is always fail-closed: policy, authentication, and gateway
+   * failures throw and never fall back to a direct provider call.
+   *
+   * For streaming, point the official OpenAI client at `gatewayUrl` and use
+   * this workspace key; the gateway implements `/v1/chat/completions`.
+   */
+  async gatewayChatCompletions<T = Record<string, unknown>>(
+    request: GatewayChatCompletionRequest,
+    options: GatewayChatCompletionOptions = {},
+  ): Promise<T> {
+    if (request.stream) {
+      throw new Error(
+        "gatewayChatCompletions returns JSON only. Use an OpenAI client with the Rakshex base URL for streaming.",
+      );
+    }
+
+    const base = this.options.gatewayUrl!.replace(/\/+$/, "");
+    const headers: Record<string, string> = {
+      authorization: `Bearer ${this.options.apiKey}`,
+      "content-type": "application/json",
+      "x-rakshex-provider": options.provider ?? "openai",
+    };
+    const projectId = options.projectId ?? this.options.projectId;
+    const agentId = options.agentId ?? this.options.agentId;
+    if (projectId) headers["x-rakshex-project-id"] = projectId;
+    if (agentId) headers["x-rakshex-agent-id"] = agentId;
+    if (options.identityId) {
+      headers["x-rakshex-identity-id"] = String(options.identityId);
+    }
+    if (options.providerAccountId) {
+      headers["x-rakshex-provider-account-id"] = String(options.providerAccountId);
+    }
+
+    const response = await this.fetchImpl(`${base}/v1/chat/completions`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ ...request, stream: false }),
+      signal: options.signal,
+    });
+    const payload = (await response.json().catch(() => null)) as
+      T | { error?: { message?: string; code?: string } } | null;
+    if (!response.ok) {
+      const gatewayError =
+        payload && typeof payload === "object" && "error" in payload ? payload.error : undefined;
+      const error = new Error(
+        gatewayError?.message ?? `Rakshex gateway request failed (${response.status})`,
+      ) as Error & { status?: number; code?: string };
+      error.status = response.status;
+      error.code = gatewayError?.code;
+      throw error;
+    }
+    if (payload == null) throw new Error("Rakshex gateway returned an empty response");
+    return payload as T;
   }
 
   async flush(): Promise<TransportResult> {

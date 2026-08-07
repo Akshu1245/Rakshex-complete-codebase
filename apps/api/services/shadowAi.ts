@@ -75,7 +75,7 @@ export function classifyShadowEvent(
       (row) => row.kind === "model" && model.toLowerCase().includes(row.pattern.toLowerCase()),
     );
   const isAllowlisted = allowlistedByHost || allowlistedByModel;
-  const isLLMHost = KNOWN_LLM_HOSTS.some((known) => host.includes(known));
+  const isLLMHost = KNOWN_LLM_HOSTS.some((known) => hostMatches(host, known));
   if (isAllowlisted) return { isAllowlisted, severity: "info", isLLMHost };
   if (!isLLMHost) return { isAllowlisted, severity: "low", isLLMHost };
   // Unsanctioned LLM call → medium by default; bumped to "high" if it's a
@@ -93,19 +93,60 @@ function hostMatches(host: string, pattern: string): boolean {
   return host === p || host.endsWith(`.${p}`);
 }
 
+const SAFE_RAW_SIGNAL_KEYS = new Set([
+  "method",
+  "status",
+  "service",
+  "environment",
+  "region",
+  "accountId",
+  "projectId",
+  "sourceIpHash",
+  "destinationIpHash",
+  "bytesOut",
+  "requestCount",
+]);
+
+function sanitizeRawSignals(input: Record<string, unknown>): Record<string, unknown> {
+  const sanitized: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(input)) {
+    if (!SAFE_RAW_SIGNAL_KEYS.has(key)) continue;
+    if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+      sanitized[key] = typeof value === "string" ? value.slice(0, 256) : value;
+    }
+  }
+  return sanitized;
+}
+
+function normalizeHost(input: string): string | null {
+  const trimmed = input.trim().toLowerCase();
+  if (!trimmed) return null;
+  try {
+    const parsed = new URL(trimmed.includes("://") ? trimmed : `https://${trimmed}`);
+    const hostname = parsed.hostname.replace(/\.$/, "");
+    if (!hostname || hostname.length > 192 || !/^[a-z0-9.-]+$/.test(hostname)) return null;
+    return hostname;
+  } catch {
+    return null;
+  }
+}
+
 function parseEvent(input: unknown): ShadowAiInputEvent | null {
   if (!input || typeof input !== "object") return null;
   const rec = input as Record<string, unknown>;
   const userId = Number(rec.userId);
   const source = String(rec.source ?? "log").slice(0, 64);
-  const host = typeof rec.host === "string" ? rec.host.trim() : "";
+  const host = typeof rec.host === "string" ? normalizeHost(rec.host) : null;
   if (!Number.isFinite(userId) || userId <= 0) return null;
-  if (host.length === 0 || host.length > 192) return null;
+  if (!host) return null;
   const event: ShadowAiInputEvent = { userId, source, host };
   if (typeof rec.model === "string") event.model = rec.model.slice(0, 96);
-  if (typeof rec.occurredAt === "number") event.occurredAt = rec.occurredAt;
+  if (typeof rec.occurredAt === "number" && Number.isFinite(rec.occurredAt) && rec.occurredAt > 0) {
+    event.occurredAt = rec.occurredAt;
+  }
   if (rec.raw && typeof rec.raw === "object") {
-    event.raw = rec.raw as Record<string, unknown>;
+    const safe = sanitizeRawSignals(rec.raw as Record<string, unknown>);
+    if (Object.keys(safe).length > 0) event.raw = safe;
   }
   return event;
 }
@@ -159,3 +200,5 @@ export async function ingestShadowAiEvents(
   }
   return summary;
 }
+
+export const __test = { hostMatches, normalizeHost, parseEvent, sanitizeRawSignals };
