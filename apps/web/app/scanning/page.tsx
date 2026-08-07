@@ -80,7 +80,7 @@ export default function ScanningPage() {
       {
         time: new Date().toLocaleTimeString(),
         type: "info",
-        msg: "Rakshex Scanner ready. Select a collection and start a scan.",
+        msg: "RaksHex Scanner ready. Select a collection and start a scan.",
       },
     ]);
   }, []);

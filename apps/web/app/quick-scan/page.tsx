@@ -86,7 +86,7 @@ export default function QuickScanPage() {
         <div className="mb-8">
           <p className="text-sm text-blue-400 mb-2">
             <Link href="/" className="hover:text-blue-300">
-              Rakshex
+              RaksHex
             </Link>
           </p>
           <h1 className="text-3xl font-bold text-blue-400">Quick Scan</h1>

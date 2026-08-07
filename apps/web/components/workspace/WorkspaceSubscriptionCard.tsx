@@ -61,7 +61,7 @@ export function WorkspaceSubscriptionCard({ workspaceId }: { workspaceId: number
         const checkout = new window.Razorpay({
           key: result.keyId,
           subscription_id: result.subscriptionId,
-          name: "Rakshex",
+          name: "RaksHex",
           description: `${result.plan === "enterprise" ? "Business" : "Pro"} team subscription`,
           handler: () => {
             setMessage(

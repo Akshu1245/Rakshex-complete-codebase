@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Data Processing Addendum | RakshEx",
+  title: "Data Processing Addendum | RaksHex",
   description:
     "Controller-to-processor obligations, security measures, subprocessors, and transfer terms.",
   alternates: { canonical: "/legal/dpa" },
@@ -31,7 +31,7 @@ export default function DataProcessingAddendumPage() {
           <section>
             <h2 className="text-xl font-semibold text-white">Roles and scope</h2>
             <p className="mt-3">
-              Customer is the controller (or data fiduciary) and RakshEx is the processor. We
+              Customer is the controller (or data fiduciary) and RaksHex is the processor. We
               process Customer Personal Data only on documented instructions — the Agreement, this
               DPA, product configuration, and authorised support requests — unless law requires
               otherwise.

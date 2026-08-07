@@ -34,7 +34,7 @@ const INTEGRATIONS: IntegrationItem[] = [
     status: "Available",
     icon: ICON_GH,
     description:
-      "Install the RakshEx GitHub App for PR secret scanning, webhook-driven jobs, and Actions-friendly scan workflows.",
+      "Install the RaksHex GitHub App for PR secret scanning, webhook-driven jobs, and Actions-friendly scan workflows.",
   },
   {
     name: "Slack Webhook",

@@ -2,7 +2,7 @@
  * Conflict resolution for offline-first sync.
  *
  * We use Last-Write-Wins (LWW) keyed on a monotonic `updatedAt` (or `version`)
- * field, which is the simplest correct strategy for the Rakshex data model
+ * field, which is the simplest correct strategy for the RaksHex data model
  * (records are owned by a workspace and rarely edited concurrently). More
  * advanced merge/CRDT strategies can be layered on later per-entity.
  */

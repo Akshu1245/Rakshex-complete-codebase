@@ -103,7 +103,7 @@ export default function ApiKeysPage() {
       </form>
       <p className="text-xs text-neutral-500 mb-8">
         {purpose === "gateway"
-          ? "Use this Rakshex key as the OpenAI client credential and set the base URL to /v1. Provider credentials remain centrally managed and are never issued to employees."
+          ? "Use this RaksHex key as the OpenAI client credential and set the base URL to /v1. Provider credentials remain centrally managed and are never issued to employees."
           : purpose === "ci"
             ? "Restricted to collection reads and security scan execution."
             : "Full-access keys are high risk. Prefer a purpose-specific key whenever possible."}

@@ -28,7 +28,7 @@ export default function CopilotGovernancePage() {
           </p>
           <h1 className="mt-3 text-3xl font-bold">No verified Copilot data yet</h1>
           <p className="mt-3 max-w-xl text-sm leading-6 text-gray-400">
-            Connect a GitHub organization and run a permitted Copilot sync. Rakshex only displays
+            Connect a GitHub organization and run a permitted Copilot sync. RaksHex only displays
             usage, seats, and costs returned by GitHub or explicitly imported by your workspace.
           </p>
           <Link

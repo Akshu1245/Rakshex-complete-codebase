@@ -158,7 +158,7 @@ export function TeamGovernanceTab() {
       <section className="rounded-xl border border-white/10 bg-white/[0.02] p-6 space-y-4">
         <h2 className="text-lg font-semibold text-white">Budgets & per-employee limits</h2>
         <p className="text-sm text-gray-500">
-          Hard limits apply only to traffic routed through the Rakshex gateway. Imported provider
+          Hard limits apply only to traffic routed through the RaksHex gateway. Imported provider
           usage is monitoring-only.
         </p>
         <div className="flex flex-wrap gap-3 items-end">

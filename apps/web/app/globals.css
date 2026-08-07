@@ -342,7 +342,7 @@ textarea:focus,
   background: #6ee7b7;
 }
 
-/* Custom Rakshex Animations & Classes */
+/* Custom RaksHex Animations & Classes */
 .emerald-glow {
   border: 1px solid #14b8a6;
 }
@@ -425,7 +425,7 @@ textarea:focus,
   animation: logo-scroll-anim 35s linear infinite;
 }
 
-/* RakshEx Hover Animations */
+/* RaksHex Hover Animations */
 .group:hover .animate-pulse-shield {
   animation: shield-pulse-anim 1.5s infinite ease-in-out;
 }
@@ -819,7 +819,7 @@ textarea:focus,
   height: 260px;
 }
 
-/* CARD 2 — RakshEx main */
+/* CARD 2 — RaksHex main */
 .card-main {
   flex: 1;
   border-color: rgba(20, 184, 166, 0.5) !important;

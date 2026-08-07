@@ -546,7 +546,7 @@ export default function DemoPage() {
                   href="https://www.rakshex.in/register"
                   className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white px-8 py-4 rounded-xl font-bold text-lg transition-colors"
                 >
-                  Get Rakshex Free <ArrowRight className="w-5 h-5" />
+                  Get RaksHex Free <ArrowRight className="w-5 h-5" />
                 </a>
                 <a
                   href="https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex-vscode"

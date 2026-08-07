@@ -60,7 +60,7 @@ function DashboardInner() {
           </div>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-white">Rakshex Enterprise</h1>
+              <h1 className="text-2xl font-bold text-white">RaksHex Enterprise</h1>
               <span className="px-2 py-0.5 bg-[#14b8a6]/10 border border-[#14b8a6]/30 rounded text-[#14b8a6] text-xs font-mono">
                 WS-{workspaceId}
               </span>

@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Enterprise SLA | RakshEx",
+  title: "Enterprise SLA | RaksHex",
   description:
     "Availability target, support response targets, exclusions, and service credits for paid Enterprise orders.",
   alternates: { canonical: "/legal/sla" },
@@ -36,7 +36,7 @@ export default function EnterpriseSlaPage() {
           <section>
             <h2 className="text-xl font-semibold text-white">Service commitment</h2>
             <p className="mt-3">
-              For the hosted RakshEx control plane, we target{" "}
+              For the hosted RaksHex control plane, we target{" "}
               <strong className="text-white">99.9%</strong> monthly uptime, excluding scheduled
               maintenance and listed exclusions. Credits are the contractual remedy for SLA failure
               — not a warranty of uninterrupted service.

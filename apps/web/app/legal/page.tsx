@@ -2,9 +2,9 @@ import Link from "next/link";
 import { FileText, Scale, ShieldCheck, Sparkles } from "lucide-react";
 
 export const metadata = {
-  title: "Legal Center | RakshEx",
+  title: "Legal Center | RaksHex",
   description:
-    "RakshEx customer terms, privacy, data-processing, security, and AI transparency documents.",
+    "RaksHex customer terms, privacy, data-processing, security, and AI transparency documents.",
   alternates: { canonical: "/legal" },
 };
 
@@ -78,7 +78,7 @@ export default function LegalCenter() {
             Clear documents. Honest boundaries.
           </h1>
           <p className="mt-5 text-lg leading-8 text-slate-400">
-            These documents explain how RakshEx is sold, operated, secured, and governed. Enterprise
+            These documents explain how RaksHex is sold, operated, secured, and governed. Enterprise
             paperwork becomes binding when incorporated into an executed Order Form.
           </p>
         </header>

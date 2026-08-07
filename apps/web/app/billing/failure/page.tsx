@@ -49,7 +49,7 @@ export default function BillingFailurePage() {
             <ArrowLeft className="w-4 h-4" /> Try again
           </Link>
           <a
-            href="mailto:support@rakshex.in?subject=Rakshex%20payment%20failed"
+            href="mailto:support@rakshex.in?subject=RaksHex%20payment%20failed"
             className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md border border-gray-700 hover:bg-black/50 text-gray-200 text-sm font-medium transition-colors"
           >
             <LifeBuoy className="w-4 h-4" /> Contact support

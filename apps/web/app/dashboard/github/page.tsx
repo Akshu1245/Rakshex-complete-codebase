@@ -84,7 +84,7 @@ export default function GitHubIntegrationPage() {
           <div className="bg-black/50 p-6 rounded-lg border border-gray-700">
             <h2 className="text-xl font-semibold mb-4">Connect GitHub App</h2>
             <p className="text-gray-400 mb-4">
-              Install the RakshEx GitHub App on your organization or account, then paste the
+              Install the RaksHex GitHub App on your organization or account, then paste the
               installation ID below to link it to your workspace.
             </p>
             <div className="flex gap-3 flex-wrap">
@@ -216,13 +216,13 @@ export default function GitHubIntegrationPage() {
           <div className="bg-black/30 p-6 rounded-lg border border-gray-800 text-sm text-gray-400">
             <h3 className="font-semibold text-white mb-2">How PR scanning works</h3>
             <ul className="list-disc pl-5 space-y-1">
-              <li>Install the RakshEx GitHub App and link the installation ID</li>
+              <li>Install the RaksHex GitHub App and link the installation ID</li>
               <li>On PR open or new commits → webhook → queue → worker</li>
               <li>
                 Real secret scanning (AWS, GitHub, OpenAI, private keys, JWTs…) + extra heuristics
               </li>
               <li>Detailed findings posted as a rich comment on the PR</li>
-              <li>Results also appear in your RakshEx dashboard</li>
+              <li>Results also appear in your RaksHex dashboard</li>
             </ul>
           </div>
         </div>

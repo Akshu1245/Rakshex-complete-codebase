@@ -61,7 +61,7 @@ const ENTRIES: ChangelogEntry[] = [
     date: "April 2026",
     items: [
       { type: "added", text: "AgentGuard kill switch engine" },
-      { type: "added", text: "VS Code extension alpha (Rakshex integration)" },
+      { type: "added", text: "VS Code extension alpha (RaksHex integration)" },
       { type: "improved", text: "Pricing page with Pro and Enterprise tiers" },
     ],
   },

@@ -43,15 +43,20 @@ export function PublicHeader() {
 
   return (
     <div className="fixed top-0 left-0 right-0 w-full z-50 flex flex-col">
+      {/* Shared radial glow tying the banner + nav together, matching the
+          hero section's teal glow language instead of leaving the top of
+          the page with flat/disconnected panels. */}
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_50%_-60%,rgba(20,184,166,0.14),transparent_65%)] pointer-events-none" />
+
       {/* SECTION 1 — sticky announcement bar */}
       {showBanner && (
-        <div className="w-full bg-transparent border-b border-[#14B8A6]">
+        <div className="w-full bg-[#0B0F14]/80 backdrop-blur-md border-b border-[#14B8A6]/40">
           <Link className="block" href="/changelog">
             <div className="mx-auto flex h-10 w-full max-w-[1280px] items-center justify-between px-6">
               <p className="min-w-0 truncate text-left text-xs font-medium text-white sm:text-sm">
                 {countdownActive
-                  ? "RakshEx private beta opens soon."
-                  : "RakshEx AI Control Plane is available for hands-on evaluation."}
+                  ? "RaksHex private beta opens soon."
+                  : "RaksHex AI Control Plane is available for hands-on evaluation."}
               </p>
               {countdownActive ? (
                 <span
@@ -76,7 +81,7 @@ export function PublicHeader() {
 
       {/* SECTION 2 — Navbar Redesign (Mega Menu) */}
       <nav
-        className="bg-[#0F1419]/90 backdrop-blur-md w-full border-b border-[#1A1F2E]"
+        className="bg-gradient-to-b from-[#0F1419]/95 to-[#0F1419]/85 backdrop-blur-md w-full border-b border-[#1A1F2E]"
         onMouseLeave={handleMouseLeave}
       >
         <div className="flex justify-between items-center max-w-[1280px] mx-auto px-6 h-14">
@@ -97,7 +102,7 @@ export function PublicHeader() {
                   />
                 </svg>
                 <span className="text-xl font-bold font-manrope tracking-tight text-white">
-                  RakshEx
+                  RaksHex
                 </span>
               </div>
             </Link>
@@ -275,28 +280,28 @@ export function PublicHeader() {
                       href="/compare/rakshex-vs-snyk"
                       onClick={forceClose}
                     >
-                      RakshEx vs Snyk →
+                      RaksHex vs Snyk →
                     </Link>
                     <Link
                       className="text-[#9CA3AF] hover:text-[#14B8A6] text-xs py-1.5 transition-colors border-b border-[#1A1F2E] pb-2"
                       href="/compare/rakshex-vs-datadog"
                       onClick={forceClose}
                     >
-                      RakshEx vs Datadog →
+                      RaksHex vs Datadog →
                     </Link>
                     <Link
                       className="text-[#9CA3AF] hover:text-[#14B8A6] text-xs py-1.5 transition-colors border-b border-[#1A1F2E] pb-2"
                       href="/compare/rakshex-vs-traceable"
                       onClick={forceClose}
                     >
-                      RakshEx vs Traceable AI →
+                      RaksHex vs Traceable AI →
                     </Link>
                     <Link
                       className="text-[#9CA3AF] hover:text-[#14B8A6] text-xs py-1.5 transition-colors"
                       href="/compare/rakshex-vs-salt"
                       onClick={forceClose}
                     >
-                      RakshEx vs Salt Security →
+                      RaksHex vs Salt Security →
                     </Link>
                   </div>
                 </div>
@@ -515,21 +520,21 @@ export function PublicHeader() {
                   href="/compare/rakshex-vs-snyk"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  RakshEx vs Snyk
+                  RaksHex vs Snyk
                 </Link>
                 <Link
                   className="text-sm text-neutral-300"
                   href="/compare/rakshex-vs-datadog"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  RakshEx vs Datadog
+                  RaksHex vs Datadog
                 </Link>
                 <Link
                   className="text-sm text-neutral-300"
                   href="/compare/rakshex-vs-traceable"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  RakshEx vs Traceable AI
+                  RaksHex vs Traceable AI
                 </Link>
               </div>
             </div>

@@ -30,7 +30,7 @@ const GATEWAY_STEPS = [
   {
     title: "Set budgets and kill switches",
     description:
-      "Configure per-identity or workspace hard limits. Hard blocks apply only to RakshEx-routed traffic.",
+      "Configure per-identity or workspace hard limits. Hard blocks apply only to RaksHex-routed traffic.",
     href: "/enterprise",
     cta: "Open team governance",
   },
@@ -115,7 +115,7 @@ export default function OnboardingPage() {
         <section className="mb-10 p-6 rounded-lg border border-teal-500/30 bg-teal-950/20">
           <h2 className="text-xl font-semibold text-teal-300 mb-2">Activate the LLM gateway</h2>
           <p className="text-sm text-gray-400 mb-4">
-            Route team traffic through RakshEx so budgets and kill switches can hard-block. Direct
+            Route team traffic through RaksHex so budgets and kill switches can hard-block. Direct
             provider SDK calls remain observation-only unless they use this endpoint.
           </p>
           <div className="space-y-4 mb-6">

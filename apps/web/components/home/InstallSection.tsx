@@ -21,11 +21,11 @@ rakshex scan ./postman-collection.json
 # Report: https://rakshex.in/report/abc123`;
 
 const vscodeCode = `# Install from VS Code Marketplace
-# Click the button below or search "Rakshex" in Extensions
+# Click the button below or search "RaksHex" in Extensions
 
 # After install:
 # 1. Open Command Palette (Ctrl+Shift+P)
-# 2. Type "Rakshex: Scan Current File"
+# 2. Type "RaksHex: Scan Current File"
 # 3. View findings in the Security Panel`;
 
 const githubCode = `name: RaksHex Security Scan

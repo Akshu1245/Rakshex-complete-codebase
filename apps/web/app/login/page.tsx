@@ -59,7 +59,7 @@ function LoginForm() {
           </Link>
 
           <div className="mb-8">
-            <h1 className="text-[28px] font-semibold text-white mb-1">Welcome to Rakshex</h1>
+            <h1 className="text-[28px] font-semibold text-white mb-1">Welcome to RaksHex</h1>
             <p className="text-neutral-500 text-sm">
               {hasOAuth ? "Sign in with email or a connected provider" : "Sign in to your account"}
             </p>

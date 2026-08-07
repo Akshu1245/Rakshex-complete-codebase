@@ -32,7 +32,7 @@ export function ChangelogSection() {
       <div className="flex flex-col items-center gap-3 text-center">
         <h2 className="text-[32px] font-bold leading-tight text-white">Changelog</h2>
         <p className="mt-1 text-lg leading-relaxed text-neutral-400">
-          See what&apos;s new in RakshEx
+          See what&apos;s new in RaksHex
         </p>
       </div>
       <div className="mx-auto grid w-full max-w-[1256px] grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
