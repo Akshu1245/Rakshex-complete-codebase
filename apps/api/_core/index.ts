@@ -876,8 +876,17 @@ async function startServer() {
   );
 
   // ── Razorpay Webhook ──────────────────────────────────────────────────────
+  const razorpayWebhookLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 120, // allow limited burst for gateway retries while mitigating abuse
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "Too many webhook requests, please try again later." },
+  });
+
   app.post(
     "/api/webhooks/razorpay",
+    razorpayWebhookLimiter,
     express.raw({ type: "application/json" }),
     async (req, res) => {
       const signature = req.headers["x-razorpay-signature"] as string;
