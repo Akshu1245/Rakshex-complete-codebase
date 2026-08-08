@@ -43,6 +43,23 @@ export default function Dashboard() {
   const [connected, setConnected] = useState(false);
   const [liveLogs, setLiveLogs] = useState<LiveLog[]>([]);
   const [liveCost, setLiveCost] = useState(0);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const welcomed = localStorage.getItem("rakshex_welcomed");
+      if (!welcomed) {
+        setShowWelcomeModal(true);
+      }
+    }
+  }, []);
+
+  const closeWelcomeModal = () => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("rakshex_welcomed", "true");
+    }
+    setShowWelcomeModal(false);
+  };
 
   // Real tRPC data
   const overviewQuery = trpc.analytics.overview.useQuery(undefined, {
@@ -173,6 +190,13 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="flex gap-2">
+            <button
+              onClick={() => setShowWelcomeModal(true)}
+              className="px-3.5 py-2 border border-[#14B8A6]/30 text-[#14B8A6] hover:bg-[#14B8A6]/10 font-button-text font-bold rounded-lg transition-all flex items-center gap-1.5 text-xs"
+            >
+              <span className="material-symbols-outlined text-sm">help_outline</span>
+              Welcome Guide
+            </button>
             <Link
               href="/report"
               className="px-4 py-2 bg-primary text-on-primary font-button-text font-bold rounded-lg emerald-glow hover:opacity-90 transition-all flex items-center gap-2"
@@ -537,6 +561,96 @@ export default function Dashboard() {
         </section>
       </div>
 
+      {/* First-Time Visitor Welcome Splash Modal */}
+      {showWelcomeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+          <div className="bg-[#0B0F17] border border-[#14B8A6]/30 rounded-2xl p-6 md:p-8 max-w-lg w-full space-y-6 shadow-2xl relative overflow-hidden">
+            {/* Background Radial Glow */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-[#14B8A6]/10 blur-[80px] rounded-full pointer-events-none" />
+
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#14B8A6]/10 border border-[#14B8A6]/30 flex items-center justify-center text-[#14B8A6]">
+                  <span className="material-symbols-outlined text-xl">shield_lock</span>
+                </div>
+                <div>
+                  <h3 className="text-white font-bold text-lg font-sans">Welcome to RaksHex</h3>
+                  <p className="text-slate-400 text-xs font-mono">
+                    AI Agent & API Security Platform
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={closeWelcomeModal}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
+                aria-label="Close welcome modal"
+              >
+                <span className="material-symbols-outlined text-lg">close</span>
+              </button>
+            </div>
+
+            {/* Overview Highlights */}
+            <div className="space-y-3 text-xs leading-relaxed text-slate-300">
+              <div className="flex items-start gap-3 p-3 rounded-xl bg-[#0D131F] border border-slate-800">
+                <span className="material-symbols-outlined text-[#14B8A6] text-lg mt-0.5">
+                  verified_user
+                </span>
+                <div>
+                  <h4 className="font-semibold text-white">Action-Level Agent Governance</h4>
+                  <p className="text-slate-400 text-[11px]">
+                    Enforce real-time rate limits, budget caps, and prompt firewall protection on
+                    every AI request.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 p-3 rounded-xl bg-[#0D131F] border border-slate-800">
+                <span className="material-symbols-outlined text-teal-400 text-lg mt-0.5">
+                  vpn_key
+                </span>
+                <div>
+                  <h4 className="font-semibold text-white">Credential Mediation Broker</h4>
+                  <p className="text-slate-400 text-[11px]">
+                    Secrets never touch untrusted LLM callers — DENY policies block the API key at
+                    the edge.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 p-3 rounded-xl bg-[#0D131F] border border-slate-800">
+                <span className="material-symbols-outlined text-cyan-400 text-lg mt-0.5">
+                  description
+                </span>
+                <div>
+                  <h4 className="font-semibold text-white">1-Click SOC2 Audit Reports</h4>
+                  <p className="text-slate-400 text-[11px]">
+                    Generate tamper-evident, hash-chained PDF evidence bundles for enterprise
+                    compliance.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-between pt-2">
+              <Link
+                href="/quick-scan"
+                onClick={closeWelcomeModal}
+                className="text-[#14B8A6] hover:underline text-xs font-mono flex items-center gap-1"
+              >
+                Run 1-Min API Scan &rarr;
+              </Link>
+              <button
+                onClick={closeWelcomeModal}
+                className="px-5 py-2.5 bg-[#14B8A6] hover:bg-[#14B8A6]/90 text-slate-950 font-bold text-xs rounded-xl shadow-lg transition-all"
+              >
+                Enter Command Center
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Footer Status Bar */}
       <footer className="fixed bottom-0 left-0 md:left-64 right-0 h-10 bg-surface-container-lowest/80 backdrop-blur-lg border-t border-glass z-30 px-6 flex items-center justify-between">
         <div className="flex items-center gap-2">
