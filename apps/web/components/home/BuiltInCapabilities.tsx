@@ -88,7 +88,7 @@ function EasyStartWidget() {
     deploy: "infra.deploy",
   };
   return (
-    <div className="bg-[#0B0F17] border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl font-mono text-xs">
+    <div className="bg-[#0B0F17] border border-slate-800 rounded-xl p-5 space-y-4 shadow-xl font-mono text-xs">
       <div className="flex items-center justify-between border-b border-slate-800 pb-3">
         <div className="flex items-center gap-2 text-slate-300 font-sans font-semibold">
           <Terminal className="w-4 h-4 text-[#14B8A6]" />
@@ -135,7 +135,7 @@ function EasyStartWidget() {
 /* Custom React UI Preview Widget 2: Delegated authority */
 function ReliabilityWidget() {
   return (
-    <div className="bg-[#0B0F17] border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl font-mono text-xs">
+    <div className="bg-[#0B0F17] border border-slate-800 rounded-xl p-5 space-y-4 shadow-xl font-mono text-xs">
       <div className="flex items-center justify-between bg-emerald-950/40 border border-emerald-500/30 p-3 rounded-xl">
         <div className="flex items-center gap-2 text-emerald-400 font-sans font-bold">
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -162,7 +162,7 @@ function ReliabilityWidget() {
 function SecurityWidget() {
   const [brokerActive, setBrokerActive] = useState(true);
   return (
-    <div className="bg-[#0B0F17] border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl font-mono text-xs">
+    <div className="bg-[#0B0F17] border border-slate-800 rounded-xl p-5 space-y-4 shadow-xl font-mono text-xs">
       <div className="flex items-center justify-between border-b border-slate-800 pb-3">
         <div className="flex items-center gap-2 text-white font-sans font-bold">
           <Shield className="w-4 h-4 text-[#14B8A6]" />
@@ -219,7 +219,7 @@ function ConsoleWidget() {
     { id: "0x1eb0", action: "infra.deploy", result: "ALLOW" },
   ];
   return (
-    <div className="bg-[#0B0F17] border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl font-mono text-xs">
+    <div className="bg-[#0B0F17] border border-slate-800 rounded-xl p-5 space-y-4 shadow-xl font-mono text-xs">
       <div className="flex items-center justify-between border-b border-slate-800 pb-3">
         <div className="flex items-center gap-2 text-white font-sans font-bold">
           <BarChart2 className="w-4 h-4 text-[#14B8A6]" />
@@ -251,7 +251,7 @@ function ConsoleWidget() {
 /* Custom React UI Preview Widget 5: Policy engine */
 function AutomationsWidget() {
   return (
-    <div className="bg-[#0B0F17] border border-slate-800 rounded-2xl p-5 space-y-3 shadow-xl font-mono text-xs">
+    <div className="bg-[#0B0F17] border border-slate-800 rounded-xl p-5 space-y-3 shadow-xl font-mono text-xs">
       <div className="flex items-center justify-between border-b border-slate-800 pb-3">
         <div className="flex items-center gap-2 text-white font-sans font-bold">
           <Code className="w-4 h-4 text-purple-400" />
@@ -289,7 +289,7 @@ export function BuiltInCapabilities() {
   const activeTab = CAPABILITIES.find((c) => c.id === activeTabId) || CAPABILITIES[0];
 
   return (
-    <section className="w-full py-20 px-4 md:px-8 bg-[#090C12] text-white relative">
+    <section className="w-full py-24 px-4 md:px-8 bg-[#090C12] text-white relative">
       <div className="max-w-6xl mx-auto space-y-10">
         {/* Section Header */}
         <div className="text-center space-y-3">

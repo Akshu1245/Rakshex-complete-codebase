@@ -40,7 +40,7 @@ export function WhyMoveToRaksHex() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section className="w-full py-20 px-4 md:px-8 bg-[#090D14] relative border-t border-slate-800/80">
+    <section className="w-full py-24 px-4 md:px-8 bg-[#090D14] relative border-t border-slate-800/80">
       <div className="max-w-6xl mx-auto space-y-12">
         {/* Section Header */}
         <div className="text-center space-y-4 max-w-3xl mx-auto">
@@ -56,7 +56,7 @@ export function WhyMoveToRaksHex() {
 
         {/* Top 3 Highlight Pillars */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-[#0D121C] border border-slate-800 rounded-2xl p-6 space-y-3 hover:border-[#14B8A6]/40 transition-all">
+          <div className="bg-[#0D121C] border border-slate-800 rounded-xl p-6 space-y-3 hover:border-[#14B8A6]/40 transition-all">
             <div className="w-10 h-10 rounded-lg bg-[#14B8A6]/10 border border-[#14B8A6]/30 flex items-center justify-center text-[#14B8A6]">
               <Sliders className="w-5 h-5" />
             </div>
@@ -69,7 +69,7 @@ export function WhyMoveToRaksHex() {
             </p>
           </div>
 
-          <div className="bg-[#0D121C] border border-slate-800 rounded-2xl p-6 space-y-3 hover:border-[#14B8A6]/40 transition-all">
+          <div className="bg-[#0D121C] border border-slate-800 rounded-xl p-6 space-y-3 hover:border-[#14B8A6]/40 transition-all">
             <div className="w-10 h-10 rounded-lg bg-[#14B8A6]/10 border border-[#14B8A6]/30 flex items-center justify-center text-[#14B8A6]">
               <Zap className="w-5 h-5" />
             </div>
@@ -82,7 +82,7 @@ export function WhyMoveToRaksHex() {
             </p>
           </div>
 
-          <div className="bg-[#0D121C] border border-slate-800 rounded-2xl p-6 space-y-3 hover:border-[#14B8A6]/40 transition-all">
+          <div className="bg-[#0D121C] border border-slate-800 rounded-xl p-6 space-y-3 hover:border-[#14B8A6]/40 transition-all">
             <div className="w-10 h-10 rounded-lg bg-[#14B8A6]/10 border border-[#14B8A6]/30 flex items-center justify-center text-[#14B8A6]">
               <RefreshCw className="w-5 h-5" />
             </div>

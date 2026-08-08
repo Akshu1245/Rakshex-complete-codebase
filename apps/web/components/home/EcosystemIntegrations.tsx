@@ -78,7 +78,7 @@ const INTEGRATIONS: IntegrationItem[] = [
 
 export function EcosystemIntegrations() {
   return (
-    <section className="w-full py-20 px-4 md:px-8 bg-[#070A10] relative overflow-hidden border-t border-slate-800/80">
+    <section className="w-full py-24 px-4 md:px-8 bg-[#070A10] relative overflow-hidden border-t border-slate-800/80">
       <div className="max-w-6xl mx-auto space-y-12 relative z-10">
         {/* Section Header */}
         <div className="text-center space-y-4 max-w-3xl mx-auto">
@@ -105,7 +105,7 @@ export function EcosystemIntegrations() {
 
           {/* Central RaksHex Core Node */}
           <div className="flex justify-center mb-10 relative z-20">
-            <div className="bg-[#081219] border-2 border-[#14B8A6] rounded-2xl p-6 shadow-[0_0_40px_rgba(20,184,166,0.3)] flex items-center gap-4 hover:scale-105 transition-transform">
+            <div className="bg-[#081219] border-2 border-[#14B8A6] rounded-xl p-6 shadow-[0_0_40px_rgba(20,184,166,0.3)] flex items-center gap-4 hover:scale-105 transition-transform">
               <div className="w-12 h-12 rounded-xl bg-[#14B8A6]/20 border border-[#14B8A6] flex items-center justify-center text-[#14B8A6]">
                 <Shield className="w-7 h-7 animate-pulse" />
               </div>

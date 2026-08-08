@@ -212,7 +212,7 @@ export function OneOnOneMatrix() {
   return (
     <section
       id="one-on-one-matrix"
-      className="w-full py-16 px-4 md:px-8 bg-[#0B0F17] relative scroll-mt-24"
+      className="w-full py-24 px-4 md:px-8 bg-[#0B0F17] relative scroll-mt-24"
     >
       <div className="max-w-7xl mx-auto space-y-10">
         {/* Section Header */}
@@ -251,7 +251,7 @@ export function OneOnOneMatrix() {
         </div>
 
         {/* Selected Competitor Summary Card */}
-        <div className="bg-[#090D14] border border-[#14B8A6]/30 rounded-2xl p-6 md:p-8 space-y-6 shadow-2xl relative overflow-hidden">
+        <div className="bg-[#090D14] border border-[#14B8A6]/30 rounded-xl p-6 md:p-8 space-y-6 shadow-2xl relative overflow-hidden">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-6">
             <div>
               <span className="text-xs font-mono text-[#14B8A6] uppercase tracking-wider">

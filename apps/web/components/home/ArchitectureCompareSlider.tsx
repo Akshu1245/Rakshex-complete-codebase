@@ -126,7 +126,7 @@ export function ArchitectureCompareSlider() {
   return (
     <section
       id="architecture-slider"
-      className="w-full py-12 px-4 md:px-8 bg-[#090D14] relative overflow-hidden scroll-mt-24"
+      className="w-full py-16 px-4 md:px-8 bg-[#090D14] relative overflow-hidden scroll-mt-24"
     >
       {/* Background radial glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-[#14B8A6]/5 blur-[100px] rounded-full pointer-events-none" />
@@ -150,7 +150,7 @@ export function ArchitectureCompareSlider() {
         {/* Compact 16:9 Slider Canvas Container */}
         <div
           ref={containerRef}
-          className="relative w-full h-[360px] rounded-2xl border border-slate-800 bg-[#060A10] overflow-hidden select-none shadow-2xl cursor-ew-resize"
+          className="relative w-full h-[360px] rounded-xl border border-slate-800 bg-[#060A10] overflow-hidden select-none shadow-2xl cursor-ew-resize"
           onMouseDown={(e) => {
             setIsDragging(true);
             handleMove(e.clientX);

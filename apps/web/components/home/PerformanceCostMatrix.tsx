@@ -5,7 +5,7 @@ import { Zap, DollarSign, TrendingDown, ArrowUpRight, ShieldCheck, Activity } fr
 
 export function PerformanceCostMatrix() {
   return (
-    <section className="w-full py-20 px-4 md:px-8 bg-[#080C14] relative overflow-hidden border-t border-slate-800/80">
+    <section className="w-full py-24 px-4 md:px-8 bg-[#080C14] relative overflow-hidden border-t border-slate-800/80">
       {/* Background radial glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-[#14B8A6]/5 blur-[120px] rounded-full pointer-events-none" />
 
@@ -39,7 +39,7 @@ export function PerformanceCostMatrix() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative">
             {/* QUADRANT 1 (Top-Left): Coarse & Narrow */}
-            <div className="bg-[#0B0F18] border border-slate-800/80 rounded-2xl p-6 min-h-[220px] flex flex-col justify-between relative group hover:border-slate-700 transition-all">
+            <div className="bg-[#0B0F18] border border-slate-800/80 rounded-xl p-6 min-h-[220px] flex flex-col justify-between relative group hover:border-slate-700 transition-all">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-mono font-semibold text-slate-400 uppercase tracking-wider">
                   Coarse &amp; Manual
@@ -64,7 +64,7 @@ export function PerformanceCostMatrix() {
             </div>
 
             {/* QUADRANT 2 (Top-Right): Fine-grained & Narrow (RAKSHEX) */}
-            <div className="bg-[#081219] border-2 border-[#14B8A6] rounded-2xl p-6 min-h-[240px] flex flex-col justify-between relative shadow-[0_0_30px_rgba(20,184,166,0.15)] group hover:shadow-[0_0_40px_rgba(20,184,166,0.25)] transition-all overflow-hidden">
+            <div className="bg-[#081219] border-2 border-[#14B8A6] rounded-xl p-6 min-h-[240px] flex flex-col justify-between relative shadow-[0_0_30px_rgba(20,184,166,0.15)] group hover:shadow-[0_0_40px_rgba(20,184,166,0.25)] transition-all overflow-hidden">
               {/* Corner Badge */}
               <div className="absolute top-0 right-0 bg-[#14B8A6] text-black font-mono text-[10px] font-bold uppercase px-3 py-1 rounded-bl-xl tracking-wider flex items-center gap-1">
                 <ShieldCheck className="w-3.5 h-3.5" /> RaksHex
@@ -98,7 +98,7 @@ export function PerformanceCostMatrix() {
             </div>
 
             {/* QUADRANT 3 (Bottom-Left): Coarse & Broad */}
-            <div className="bg-[#0B0F18] border border-slate-800/80 rounded-2xl p-6 min-h-[220px] flex flex-col justify-between relative group hover:border-slate-700 transition-all">
+            <div className="bg-[#0B0F18] border border-slate-800/80 rounded-xl p-6 min-h-[220px] flex flex-col justify-between relative group hover:border-slate-700 transition-all">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-mono font-semibold text-slate-400 uppercase tracking-wider">
                   Coarse &amp; Broad
@@ -127,7 +127,7 @@ export function PerformanceCostMatrix() {
             </div>
 
             {/* QUADRANT 4 (Bottom-Right): Fine-grained but logging-only */}
-            <div className="bg-[#0B0F18] border border-slate-800/80 rounded-2xl p-6 min-h-[220px] flex flex-col justify-between relative group hover:border-slate-700 transition-all">
+            <div className="bg-[#0B0F18] border border-slate-800/80 rounded-xl p-6 min-h-[220px] flex flex-col justify-between relative group hover:border-slate-700 transition-all">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-mono font-semibold text-slate-400 uppercase tracking-wider">
                   Fine-Grained but Broad
