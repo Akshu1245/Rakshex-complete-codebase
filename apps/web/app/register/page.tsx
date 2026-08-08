@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc";
 import { PasswordField } from "@/components/PasswordField";
+import { AgentFirewallCanvas } from "@/components/AgentFirewallCanvas";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -173,13 +174,17 @@ export default function RegisterPage() {
         </div>
       </div>
 
-      <div className="hidden lg:flex flex-1 relative bg-neutral-950 border-l border-neutral-900 overflow-hidden items-center justify-center">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(20,184,166,0.15)_1px,transparent_0)] [background-size:24px_24px]" />
-        <div className="relative px-8 text-center max-w-md">
-          <p className="text-3xl font-bold leading-snug tracking-[-0.02em] text-white">
+      <div className="hidden lg:flex flex-1 relative bg-neutral-950 border-l border-neutral-900 overflow-hidden">
+        <AgentFirewallCanvas />
+        <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-neutral-950 via-neutral-950/70 to-transparent pointer-events-none" />
+        <div className="absolute inset-x-0 bottom-0 px-10 pb-12">
+          <p className="text-2xl font-bold leading-snug tracking-[-0.02em] text-white max-w-sm">
             Competitors govern the session.
             <br />
             <span className="text-[#14B8A6]">RaksHex governs the action.</span>
+          </p>
+          <p className="mt-3 text-sm text-neutral-500 max-w-sm">
+            Every action evaluated against delegated authority. A DENY blocks the credential itself.
           </p>
         </div>
       </div>
