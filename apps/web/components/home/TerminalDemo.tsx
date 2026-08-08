@@ -1,67 +1,58 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { CheckCircle2, XCircle, Circle } from "lucide-react";
+
+interface TraceStep {
+  label: string;
+  detail: string;
+}
+
+const TRACE_STEPS: TraceStep[] = [
+  { label: "Agent identified", detail: "finance-support-prod" },
+  { label: "Authority checked", detail: "parent scope ≤ $50" },
+  { label: "Decision reached", detail: "DENY — exceeds limit" },
+  { label: "Ledger recorded", detail: "hash-chained entry" },
+];
+
+interface LedgerEntry {
+  action: string;
+  decision: "ALLOW" | "DENY";
+}
+
+const RECENT_LEDGER: LedgerEntry[] = [
+  { action: "data.export", decision: "ALLOW" },
+  { action: "infra.deploy", decision: "ALLOW" },
+  { action: "financial.refund", decision: "DENY" },
+];
+
+const terminalLines = [
+  "> agent.call(financial.refund, { amount: 400 })",
+  "✓ authority checked: parent scope ≤ $50",
+  "⛔ DENY: exceeds delegated limit",
+  "🔗 written to Action Ledger",
+  "🔒 credential broker: request blocked",
+];
 
 export function TerminalDemo() {
   const [scanStep, setScanStep] = useState(0);
-  const [findings, setFindings] = useState<string[]>([]);
-  const [securityScore, setSecurityScore] = useState(100);
-  const [issuesCount, setIssuesCount] = useState(0);
 
   useEffect(() => {
-    const steps = [
-      { text: "> agent.call(financial.refund, { amount: 400 })", delay: 1200 },
-      { text: "✓ authority checked: parent scope ≤ $50", delay: 800 },
-      {
-        text: "⛔ DENY: exceeds delegated limit",
-        delay: 800,
-        finding: "⛔ DENY: exceeds delegated limit",
-        score: 98,
-        issues: 1,
-      },
-      {
-        text: "🔗 written to Action Ledger",
-        delay: 800,
-        finding: "🔗 written to Action Ledger",
-        score: 98,
-        issues: 1,
-      },
-      {
-        text: "🔒 credential broker: request blocked",
-        delay: 800,
-        finding: "🔒 credential broker: request blocked",
-        score: 98,
-        issues: 1,
-      },
-    ];
-
+    const delays = [1200, 800, 800, 800, 800];
     let currentStep = 0;
     let timer: NodeJS.Timeout;
 
     const runScan = () => {
-      if (currentStep < steps.length) {
-        const step = steps[currentStep];
+      if (currentStep < terminalLines.length) {
         setScanStep(currentStep + 1);
-        if (step.finding) {
-          setFindings((prev) => [...prev, step.finding!]);
-        }
-        if (step.score !== undefined) {
-          setSecurityScore(step.score);
-        }
-        if (step.issues !== undefined) {
-          setIssuesCount(step.issues);
-        }
+        timer = setTimeout(runScan, delays[currentStep]);
         currentStep++;
-        timer = setTimeout(runScan, step.delay);
       } else {
         timer = setTimeout(() => {
-          setFindings([]);
-          setSecurityScore(100);
-          setIssuesCount(0);
           currentStep = 0;
           setScanStep(0);
           runScan();
-        }, 5000);
+        }, 4500);
       }
     };
 
@@ -69,27 +60,25 @@ export function TerminalDemo() {
     return () => clearTimeout(timer);
   }, []);
 
-  const terminalLines = [
-    "> agent.call(financial.refund, { amount: 400 })",
-    "✓ authority checked: parent scope ≤ $50",
-    "⛔ DENY: exceeds delegated limit",
-    "🔗 written to Action Ledger",
-    "🔒 credential broker: request blocked",
-  ];
+  // Trace steps light up roughly in step with the terminal lines (4 trace
+  // steps mapped across 5 terminal lines — the first two terminal lines
+  // both belong to "authority checked").
+  const traceStepIndex = Math.max(0, Math.min(TRACE_STEPS.length, scanStep - 1));
+  const decided = scanStep >= 3;
 
   return (
-    <div className="w-full max-w-[580px] rounded-lg border border-[#14B8A6] bg-transparent flex flex-col md:flex-row p-5 gap-5 items-stretch shadow-md relative">
-      {/* Left panel: VS Code terminal */}
-      <div className="flex-1 bg-black/40 rounded border border-[#14B8A6]/20 p-4 font-mono text-xs text-left h-52 flex flex-col justify-between">
-        <div className="flex items-center gap-1.5 mb-3 border-b border-white/5 pb-2">
+    <div className="w-full max-w-[640px] rounded-lg border border-[#14B8A6] bg-transparent flex flex-col md:flex-row gap-5 p-5 items-stretch shadow-md relative">
+      {/* Left panel: terminal */}
+      <div className="flex-1 bg-black/40 rounded border border-[#14B8A6]/20 p-4 font-mono text-xs text-left min-h-[280px] flex flex-col">
+        <div className="flex items-center gap-1.5 mb-3 border-b border-white/5 pb-2 shrink-0">
           <div className="w-2.5 h-2.5 rounded-full bg-[#14B8A6]/40" />
           <div className="w-2.5 h-2.5 rounded-full bg-[#14B8A6]/60" />
           <div className="w-2.5 h-2.5 rounded-full bg-[#14B8A6]" />
           <span className="text-[10px] text-[#9CA3AF] ml-2 font-sans font-medium">
-            bash - agent firewall
+            bash — agent firewall
           </span>
         </div>
-        <div className="space-y-2 flex-1 overflow-y-auto">
+        <div className="space-y-2 flex-1">
           {terminalLines.slice(0, scanStep).map((line, idx) => {
             let color = "text-[#FFFFFF]";
             if (line.startsWith("✓")) color = "text-[#14B8A6]";
@@ -106,71 +95,87 @@ export function TerminalDemo() {
             <span className="inline-block w-1.5 h-3 bg-[#14B8A6] ml-1 animate-pulse" />
           )}
         </div>
-      </div>
 
-      {/* Right panel: findings dashboard */}
-      <div className="w-full md:w-52 bg-black/40 rounded border border-[#14B8A6]/20 p-4 flex flex-col justify-between items-center text-center">
-        <div className="w-full flex flex-col items-center gap-2">
-          <span className="text-[9px] text-[#9CA3AF] uppercase tracking-widest font-sans font-semibold">
-            Security Score
+        {/* Recent Action Ledger entries — fills the lower terminal space
+            with something informative instead of blank space, and
+            reinforces the ledger concept beyond this one demo action. */}
+        <div className="mt-4 pt-3 border-t border-white/5 shrink-0">
+          <span className="text-[9px] text-[#9CA3AF] uppercase tracking-widest font-sans font-semibold block mb-2">
+            Recent Action Ledger
           </span>
-          <div className="relative flex items-center justify-center">
-            <svg className="w-20 h-20 transform -rotate-90">
-              <circle
-                cx="40"
-                cy="40"
-                r="32"
-                stroke="rgba(255,255,255,0.1)"
-                strokeWidth="4"
-                fill="transparent"
-              />
-              <circle
-                cx="40"
-                cy="40"
-                r="32"
-                stroke="#14B8A6"
-                strokeWidth="4"
-                fill="transparent"
-                strokeDasharray="201"
-                strokeDashoffset={201 - (201 * securityScore) / 100}
-                className="transition-all duration-750 ease-out"
-              />
-            </svg>
-            <div className="absolute flex flex-col justify-center items-center">
-              <span className="text-xl font-extrabold font-sans text-white leading-none">
-                {securityScore}
-              </span>
-              <span className="text-[8px] text-[#9CA3AF] font-sans font-medium mt-0.5">/100</span>
-            </div>
+          <div className="space-y-1.5">
+            {RECENT_LEDGER.map((entry, i) => (
+              <div key={i} className="flex items-center justify-between gap-2 text-[10px]">
+                <span className="text-[#9CA3AF] font-mono truncate">{entry.action}</span>
+                <span
+                  className={`font-mono font-semibold shrink-0 ${entry.decision === "ALLOW" ? "text-[#14B8A6]" : "text-red-400"}`}
+                >
+                  {entry.decision}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
+      </div>
 
-        <div className="w-full mt-4 space-y-2 text-left">
-          <div className="flex justify-between items-center border-b border-white/5 pb-1.5">
-            <span className="text-[9px] text-[#9CA3AF] font-sans font-medium">Issues:</span>
-            <span className="text-[9px] text-white font-sans font-bold">{issuesCount}</span>
-          </div>
-          <div className="space-y-1">
-            {findings.map((f, i) => {
-              let borderBgColor = "border-orange-500/25 text-orange-400 bg-orange-500/10";
-              if (f.startsWith("🔒")) {
-                borderBgColor = "border-red-500/25 text-red-400 bg-red-500/10";
-              } else if (f.startsWith("💰")) {
-                borderBgColor = "border-amber-500/25 text-amber-400 bg-amber-500/10";
-              }
-              return (
-                <div
-                  key={i}
-                  className={`text-[9px] border rounded px-1.5 py-0.5 font-mono flex items-start gap-1.5 whitespace-pre-wrap leading-tight ${borderBgColor}`}
-                >
-                  <span>{f}</span>
+      {/* Right panel: live decision trace */}
+      <div className="w-full md:w-64 bg-black/40 rounded border border-[#14B8A6]/20 p-4 flex flex-col shrink-0">
+        <span className="text-[9px] text-[#9CA3AF] uppercase tracking-widest font-sans font-semibold mb-3">
+          Live Decision
+        </span>
+
+        <div className="flex-1 space-y-0">
+          {TRACE_STEPS.map((step, i) => {
+            const isDone = i < traceStepIndex;
+            const isCurrent = i === traceStepIndex && scanStep > 0 && scanStep < 5;
+            const isDenyStep = i === 2;
+            return (
+              <div key={i} className="flex gap-2.5">
+                <div className="flex flex-col items-center">
+                  {isDone ? (
+                    isDenyStep ? (
+                      <XCircle className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                    ) : (
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#14B8A6] shrink-0" />
+                    )
+                  ) : (
+                    <Circle
+                      className={`w-3.5 h-3.5 shrink-0 ${isCurrent ? "text-[#14B8A6] animate-pulse" : "text-white/15"}`}
+                    />
+                  )}
+                  {i < TRACE_STEPS.length - 1 && (
+                    <span
+                      className={`w-px flex-1 min-h-[14px] ${isDone ? "bg-[#14B8A6]/30" : "bg-white/10"}`}
+                    />
+                  )}
                 </div>
-              );
-            })}
-            {findings.length === 0 && (
-              <div className="text-[8px] text-[#9CA3AF]/60 italic font-sans">Scanning...</div>
-            )}
-          </div>
+                <div className="pb-3">
+                  <p
+                    className={`text-[10px] font-sans font-semibold ${isDone || isCurrent ? "text-white" : "text-white/30"}`}
+                  >
+                    {step.label}
+                  </p>
+                  <p
+                    className={`text-[9px] font-mono mt-0.5 ${isDone ? (isDenyStep ? "text-red-400" : "text-[#9CA3AF]") : "text-white/20"}`}
+                  >
+                    {step.detail}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div
+          className={`mt-2 rounded px-2.5 py-2 text-center border transition-colors duration-500 ${
+            decided
+              ? "border-red-500/30 bg-red-500/10 text-red-400"
+              : "border-white/10 bg-white/[0.02] text-white/30"
+          }`}
+        >
+          <span className="text-[10px] font-mono font-bold tracking-wider">
+            {decided ? "DENY" : "EVALUATING…"}
+          </span>
         </div>
       </div>
     </div>

@@ -14,12 +14,18 @@ export function OverviewSplash({ isOpen: externalIsOpen, onClose }: OverviewSpla
   const [isOpen, setIsOpen] = useState<boolean>(false);
 
   useEffect(() => {
-    if (externalIsOpen !== undefined) {
-      setIsOpen(externalIsOpen);
+    // An explicit "open" request (e.g. clicking "Cloud Overview" in the
+    // sub-nav) always shows it, regardless of first-visit state.
+    if (externalIsOpen === true) {
+      setIsOpen(true);
       return;
     }
 
-    // Check localStorage for first-time visitor
+    // Otherwise (externalIsOpen is false or undefined — both real call
+    // sites pass a default-false state on mount), fall through to the
+    // first-time-visitor check. Previously this branch was unreachable
+    // whenever a parent passed any defined boolean, which silently
+    // disabled the auto-show-on-first-visit behavior entirely.
     const hasSeenOverview = localStorage.getItem("rakshex_overview_seen");
     if (!hasSeenOverview) {
       setIsOpen(true);

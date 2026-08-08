@@ -33,6 +33,7 @@ import {
   verifyAccessToken,
 } from "./_core/tokens";
 import { redis } from "./_core/cache";
+import { decodeNextAuthToken } from "./services/nextAuthJwt";
 
 // Import individual routers
 import { collectionsRouter } from "./api/collections";
@@ -94,6 +95,113 @@ export const appRouter = router({
   system: systemRouter,
   auth: router({
     me: publicProcedure.query((opts) => opts.ctx.user),
+    /**
+     * Bridges a NextAuth (Google/GitHub) session into the app's own
+     * session system. NextAuth's cookie is only understood by the
+     * Next.js frontend's own auth machinery; without this, the API's
+     * `auth.me` (which AuthGuard relies on) never sees the user, so a
+     * successful social sign-in redirects straight back to /login.
+     *
+     * The NextAuth session-token cookie arrives with this request
+     * automatically (this call goes through the same-origin /api/trpc
+     * rewrite). We decode+verify it with NEXTAUTH_SECRET -- the same
+     * secret the Next.js app uses to issue it -- so the email we trust
+     * here is cryptographically theirs, not client-supplied.
+     */
+    oauthSync: publicProcedure.mutation(async ({ ctx }) => {
+      const secret = process.env.NEXTAUTH_SECRET;
+      if (!secret) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Social sign-in is not configured on this server.",
+        });
+      }
+
+      const cookies = ctx.req.headers.cookie ?? "";
+      const parsed = Object.fromEntries(
+        cookies.split(";").map((c: string) => {
+          const [k, ...v] = c.trim().split("=");
+          return [k, decodeURIComponent(v.join("="))];
+        }),
+      );
+      const rawToken =
+        parsed["next-auth.session-token"] ?? parsed["__Secure-next-auth.session-token"];
+      if (!rawToken) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "No active social sign-in session" });
+      }
+
+      const payload = await decodeNextAuthToken(rawToken, secret).catch(() => null);
+      const email = payload?.email?.trim().toLowerCase();
+      if (!email) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid or expired sign-in token" });
+      }
+
+      let user = await db.getUserByEmail(email);
+      if (!user) {
+        const provider = typeof payload.provider === "string" ? payload.provider : "google";
+        const created = await db.createOAuthUser({
+          email,
+          name: (payload.name as string | undefined)?.trim() || email.split("@")[0],
+          provider,
+        });
+        try {
+          await ensurePersonalWorkspace(created.id, (payload.name as string) || email);
+        } catch (err) {
+          logger.error(
+            { err, userId: created.id },
+            "[oauthSync] personal workspace creation failed",
+          );
+        }
+        user = await db.getUserByEmail(email);
+      }
+      if (!user) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Could not establish your account. Please try again.",
+        });
+      }
+
+      const refreshToken = generateRefreshToken();
+      const refreshTokenHash = hashRefreshToken(refreshToken);
+      const expiresAt = new Date(Date.now() + REFRESH_TOKEN_MAX_AGE_MS);
+
+      const { id: sessionId } = await db.createUserSession(
+        user.id,
+        refreshTokenHash,
+        refreshTokenHash,
+        ctx.req.ip ?? null,
+        (ctx.req.headers["user-agent"] as string) ?? null,
+        expiresAt,
+      );
+
+      const accessToken = await generateAccessToken(user.id, sessionId);
+      const cookieOptions = getSessionCookieOptions(ctx.req);
+
+      ctx.res.cookie(ACCESS_TOKEN_COOKIE, accessToken, {
+        ...cookieOptions,
+        maxAge: ACCESS_TOKEN_MAX_AGE_MS,
+      });
+      ctx.res.cookie(REFRESH_TOKEN_COOKIE, refreshToken, {
+        ...cookieOptions,
+        maxAge: REFRESH_TOKEN_MAX_AGE_MS,
+        path: "/api/trpc/auth.refreshToken",
+      });
+      ctx.res.cookie("session", accessToken, {
+        ...cookieOptions,
+        maxAge: ACCESS_TOKEN_MAX_AGE_MS,
+      });
+      setCsrfCookie(ctx.res);
+
+      await db.createAuditLogEntry(
+        user.id,
+        "login_oauth",
+        { email },
+        ctx.req.ip,
+        ctx.req.headers["user-agent"] as string,
+      );
+
+      return { success: true, userId: user.id };
+    }),
     logout: publicProcedure.mutation(async ({ ctx }) => {
       // Immediate session revocation when we can resolve the session
       if (ctx.user?.id) {

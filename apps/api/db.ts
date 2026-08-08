@@ -771,7 +771,10 @@ export async function getScansPageByCollectionId(params: {
       .orderBy(desc(scans.createdAt))
       .limit(params.limit)
       .offset(params.offset),
-    db.select({ value: sql<number>`count(*)` }).from(scans).where(where),
+    db
+      .select({ value: sql<number>`count(*)` })
+      .from(scans)
+      .where(where),
   ]);
 
   return { items, total: Number(totalRows[0]?.value ?? 0) };
@@ -2214,7 +2217,10 @@ export async function getAuditLogForUserPage(params: {
       .orderBy(desc(auditLog.createdAt))
       .limit(params.limit)
       .offset(params.offset),
-    db.select({ value: sql<number>`count(*)` }).from(auditLog).where(where),
+    db
+      .select({ value: sql<number>`count(*)` })
+      .from(auditLog)
+      .where(where),
   ]);
 
   return { items, total: Number(totalRows[0]?.value ?? 0) };
@@ -2357,6 +2363,45 @@ export async function createLocalUser(data: {
     name: data.name,
     loginMethod: "email",
     passwordHash: data.passwordHash,
+    lastSignedIn: new Date(),
+  });
+
+  const created = await db
+    .select({ id: users.id, openId: users.openId })
+    .from(users)
+    .where(eq(users.openId, openId))
+    .limit(1);
+
+  if (created.length === 0) {
+    throw new InternalError("Failed to create user", {
+      safeMessage: "Could not create your account. Please try again.",
+    });
+  }
+
+  return created[0];
+}
+
+/**
+ * Creates a user with no password — social sign-in only. `passwordHash`
+ * stays null; `loginMethod` records which provider ("google"/"github")
+ * so the account is never mistaken for an email/password account.
+ */
+export async function createOAuthUser(data: {
+  email: string;
+  name: string;
+  provider: string;
+}): Promise<{ id: number; openId: string }> {
+  const db = await getDb();
+  assertDb(db);
+
+  const openId = `${data.provider}:${crypto.randomBytes(24).toString("hex")}`;
+
+  await db.insert(users).values({
+    openId,
+    email: data.email,
+    name: data.name,
+    loginMethod: data.provider,
+    passwordHash: null,
     lastSignedIn: new Date(),
   });
 
