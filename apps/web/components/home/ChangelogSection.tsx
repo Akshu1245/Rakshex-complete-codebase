@@ -22,7 +22,7 @@ export function ChangelogSection() {
     },
     {
       date: "April 2026",
-      title: "AgentGuard kill-switch controls added",
+      title: "Credential broker kill-switch controls added",
       link: "/changelog#kill-switch",
     },
   ];

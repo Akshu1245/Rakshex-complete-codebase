@@ -1,36 +1,84 @@
 "use client";
 
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import {
-  Shield,
-  Zap,
-  AlertTriangle,
-  BarChart2,
-  CheckCircle2,
-  XCircle,
-  Sliders,
-  Cpu,
-  Server,
-} from "lucide-react";
+import { Shield, AlertTriangle, CheckCircle2, XCircle, Sliders, Server } from "lucide-react";
+
+interface ArchitectureCard {
+  title: string;
+  detail: string;
+  tag: string;
+  status: string;
+  tagColor: string;
+  tagBg: string;
+}
+
+interface CardPair {
+  left: ArchitectureCard;
+  right: ArchitectureCard;
+}
+
+const CARD_PAIRS: CardPair[] = [
+  {
+    left: {
+      title: "All-or-Nothing Scopes",
+      detail: "A valid session can call any action the API key can reach.",
+      tag: "No Attenuation",
+      status: "Broad Blast Radius",
+      tagColor: "text-red-400",
+      tagBg: "bg-red-950/40",
+    },
+    right: {
+      title: "Delegated Authority",
+      detail:
+        "Parent-to-child attenuation — a child authority can never exceed its parent's scope.",
+      tag: "Active",
+      status: "Enforced",
+      tagColor: "text-emerald-400",
+      tagBg: "bg-emerald-950/50",
+    },
+  },
+  {
+    left: {
+      title: "Advisory Denials",
+      detail: "A DENY is logged, but the underlying credential still works.",
+      tag: "Not Enforced",
+      status: "Bypassable",
+      tagColor: "text-red-400",
+      tagBg: "bg-red-950/40",
+    },
+    right: {
+      title: "Credential Mediation",
+      detail: "A DENY blocks the credential itself — the secret never reaches a denied caller.",
+      tag: "Broker",
+      status: "Fail-closed",
+      tagColor: "text-teal-400",
+      tagBg: "bg-teal-950/50",
+    },
+  },
+  {
+    left: {
+      title: "No Audit Trail",
+      detail: "No tamper-evident record of which action was authorized and why.",
+      tag: "Un-tracked",
+      status: "Hard to Dispute",
+      tagColor: "text-red-400",
+      tagBg: "bg-red-950/40",
+    },
+    right: {
+      title: "Action Ledger",
+      detail: "Every decision is recorded tamper-evidently for audit and dispute resolution.",
+      tag: "Hash-chained",
+      status: "Tamper-evident",
+      tagColor: "text-cyan-400",
+      tagBg: "bg-cyan-950/50",
+    },
+  },
+];
 
 export function ArchitectureCompareSlider() {
   const [sliderPosition, setSliderPosition] = useState<number>(50); // percentage 0-100
   const [isDragging, setIsDragging] = useState<boolean>(false);
-  const [containerWidth, setContainerWidth] = useState<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!containerRef.current) return;
-    const updateWidth = () => {
-      if (containerRef.current) {
-        setContainerWidth(containerRef.current.clientWidth);
-      }
-    };
-    updateWidth();
-    const observer = new ResizeObserver(updateWidth);
-    observer.observe(containerRef.current);
-    return () => observer.disconnect();
-  }, []);
 
   const handleMove = useCallback((clientX: number) => {
     if (!containerRef.current) return;
@@ -75,12 +123,10 @@ export function ArchitectureCompareSlider() {
     };
   }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove]);
 
-  const innerWidthStyle = containerWidth ? { width: `${containerWidth}px` } : { width: "100%" };
-
   return (
     <section
       id="architecture-slider"
-      className="w-full py-12 px-4 md:px-8 bg-[#090D14] relative overflow-hidden"
+      className="w-full py-12 px-4 md:px-8 bg-[#090D14] relative overflow-hidden scroll-mt-24"
     >
       {/* Background radial glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-[#14B8A6]/5 blur-[100px] rounded-full pointer-events-none" />
@@ -115,16 +161,49 @@ export function ArchitectureCompareSlider() {
           }}
         >
           {/* ======================================================================== */}
-          {/* RIGHT PANEL (RAKSHEX ARCHITECTURE - FULL WIDTH UNDERNEATH)              */}
+          {/* BACKGROUND LAYERS — color/border only, no text (avoids any pixel-wipe    */}
+          {/* garbling; all copy renders once via the atomic overlays below)          */}
           {/* ======================================================================== */}
-          <div className="absolute inset-0 bg-[#060A10] p-5 md:p-6 flex flex-col justify-between z-0">
-            {/* Panel Badge */}
-            <div className="flex items-center justify-between border-b border-[#14B8A6]/20 pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-[#14B8A6]/10 border border-[#14B8A6]/30 flex items-center justify-center text-[#14B8A6]">
-                  <Shield className="w-4 h-4" />
+          <div className="absolute inset-0 bg-[#060A10] z-0" />
+          <div
+            className="absolute inset-y-0 left-0 bg-[#090C12] overflow-hidden border-r-2 border-red-500 z-10 shadow-2xl"
+            style={{ width: `${sliderPosition}%` }}
+          />
+
+          {/* ======================================================================== */}
+          {/* HEADER ROW — rendered once, atomic swap at the same 50% boundary as the  */}
+          {/* panel split, so it can never show two overlapping titles/badges          */}
+          {/* ======================================================================== */}
+          <div
+            className="absolute top-0 left-0 right-0 p-5 md:p-6 pb-3 border-b z-20 flex items-center justify-between pointer-events-none"
+            style={{
+              borderColor: sliderPosition > 50 ? "rgba(239,68,68,0.2)" : "rgba(20,184,166,0.2)",
+            }}
+          >
+            {sliderPosition > 50 ? (
+              <>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-red-950/40 border border-red-500/30 flex items-center justify-center text-red-400">
+                    <AlertTriangle className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-white font-bold text-sm md:text-base font-sans flex items-center gap-2">
+                    Session-Level Access
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-950 text-red-400 font-mono border border-red-500/30 uppercase">
+                      Coarse-Grained
+                    </span>
+                  </h3>
                 </div>
-                <div>
+                <div className="hidden sm:flex items-center gap-1.5 text-[11px] text-red-400 font-mono bg-red-950/30 px-2.5 py-1 rounded-md border border-red-500/20">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
+                  Advisory Only
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-[#14B8A6]/10 border border-[#14B8A6]/30 flex items-center justify-center text-[#14B8A6]">
+                    <Shield className="w-4 h-4" />
+                  </div>
                   <h3 className="text-white font-bold text-sm md:text-base font-sans flex items-center gap-2">
                     RaksHex Agent Firewall
                     <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#14B8A6]/20 text-[#14B8A6] font-mono border border-[#14B8A6]/30 uppercase">
@@ -132,167 +211,88 @@ export function ArchitectureCompareSlider() {
                     </span>
                   </h3>
                 </div>
-              </div>
-              <div className="hidden sm:flex items-center gap-1.5 text-[11px] text-[#14B8A6] font-mono bg-[#14B8A6]/5 px-2.5 py-1 rounded-md border border-[#14B8A6]/20">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#14B8A6] animate-pulse" />
-                Enforcement Active
-              </div>
-            </div>
-
-            {/* Architecture Grid Cards (RaksHex) */}
-            <div className="grid grid-cols-3 gap-3 my-2">
-              {/* Card 1 */}
-              <div className="bg-[#0D131F] border border-[#14B8A6]/30 rounded-xl p-3 space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-white font-semibold text-xs">Delegated Authority</span>
-                  <span className="text-[9px] font-mono text-emerald-400 bg-emerald-950/50 px-1.5 py-0.5 rounded">
-                    Active
-                  </span>
+                <div className="hidden sm:flex items-center gap-1.5 text-[11px] text-[#14B8A6] font-mono bg-[#14B8A6]/5 px-2.5 py-1 rounded-md border border-[#14B8A6]/20">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#14B8A6] animate-pulse" />
+                  Enforcement Active
                 </div>
-                <p className="text-slate-400 text-[11px] leading-snug">
-                  Parent-to-child attenuation — a child authority can never exceed its parent&apos;s
-                  scope.
-                </p>
-                <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-mono">
-                  <CheckCircle2 className="w-3 h-3" /> Enforced
-                </div>
-              </div>
-
-              {/* Card 2 */}
-              <div className="bg-[#0D131F] border border-[#14B8A6]/30 rounded-xl p-3 space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-white font-semibold text-xs">Credential Mediation</span>
-                  <span className="text-[9px] font-mono text-teal-400 bg-teal-950/50 px-1.5 py-0.5 rounded">
-                    Broker
-                  </span>
-                </div>
-                <p className="text-slate-400 text-[11px] leading-snug">
-                  A DENY blocks the credential itself — the secret never reaches a denied caller.
-                </p>
-                <div className="flex items-center gap-1 text-[10px] text-teal-400 font-mono">
-                  <CheckCircle2 className="w-3 h-3" /> Fail-closed
-                </div>
-              </div>
-
-              {/* Card 3 */}
-              <div className="bg-[#0D131F] border border-[#14B8A6]/30 rounded-xl p-3 space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-white font-semibold text-xs">Action Ledger</span>
-                  <span className="text-[9px] font-mono text-cyan-400 bg-cyan-950/50 px-1.5 py-0.5 rounded">
-                    Hash-chained
-                  </span>
-                </div>
-                <p className="text-slate-400 text-[11px] leading-snug">
-                  Every decision is recorded tamper-evidently for audit and dispute resolution.
-                </p>
-                <div className="flex items-center gap-1 text-[10px] text-cyan-400 font-mono">
-                  <CheckCircle2 className="w-3 h-3" /> Tamper-evident
-                </div>
-              </div>
-            </div>
-
-            {/* Bottom Footer Info */}
-            <div className="border-t border-[#14B8A6]/10 pt-2 flex items-center justify-between text-[11px] text-slate-400 font-mono">
-              <span className="text-[#14B8A6] flex items-center gap-1.5">
-                <Server className="w-3.5 h-3.5" /> Semantic action authorization
-              </span>
-              <span>Enforced at the credential</span>
-            </div>
+              </>
+            )}
           </div>
 
           {/* ======================================================================== */}
-          {/* LEFT PANEL (SELF-MANAGED ARCHITECTURE - CLIPPED VIA SLIDER PERCENTAGE)    */}
+          {/* FOOTER ROW — same atomic-swap treatment as the header row above          */}
           {/* ======================================================================== */}
           <div
-            className="absolute inset-y-0 left-0 bg-[#090C12] overflow-hidden border-r-2 border-red-500 z-10 shadow-2xl"
-            style={{ width: `${sliderPosition}%` }}
+            className="absolute bottom-0 left-0 right-0 p-5 md:p-6 pt-2 border-t z-20 flex items-center justify-between text-[11px] font-mono text-slate-400 pointer-events-none"
+            style={{
+              borderColor: sliderPosition > 50 ? "rgba(239,68,68,0.1)" : "rgba(20,184,166,0.1)",
+            }}
           >
-            <div
-              className="absolute top-0 left-0 h-full p-5 md:p-6 flex flex-col justify-between bg-[#090C12]"
-              style={innerWidthStyle}
-            >
-              {/* Panel Badge */}
-              <div className="flex items-center justify-between border-b border-red-500/20 pb-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-red-950/40 border border-red-500/30 flex items-center justify-center text-red-400">
-                    <AlertTriangle className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-white font-bold text-sm md:text-base font-sans flex items-center gap-2">
-                      Session-Level Access
-                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-950 text-red-400 font-mono border border-red-500/30 uppercase">
-                        Coarse-Grained
-                      </span>
-                    </h3>
-                  </div>
-                </div>
-                <div className="hidden sm:flex items-center gap-1.5 text-[11px] text-red-400 font-mono bg-red-950/30 px-2.5 py-1 rounded-md border border-red-500/20">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
-                  Advisory Only
-                </div>
-              </div>
-
-              {/* Architecture Grid Cards (Session-level) */}
-              <div className="grid grid-cols-3 gap-3 my-2">
-                {/* Card 1 */}
-                <div className="bg-[#121620] border border-dashed border-red-500/30 rounded-xl p-3 space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-200 font-semibold text-xs">
-                      All-or-Nothing Scopes
-                    </span>
-                    <span className="text-[9px] font-mono text-red-400 bg-red-950/40 px-1.5 py-0.5 rounded">
-                      No Attenuation
-                    </span>
-                  </div>
-                  <p className="text-slate-400 text-[11px] leading-snug">
-                    A valid session can call any action the API key can reach.
-                  </p>
-                  <div className="flex items-center gap-1 text-[10px] text-red-400 font-mono">
-                    <XCircle className="w-3 h-3" /> Broad Blast Radius
-                  </div>
-                </div>
-
-                {/* Card 2 */}
-                <div className="bg-[#121620] border border-dashed border-red-500/30 rounded-xl p-3 space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-200 font-semibold text-xs">Advisory Denials</span>
-                    <span className="text-[9px] font-mono text-red-400 bg-red-950/40 px-1.5 py-0.5 rounded">
-                      Not Enforced
-                    </span>
-                  </div>
-                  <p className="text-slate-400 text-[11px] leading-snug">
-                    A DENY is logged, but the underlying credential still works.
-                  </p>
-                  <div className="flex items-center gap-1 text-[10px] text-red-400 font-mono">
-                    <XCircle className="w-3 h-3" /> Bypassable
-                  </div>
-                </div>
-
-                {/* Card 3 */}
-                <div className="bg-[#121620] border border-dashed border-red-500/30 rounded-xl p-3 space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-200 font-semibold text-xs">No Audit Trail</span>
-                    <span className="text-[9px] font-mono text-red-400 bg-red-950/40 px-1.5 py-0.5 rounded">
-                      Un-tracked
-                    </span>
-                  </div>
-                  <p className="text-slate-400 text-[11px] leading-snug">
-                    No tamper-evident record of which action was authorized and why.
-                  </p>
-                  <div className="flex items-center gap-1 text-[10px] text-red-400 font-mono">
-                    <XCircle className="w-3 h-3" /> Hard to Dispute
-                  </div>
-                </div>
-              </div>
-
-              {/* Bottom Footer Info */}
-              <div className="border-t border-red-500/10 pt-2 flex items-center justify-between text-[11px] text-slate-400 font-mono">
+            {sliderPosition > 50 ? (
+              <>
                 <span className="text-red-400 flex items-center gap-1.5">
                   <AlertTriangle className="w-3.5 h-3.5" /> Session governed, action ungoverned
                 </span>
                 <span>Enforcement: None</span>
-              </div>
-            </div>
+              </>
+            ) : (
+              <>
+                <span className="text-[#14B8A6] flex items-center gap-1.5">
+                  <Server className="w-3.5 h-3.5" /> Semantic action authorization
+                </span>
+                <span>Enforced at the credential</span>
+              </>
+            )}
+          </div>
+
+          {/* ======================================================================== */}
+          {/* ARCHITECTURE GRID CARDS — rendered once, each card is an atomic swap       */}
+          {/* (never a mid-card text wipe, so dragging the handle can't garble a card)  */}
+          {/* ======================================================================== */}
+          <div className="absolute left-5 right-5 md:left-6 md:right-6 top-[76px] md:top-[84px] grid grid-cols-3 gap-3 z-20 pointer-events-none">
+            {CARD_PAIRS.map((pair, i) => {
+              const cardBoundary = ((i + 0.5) / CARD_PAIRS.length) * 100;
+              const showLeft = sliderPosition > cardBoundary;
+              const card = showLeft ? pair.left : pair.right;
+              return (
+                <div
+                  key={i}
+                  className={`rounded-xl p-3 space-y-1.5 ${
+                    showLeft
+                      ? "bg-[#121620] border border-dashed border-red-500/30"
+                      : "bg-[#0D131F] border border-[#14B8A6]/30"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span
+                      className={`font-semibold text-xs ${showLeft ? "text-slate-200" : "text-white"}`}
+                    >
+                      {card.title}
+                    </span>
+                    <span
+                      className={`text-[9px] font-mono px-1.5 py-0.5 rounded ${
+                        showLeft ? "text-red-400 bg-red-950/40" : `${card.tagColor} ${card.tagBg}`
+                      }`}
+                    >
+                      {card.tag}
+                    </span>
+                  </div>
+                  <p className="text-slate-400 text-[11px] leading-snug">{card.detail}</p>
+                  <div
+                    className={`flex items-center gap-1 text-[10px] font-mono ${
+                      showLeft ? "text-red-400" : card.tagColor
+                    }`}
+                  >
+                    {showLeft ? (
+                      <XCircle className="w-3 h-3" />
+                    ) : (
+                      <CheckCircle2 className="w-3 h-3" />
+                    )}{" "}
+                    {card.status}
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
           {/* ======================================================================== */}

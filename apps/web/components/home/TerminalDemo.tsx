@@ -10,28 +10,28 @@ export function TerminalDemo() {
 
   useEffect(() => {
     const steps = [
-      { text: "> rakshex scan ./api.json", delay: 1200 },
-      { text: "✓ 23 endpoints scanned", delay: 800 },
+      { text: "> agent.call(financial.refund, { amount: 400 })", delay: 1200 },
+      { text: "✓ authority checked: parent scope ≤ $50", delay: 800 },
       {
-        text: "⚠ 2 credentials detected",
+        text: "⛔ DENY: exceeds delegated limit",
         delay: 800,
-        finding: "⚠ 2 credentials detected",
+        finding: "⛔ DENY: exceeds delegated limit",
         score: 98,
-        issues: 2,
+        issues: 1,
       },
       {
-        text: "🔒 1 prompt injection blocked",
+        text: "🔗 written to Action Ledger",
         delay: 800,
-        finding: "🔒 1 prompt injection blocked",
-        score: 96,
-        issues: 3,
+        finding: "🔗 written to Action Ledger",
+        score: 98,
+        issues: 1,
       },
       {
-        text: "💰 $47.3 cost anomaly flagged",
+        text: "🔒 credential broker: request blocked",
         delay: 800,
-        finding: "💰 $47.3 cost anomaly flagged",
-        score: 94,
-        issues: 4,
+        finding: "🔒 credential broker: request blocked",
+        score: 98,
+        issues: 1,
       },
     ];
 
@@ -70,11 +70,11 @@ export function TerminalDemo() {
   }, []);
 
   const terminalLines = [
-    "> rakshex scan ./api.json",
-    "✓ 23 endpoints scanned",
-    "⚠ 2 credentials detected",
-    "🔒 1 prompt injection blocked",
-    "💰 $47.3 cost anomaly flagged",
+    "> agent.call(financial.refund, { amount: 400 })",
+    "✓ authority checked: parent scope ≤ $50",
+    "⛔ DENY: exceeds delegated limit",
+    "🔗 written to Action Ledger",
+    "🔒 credential broker: request blocked",
   ];
 
   return (
@@ -86,16 +86,16 @@ export function TerminalDemo() {
           <div className="w-2.5 h-2.5 rounded-full bg-[#14B8A6]/60" />
           <div className="w-2.5 h-2.5 rounded-full bg-[#14B8A6]" />
           <span className="text-[10px] text-[#9CA3AF] ml-2 font-sans font-medium">
-            bash - rakshex scan
+            bash - agent firewall
           </span>
         </div>
         <div className="space-y-2 flex-1 overflow-y-auto">
           {terminalLines.slice(0, scanStep).map((line, idx) => {
             let color = "text-[#FFFFFF]";
             if (line.startsWith("✓")) color = "text-[#14B8A6]";
-            else if (line.startsWith("⚠")) color = "text-orange-400";
-            else if (line.startsWith("🔒")) color = "text-red-400";
-            else if (line.startsWith("💰")) color = "text-amber-400";
+            else if (line.startsWith("⛔")) color = "text-red-400";
+            else if (line.startsWith("🔗")) color = "text-amber-400";
+            else if (line.startsWith("🔒")) color = "text-orange-400";
             return (
               <p key={idx} className={`${color} font-mono leading-relaxed`}>
                 {line}
