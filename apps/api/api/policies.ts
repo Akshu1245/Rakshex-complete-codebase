@@ -295,20 +295,22 @@ export const policyRulesRouter = router({
       const dbClient = await db.getDb();
       if (!dbClient) throw new ValidationError("DB unavailable");
 
-      const sets: string[] = [];
-      if (input.name !== undefined) sets.push(`name = '${input.name}'`);
-      if (input.description !== undefined) sets.push(`description = '${input.description}'`);
-      if (input.priority !== undefined) sets.push(`priority = ${input.priority}`);
+      const workspaceId = `ws_${ctx.user.id}`;
+      const sets = [];
+      if (input.name !== undefined) sets.push(sql`name = ${input.name}`);
+      if (input.description !== undefined) sets.push(sql`description = ${input.description}`);
+      if (input.priority !== undefined) sets.push(sql`priority = ${input.priority}`);
       if (input.conditions !== undefined)
-        sets.push(`conditions = '${JSON.stringify(input.conditions)}'`);
-      if (input.action !== undefined) sets.push(`action = '${input.action}'`);
-      if (input.enabled !== undefined) sets.push(`enabled = ${input.enabled}`);
+        sets.push(sql`conditions = ${JSON.stringify(input.conditions)}`);
+      if (input.action !== undefined) sets.push(sql`action = ${input.action}`);
+      if (input.enabled !== undefined) sets.push(sql`enabled = ${input.enabled}`);
       if (sets.length > 0) {
+        const setClause = sql.join(sets, sql`, `);
         await dbClient.execute(
-          sql.raw(`UPDATE policy_rules SET ${sets.join(", ")} WHERE rule_id = '${input.ruleId}'`),
+          sql`UPDATE policy_rules SET ${setClause} WHERE rule_id = ${input.ruleId} AND workspace_id = ${workspaceId}`,
         );
       }
-      await invalidatePolicyCache(`ws_${ctx.user.id}`);
+      await invalidatePolicyCache(workspaceId);
       return { success: true };
     }),
 
@@ -318,10 +320,11 @@ export const policyRulesRouter = router({
     .mutation(async ({ input, ctx }) => {
       const dbClient = await db.getDb();
       if (!dbClient) throw new ValidationError("DB unavailable");
+      const workspaceId = `ws_${ctx.user.id}`;
       await dbClient.execute(
-        sql`UPDATE policy_rules SET deleted_at = NOW(), enabled = FALSE WHERE rule_id = ${input.ruleId}`,
+        sql`UPDATE policy_rules SET deleted_at = NOW(), enabled = FALSE WHERE rule_id = ${input.ruleId} AND workspace_id = ${workspaceId}`,
       );
-      await invalidatePolicyCache(`ws_${ctx.user.id}`);
+      await invalidatePolicyCache(workspaceId);
       return { success: true };
     }),
 
@@ -341,12 +344,12 @@ export const policyRulesRouter = router({
         }),
       }),
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       const dbClient = await db.getDb();
       if (!dbClient) return null;
 
       const rows = await dbClient.execute(
-        sql`SELECT * FROM policy_rules WHERE rule_id = ${input.ruleId} AND deleted_at IS NULL`,
+        sql`SELECT * FROM policy_rules WHERE rule_id = ${input.ruleId} AND workspace_id = ${`ws_${ctx.user.id}`} AND deleted_at IS NULL`,
       );
       const row = (rows as unknown as any[])[0];
       if (!row) return null;

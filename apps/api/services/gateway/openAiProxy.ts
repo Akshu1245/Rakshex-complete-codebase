@@ -25,6 +25,8 @@ import {
   type GatewayBudgetReservation,
 } from "../teamGovernance";
 import type { GovernanceProvider } from "../teamGovernance/types";
+import { buildPreflightEventContext, enforcePolicies } from "../../middleware/policyEnforcement";
+import { RuntimePolicyError } from "../../_core/errors";
 
 const MAX_UPSTREAM_ERROR_BYTES = 8_192;
 const MAX_STREAM_AUDIT_BYTES = 2 * 1024 * 1024;
@@ -461,6 +463,39 @@ export function registerOpenAiGatewayRoutes(app: Express): void {
         openAiError(res, 403, "rakshex_policy_blocked", reason, "policy_error");
         return;
       }
+
+      try {
+        await enforcePolicies(
+          buildPreflightEventContext({
+            model: body.model,
+            provider,
+            estimatedCostUsd: estimate.estimatedCostUsd,
+            agentId,
+            userId: auth.identityId != null ? String(auth.identityId) : undefined,
+            messages: body.messages,
+            tools: body.tools,
+          }),
+          String(auth.workspaceId),
+        );
+      } catch (err) {
+        if (err instanceof RuntimePolicyError) {
+          await persistGatewayResult({
+            auth,
+            requestId,
+            provider,
+            model: body.model,
+            identityId,
+            decision: "blocked",
+            blockReason: err.message,
+            estimatedCostUsd: estimate.estimatedCostUsd,
+            startedAt,
+          });
+          openAiError(res, 403, "rakshex_policy_blocked", err.message, "policy_error");
+          return;
+        }
+        throw err;
+      }
+
       const reservationResult = await reserveGatewayBudget({
         workspaceId: auth.workspaceId,
         identityId,

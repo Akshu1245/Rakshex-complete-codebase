@@ -22,6 +22,8 @@ import {
 } from "../teamGovernance";
 import type { GovernanceProvider } from "../teamGovernance/types";
 import { validateWorkspaceApiKey, type ValidatedApiKey } from "../workspaceApiKeys";
+import { buildPreflightEventContext, enforcePolicies } from "../../middleware/policyEnforcement";
+import { RuntimePolicyError } from "../../_core/errors";
 
 const UPSTREAM_TIMEOUT_MS = 120_000;
 const MAX_UPSTREAM_ERROR_BYTES = 8_192;
@@ -335,6 +337,37 @@ export function registerAnthropicGatewayRoutes(app: Express): void {
         });
         anthropicError(res, 403, "permission_error", reason);
         return;
+      }
+
+      try {
+        await enforcePolicies(
+          buildPreflightEventContext({
+            model: body.model,
+            provider: "anthropic",
+            estimatedCostUsd: estimate.estimatedCostUsd,
+            agentId,
+            userId: auth.identityId != null ? String(auth.identityId) : undefined,
+            messages: body.messages,
+            tools: body.tools,
+          }),
+          String(auth.workspaceId),
+        );
+      } catch (err) {
+        if (err instanceof RuntimePolicyError) {
+          await persistResult({
+            auth,
+            requestId,
+            model: body.model,
+            identityId,
+            decision: "blocked",
+            blockReason: err.message,
+            estimatedCostUsd: estimate.estimatedCostUsd,
+            startedAt,
+          });
+          anthropicError(res, 403, "permission_error", err.message);
+          return;
+        }
+        throw err;
       }
 
       const reservationResult = await reserveGatewayBudget({
