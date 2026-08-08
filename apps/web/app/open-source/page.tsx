@@ -72,7 +72,7 @@ export default function OpenSourcePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-transparent text-slate-100 py-16 px-4 font-sans">
+    <div className="min-h-screen bg-transparent text-slate-100 py-24 px-4 font-sans">
       <div className="max-w-4xl mx-auto">
         <header className="text-center mb-16">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-950 text-blue-400 border border-blue-900/60 mb-4">
@@ -88,7 +88,7 @@ export default function OpenSourcePage() {
         </header>
 
         {/* Planned Open Source Statement */}
-        <section className="bg-slate-900/40 border border-slate-900 rounded-2xl p-8 mb-12 text-center md:text-left md:flex md:items-center md:justify-between gap-8">
+        <section className="bg-slate-900/40 border border-slate-900 rounded-xl p-8 mb-12 text-center md:text-left md:flex md:items-center md:justify-between gap-8">
           <div className="max-w-xl mb-6 md:mb-0">
             <h2 className="text-2xl font-bold text-white mb-3">
               Planned: OWASP AI Top 10 Detection Ruleset
@@ -129,7 +129,7 @@ export default function OpenSourcePage() {
         </section>
 
         {/* GitHub Contribution CTA */}
-        <section className="bg-gradient-to-br from-slate-900/60 to-slate-950 border border-slate-800/80 rounded-2xl p-8 mb-12 flex flex-col md:flex-row items-center justify-between gap-6">
+        <section className="bg-gradient-to-br from-slate-900/60 to-slate-950 border border-slate-800/80 rounded-xl p-8 mb-12 flex flex-col md:flex-row items-center justify-between gap-6">
           <div>
             <h2 className="text-xl font-bold text-white mb-2">Contribute on GitHub</h2>
             <p className="text-sm text-slate-400 max-w-xl">

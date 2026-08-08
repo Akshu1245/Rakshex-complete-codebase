@@ -23,7 +23,7 @@ export default function AboutPage() {
       </div>
 
       {/* Mission */}
-      <div className="bg-transparent/50 border-y border-neutral-900 py-16 my-8">
+      <div className="bg-transparent/50 border-y border-neutral-900 py-24 my-8">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-2xl font-bold mb-6 text-center font-manrope">Our Mission</h2>
           <p className="text-neutral-300 text-lg leading-relaxed text-center">
@@ -38,12 +38,12 @@ export default function AboutPage() {
       </div>
 
       {/* Stats */}
-      <div className="max-w-5xl mx-auto py-16">
+      <div className="max-w-5xl mx-auto py-24">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           {[
-            { value: "478+", label: "Server Tests" },
-            { value: "37", label: "API Routers" },
-            { value: "18", label: "DB Migrations" },
+            { value: "1,000+", label: "Automated Tests" },
+            { value: "26", label: "DB Migrations" },
+            { value: "61", label: "Agent Firewall Tests" },
           ].map((s) => (
             <div key={s.label}>
               <div className="text-3xl font-bold text-teal-accent">{s.value}</div>
@@ -54,7 +54,7 @@ export default function AboutPage() {
       </div>
 
       {/* Founder */}
-      <div className="max-w-4xl mx-auto py-16">
+      <div className="max-w-4xl mx-auto py-24">
         <h2 className="text-2xl font-bold mb-10 text-center font-manrope">Team</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           <div className="bg-transparent rounded-xl p-8 border border-neutral-850 hover:border-neutral-800 transition-all">
@@ -93,7 +93,7 @@ export default function AboutPage() {
       </div>
 
       {/* Location */}
-      <div className="max-w-4xl mx-auto py-16 text-center">
+      <div className="max-w-4xl mx-auto py-24 text-center">
         <h2 className="text-2xl font-bold mb-4 font-manrope">Headquartered in Bengaluru</h2>
         <p className="text-neutral-400 max-w-xl mx-auto leading-relaxed">
           Based in Bengaluru, Karnataka — the Silicon Valley of India. Building for the world from
@@ -102,7 +102,7 @@ export default function AboutPage() {
       </div>
 
       {/* Investors / Backing */}
-      <div className="bg-transparent/50 border-t border-neutral-900 py-16">
+      <div className="bg-transparent/50 border-t border-neutral-900 py-24">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-2xl font-bold mb-4 font-manrope">Investor Relations</h2>
           <p className="text-neutral-400 mb-6 max-w-2xl mx-auto leading-relaxed">

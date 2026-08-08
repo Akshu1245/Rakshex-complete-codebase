@@ -3,59 +3,59 @@ import Link from "next/link";
 export const metadata = {
   title: "RaksHex vs Helicone — Honest Comparison",
   description:
-    "Helicone is great for AI observability. RaksHex adds security scanning, compliance, and kill switches. Side-by-side feature comparison.",
+    "Helicone logs and routes LLM requests. RaksHex authorizes and enforces what an AI agent is allowed to do at call time. Side-by-side feature comparison.",
 };
 
 const features = [
   {
-    name: "LLM Observability",
+    name: "LLM Request Logging & Tracing",
     helicone: "Comprehensive (logs, traces, latency)",
-    RaksHex: "Full observability + cost anomaly detection",
+    RaksHex: "Not the primary focus — action-level audit, not request tracing",
   },
   {
-    name: "Prompt Injection Detection",
+    name: "Semantic Action Authorization",
     helicone: "Not available",
-    RaksHex: "Built-in with 50+ payload patterns",
+    RaksHex: "Every action (e.g. financial.refund) evaluated at call time",
   },
   {
-    name: "API Security Scanning",
+    name: "Delegated Authority & Attenuation",
     helicone: "Not available",
-    RaksHex: "Postman / OpenAPI collection scanner",
+    RaksHex: "Parent-to-child scopes, enforced so a child can't exceed its parent",
   },
   {
-    name: "Shadow API Detection",
+    name: "Credential Mediation",
     helicone: "Not available",
-    RaksHex: "Automatic undocumented endpoint discovery",
+    RaksHex: "Fail-closed broker; DENY blocks the credential, not just the route",
   },
   {
-    name: "Kill Switch / Budget Cap",
-    helicone: "Basic alerting only",
-    RaksHex: "Hard stop + Slack/Email + Webhook alerts",
+    name: "Tamper-Evident Action Ledger",
+    helicone: "Request logs, not a decision ledger",
+    RaksHex: "Hash-chained record of every authorization decision",
   },
   {
-    name: "Compliance Reporting",
+    name: "Policy Engine",
     helicone: "Not available",
-    RaksHex: "PCI DSS, OWASP, SOC 2 mapped findings",
+    RaksHex: "Priority-ordered rules evaluated per action, with shadow-mode testing",
   },
   {
-    name: "PII Redaction",
+    name: "MCP Tool Governance",
     helicone: "Not available",
-    RaksHex: "Real-time redaction in request/response",
+    RaksHex: "Adversarial-intent scanning on MCP tool calls",
   },
   {
-    name: "VS Code Extension",
+    name: "Compliance Evidence",
     helicone: "Not available",
-    RaksHex: "In-editor scanning + inline warnings",
+    RaksHex: "SOC 2 audit in progress; policy and ledger data exportable as evidence",
   },
   {
-    name: "GitHub Actions Integration",
-    helicone: "Not available",
-    RaksHex: "PR-level security gate with comments",
+    name: "Rate Limiting / Fallback Routing",
+    helicone: "Advanced (caching, retries, fallbacks)",
+    RaksHex: "Not the primary focus",
   },
   {
-    name: "Pricing (Starter)",
-    helicone: "$0 / 10K requests/mo",
-    RaksHex: "$0 / unlimited scans (self-hosted)",
+    name: "Deployment",
+    helicone: "Managed gateway",
+    RaksHex: "SDK integrated into the agent's call path",
   },
 ];
 
@@ -71,9 +71,9 @@ export default function CompareHelicone() {
 
         <h1 className="text-4xl font-bold mb-2">RaksHex vs Helicone</h1>
         <p className="text-xl text-gray-400 mb-8">
-          Helicone is the gold standard for AI observability. RaksHex covers observability{" "}
-          <em>plus</em> the security and governance layer most teams discover they need 6 months
-          later.
+          Helicone is built for LLM observability — logging, tracing, and routing requests. RaksHex
+          answers a different question: whether a specific agent action should be allowed to happen
+          at all, and enforces that decision at the credential.
         </p>
 
         <div className="bg-black/50 rounded-xl border border-gray-700 overflow-hidden mb-12">
@@ -101,21 +101,21 @@ export default function CompareHelicone() {
           <div className="bg-black/50/50 border border-gray-700 rounded-xl p-6">
             <h3 className="text-xl font-bold mb-3 text-green-400">When to choose Helicone</h3>
             <ul className="list-disc list-inside text-gray-300 space-y-2">
-              <li>You only need request logging and latency metrics</li>
-              <li>You are not handling sensitive user data</li>
-              <li>Budget alerts (not hard stops) are sufficient</li>
-              <li>You do not need compliance certifications</li>
+              <li>You need request-level logging, tracing, and latency metrics</li>
+              <li>Caching and fallback routing across model providers matter most</li>
+              <li>You already have a separate authorization or policy layer</li>
+              <li>Observability, not enforcement, is the immediate gap</li>
             </ul>
           </div>
 
           <div className="bg-black/50/50 border border-blue-500/30 rounded-xl p-6">
             <h3 className="text-xl font-bold mb-3 text-blue-400">When to choose RaksHex</h3>
             <ul className="list-disc list-inside text-gray-300 space-y-2">
-              <li>You handle PII, financial data, or health records</li>
-              <li>You need PCI DSS, SOC 2, or OWASP compliance reports</li>
-              <li>You want a kill switch that actually stops traffic</li>
-              <li>You need API security scanning (shadow endpoints, auth gaps)</li>
-              <li>You want everything in one platform instead of 3 tools</li>
+              <li>Agents take real-world actions (payments, data writes, API calls)</li>
+              <li>You need a DENY to actually block the action, not just log it</li>
+              <li>Delegated authority needs to shrink, not widen, as it's passed down</li>
+              <li>You need a tamper-evident record of every authorization decision</li>
+              <li>You're evaluating MCP tool calls for adversarial intent</li>
             </ul>
           </div>
         </div>

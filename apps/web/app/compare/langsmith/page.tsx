@@ -3,59 +3,59 @@ import Link from "next/link";
 export const metadata = {
   title: "RaksHex vs LangSmith — Honest Comparison",
   description:
-    "LangSmith is observability-only with no security scanning. RaksHex adds OWASP scanning, thinking token attribution, PCI DSS compliance, and real kill switches.",
+    "LangSmith is built for LLM run tracing and debugging. RaksHex authorizes and enforces what an AI agent is allowed to do at runtime. Side-by-side comparison.",
 };
 
 const features = [
   {
-    name: "LLM Observability",
+    name: "LLM Run Tracing & Debugging",
     langsmith: "Comprehensive (traces, runs, feedback)",
-    RaksHex: "Full observability + cost anomaly detection",
+    RaksHex: "Not the primary focus",
   },
   {
-    name: "Security Scanning",
+    name: "Semantic Action Authorization",
     langsmith: "Not available — observability only",
-    RaksHex: "OWASP API Top 10 + prompt injection blocking",
+    RaksHex: "Every action evaluated against delegated authority at call time",
   },
   {
-    name: "Thinking Token Attribution",
+    name: "Delegated Authority & Attenuation",
     langsmith: "Not available",
-    RaksHex: "First-in-world: isolates reasoning tokens (o1/o3/Claude)",
+    RaksHex: "Parent-to-child scopes, enforced so a child can't exceed its parent",
   },
   {
-    name: "PCI DSS Compliance",
+    name: "Credential Mediation",
     langsmith: "Not available",
-    RaksHex: "PCI DSS v4.0.1 mapped findings + export",
+    RaksHex: "Fail-closed broker; DENY blocks the credential itself",
   },
   {
-    name: "Kill Switch / Budget Cap",
+    name: "Tamper-Evident Action Ledger",
+    langsmith: "Run logs, not a decision ledger",
+    RaksHex: "Hash-chained record of every authorization decision",
+  },
+  {
+    name: "Policy Engine",
     langsmith: "Not available",
-    RaksHex: "Hard stop on budget, anomaly, or red-team score",
+    RaksHex: "Priority-ordered rules, with shadow-mode policy testing",
   },
   {
-    name: "PII Redaction",
-    langsmith: "Manual masking only",
-    RaksHex: "Real-time auto-redaction in request/response",
-  },
-  {
-    name: "Shadow API Detection",
+    name: "MCP Tool Governance",
     langsmith: "Not available",
-    RaksHex: "Static + runtime undocumented endpoint discovery",
+    RaksHex: "Adversarial-intent scanning on MCP tool calls",
   },
   {
-    name: "Cost Attribution per Agent",
+    name: "Cost / Usage Logging per Run",
     langsmith: "Per-run cost logging",
-    RaksHex: "Per-agent, per-model, per-thinking-token breakdown",
+    RaksHex: "Not the primary focus of the current product",
   },
   {
-    name: "VS Code Extension",
+    name: "Compliance Evidence",
     langsmith: "Not available",
-    RaksHex: "In-editor scanning + inline security warnings",
+    RaksHex: "SOC 2 audit in progress; ledger data exportable as evidence",
   },
   {
-    name: "Compliance Reports",
-    langsmith: "Not available",
-    RaksHex: "SOC 2, PCI DSS, OWASP — JSON/CSV/PDF export",
+    name: "LangChain Ecosystem Integration",
+    langsmith: "Native, deep integration",
+    RaksHex: "Framework-agnostic SDK integrated into the agent's call path",
   },
 ];
 
@@ -79,9 +79,9 @@ export default function CompareLangsmith() {
           RaksHex vs LangSmith
         </h1>
         <p className="text-on-surface-variant mb-8" style={{ fontSize: "16px", lineHeight: 1.7 }}>
-          LangSmith excels at LLM observability and debugging. But it stops there — no security
-          scanning, no compliance, no kill switch. RaksHex covers observability <em>plus</em> the
-          full security and governance layer teams need once they ship AI to production.
+          LangSmith excels at LLM run tracing and debugging — understanding what an agent did.
+          RaksHex answers a different question: whether a specific agent action should be allowed to
+          happen at all, and enforces that decision at the credential.
         </p>
 
         <div className="glass-card rounded-xl overflow-hidden mb-12">
@@ -124,8 +124,8 @@ export default function CompareLangsmith() {
             <ul className="space-y-2 text-on-surface-variant" style={{ fontSize: "13px" }}>
               <li>• You only need LLM run tracing and debugging</li>
               <li>• You are deep in the LangChain ecosystem</li>
-              <li>• Security and compliance are handled separately</li>
-              <li>• You do not need kill switch or budget caps</li>
+              <li>• Action-level authorization is handled by a separate layer</li>
+              <li>• Your agents don't take consequential real-world actions</li>
             </ul>
           </div>
 
@@ -137,11 +137,11 @@ export default function CompareLangsmith() {
               When to choose RaksHex
             </h3>
             <ul className="space-y-2 text-on-surface-variant" style={{ fontSize: "13px" }}>
-              <li>• You need security + observability in one platform</li>
-              <li>• You handle PII, financial data, or health records</li>
-              <li>• You want thinking token attribution (o1/o3/Claude)</li>
-              <li>• You need PCI DSS or SOC 2 compliance evidence</li>
-              <li>• You want a kill switch that actually halts traffic</li>
+              <li>• Agents take real-world actions (payments, data writes, API calls)</li>
+              <li>• You need a DENY that actually blocks the credential</li>
+              <li>• Delegated authority needs to narrow as it's passed to sub-agents</li>
+              <li>• You need a tamper-evident record of every decision</li>
+              <li>• You're governing MCP tool calls, not just tracing runs</li>
             </ul>
           </div>
         </div>

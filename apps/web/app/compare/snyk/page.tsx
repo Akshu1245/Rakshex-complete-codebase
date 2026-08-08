@@ -3,59 +3,54 @@ import Link from "next/link";
 export const metadata = {
   title: "RaksHex vs Snyk — Honest Comparison",
   description:
-    "Snyk scans static code. RaksHex scans live API traffic. Snyk has no LLM threat coverage or cost intelligence. Compare runtime vs static security analysis.",
+    "Snyk scans repos and dependencies for known vulnerabilities before code ships. RaksHex evaluates what an already-running AI agent is authorized to do at call time.",
 };
 
 const features = [
   {
-    name: "Analysis Approach",
-    snyk: "Static code analysis (SAST) — scans source files",
-    RaksHex: "Runtime API traffic analysis — scans live requests",
+    name: "Primary Security Focus",
+    snyk: "Static code vulnerabilities (SAST/SCA)",
+    RaksHex: "Runtime action authorization for AI agents",
   },
   {
-    name: "OWASP API Top 10",
-    snyk: "Partial — code patterns only, no runtime context",
-    RaksHex: "Full OWASP API Top 10 on live traffic",
+    name: "Semantic Action Authorization",
+    snyk: "No runtime action model",
+    RaksHex: "Evaluates each action against delegated authority",
   },
   {
-    name: "Prompt Injection Detection",
-    snyk: "Not available — LLM threats not in scope",
-    RaksHex: "50+ payload patterns, real-time blocking",
-  },
-  {
-    name: "LLM Cost Intelligence",
+    name: "Delegated Authority & Attenuation",
     snyk: "Not available",
-    RaksHex: "Per-model, per-agent cost attribution + forecasting",
+    RaksHex: "Parent-to-child scopes, enforced in code",
   },
   {
-    name: "Shadow API Detection",
+    name: "Credential Mediation",
+    snyk: "No credential brokering",
+    RaksHex: "Fail-closed broker enforces DENY at the credential",
+  },
+  {
+    name: "Tamper-Evident Action Ledger",
+    snyk: "No runtime decision ledger",
+    RaksHex: "Hash-chained record of every decision",
+  },
+  {
+    name: "Policy Engine",
     snyk: "Not available",
-    RaksHex: "Runtime undocumented endpoint discovery",
+    RaksHex: "Priority-ordered rules evaluated per action",
   },
   {
-    name: "Kill Switch",
-    snyk: "Not available",
-    RaksHex: "Hard stop on budget, anomaly, or red-team score",
+    name: "MCP Tool Governance",
+    snyk: "Scans hardcoded secrets in source",
+    RaksHex: "Adversarial-intent scanning on live tool calls",
   },
   {
-    name: "PCI DSS v4.0.1 Compliance",
-    snyk: "Code-level vulnerability mapping only",
-    RaksHex: "Full PCI DSS v4.0.1 runtime compliance reports",
+    name: "Dependency & Code Vulnerability Scanning",
+    snyk: "Comprehensive, CI/CD-integrated",
+    RaksHex: "Not the primary focus",
   },
   {
-    name: "Agent-level Threat Detection",
-    snyk: "Not available",
-    RaksHex: "MCP tool governance, agent drift detection",
-  },
-  {
-    name: "API Collection Scanning",
-    snyk: "Scans code, not Postman/OpenAPI collections",
-    rakshex: "Direct Postman, OpenAPI, Bruno import + scan",
-  },
-  {
-    name: "Runtime PII Redaction",
-    snyk: "Not available",
-    RaksHex: "Real-time redaction in live API traffic",
+    name: "Compliance Evidence",
+    snyk: "Code-level vulnerability mapping",
+    RaksHex: "SOC 2 audit in progress; ledger data exportable as evidence",
   },
 ];
 
@@ -79,9 +74,9 @@ export default function CompareSnyk() {
           RaksHex vs Snyk
         </h1>
         <p className="text-on-surface-variant mb-8" style={{ fontSize: "16px", lineHeight: 1.7 }}>
-          Snyk is excellent for static code vulnerability scanning. RaksHex operates at the other
-          end of the spectrum — scanning live API traffic at runtime, detecting LLM-specific threats
-          like prompt injection, and providing cost intelligence Snyk simply does not cover.
+          Snyk scans repos and dependencies for known vulnerabilities before code ships. It doesn't
+          evaluate what an already-running AI agent is authorized to do at call time. RaksHex
+          operates at runtime — authorizing and enforcing each agent action as it happens.
         </p>
 
         <div className="glass-card rounded-xl overflow-hidden mb-12">
@@ -124,8 +119,8 @@ export default function CompareSnyk() {
             <ul className="space-y-2 text-on-surface-variant" style={{ fontSize: "13px" }}>
               <li>• You need static code scanning in CI/CD pipelines</li>
               <li>• Your primary threat model is dependency vulnerabilities</li>
-              <li>• You do not have LLM agents in production</li>
-              <li>• Runtime API security is handled by another tool</li>
+              <li>• You do not have autonomous AI agents in production</li>
+              <li>• Runtime action authorization is handled by another layer</li>
             </ul>
           </div>
 
@@ -137,11 +132,11 @@ export default function CompareSnyk() {
               When to choose RaksHex
             </h3>
             <ul className="space-y-2 text-on-surface-variant" style={{ fontSize: "13px" }}>
-              <li>• You need runtime API traffic scanning (not just SAST)</li>
-              <li>• You have LLM agents exposed to user input</li>
-              <li>• You need prompt injection and shadow API detection</li>
-              <li>• You want LLM cost attribution alongside security</li>
-              <li>• You need PCI DSS compliance from runtime evidence</li>
+              <li>• You need runtime authorization, not just pre-ship scanning</li>
+              <li>• Agents take real-world actions exposed to user input</li>
+              <li>• You need delegated authority that narrows as it's passed down</li>
+              <li>• You're governing MCP tool calls for adversarial intent</li>
+              <li>• You need a tamper-evident record of every decision</li>
             </ul>
           </div>
         </div>

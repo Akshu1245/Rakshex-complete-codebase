@@ -12,7 +12,7 @@ export default function NonameSecurityCompare() {
 
         <h1 className="text-4xl font-bold mb-2">RaksHex vs Noname Security</h1>
         <p className="text-gray-400 mb-10">
-          Real-time API security + AI governance vs traditional API discovery and posture
+          Runtime authorization for AI agent actions vs traditional API discovery and posture
           management.
         </p>
 
@@ -20,15 +20,15 @@ export default function NonameSecurityCompare() {
           <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800">
             <h2 className="text-2xl font-semibold mb-4 text-blue-400">RaksHex</h2>
             <ul className="space-y-3 text-sm">
-              <li>✅ Real-time PR scanning with secret detection + code heuristics</li>
-              <li>✅ LLM cost monitoring, kill-switch, and shadow AI detection</li>
-              <li>✅ OWASP + compliance scoring + unified risk</li>
-              <li>✅ GitHub App native PR comments</li>
-              <li>✅ VS Code extension + runtime governance</li>
-              <li>✅ Open source friendly rules + fast iteration</li>
+              <li>✅ Semantic action authorization, evaluated at call time</li>
+              <li>✅ Delegated authority with parent-to-child attenuation</li>
+              <li>✅ Hash-chained, tamper-evident Action Ledger</li>
+              <li>✅ Credential mediation — DENY blocks the credential, fail-closed</li>
+              <li>✅ MCP tool governance with adversarial-intent scanning</li>
+              <li>✅ Priority-ordered policy engine with shadow-mode testing</li>
             </ul>
             <div className="mt-6 text-xs text-emerald-400">
-              Best for: Modern AI-heavy engineering teams that ship fast.
+              Best for: Teams running autonomous AI agents that take real-world actions.
             </div>
           </div>
 
@@ -38,11 +38,11 @@ export default function NonameSecurityCompare() {
               <li>Strong API discovery and inventory</li>
               <li>Good posture management and risk scoring</li>
               <li>Enterprise-grade for large orgs</li>
-              <li>Less emphasis on real-time PR feedback or LLM cost control</li>
+              <li>Less emphasis on AI agent authorization or delegated authority</li>
               <li>Heavier implementation for full value</li>
             </ul>
             <div className="mt-6 text-xs">
-              Best for: Large enterprises focused purely on API inventory.
+              Best for: Large enterprises focused purely on classic API inventory.
             </div>
           </div>
         </div>

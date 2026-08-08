@@ -15,7 +15,7 @@ export default function EnterpriseSolutionPage() {
     },
     {
       title: "Compliance Reporting at Scale",
-      desc: "Enterprise audits require mapping all model behaviors to security frameworks like SOC 2, ISO 27001, and local guidelines. RaksHex compiles centralized evidence.",
+      desc: "Enterprise audits require mapping agent actions to security frameworks like SOC 2 and ISO 27001. RaksHex's hash-chained Action Ledger gives you a centralized, tamper-evident evidence trail to support those audits.",
     },
     {
       title: "LLM Costs & Token Leakage",
@@ -43,7 +43,7 @@ export default function EnterpriseSolutionPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-transparent text-slate-100 py-16 px-4 font-sans">
+    <div className="min-h-screen bg-transparent text-slate-100 py-24 px-4 font-sans">
       <div className="max-w-4xl mx-auto">
         <nav className="text-sm text-blue-400 mb-6">
           <Link href="/" className="hover:underline">
@@ -60,7 +60,7 @@ export default function EnterpriseSolutionPage() {
             Enterprise-Grade AI Governance
           </h1>
           <p className="text-slate-400 text-lg mt-3">
-            Govern multi-team agent deployments, generate automated compliance audits, and enforce
+            Govern multi-team agent deployments, generate audit-ready evidence trails, and enforce
             runtime guardrails globally.
           </p>
         </header>
@@ -74,7 +74,7 @@ export default function EnterpriseSolutionPage() {
             {painPoints.map((pt) => (
               <div
                 key={pt.title}
-                className="p-6 bg-slate-900/30 border border-slate-905 rounded-2xl"
+                className="p-6 bg-slate-900/30 border border-slate-905 rounded-xl"
               >
                 <h3 className="font-bold text-white text-base mb-2">{pt.title}</h3>
                 <p className="text-slate-400 text-xs leading-relaxed">{pt.desc}</p>
@@ -92,7 +92,7 @@ export default function EnterpriseSolutionPage() {
             {enterpriseFeatures.map((feat) => (
               <div
                 key={feat.title}
-                className="p-6 bg-slate-900/10 border border-slate-900 rounded-2xl hover:bg-slate-900/20 transition-all"
+                className="p-6 bg-slate-900/10 border border-slate-900 rounded-xl hover:bg-slate-900/20 transition-all"
               >
                 <h3 className="font-bold text-slate-200 text-base mb-2">{feat.title}</h3>
                 <p className="text-slate-400 text-xs leading-relaxed">{feat.desc}</p>
@@ -102,7 +102,7 @@ export default function EnterpriseSolutionPage() {
         </section>
 
         {/* Pricing Info */}
-        <div className="bg-slate-900/30 border border-slate-900 p-8 rounded-2xl mb-16 text-center">
+        <div className="bg-slate-900/30 border border-slate-900 p-8 rounded-xl mb-16 text-center">
           <h2 className="text-2xl font-bold text-white mb-2">Flexible Enterprise Engagements</h2>
           <p className="text-slate-400 text-sm max-w-md mx-auto mb-6">
             Our pricing is designed to scale with your API call volume. Speak to our founding team
