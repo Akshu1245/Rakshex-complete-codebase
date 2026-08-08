@@ -3,14 +3,10 @@
 import { useMemo, useState } from "react";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { trpc } from "@/lib/trpc";
+import { DecisionTrace } from "@/components/agent-firewall/DecisionTrace";
+import { LedgerTimeline } from "@/components/agent-firewall/LedgerTimeline";
 
 const DEFAULT_ACTIONS = ["financial.refund", "code.pr.create", "database.read", "mcp.*"];
-
-function badge(decision: string): string {
-  if (decision === "ALLOW") return "border-emerald-500/40 bg-emerald-500/10 text-emerald-300";
-  if (decision === "APPROVAL_REQUIRED") return "border-amber-500/40 bg-amber-500/10 text-amber-200";
-  return "border-red-500/40 bg-red-500/10 text-red-300";
-}
 
 export default function AgentFirewallPage() {
   const { workspaceId, workspace, isLoading } = useWorkspace();
@@ -424,17 +420,16 @@ export default function AgentFirewallPage() {
               {evaluate.isPending ? "Evaluating…" : "Evaluate action"}
             </button>
             {lastDecision && (
-              <div className={`mt-5 rounded-lg border p-4 ${badge(lastDecision.decision)}`}>
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <strong>{lastDecision.decision}</strong>
-                  <span className="text-xs">Runtime result: {lastDecision.effectiveDecision}</span>
-                </div>
-                <p className="mt-2 text-sm">{lastDecision.normalizedAction?.name}</p>
-                <ul className="mt-2 list-disc space-y-1 pl-5 text-xs">
-                  {lastDecision.reasons.map((reason) => (
-                    <li key={reason}>{reason}</li>
-                  ))}
-                </ul>
+              <div className="mt-5">
+                <DecisionTrace
+                  agentName={activeAgent?.name}
+                  provider={provider}
+                  operation={operation}
+                  normalizedActionName={lastDecision.normalizedAction?.name}
+                  decision={lastDecision.decision}
+                  effectiveDecision={lastDecision.effectiveDecision}
+                  reasons={lastDecision.reasons}
+                />
               </div>
             )}
           </form>
@@ -522,46 +517,8 @@ export default function AgentFirewallPage() {
               Refresh
             </button>
           </div>
-          <div className="mt-5 overflow-x-auto">
-            <table className="w-full min-w-[760px] text-left text-sm">
-              <thead className="text-xs uppercase tracking-wide text-gray-500">
-                <tr>
-                  <th className="pb-3">Time</th>
-                  <th className="pb-3">Action</th>
-                  <th className="pb-3">Mode</th>
-                  <th className="pb-3">Decision</th>
-                  <th className="pb-3">Resource</th>
-                  <th className="pb-3">Outcome</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/10">
-                {ledger.data?.map((row) => (
-                  <tr key={row.id}>
-                    <td className="py-3 text-gray-400">
-                      {new Date(row.occurredAt).toLocaleString()}
-                    </td>
-                    <td className="py-3 font-medium">{row.semanticAction}</td>
-                    <td className="py-3 capitalize">{row.mode}</td>
-                    <td className="py-3">
-                      <span
-                        className={`rounded-full border px-2 py-1 text-xs ${badge(row.decision)}`}
-                      >
-                        {row.decision}
-                      </span>
-                    </td>
-                    <td className="py-3 text-gray-400">{row.resource || "—"}</td>
-                    <td className="py-3 text-gray-400">{row.outcomeStatus}</td>
-                  </tr>
-                ))}
-                {!ledger.data?.length && (
-                  <tr>
-                    <td colSpan={6} className="py-10 text-center text-gray-500">
-                      No protected actions yet. Complete the three setup steps above.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+          <div className="mt-5">
+            <LedgerTimeline rows={ledger.data ?? []} />
           </div>
         </section>
 
@@ -766,13 +723,7 @@ export default function AgentFirewallPage() {
                     <span className="font-mono text-gray-500">{row.method}</span>{" "}
                     {row.semanticAction}
                   </span>
-                  <span
-                    className={
-                      row.error
-                        ? "shrink-0 text-red-300"
-                        : "shrink-0 text-gray-500"
-                    }
-                  >
+                  <span className={row.error ? "shrink-0 text-red-300" : "shrink-0 text-gray-500"}>
                     {row.error ? "failed" : (row.responseStatus ?? "—")}
                   </span>
                 </li>
