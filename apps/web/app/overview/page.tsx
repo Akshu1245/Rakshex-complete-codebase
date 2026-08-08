@@ -13,7 +13,7 @@ import { OneOnOneMatrix } from "@/components/home/OneOnOneMatrix";
 import { AskAISection } from "@/components/home/AskAISection";
 import { OverviewSplash } from "@/components/home/OverviewSplash";
 import { Footer } from "@/components/layout/Footer";
-import { ArrowRight, ShieldCheck, Sparkles, Server } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 
 export default function OverviewPage() {
   const [overviewOpen, setOverviewOpen] = useState(false);
@@ -30,63 +30,62 @@ export default function OverviewPage() {
       <PublicHeader />
 
       {/* Main Container */}
-      <main className="pt-24 space-y-12">
+      <main className="pt-32 pb-24 space-y-12">
         {/* Floating Sub-Nav Switcher */}
         <ComparisonSubNav onOverviewClick={() => setOverviewOpen(true)} />
 
-        {/* Hero Section - ClickHouse Cloud Style Overview */}
+        {/* Hero Section — mirrors the homepage hero's positioning and structure */}
         <section
           id="hero-overview"
           className="w-full max-w-7xl mx-auto px-6 pt-8 pb-16 text-center space-y-8 relative"
         >
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#14B8A6]/10 border border-[#14B8A6]/30 text-[#14B8A6] text-xs font-semibold uppercase tracking-wider font-mono">
             <Sparkles className="w-3.5 h-3.5" />
-            RaksHex Cloud Overview
+            RaksHex Overview
           </div>
 
-          <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight font-sans text-white max-w-4xl mx-auto leading-tight">
-            Autonomous. Sub-Second. <span className="text-[#14B8A6]">Zero Retention.</span>
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-[-0.03em] font-sans text-white max-w-4xl mx-auto leading-[1.05]">
+            Competitors govern the session.
+            <br />
+            <span className="text-[#14B8A6]">RaksHex governs the action.</span>
           </h1>
 
           <p className="text-slate-400 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
-            RaksHex AI Control Plane: The fastest, most cost-efficient way to govern AI agents,
-            block prompt injections, and enforce sub-second circuit breakers. Fully managed with
-            zero raw prompt storage.
+            Runtime authorization for autonomous AI agents. Semantic actions, delegated authority
+            with parent-to-child attenuation, a hash-chained tamper-evident Action Ledger, and
+            credential mediation so a DENY is enforced, not just logged.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
             <Link
               href="/register"
-              className="px-8 py-3.5 rounded-xl bg-[#14B8A6] hover:bg-[#0D9488] text-black font-extrabold text-sm sm:text-base transition-all shadow-[0_0_20px_rgba(20,184,166,0.3)] flex items-center gap-2"
+              className="px-6 py-3 rounded-lg bg-[#14B8A6] hover:bg-[#0D9488] text-black font-semibold text-sm sm:text-base transition-all shadow-[0_0_20px_rgba(20,184,166,0.3)] flex items-center gap-2"
             >
-              <span>Start Free Trial</span>
+              <span>Get started free</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
               href="/demo"
-              className="px-8 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white font-bold text-sm sm:text-base transition-all"
+              className="px-6 py-3 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white font-semibold text-sm sm:text-base transition-all"
             >
-              Book Technical Demo
+              Book technical demo
             </Link>
           </div>
 
-          {/* Cloud Provider Marketplace Badges */}
+          {/* Proof strip — matches the homepage hero's proof strip exactly */}
           <div className="pt-8 border-t border-slate-800/80 max-w-3xl mx-auto">
-            <span className="text-xs font-mono text-slate-400 uppercase tracking-wider block mb-4">
-              Deployable on all major clouds &amp; hybrid environments
-            </span>
-            <div className="flex flex-wrap items-center justify-center gap-6 text-slate-300 text-xs font-mono">
-              <span className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 flex items-center gap-2">
-                <Server className="w-3.5 h-3.5 text-amber-500" /> AWS Marketplace
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-mono text-slate-400">
+              <span className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#14B8A6]" />
+                1,000+ tests passing
               </span>
-              <span className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 flex items-center gap-2">
-                <Server className="w-3.5 h-3.5 text-blue-500" /> GCP Cloud
+              <span className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#14B8A6]" />
+                26 migrations, rollback-verified
               </span>
-              <span className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 flex items-center gap-2">
-                <Server className="w-3.5 h-3.5 text-sky-400" /> Azure Marketplace
-              </span>
-              <span className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 flex items-center gap-2 text-[#14B8A6] border-[#14B8A6]/30">
-                <ShieldCheck className="w-3.5 h-3.5" /> BYOC / Air-Gapped
+              <span className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#14B8A6]" />
+                Hash-chained Action Ledger
               </span>
             </div>
           </div>

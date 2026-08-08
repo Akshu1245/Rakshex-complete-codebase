@@ -15,6 +15,7 @@ export const PUBLIC_PATH_PREFIXES = [
   "/pricing",
   "/waitlist",
   "/landing",
+  "/overview",
   "/benchmark",
   "/research",
   "/playbooks",
