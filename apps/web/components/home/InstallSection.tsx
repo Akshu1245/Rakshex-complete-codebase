@@ -4,42 +4,47 @@ import { useState } from "react";
 import { Terminal, Code, Github, Copy, Check } from "lucide-react";
 
 const tabs = [
-  { id: "cli", label: "CLI", icon: Terminal },
-  { id: "vscode", label: "VS Code", icon: Code },
-  { id: "github", label: "GitHub Action", icon: Github },
+  { id: "cli", label: "SDK", icon: Terminal },
+  { id: "vscode", label: "Policy", icon: Code },
+  { id: "github", label: "CI", icon: Github },
 ];
 
-const cliCode = `npx rakshex scan ./collection.json
+const cliCode = `import { RaksHexFirewall } from "@rakshex/sdk";
 
-# Or install globally
-npm install -g rakshex
-rakshex scan ./postman-collection.json
+const firewall = new RaksHexFirewall();
 
-# Output:
-# Score: 30/100
-# Findings: 7 vulnerabilities
-# Report: https://rakshex.in/report/abc123`;
+const decision = await firewall.authorize({
+  action: "financial.refund",
+  authority: delegatedAuthority,
+  params: { amount: 40, orderId },
+});
 
-const vscodeCode = `# Install from VS Code Marketplace
-# Click the button below or search "RaksHex" in Extensions
+if (decision.effect === "DENY") {
+  throw new Error(decision.reason);
+}`;
 
-# After install:
-# 1. Open Command Palette (Ctrl+Shift+P)
-# 2. Type "RaksHex: Scan Current File"
-# 3. View findings in the Security Panel`;
+const vscodeCode = `# Define a policy rule
+rule:
+  action: financial.refund
+  condition: "amount > authority.limit"
+  effect: DENY
+  priority: 10
 
-const githubCode = `name: RaksHex Security Scan
+# Rules are evaluated in priority order
+# and every decision is written to the
+# hash-chained Action Ledger.`;
+
+const githubCode = `name: RaksHex Policy Check
 on: [push, pull_request]
 jobs:
-  security:
+  policy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Run RaksHex Scan
-        run: npx rakshex scan ./postman-collection.json
-      - name: Upload Report
-        if: always()
-        run: echo "Report available at rakshex.in"`;
+      - name: Validate policy rules
+        run: pnpm rakshex policy lint
+      - name: Run differential policy test
+        run: pnpm rakshex policy test`;
 
 export function InstallSection() {
   const [activeTab, setActiveTab] = useState("cli");
@@ -56,15 +61,15 @@ export function InstallSection() {
 
   return (
     <section
-      className="w-full max-w-[1280px] mx-auto py-20 px-6 xl:px-8 bg-transparent"
+      className="w-full max-w-[1280px] mx-auto py-24 px-6 xl:px-8 bg-transparent"
       id="install"
     >
       <div className="text-center mb-10">
         <h2 className="text-3xl sm:text-[36px] font-bold font-sans text-white leading-tight tracking-[-0.02em] mb-4">
-          Install RaksHex
+          Integrate the Agent Firewall
         </h2>
         <p className="text-[#9CA3AF] text-base max-w-lg mx-auto">
-          Three ways to secure your APIs. Pick the one that fits your workflow.
+          Authorize actions in your agent's call path, define policy, or gate it in CI.
         </p>
       </div>
 
@@ -114,17 +119,15 @@ export function InstallSection() {
         </pre>
       </div>
 
-      {/* VS Code CTA */}
+      {/* Policy docs CTA */}
       {activeTab === "vscode" && (
         <div className="text-center mt-6">
           <a
-            href="https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex-vscode"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="/docs"
             className="inline-flex items-center gap-2 px-6 py-3 bg-[#14B8A6] text-black font-semibold rounded-lg hover:bg-[#0D9488] transition-colors"
           >
             <Code className="w-5 h-5" />
-            Install from Marketplace
+            Read the policy engine docs
           </a>
         </div>
       )}

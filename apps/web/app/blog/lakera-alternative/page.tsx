@@ -56,8 +56,7 @@ export default function BlogLakeraAlternative() {
           <ul className="list-disc list-inside space-y-2">
             <li>API security — shadow endpoints, missing auth, credential leaks</li>
             <li>Cost governance — per-request tracking, anomaly detection, kill switch</li>
-            <li>Compliance — PCI DSS, OWASP, SOC 2 mapped findings</li>
-            <li>Developer experience — VS Code extension, GitHub PR scanning</li>
+            <li>Compliance evidence — OWASP-mapped findings, exportable audit trail</li>
             <li>Self-hosting — full data sovereignty without enterprise contract</li>
           </ul>
 
@@ -82,9 +81,7 @@ export default function BlogLakeraAlternative() {
                   ["Credential leak scanning", "❌", "✅"],
                   ["LLM cost monitoring", "❌", "✅"],
                   ["Kill switch / budget cap", "❌", "✅"],
-                  ["Compliance reporting", "❌", "✅"],
-                  ["VS Code extension", "❌", "✅"],
-                  ["GitHub PR scanning", "❌", "✅"],
+                  ["Compliance evidence export", "❌", "✅ SOC 2 audit in progress"],
                   ["Self-hosted", "❌ Enterprise only", "✅ All tiers"],
                 ].map(([cap, lak, dev]) => (
                   <tr key={cap}>
@@ -116,9 +113,8 @@ export default function BlogLakeraAlternative() {
           <ul className="list-disc list-inside space-y-2">
             <li>You want prompt injection defense + API security in one platform</li>
             <li>You need cost governance and a real kill switch</li>
-            <li>Compliance (PCI DSS, SOC 2) is non-negotiable</li>
+            <li>You need an exportable, auditor-facing evidence trail (SOC 2 audit in progress)</li>
             <li>You prefer self-hosted with Indian data residency</li>
-            <li>You want developer tools (VS Code, GitHub Actions)</li>
           </ul>
 
           <h2 className="text-2xl font-bold text-white mt-8">The Verdict</h2>

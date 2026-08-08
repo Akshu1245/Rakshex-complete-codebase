@@ -123,8 +123,9 @@ export default function BlogReduceCosts() {
 
           <p>
             You don't need to downgrade your model to save money. By implementing proper runtime
-            token governance, caching, and model routing at the API layer, you can slash your LLM
-            bills by 60% or more. Here is the step-by-step optimization blueprint.
+            token governance, caching, and model routing at the API layer, teams routinely cut a
+            meaningful share of their LLM bill — the exact number depends on your traffic mix. Here
+            is the step-by-step optimization blueprint.
           </p>
 
           <hr className="border-slate-800 my-8" />
@@ -158,9 +159,9 @@ export default function BlogReduceCosts() {
           </p>
           <p>
             If you don't attribute thinking tokens to specific features, users, or API keys, you
-            won't know which part of your app is driving costs. RaksHex solves this by parsing
-            completion metadata to attribute thinking tokens separately from output tokens, enabling
-            accurate billing and cost allocation.
+            won't know which part of your app is driving costs. This is exactly the kind of
+            per-action visibility a policy engine with budget rules is built to give you — enforced
+            at the point where the agent actually makes the call, not after the invoice arrives.
           </p>
 
           <h2 className="text-2xl font-bold text-white mt-8">Implement Caching Strategies</h2>
@@ -210,16 +211,17 @@ export default function BlogReduceCosts() {
             "autocomplete" vs. "data-enrichment").
           </p>
           <p>
-            RaksHex injects custom headers in API requests to track cost per session, feature, and
-            endpoint. You can view exactly which user query triggered an agent loop and set
-            automated alerts or hard stops to cut off runaway agents.
+            RaksHex's policy engine lets you define budget rules per session, feature, and action,
+            evaluated at call time. You can see exactly which agent action triggered a loop and use
+            the kill switch to cut off runaway spend before it compounds, instead of discovering it
+            on the invoice.
           </p>
 
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 my-8">
             <h3 className="text-xl font-bold text-white mb-2">Start Optimizing Your Spend</h3>
             <p className="text-sm text-slate-400 mb-4">
-              Integrate RaksHex to get real-time cost dashboards, thinking token attribution, and
-              budget alerts for your API environment. Run a scan of your API specs today.
+              Integrate RaksHex to get policy-based budget rules and kill switch protection for your
+              API environment. Run a scan of your API specs today.
             </p>
             <div className="flex gap-4">
               <Link

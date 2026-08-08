@@ -31,7 +31,8 @@ export default function DocsOverview() {
 
       <p>
         RaksHex gives your AI agents and APIs real-time security scanning, LLM cost attribution,
-        prompt injection blocking, and compliance reporting — all in one platform. 478 server tests.
+        prompt injection blocking, and compliance reporting — all in one platform. 1000+ server
+        tests.
       </p>
 
       <h2 id="connect-first">Connect first</h2>
@@ -78,19 +79,19 @@ export default function DocsOverview() {
           {
             title: "Security Scanner",
             icon: "🔒",
-            desc: "87-payload injection library. OWASP Top 10.",
+            desc: "Prompt injection payload library. OWASP Top 10.",
             href: "/docs/security-scanner",
           },
           {
             title: "Kill Switch",
             icon: "⚡",
-            desc: "Autonomous circuit breaker. Sub-second.",
+            desc: "Autonomous circuit breaker.",
             href: "/docs/kill-switch",
           },
           {
             title: "Cost Monitor",
             icon: "💰",
-            desc: "Holt-Winters forecasting. Per-model breakdown.",
+            desc: "Trend forecasting. Per-model breakdown.",
             href: "/docs/cost-monitor",
           },
           {
@@ -114,7 +115,7 @@ export default function DocsOverview() {
           {
             title: "Compliance Reports",
             icon: "📋",
-            desc: "SOC2, PCI DSS, OWASP. One-click PDF.",
+            desc: "PCI DSS, OWASP evidence. SOC 2 audit in progress.",
             href: "/docs/compliance",
           },
           {
