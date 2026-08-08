@@ -13,11 +13,13 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Accept dual-token access_token, legacy app_session_id, or session alias
+  // Accept dual-token access_token, legacy app_session_id, session alias, or NextAuth session cookies
   const session =
     request.cookies.get("access_token")?.value ||
     request.cookies.get("app_session_id")?.value ||
-    request.cookies.get("session")?.value;
+    request.cookies.get("session")?.value ||
+    request.cookies.get("next-auth.session-token")?.value ||
+    request.cookies.get("__Secure-next-auth.session-token")?.value;
   if (!session) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("redirect", pathname);
