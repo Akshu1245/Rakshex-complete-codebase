@@ -14,8 +14,8 @@ export default function FintechSolutionPage() {
       desc: "Regulated financial platforms must ensure cardholder data (CHD) and sensitive authentication data (SAD) never leaks to external LLM provider environments. RaksHex redacts sensitive info at the API level.",
     },
     {
-      title: "Real-time Fraud Detection in AI Agents",
-      desc: "Autonomous financial agents can be manipulated via prompt injection to transfer funds or override transaction thresholds. RaksHex monitors tool parameters in real time.",
+      title: "Unbounded Agent Authority",
+      desc: "Autonomous financial agents can be manipulated via prompt injection to attempt unauthorized transfers or refunds. RaksHex authorizes each semantic action (e.g. financial.refund) against scoped, delegated authority before it's allowed to execute.",
     },
     {
       title: "LLM Cost Attribution at Scale",
@@ -56,7 +56,7 @@ export default function FintechSolutionPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-transparent text-slate-100 py-16 px-4 font-sans">
+    <div className="min-h-screen bg-transparent text-slate-100 py-24 px-4 font-sans">
       <div className="max-w-4xl mx-auto">
         <nav className="text-sm text-blue-400 mb-6">
           <Link href="/" className="hover:underline">
@@ -87,7 +87,7 @@ export default function FintechSolutionPage() {
             {painPoints.map((pt) => (
               <div
                 key={pt.title}
-                className="p-6 bg-slate-900/30 border border-slate-905 rounded-2xl"
+                className="p-6 bg-slate-900/30 border border-slate-905 rounded-xl"
               >
                 <h3 className="font-bold text-white text-base mb-2">{pt.title}</h3>
                 <p className="text-slate-400 text-xs leading-relaxed">{pt.desc}</p>
@@ -105,7 +105,7 @@ export default function FintechSolutionPage() {
             {exampleWorkflows.map((cs) => (
               <div
                 key={cs.company}
-                className="p-8 bg-slate-900/10 border border-slate-900 rounded-2xl hover:border-slate-800 transition-colors"
+                className="p-8 bg-slate-900/10 border border-slate-900 rounded-xl hover:border-slate-800 transition-colors"
               >
                 <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider block mb-1">
                   {cs.company}
@@ -135,16 +135,19 @@ export default function FintechSolutionPage() {
         </section>
 
         {/* CTA */}
-        <div className="text-center bg-slate-900/30 border border-slate-900 p-8 rounded-2xl">
-          <h2 className="text-xl font-bold text-white mb-2">Ready to run a secure scan?</h2>
+        <div className="text-center bg-slate-900/30 border border-slate-900 p-8 rounded-xl">
+          <h2 className="text-xl font-bold text-white mb-2">
+            Talk to us about your fintech workflows
+          </h2>
           <p className="text-slate-400 text-sm mb-6 max-w-md mx-auto leading-relaxed">
-            Upload your financial API specs to detect credentials and vulnerabilities instantly.
+            Walk through how RaksHex can authorize and audit financial agent actions in your
+            environment.
           </p>
           <Link
             href="/demo"
             className="inline-block bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm py-3 px-8 rounded-lg transition-colors shadow-lg shadow-blue-500/20"
           >
-            Start Free Demo Scan
+            Book a demo
           </Link>
         </div>
       </div>

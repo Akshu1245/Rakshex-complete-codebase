@@ -5,7 +5,15 @@
  * (lowest number = highest priority), first match wins.
  *
  * Performance target: < 50ms for 1000 rules.
+ *
+ * Coverage note: this engine has no network/destination-domain field.
+ * A condition referencing `destination`/`network`/`url` will never match
+ * (see getFieldValue's unknown-field warning below) — it covers
+ * model/tool/cost/prompt/threat-level rules, not outbound-destination
+ * rules. Destination allowlisting today lives in
+ * apps/api/services/gateway/enforcement.ts's `allowedDomains` check.
  */
+import { logger } from "../_core/logger";
 
 export type PolicyAction = "allow" | "block" | "redact" | "alert_only" | "require_approval";
 
@@ -59,6 +67,18 @@ function getRegex(pattern: string): RegExp {
   return r;
 }
 
+const warnedUnknownFields = new Set<string>();
+
+/** Logs each distinct unknown field name once per process, not once per event. */
+function warnUnknownField(field: string): void {
+  if (warnedUnknownFields.has(field)) return;
+  warnedUnknownFields.add(field);
+  logger.warn(
+    { field },
+    `[PolicyEngine] Rule references unrecognized field "${field}" — this condition will never match. See getFieldValue() for supported fields.`,
+  );
+}
+
 function getFieldValue(event: AIEventContext, field: string): unknown {
   switch (field) {
     case "model":
@@ -90,6 +110,7 @@ function getFieldValue(event: AIEventContext, field: string): unknown {
     case "hour_of_day":
       return event.timestamp.getUTCHours();
     default:
+      warnUnknownField(field);
       return "";
   }
 }

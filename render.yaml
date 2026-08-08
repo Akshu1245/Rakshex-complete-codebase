@@ -1,11 +1,11 @@
-﻿services:
+services:
   - type: web
     name: rakshex-backend
+    plan: free
     env: docker
     dockerfilePath: ./Dockerfile.prod
-    dockerCommand: node --import tsx apps/api/_core/index.ts
+    dockerCommand: pnpm --filter @rakshex/database db:migrate && node --import tsx apps/api/_core/index.ts
     healthCheckPath: /api/health/live
-    preDeployCommand: pnpm --filter @rakshex/database db:migrate
     envVars:
       - key: NODE_ENV
         value: production
@@ -65,6 +65,7 @@
 
   - type: worker
     name: rakshex-worker
+    plan: free
     env: docker
     dockerfilePath: ./Dockerfile.prod
     dockerCommand: node --import tsx apps/api/queues/workers/index.ts
@@ -97,9 +98,16 @@
       - key: SENTRY_DSN
         sync: false
 
+  - type: redis
+    name: rakshex-redis
+    plan: free
+    ipAllowList:
+      - source: 0.0.0.0/0
+        description: everywhere
+
 databases:
   - name: rakshex-db
-    plan: basic-256mb
+    plan: free
     databaseName: rakshex
     user: rakshex
 

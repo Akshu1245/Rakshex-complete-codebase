@@ -57,7 +57,7 @@ export default function BlogPortkeyAlternative() {
             <li>No PII redaction before third-party providers</li>
             <li>No API security scanning (shadow endpoints, auth gaps)</li>
             <li>Rate limits only, not a true budget kill switch</li>
-            <li>No compliance reporting (PCI DSS, OWASP, SOC 2)</li>
+            <li>No auditor-facing compliance evidence trail</li>
           </ul>
 
           <h2 className="text-2xl font-bold text-white mt-8">
@@ -82,8 +82,7 @@ export default function BlogPortkeyAlternative() {
                   ["Shadow API detection", "❌", "✅"],
                   ["Kill switch / hard stop", "❌", "✅"],
                   ["Cost anomaly detection", "⚠️ Basic", "✅ Advanced"],
-                  ["Compliance reporting", "❌", "✅"],
-                  ["VS Code extension", "❌", "✅"],
+                  ["Compliance evidence export", "❌", "✅ SOC 2 audit in progress"],
                   ["Self-hosted", "❌ Enterprise only", "✅ All tiers"],
                 ].map(([cap, port, dev]) => (
                   <tr key={cap}>

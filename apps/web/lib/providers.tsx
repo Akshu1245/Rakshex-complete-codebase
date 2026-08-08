@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink } from "@trpc/client";
 import superjson from "superjson";
+import { SessionProvider } from "next-auth/react";
 import { trpc } from "./trpc";
 import { SyncProvider } from "./offline/SyncProvider";
 
@@ -167,10 +168,12 @@ export function TRPCProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <trpc.Provider client={trpcClient} queryClient={queryClient}>
-      <QueryClientProvider client={queryClient}>
-        <SyncProvider>{children}</SyncProvider>
-      </QueryClientProvider>
-    </trpc.Provider>
+    <SessionProvider>
+      <trpc.Provider client={trpcClient} queryClient={queryClient}>
+        <QueryClientProvider client={queryClient}>
+          <SyncProvider>{children}</SyncProvider>
+        </QueryClientProvider>
+      </trpc.Provider>
+    </SessionProvider>
   );
 }

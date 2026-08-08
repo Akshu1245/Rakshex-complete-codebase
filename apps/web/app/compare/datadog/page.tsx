@@ -3,59 +3,54 @@ import Link from "next/link";
 export const metadata = {
   title: "RaksHex vs Datadog — Honest Comparison",
   description:
-    "Datadog charges per host with no OWASP API scanning or LLM-specific features. RaksHex is per-API with built-in security, cost attribution, and PCI DSS compliance.",
+    "Datadog observes and alerts on infrastructure after the fact. RaksHex authorizes individual AI agent actions before they execute. Side-by-side comparison.",
 };
 
 const features = [
   {
-    name: "Pricing Model",
-    datadog: "Per host/container — costs explode at scale",
-    RaksHex: "Per-API — predictable pricing regardless of infra",
+    name: "Enforcement vs Observability",
+    datadog: "Alerts after the fact",
+    RaksHex: "Blocks the action before it executes",
   },
   {
-    name: "OWASP API Top 10 Scanning",
+    name: "Semantic Action Authorization",
     datadog: "Not available",
-    RaksHex: "Full OWASP API Top 10 + custom payload library",
+    RaksHex: "Evaluates each agent action against delegated authority",
   },
   {
-    name: "LLM Cost Attribution",
-    datadog: "Basic metrics only, no per-model breakdown",
-    RaksHex: "Per-model, per-agent, thinking token attribution",
+    name: "Delegated Authority Model",
+    datadog: "No authority/attenuation concept",
+    RaksHex: "Parent-to-child attenuation, enforced in code",
   },
   {
-    name: "Prompt Injection Detection",
+    name: "Credential Mediation",
     datadog: "Not available",
-    RaksHex: "50+ payload patterns, real-time blocking",
+    RaksHex: "Fail-closed broker; DENY blocks the credential itself",
   },
   {
-    name: "Shadow API Detection",
-    datadog: "Not available",
-    RaksHex: "Static route extraction + runtime discovery",
+    name: "Policy Engine",
+    datadog: "Custom alerting rules, not authorization",
+    RaksHex: "Priority-ordered rules evaluated per action",
   },
   {
-    name: "Kill Switch / Budget Cap",
-    datadog: "Alerts only — no hard stops",
-    RaksHex: "Hard stop on budget, anomaly, or red-team score",
+    name: "MCP-Aware Monitoring",
+    datadog: "No MCP-specific tooling",
+    RaksHex: "Adversarial-intent scanning on MCP tool calls",
   },
   {
-    name: "PCI DSS v4.0.1 Compliance",
-    datadog: "Partial log collection only",
-    RaksHex: "Full PCI DSS v4.0.1 mapped findings + reports",
+    name: "Auditable Decision Trail",
+    datadog: "General-purpose log retention",
+    RaksHex: "Hash-chained, tamper-evident Action Ledger",
   },
   {
-    name: "PII Redaction",
-    datadog: "Manual scrubbing rules only",
-    RaksHex: "Real-time auto-redaction in request/response",
+    name: "Infrastructure APM / Host Monitoring",
+    datadog: "Comprehensive",
+    RaksHex: "Not the primary focus",
   },
   {
-    name: "VS Code Extension",
-    datadog: "Not available",
-    RaksHex: "In-editor scanning + inline security warnings",
-  },
-  {
-    name: "India-specific Compliance (Aadhaar/PAN)",
-    datadog: "Not available",
-    RaksHex: "Built-in Aadhaar & PAN detection rules",
+    name: "Compliance Evidence",
+    datadog: "General log collection",
+    RaksHex: "SOC 2 audit in progress; ledger exportable as evidence",
   },
 ];
 
@@ -79,9 +74,9 @@ export default function CompareDatadog() {
           RaksHex vs Datadog
         </h1>
         <p className="text-on-surface-variant mb-8" style={{ fontSize: "16px", lineHeight: 1.7 }}>
-          Datadog is the gold standard for infrastructure monitoring. But it charges per host, has
-          no OWASP API scanning, and zero LLM-specific security features. RaksHex is built
-          specifically for API security and AI cost intelligence — at a fraction of the cost.
+          Datadog is built to observe and alert on infrastructure after something already happened.
+          It has no concept of authorizing an individual AI agent action before it executes. RaksHex
+          governs the action itself — evaluating and enforcing a decision at call time.
         </p>
 
         <div className="glass-card rounded-xl overflow-hidden mb-12">
@@ -124,8 +119,8 @@ export default function CompareDatadog() {
             <ul className="space-y-2 text-on-surface-variant" style={{ fontSize: "13px" }}>
               <li>• You need infrastructure APM and host-level monitoring</li>
               <li>• Your primary need is logs, traces, and dashboards</li>
-              <li>• You have no LLM agents in production</li>
-              <li>• Security scanning is handled by a separate tool</li>
+              <li>• You have no autonomous AI agents taking real-world actions</li>
+              <li>• Action-level authorization is handled by a separate layer</li>
             </ul>
           </div>
 
@@ -137,11 +132,11 @@ export default function CompareDatadog() {
               When to choose RaksHex
             </h3>
             <ul className="space-y-2 text-on-surface-variant" style={{ fontSize: "13px" }}>
-              <li>• You need OWASP API scanning + LLM cost control in one tool</li>
-              <li>• You want per-API pricing instead of per-host billing</li>
-              <li>• You need PCI DSS or SOC 2 compliance reports</li>
-              <li>• You run AI agents and need kill switch protection</li>
-              <li>• You operate in India and need Aadhaar/PAN detection</li>
+              <li>• You run autonomous AI agents that take real-world actions</li>
+              <li>• You need a DENY that blocks the action before it executes</li>
+              <li>• Delegated authority needs to narrow as it's passed to sub-agents</li>
+              <li>• You need a tamper-evident record of every authorization decision</li>
+              <li>• You're governing MCP tool calls, not just infrastructure metrics</li>
             </ul>
           </div>
         </div>

@@ -138,7 +138,7 @@ const FEATURES = [
 export default function FeaturesPage() {
   return (
     <div className="min-h-screen bg-transparent text-white">
-      <div className="text-center py-20 px-4 border-b border-gray-800">
+      <div className="text-center py-24 px-4 border-b border-gray-800">
         <h1 className="text-4xl md:text-5xl font-bold mb-4">Features that ship with RaksHex</h1>
         <p className="text-gray-400 max-w-2xl mx-auto text-lg">
           Honest product surface: security scanning, cost governance, compliance scoring, and
@@ -147,7 +147,7 @@ export default function FeaturesPage() {
         </p>
       </div>
 
-      <div className="max-w-6xl mx-auto py-16 px-4 space-y-20">
+      <div className="max-w-6xl mx-auto py-24 px-4 space-y-20">
         {FEATURES.map((section) => (
           <section key={section.category}>
             <h2 className="text-2xl font-bold text-blue-400 mb-8 flex items-center gap-3">
@@ -169,7 +169,7 @@ export default function FeaturesPage() {
         ))}
       </div>
 
-      <div className="text-center py-16 border-t border-gray-800">
+      <div className="text-center py-24 border-t border-gray-800">
         <h2 className="text-2xl font-bold mb-4">Ready to see it in action?</h2>
         <div className="flex flex-col sm:flex-row justify-center gap-4">
           <Link

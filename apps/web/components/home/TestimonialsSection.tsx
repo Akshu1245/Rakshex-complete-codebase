@@ -4,7 +4,7 @@ import { ArrowRight, ShieldCheck } from "lucide-react";
 export function TestimonialsSection() {
   return (
     <section
-      className="mx-auto w-full max-w-[1280px] px-6 py-20 xl:px-8"
+      className="mx-auto w-full max-w-[1280px] px-6 py-24 xl:px-8"
       aria-labelledby="proof-heading"
     >
       <div className="border border-neutral-700 bg-neutral-950/30 p-8 md:p-10">

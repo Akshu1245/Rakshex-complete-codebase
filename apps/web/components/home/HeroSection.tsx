@@ -15,7 +15,7 @@ export function HeroSection({ antiGravity, setAntiGravity }: HeroSectionProps) {
   const [activeLogoName, setActiveLogoName] = useState("OpenAI");
 
   const handleCopyCommand = () => {
-    navigator.clipboard.writeText("npx rakshex scan ./collection.json");
+    navigator.clipboard.writeText("financial.refund({ amount: 40, orderId })");
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -38,40 +38,40 @@ export function HeroSection({ antiGravity, setAntiGravity }: HeroSectionProps) {
 
           {/* Headline */}
           <h1 className="hero-headline font-sans font-bold tracking-[-0.02em] text-left flex flex-col text-[40px] sm:text-[48px] md:text-[56px] leading-[1.1] mb-6">
-            <span className="text-white">Know every AI account,</span>
-            <span className="text-[#14B8A6]">key, model, cost,</span>
-            <span className="text-[#14B8A6]">and policy.</span>
+            <span className="text-white">Competitors govern the session.</span>
+            <span className="text-[#14B8A6]">RaksHex governs</span>
+            <span className="text-[#14B8A6]">the action.</span>
           </h1>
 
           {/* Subtext */}
           <p className="hero-subtext font-sans text-lg max-w-[480px] text-[#9CA3AF] mb-10 leading-[1.6] font-medium">
-            RaksHex gives engineering and security teams one control plane for AI discovery,
-            credentials, subscriptions, gateway policy, cost controls, and audit evidence. Start
-            with a local scan. Keep prompts out of the inventory by default.
+            Runtime authorization for autonomous AI agents. Semantic actions, delegated authority
+            with parent-to-child attenuation, a hash-chained tamper-evident Action Ledger, and
+            credential mediation so a DENY is enforced, not just logged.
           </p>
 
           {/* CTA Buttons */}
           <div className="hero-buttons flex flex-wrap items-center gap-4 w-full mb-12">
             <Link
               href="/login"
-              className="px-6 py-3 bg-[#14B8A6] text-white font-sans font-semibold text-sm rounded-[6px] hover:bg-[#0D9488] active:bg-[#0A7F6F] hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_4px_12px_rgba(20,184,166,0.2)] transition-all duration-200 text-center flex items-center justify-center gap-2 transform"
+              className="px-6 py-3 bg-[#14B8A6] text-white font-sans font-semibold text-sm rounded-lg hover:bg-[#0D9488] active:bg-[#0A7F6F] hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_4px_12px_rgba(20,184,166,0.2)] transition-all duration-200 text-center flex items-center justify-center gap-2 transform"
             >
-              Scan your repo free &rarr;
+              Get started free &rarr;
             </Link>
             <Link
               href="/pricing"
-              className="px-6 py-3 bg-transparent border-2 border-[#14B8A6] text-white font-sans font-semibold text-sm rounded-[6px] hover:bg-[#14B8A6]/10 hover:border-[#0D9488] active:bg-[#14B8A6]/20 hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_4px_12px_rgba(20,184,166,0.1)] transition-all duration-200 text-center flex items-center justify-center transform"
+              className="px-6 py-3 bg-transparent border-2 border-[#14B8A6] text-white font-sans font-semibold text-sm rounded-lg hover:bg-[#14B8A6]/10 hover:border-[#0D9488] active:bg-[#14B8A6]/20 hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_4px_12px_rgba(20,184,166,0.1)] transition-all duration-200 text-center flex items-center justify-center transform"
             >
               See pricing
             </Link>
           </div>
 
-          {/* CLI Command & Anti-Gravity Control */}
+          {/* Example semantic action & Anti-Gravity Control */}
           <div className="flex flex-wrap items-center gap-4 mb-4">
-            {/* CLI Command Pill */}
+            {/* Semantic action pill */}
             <div className="hero-cli-pill bg-transparent border border-[#14B8A6]/25 rounded-full px-5 py-2.5 flex items-center gap-4 w-fit">
               <span className="cli-text text-[#14B8A6] font-mono text-sm">
-                $ npx rakshex scan ./collection.json
+                $ financial.refund({"{ amount: 40, orderId }"})
               </span>
               <button
                 onClick={handleCopyCommand}
@@ -97,32 +97,20 @@ export function HeroSection({ antiGravity, setAntiGravity }: HeroSectionProps) {
             </button>
           </div>
 
-          {/* npm & VS Code badges */}
-          <div className="flex flex-wrap items-center gap-3 mb-12">
-            <a
-              href="https://npmjs.com/package/rakshex"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:opacity-80 transition-opacity"
-            >
-              <img
-                src="https://img.shields.io/npm/dm/rakshex?style=flat-square&logo=npm&color=14B8A6&label=npm"
-                alt="npm downloads"
-                className="h-5"
-              />
-            </a>
-            <a
-              href="https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex-vscode"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:opacity-80 transition-opacity"
-            >
-              <img
-                src="https://img.shields.io/visual-studio-marketplace/i/rakshex.rakshex-vscode?style=flat-square&logo=visualstudiocode&color=14B8A6&label=vscode"
-                alt="VS Code installs"
-                className="h-5"
-              />
-            </a>
+          {/* Proof strip */}
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mb-12 text-xs font-mono text-[#9CA3AF]">
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#14B8A6]" />
+              1,000+ tests passing
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#14B8A6]" />
+              26 migrations, rollback-verified
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#14B8A6]" />
+              Hash-chained Action Ledger
+            </span>
           </div>
 
           {/* Works perfectly with Label inside hero-left */}

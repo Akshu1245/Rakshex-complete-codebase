@@ -60,7 +60,7 @@ const ENTRIES: ChangelogEntry[] = [
     version: "v0.3.0",
     date: "April 2026",
     items: [
-      { type: "added", text: "AgentGuard kill switch engine" },
+      { type: "added", text: "Kill switch engine" },
       { type: "added", text: "VS Code extension alpha (RaksHex integration)" },
       { type: "improved", text: "Pricing page with Pro and Enterprise tiers" },
     ],
@@ -72,7 +72,7 @@ const ENTRIES: ChangelogEntry[] = [
       { type: "added", text: "LLM cost intelligence dashboard" },
       { type: "added", text: "Thinking token attribution engine" },
       { type: "added", text: "Multi-provider support (OpenAI, Anthropic, Gemini)" },
-      { type: "improved", text: "Dashboard performance 40% faster" },
+      { type: "improved", text: "Dashboard performance improvements" },
     ],
   },
   {
@@ -138,7 +138,7 @@ export default function ChangelogPage() {
         </div>
 
         {/*  */}
-        <div className="mt-16 p-8 bg-transparent border border-neutral-850 rounded-2xl">
+        <div className="mt-16 p-8 bg-transparent border border-neutral-850 rounded-xl">
           <h3 className="text-lg font-bold text-white mb-4">Roadmap (Coming in next releases)</h3>
           <ul className="text-neutral-400 text-sm space-y-3">
             <li className="flex items-center gap-2">

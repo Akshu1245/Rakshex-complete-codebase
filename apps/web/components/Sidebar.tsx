@@ -95,13 +95,17 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
           ${open ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
       >
         <div className="p-6 overflow-y-auto flex-1">
-          <Link href="/dashboard" className="flex items-center gap-3 mb-10">
-            <img src="/icon-mark-128.png" alt="RaksHex Mark" className="w-8 h-8 object-contain" />
+          <Link href="/dashboard" className="flex items-center gap-3 mb-10 group">
+            <img
+              src="/icon-mark-128.png"
+              alt="RaksHex Mark"
+              className="w-9 h-9 rounded-lg border border-[#14B8A6]/30 shadow-[0_0_12px_rgba(20,184,166,0.25)] object-cover transition-all duration-300 group-hover:border-[#14B8A6]/60 group-hover:shadow-[0_0_20px_rgba(20,184,166,0.4)]"
+            />
             <div>
-              <div className="font-headline-md text-headline-md font-bold tracking-tight text-primary leading-none">
-                RaksHex
+              <div className="font-headline-md text-headline-md font-bold tracking-tight text-white leading-none">
+                Raks<span className="text-[#14B8A6]">Hex</span>
               </div>
-              <div className="text-[10px] uppercase tracking-[0.2em] text-on-surface-variant font-semibold mt-1">
+              <div className="text-[10px] uppercase tracking-[0.2em] text-[#14B8A6] font-semibold mt-1">
                 AI &amp; API security
               </div>
             </div>

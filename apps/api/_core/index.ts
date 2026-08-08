@@ -658,63 +658,68 @@ async function startServer() {
     });
   });
 
-  app.post("/api/internal/gateway-audit", internalWriteLimiter, express.json(), async (req, res) => {
-    if (!gatewayAuthOk(req)) {
-      res.status(401).json({ error: "unauthorised" });
-      return;
-    }
-    const body = req.body as Record<string, unknown> | undefined;
-    if (!body) {
-      res.status(400).json({ error: "invalid_body" });
-      return;
-    }
-    // Persist into the cost-meter (tokenUsage) and shadow-AI / runtime
-    // monitoring streams so dashboards reflect gateway traffic in real time.
-    const audit = body as {
-      tenantId?: string;
-      requestId?: string;
-      model?: string;
-      provider?: string;
-      decision?: "allowed" | "blocked" | "errored";
-      blockReason?: string;
-      usage?: {
-        prompt_tokens?: number;
-        completion_tokens?: number;
-        total_tokens?: number;
+  app.post(
+    "/api/internal/gateway-audit",
+    internalWriteLimiter,
+    express.json(),
+    async (req, res) => {
+      if (!gatewayAuthOk(req)) {
+        res.status(401).json({ error: "unauthorised" });
+        return;
+      }
+      const body = req.body as Record<string, unknown> | undefined;
+      if (!body) {
+        res.status(400).json({ error: "invalid_body" });
+        return;
+      }
+      // Persist into the cost-meter (tokenUsage) and shadow-AI / runtime
+      // monitoring streams so dashboards reflect gateway traffic in real time.
+      const audit = body as {
+        tenantId?: string;
+        requestId?: string;
+        model?: string;
+        provider?: string;
+        decision?: "allowed" | "blocked" | "errored";
+        blockReason?: string;
+        usage?: {
+          prompt_tokens?: number;
+          completion_tokens?: number;
+          total_tokens?: number;
+        };
+        promptFingerprint?: string;
+        startedAt?: number;
+        endedAt?: number;
       };
-      promptFingerprint?: string;
-      startedAt?: number;
-      endedAt?: number;
-    };
-    const db = await import("../db");
-    try {
-      await db.recordGatewayAudit({
-        tenantId: audit.tenantId,
-        requestId: audit.requestId,
-        model: audit.model,
-        provider: audit.provider,
-        decision: audit.decision ?? "allowed",
-        blockReason: audit.blockReason,
-        usage: audit.usage,
-        promptFingerprint: audit.promptFingerprint,
-        startedAt: audit.startedAt,
-        endedAt: audit.endedAt,
-      });
-    } catch (err) {
-      logger.warn({ err }, "[Gateway] audit persist failed");
-    }
-    logger.info(
-      {
-        tenantId: audit.tenantId,
-        requestId: audit.requestId,
-        model: audit.model,
-        provider: audit.provider,
-        decision: audit.decision,
-      },
-      "[Gateway] audit record received",
-    );
-    res.json({ received: true });
-  });
+      const db = await import("../db");
+      try {
+        await db.recordGatewayAudit({
+          tenantId: audit.tenantId,
+          requestId: audit.requestId,
+          model: audit.model,
+          provider: audit.provider,
+          decision: audit.decision ?? "allowed",
+          blockReason: audit.blockReason,
+          usage: audit.usage,
+          promptFingerprint: audit.promptFingerprint,
+          startedAt: audit.startedAt,
+          endedAt: audit.endedAt,
+        });
+      } catch (err) {
+        logger.warn({ err }, "[Gateway] audit persist failed");
+      }
+      logger.info(
+        {
+          tenantId: audit.tenantId,
+          requestId: audit.requestId,
+          model: audit.model,
+          provider: audit.provider,
+          decision: audit.decision,
+        },
+        "[Gateway] audit record received",
+      );
+      res.json({ received: true });
+    },
+  );
 
   // ── Token-budget query (gateway -> server) ─────────────────────────────────
   // Returns the tenant's quota for the current UTC day plus current usage.
@@ -745,21 +750,26 @@ async function startServer() {
     standardHeaders: true,
     legacyHeaders: false,
   });
-  app.post("/api/internal/shadow-ai-events", shadowAiEventsLimiter, express.json({ limit: "1mb" }), async (req, res) => {
-    if (!gatewayAuthOk(req)) {
-      res.status(401).json({ error: "unauthorised" });
-      return;
-    }
-    const body = req.body as { events?: unknown[] } | undefined;
-    if (!body || !Array.isArray(body.events)) {
-      res.status(400).json({ error: "invalid_body" });
-      return;
-    }
-    const db = await import("../db");
-    const { ingestShadowAiEvents } = await import("../services/shadowAi");
-    const summary = await ingestShadowAiEvents(db, body.events);
-    res.json(summary);
-  });
+  app.post(
+    "/api/internal/shadow-ai-events",
+    shadowAiEventsLimiter,
+    express.json({ limit: "1mb" }),
+    async (req, res) => {
+      if (!gatewayAuthOk(req)) {
+        res.status(401).json({ error: "unauthorised" });
+        return;
+      }
+      const body = req.body as { events?: unknown[] } | undefined;
+      if (!body || !Array.isArray(body.events)) {
+        res.status(400).json({ error: "invalid_body" });
+        return;
+      }
+      const db = await import("../db");
+      const { ingestShadowAiEvents } = await import("../services/shadowAi");
+      const summary = await ingestShadowAiEvents(db, body.events);
+      res.json(summary);
+    },
+  );
 
   // ── Email unsubscribe endpoint ───────────────────────────────────────────
   app.get("/unsubscribe", tokenLinkLimiter, async (req, res) => {
@@ -1137,44 +1147,49 @@ async function startServer() {
   // ── GitHub Webhook (legacy) ────────────────────────────────────────────────
   // Always reject when GITHUB_WEBHOOK_SECRET is missing — never process
   // unsigned webhooks in any environment.
-  app.post("/api/webhooks/github", webhookLimiter, express.raw({ type: "application/json" }), async (req, res) => {
-    const signature = req.headers["x-hub-signature-256"] as string;
-    const githubSecret = ENV.githubWebhookSecret || "";
+  app.post(
+    "/api/webhooks/github",
+    webhookLimiter,
+    express.raw({ type: "application/json" }),
+    async (req, res) => {
+      const signature = req.headers["x-hub-signature-256"] as string;
+      const githubSecret = ENV.githubWebhookSecret || "";
 
-    const body = req.body.toString("utf-8");
+      const body = req.body.toString("utf-8");
 
-    if (!githubSecret) {
-      logger.error(
-        "[GitHub] GITHUB_WEBHOOK_SECRET missing — rejecting legacy webhook (fail-closed)",
-      );
-      res.status(503).json({ error: "GitHub webhook secret not configured" });
-      return;
-    }
-
-    const isValid = verifyGitHubWebhook(body, signature, githubSecret);
-    if (!isValid) {
-      res.status(401).json({ error: "Invalid signature" });
-      return;
-    }
-
-    const event = req.headers["x-github-event"] as string;
-    const payload = JSON.parse(body);
-
-    try {
-      if (event === "push") {
-        const result = handleGitHubPush(payload);
-        res.json(result);
-      } else if (event === "pull_request") {
-        const result = handleGitHubPullRequest(payload);
-        res.json(result);
-      } else {
-        res.json({ status: "ignored", event });
+      if (!githubSecret) {
+        logger.error(
+          "[GitHub] GITHUB_WEBHOOK_SECRET missing — rejecting legacy webhook (fail-closed)",
+        );
+        res.status(503).json({ error: "GitHub webhook secret not configured" });
+        return;
       }
-    } catch (error) {
-      logger.error({ err: error }, "[GitHub] Webhook processing error");
-      res.status(500).json({ error: "Webhook processing failed" });
-    }
-  });
+
+      const isValid = verifyGitHubWebhook(body, signature, githubSecret);
+      if (!isValid) {
+        res.status(401).json({ error: "Invalid signature" });
+        return;
+      }
+
+      const event = req.headers["x-github-event"] as string;
+      const payload = JSON.parse(body);
+
+      try {
+        if (event === "push") {
+          const result = handleGitHubPush(payload);
+          res.json(result);
+        } else if (event === "pull_request") {
+          const result = handleGitHubPullRequest(payload);
+          res.json(result);
+        } else {
+          res.json({ status: "ignored", event });
+        }
+      } catch (error) {
+        logger.error({ err: error }, "[GitHub] Webhook processing error");
+        res.status(500).json({ error: "Webhook processing failed" });
+      }
+    },
+  );
 
   // ── Frontend serving ───────────────────────────────────────────────────────
   if (process.env.NODE_ENV === "development") {
@@ -1213,6 +1228,33 @@ async function startServer() {
       startRedTeamScheduler(60_000);
       logger.info("[Server] Continuous red-team scheduler started");
     }
+
+    // ── Render Anti-Sleep Keep-Alive Pinger ──────────────────────────────────
+    // Pings self every 10 minutes to prevent Render free-tier containers
+    // from going to sleep after 15 minutes of inactivity.
+    const pingTarget = process.env.RENDER_EXTERNAL_URL
+      ? `${process.env.RENDER_EXTERNAL_URL.replace(/\/$/, "")}/api/health/live`
+      : "https://rakshex-backend.onrender.com/api/health/live";
+
+    logger.info({ pingTarget }, "[Render Keep-Alive] Anti-sleep pinger initialized (10m interval)");
+    const antiSleepTimer = setInterval(
+      async () => {
+        try {
+          const response = await fetch(pingTarget);
+          logger.info(
+            { status: response.status },
+            "[Render Keep-Alive] Self-ping pulse sent successfully — host active",
+          );
+        } catch (err) {
+          logger.warn(
+            { error: err instanceof Error ? err.message : String(err) },
+            "[Render Keep-Alive] Self-ping pulse ping warning",
+          );
+        }
+      },
+      10 * 60 * 1000,
+    );
+    antiSleepTimer.unref();
   });
 
   server.on("error", (err: NodeJS.ErrnoException) => {

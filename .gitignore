@@ -203,3 +203,5 @@ repomix-output.txt
 # array in packages/database/src/migrate.ts, not by file discovery.
 scratch/
 
+
+.vercel

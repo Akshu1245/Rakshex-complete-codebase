@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 
 export function WaveDotsCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const mouseRef = useRef({ x: 0.5, y: 0.5 });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -12,6 +13,15 @@ export function WaveDotsCanvas() {
 
     let animationId: number | null = null;
     let time = 0;
+
+    const onMouseMove = (e: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      mouseRef.current = {
+        x: (e.clientX - rect.left) / rect.width,
+        y: (e.clientY - rect.top) / rect.height,
+      };
+    };
+    canvas.addEventListener("mousemove", onMouseMove);
 
     const resize = () => {
       const dpr = window.devicePixelRatio || 1;
@@ -23,15 +33,10 @@ export function WaveDotsCanvas() {
     resize();
     window.addEventListener("resize", resize);
 
-    // 3D perspective wave grid
-    const dotSpacing = 14;
-    const perspective = 400;
-    const fov = 300;
-
-    // Dots riding the crest of the wave (waveZ above this threshold) pick up
-    // the brand teal instead of neutral gray — ties the accent color to the
-    // wave motion itself rather than a static or random sprinkle.
-    const TEAL_CREST_THRESHOLD = 32;
+    const dotSpacing = 22; // wider spacing for bigger, more visible dots
+    const perspective = 420;
+    const fov = 320;
+    const TEAL_CREST_THRESHOLD = 28;
 
     const draw = () => {
       const w = canvas.offsetWidth;
@@ -41,66 +46,85 @@ export function WaveDotsCanvas() {
       const cx = w / 2;
       const cy = h / 2;
 
-      // Build all dots with 3D positions
-      const dots: { sx: number; sy: number; r: number; alpha: number; teal: boolean }[] = [];
+      // Mouse influence offset
+      const mx = (mouseRef.current.x - 0.5) * 30;
+      const my = (mouseRef.current.y - 0.5) * 20;
 
-      const cols = Math.ceil(w / dotSpacing) + 8;
-      const rows = Math.ceil(h / dotSpacing) + 8;
+      const dots: {
+        sx: number;
+        sy: number;
+        r: number;
+        alpha: number;
+        teal: boolean;
+        waveZ: number;
+      }[] = [];
+
+      const cols = Math.ceil(w / dotSpacing) + 6;
+      const rows = Math.ceil(h / dotSpacing) + 6;
 
       for (let col = -cols / 2; col < cols / 2; col++) {
         for (let row = -rows / 2; row < rows / 2; row++) {
-          // 3D world coordinates
           const x3 = col * dotSpacing;
           const y3 = row * dotSpacing;
 
-          // Wave modulation on Z (creates the sheet curve)
+          // Richer multi-frequency wave
           const waveZ =
-            Math.sin(col * 0.12 + time * 0.015) * 40 +
-            Math.sin(col * 0.06 + row * 0.08 + time * 0.01) * 25 +
-            Math.cos(row * 0.1 + time * 0.008) * 15;
+            Math.sin(col * 0.1 + time * 0.018 + mx * 0.02) * 50 +
+            Math.sin(col * 0.05 + row * 0.07 + time * 0.012) * 30 +
+            Math.cos(row * 0.09 + time * 0.009 + my * 0.02) * 20 +
+            Math.sin((col + row) * 0.06 + time * 0.006) * 15;
 
           const z3 = waveZ + perspective;
-
-          // Perspective projection
           const scale = fov / z3;
           const sx = cx + x3 * scale;
           const sy = cy + y3 * scale;
 
-          // Skip if off-screen
-          if (sx < -2 || sx > w + 2 || sy < -2 || sy > h + 2) continue;
+          if (sx < -4 || sx > w + 4 || sy < -4 || sy > h + 4) continue;
 
-          // Size and opacity based on depth
           const depthFactor = scale;
-          const r = Math.max(0.4, 1.8 * depthFactor);
-          const alpha = Math.min(0.8, 0.15 + depthFactor * 0.5);
+          // Larger dots — min 1.2, scale up to ~4px
+          const r = Math.max(1.2, 3.5 * depthFactor);
+          const alpha = Math.min(0.9, 0.2 + depthFactor * 0.65);
 
-          dots.push({ sx, sy, r, alpha, teal: waveZ > TEAL_CREST_THRESHOLD });
+          dots.push({ sx, sy, r, alpha, teal: waveZ > TEAL_CREST_THRESHOLD, waveZ });
         }
       }
 
-      // Draw neutral dots first, then teal crest dots on top so the accent
-      // color reads clearly instead of blending under overlapping gray dots.
+      // Draw gray/white dots
       for (const dot of dots) {
         if (dot.teal) continue;
         ctx.beginPath();
         ctx.arc(dot.sx, dot.sy, dot.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(180, 180, 180, ${dot.alpha})`;
-        ctx.fill();
-      }
-      for (const dot of dots) {
-        if (!dot.teal) continue;
-        ctx.beginPath();
-        ctx.arc(dot.sx, dot.sy, dot.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(20, 184, 166, ${Math.min(1, dot.alpha + 0.15)})`;
+        ctx.fillStyle = `rgba(200, 210, 220, ${dot.alpha * 0.75})`;
         ctx.fill();
       }
 
+      // Draw teal crest dots with glow
+      for (const dot of dots) {
+        if (!dot.teal) continue;
+        const glowAlpha = Math.min(1, dot.alpha + 0.2);
+
+        // Glow halo
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = `rgba(20, 184, 166, 0.7)`;
+        ctx.beginPath();
+        ctx.arc(dot.sx, dot.sy, dot.r * 1.2, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(20, 184, 166, ${glowAlpha * 0.4})`;
+        ctx.fill();
+
+        // Core dot
+        ctx.shadowBlur = 0;
+        ctx.beginPath();
+        ctx.arc(dot.sx, dot.sy, dot.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(20, 184, 166, ${glowAlpha})`;
+        ctx.fill();
+      }
+
+      ctx.shadowBlur = 0;
       time++;
       animationId = requestAnimationFrame(draw);
     };
 
-    // Respect prefers-reduced-motion: render a single static frame instead
-    // of an infinite requestAnimationFrame loop.
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     const stop = () => {
@@ -110,8 +134,6 @@ export function WaveDotsCanvas() {
       }
     };
 
-    // Pause the loop when the tab isn't visible instead of burning CPU/battery
-    // on a purely decorative background.
     const handleVisibility = () => {
       if (document.hidden) {
         stop();
@@ -132,6 +154,7 @@ export function WaveDotsCanvas() {
       stop();
       window.removeEventListener("resize", resize);
       document.removeEventListener("visibilitychange", handleVisibility);
+      canvas.removeEventListener("mousemove", onMouseMove);
     };
   }, []);
 
@@ -139,7 +162,7 @@ export function WaveDotsCanvas() {
     <canvas
       ref={canvasRef}
       className="absolute inset-0 w-full h-full"
-      style={{ pointerEvents: "none" }}
+      style={{ pointerEvents: "auto" }}
     />
   );
 }

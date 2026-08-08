@@ -22,10 +22,10 @@ const solutions = [
     id: "fintech",
     title: "Fintech",
     description:
-      "PCI-DSS compliance, real-time fraud detection, and cost governance for financial AI agents.",
+      "Semantic action controls, PCI-DSS-aligned data handling, and cost governance for financial AI agents.",
     icon: Landmark,
     href: "/solutions/fintech",
-    features: ["PCI-DSS Mapping", "Fraud Detection", "Cost Attribution", "Audit Logs"],
+    features: ["PCI-DSS Alignment", "Action-Level Controls", "Cost Attribution", "Action Ledger"],
   },
   {
     id: "healthcare",
@@ -34,13 +34,13 @@ const solutions = [
       "HIPAA-aligned data handling, PHI redaction, and clinical AI safety monitoring at scale.",
     icon: HeartPulse,
     href: "/solutions/healthcare",
-    features: ["PHI Redaction", "HIPAA Alignment", "Clinical Safety", "Model Drift"],
+    features: ["PHI Redaction", "HIPAA Alignment", "Clinical Safety", "Action Ledger"],
   },
 ];
 
 export default function SolutionsPage() {
   return (
-    <div className="min-h-screen bg-transparent text-white pt-32 pb-16 px-6 xl:px-8">
+    <div className="min-h-screen bg-transparent text-white pt-32 pb-24 px-6 xl:px-8">
       <div className="max-w-5xl mx-auto">
         {/* Hero */}
         <div className="text-center mb-16">
@@ -61,7 +61,7 @@ export default function SolutionsPage() {
               <Link
                 key={s.id}
                 href={s.href}
-                className="group block bg-black/50 rounded-2xl border border-neutral-800 p-6 hover:border-[#14B8A6]/30 transition-all"
+                className="group block bg-black/50 rounded-xl border border-neutral-800 p-6 hover:border-[#14B8A6]/30 transition-all"
               >
                 <div className="w-12 h-12 rounded-xl bg-[#14B8A6]/10 border border-[#14B8A6]/20 flex items-center justify-center mb-5">
                   <Icon className="w-5 h-5 text-[#14B8A6]" />
@@ -87,7 +87,7 @@ export default function SolutionsPage() {
         </div>
 
         {/* CTA */}
-        <div className="text-center bg-black/50 rounded-2xl border border-neutral-800 p-10">
+        <div className="text-center bg-black/50 rounded-xl border border-neutral-800 p-10">
           <h2 className="text-2xl font-bold mb-3">Not sure which fits you?</h2>
           <p className="text-neutral-400 mb-6 max-w-lg mx-auto">
             Talk to our team and get a tailored assessment of your AI security posture.

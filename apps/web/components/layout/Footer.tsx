@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { RaksHexLogo } from "@/components/common/RaksHexLogo";
 
 export function Footer() {
   return (
@@ -12,24 +13,7 @@ export function Footer() {
           <div className="flex flex-col items-start justify-between">
             <div className="flex flex-row flex-wrap items-center gap-x-6 gap-y-4">
               <Link className="flex items-center gap-2 no-underline shrink-0" href="/">
-                <div className="flex items-center gap-2">
-                  <svg
-                    className="w-6 h-6 text-[#06b6d4] shrink-0"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                    />
-                  </svg>
-                  <span className="text-xl font-bold font-manrope tracking-tight text-white">
-                    RaksHex
-                  </span>
-                </div>
+                <RaksHexLogo size={30} />
               </Link>
 
               <div className="hidden sm:block w-px h-6 bg-[#414141]"></div>

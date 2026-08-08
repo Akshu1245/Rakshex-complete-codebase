@@ -35,13 +35,13 @@ export default function LandingPage() {
     {
       icon: <Eye className="w-5 h-5" />,
       title: "Hidden Token Revelation",
-      desc: "See reasoning tokens providers hide. Cut AI costs by 20-40%.",
+      desc: "See reasoning tokens providers hide and cut hidden AI costs.",
       color: "from-amber-500/20 to-orange-500/10",
       border: "border-amber-500/20",
     },
     {
       icon: <Shield className="w-5 h-5" />,
-      title: "AgentGuard Kill Switch",
+      title: "Kill Switch",
       desc: "Auto-stop infinite loops, rogue agents & cost spikes in real-time.",
       color: "from-emerald-500/20 to-green-500/10",
       border: "border-emerald-500/20",
@@ -116,9 +116,9 @@ export default function LandingPage() {
               for AI agents
             </h1>
             <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-              The first developer-native platform that sits between your code and LLM providers,
-              detecting infinite loops, hidden reasoning costs, and API vulnerabilities before they
-              hit production.
+              A developer-native platform that sits between your code and LLM providers, detecting
+              infinite loops, hidden reasoning costs, and API vulnerabilities before they hit
+              production.
             </p>
 
             {/* Email capture */}
@@ -223,7 +223,7 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.08 }}
                 viewport={{ once: true }}
-                className={`p-6 rounded-2xl bg-gradient-to-br ${feature.color} border ${feature.border} backdrop-blur-sm hover:scale-[1.02] transition-transform`}
+                className={`p-6 rounded-xl bg-gradient-to-br ${feature.color} border ${feature.border} backdrop-blur-sm hover:scale-[1.02] transition-transform`}
               >
                 <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center mb-4 text-indigo-300">
                   {feature.icon}

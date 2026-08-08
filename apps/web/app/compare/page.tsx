@@ -6,33 +6,55 @@ const COMPETITORS = [
   {
     slug: "snyk",
     name: "Snyk",
-    tagline: "Code-level vulnerability scanner, blind to live API and LLM surfaces.",
+    tagline: "Scans code and dependencies before ship; no runtime action authorization for agents.",
   },
   {
     slug: "datadog",
-    name: "Datadog LLM",
-    tagline: "Infrastructure observability giant, but AI security is an afterthought.",
+    name: "Datadog",
+    tagline:
+      "Observes and alerts after the fact; no concept of authorizing an action before it runs.",
   },
   {
     slug: "traceable-ai",
     name: "Traceable AI",
-    tagline: "Enterprise API security, lacking runtime LLM cost attribution & agent firewalls.",
+    tagline:
+      "Enterprise REST/GraphQL API security, no delegated authority or semantic action model.",
   },
   {
     slug: "salt-security",
     name: "Salt Security",
-    tagline: "API anomaly detection, not built for non-deterministic AI agentic flows.",
+    tagline: "ML-based API anomaly detection, not built for AI agent delegated authority.",
   },
   {
     slug: "noname-security",
     name: "Noname Security",
-    tagline: "Posture management and scanning, missing dynamic prompt injection blocking.",
+    tagline: "API discovery and posture management, no AI agent authorization layer.",
+  },
+  {
+    slug: "lakera",
+    name: "Lakera Guard",
+    tagline: "Detects prompt injection at the input layer; RaksHex authorizes the action itself.",
+  },
+  {
+    slug: "portkey",
+    name: "Portkey / Helicone",
+    tagline: "Routes and logs LLM traffic; doesn't decide whether an action should be allowed.",
+  },
+  {
+    slug: "helicone",
+    name: "Helicone",
+    tagline: "LLM request logging and tracing, not action-level authorization or enforcement.",
+  },
+  {
+    slug: "langsmith",
+    name: "LangSmith",
+    tagline: "LLM run tracing and debugging, not runtime authorization or credential enforcement.",
   },
 ];
 
 export default function ComparisonIndex() {
   return (
-    <div className="min-h-screen bg-transparent text-slate-100 py-16 px-4 font-sans">
+    <div className="min-h-screen bg-transparent text-slate-100 py-24 px-4 font-sans">
       <div className="max-w-4xl mx-auto">
         <header className="mb-12">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-950 text-blue-400 border border-blue-900/60 mb-4">
@@ -52,7 +74,7 @@ export default function ComparisonIndex() {
             <Link
               key={comp.slug}
               href={`/compare/${comp.slug}`}
-              className="block bg-slate-900/30 border border-slate-900 hover:border-blue-500/50 p-6 rounded-2xl transition-all group"
+              className="block bg-slate-900/30 border border-slate-900 hover:border-blue-500/50 p-6 rounded-xl transition-all group"
             >
               <h3 className="text-lg font-bold text-white mb-2 group-hover:text-blue-400 transition-colors">
                 RaksHex vs {comp.name}

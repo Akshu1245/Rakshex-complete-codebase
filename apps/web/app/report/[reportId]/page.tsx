@@ -261,17 +261,12 @@ export default function ReportPage() {
               <ArrowRight className="w-4 h-4" />
               Start Free Scan
             </Link>
-            <a
-              href="https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex-vscode"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href="/docs"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/10 text-white font-semibold rounded-lg hover:bg-white/20 transition-colors"
             >
-              Install VS Code Extension
-            </a>
-          </div>
-          <div className="mt-4 p-3 bg-black/30 rounded-lg font-mono text-sm text-gray-400 inline-block">
-            npx rakshex scan ./collection.json
+              Read the docs
+            </Link>
           </div>
         </div>
       </main>

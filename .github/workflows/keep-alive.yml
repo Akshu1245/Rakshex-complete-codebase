@@ -1,0 +1,17 @@
+name: Render Keep-Alive Pinger
+
+on:
+  schedule:
+    # Runs every 10 minutes 24/7/365 to keep Render backend active
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  keep-alive-pulse:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render Backend Health Check
+        run: |
+          echo "Sending keep-alive pulse to Render backend..."
+          RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" https://rakshex-backend.onrender.com/api/health/live)
+          echo "$RESPONSE"

@@ -1,3 +1,10 @@
+try {
+  const { AsyncLocalStorage } = require("node:async_hooks");
+  if (typeof globalThis !== "undefined" && !globalThis.AsyncLocalStorage) {
+    globalThis.AsyncLocalStorage = AsyncLocalStorage;
+  }
+} catch (e) {}
+
 const path = require("path");
 
 /** @type {import('next').NextConfig} */
@@ -5,9 +12,10 @@ const TS_BACKEND_URL =
   process.env.NEXT_PUBLIC_TS_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
 const nextConfig = {
+  serverExternalPackages: ["async_hooks"],
   // This project sits inside a larger local workspace that has its own lock
   // file. Pin tracing here so production builds never walk the parent tree.
-  outputFileTracingRoot: path.join(__dirname, ".."),
+  outputFileTracingRoot: path.join(__dirname, "../.."),
   // Don't advertise Next.js in response headers. Attackers can still
   // fingerprint us via HTML quirks, but no reason to make it trivial.
   poweredByHeader: false,

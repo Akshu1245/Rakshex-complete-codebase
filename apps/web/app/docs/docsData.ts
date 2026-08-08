@@ -123,15 +123,15 @@ export const docsData: Record<string, DocPage> = {
       </ul>
 
       <h2>Prompt Injection Classifiers</h2>
-      <p>The scanner uses a library of 87 distinct payloads representing indirect prompt injections, jailbreaks, and system prompt leakage attacks. We update this model weekly to capture new attack vectors targeting OpenAI, Anthropic, and Gemini models.</p>
+      <p>The scanner draws on a growing library of payloads representing indirect prompt injections, jailbreaks, and system prompt leakage attacks, covering common attack patterns targeting OpenAI, Anthropic, and Gemini models.</p>
     `,
   },
   "kill-switch": {
-    title: "AgentGuard Kill Switch",
+    title: "Kill Switch",
     breadcrumb: "Products / Cost & Governance",
-    lead: "Set autonomous circuit breakers that instantly block LLM gateways when budget caps or security anomalies are detected.",
+    lead: "Set autonomous circuit breakers that block LLM gateways when budget caps or security anomalies are detected.",
     contentHtml: `
-      <p>The AgentGuard Kill Switch is a sub-second response middleware that intercepts all outbound model calls. It acts as an autonomous circuit breaker to protect your company from runaway cost spikes and prompt injection attacks.</p>
+      <p>The Kill Switch is response middleware that intercepts outbound model calls. It acts as an autonomous circuit breaker to protect your company from runaway cost spikes and prompt injection attacks.</p>
       
       <h2>How It Works</h2>
       <p>When an API gateway call is initiated, the RaksHex middleware evaluates the request context against your active workspace rules:</p>
@@ -169,19 +169,19 @@ app.post('/api/chat', RaksHex.middleware(), async (req, res) => {
         <li>DeepSeek R1 / V3.</li>
       </ul>
 
-      <h2>Holt-Winters Forecasting</h2>
-      <p>We use a triple-exponential smoothing algorithm (Holt-Winters forecasting) to analyze hourly, weekly, and monthly trend seasonality. It displays a 95% confidence boundary indicating when your LLM consumption is expected to breach budget limits.</p>
+      <h2>Trend Forecasting</h2>
+      <p>We analyze hourly, weekly, and monthly consumption trends to give you a forward-looking estimate of when your LLM spend is likely to approach budget limits.</p>
     `,
   },
   "thinking-tokens": {
     title: "Thinking Token Cost Isolation",
     breadcrumb: "Products / Cost",
-    lead: "First-in-world tracking and isolation of reasoning/thinking tokens to attribute exact processing costs.",
+    lead: "Tracking and isolation of reasoning/thinking tokens to attribute processing costs.",
     contentHtml: `
       <p>Reasoning models like OpenAI <code>o1</code>, <code>o3-mini</code>, and DeepSeek <code>R1</code> generate internal "thinking" or reasoning steps. These steps consume output tokens that are charged at output rates, yet they are excluded from the final visible response.</p>
       
       <h2>The Challenge</h2>
-      <p>Since thinking tokens are not returned in the message content payload, standard APM logs miss them, leading to a 30-50% cost misattribution. RaksHex solves this by parsing the usage metadata object in the API response payload.</p>
+      <p>Since thinking tokens are not returned in the message content payload, standard APM logs tend to miss them, leading to cost misattribution. RaksHex addresses this by parsing the usage metadata object in the API response payload.</p>
       
       <h2>Attribution Analytics</h2>
       <p>The Cost Dashboard highlights the exact percentage of your model spend going towards reasoning steps vs standard output, helping developers evaluate if a model's logical depth is worth the extra cost for a given task.</p>
@@ -214,7 +214,7 @@ app.post('/api/chat', RaksHex.middleware(), async (req, res) => {
     breadcrumb: "Products / Security",
     lead: "Automatically redact passwords, tokens, API keys, and PII from prompts before sending them to public LLM APIs.",
     contentHtml: `
-      <p>The Credential Scanner inspects model inputs for sensitive developer secrets and customer PII (Personally Identifiable Information). It ensures compliance with PCI DSS and local data protection laws (like India's DPDP Act and EU's GDPR).</p>
+      <p>The Credential Scanner inspects model inputs for sensitive developer secrets and customer PII (Personally Identifiable Information), helping support compliance efforts under local data protection laws (like India's DPDP Act and EU's GDPR).</p>
       
       <h2>Secret Detection Patterns</h2>
       <p>We scan prompts for over 120 key signatures, including:</p>
@@ -237,19 +237,19 @@ app.post('/api/chat', RaksHex.middleware(), async (req, res) => {
   compliance: {
     title: "Compliance Evidence Builder",
     breadcrumb: "Products / Compliance",
-    lead: "Auto-generate audit logs and export evidence for SOC 2 Type II, PCI DSS v4.0, and ISO 27001.",
+    lead: "Auto-generate audit logs and export evidence to support PCI DSS and SOC 2 preparation (SOC 2 audit in progress — not yet certified).",
     contentHtml: `
-      <p>Securing enterprise contracts requires demonstrating rigorous compliance controls. RaksHex collects scan telemetry and security events to construct auditor-ready evidence logs.</p>
-      
-      <h2>Supported Compliances</h2>
+      <p>Securing enterprise contracts requires demonstrating rigorous compliance controls. RaksHex collects scan telemetry and security events to construct auditor-ready evidence logs. We are not currently SOC 2 or PCI DSS certified — our SOC 2 audit is in progress, and these tools are designed to help you build toward that evidence, not to assert a certification we don't hold.</p>
+
+      <h2>Supported Frameworks</h2>
       <ul>
-        <li><strong>PCI DSS v4.0.1:</strong> Automatically maps API vulnerability findings to Requirements 6.4, 6.5, and 11.3 (vulnerability management and secure coding).</li>
-        <li><strong>SOC 2 Type II:</strong> Evidence building for Common Criteria (Security, Confidentiality, and Availability).</li>
-        <li><strong>OWASP LLM Top 10:</strong> Verification logs proving that inputs are scanned for prompt injections (LLM01) and sensitive data disclosures (LLM06).</li>
+        <li><strong>PCI DSS:</strong> Maps API vulnerability findings to relevant requirements around vulnerability management and secure coding.</li>
+        <li><strong>SOC 2:</strong> Evidence building for the Common Criteria (Security, Confidentiality, and Availability). Our own SOC 2 audit is in progress.</li>
+        <li><strong>OWASP LLM Top 10:</strong> Verification logs showing that inputs are scanned for prompt injections (LLM01) and sensitive data disclosures (LLM06).</li>
       </ul>
-      
+
       <h2>Audit Exports</h2>
-      <p>You can export logs as hashed, cryptographically signed PDFs or CSV spreadsheets directly from the Compliance tab in the dashboard, ready to import into compliance portals like Vanta, Drata, or Secureframe.</p>
+      <p>You can export logs as hashed PDFs or CSV spreadsheets from the Compliance tab in the dashboard for use in your own audit or compliance workflow.</p>
     `,
   },
   mcp: {
@@ -287,7 +287,7 @@ app.post('/api/chat', RaksHex.middleware(), async (req, res) => {
     breadcrumb: "Documentation",
     lead: "Integrate RaksHex with a single line of code in Node.js, Python, or Go.",
     contentHtml: `
-      <p>We provide official client libraries to intercept LLM calls, calculate costs, scan prompts, and trigger kill-switches. Our SDKs run locally with asynchronous caching to ensure sub-millisecond overhead on your application's hot path.</p>
+      <p>We provide official client libraries to intercept LLM calls, calculate costs, scan prompts, and trigger kill-switches. Our SDKs run locally with asynchronous caching to keep overhead on your application's hot path low.</p>
       
       <h2>Node.js SDK</h2>
       <p>Install via npm:</p>

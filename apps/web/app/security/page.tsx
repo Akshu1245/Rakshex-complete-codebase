@@ -27,7 +27,7 @@ export default function SecurityWhitepaper() {
             {[
               {
                 title: "Prompt Injection (LLM01)",
-                desc: "87-payload regex library with severity-tiered blocking. All user inputs to LLM endpoints are scanned before reaching the model.",
+                desc: "Pattern library with severity-tiered blocking, continuously expanded as new attack vectors appear. All user inputs to LLM endpoints are scanned before reaching the model.",
               },
               {
                 title: "Insecure Output Handling (LLM02)",
@@ -132,8 +132,9 @@ export default function SecurityWhitepaper() {
           <h2 className="text-2xl font-bold mb-4">5. Compliance</h2>
           <ul className="space-y-3 text-gray-300 leading-relaxed">
             <li>
-              <strong>SOC 2:</strong> 11-control evidence pack builder. Programmatic control
-              evaluation over 90-day windows. Consumable by Vanta/Drata API.
+              <strong>SOC 2:</strong> 11-control evidence pack builder covering a minimum-viable
+              Trust Services scope. Programmatic control evaluation over 90-day windows, exported in
+              a format Vanta/Drata can import. No certification is claimed.
             </li>
             <li>
               <strong>PCI DSS v4.0.1:</strong> Requirement mapping for OWASP findings. PDF report

@@ -18,7 +18,7 @@ const FAQS = [
   },
   {
     q: "What compliance standards do you support?",
-    a: "We support major frameworks including PCI DSS v4.0.1, SOC 2 Type II (Trust Services Criteria), HIPAA, OWASP API Top 10, and OWASP LLM Top 10. Reports map controls for evidence; formal certification is external.",
+    a: "RaksHex maps findings and audit events to control language from PCI DSS, SOC 2 Trust Services Criteria, HIPAA, OWASP API Top 10, and OWASP LLM Top 10, and can export that evidence for your auditors. A SOC 2 audit is in progress — we do not claim certification until it's complete and published.",
   },
   {
     q: "How does the kill switch work?",

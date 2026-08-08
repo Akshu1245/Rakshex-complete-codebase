@@ -3,59 +3,59 @@ import Link from "next/link";
 export const metadata = {
   title: "RaksHex vs Lakera Guard — Honest Comparison",
   description:
-    "Lakera Guard is the leader in prompt injection defense. RaksHex adds API security, compliance, and cost governance. Side-by-side comparison.",
+    "Lakera Guard detects prompt injection at the input layer. RaksHex authorizes the action an agent wants to take, independent of how the prompt was worded. Side-by-side comparison.",
 };
 
 const features = [
   {
-    name: "Prompt Injection Defense",
-    lakera: "Industry-leading (research-backed)",
-    RaksHex: "Built-in engine with 50+ patterns + heuristic layers",
+    name: "Prompt Injection Detection",
+    lakera: "Focused, research-backed detection API",
+    RaksHex: "Not the primary focus — operates one layer deeper, at the action",
+  },
+  {
+    name: "Semantic Action Authorization",
+    lakera: "Not available",
+    RaksHex: "Evaluates each action against delegated authority before it runs",
+  },
+  {
+    name: "Delegated Authority & Attenuation",
+    lakera: "Not available",
+    RaksHex: "Child scope can't exceed parent scope, enforced in code",
+  },
+  {
+    name: "Credential Mediation",
+    lakera: "Detection only, no credential control",
+    RaksHex: "DENY blocks the credential itself, fail-closed",
+  },
+  {
+    name: "Tamper-Evident Action Ledger",
+    lakera: "Not available",
+    RaksHex: "Hash-chained record of every authorization decision",
+  },
+  {
+    name: "Policy Engine",
+    lakera: "Not available",
+    RaksHex: "Priority-ordered rules, with shadow-mode policy testing",
+  },
+  {
+    name: "MCP Tool Governance",
+    lakera: "Not available",
+    RaksHex: "Adversarial-intent scanning on MCP tool calls",
   },
   {
     name: "PII Detection & Redaction",
     lakera: "Available",
-    RaksHex: "Available + compliance-grade audit trail",
+    RaksHex: "Not a primary focus of the current product",
   },
   {
-    name: "API Security Scanning",
+    name: "Compliance Evidence",
     lakera: "Not available",
-    RaksHex: "Postman / OpenAPI collection scanner",
-  },
-  {
-    name: "Shadow API Detection",
-    lakera: "Not available",
-    RaksHex: "Automatic undocumented endpoint discovery",
-  },
-  {
-    name: "Kill Switch / Budget Cap",
-    lakera: "Not available",
-    RaksHex: "Hard stop + Slack/Email/Webhook alerts",
-  },
-  {
-    name: "Compliance Reporting",
-    lakera: "Not available",
-    RaksHex: "PCI DSS, OWASP, SOC 2 mapped findings",
-  },
-  {
-    name: "LLM Cost Monitoring",
-    lakera: "Not available",
-    RaksHex: "Per-request cost tracking + anomaly detection",
-  },
-  {
-    name: "VS Code Extension",
-    lakera: "Not available",
-    RaksHex: "In-editor scanning + real-time warnings",
-  },
-  {
-    name: "GitHub App / CI Gate",
-    lakera: "Not available",
-    RaksHex: "PR-level security gate with auto-fix",
+    RaksHex: "SOC 2 audit in progress; ledger data exportable as evidence",
   },
   {
     name: "Self-hosted Option",
     lakera: "Enterprise only",
-    RaksHex: "Docker Compose (all tiers)",
+    RaksHex: "Available for self-hosted deployments",
   },
 ];
 
@@ -71,8 +71,9 @@ export default function CompareLakera() {
 
         <h1 className="text-4xl font-bold mb-2">RaksHex vs Lakera Guard</h1>
         <p className="text-xl text-gray-400 mb-8">
-          Lakera Guard is the most advanced prompt injection defense on the market. RaksHex covers
-          prompt injection <em>plus</em> API security, compliance, and cost governance.
+          Lakera Guard focuses on detecting prompt injection at the input layer. RaksHex operates
+          one layer deeper — authorizing the action the model wants to take, independent of how the
+          prompt was worded, and enforcing that decision at the credential.
         </p>
 
         <div className="bg-black/50 rounded-xl border border-gray-700 overflow-hidden mb-12">
@@ -100,21 +101,21 @@ export default function CompareLakera() {
           <div className="bg-black/50/50 border border-gray-700 rounded-xl p-6">
             <h3 className="text-xl font-bold mb-3 text-green-400">When to choose Lakera</h3>
             <ul className="list-disc list-inside text-gray-300 space-y-2">
-              <li>Prompt injection is your only concern</li>
-              <li>You want research-grade adversarial testing</li>
-              <li>You already have separate API security and compliance tools</li>
-              <li>Budget is unlimited for best-in-class defense</li>
+              <li>Detecting adversarial or malicious prompts is your core problem</li>
+              <li>You want a focused, research-backed detection API</li>
+              <li>You already have a separate authorization or credential layer</li>
+              <li>You need PII detection at the input/output boundary</li>
             </ul>
           </div>
 
           <div className="bg-black/50/50 border border-blue-500/30 rounded-xl p-6">
             <h3 className="text-xl font-bold mb-3 text-blue-400">When to choose RaksHex</h3>
             <ul className="list-disc list-inside text-gray-300 space-y-2">
-              <li>You need prompt injection + API security + compliance in one tool</li>
-              <li>You want self-hosted with Indian data residency</li>
-              <li>Cost monitoring and kill switches are required</li>
-              <li>You need VS Code and GitHub integration for developer workflows</li>
-              <li>You want a unified platform instead of 4+ point solutions</li>
+              <li>Agents take real-world actions, not just generate text</li>
+              <li>You need delegated authority that narrows as it's passed down</li>
+              <li>A DENY needs to actually block the credential, not just flag the prompt</li>
+              <li>You need a tamper-evident audit trail of every decision</li>
+              <li>You're governing MCP tool calls, not just chat prompts</li>
             </ul>
           </div>
         </div>
