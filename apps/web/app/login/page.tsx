@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { WaveDotsCanvas } from "@/components/WaveDotsCanvas";
 import { trpc } from "@/lib/trpc";
 import { PasswordField } from "@/components/PasswordField";
 import { Suspense } from "react";
@@ -192,18 +191,13 @@ function LoginForm() {
       </div>
 
       <div className="hidden lg:flex flex-1 relative bg-neutral-950 border-l border-neutral-900 overflow-hidden items-center justify-center">
-        <WaveDotsCanvas />
-        {/* Single centered tagline */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-8">
-          <div className="px-8 py-5 rounded-2xl bg-black/40 backdrop-blur-sm border border-white/5 text-center">
-            <p className="text-3xl font-bold leading-snug tracking-tight drop-shadow-lg">
-              <span className="text-white">Monitor, govern &amp; protect</span>
-              <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#14B8A6] to-cyan-300">
-                every AI interaction.
-              </span>
-            </p>
-          </div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(20,184,166,0.15)_1px,transparent_0)] [background-size:24px_24px]" />
+        <div className="relative px-8 text-center max-w-md">
+          <p className="text-3xl font-bold leading-snug tracking-[-0.02em] text-white">
+            Competitors govern the session.
+            <br />
+            <span className="text-[#14B8A6]">RaksHex governs the action.</span>
+          </p>
         </div>
       </div>
     </div>

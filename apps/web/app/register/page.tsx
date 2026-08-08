@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc";
 import { PasswordField } from "@/components/PasswordField";
-import { WaveDotsCanvas } from "@/components/WaveDotsCanvas";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -174,8 +173,15 @@ export default function RegisterPage() {
         </div>
       </div>
 
-      <div className="hidden lg:flex flex-1 relative bg-neutral-950 border-l border-neutral-900 overflow-hidden">
-        <WaveDotsCanvas />
+      <div className="hidden lg:flex flex-1 relative bg-neutral-950 border-l border-neutral-900 overflow-hidden items-center justify-center">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(20,184,166,0.15)_1px,transparent_0)] [background-size:24px_24px]" />
+        <div className="relative px-8 text-center max-w-md">
+          <p className="text-3xl font-bold leading-snug tracking-[-0.02em] text-white">
+            Competitors govern the session.
+            <br />
+            <span className="text-[#14B8A6]">RaksHex governs the action.</span>
+          </p>
+        </div>
       </div>
     </div>
   );
