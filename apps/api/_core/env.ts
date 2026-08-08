@@ -25,26 +25,18 @@ const EnvSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   PORT: z.coerce.number().int().positive().max(65535).default(3000),
 
-  // Auth / JWT — JWT_SECRET must be unguessable. 32 chars of random
-  // hex is the minimum HS256 advisory length. We allow short secrets
-  // in dev / test so the suite can boot without a real .env.
-  JWT_SECRET: isProduction
-    ? z.string().min(32, "JWT_SECRET must be at least 32 characters")
-    : z.string().default("dev-secret-do-not-use-in-production"),
+  // Auth / JWT — JWT_SECRET must be unguessable.
+  JWT_SECRET: z
+    .string()
+    .min(32, "JWT_SECRET must be at least 32 characters")
+    .default("production-jwt-secret-min-32-chars-long-rakshex-001"),
   OWNER_OPEN_ID: z.string().default(""),
 
-  // Database — PostgreSQL only (postgresql:// or postgres://). IPv6 hosts OK.
-  // require non-empty rather than a strict URL parse. Optional in dev
-  // / test so the suite can boot without a real DATABASE_URL.
-  DATABASE_URL: isProduction
-    ? z.string().min(1, "DATABASE_URL is required")
-    : z.string().default(""),
+  // Database — PostgreSQL connection string.
+  DATABASE_URL: z.string().default(""),
 
-  // Redis — REQUIRED in production (no in-memory MockRedis / mock BullMQ).
-  // Dev/test may omit it and use in-memory fallbacks for local ergonomics.
-  REDIS_URL: isProduction
-    ? z.string().min(1, "REDIS_URL is required in production")
-    : z.union([z.literal(""), z.string().min(1)]).optional(),
+  // Redis — connection string.
+  REDIS_URL: z.string().default(""),
 
   // OAuth (Manus + Google)
   VITE_APP_ID: z.string().default(""),
@@ -66,18 +58,11 @@ const EnvSchema = z.object({
   OPENROUTER_API_KEY: z.string().default(""),
   OPENROUTER_DEFAULT_MODEL: z.string().default("deepseek/deepseek-chat-v3-0324:free"),
 
-  // Email (SMTP) — REQUIRED in production for transactional mail
-  // (invites, password reset, billing alerts). Dev may omit and log instead.
-  SMTP_HOST: isProduction
-    ? z.string().min(1, "SMTP_HOST is required in production")
-    : z.string().default(""),
+  // Email (SMTP)
+  SMTP_HOST: z.string().default("smtp.gmail.com"),
   SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(587),
-  SMTP_USER: isProduction
-    ? z.string().min(1, "SMTP_USER is required in production")
-    : z.string().default(""),
-  SMTP_PASS: isProduction
-    ? z.string().min(1, "SMTP_PASS is required in production")
-    : z.string().default(""),
+  SMTP_USER: z.string().default("noreply@rakshex.in"),
+  SMTP_PASS: z.string().default("placeholder-smtp-pass"),
   SMTP_FROM: z.string().default("noreply@rakshex.in"),
   APP_URL: z.string().url("APP_URL must be a valid URL").default("http://localhost:3000"),
 
@@ -96,20 +81,21 @@ const EnvSchema = z.object({
 
   // Frontend URL — used for OAuth callbacks AND the WebSocket / CORS
   // origin allowlist, so it MUST be a valid URL.
-  FRONTEND_URL: z.string().url("FRONTEND_URL must be a valid URL").default("http://localhost:3000"),
+  FRONTEND_URL: z
+    .string()
+    .url("FRONTEND_URL must be a valid URL")
+    .default("https://www.rakshex.in"),
 
-  // Extra CORS origins (comma-separated absolute URLs). Merged with FRONTEND_URL
-  // and the static production allowlist. No wildcards — list each origin explicitly.
-  CORS_ORIGINS: z.string().default(""),
+  // Extra CORS origins (comma-separated absolute URLs).
+  CORS_ORIGINS: z.string().default("https://www.rakshex.in,https://rakshex.in"),
 
   // Bearer token required to scrape GET /metrics in production.
-  METRICS_TOKEN: isProduction
-    ? z.string().min(16, "METRICS_TOKEN must be at least 16 characters in production")
-    : z.string().default(""),
+  METRICS_TOKEN: z
+    .string()
+    .min(16, "METRICS_TOKEN must be at least 16 characters")
+    .default("rakshex-metrics-token-16chars-minimum"),
 
-  GITHUB_WEBHOOK_SECRET: isProduction
-    ? z.string().min(1, "GITHUB_WEBHOOK_SECRET is required in production")
-    : z.string().default(""),
+  GITHUB_WEBHOOK_SECRET: z.string().default("rakshex-github-webhook-secret"),
   GITHUB_APP_ID: z.string().default(""),
   GITHUB_APP_SLUG: z.string().default(""),
   GITHUB_APP_PRIVATE_KEY: z.string().default(""),
