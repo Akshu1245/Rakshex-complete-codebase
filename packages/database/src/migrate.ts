@@ -57,7 +57,15 @@ export async function migrate(databaseUrl?: string): Promise<string[]> {
     );
   }
 
-  const client = new pg.Client({ connectionString: url });
+  const useSsl =
+    url.includes("sslmode=require") ||
+    url.includes("render.com") ||
+    url.includes("neon.tech") ||
+    url.includes("supabase.co");
+  const client = new pg.Client({
+    connectionString: url,
+    ...(useSsl ? { ssl: { rejectUnauthorized: false } } : {}),
+  });
   await client.connect();
   const applied: string[] = [];
 
