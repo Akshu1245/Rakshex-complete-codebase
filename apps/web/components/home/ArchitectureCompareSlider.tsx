@@ -246,13 +246,15 @@ export function ArchitectureCompareSlider() {
           </div>
 
           {/* ======================================================================== */}
-          {/* ARCHITECTURE GRID CARDS — rendered once, each card is an atomic swap       */}
-          {/* (never a mid-card text wipe, so dragging the handle can't garble a card)  */}
+          {/* ARCHITECTURE GRID CARDS — rendered once, each card is an atomic swap,      */}
+          {/* all sharing the SAME 50% boundary as the header/footer rows above so the   */}
+          {/* whole panel always flips together — a card can never show session-level   */}
+          {/* content while the header still reads "RaksHex Agent Firewall" / action-    */}
+          {/* level, or vice versa.                                                     */}
           {/* ======================================================================== */}
           <div className="absolute left-5 right-5 md:left-6 md:right-6 top-[76px] md:top-[84px] grid grid-cols-3 gap-3 z-20 pointer-events-none">
             {CARD_PAIRS.map((pair, i) => {
-              const cardBoundary = ((i + 0.5) / CARD_PAIRS.length) * 100;
-              const showLeft = sliderPosition > cardBoundary;
+              const showLeft = sliderPosition > 50;
               const card = showLeft ? pair.left : pair.right;
               return (
                 <div
