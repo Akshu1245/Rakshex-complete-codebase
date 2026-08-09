@@ -1,18 +1,23 @@
-# @rakshex/agentguard-sdk
+# @rakshex/sdk
 
-Runtime SDK for Rakshex AgentGuard — capture LLM usage metadata, enforce privacy modes, and ship telemetry safely.
+The Rakshex runtime SDK. Ships two clients:
+
+- **AgentGuardClient** — capture LLM usage metadata, enforce privacy modes, and ship telemetry safely. Documented below.
+- **AgentFirewallClient** — authorize an autonomous agent action before it runs, optionally have Rakshex broker the provider call itself, and record the outcome. See [Agent Firewall client](#agent-firewall-client) below, and `docs/SDK.md` / `CLAUDE.md` for why both live in one package (renamed from `@rakshex/agentguard-sdk` on 2026-08-09).
 
 ## Install
 
 ```bash
-pnpm add @rakshex/agentguard-sdk
-# or: npm install @rakshex/agentguard-sdk
+pnpm add @rakshex/sdk
+# or: npm install @rakshex/sdk
 ```
 
-## Quick start
+## AgentGuard client
+
+### Quick start
 
 ```ts
-import { createAgentGuardClient, wrapOpenAI } from "@rakshex/agentguard-sdk";
+import { createAgentGuardClient, wrapOpenAI } from "@rakshex/sdk";
 
 const guard = createAgentGuardClient({
   apiKey: process.env.RAKSHEX_API_KEY!, // workspace key — NOT an OpenAI key
@@ -102,6 +107,43 @@ Tokens, latency, cost (estimate/exact), errors, retries, tool calls (names + arg
 - SDK never logs or forwards provider API keys to the gateway.
 - Metadata keys matching `api_key`, `authorization`, `secret`, etc. are redacted.
 - Authorization header uses only the Rakshex workspace key.
+
+## Agent Firewall client
+
+Authorize an autonomous action before it runs. This is the client for
+Rakshex's headline feature — semantic actions, delegated authority, a
+hash-chained Action Ledger, and (optionally) credential mediation so a DENY
+is enforceable rather than advisory.
+
+```ts
+import { createAgentFirewallClient } from "@rakshex/sdk";
+
+const firewall = createAgentFirewallClient({
+  apiKey: process.env.RAKSHEX_API_KEY!, // rk_... workspace key
+  workspaceId: 1,
+  agentId: "agent_123",
+  capabilityToken: process.env.RAKSHEX_CAPABILITY_TOKEN!, // rk_cap_... delegated authority
+});
+
+// Option A: your process holds the real provider key. RaksHex only decides.
+const { decision, result } = await firewall.authorizeAndRun(
+  { provider: "stripe", operation: "financial.refund", amountMinor: 5000, currency: "USD" },
+  async () => stripe.refunds.create({ /* ... */ }),
+);
+
+// Option B: RaksHex holds the provider key and makes the call itself — a DENY
+// is enforced by RaksHex, not by whether your code chose to honor it.
+const { decision: d2, response } = await firewall.executeWithCredential(
+  { provider: "stripe", operation: "financial.refund", amountMinor: 5000, currency: "USD" },
+  { credentialId: "cred_...", targetUrl: "https://api.stripe.com/v1/refunds" },
+);
+```
+
+An API key scoped to `agent:execute` only (the recommended least-privilege
+deployment shape) is sufficient for every call this client makes —
+`evaluate`, `credentials.broker`, `ledger.outcome`, and
+`approvals.consume` all authorize on that scope, not on the calling user's
+full workspace RBAC role.
 
 ## Examples
 

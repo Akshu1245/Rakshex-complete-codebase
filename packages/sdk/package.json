@@ -1,7 +1,7 @@
 {
-  "name": "@rakshex/agentguard-sdk",
+  "name": "@rakshex/sdk",
   "version": "0.1.0",
-  "description": "Rakshex AgentGuard runtime SDK — provider wrappers, privacy modes, telemetry",
+  "description": "Rakshex runtime SDK — AgentGuard telemetry/privacy/provider wrappers and the Agent Firewall client (AgentFirewallClient) in one package",
   "license": "MIT",
   "private": false,
   "type": "module",
@@ -25,7 +25,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "lint": "echo \"@rakshex/agentguard-sdk: ok\"",
+    "lint": "echo \"@rakshex/sdk: ok\"",
     "test": "vitest run",
     "prepublishOnly": "pnpm run build && pnpm test"
   },
@@ -34,11 +34,13 @@
   },
   "keywords": [
     "agentguard",
+    "agent-firewall",
     "llm",
     "telemetry",
     "openai",
     "anthropic",
-    "governance"
+    "governance",
+    "authorization"
   ],
   "devDependencies": {
     "@types/node": "^22.10.0",

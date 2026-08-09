@@ -22,7 +22,7 @@ Canonical monorepo architecture for Rakshex. Prefer this document over outdated 
 | `@rakshex/scanner-core`      | Deterministic findings         |
 | `@rakshex/policy-engine`     | YAML policy evaluate/lifecycle |
 | `@rakshex/pricing-engine`    | Versioned cost calculation     |
-| `@rakshex/agentguard-sdk`    | Client telemetry + privacy     |
+| `@rakshex/sdk`               | Client telemetry/privacy (AgentGuard) + Agent Firewall client |
 | `@rakshex/mcp-security`      | MCP risk scoring               |
 | `@rakshex/compliance-engine` | Control catalog / reports      |
 

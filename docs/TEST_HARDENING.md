@@ -23,7 +23,7 @@ Package vitest configs should fail CI on test failure. Meaningful coverage targe
 
 | Package           | Target lines |
 | ----------------- | ------------ |
-| agentguard-sdk    | ≥70%         |
+| sdk (was agentguard-sdk) | ≥70%  |
 | policy-engine     | ≥80%         |
 | pricing-engine    | ≥80%         |
 | mcp-security      | ≥70%         |

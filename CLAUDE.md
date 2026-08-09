@@ -190,6 +190,62 @@ exit code; `scan --upload` against a live mock server sends the exact
 receives a 200. `apps/cli` typecheck: 0 errors. Existing `cli.test.ts`:
 2/2 pass, unmodified.
 
+### The "AgentGuard" naming reality, resolved — `packages/agentguard-sdk` → `packages/sdk` (2026-08-09)
+
+There were three genuinely distinct things all called "AgentGuard," not one
+misnamed file:
+
+1. `apps/api/api/agentGuard.ts` — prompt-injection/PII scanning router.
+2. `apps/api/services/agentguard/engine.ts` — a real, separately-scoped
+   enterprise feature: autonomous risk-signal evaluation and auto-kill
+   actions on Azure-discovered keys, backed by its own DB tables
+   (`agentGuardPolicies`, `agentGuardEvents`) and its own dashboard tab
+   (`apps/web/components/enterprise/AgentGuardTab.tsx`).
+3. `@rakshex/agentguard-sdk` (npm) / `rakshex-agentguard` (PyPI) — the
+   published client SDK. The Node package's actual exports were never
+   confused internally (`AgentGuardClient` for telemetry/privacy,
+   `AgentFirewallClient` for the Agent Firewall, both clearly named) — the
+   confusion was one level up: a package that ships **both** clients was
+   named after only one of them, and the one it wasn't named after
+   (`AgentFirewallClient`) is the product's headline differentiator
+   ("competitors govern the session, Rakshex governs the action").
+
+**Decision (founder call, not a bug fix):** #1 and #2 keep their names —
+both are real, correctly-scoped AgentGuard features and renaming either
+would mean touching live enterprise DB tables for no functional gain.
+#3 (Node) is renamed: `packages/agentguard-sdk` → `packages/sdk`,
+`@rakshex/agentguard-sdk` → `@rakshex/sdk`. A developer installing the SDK
+should not have to already know the history to guess it also contains the
+Firewall client. The Python package (`rakshex-agentguard`) is untouched —
+it genuinely only contains the AgentGuard client today; there is no Python
+`AgentFirewallClient` yet, and that gap is now stated explicitly in
+`docs/SDK.md` rather than left implicit.
+
+Every reference was updated, not just the directory: `package.json` name/
+description/keywords, the `SDK_NAME` constant in `client.ts`, `index.ts`'s
+header doc (now explains why both clients live in one package),
+`packages/sdk/README.md` (added a full Agent Firewall client section that
+never existed before — the addition of `firewall.ts` had never been
+documented), `docs/SDK.md`, `docs/ARCHITECTURE.md`, root `README.md`,
+`tsconfig.json`/`tsconfig.base.json` path mappings, `apps/api/package.json`/
+`tsconfig.json`/`vitest.config.ts`, root `package.json` script filters, and
+`pnpm-lock.yaml` (hand-edited precisely rather than copying a
+sandbox-regenerated lockfile that had accumulated unrelated drift from
+`packages/agent-memory` being out of sync with its own package.json — a
+**pre-existing, unrelated issue this session did not introduce and did not
+fix**; `pnpm install --frozen-lockfile` will fail on that until someone
+regenerates the lockfile for real, separately from this change).
+
+Verified by execution, not assumed: `@rakshex/sdk` typecheck 0 errors,
+14/14 existing tests pass unmodified under the new name; `apps/api`
+typecheck 0 errors with the renamed dependency; the SDK's actual publish
+build (`tsc -p tsconfig.build.json`) succeeds and produces correct `dist/`
+output including `firewall.js`/`firewall.d.ts`; confirmed no consumer in
+`apps/` actually imports `@rakshex/agentguard-sdk` at the source level (the
+dependency was declared in `apps/api/package.json` but never imported —
+so the internal blast radius of this rename was genuinely limited to
+config/build files, not application logic).
+
 ### Missing DB functions implemented (`apps/api/db.ts`)
 
 `getAuditLogForUserPage`, `getScansPageByCollectionId`, `saveScanWithFindings`,

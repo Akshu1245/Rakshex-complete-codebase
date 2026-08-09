@@ -16,6 +16,6 @@
     { "path": "./packages/policy-engine" },
     { "path": "./packages/config" },
     { "path": "./packages/pricing-engine" },
-    { "path": "./packages/agentguard-sdk" }
+    { "path": "./packages/sdk" }
   ]
 }

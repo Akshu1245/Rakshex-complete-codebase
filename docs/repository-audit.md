@@ -4,6 +4,13 @@
 **Branch:** `akshu1245/feat/launch-control-plane`  
 **Method:** Filesystem inventory, code inspection, automated tests. Documentation is secondary to code + tests.
 
+> **2026-08-09:** `packages/agentguard-sdk` below was renamed to
+> `packages/sdk` (`@rakshex/sdk`) — it now ships both the AgentGuard client
+> and the Agent Firewall client (`AgentFirewallClient`, added after this
+> audit was written), so the old name named only half of what it contains.
+> See `CLAUDE.md` and `docs/SDK.md`. This is a point-in-time snapshot,
+> otherwise left as originally written.
+
 ---
 
 ## 1. Monorepo layout (actual)

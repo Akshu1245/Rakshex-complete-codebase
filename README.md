@@ -54,7 +54,7 @@ This repository does **not** claim:
 - **Web:** Next.js (`apps/web`)
 - **DB:** PostgreSQL (Drizzle)
 - **Cache/queues:** Redis + BullMQ
-- **Packages:** `packages/*` (scanner, policy, pricing, agentguard-sdk, …)
+- **Packages:** `packages/*` (scanner, policy, pricing, sdk, …)
 
 ## Quick start (clean machine)
 
@@ -138,7 +138,7 @@ CI stages: install → format → lint → typecheck → unit → integration �
 | [docs/market-readiness-audit.md](docs/market-readiness-audit.md)                                     | Historical audit findings                 |
 | [docs/GAP_INVENTORY.md](docs/GAP_INVENTORY.md)                                                       | Closed product gaps                       |
 
-SDK package READMEs: `packages/agentguard-sdk`, `packages/agentguard-python`.
+SDK package READMEs: `packages/sdk` (Node — AgentGuard + Agent Firewall clients), `packages/agentguard-python` (Python — AgentGuard only).
 
 ## Security contact
 

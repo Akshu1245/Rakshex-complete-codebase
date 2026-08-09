@@ -29,7 +29,7 @@ export default defineConfig({
       "@rakshex/config": path.resolve(root, "../../packages/config/src/index.ts"),
       "@rakshex/shared-types/const": path.resolve(root, "../../packages/shared-types/src/const.ts"),
       "@rakshex/shared-types": path.resolve(root, "../../packages/shared-types/src/index.ts"),
-      "@rakshex/agentguard-sdk": path.resolve(root, "../../packages/agentguard-sdk/src/index.ts"),
+      "@rakshex/sdk": path.resolve(root, "../../packages/sdk/src/index.ts"),
       "@rakshex/pricing-engine": path.resolve(root, "../../packages/pricing-engine/src/index.ts"),
     },
   },
