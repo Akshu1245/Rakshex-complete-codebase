@@ -351,3 +351,123 @@ d("Agent Firewall — authenticated end-to-end", () => {
     expect(upstreamHits).toBe(0);
   });
 });
+
+d("Agent Firewall — runtime key scope for ledger.outcome (regression)", () => {
+  // Reproduces and proves the fix for a scope-model mismatch: `evaluate` and
+  // `credentials.broker` both authorize a runtime call via
+  // assertRuntimeApiKeyScope(ctx.user, workspaceId, "agent:execute") — the
+  // scope carried by the API key itself, independent of the underlying
+  // user's workspace RBAC role. `ledger.outcome` used to instead require
+  // the full `security:write` RBAC permission (minimum role: security_lead,
+  // rank 5), which a "developer" role (rank 3) does not have even though
+  // developer is a perfectly reasonable role to own a scoped, agent:execute
+  // -only runtime key under. Since AgentFirewallClient.recordOutcome() in
+  // the SDK is called with the exact same key that called evaluate(), and
+  // authorizeAndRun()'s success path awaits it uncaught, that mismatch made
+  // the SDK's own happy path throw after a successfully executed action.
+  let devUserId = 0;
+
+  beforeAll(async () => {
+    if (!RUN) return;
+    const db = await getDb();
+    if (!db) throw new Error("no database");
+    const suffix = Math.random().toString(36).slice(2, 10);
+    const [u] = await db
+      .insert(users)
+      .values({
+        openId: `local:e2e-dev-${suffix}`,
+        email: `e2e-dev-${suffix}@example.com`,
+        name: "E2E Developer",
+        role: "user",
+      })
+      .returning({ id: users.id });
+    devUserId = u!.id;
+    await db.insert(workspaceMembers).values({
+      workspaceId,
+      userId: devUserId,
+      role: "developer",
+      active: true,
+      joinedAt: new Date(),
+    });
+  });
+
+  afterAll(async () => {
+    if (!RUN || !devUserId) return;
+    const db = await getDb();
+    if (!db) return;
+    await db
+      .delete(workspaceMembers)
+      .where(eq(workspaceMembers.userId, devUserId));
+    await db.delete(users).where(eq(users.id, devUserId));
+  });
+
+  function scopedAgentKeyCaller() {
+    const csrfToken = generateCsrfToken();
+    const ctx = {
+      user: {
+        id: devUserId,
+        openId: `local:e2e-dev-${devUserId}`,
+        email: "e2e-dev@example.com",
+        name: "E2E Developer",
+        role: "member",
+        plan: "free",
+        __apiKeyAuth: { keyId: "e2e-key", workspaceId, scopes: ["agent:execute"] },
+      },
+      req: {
+        protocol: "https",
+        headers: { cookie: `csrf-token=${csrfToken}`, "x-csrf-token": csrfToken },
+        ip: "127.0.0.1",
+      },
+      res: { clearCookie: () => undefined, getHeader: () => undefined, cookie: () => undefined },
+    } as never;
+    return appRouter.createCaller(ctx);
+  }
+
+  it("a developer-role member with an agent:execute-only key can still record an outcome", async () => {
+    // A "developer" role has rank 3, well under the security_lead (rank 5)
+    // that `security:write` used to require — proving this isn't allowed
+    // by accident via an elevated role, only via the key's own scope.
+    const allowed = await freshAllow();
+    expect(allowed.effectiveDecision).toBe("ALLOW");
+
+    const result = await scopedAgentKeyCaller().agentFirewall.ledger.outcome({
+      workspaceId,
+      ledgerId: allowed.ledgerId,
+      status: "succeeded",
+    });
+    expect((result as { success: boolean }).success).toBe(true);
+  });
+
+  it("still refuses a key scoped to a different workspace", async () => {
+    const allowed = await freshAllow();
+    const csrfToken = generateCsrfToken();
+    const wrongWorkspaceCtx = {
+      user: {
+        id: devUserId,
+        openId: `local:e2e-dev-${devUserId}`,
+        email: "e2e-dev@example.com",
+        name: "E2E Developer",
+        role: "member",
+        plan: "free",
+        __apiKeyAuth: {
+          keyId: "e2e-key",
+          workspaceId: workspaceId + 99_999,
+          scopes: ["agent:execute"],
+        },
+      },
+      req: {
+        protocol: "https",
+        headers: { cookie: `csrf-token=${csrfToken}`, "x-csrf-token": csrfToken },
+        ip: "127.0.0.1",
+      },
+      res: { clearCookie: () => undefined, getHeader: () => undefined, cookie: () => undefined },
+    } as never;
+    await expect(
+      appRouter.createCaller(wrongWorkspaceCtx).agentFirewall.ledger.outcome({
+        workspaceId,
+        ledgerId: allowed.ledgerId,
+        status: "succeeded",
+      }),
+    ).rejects.toThrow();
+  });
+});

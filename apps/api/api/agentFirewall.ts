@@ -670,7 +670,18 @@ export const agentFirewallRouter = router({
         }),
       )
       .mutation(async ({ input, ctx }) => {
-        await requireWorkspacePermission(input.workspaceId, ctx.user.id, "security", "write");
+        // Same scope model as `evaluate`/`credentials.broker`: a runtime
+        // agent key scoped to `agent:execute` must be able to record the
+        // outcome of the action it just took. This used to require the
+        // full `security:write` RBAC permission, which a least-privilege
+        // agent key legitimately lacks — every call from
+        // AgentFirewallClient.recordOutcome() (including the uncaught
+        // success path inside authorizeAndRun()) would 403 even though the
+        // action itself was correctly evaluated and allowed. See
+        // docs/POLICY_ENGINE_UNIFICATION.md-style note: fixed 2026-08-09,
+        // do not revert to requireWorkspacePermission here.
+        await requireWorkspaceMembership(input.workspaceId, ctx.user.id);
+        assertRuntimeApiKeyScope(ctx.user, input.workspaceId, "agent:execute");
         const database = requireDb(await db.getDb());
         const [updated] = await database
           .update(actionLedger)

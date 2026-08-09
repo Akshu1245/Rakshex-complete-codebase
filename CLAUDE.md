@@ -129,6 +129,35 @@ Non-obvious invariants, each of which has a test:
 4. **Secret never leaves the server.** `credentials.list` uses an explicit column list,
    never `select()`. Never add `secretCiphertext` to a response.
 
+### SDK/router scope mismatch on `ledger.outcome` — fixed 2026-08-09
+
+Found by comparing what `packages/agentguard-sdk/src/firewall.ts`'s
+`AgentFirewallClient` actually calls against what
+`apps/api/api/agentFirewall.ts` actually requires, endpoint by endpoint —
+not by reading either file in isolation. `evaluate` and `credentials.broker`
+both authorize a runtime call via
+`assertRuntimeApiKeyScope(ctx.user, workspaceId, "agent:execute")` — the
+scope on the API key itself, independent of the underlying user's workspace
+RBAC role. `ledger.outcome` instead required the full `security:write` RBAC
+permission (minimum role `security_lead`, rank 5 of 7). The SDK's
+`recordOutcome()` is called by the exact same key that called `evaluate()`,
+and `authorizeAndRun()`'s success path awaits it **uncaught** — so a
+correctly least-privileged agent key (scope: `agent:execute` only, which is
+the product's own recommended deployment shape) would 403 on `ledger.outcome`
+even though the action it just took was correctly evaluated and allowed,
+and `authorizeAndRun()` would throw after the real work already succeeded.
+
+Fixed: `ledger.outcome` now uses the same `assertRuntimeApiKeyScope(...,
+"agent:execute")` check as its two siblings. Verified by execution, not
+assumed — a new regression test
+(`apps/api/api/agentFirewall.e2e.test.ts`, describe block "runtime key scope
+for ledger.outcome (regression)") creates a workspace member with role
+`developer` (rank 3, well under the `security_lead` the old check required)
+holding an `agent:execute`-only key, and asserts `ledger.outcome` succeeds.
+Confirmed this test actually catches the bug by reverting the fix locally
+and re-running: 12/13 pass with a `FORBIDDEN` failure on exactly this test;
+13/13 pass with the fix restored. Full `apps/api` typecheck: 0 errors.
+
 ### Missing DB functions implemented (`apps/api/db.ts`)
 
 `getAuditLogForUserPage`, `getScansPageByCollectionId`, `saveScanWithFindings`,
