@@ -1,5 +1,12 @@
 # Rakshex
 
+> **Read `CLAUDE.md` first.** This README (2026-07-30) predates the Agent
+> Firewall (`@rakshex/action-control` — delegated authority, Action Ledger,
+> credential mediation, gateway enforcement), which is real, tested code
+> shipped since and is the current strategic core of the product. This file
+> is accurate for the scanner/SDK/compliance surfaces it describes but is
+> not the full picture — `CLAUDE.md` is the single current status doc.
+
 AI agent and API security platform — monorepo for scanning, governance, AgentGuard telemetry, and control-plane tooling.
 
 **Status:** **Deployable release candidate** as of 2026-07-30. Private beta

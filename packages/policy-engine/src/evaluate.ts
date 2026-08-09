@@ -1,5 +1,173 @@
 import { compilePolicy, hostMatches, normalizeModel, normalizeTool } from "./compile.js";
-import type { CompiledPolicy, EvaluationContext, PolicyDecision, PolicyDocument } from "./types.js";
+import type {
+  CompiledPolicy,
+  ConditionOp,
+  EvaluationContext,
+  GenericRule,
+  PolicyDecision,
+  PolicyDocument,
+  RuleCondition,
+} from "./types.js";
+
+// --- Generic prioritized rules ------------------------------------------
+//
+// This block is the mechanism that absorbed the second policy engine
+// (formerly `apps/api/engines/policyEngine.ts`) into this package. See
+// `GenericRule` in types.ts for the field-level rationale.
+
+const THREAT_ORDER: Record<string, number> = {
+  none: 0,
+  low: 1,
+  medium: 2,
+  high: 3,
+  critical: 4,
+};
+
+function compareThreatLevel(actual: string, op: string, value: string): boolean {
+  const a = THREAT_ORDER[actual] ?? -1;
+  const v = THREAT_ORDER[value] ?? -1;
+  if (a < 0 || v < 0) return false;
+  switch (op) {
+    case "gt":
+      return a > v;
+    case "lt":
+      return a < v;
+    case "gte":
+      return a >= v;
+    case "lte":
+      return a <= v;
+    default:
+      return false;
+  }
+}
+
+const regexCache = new Map<string, RegExp>();
+function getRegex(pattern: string): RegExp {
+  let r = regexCache.get(pattern);
+  if (!r) {
+    r = new RegExp(pattern, "i");
+    regexCache.set(pattern, r);
+  }
+  return r;
+}
+
+function getRuleFieldValue(ctx: EvaluationContext, field: string): unknown {
+  switch (field) {
+    case "model":
+      return ctx.model ?? "";
+    case "provider":
+      return ctx.provider ?? "";
+    case "costUsd":
+    case "cost_usd":
+      return ctx.costUsdSoFar ?? 0;
+    case "inputTokens":
+    case "input_tokens":
+      return ctx.inputTokens ?? 0;
+    case "promptContains":
+    case "prompt_contains":
+      return ctx.prompt ?? "";
+    case "threatLevel":
+    case "threat_level":
+      return ctx.threatLevel ?? "none";
+    case "agentId":
+    case "agent_id":
+      return ctx.agentId ?? "";
+    case "userId":
+    case "user_id":
+      return ctx.userId ?? "";
+    case "toolName":
+    case "tool_name":
+      return ctx.toolCalls?.map((t) => t.name).join(",") ?? ctx.toolName ?? "";
+    case "destination":
+      return ctx.destination ?? "";
+    case "hourOfDay":
+    case "hour_of_day":
+      return (ctx.timestamp ?? new Date()).getUTCHours();
+    default:
+      return "";
+  }
+}
+
+function evaluateRuleCondition(condition: RuleCondition, ctx: EvaluationContext): boolean {
+  const actual = getRuleFieldValue(ctx, condition.field);
+
+  if (condition.field === "threatLevel" || condition.field === "threat_level") {
+    if (["gt", "lt", "gte", "lte"].includes(condition.op)) {
+      return compareThreatLevel(String(actual), condition.op, String(condition.value));
+    }
+  }
+
+  if ((condition.field === "toolName" || condition.field === "tool_name") && condition.op === "eq") {
+    const tools = ctx.toolCalls?.map((t) => t.name) ?? (ctx.toolName ? [ctx.toolName] : []);
+    return tools.some((t) => t === String(condition.value));
+  }
+
+  const op: ConditionOp = condition.op;
+  switch (op) {
+    case "eq":
+      return String(actual) === String(condition.value);
+    case "in":
+      return Array.isArray(condition.value)
+        ? condition.value.some((v) => String(v) === String(actual))
+        : String(condition.value) === String(actual);
+    case "not_in":
+      return Array.isArray(condition.value)
+        ? !condition.value.some((v) => String(v) === String(actual))
+        : String(condition.value) !== String(actual);
+    case "gt":
+      return Number(actual) > Number(condition.value);
+    case "lt":
+      return Number(actual) < Number(condition.value);
+    case "gte":
+      return Number(actual) >= Number(condition.value);
+    case "lte":
+      return Number(actual) <= Number(condition.value);
+    case "regex":
+      return getRegex(String(condition.value)).test(String(actual));
+    case "keyword":
+      return String(actual).toLowerCase().includes(String(condition.value).toLowerCase());
+    case "between": {
+      if (!Array.isArray(condition.value) || condition.value.length !== 2) return false;
+      const num = Number(actual);
+      return num >= Number(condition.value[0]) && num <= Number(condition.value[1]);
+    }
+    default:
+      return false;
+  }
+}
+
+function evaluateRuleGroup(conditions: GenericRule["conditions"], ctx: EvaluationContext): boolean {
+  const results = conditions.rules.map((c) => evaluateRuleCondition(c, ctx));
+  return conditions.operator === "AND" ? results.every(Boolean) : results.some(Boolean);
+}
+
+/**
+ * Evaluate a document's `rules` list against a context. Returns null when
+ * there are no rules or none match, so the caller can fall through to the
+ * structured agent/models/tools/network/data checks.
+ */
+function evaluateGenericRules(
+  rules: GenericRule[] | undefined,
+  ctx: EvaluationContext,
+): PolicyDecision | null {
+  if (!rules?.length) return null;
+  const sorted = rules
+    .filter((r) => r.enabled !== false)
+    .sort((a, b) => a.priority - b.priority);
+
+  for (const rule of sorted) {
+    if (evaluateRuleGroup(rule.conditions, ctx)) {
+      return {
+        action: rule.action,
+        reasons: [`Matched rule "${rule.name ?? rule.ruleId}" (priority ${rule.priority})`],
+        matchedRules: [rule.ruleId],
+      };
+    }
+  }
+  return null;
+}
+
+// --- Structured policy evaluation ---------------------------------------
 
 /**
  * Evaluate a compiled policy (or document) against a runtime context.
@@ -13,6 +181,11 @@ export function evaluatePolicy(
     "document" in policy && "allowedModels" in policy
       ? (policy as CompiledPolicy)
       : compilePolicy(policy as PolicyDocument);
+
+  // Generic priority rules run first and can override category order —
+  // see GenericRule's doc comment in types.ts.
+  const genericDecision = evaluateGenericRules(compiled.document.rules, ctx);
+  if (genericDecision) return genericDecision;
 
   const reasons: string[] = [];
   const matchedRules: string[] = [];

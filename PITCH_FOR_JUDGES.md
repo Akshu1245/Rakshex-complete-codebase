@@ -1,5 +1,14 @@
 # Rakshex — Pitch for Judges
 
+> **CORRECTION (2026-08-09):** this file (Jul 2026) describes Rakshex as a
+> scanning/routing/cost-dashboard consolidation play and never mentions the
+> Agent Firewall (`@rakshex/action-control` — delegated authority, Action
+> Ledger, credential mediation), which is real, tested code shipped since.
+> It also previously cited a now-deleted file as evidence (fixed below).
+> Anyone pitching this product externally should read `CLAUDE.md` first —
+> the two documents describe different products, not one product at two
+> points in time.
+
 **[0:00–0:20] The Problem**
 
 Teams shipping AI agents end up with 4–6 disconnected tools: routing, security filters, logging, and cost dashboards that do not talk to each other. Prompt injection, shadow APIs, and runaway LLM bills slip through the gaps.
@@ -34,4 +43,4 @@ Pilot design partners + waitlist conversion. We ship governance, not another gen
 
 ---
 
-See also: `docs/MARKET_READY_COMPLETE.md`, `JUDGES_PITCH_DECK.html`.
+See also: `JUDGES_PITCH_DECK.html`, `CLAUDE.md` (current status; `docs/MARKET_READY_COMPLETE.md` was deleted 2026-08-05 for false claims — see the correction note at the top of this file).

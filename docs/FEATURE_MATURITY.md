@@ -1,5 +1,11 @@
 # Feature maturity matrix
 
+> **CORRECTION (2026-08-09):** dated 2026-07-30, this file predates the
+> Agent Firewall (`@rakshex/action-control`, delegated authority, Action
+> Ledger, credential mediation) entirely — there is no row for it below.
+> `CLAUDE.md` already warns not to trust this file's "code-complete" framing
+> and that warning is still correct. Read `CLAUDE.md` for current status.
+
 **Updated:** 2026-07-30  
 **Status:** All product surfaces below are **code-complete and test-covered**. Live provider keys, production secrets, and legal entity fields remain operator steps (not missing application code).
 

@@ -40,7 +40,7 @@ Use this list before each production cut. Automated gates must be green; manual 
 - [ ] `docs/FEATURE_MATURITY.md` matches shipped surfaces
 - [ ] No new certification / patent / unverified readiness claims
 - [ ] `docs/DEPLOYMENT.md` version/tag recorded for rollback
-- [ ] `docs/MARKET_READY_COMPLETE.md` still reflects intent of this release
+- [ ] `CLAUDE.md` still reflects intent of this release (`docs/MARKET_READY_COMPLETE.md` was deleted 2026-08-05 for containing false claims; do not recreate it as a checklist target)
 
 ## Explicit do-not-ship if
 

@@ -116,7 +116,7 @@ export function registerQuickScanRoute(app: Express): void {
           truncated: allFindings.length > MAX_FINDINGS,
           message:
             allFindings.length > MAX_FINDINGS || credentialFindings.length > 0
-              ? "Create a free DevPulse account for the full report, remediation guidance, and credential details."
+              ? "Create a free Rakshex account for the full report, remediation guidance, and credential details."
               : "No issues in the free preview — sign up to run a full OWASP + credential scan.",
           upgradeUrl: "/register",
         });

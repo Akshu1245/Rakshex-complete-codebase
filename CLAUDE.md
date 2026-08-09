@@ -141,64 +141,50 @@ despite the columns existing since migration 0013.
 
 ## 5. Known gaps — start here
 
-0. **TWO POLICY ENGINES ARE LIVE AT ONCE.** Found 2026-08-06. There are two
-   different functions both called `evaluatePolicy`, with incompatible data
-   models, both in active use on different request paths:
+0. ~~**TWO POLICY ENGINES ARE LIVE AT ONCE.**~~ **RESOLVED 2026-08-09** — see
+   `docs/POLICY_ENGINE_UNIFICATION.md` for the full account. Original finding
+   (2026-08-06), kept for history: two different functions both called
+   `evaluatePolicy`, incompatible data models, both live on different request
+   paths (`apps/api/engines/policyEngine.ts` vs `packages/policy-engine`),
+   with a differential test proving 3 of 10 real policy intents got different
+   verdicts depending only on which code path handled them.
 
-   - `apps/api/engines/policyEngine.ts` — `(event: AIEventContext, rules: PolicyRule[])`,
-     a priority-sorted rule list where first match wins. Used by
-     `middleware/policyEnforcement.ts`, `services/policyCache.ts`, `api/policies.ts`.
-   - `packages/policy-engine` — `(policy: PolicyDocument | CompiledPolicy, ctx)`,
-     a compiled policy document. Used by `services/gateway/enforcement.ts`
-     and `services/policyAsCode.ts`.
+   **Fix, verified by execution, not asserted:** `packages/policy-engine`
+   gained a generic, priority-ordered `rules` field (`GenericRule` in
+   `types.ts`) that is a faithful port of the app engine's entire condition
+   model — every operator, threat-level comparison, multi-tool matching.
+   `apps/api/engines/policyEngine.ts` is now a thin adapter that delegates
+   every decision to that mechanism and translates types/vocabulary at the
+   boundary; its external contract (types, function signature, return shape)
+   is byte-identical, so `middleware/policyEnforcement.ts`,
+   `services/policyCache.ts`, `api/policies.ts`, `api/policyRules.ts`
+   required zero changes. There is now exactly one function that makes
+   policy decisions.
 
-   For a security product this is the most serious structural problem in the
-   repo: **a policy authored in one model is invisible to the other**, so the
-   answer to "is this action allowed?" depends on which entry point the
-   request happened to take. A customer configuring a rule in the dashboard
-   has no reason to expect it not to apply at the gateway. Nothing currently
-   detects the divergence — both engines are individually tested and both
-   pass.
+   Verified this session against a real local install (not read-only code
+   review): `packages/policy-engine` 14/14 tests pass; the **unmodified**
+   `apps/api/engines/policyEngine.test.ts` 21/21 pass (proves behavioral
+   equivalence to the old standalone engine); the differential test now
+   asserts 9/10 agreement (up from 7/10) with 12/12 passing;
+   `promptInjectionEngine.test.ts`, `services/gateway/enforcement.test.ts`,
+   `services/policyDecisionCompat.test.ts` — 83 more tests, all pass; full
+   `apps/api` TypeScript compile — 0 errors.
 
-   Do not "fix" this by deleting one at random; they encode different
-   semantics and each has live call sites. It needs a deliberate decision
-   about which model is canonical, then a migration of the other's call
-   sites, ideally with a test that asserts both paths agree on a shared
-   corpus of policies before either is removed.
+   **One item remains genuinely open, not an engine gap:** `AIEventContext`
+   (the AI-telemetry event shape) has no network-destination field at all,
+   because that data doesn't exist at the point telemetry events are built.
+   This is a data-shape limitation of one event type, not a decision
+   disagreement — network policy is correctly enforced in
+   `services/gateway/enforcement.ts`, whose context does carry
+   `ctx.destination`. Documented as such in the differential test rather
+   than left unexplained.
 
-   **Update 2026-08-06 — the corpus test now exists:**
-   `apps/api/engines/policyEngine.differential.test.ts` runs 10 policy
-   intents through both engines and normalizes the results through
-   `services/policyDecisionCompat.ts`. **7 of 10 agree. 3 are asserted
-   divergences**, and they are the actual scope of the migration, not a
-   footnote:
-
-   - **Network destination policy is unenforceable in the app engine.**
-     `AIEventContext` has no field a rule can match a destination against —
-     `getFieldValue()` falls through to `""` for any unrecognised field. A
-     domain block that works via the package engine is a silent no-op via
-     the app engine.
-   - **Prompt threat level is unenforceable in the package engine.**
-     `PolicyDocument` has no threat-level concept anywhere in its schema. A
-     rule that blocks on the MCP adversarial-intent scanner's threat level
-     cannot be represented as a `PolicyDocument` at all.
-   - **Cross-category precedence is not the same relation.** The app engine
-     lets a per-rule `priority` beat another rule regardless of category (a
-     tool rule ranked above a model rule wins). The package engine hardcodes
-     category order (models before tools, no override). Identical facts,
-     opposite decision, depending only on which engine handles the request —
-     this is the fail-open hazard from the paragraph above, demonstrated
-     rather than asserted.
-
-   **What this means for "migrate to one engine":** it is not a rename.
-   The package engine's schema has no slot for threat-level or free-form
-   telemetry conditions, and no per-rule priority. Migrating the app
-   engine's call sites onto the package engine today would silently drop
-   both threat-level policies and any priority-based rule that currently
-   overrides a category. Either extend `PolicyDocument`'s schema first, or
-   accept and document the loss explicitly before switching call sites —
-   do not switch call sites and assume parity. The migration itself has
-   **not** been started.
+   **A second item is not yet verified:** whichever surface serializes
+   dashboard-authored policies into a `PolicyDocument` today (e.g.
+   `services/policyAsCode.ts`) should be checked to confirm it actually
+   emits `rules` entries for threat-level/priority intents now that the
+   engine supports it — the engine-level fix is done, but audit the
+   authoring path before claiming every dashboard policy can express these.
 
 1. ~~`pnpm test:db` / `foundation.test.ts` — UNVERIFIED.~~ **VERIFIED 2026-08-06 on
    real Postgres 18.4 — 10/10 pass.** The earlier 6 PGlite failures

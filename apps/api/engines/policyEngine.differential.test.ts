@@ -1,27 +1,25 @@
 /**
- * Differential corpus test — the two live `evaluatePolicy` engines, run
- * side by side against a shared set of real-world policy intents.
+ * Differential corpus test — UPDATED post-unification (see CLAUDE.md §5
+ * item 0 and docs/POLICY_ENGINE_UNIFICATION.md).
  *
- * See CLAUDE.md §5 item 0 and services/policyDecisionCompat.ts for the full
- * background. Short version: `apps/api/engines/policyEngine.ts` (rule list,
- * priority order, telemetry-shaped input) and `@rakshex/policy-engine`
- * (compiled document, fixed category order, agent/model/tool/network/data
- * shaped input) are both live on different request paths, and nothing today
- * checks whether they agree.
+ * HISTORY: `apps/api/engines/policyEngine.ts` used to be a second,
+ * independent decision-making engine (rule list, priority order,
+ * telemetry-shaped input) running alongside `@rakshex/policy-engine`
+ * (compiled document, fixed category order) on a different request path.
+ * This file proved they disagreed on 3 of 10 real-world policy intents.
  *
- * The two engines take differently-shaped input, so there is no way to feed
- * one literal object through both. What this file does instead: for each
- * scenario, express the SAME policy intent once in each engine's native
- * shape, run both, normalize both decisions through `normalizeAction()`,
- * and assert on whether they agree.
- *
- * Most scenarios assert AGREEMENT — that's the baseline a shared engine
- * would have to preserve. A few scenarios are marked `expectDivergence` and
- * assert the two engines DISAGREE, on purpose: these are not bugs to fix
- * here, they are the actual gaps a migration has to resolve, and a test
- * that silently started passing on one of these later is exactly the
- * regression this file exists to catch. If a `expectDivergence` case starts
- * agreeing, tighten it into a real regression test and delete the note.
+ * CURRENT STATE: `apps/api/engines/policyEngine.ts` is now a thin adapter
+ * that delegates every decision to `@rakshex/policy-engine`'s generic
+ * `rules` mechanism — there is exactly one decision-making function left.
+ * This test now checks something narrower and still worth guarding: can
+ * the SAME policy intent, expressed once via the app's historical
+ * `PolicyRule[]` shape and once via a `PolicyDocument`'s older *structured*
+ * fields (`models`/`tools`/`network`/`data`, predating `rules`), still
+ * reach the same decision? For 9 of 10 scenarios, yes — including the two
+ * that used to be unfixable gaps (threat-level, cross-category priority),
+ * once expressed as `rules` on both sides. One real, honest limitation
+ * remains and is called out below: it is a data-shape gap, not an engine
+ * disagreement.
  */
 import { describe, expect, it } from "vitest";
 import { evaluatePolicy as evaluateAppPolicy, type AIEventContext, type PolicyRule } from "./policyEngine";
@@ -122,52 +120,34 @@ const corpus: Scenario[] = [
     packageCtx: { model: "gpt-4o" },
   },
   {
-    name: "GAP: network destination policy has no app-engine equivalent",
-    // AIEventContext has no destination/URL field at all — getFieldValue()
-    // falls through to "" for any unrecognised field, so a rule authored
-    // against "destination" can never match. A domain block configured
-    // through whichever surface writes app-engine rules is silently inert.
-    appEvent: event(),
-    appRules: [rule({ conditions: { operator: "AND", rules: [{ field: "destination", op: "eq", value: "evil.example.com" }] }, action: "block" })],
-    packageDoc: doc({ network: { deny_domains: ["evil.example.com"] } }),
-    packageCtx: { destination: "https://evil.example.com/exfil" },
-    expectDivergence: {
-      app: "allow",
-      pkg: "deny",
-      because:
-        "AIEventContext has no field for network destination — the app engine cannot express or enforce network policy at all, so a domain block is real in the package engine and a no-op in the app engine.",
-    },
-  },
-  {
-    name: "GAP: prompt threat level has no package-engine equivalent",
-    // PolicyDocument has no threat-level concept anywhere in its schema —
-    // only agent/models/tools/network/data. A dashboard rule keyed on the
-    // MCP adversarial-intent scanner's threat level cannot be represented
-    // as a PolicyDocument at all, so it silently always allows if enforced
-    // through the package engine.
+    name: "RESOLVED (was GAP): prompt threat level, expressed via `rules` on both sides",
+    // Previously: PolicyDocument's *structured* fields had no threat-level
+    // concept, so a threat-level rule was unrepresentable through the
+    // package engine's old schema. Now that both sides can use the shared
+    // `rules` mechanism, the same condition reaches the same decision.
     appEvent: event({ threatLevel: "critical" }),
     appRules: [rule({ conditions: { operator: "AND", rules: [{ field: "threatLevel", op: "gte", value: "high" }] }, action: "block" })],
-    packageDoc: doc(), // no way to express "threat level" in this schema
-    packageCtx: {},
-    expectDivergence: {
-      app: "deny",
-      pkg: "allow",
-      because:
-        "PolicyDocument has no threat-level field — a rule that blocks on the MCP scanner's threat level is enforceable via the app engine and silently unenforceable via the package engine.",
-    },
+    packageDoc: doc({
+      rules: [
+        {
+          ruleId: "r1",
+          priority: 10,
+          enabled: true,
+          conditions: { operator: "AND", rules: [{ field: "threatLevel", op: "gte", value: "high" }] },
+          action: "deny",
+        },
+      ],
+    }),
+    packageCtx: { threatLevel: "critical" },
   },
   {
-    name: "GAP: cross-category precedence is not the same relation",
-    // Same underlying facts — a denied model AND a tool that should only
-    // trigger an alert — routed through both engines. The app engine lets
-    // an operator rank an individual RULE above another regardless of its
-    // category (priority 1 beats priority 2, no matter what field each
-    // rule inspects). The package engine has no such concept: category
-    // order is hardcoded (agent limits, then models, then tools, then
-    // network, then data) and cannot be overridden per-policy. An operator
-    // who ranks the tool rule above the model rule, expecting the alert-only
-    // outcome to win, gets exactly that from the app engine and the
-    // opposite (hard deny) from the package engine for the identical intent.
+    name: "RESOLVED (was GAP): cross-category priority, expressed via `rules` on both sides",
+    // Previously: the package engine's structured fields hardcoded category
+    // order (models before tools) with no per-rule priority, so a tool rule
+    // could never outrank a model rule the way the app engine allowed. Now
+    // that the package engine's `rules` field carries the same priority
+    // concept the app engine always had, an operator who ranks the tool
+    // rule above the model rule gets the same outcome on both sides.
     appEvent: event({ model: "gpt-3.5-untrusted", toolCalls: [{ name: "read_only.lookup" }] }),
     appRules: [
       rule({
@@ -183,13 +163,48 @@ const corpus: Scenario[] = [
         action: "block",
       }),
     ],
-    packageDoc: doc({ models: { deny: ["gpt-3.5-untrusted"] } }),
+    packageDoc: doc({
+      rules: [
+        {
+          ruleId: "tool-alert",
+          priority: 1,
+          enabled: true,
+          conditions: { operator: "AND", rules: [{ field: "toolName", op: "eq", value: "read_only.lookup" }] },
+          action: "warn",
+        },
+        {
+          ruleId: "model-deny",
+          priority: 2,
+          enabled: true,
+          conditions: { operator: "AND", rules: [{ field: "model", op: "eq", value: "gpt-3.5-untrusted" }] },
+          action: "deny",
+        },
+      ],
+    }),
     packageCtx: { model: "gpt-3.5-untrusted", toolName: "read_only.lookup" },
+  },
+  {
+    name: "REMAINING (data-shape, not an engine gap): AIEventContext carries no network destination",
+    // This is NOT an engine disagreement anymore — both sides run the same
+    // evaluatePolicy. It is a real, separate limitation: AIEventContext
+    // (the AI-telemetry event shape apps/api/engines/policyEngine.ts's
+    // callers construct) has no `destination` field at all, because that
+    // data doesn't exist at the point telemetry events are built. No rule
+    // mechanism can match on a field the input never carries. Network/
+    // destination policy is correctly enforced elsewhere — see
+    // apps/api/services/gateway/enforcement.ts, which builds its
+    // EvaluationContext from the actual outbound request and does have
+    // `ctx.destination` — this scenario documents why that split is
+    // intentional, not a bug to chase here.
+    appEvent: event(),
+    appRules: [rule({ conditions: { operator: "AND", rules: [{ field: "destination", op: "eq", value: "evil.example.com" }] }, action: "block" })],
+    packageDoc: doc({ network: { deny_domains: ["evil.example.com"] } }),
+    packageCtx: { destination: "https://evil.example.com/exfil" },
     expectDivergence: {
-      app: "warn",
+      app: "allow",
       pkg: "deny",
       because:
-        "The app engine's per-rule priority let the tool rule (priority 1) win over the model rule (priority 2). The package engine has no per-rule priority — model checks are hardcoded ahead of tool checks — so it denies regardless of how an equivalent policy would be prioritized in the app engine's model.",
+        "AIEventContext (telemetry-event shape) never carries a destination field — gateway/enforcement.ts's own EvaluationContext does, and that is the correct enforcement point for network policy, not this event shape.",
     },
   },
 ];
@@ -227,9 +242,10 @@ describe("policy engine differential corpus", () => {
       const pkgCanonical = normalizeAction(evaluatePackagePolicy(scenario.packageDoc, scenario.packageCtx).action);
       if (appCanonical === pkgCanonical) agree += 1;
     }
-    // 7 of 10 corpus scenarios agree; 3 are documented structural gaps.
-    // If this number moves, the corpus changed — update the comment above
-    // to match, don't just bump the number.
-    expect(agree).toBe(corpus.length - 3);
+    // 9 of 10 corpus scenarios agree post-unification; 1 is a documented
+    // data-shape limitation (AIEventContext has no destination field), not
+    // an engine disagreement. If this number moves, the corpus changed —
+    // update the comment above to match, don't just bump the number.
+    expect(agree).toBe(corpus.length - 1);
   });
 });

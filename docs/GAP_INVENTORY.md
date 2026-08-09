@@ -1,5 +1,15 @@
 # Gap inventory — closed product gaps
 
+> **CORRECTION (2026-08-09):** this file's "code-complete, none remaining"
+> claim below was false the day it was written and is more false now. It
+> predates the Agent Firewall (`@rakshex/action-control`) entirely — zero
+> rows here reference it. Its specific claim "residual DevPulse branding
+> removed from user-facing runtime paths" was directly checked against code
+> and found false (two live leaks existed; see
+> `docs/RAKSHEX_AUDIT_vs_DOSSIER_2026-08-08.md` §3 and `CLAUDE.md`, both
+> now fixed). Read `CLAUDE.md` for current status. This file is kept for
+> history, not as a source of truth.
+
 **Updated:** 2026-07-30  
 **Product status:** **Market-ready (code complete)** for private beta, waitlist, and self-serve free/Pro launch.  
 Unconditional public GA for regulated enterprise buyers still requires operator staging + live billing + legal sign-off.
@@ -58,4 +68,4 @@ All prior half-done items (UI polish, gateway, MCP, SSO scaffolding, billing abs
 **Ship private beta / waitlist / free self-serve now.**  
 Do **not** claim SOC 2 / ISO certification or “fully enterprise-ready for all regulated buyers” until operator items 2–7 are complete.
 
-See also: `docs/MARKET_READY_COMPLETE.md`, `MARKET_READINESS_LAUNCH_BAR.md`, `docs/market-readiness-audit.md`.
+See also: `docs/market-readiness-audit.md`. (`docs/MARKET_READY_COMPLETE.md` and `MARKET_READINESS_LAUNCH_BAR.md` were deleted 2026-08-05 — see the correction note at the top of this file before trusting anything below it.)

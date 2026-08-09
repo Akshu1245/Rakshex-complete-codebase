@@ -90,4 +90,4 @@ pnpm market:check
 6. Optional: Sentry, uptime, named on-call.
 7. Legal entity / GST / grievance officer (`docs/operations/LEGAL_LAUNCH_SIGNOFF.md`) before paid public orders.
 
-See: `docs/MARKET_READY_COMPLETE.md`, `docs/GAP_INVENTORY.md`, `docs/FEATURE_MATURITY.md`, `docs/LAUNCH_GAP_REGISTER.md`.
+See: `docs/GAP_INVENTORY.md` and `docs/FEATURE_MATURITY.md` (both stale — see their header notes), `docs/LAUNCH_GAP_REGISTER.md`, and `CLAUDE.md` for current status. `docs/MARKET_READY_COMPLETE.md` was deleted 2026-08-05.

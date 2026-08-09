@@ -46,4 +46,4 @@ Mark items only after you have run them against the deployed staging stack.
 | Ops / SRE   |      |      |       |
 | GTM / Sales |      |      |       |
 
-Related: [DEPLOY_RAILWAY_VERCEL.md](./DEPLOY_RAILWAY_VERCEL.md), [BETA_OPS_CHECKLIST.md](./BETA_OPS_CHECKLIST.md), [MARKET_READINESS_LAUNCH_BAR.md](../MARKET_READINESS_LAUNCH_BAR.md), [FEATURE_MATURITY.md](./FEATURE_MATURITY.md).
+Related: [DEPLOY_RAILWAY_VERCEL.md](./DEPLOY_RAILWAY_VERCEL.md), [BETA_OPS_CHECKLIST.md](./BETA_OPS_CHECKLIST.md), [FEATURE_MATURITY.md](./FEATURE_MATURITY.md) (stale, see its own header note). `MARKET_READINESS_LAUNCH_BAR.md` was deleted 2026-08-05; `CLAUDE.md` is the current status doc.

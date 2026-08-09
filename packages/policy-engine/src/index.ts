@@ -1,13 +1,16 @@
 export type {
   AgentPolicy,
   CompiledPolicy,
+  ConditionOp,
   DataPolicy,
   DecisionAction,
   EvaluationContext,
+  GenericRule,
   ModelsPolicy,
   NetworkPolicy,
   PolicyDecision,
   PolicyDocument,
+  RuleCondition,
   ToolsPolicy,
 } from "./types.js";
 

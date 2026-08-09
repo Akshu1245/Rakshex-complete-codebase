@@ -60,4 +60,4 @@
 Marketing claims allowed: “AI runtime governance — prompt injection blocking, LLM cost control, shadow API discovery, policy-as-code, AgentGuard SDKs, kill switch.”  
 Marketing claims **not** allowed until operator complete: “SOC 2 certified”, “enterprise production-ready for all regulated industries”, “fully live paid checkout proven”.
 
-Full declaration: `docs/MARKET_READY_COMPLETE.md`.
+Full declaration: `docs/MARKET_READY_COMPLETE.md` was deleted 2026-08-05 (see CLAUDE.md's account of the doc purge — it asserted "code-complete" claims that were false while the build didn't typecheck). `CLAUDE.md` is the current single status doc; read that instead.
