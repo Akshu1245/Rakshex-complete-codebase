@@ -22,6 +22,7 @@ import {
 const CONFIG_DIR = join(homedir(), ".rakshex");
 const CONFIG_PATH = join(CONFIG_DIR, "config.json");
 const BASELINE_PATH = join(CONFIG_DIR, "baseline.json");
+const DEFAULT_API_URL = "https://api.rakshex.in";
 
 type OutputFormat = "terminal" | "json" | "sarif";
 
@@ -76,11 +77,18 @@ function printHelp(): void {
 Usage:
   rakshex login --api-key <key> [--api-url <url>]
   rakshex configure --fail-on Critical,High [--ignore-rules id1,id2]
-  rakshex scan <file-or-dir> [--format terminal|json|sarif] [--changed-only] [--baseline] [--offline]
+  rakshex scan <file-or-dir> [--format terminal|json|sarif] [--changed-only] [--baseline] [--upload]
   rakshex policy check <file> [--format json]
   rakshex report <file> [--format sarif|json]
   rakshex doctor
   rakshex rules
+
+Scanning is always local and offline — no network call, no data leaves this
+machine, by default. Pass --upload (requires a prior 'rakshex login') to also
+report this scan's findings to your Rakshex workspace dashboard. Uploading is
+never automatic just because a key is configured; it must be requested on
+every invocation that should transmit data. A failed upload never changes the
+scan's own exit code — offline scanning stays authoritative for CI gating.
 
 Exit codes (scan):
   0  clean / below threshold
@@ -199,6 +207,50 @@ function printTerminal(findings: RuleFinding[], score: number, level: string): v
   }
 }
 
+/**
+ * Report a scan's findings to the workspace dashboard via the existing
+ * CI-scan REST endpoint (POST /api/github/scan — the same route the GitHub
+ * Action integration uses, so this reuses a real, already-authenticated,
+ * already-audited server path instead of inventing a parallel one).
+ *
+ * Deliberately opt-in per invocation (--upload), not automatic just because
+ * a key is stored: this is a security tool, and an API spec can itself be
+ * sensitive. A failed or skipped upload never changes the caller's exit
+ * code — offline scanning is the source of truth for CI gating; uploading
+ * is a best-effort side report on top of it.
+ */
+async function maybeUploadScan(
+  cfg: CliConfig,
+  requested: boolean,
+  file: string,
+  collection: unknown,
+): Promise<void> {
+  if (!requested) return;
+  if (!cfg.apiKey) {
+    console.warn("--upload requested but no API key configured. Run: rakshex login --api-key <key>");
+    return;
+  }
+  const base = (cfg.apiUrl ?? DEFAULT_API_URL).replace(/\/$/, "");
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15_000);
+    const res = await fetch(`${base}/api/github/scan`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-api-key": cfg.apiKey },
+      body: JSON.stringify({ collection }),
+      signal: controller.signal,
+    }).finally(() => clearTimeout(timeout));
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      console.warn(`Upload failed for ${file}: HTTP ${res.status} ${body.slice(0, 200)}`);
+      return;
+    }
+    console.log(`Uploaded ${file} to ${base} (visible in your Rakshex dashboard).`);
+  } catch (err) {
+    console.warn(`Upload failed for ${file}: ${(err as Error).message}`);
+  }
+}
+
 function severityRank(s: string): number {
   return { Critical: 4, High: 3, Medium: 2, Low: 1 }[s] ?? 0;
 }
@@ -244,16 +296,20 @@ function cmdConfigure(flags: Record<string, string | boolean>): number {
   return 0;
 }
 
-function cmdScan(positional: string[], flags: Record<string, string | boolean>): number {
+async function cmdScan(
+  positional: string[],
+  flags: Record<string, string | boolean>,
+): Promise<number> {
   const target = positional[0];
   if (!target) {
-    console.error("Usage: rakshex scan <file-or-dir> [--format terminal|json|sarif]");
+    console.error("Usage: rakshex scan <file-or-dir> [--format terminal|json|sarif] [--upload]");
     return 2;
   }
   const format = (String(flags.format ?? "terminal") as OutputFormat) || "terminal";
   const cfg = loadConfig();
   const failOn = cfg.failOn ?? ["Critical", "High"];
   const ignore = new Set(cfg.ignoreRules ?? []);
+  const upload = Boolean(flags.upload);
 
   let all: RuleFinding[] = [];
   const files = collectScanTargets(target, Boolean(flags["changed-only"]));
@@ -262,15 +318,18 @@ function cmdScan(positional: string[], flags: Record<string, string | boolean>):
     return 2;
   }
 
+  const uploads: Array<Promise<void>> = [];
   for (const file of files) {
     try {
       const data = loadCollection(file);
       const result = runScan(data);
       all.push(...result.findings.filter((f) => !ignore.has(f.ruleId)));
+      if (upload) uploads.push(maybeUploadScan(cfg, upload, file, data));
     } catch (err) {
       console.error(`Skip ${file}: ${(err as Error).message}`);
     }
   }
+  if (uploads.length > 0) await Promise.all(uploads);
 
   // Dedupe by fingerprint
   const byFp = new Map<string, RuleFinding>();
@@ -344,15 +403,23 @@ function cmdPolicy(positional: string[], flags: Record<string, string | boolean>
   return result.passed ? 0 : 1;
 }
 
-function cmdReport(positional: string[], flags: Record<string, string | boolean>): number {
+function cmdReport(
+  positional: string[],
+  flags: Record<string, string | boolean>,
+): Promise<number> {
   return cmdScan(positional, { ...flags, format: flags.format ?? "sarif" });
 }
 
 function cmdDoctor(): number {
   const issues: string[] = [];
   const cfg = loadConfig();
-  if (!cfg.apiKey)
-    issues.push("No API key (run: rakshex login --api-key …) — offline scan still works");
+  if (!cfg.apiKey) {
+    issues.push(
+      "No API key configured — offline scan still works; run 'rakshex login --api-key …' to enable 'scan --upload'",
+    );
+  } else {
+    console.log(`API key: configured (upload target: ${cfg.apiUrl ?? DEFAULT_API_URL})`);
+  }
   try {
     listRuleIds();
   } catch {
@@ -370,43 +437,42 @@ function cmdDoctor(): number {
   return 0;
 }
 
-const { cmd, flags, positional } = parseArgs(process.argv.slice(2));
+async function main(): Promise<number> {
+  const { cmd, flags, positional } = parseArgs(process.argv.slice(2));
 
-let code = 0;
-switch (cmd) {
-  case "login":
-    code = cmdLogin(flags);
-    break;
-  case "configure":
-  case "config":
-    code = cmdConfigure(flags);
-    break;
-  case "scan":
-    code = cmdScan(positional, flags);
-    break;
-  case "policy":
-    code = cmdPolicy(positional, flags);
-    break;
-  case "report":
-    code = cmdReport(positional, flags);
-    break;
-  case "doctor":
-    code = cmdDoctor();
-    break;
-  case "rules":
-    console.log(listRuleIds().join("\n"));
-    code = 0;
-    break;
-  case "help":
-  case "--help":
-  case "-h":
-    printHelp();
-    code = 0;
-    break;
-  default:
-    console.error(`Unknown command: ${cmd}`);
-    printHelp();
-    code = 2;
+  switch (cmd) {
+    case "login":
+      return cmdLogin(flags);
+    case "configure":
+    case "config":
+      return cmdConfigure(flags);
+    case "scan":
+      return cmdScan(positional, flags);
+    case "policy":
+      return cmdPolicy(positional, flags);
+    case "report":
+      return cmdReport(positional, flags);
+    case "doctor":
+      return cmdDoctor();
+    case "rules":
+      console.log(listRuleIds().join("\n"));
+      return 0;
+    case "help":
+    case "--help":
+    case "-h":
+      printHelp();
+      return 0;
+    default:
+      console.error(`Unknown command: ${cmd}`);
+      printHelp();
+      return 2;
+  }
 }
 
-process.exit(code);
+main().then(
+  (code) => process.exit(code),
+  (err) => {
+    console.error(`rakshex: fatal: ${(err as Error).message}`);
+    process.exit(2);
+  },
+);

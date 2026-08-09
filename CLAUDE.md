@@ -158,6 +158,38 @@ Confirmed this test actually catches the bug by reverting the fix locally
 and re-running: 12/13 pass with a `FORBIDDEN` failure on exactly this test;
 13/13 pass with the fix restored. Full `apps/api` typecheck: 0 errors.
 
+### CLI `login`/`--api-url` were dead config — fixed 2026-08-09
+
+`apps/cli/src/index.ts`'s `login` command persisted `apiKey`/`apiUrl` to
+`~/.rakshex/config.json`, but nothing in the file ever read them back — the
+CLI's `scan`/`report`/`policy` commands run entirely offline through
+`@rakshex/scanner-core`, and no `fetch(` call existed anywhere in the file.
+The stored credential did nothing; `rakshex login` was cosmetic. The CLI's
+own `doctor` command was honest about this ("offline scan still works"),
+so it wasn't concealed, but it was still misleading: a security CLI that
+lets you "log in" and silently does nothing with it is a real gap for a
+product being pushed toward market.
+
+Fixed by adding an explicit, opt-in `scan --upload` flag that POSTs the
+scanned collection to the **existing** `/api/github/scan` REST route (the
+same authenticated endpoint the GitHub Action integration already uses —
+no new server surface invented) via `x-api-key`. Deliberately **not**
+automatic just because a key is configured: an API spec can itself be
+sensitive, so upload must be requested on every invocation. A failed or
+declined upload never changes the scan's exit code — offline scanning
+stays authoritative for CI gating; uploading is a best-effort side report
+layered on top. `doctor` now also reports the configured upload target
+when a key is present, instead of only ever mentioning the offline path.
+
+Verified by execution against a real local HTTP server, not assumed:
+offline `scan` (exit code governed only by findings) unaffected;
+`scan --upload` with no key configured warns and still exits correctly;
+`scan --upload` against an unreachable server warns without changing the
+exit code; `scan --upload` against a live mock server sends the exact
+`{"collection": <parsed file>}` body with the right `x-api-key` header and
+receives a 200. `apps/cli` typecheck: 0 errors. Existing `cli.test.ts`:
+2/2 pass, unmodified.
+
 ### Missing DB functions implemented (`apps/api/db.ts`)
 
 `getAuditLogForUserPage`, `getScansPageByCollectionId`, `saveScanWithFindings`,
