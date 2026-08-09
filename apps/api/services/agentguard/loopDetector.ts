@@ -1,7 +1,7 @@
 /**
  * AgentGuard autonomous loop / rate anomaly detector.
  *
- * Detects the runaway-agent failure mode described in the DevPulse AgentGuard
+ * Detects the runaway-agent failure mode described in the Rakshex AgentGuard
  * design: an AI agent stuck in an infinite reasoning loop that fires rapid LLM
  * calls (often with the same prompt) and burns budget. It uses a fixed-window
  * counter keyed per (workspace, agent):

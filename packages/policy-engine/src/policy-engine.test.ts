@@ -104,6 +104,78 @@ describe("evaluatePolicy", () => {
   });
 });
 
+describe("generic `rules` — the authoring path formerly unique to the app engine", () => {
+  // Regression coverage for docs/POLICY_ENGINE_UNIFICATION.md's "second item,
+  // not yet verified": a dashboard/YAML-authored PolicyDocument must be able
+  // to express threat-level and per-rule priority, not just the older
+  // structured agent/models/tools/network/data fields.
+  const YAML_WITH_RULES = `
+version: 1
+name: threat-level-and-priority-example
+rules:
+  - ruleId: block-critical-threat
+    priority: 1
+    action: deny
+    conditions:
+      operator: AND
+      rules:
+        - field: threatLevel
+          op: gte
+          value: high
+  - ruleId: tool-alert-outranks-model-deny
+    priority: 2
+    action: warn
+    conditions:
+      operator: AND
+      rules:
+        - field: toolName
+          op: eq
+          value: read_only.lookup
+models:
+  deny:
+    - gpt-3.5-untrusted
+`;
+
+  it("parses a `rules` block from YAML", () => {
+    const doc = parsePolicy(YAML_WITH_RULES);
+    expect(doc.rules).toHaveLength(2);
+    expect(doc.rules?.[0]).toMatchObject({ ruleId: "block-critical-threat", priority: 1, action: "deny" });
+  });
+
+  it("evaluates a threat-level rule authored via YAML (was unrepresentable before unification)", () => {
+    const doc = parsePolicy(YAML_WITH_RULES);
+    const decision = evaluatePolicy(doc, { threatLevel: "critical" });
+    expect(decision.action).toBe("deny");
+    expect(decision.matchedRules).toEqual(["block-critical-threat"]);
+  });
+
+  it("lets a `rules` priority outrank the structured `models.deny` category (was unrepresentable before unification)", () => {
+    const doc = parsePolicy(YAML_WITH_RULES);
+    const decision = evaluatePolicy(doc, {
+      model: "gpt-3.5-untrusted",
+      toolName: "read_only.lookup",
+      threatLevel: "none",
+    });
+    // Priority 2 rule (tool-alert, "warn") is evaluated before the
+    // structured models.deny check ever runs, because `rules` always run
+    // first. This is the exact scenario the differential test's former
+    // "cross-category precedence" gap described.
+    expect(decision.action).toBe("warn");
+  });
+
+  it("rejects a malformed `rules` entry instead of silently dropping it", () => {
+    const bad = `
+version: 1
+rules:
+  - ruleId: r1
+    priority: 1
+    action: nonsense
+    conditions: { operator: AND, rules: [] }
+`;
+    expect(() => parsePolicy(bad)).toThrow(PolicyParseError);
+  });
+});
+
 describe("policy lifecycle", () => {
   it("rejects invalid policies", () => {
     const bad = validatePolicyYaml("version: 99\n");

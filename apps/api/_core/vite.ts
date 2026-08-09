@@ -30,7 +30,7 @@ export async function setupVite(app: Express, server: Server) {
       const clientTemplate = path.resolve(import.meta.dirname, "../..", "client", "index.html");
 
       // Guard: the project no longer uses a Vite SPA in client/. The product
-      // UI lives in the separate Next.js app under devpulse-frontend/.
+      // UI lives in the separate Next.js app under apps/web/.
       if (!fs.existsSync(clientTemplate)) {
         if (process.env.NODE_ENV !== "production") {
           res.redirect(302, `http://localhost:3001${url}`);

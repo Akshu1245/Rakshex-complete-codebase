@@ -25,10 +25,7 @@
     "**/.next",
     "**/node_modules",
     "**/out",
-    "devpulse-frontend",
-    "devpulse-vscode",
     "vscode-extension",
-    "web-demo",
-    "backend"
+    "web-demo"
   ]
 }

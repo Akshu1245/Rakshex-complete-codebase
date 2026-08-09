@@ -1,7 +1,7 @@
 /**
  * SSRF protection for user-supplied scan targets.
  *
- * DevPulse must never be tricked into making requests to internal/link-local
+ * Rakshex must never be tricked into making requests to internal/link-local
  * addresses (Redis, cloud metadata, private ranges). This validates a target
  * URL both by literal host and by DNS resolution before any fetch.
  */

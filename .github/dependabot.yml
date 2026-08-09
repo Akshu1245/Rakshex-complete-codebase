@@ -14,7 +14,7 @@ updates:
       include: "scope"
 
   - package-ecosystem: "npm"
-    directory: "/devpulse-frontend"
+    directory: "/apps/web"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
@@ -23,7 +23,7 @@ updates:
       - "frontend"
 
   - package-ecosystem: "npm"
-    directory: "/devpulse-vscode"
+    directory: "/apps/vscode-extension"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5

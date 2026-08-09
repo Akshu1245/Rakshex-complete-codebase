@@ -1,5 +1,5 @@
 import { parse as parseYaml, YAMLParseError } from "yaml";
-import type { PolicyDocument } from "./types.js";
+import type { ConditionOp, DecisionAction, GenericRule, PolicyDocument } from "./types.js";
 
 export class PolicyParseError extends Error {
   constructor(
@@ -124,5 +124,80 @@ export function parsePolicy(input: string | unknown): PolicyDocument {
     };
   }
 
+  if (obj.rules !== undefined) {
+    doc.rules = asGenericRules(obj.rules, "rules");
+  }
+
   return doc;
+}
+
+const VALID_OPS = new Set([
+  "eq",
+  "in",
+  "not_in",
+  "gt",
+  "lt",
+  "gte",
+  "lte",
+  "regex",
+  "keyword",
+  "between",
+]);
+const VALID_ACTIONS = new Set(["allow", "deny", "require_approval", "redact", "warn"]);
+
+function asGenericRules(value: unknown, path: string): GenericRule[] {
+  if (!Array.isArray(value)) {
+    throw new PolicyParseError(`Expected array at ${path}`);
+  }
+  return value.map((raw, i) => {
+    if (!raw || typeof raw !== "object") {
+      throw new PolicyParseError(`Expected object at ${path}[${i}]`);
+    }
+    const r = raw as Record<string, unknown>;
+    if (typeof r.ruleId !== "string" || !r.ruleId) {
+      throw new PolicyParseError(`Expected non-empty string at ${path}[${i}].ruleId`);
+    }
+    if (typeof r.priority !== "number") {
+      throw new PolicyParseError(`Expected number at ${path}[${i}].priority`);
+    }
+    if (typeof r.action !== "string" || !VALID_ACTIONS.has(r.action)) {
+      throw new PolicyParseError(
+        `Expected one of allow|deny|require_approval|redact|warn at ${path}[${i}].action`,
+      );
+    }
+    const cond = r.conditions as Record<string, unknown> | undefined;
+    if (!cond || (cond.operator !== "AND" && cond.operator !== "OR") || !Array.isArray(cond.rules)) {
+      throw new PolicyParseError(
+        `Expected { operator: "AND"|"OR", rules: [...] } at ${path}[${i}].conditions`,
+      );
+    }
+    const conditions = cond.rules.map((c, j) => {
+      if (!c || typeof c !== "object") {
+        throw new PolicyParseError(`Expected object at ${path}[${i}].conditions.rules[${j}]`);
+      }
+      const cc = c as Record<string, unknown>;
+      if (typeof cc.field !== "string" || !cc.field) {
+        throw new PolicyParseError(`Expected non-empty string at ${path}[${i}].conditions.rules[${j}].field`);
+      }
+      if (typeof cc.op !== "string" || !VALID_OPS.has(cc.op)) {
+        throw new PolicyParseError(`Invalid op at ${path}[${i}].conditions.rules[${j}].op`);
+      }
+      if (cc.value === undefined) {
+        throw new PolicyParseError(`Missing value at ${path}[${i}].conditions.rules[${j}].value`);
+      }
+      return {
+        field: cc.field,
+        op: cc.op as ConditionOp,
+        value: cc.value as string | string[] | number | [number, number],
+      };
+    });
+    return {
+      ruleId: r.ruleId,
+      name: typeof r.name === "string" ? r.name : undefined,
+      priority: r.priority,
+      enabled: typeof r.enabled === "boolean" ? r.enabled : true,
+      conditions: { operator: cond.operator as "AND" | "OR", rules: conditions },
+      action: r.action as DecisionAction,
+    };
+  });
 }
