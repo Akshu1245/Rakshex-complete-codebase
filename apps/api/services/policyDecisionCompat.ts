@@ -30,13 +30,7 @@
 
 /** Every action either engine can emit. */
 export type AnyPolicyAction =
-  | "allow"
-  | "block"
-  | "deny"
-  | "redact"
-  | "alert_only"
-  | "warn"
-  | "require_approval";
+  "allow" | "block" | "deny" | "redact" | "alert_only" | "warn" | "require_approval";
 
 /** The canonical vocabulary, chosen to match @rakshex/policy-engine. */
 export type CanonicalPolicyAction = "allow" | "deny" | "redact" | "warn" | "require_approval";

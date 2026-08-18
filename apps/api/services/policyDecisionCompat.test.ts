@@ -21,22 +21,10 @@ import {
 } from "./policyDecisionCompat";
 
 // Mirrored from apps/api/engines/policyEngine.ts (PolicyAction).
-const APP_ENGINE_ACTIONS = [
-  "allow",
-  "block",
-  "redact",
-  "alert_only",
-  "require_approval",
-] as const;
+const APP_ENGINE_ACTIONS = ["allow", "block", "redact", "alert_only", "require_approval"] as const;
 
 // Mirrored from @rakshex/policy-engine (DecisionAction).
-const PACKAGE_ENGINE_ACTIONS = [
-  "allow",
-  "deny",
-  "require_approval",
-  "redact",
-  "warn",
-] as const;
+const PACKAGE_ENGINE_ACTIONS = ["allow", "deny", "require_approval", "redact", "warn"] as const;
 
 describe("policy engine vocabularies", () => {
   it("every app-engine action is mapped", () => {

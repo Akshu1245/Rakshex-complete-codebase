@@ -16,15 +16,15 @@ Canonical monorepo architecture for Rakshex. Prefer this document over outdated 
 
 ## Packages
 
-| Package                      | Responsibility                 |
-| ---------------------------- | ------------------------------ |
-| `@rakshex/database`          | Schema, migrations, seed       |
-| `@rakshex/scanner-core`      | Deterministic findings         |
-| `@rakshex/policy-engine`     | YAML policy evaluate/lifecycle |
-| `@rakshex/pricing-engine`    | Versioned cost calculation     |
+| Package                      | Responsibility                                                |
+| ---------------------------- | ------------------------------------------------------------- |
+| `@rakshex/database`          | Schema, migrations, seed                                      |
+| `@rakshex/scanner-core`      | Deterministic findings                                        |
+| `@rakshex/policy-engine`     | YAML policy evaluate/lifecycle                                |
+| `@rakshex/pricing-engine`    | Versioned cost calculation                                    |
 | `@rakshex/sdk`               | Client telemetry/privacy (AgentGuard) + Agent Firewall client |
-| `@rakshex/mcp-security`      | MCP risk scoring               |
-| `@rakshex/compliance-engine` | Control catalog / reports      |
+| `@rakshex/mcp-security`      | MCP risk scoring                                              |
+| `@rakshex/compliance-engine` | Control catalog / reports                                     |
 
 ## Apps
 

@@ -58,7 +58,7 @@ export function severityFor(row: {
     case "FREEZE":
       return "critical";
     case "DENY":
-// An enforced denial is the headline event for a SOC.
+      // An enforced denial is the headline event for a SOC.
       return "high";
     case "APPROVAL_REQUIRED":
     case "PAUSE":

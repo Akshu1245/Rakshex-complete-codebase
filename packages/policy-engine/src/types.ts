@@ -38,16 +38,7 @@ export interface NetworkPolicy {
 export type DecisionAction = "allow" | "deny" | "require_approval" | "redact" | "warn";
 
 export type ConditionOp =
-  | "eq"
-  | "in"
-  | "not_in"
-  | "gt"
-  | "lt"
-  | "gte"
-  | "lte"
-  | "regex"
-  | "keyword"
-  | "between";
+  "eq" | "in" | "not_in" | "gt" | "lt" | "gte" | "lte" | "regex" | "keyword" | "between";
 
 /**
  * A single field/operator/value condition, evaluated against an

@@ -166,7 +166,11 @@ function asGenericRules(value: unknown, path: string): GenericRule[] {
       );
     }
     const cond = r.conditions as Record<string, unknown> | undefined;
-    if (!cond || (cond.operator !== "AND" && cond.operator !== "OR") || !Array.isArray(cond.rules)) {
+    if (
+      !cond ||
+      (cond.operator !== "AND" && cond.operator !== "OR") ||
+      !Array.isArray(cond.rules)
+    ) {
       throw new PolicyParseError(
         `Expected { operator: "AND"|"OR", rules: [...] } at ${path}[${i}].conditions`,
       );
@@ -177,7 +181,9 @@ function asGenericRules(value: unknown, path: string): GenericRule[] {
       }
       const cc = c as Record<string, unknown>;
       if (typeof cc.field !== "string" || !cc.field) {
-        throw new PolicyParseError(`Expected non-empty string at ${path}[${i}].conditions.rules[${j}].field`);
+        throw new PolicyParseError(
+          `Expected non-empty string at ${path}[${i}].conditions.rules[${j}].field`,
+        );
       }
       if (typeof cc.op !== "string" || !VALID_OPS.has(cc.op)) {
         throw new PolicyParseError(`Invalid op at ${path}[${i}].conditions.rules[${j}].op`);
