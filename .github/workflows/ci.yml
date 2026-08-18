@@ -19,7 +19,7 @@ permissions:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: akshu1245/rakshex
-  NODE_VERSION: "22"
+  NODE_VERSION: "24"
   HUSKY: "0"
 
 # Fail-fast policy: critical jobs never use continue-on-error.

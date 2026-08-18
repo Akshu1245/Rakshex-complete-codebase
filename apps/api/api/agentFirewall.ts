@@ -991,32 +991,30 @@ export const agentFirewallRouter = router({
    * a call made on its behalf.
    */
   credentials: router({
-    list: protectedProcedure
-      .input(workspaceInput)
-      .query(async ({ ctx, input }) => {
-        await requireWorkspaceMembership(input.workspaceId, ctx.user.id);
-        const database = requireDb(await db.getDb());
-        // Note the explicit column list: secretCiphertext must never be
-        // selected into an API response, so we do not `select()` the row.
-        const rows = await database
-          .select({
-            id: brokeredCredentials.id,
-            name: brokeredCredentials.name,
-            provider: brokeredCredentials.provider,
-            allowedActions: brokeredCredentials.allowedActions,
-            allowedOrigin: brokeredCredentials.allowedOrigin,
-            injection: brokeredCredentials.injection,
-            headerName: brokeredCredentials.headerName,
-            status: brokeredCredentials.status,
-            createdAt: brokeredCredentials.createdAt,
-            revokedAt: brokeredCredentials.revokedAt,
-            lastUsedAt: brokeredCredentials.lastUsedAt,
-          })
-          .from(brokeredCredentials)
-          .where(eq(brokeredCredentials.workspaceId, input.workspaceId))
-          .orderBy(desc(brokeredCredentials.createdAt));
-        return { credentials: rows };
-      }),
+    list: protectedProcedure.input(workspaceInput).query(async ({ ctx, input }) => {
+      await requireWorkspaceMembership(input.workspaceId, ctx.user.id);
+      const database = requireDb(await db.getDb());
+      // Note the explicit column list: secretCiphertext must never be
+      // selected into an API response, so we do not `select()` the row.
+      const rows = await database
+        .select({
+          id: brokeredCredentials.id,
+          name: brokeredCredentials.name,
+          provider: brokeredCredentials.provider,
+          allowedActions: brokeredCredentials.allowedActions,
+          allowedOrigin: brokeredCredentials.allowedOrigin,
+          injection: brokeredCredentials.injection,
+          headerName: brokeredCredentials.headerName,
+          status: brokeredCredentials.status,
+          createdAt: brokeredCredentials.createdAt,
+          revokedAt: brokeredCredentials.revokedAt,
+          lastUsedAt: brokeredCredentials.lastUsedAt,
+        })
+        .from(brokeredCredentials)
+        .where(eq(brokeredCredentials.workspaceId, input.workspaceId))
+        .orderBy(desc(brokeredCredentials.createdAt));
+      return { credentials: rows };
+    }),
 
     create: protectedProcedure
       .input(
@@ -1224,10 +1222,7 @@ export const agentFirewallRouter = router({
           });
         }
 
-        const secret = decryptSecret(
-          credentialRow!.secretCiphertext,
-          String(input.workspaceId),
-        );
+        const secret = decryptSecret(credentialRow!.secretCiphertext, String(input.workspaceId));
 
         try {
           const result = await executeBrokeredCall({

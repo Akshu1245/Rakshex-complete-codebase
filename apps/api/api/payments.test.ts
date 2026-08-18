@@ -100,9 +100,7 @@ vi.mock("../db", async () => ({
   getEffectivePlan: vi.fn(async (userId: number) => "free"),
   getTrialStatus: vi.fn(async (userId: number) => ({ active: false, remainingDays: 0 })),
   markWebhookEventProcessed: vi.fn(async () => true),
-  listWorkspacesForUser: vi.fn(async (userId: number) => [
-    { id: 1, ownerUserId: userId },
-  ]),
+  listWorkspacesForUser: vi.fn(async (userId: number) => [{ id: 1, ownerUserId: userId }]),
 }));
 
 vi.mock("../db/workspaceSeats", () => ({

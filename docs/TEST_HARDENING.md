@@ -21,13 +21,13 @@ pnpm --filter @rakshex/web exec playwright test
 
 Package vitest configs should fail CI on test failure. Meaningful coverage targets for new packages:
 
-| Package           | Target lines |
-| ----------------- | ------------ |
-| sdk (was agentguard-sdk) | ≥70%  |
-| policy-engine     | ≥80%         |
-| pricing-engine    | ≥80%         |
-| mcp-security      | ≥70%         |
-| compliance-engine | ≥70%         |
+| Package                  | Target lines |
+| ------------------------ | ------------ |
+| sdk (was agentguard-sdk) | ≥70%         |
+| policy-engine            | ≥80%         |
+| pricing-engine           | ≥80%         |
+| mcp-security             | ≥70%         |
+| compliance-engine        | ≥70%         |
 
 Do not add empty `expect(true)` tests to inflate coverage.
 

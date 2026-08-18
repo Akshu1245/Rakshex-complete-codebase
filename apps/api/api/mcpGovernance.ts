@@ -496,9 +496,16 @@ export const mcpGovernanceRouter = router({
         logSecurityEvent(
           "mcp_tool_invocation_blocked",
           { toolName: input.toolName, reason: result.error },
-          { userId: ctx.user.id, ip: ctx.req.ip, userAgent: ctx.req.headers["user-agent"] as string },
+          {
+            userId: ctx.user.id,
+            ip: ctx.req.ip,
+            userAgent: ctx.req.headers["user-agent"] as string,
+          },
         );
-        throw new TRPCError({ code: "FORBIDDEN", message: result.error ?? "Tool invocation blocked" });
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: result.error ?? "Tool invocation blocked",
+        });
       }
 
       return result;
