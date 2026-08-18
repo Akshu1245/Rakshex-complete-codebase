@@ -11,8 +11,8 @@ const INTERNAL_SERVICE_HEADER = "x-internal-service";
  * requirement). Never share a store across multiple limiters.
  */
 async function createStore(prefix: string): Promise<unknown | undefined> {
-  if (!process.env.REDIS_URL) {
-    logger.info(`[RateLimiter] No REDIS_URL — using in-memory store for ${prefix}`);
+  if (!process.env.REDIS_URL || process.env.USE_IN_MEMORY_REDIS === "true") {
+    logger.info(`[RateLimiter] No Redis backend configured — using in-memory store for ${prefix}`);
     return undefined;
   }
 
