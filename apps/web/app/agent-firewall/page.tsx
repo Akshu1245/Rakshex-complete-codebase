@@ -274,23 +274,36 @@ export default function AgentFirewallPage() {
     resolveApproval.error;
 
   return (
-    <main className="p-5 text-white md:p-8">
+    <main className="p-5 pb-16 text-white md:p-8">
       <div className="mx-auto max-w-7xl space-y-7">
-        <header className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">
-            Runtime authorization
-          </p>
-          <h1 className="text-3xl font-bold">Agent Firewall</h1>
-          <p className="max-w-3xl text-gray-400">
-            RaksHex identifies the agent, normalizes the requested business action, checks its
-            delegated authority and records the decision before a real system changes.
-          </p>
+        <header className="rounded-2xl border border-glass bg-surface-container-low/60 p-5 shadow-2xl shadow-black/10 md:p-7">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div className="space-y-2">
+              <p className="font-label-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-primary">
+                Runtime authorization
+              </p>
+              <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Agent Firewall</h1>
+              <p className="max-w-3xl text-sm leading-6 text-on-surface-variant md:text-base">
+                RaksHex identifies the agent, normalizes the requested business action, checks its
+                delegated authority and records the decision before a real system changes.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary-container/20 px-3 py-1.5 text-primary">
+                <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden="true" />
+                {workspace.name} workspace
+              </span>
+              <span className="rounded-full border border-glass bg-surface-base/60 px-3 py-1.5 text-on-surface-variant">
+                {activeAgent ? `${activeAgent.name} · ${activeAgent.mode}` : "No agent selected"}
+              </span>
+            </div>
+          </div>
         </header>
 
         <div
           role="tablist"
           aria-label="Agent Firewall workspace sections"
-          className="flex flex-wrap gap-2 rounded-xl border border-white/10 bg-black/20 p-1"
+          className="sticky top-20 z-20 flex flex-wrap gap-2 rounded-2xl border border-glass bg-surface-container-low/90 p-1.5 shadow-xl shadow-black/10 backdrop-blur-xl"
         >
           <button
             type="button"
@@ -298,7 +311,7 @@ export default function AgentFirewallPage() {
             aria-selected={activeView === "onboard"}
             aria-controls="agent-firewall-onboarding"
             onClick={() => showView("onboard")}
-            className={`rounded-lg px-4 py-2 text-sm font-semibold ${activeView === "onboard" ? "bg-emerald-400 text-black" : "text-gray-300 hover:bg-white/5"}`}
+            className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${activeView === "onboard" ? "bg-primary text-on-primary shadow-lg shadow-primary/20" : "text-on-surface-variant hover:bg-surface-base/70 hover:text-white"}`}
           >
             Five minute onboarding
           </button>
@@ -308,7 +321,7 @@ export default function AgentFirewallPage() {
             aria-selected={activeView === "operate"}
             aria-controls="agent-firewall-operate"
             onClick={() => showView("operate")}
-            className={`rounded-lg px-4 py-2 text-sm font-semibold ${activeView === "operate" ? "bg-emerald-400 text-black" : "text-gray-300 hover:bg-white/5"}`}
+            className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${activeView === "operate" ? "bg-primary text-on-primary shadow-lg shadow-primary/20" : "text-on-surface-variant hover:bg-surface-base/70 hover:text-white"}`}
           >
             Operational control plane
           </button>
@@ -316,7 +329,7 @@ export default function AgentFirewallPage() {
 
         <div
           role="note"
-          className="rounded-xl border border-amber-400/35 bg-amber-400/10 p-4 text-sm leading-6 text-amber-100"
+          className="rounded-2xl border border-status-warning/30 bg-status-warning/10 p-4 text-sm leading-6 text-status-warning shadow-lg shadow-status-warning/5"
         >
           <p className="font-semibold text-amber-50">Coverage warning</p>
           <p className="mt-1">
@@ -332,7 +345,7 @@ export default function AgentFirewallPage() {
             id="agent-firewall-onboarding"
             role="tabpanel"
             aria-label="Five minute onboarding"
-            className="rounded-xl border border-white/10 bg-white/[0.03] p-5"
+            className="rounded-2xl border border-glass bg-surface-container-low/70 p-5 shadow-xl shadow-black/10"
           >
             <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
               <div>
@@ -353,12 +366,12 @@ export default function AgentFirewallPage() {
               {onboardingSteps.map((step, index) => (
                 <li
                   key={step.label}
-                  className={`rounded-lg border p-4 ${step.complete ? "border-emerald-400/30 bg-emerald-400/10" : "border-white/10 bg-black/20"}`}
+                  className={`rounded-xl border p-4 transition-colors ${step.complete ? "border-primary/30 bg-primary/10" : "border-glass bg-surface-base/50 hover:border-primary/25 hover:bg-surface-container-low"}`}
                 >
                   <div className="flex items-center gap-2">
                     <span
                       aria-hidden="true"
-                      className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${step.complete ? "bg-emerald-400 text-black" : "bg-white/10 text-gray-300"}`}
+                      className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${step.complete ? "bg-primary text-on-primary" : "bg-surface-container-high text-on-surface-variant"}`}
                     >
                       {step.complete ? "✓" : index + 1}
                     </span>
@@ -391,8 +404,11 @@ export default function AgentFirewallPage() {
               "Start in Shadow mode, review would-block decisions, then enable enforcement.",
             ],
           ].map(([number, title, description]) => (
-            <article key={number} className="rounded-xl border border-white/10 bg-white/[0.03] p-5">
-              <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-400 text-sm font-bold text-black">
+            <article
+              key={number}
+              className="rounded-2xl border border-glass bg-surface-container-low/60 p-5 shadow-xl shadow-black/10 transition-colors hover:border-primary/25 hover:bg-surface-container-low"
+            >
+              <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary text-sm font-bold text-on-primary shadow-lg shadow-primary/20">
                 {number}
               </span>
               <h2 className="mt-4 font-semibold">{title}</h2>

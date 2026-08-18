@@ -96,8 +96,8 @@ textarea:focus,
 /* === Button Hover & Active === */
 button:hover,
 .btn-primary:hover {
-  transform: scale(1.02);
-  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(20, 184, 166, 0.16);
 }
 
 button:active,
@@ -109,7 +109,7 @@ button:active,
 .btn-secondary:hover {
   background-color: rgba(20, 184, 166, 0.1);
   border-color: #0d9488;
-  transform: scale(1.02);
+  transform: translateY(-1px);
 }
 
 .btn-tertiary:hover {
