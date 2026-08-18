@@ -53,6 +53,9 @@ export default function AppShell({ children }: { children: ReactNode }) {
     if (pathname.startsWith("/docs")) {
       return <>{children}</>;
     }
+    if (pathname.startsWith("/login")) {
+      return <>{children}</>;
+    }
     return (
       <>
         <PublicHeader />
