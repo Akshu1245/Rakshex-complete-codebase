@@ -105,7 +105,10 @@ export function originOf(rawUrl: string): string | null {
  * have us attach credentials to the request.
  */
 export function isPrivateHost(hostname: string): boolean {
-  const h = hostname.toLowerCase();
+  const h = hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  // IPv4 mapped IPv6 addresses can bypass a literal IPv4 prefix check unless
+  // the mapped suffix is evaluated with the same private range rules.
+  if (h.startsWith("::ffff:")) return isPrivateHost(h.slice("::ffff:".length));
   if (h === "" || h === "0.0.0.0" || h === "localhost" || h.endsWith(".localhost")) return true;
   if (h === "::1" || h === "0:0:0:0:0:0:0:1") return true;
   if (h.startsWith("fe80:") || h.startsWith("fc") || h.startsWith("fd")) return true;
@@ -295,9 +298,7 @@ export interface BrokerExecuteResult {
  * Performs the upstream call with the secret injected. Assumes authorization
  * has already passed — callers must not invoke this directly.
  */
-export async function executeBrokeredCall(
-  input: BrokerExecuteInput,
-): Promise<BrokerExecuteResult> {
+export async function executeBrokeredCall(input: BrokerExecuteInput): Promise<BrokerExecuteResult> {
   const started = Date.now();
   const doFetch = input.fetchImpl ?? globalThis.fetch;
   const { headers: forwarded, dropped } = sanitizeForwardHeaders(input.headers);

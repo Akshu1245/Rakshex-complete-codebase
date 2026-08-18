@@ -233,12 +233,13 @@ describe("isPrivateHost", () => {
     "172.31.255.255",
     "::1",
     "fd00::1",
+    "::ffff:127.0.0.1",
+    "::ffff:169.254.169.254",
     "0.0.0.0",
   ])("treats %s as private", (h) => expect(isPrivateHost(h)).toBe(true));
 
-  it.each(["api.stripe.com", "8.8.8.8", "172.32.0.1", "11.0.0.1"])(
-    "treats %s as public",
-    (h) => expect(isPrivateHost(h)).toBe(false),
+  it.each(["api.stripe.com", "8.8.8.8", "172.32.0.1", "11.0.0.1"])("treats %s as public", (h) =>
+    expect(isPrivateHost(h)).toBe(false),
   );
 });
 
@@ -265,7 +266,9 @@ describe("buildAuthHeader", () => {
 
   it("builds a basic header with an empty password", () => {
     const { value } = buildAuthHeader("basic", null, "fixture-basic-auth-secret");
-    expect(Buffer.from(value.replace("Basic ", ""), "base64").toString()).toBe("fixture-basic-auth-secret:");
+    expect(Buffer.from(value.replace("Basic ", ""), "base64").toString()).toBe(
+      "fixture-basic-auth-secret:",
+    );
   });
 
   it("builds a custom header, lowercased", () => {
@@ -289,9 +292,7 @@ describe("sanitizeForwardHeaders", () => {
       "Idempotency-Key": "abc",
     });
     expect(headers).toEqual({ "idempotency-key": "abc" });
-    expect(dropped).toEqual(
-      expect.arrayContaining(["authorization", "cookie", "x-forwarded-for"]),
-    );
+    expect(dropped).toEqual(expect.arrayContaining(["authorization", "cookie", "x-forwarded-for"]));
   });
 
   it("handles no headers", () => {
@@ -315,7 +316,10 @@ describe("sanitizeResponseHeaders", () => {
 
 describe("redactSecret", () => {
   it("redacts a credential echoed back by the provider", () => {
-    const out = redactSecret({ error: { message: "Invalid key fixture-echoed-secret-value" } }, "fixture-echoed-secret-value");
+    const out = redactSecret(
+      { error: { message: "Invalid key fixture-echoed-secret-value" } },
+      "fixture-echoed-secret-value",
+    );
     expect(JSON.stringify(out)).not.toContain("fixture-echoed-secret-value");
     expect(JSON.stringify(out)).toContain("[REDACTED]");
   });
