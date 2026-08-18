@@ -233,6 +233,8 @@ describe("isPrivateHost", () => {
     "172.31.255.255",
     "::1",
     "fd00::1",
+    "::ffff:127.0.0.1",
+    "::ffff:169.254.169.254",
     "0.0.0.0",
   ])("treats %s as private", (h) => expect(isPrivateHost(h)).toBe(true));
 
