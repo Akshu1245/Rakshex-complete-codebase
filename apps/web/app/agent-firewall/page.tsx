@@ -1,12 +1,58 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { trpc } from "@/lib/trpc";
 import { DecisionTrace } from "@/components/agent-firewall/DecisionTrace";
 import { LedgerTimeline } from "@/components/agent-firewall/LedgerTimeline";
 
 const DEFAULT_ACTIONS = ["financial.refund", "code.pr.create", "database.read", "mcp.*"];
+
+const CREDENTIAL_PROVIDER_PRESETS = {
+  razorpay: {
+    label: "Razorpay",
+    provider: "razorpay",
+    origin: "https://api.razorpay.com",
+    injection: "basic" as const,
+    headerName: "",
+    actions: "financial.refund",
+    secretPlaceholder: "key_id:key_secret",
+    help: "Use Basic auth with a restricted key for the pilot.",
+  },
+  stripe: {
+    label: "Stripe",
+    provider: "stripe",
+    origin: "https://api.stripe.com",
+    injection: "bearer" as const,
+    headerName: "",
+    actions: "financial.refund",
+    secretPlaceholder: "sk_live_…",
+    help: "Use a restricted Stripe key where possible.",
+  },
+  github: {
+    label: "GitHub",
+    provider: "github",
+    origin: "https://api.github.com",
+    injection: "bearer" as const,
+    headerName: "",
+    actions: "code.pr.create",
+    secretPlaceholder: "github_pat_…",
+    help: "Use a fine grained token scoped to the repositories the agent may touch.",
+  },
+  custom: {
+    label: "Custom HTTP API",
+    provider: "custom",
+    origin: "https://api.example.com",
+    injection: "header" as const,
+    headerName: "X-Api-Key",
+    actions: "mcp.*",
+    secretPlaceholder: "provider secret",
+    help: "Use Custom only when a preset does not match the provider.",
+  },
+};
+
+type CredentialProviderPreset = keyof typeof CREDENTIAL_PROVIDER_PRESETS;
+type AgentFirewallView = "onboard" | "operate";
 
 export default function AgentFirewallPage() {
   const { workspaceId, workspace, isLoading } = useWorkspace();
@@ -16,6 +62,11 @@ export default function AgentFirewallPage() {
     { enabled, retry: false },
   );
   const [selectedAgentId, setSelectedAgentId] = useState("");
+  const [activeView, setActiveView] = useState<AgentFirewallView>("onboard");
+  const [ledgerSearch, setLedgerSearch] = useState("");
+  const [ledgerDecision, setLedgerDecision] = useState<
+    "all" | "ALLOW" | "DENY" | "APPROVAL_REQUIRED"
+  >("all");
   const agentId = selectedAgentId || identities.data?.[0]?.id || "";
   const authorities = trpc.agentFirewall.authorities.list.useQuery(
     { workspaceId, agentId: agentId || undefined },
@@ -56,10 +107,94 @@ export default function AgentFirewallPage() {
     normalizedAction?: { name: string };
   } | null>(null);
 
+  const [credPreset, setCredPreset] = useState<CredentialProviderPreset>("razorpay");
   const activeAgent = useMemo(
     () => identities.data?.find((agent) => agent.id === agentId),
     [agentId, identities.data],
   );
+
+  const activeAuthority = authorities.data?.find((item) => item.status === "active");
+  const activeCredentials =
+    credentials.data?.credentials?.filter((credential) => credential.status === "active") ?? [];
+  const filteredLedgerRows = useMemo(() => {
+    const query = ledgerSearch.trim().toLowerCase();
+    return (ledger.data ?? []).filter((row) => {
+      const decisionMatches = ledgerDecision === "all" || row.decision === ledgerDecision;
+      const queryMatches =
+        !query ||
+        row.semanticAction.toLowerCase().includes(query) ||
+        (row.resource ?? "").toLowerCase().includes(query) ||
+        row.outcomeStatus.toLowerCase().includes(query) ||
+        row.id.toLowerCase().includes(query);
+      return decisionMatches && queryMatches;
+    });
+  }, [ledger.data, ledgerDecision, ledgerSearch]);
+
+  const onboardingSteps = [
+    {
+      label: "Agent registered",
+      complete: Boolean(agentId),
+      detail: activeAgent?.name ?? "Create or select an agent identity.",
+    },
+    {
+      label: "Authority delegated",
+      complete: Boolean(activeAuthority || capabilityToken),
+      detail:
+        activeAuthority || capabilityToken
+          ? "A scoped authority is available."
+          : "Create a scoped capability token.",
+    },
+    {
+      label: "Credential brokered",
+      complete: activeCredentials.length > 0,
+      detail:
+        activeCredentials.length > 0
+          ? `${activeCredentials.length} active credential(s).`
+          : "Store at least one provider credential.",
+    },
+    {
+      label: "Decision tested",
+      complete: Boolean(lastDecision || (ledger.data?.length ?? 0) > 0),
+      detail:
+        lastDecision || (ledger.data?.length ?? 0) > 0
+          ? "A decision is recorded in the ledger."
+          : "Evaluate a sample action before enforcing.",
+    },
+  ];
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.hash === "#operate")
+      setActiveView("operate");
+  }, []);
+
+  const showView = (view: AgentFirewallView) => {
+    setActiveView(view);
+    if (typeof window !== "undefined")
+      window.history.replaceState(null, "", view === "operate" ? "#operate" : "#onboard");
+  };
+
+  const switchAgentMode = () => {
+    if (!activeAgent) return;
+    const nextMode = activeAgent.mode === "shadow" ? "enforce" : "shadow";
+    if (nextMode === "enforce") {
+      const warning =
+        activeCredentials.length > 0
+          ? "Switch to Enforce? Confirm the agent no longer has raw provider credentials and sensitive calls are routed through the RaksHex broker."
+          : "No active brokered credentials are configured. Enforce mode can still be bypassed if the agent has raw provider keys or direct egress. Switch anyway?";
+      if (!window.confirm(warning)) return;
+    }
+    setMode.mutate({ workspaceId, agentId: activeAgent.id, mode: nextMode });
+  };
+
+  const applyCredentialPreset = (presetKey: CredentialProviderPreset) => {
+    const preset = CREDENTIAL_PROVIDER_PRESETS[presetKey];
+    setCredPreset(presetKey);
+    setCredProvider(preset.provider);
+    setCredOrigin(preset.origin);
+    setCredActions(preset.actions);
+    setCredInjection(preset.injection);
+    setCredHeaderName(preset.headerName);
+  };
 
   const refresh = async () => {
     await Promise.all([
@@ -103,11 +238,11 @@ export default function AgentFirewallPage() {
 
   // ── Brokered credentials ────────────────────────────────────────────────
   const [credName, setCredName] = useState("");
-  const [credProvider, setCredProvider] = useState("stripe");
+  const [credProvider, setCredProvider] = useState("razorpay");
   const [credSecret, setCredSecret] = useState("");
-  const [credOrigin, setCredOrigin] = useState("https://api.stripe.com");
+  const [credOrigin, setCredOrigin] = useState("https://api.razorpay.com");
   const [credActions, setCredActions] = useState("financial.refund");
-  const [credInjection, setCredInjection] = useState<"bearer" | "header" | "basic">("bearer");
+  const [credInjection, setCredInjection] = useState<"bearer" | "header" | "basic">("basic");
   const [credHeaderName, setCredHeaderName] = useState("");
   const createCredential = trpc.agentFirewall.credentials.create.useMutation({
     onSuccess: async () => {
@@ -152,7 +287,93 @@ export default function AgentFirewallPage() {
           </p>
         </header>
 
-        <section className="grid gap-3 md:grid-cols-3">
+        <div
+          role="tablist"
+          aria-label="Agent Firewall workspace sections"
+          className="flex flex-wrap gap-2 rounded-xl border border-white/10 bg-black/20 p-1"
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeView === "onboard"}
+            aria-controls="agent-firewall-onboarding"
+            onClick={() => showView("onboard")}
+            className={`rounded-lg px-4 py-2 text-sm font-semibold ${activeView === "onboard" ? "bg-emerald-400 text-black" : "text-gray-300 hover:bg-white/5"}`}
+          >
+            Five minute onboarding
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeView === "operate"}
+            aria-controls="agent-firewall-operate"
+            onClick={() => showView("operate")}
+            className={`rounded-lg px-4 py-2 text-sm font-semibold ${activeView === "operate" ? "bg-emerald-400 text-black" : "text-gray-300 hover:bg-white/5"}`}
+          >
+            Operational control plane
+          </button>
+        </div>
+
+        <div
+          role="note"
+          className="rounded-xl border border-amber-400/35 bg-amber-400/10 p-4 text-sm leading-6 text-amber-100"
+        >
+          <p className="font-semibold text-amber-50">Coverage warning</p>
+          <p className="mt-1">
+            Enforcement is only as strong as the protected path. A DENY blocks access when the
+            action is routed through a brokered RaksHex credential and the agent no longer has the
+            raw provider key. Direct provider keys, direct network egress, or unbrokered tools can
+            bypass the firewall.
+          </p>
+        </div>
+
+        {activeView === "onboard" && (
+          <section
+            id="agent-firewall-onboarding"
+            role="tabpanel"
+            aria-label="Five minute onboarding"
+            className="rounded-xl border border-white/10 bg-white/[0.03] p-5"
+          >
+            <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+              <div>
+                <h2 className="text-lg font-semibold">Five minute setup progress</h2>
+                <p className="mt-1 text-sm text-gray-400">
+                  Complete these in order. Stay in Shadow until broker coverage is verified.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => showView("operate")}
+                className="rounded-lg border border-white/15 px-4 py-2 text-sm hover:bg-white/5"
+              >
+                Open control plane
+              </button>
+            </div>
+            <ol className="mt-5 grid gap-3 md:grid-cols-4">
+              {onboardingSteps.map((step, index) => (
+                <li
+                  key={step.label}
+                  className={`rounded-lg border p-4 ${step.complete ? "border-emerald-400/30 bg-emerald-400/10" : "border-white/10 bg-black/20"}`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span
+                      aria-hidden="true"
+                      className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${step.complete ? "bg-emerald-400 text-black" : "bg-white/10 text-gray-300"}`}
+                    >
+                      {step.complete ? "✓" : index + 1}
+                    </span>
+                    <p className="text-sm font-semibold text-white">{step.label}</p>
+                  </div>
+                  <p className="mt-2 text-xs leading-5 text-gray-400">{step.detail}</p>
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
+
+        <section
+          className={`grid gap-3 md:grid-cols-3 ${activeView === "operate" ? "hidden" : ""}`}
+        >
           {[
             [
               "1",
@@ -189,7 +410,9 @@ export default function AgentFirewallPage() {
           </div>
         )}
 
-        <section className="grid gap-6 lg:grid-cols-2">
+        <section
+          className={`grid gap-6 lg:grid-cols-2 ${activeView === "operate" ? "hidden" : ""}`}
+        >
           <form
             className="rounded-xl border border-white/10 bg-white/[0.03] p-6"
             onSubmit={(event) => {
@@ -241,7 +464,15 @@ export default function AgentFirewallPage() {
 
           <div className="rounded-xl border border-white/10 bg-white/[0.03] p-6">
             <h2 className="text-lg font-semibold">Protected agent</h2>
+            <label
+              htmlFor="protected-agent"
+              className="mt-4 block text-sm font-medium text-gray-300"
+            >
+              Protected agent
+            </label>
             <select
+              id="protected-agent"
+              aria-label="Protected agent"
               value={agentId}
               onChange={(event) => setSelectedAgentId(event.target.value)}
               className="mt-4 w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2.5"
@@ -266,21 +497,17 @@ export default function AgentFirewallPage() {
                   <span className="text-sm text-gray-400">{activeAgent.status}</span>
                 </div>
                 <button
-                  onClick={() =>
-                    setMode.mutate({
-                      workspaceId,
-                      agentId: activeAgent.id,
-                      mode: activeAgent.mode === "shadow" ? "enforce" : "shadow",
-                    })
-                  }
+                  type="button"
+                  onClick={switchAgentMode}
                   disabled={setMode.isPending}
                   className="rounded-lg border border-white/15 px-4 py-2 text-sm hover:bg-white/5 disabled:opacity-50"
                 >
                   Switch to {activeAgent.mode === "shadow" ? "Enforce" : "Shadow"}
                 </button>
                 <p className="text-xs leading-5 text-amber-200">
-                  Enable Enforce only after reviewing enough Shadow decisions and verifying the
-                  agent cannot bypass the protected credential path.
+                  Enforce blocks only broker routed credentials. Active brokered credentials:{" "}
+                  <strong>{activeCredentials.length}</strong>. Remove raw provider keys from the
+                  agent runtime before relying on DENY as a hard control.
                 </p>
               </div>
             ) : (
@@ -289,7 +516,9 @@ export default function AgentFirewallPage() {
           </div>
         </section>
 
-        <section className="grid gap-6 lg:grid-cols-2">
+        <section
+          className={`grid gap-6 lg:grid-cols-2 ${activeView === "operate" ? "hidden" : ""}`}
+        >
           <div className="rounded-xl border border-white/10 bg-white/[0.03] p-6">
             <h2 className="text-lg font-semibold">Delegate a safe starter scope</h2>
             <p className="mt-1 text-sm text-gray-400">
@@ -336,6 +565,7 @@ export default function AgentFirewallPage() {
                   {capabilityToken}
                 </code>
                 <button
+                  type="button"
                   onClick={() => navigator.clipboard.writeText(capabilityToken)}
                   className="mt-3 rounded border border-amber-300/30 px-3 py-1.5 text-xs text-amber-100"
                 >
@@ -435,7 +665,12 @@ export default function AgentFirewallPage() {
           </form>
         </section>
 
-        <section className="grid gap-4 sm:grid-cols-3">
+        <section
+          id="agent-firewall-operate"
+          className={`grid gap-4 sm:grid-cols-3 ${activeView === "onboard" ? "hidden" : ""}`}
+          role="tabpanel"
+          aria-label="Operational metrics"
+        >
           <div className="rounded-xl border border-white/10 bg-white/[0.03] p-5">
             <p className="text-sm text-gray-400">Shadow actions · 7 days</p>
             <p className="mt-2 text-3xl font-semibold">{report.data?.observedActions ?? 0}</p>
@@ -502,7 +737,9 @@ export default function AgentFirewallPage() {
           </section>
         )}
 
-        <section className="rounded-xl border border-white/10 bg-white/[0.03] p-6">
+        <section
+          className={`rounded-xl border border-white/10 bg-white/[0.03] p-6 ${activeView === "onboard" ? "hidden" : ""}`}
+        >
           <div className="flex items-end justify-between gap-4">
             <div>
               <h2 className="text-lg font-semibold">Action Ledger</h2>
@@ -517,8 +754,49 @@ export default function AgentFirewallPage() {
               Refresh
             </button>
           </div>
+          <div className="mt-5 grid gap-3 md:grid-cols-[1fr_220px_auto]">
+            <label className="text-sm text-gray-300">
+              Search ledger
+              <input
+                value={ledgerSearch}
+                onChange={(event) => setLedgerSearch(event.target.value)}
+                placeholder="Action, resource, outcome, ledger id"
+                className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2.5"
+              />
+            </label>
+            <label className="text-sm text-gray-300">
+              Decision
+              <select
+                value={ledgerDecision}
+                onChange={(event) => setLedgerDecision(event.target.value as typeof ledgerDecision)}
+                className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2.5"
+              >
+                <option value="all">All decisions</option>
+                <option value="ALLOW">ALLOW</option>
+                <option value="DENY">DENY</option>
+                <option value="APPROVAL_REQUIRED">APPROVAL_REQUIRED</option>
+              </select>
+            </label>
+            <div className="flex items-end">
+              <button
+                type="button"
+                onClick={() => ledger.refetch()}
+                disabled={ledger.isFetching}
+                className="w-full rounded border border-white/15 px-3 py-2.5 text-xs disabled:opacity-50"
+              >
+                {ledger.isFetching ? "Refreshing…" : "Refresh"}
+              </button>
+            </div>
+          </div>
           <div className="mt-5">
-            <LedgerTimeline rows={ledger.data ?? []} />
+            <LedgerTimeline
+              rows={filteredLedgerRows}
+              emptyMessage={
+                (ledger.data?.length ?? 0) > 0
+                  ? "No ledger entries match the current filters."
+                  : "No protected actions yet. Complete onboarding and evaluate a sample action."
+              }
+            />
           </div>
         </section>
 
@@ -529,7 +807,9 @@ export default function AgentFirewallPage() {
           never leaves the server and the agent must present an ALLOW decision
           to get a call made on its behalf.
         */}
-        <section className="grid gap-6 lg:grid-cols-2">
+        <section
+          className={`grid gap-6 lg:grid-cols-2 ${activeView === "operate" ? "hidden" : ""}`}
+        >
           <form
             className="rounded-xl border border-white/10 bg-white/[0.03] p-6"
             onSubmit={(event) => {
@@ -568,7 +848,26 @@ export default function AgentFirewallPage() {
 
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <label className="block text-sm text-gray-300">
-                Provider
+                Provider preset
+                <select
+                  value={credPreset}
+                  onChange={(event) =>
+                    applyCredentialPreset(event.target.value as CredentialProviderPreset)
+                  }
+                  className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2.5 outline-none focus:border-emerald-400"
+                >
+                  {Object.entries(CREDENTIAL_PROVIDER_PRESETS).map(([key, preset]) => (
+                    <option key={key} value={key}>
+                      {preset.label}
+                    </option>
+                  ))}
+                </select>
+                <span className="mt-1 block text-xs text-gray-500">
+                  {CREDENTIAL_PROVIDER_PRESETS[credPreset].help}
+                </span>
+              </label>
+              <label className="block text-sm text-gray-300">
+                Provider id
                 <input
                   value={credProvider}
                   onChange={(event) => setCredProvider(event.target.value)}
@@ -611,7 +910,7 @@ export default function AgentFirewallPage() {
                 type="password"
                 value={credSecret}
                 onChange={(event) => setCredSecret(event.target.value)}
-                placeholder="sk_live_…"
+                placeholder={CREDENTIAL_PROVIDER_PRESETS[credPreset].secretPlaceholder}
                 autoComplete="off"
                 required
                 className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2.5 outline-none focus:border-emerald-400"

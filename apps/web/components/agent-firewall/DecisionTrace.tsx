@@ -69,7 +69,11 @@ export function DecisionTrace({
   const finalStatus: StepStatus = denied ? "denied" : pending ? "pending" : "done";
 
   return (
-    <div className="rounded-lg border border-white/10 bg-black/20 p-4">
+    <div
+      role="status"
+      aria-live="polite"
+      className="rounded-lg border border-white/10 bg-black/20 p-4"
+    >
       <Step
         status="done"
         title="Agent identified"

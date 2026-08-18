@@ -35,11 +35,17 @@ function outcomeTone(outcome: string): string {
  * what mode, what the decision was, and what happened after. A colored
  * left stripe (the decision) is the thing a reviewer scans for first.
  */
-export function LedgerTimeline({ rows }: { rows: LedgerRow[] }) {
+export function LedgerTimeline({
+  rows,
+  emptyMessage = "No protected actions yet. Complete onboarding and evaluate a sample action.",
+}: {
+  rows: LedgerRow[];
+  emptyMessage?: string;
+}) {
   if (rows.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-white/10 py-10 text-center text-sm text-gray-500">
-        No protected actions yet. Complete the three setup steps above.
+        {emptyMessage}
       </div>
     );
   }
@@ -62,11 +68,14 @@ export function LedgerTimeline({ rows }: { rows: LedgerRow[] }) {
             </div>
             <p className="mt-0.5 truncate text-xs text-gray-500">
               {row.resource || "any resource"} · <span className="capitalize">{row.mode}</span> mode
+              · <span className="font-mono">{row.id}</span>
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-4 text-xs">
             <span className={outcomeTone(row.outcomeStatus)}>{row.outcomeStatus}</span>
-            <span className="text-gray-500">{new Date(row.occurredAt).toLocaleString()}</span>
+            <time dateTime={row.occurredAt} className="text-gray-500">
+              {new Date(row.occurredAt).toLocaleString()}
+            </time>
           </div>
         </li>
       ))}

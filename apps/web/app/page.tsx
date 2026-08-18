@@ -189,12 +189,12 @@ export default function RootHomePage() {
     {
       question: "What AI providers does RaksHex support?",
       answer:
-        "OpenAI, Anthropic, Azure OpenAI, AWS Bedrock, Google Vertex/Gemini, GitHub Copilot, Claude Teams, Cursor, self-hosted models, and OpenAI-compatible endpoints.",
+        "AgentGuard telemetry wrappers support common LLM providers including OpenAI, Anthropic, Gemini, Azure OpenAI, Bedrock, OpenRouter and OpenAI compatible endpoints. Agent Firewall enforcement depends on routing sensitive actions and credentials through the RaksHex broker. TypeScript has an Agent Firewall SDK client today; Python Agent Firewall support is not yet shipped.",
     },
     {
       question: "How is this different from a policy engine that just logs decisions?",
       answer:
-        "Enforcement happens at the credential broker. A DENY blocks the secret itself, so a denied action can't fall back to a raw API key that still works elsewhere.",
+        "RaksHex can enforce at the credential broker, not only log decisions. When a provider secret is stored in the RaksHex broker and removed from the agent runtime, a DENY prevents that secret from being used. If an agent still has raw provider keys, direct network egress, or unbrokered tools, it can bypass the firewall, so broker coverage is part of rollout.",
     },
     {
       question: "Who should use RaksHex?",
