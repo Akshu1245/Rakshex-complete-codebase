@@ -4,6 +4,7 @@ import { createCopilotAdapter } from "./copilot";
 import { createCursorAdapter } from "./cursor";
 import { createCsvImportAdapter } from "./csvImport";
 import { createMonitorOnlyAdapter } from "./monitorOnly";
+import { createOpenAiAdapter } from "./openai";
 
 const adapters = new Map<string, TeamGovernanceAdapter>();
 
@@ -13,7 +14,7 @@ function register(adapter: TeamGovernanceAdapter) {
 
 register(createCopilotAdapter());
 register(createCursorAdapter());
-register(createCsvImportAdapter("openai"));
+register(createOpenAiAdapter());
 register(createCsvImportAdapter("anthropic"));
 register(createCsvImportAdapter("claude_teams"));
 register(createCsvImportAdapter("windsurf"));

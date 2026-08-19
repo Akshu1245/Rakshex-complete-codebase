@@ -1,10 +1,10 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import crypto from "node:crypto";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { router, protectedProcedure, editorProcedure } from "../_core/trpc";
 import * as db from "../db";
-import { aiEvents, users } from "@rakshex/database";
+import { aiEvents, auditLog, users } from "@rakshex/database";
 import {
   aiSubscriptions,
   aiSubscriptionSeats,
@@ -52,6 +52,87 @@ async function writeAccess(workspaceId: number, userId: number) {
 
 function noDb(): never {
   throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+}
+
+async function validateOpenAiAdminAuthorization(secret: string) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10_000);
+  try {
+    const response = await fetch("https://api.openai.com/v1/organization", {
+      headers: { authorization: `Bearer ${secret}` },
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message:
+          "OpenAI Admin API authorization failed. Confirm an organization Admin API key was supplied.",
+      });
+    }
+    const payload = (await response.json()) as { id?: unknown; name?: unknown };
+    const organizationId = typeof payload.id === "string" ? payload.id : undefined;
+    if (!organizationId) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "OpenAI Admin API authorization returned no organization identifier.",
+      });
+    }
+    return {
+      organizationId,
+      organizationName: typeof payload.name === "string" ? payload.name : undefined,
+    };
+  } catch (error) {
+    if (error instanceof TRPCError) throw error;
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "OpenAI Admin API could not be reached. No provider credential was stored.",
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function validateOpenRouterAuthorization(secret: string) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10_000);
+  try {
+    const response = await fetch("https://openrouter.ai/api/v1/key", {
+      headers: { authorization: `Bearer ${secret}` },
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message:
+          "OpenRouter authorization failed. Confirm a dedicated OpenRouter API key was supplied.",
+      });
+    }
+    const payload = (await response.json()) as {
+      data?: { label?: unknown; limit_remaining?: unknown; usage?: unknown };
+    };
+    const data = payload.data;
+    if (!data || typeof data !== "object") {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "OpenRouter authorization returned no key metadata.",
+      });
+    }
+    return {
+      keyLabel: typeof data.label === "string" ? data.label : undefined,
+      remainingCreditUsd:
+        typeof data.limit_remaining === "number" && Number.isFinite(data.limit_remaining)
+          ? data.limit_remaining
+          : undefined,
+    };
+  } catch (error) {
+    if (error instanceof TRPCError) throw error;
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "OpenRouter could not be reached. No provider credential was stored.",
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 export const controlPlaneRouter = router({
@@ -106,6 +187,391 @@ export const controlPlaneRouter = router({
           accountId: account?.id,
         });
         return account;
+      }),
+    connectOpenAiGateway: editorProcedure
+      .input(
+        workspaceInput.extend({
+          displayName: z.string().min(1).max(255).default("OpenAI production"),
+          credentialName: z.string().min(1).max(128).default("OpenAI gateway inference key"),
+          secret: z.string().min(8).max(4096),
+        }),
+      )
+      .mutation(async ({ input, ctx }) => {
+        await writeAccess(input.workspaceId, ctx.user.id);
+        const database = await db.getDb();
+        if (!database) noDb();
+
+        const tenant = `workspace:${input.workspaceId}`;
+        const vault = getVault();
+        const encryptedValue = encryptSecret(input.secret, tenant);
+        const fingerprint = vault.fingerprint(input.secret, tenant);
+        const definition = PROVIDERS.find((provider) => provider.id === "openai");
+        if (!definition) noDb();
+
+        const configured = await database!.transaction(async (tx) => {
+          const [existingAccount] = await tx
+            .select({
+              id: providerAccounts.id,
+              adminCredentialId: providerAccounts.adminCredentialId,
+            })
+            .from(providerAccounts)
+            .where(
+              and(
+                eq(providerAccounts.workspaceId, input.workspaceId),
+                eq(providerAccounts.provider, "openai"),
+                eq(providerAccounts.accountType, "gateway_inference"),
+              ),
+            )
+            .orderBy(desc(providerAccounts.updatedAt))
+            .limit(1)
+            .for("update");
+
+          let accountId = existingAccount?.id;
+          if (!accountId) {
+            const [account] = await tx
+              .insert(providerAccounts)
+              .values({
+                workspaceId: input.workspaceId,
+                provider: "openai",
+                accountType: "gateway_inference",
+                displayName: input.displayName,
+                connectionStatus: "configuring",
+                authMethod: "manual_import",
+                syncStatus: "not_connected",
+                capabilities: definition!.capabilities as unknown as Record<string, boolean>,
+                metadata: { gatewayPath: "/v1/chat/completions", telemetrySource: "gateway" },
+              })
+              .returning({ id: providerAccounts.id });
+            accountId = account?.id;
+          }
+          if (!accountId) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+          const [credential] = await tx
+            .insert(controlPlaneCredentials)
+            .values({
+              workspaceId: input.workspaceId,
+              providerAccountId: accountId,
+              name: input.credentialName,
+              provider: "openai",
+              credentialType: "inference_api_key",
+              environment: "production",
+              encryptedValue,
+              fingerprint,
+              keyPrefix: input.secret.slice(0, Math.min(12, input.secret.length)),
+              createdBy: ctx.user.id,
+            })
+            .returning({ id: controlPlaneCredentials.id });
+          if (!credential?.id) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+          if (existingAccount?.adminCredentialId) {
+            await tx
+              .update(controlPlaneCredentials)
+              .set({ status: "revoked", revokedAt: new Date() })
+              .where(
+                and(
+                  eq(controlPlaneCredentials.id, existingAccount.adminCredentialId),
+                  eq(controlPlaneCredentials.workspaceId, input.workspaceId),
+                  eq(controlPlaneCredentials.status, "active"),
+                ),
+              );
+          }
+
+          await tx
+            .update(providerAccounts)
+            .set({
+              displayName: input.displayName,
+              connectionStatus: "gateway_enforced",
+              authMethod: "manual_import",
+              adminCredentialId: credential.id,
+              syncStatus: "healthy",
+              lastSyncError: null,
+              capabilities: definition!.capabilities as unknown as Record<string, boolean>,
+              metadata: { gatewayPath: "/v1/chat/completions", telemetrySource: "gateway" },
+            })
+            .where(eq(providerAccounts.id, accountId));
+
+          return {
+            accountId,
+            credentialId: credential.id,
+            rotated: Boolean(existingAccount?.adminCredentialId),
+          };
+        });
+
+        await db.createAuditLogEntry(ctx.user.id, "openai_gateway_connected", {
+          workspaceId: input.workspaceId,
+          providerAccountId: configured.accountId,
+          credentialId: configured.credentialId,
+          rotatedCredential: configured.rotated,
+          enforcement: "routed_traffic_only",
+        });
+
+        return {
+          ...configured,
+          gatewayPath: "/v1/chat/completions",
+          enforcement: "routed_traffic_only" as const,
+          rawSecretStored: false,
+        };
+      }),
+    connectOpenRouterGateway: editorProcedure
+      .input(
+        workspaceInput.extend({
+          displayName: z.string().min(1).max(255).default("OpenRouter production"),
+          credentialName: z.string().min(1).max(128).default("OpenRouter gateway API key"),
+          secret: z.string().min(8).max(4096),
+        }),
+      )
+      .mutation(async ({ input, ctx }) => {
+        await writeAccess(input.workspaceId, ctx.user.id);
+        const authorization = await validateOpenRouterAuthorization(input.secret);
+        const database = await db.getDb();
+        if (!database) noDb();
+
+        const tenant = `workspace:${input.workspaceId}`;
+        const vault = getVault();
+        const encryptedValue = encryptSecret(input.secret, tenant);
+        const fingerprint = vault.fingerprint(input.secret, tenant);
+        const definition = PROVIDERS.find((provider) => provider.id === "openai_compatible");
+        if (!definition) noDb();
+
+        const configured = await database!.transaction(async (tx) => {
+          const [existingAccount] = await tx
+            .select({
+              id: providerAccounts.id,
+              adminCredentialId: providerAccounts.adminCredentialId,
+            })
+            .from(providerAccounts)
+            .where(
+              and(
+                eq(providerAccounts.workspaceId, input.workspaceId),
+                eq(providerAccounts.provider, "openai_compatible"),
+                eq(providerAccounts.accountType, "gateway_inference"),
+              ),
+            )
+            .orderBy(desc(providerAccounts.updatedAt))
+            .limit(1)
+            .for("update");
+
+          let accountId = existingAccount?.id;
+          if (!accountId) {
+            const [account] = await tx
+              .insert(providerAccounts)
+              .values({
+                workspaceId: input.workspaceId,
+                provider: "openai_compatible",
+                accountType: "gateway_inference",
+                displayName: input.displayName,
+                connectionStatus: "configuring",
+                authMethod: "manual_import",
+                syncStatus: "not_connected",
+                capabilities: definition!.capabilities as unknown as Record<string, boolean>,
+                metadata: {
+                  baseUrl: "https://openrouter.ai/api/v1",
+                  telemetrySource: "openrouter_key",
+                },
+              })
+              .returning({ id: providerAccounts.id });
+            accountId = account?.id;
+          }
+          if (!accountId) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+          const [credential] = await tx
+            .insert(controlPlaneCredentials)
+            .values({
+              workspaceId: input.workspaceId,
+              providerAccountId: accountId,
+              name: input.credentialName,
+              provider: "openai_compatible",
+              credentialType: "inference_api_key",
+              environment: "production",
+              encryptedValue,
+              fingerprint,
+              keyPrefix: input.secret.slice(0, Math.min(12, input.secret.length)),
+              createdBy: ctx.user.id,
+            })
+            .returning({ id: controlPlaneCredentials.id });
+          if (!credential?.id) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+          if (existingAccount?.adminCredentialId) {
+            await tx
+              .update(controlPlaneCredentials)
+              .set({ status: "revoked", revokedAt: new Date() })
+              .where(
+                and(
+                  eq(controlPlaneCredentials.id, existingAccount.adminCredentialId),
+                  eq(controlPlaneCredentials.workspaceId, input.workspaceId),
+                  eq(controlPlaneCredentials.status, "active"),
+                ),
+              );
+          }
+
+          await tx
+            .update(providerAccounts)
+            .set({
+              displayName: authorization.keyLabel ?? input.displayName,
+              connectionStatus: "gateway_enforced",
+              authMethod: "manual_import",
+              adminCredentialId: credential.id,
+              syncStatus: "healthy",
+              lastSyncError: null,
+              capabilities: definition!.capabilities as unknown as Record<string, boolean>,
+              metadata: {
+                baseUrl: "https://openrouter.ai/api/v1",
+                telemetrySource: "openrouter_key",
+                ...(authorization.remainingCreditUsd === undefined
+                  ? {}
+                  : { providerReportedRemainingCreditUsd: authorization.remainingCreditUsd }),
+              },
+            })
+            .where(eq(providerAccounts.id, accountId));
+
+          return {
+            accountId,
+            credentialId: credential.id,
+            rotated: Boolean(existingAccount?.adminCredentialId),
+          };
+        });
+
+        await db.createAuditLogEntry(ctx.user.id, "openrouter_gateway_connected", {
+          workspaceId: input.workspaceId,
+          providerAccountId: configured.accountId,
+          credentialId: configured.credentialId,
+          rotatedCredential: configured.rotated,
+          enforcement: "routed_traffic_only",
+        });
+        return {
+          ...configured,
+          gatewayPath: "/v1/chat/completions",
+          enforcement: "routed_traffic_only" as const,
+          rawSecretStored: false,
+        };
+      }),
+    connectOpenAiAdministration: editorProcedure
+      .input(
+        workspaceInput.extend({
+          displayName: z.string().min(1).max(255).default("OpenAI organization administration"),
+          credentialName: z.string().min(1).max(128).default("OpenAI Admin API key"),
+          secret: z.string().min(8).max(4096),
+        }),
+      )
+      .mutation(async ({ input, ctx }) => {
+        await writeAccess(input.workspaceId, ctx.user.id);
+        const organization = await validateOpenAiAdminAuthorization(input.secret);
+        const database = await db.getDb();
+        if (!database) noDb();
+
+        const tenant = `workspace:${input.workspaceId}`;
+        const vault = getVault();
+        const encryptedValue = encryptSecret(input.secret, tenant);
+        const fingerprint = vault.fingerprint(input.secret, tenant);
+        const definition = PROVIDERS.find((provider) => provider.id === "openai");
+        if (!definition) noDb();
+
+        const configured = await database!.transaction(async (tx) => {
+          const [existingAccount] = await tx
+            .select({
+              id: providerAccounts.id,
+              adminCredentialId: providerAccounts.adminCredentialId,
+            })
+            .from(providerAccounts)
+            .where(
+              and(
+                eq(providerAccounts.workspaceId, input.workspaceId),
+                eq(providerAccounts.provider, "openai"),
+                eq(providerAccounts.accountType, "admin_telemetry"),
+              ),
+            )
+            .orderBy(desc(providerAccounts.updatedAt))
+            .limit(1)
+            .for("update");
+
+          let accountId = existingAccount?.id;
+          if (!accountId) {
+            const [account] = await tx
+              .insert(providerAccounts)
+              .values({
+                workspaceId: input.workspaceId,
+                provider: "openai",
+                accountType: "admin_telemetry",
+                externalId: organization.organizationId,
+                displayName: input.displayName,
+                connectionStatus: "authorizing",
+                authMethod: "admin_api",
+                syncStatus: "not_connected",
+                capabilities: definition!.capabilities as unknown as Record<string, boolean>,
+                metadata: { telemetrySource: "openai_admin_api" },
+              })
+              .returning({ id: providerAccounts.id });
+            accountId = account?.id;
+          }
+          if (!accountId) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+          const [credential] = await tx
+            .insert(controlPlaneCredentials)
+            .values({
+              workspaceId: input.workspaceId,
+              providerAccountId: accountId,
+              name: input.credentialName,
+              provider: "openai",
+              credentialType: "admin_api_key",
+              environment: "production",
+              encryptedValue,
+              fingerprint,
+              keyPrefix: input.secret.slice(0, Math.min(12, input.secret.length)),
+              createdBy: ctx.user.id,
+            })
+            .returning({ id: controlPlaneCredentials.id });
+          if (!credential?.id) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+          if (existingAccount?.adminCredentialId) {
+            await tx
+              .update(controlPlaneCredentials)
+              .set({ status: "revoked", revokedAt: new Date() })
+              .where(
+                and(
+                  eq(controlPlaneCredentials.id, existingAccount.adminCredentialId),
+                  eq(controlPlaneCredentials.workspaceId, input.workspaceId),
+                  eq(controlPlaneCredentials.status, "active"),
+                ),
+              );
+          }
+
+          await tx
+            .update(providerAccounts)
+            .set({
+              externalId: organization.organizationId,
+              displayName: organization.organizationName ?? input.displayName,
+              connectionStatus: "admin_authorized",
+              authMethod: "admin_api",
+              adminCredentialId: credential.id,
+              syncStatus: "not_connected",
+              lastSyncError: "Awaiting first OpenAI administration synchronization",
+              capabilities: definition!.capabilities as unknown as Record<string, boolean>,
+              metadata: { telemetrySource: "openai_admin_api" },
+            })
+            .where(eq(providerAccounts.id, accountId));
+
+          return {
+            accountId,
+            credentialId: credential.id,
+            rotated: Boolean(existingAccount?.adminCredentialId),
+          };
+        });
+
+        await db.createAuditLogEntry(ctx.user.id, "openai_administration_connected", {
+          workspaceId: input.workspaceId,
+          providerAccountId: configured.accountId,
+          credentialId: configured.credentialId,
+          organizationId: organization.organizationId,
+          rotatedCredential: configured.rotated,
+          enforcement: "monitoring_and_provider_native_controls",
+        });
+
+        return {
+          ...configured,
+          organizationId: organization.organizationId,
+          enforcement: "monitoring_and_provider_native_controls" as const,
+          rawSecretStored: false,
+        };
       }),
   }),
 
@@ -172,7 +638,7 @@ export const controlPlaneRouter = router({
           provider: input.provider,
           credentialId: credential?.id,
         });
-        return { id: credential?.id, secret: input.secret, shownOnce: true };
+        return { id: credential?.id, rawSecretStored: false };
       }),
     revoke: editorProcedure
       .input(workspaceInput.extend({ id: z.number().int().positive() }))
@@ -795,5 +1261,32 @@ export const controlPlaneRouter = router({
       openFindings: findings.length,
       subscriptions: subscriptions.length,
     };
+  }),
+  recentEvidence: protectedProcedure.input(workspaceInput).query(async ({ input, ctx }) => {
+    await readAccess(input.workspaceId, ctx.user.id);
+    const database = await db.getDb();
+    if (!database) return [];
+    const actions = [
+      "openai_administration_connected",
+      "openai_gateway_connected",
+      "gateway_blocked",
+      "kill_switch_triggered",
+      "kill_switch_reset",
+      "kill_switch_budget_set",
+      "team_governance_budget_set",
+      "team_governance_kill_switch_set",
+      "provider_sync_completed",
+    ];
+    return database
+      .select({ id: auditLog.id, action: auditLog.action, createdAt: auditLog.createdAt })
+      .from(auditLog)
+      .where(
+        and(
+          inArray(auditLog.action, actions),
+          sql`${auditLog.details}->>'workspaceId' = ${String(input.workspaceId)}`,
+        ),
+      )
+      .orderBy(desc(auditLog.createdAt))
+      .limit(12);
   }),
 });

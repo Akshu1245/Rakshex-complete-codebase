@@ -7,6 +7,7 @@ import { protectedProcedure, router } from "../_core/trpc";
 import { assertWorkspacePermission } from "../services/workspaceContext";
 import { PermissionDeniedError, type RbacAction, type RbacResource } from "../services/rbac";
 import * as gov from "../services/teamGovernance";
+import * as db from "../db";
 import type { GovernanceProvider } from "../services/teamGovernance/types";
 import {
   assertSeatAvailable,
@@ -104,7 +105,7 @@ export const teamGovernanceRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       await requireGovAccess(input.workspaceId, ctx.user.id, "policies", "write");
-      return gov.upsertBudget({
+      const budget = await gov.upsertBudget({
         workspaceId: input.workspaceId,
         identityId: input.identityId,
         limitUsd: input.limitUsd,
@@ -112,6 +113,16 @@ export const teamGovernanceRouter = router({
         hardLimit: input.hardLimit,
         enforcementMode: input.enforcementMode,
       });
+      await db.createAuditLogEntry(ctx.user.id, "team_governance_budget_set", {
+        workspaceId: input.workspaceId,
+        budgetId: budget.id,
+        identityId: input.identityId ?? null,
+        limitUsd: input.limitUsd,
+        warningPct: input.warningPct,
+        hardLimit: input.hardLimit,
+        enforcementMode: input.enforcementMode,
+      });
+      return budget;
     }),
 
   deleteBudget: protectedProcedure
@@ -165,6 +176,14 @@ export const teamGovernanceRouter = router({
         reason: input.reason,
         setBy: ctx.user.id,
       });
+      await db.createAuditLogEntry(ctx.user.id, "team_governance_kill_switch_set", {
+        workspaceId: input.workspaceId,
+        killSwitchId: row.id,
+        scopeType: input.scopeType,
+        scopeId: input.scopeId,
+        active: input.active,
+        reason: input.reason ?? null,
+      });
       return {
         ok: true,
         row,
@@ -191,12 +210,21 @@ export const teamGovernanceRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       await requireGovAccess(input.workspaceId, ctx.user.id, "policies", "write");
-      return gov.syncProvider({
+      const result = await gov.syncProvider({
         workspaceId: input.workspaceId,
         provider: input.provider as GovernanceProvider,
         orgName: input.orgName,
         providerAccountId: input.providerAccountId,
       });
+      await db.createAuditLogEntry(ctx.user.id, "provider_sync_completed", {
+        workspaceId: input.workspaceId,
+        provider: input.provider,
+        providerAccountId: input.providerAccountId ?? null,
+        status: result.status,
+        seatsSynced: "seatsSynced" in result ? result.seatsSynced : 0,
+        usageEventsSynced: "usageEventsSynced" in result ? result.usageEventsSynced : 0,
+      });
+      return result;
     }),
 
   providerHealth: protectedProcedure.input(workspaceInput).query(async ({ ctx, input }) => {

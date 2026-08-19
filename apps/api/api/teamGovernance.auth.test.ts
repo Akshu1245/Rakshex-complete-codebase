@@ -16,10 +16,15 @@ vi.mock("../services/teamGovernance", () => ({
   deleteBudget: vi.fn(),
   listKillSwitches: vi.fn(),
   setKillSwitch: vi.fn(),
+  syncProvider: vi.fn(),
   listProviderAccounts: vi.fn(),
   upsertProviderAccount: vi.fn(),
   syncProviderAccount: vi.fn(),
   listGovernanceCapabilityCatalog: vi.fn(),
+}));
+
+vi.mock("../db", () => ({
+  createAuditLogEntry: vi.fn(),
 }));
 
 vi.mock("../db/workspaceSeats", () => ({
@@ -30,13 +35,23 @@ vi.mock("../db/workspaceSeats", () => ({
 }));
 
 import { assertWorkspacePermission } from "../services/workspaceContext";
-import { evaluateGatewayGovernance } from "../services/teamGovernance";
+import {
+  evaluateGatewayGovernance,
+  setKillSwitch,
+  syncProvider,
+  upsertBudget,
+} from "../services/teamGovernance";
+import { createAuditLogEntry } from "../db";
 import { teamGovernanceRouter } from "./teamGovernance";
 
 describe("teamGovernance auth", () => {
   beforeEach(() => {
     vi.mocked(assertWorkspacePermission).mockReset();
     vi.mocked(evaluateGatewayGovernance).mockClear();
+    vi.mocked(upsertBudget).mockReset();
+    vi.mocked(setKillSwitch).mockReset();
+    vi.mocked(syncProvider).mockReset();
+    vi.mocked(createAuditLogEntry).mockReset();
   });
 
   it("evaluateGateway denies non-members with FORBIDDEN before service call", async () => {
@@ -86,5 +101,83 @@ describe("teamGovernance auth", () => {
       agentId: undefined,
       estimatedCostUsd: 0.02,
     });
+  });
+
+  it("records workspace scoped evidence when a hard routed budget is configured", async () => {
+    vi.mocked(assertWorkspacePermission).mockResolvedValueOnce("admin");
+    vi.mocked(upsertBudget).mockResolvedValueOnce({ id: 42 } as never);
+    vi.mocked(createAuditLogEntry).mockResolvedValueOnce(undefined);
+    const caller = teamGovernanceRouter.createCaller({
+      user: { id: 3, role: "editor" },
+      req: { headers: { "x-api-key": "test-key" }, protocol: "https" },
+      res: { clearCookie: () => {} },
+    } as never);
+
+    await caller.setBudget({
+      workspaceId: 12,
+      limitUsd: 100,
+      warningPct: 80,
+      hardLimit: true,
+      enforcementMode: "gateway",
+    });
+
+    expect(createAuditLogEntry).toHaveBeenCalledWith(
+      3,
+      "team_governance_budget_set",
+      expect.objectContaining({
+        workspaceId: 12,
+        budgetId: 42,
+        hardLimit: true,
+        enforcementMode: "gateway",
+      }),
+    );
+  });
+
+  it("records a scoped stop change and provider synchronization without provider secret values", async () => {
+    vi.mocked(assertWorkspacePermission).mockResolvedValue("admin");
+    vi.mocked(setKillSwitch).mockResolvedValueOnce({ id: 51 } as never);
+    vi.mocked(syncProvider).mockResolvedValueOnce({
+      status: "success",
+      seatsSynced: 2,
+      usageEventsSynced: 4,
+    } as never);
+    vi.mocked(createAuditLogEntry).mockResolvedValue(undefined);
+    const caller = teamGovernanceRouter.createCaller({
+      user: { id: 3, role: "editor" },
+      req: { headers: { "x-api-key": "test-key" }, protocol: "https" },
+      res: { clearCookie: () => {} },
+    } as never);
+
+    await caller.setKillSwitch({
+      workspaceId: 12,
+      scopeType: "workspace",
+      scopeId: "12",
+      active: true,
+      reason: "incident",
+    });
+    await caller.syncProvider({ workspaceId: 12, provider: "openai", providerAccountId: 7 });
+
+    expect(createAuditLogEntry).toHaveBeenNthCalledWith(
+      1,
+      3,
+      "team_governance_kill_switch_set",
+      expect.objectContaining({ workspaceId: 12, killSwitchId: 51, active: true }),
+    );
+    expect(createAuditLogEntry).toHaveBeenNthCalledWith(
+      2,
+      3,
+      "provider_sync_completed",
+      expect.objectContaining({
+        workspaceId: 12,
+        provider: "openai",
+        providerAccountId: 7,
+        status: "success",
+        seatsSynced: 2,
+        usageEventsSynced: 4,
+      }),
+    );
+    expect(JSON.stringify(vi.mocked(createAuditLogEntry).mock.calls)).not.toMatch(
+      /sk-|api[_-]?key|bearer/i,
+    );
   });
 });

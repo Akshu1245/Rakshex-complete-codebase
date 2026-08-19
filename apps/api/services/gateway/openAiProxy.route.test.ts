@@ -11,6 +11,9 @@ const mocks = vi.hoisted(() => ({
   ),
   recordGatewayAudit: vi.fn(),
   getDb: vi.fn(),
+  decryptSecret: vi.fn(),
+  enforcePolicies: vi.fn(),
+  buildPreflightEventContext: vi.fn(() => ({})),
 }));
 
 vi.mock("../workspaceApiKeys", () => ({
@@ -28,6 +31,15 @@ vi.mock("../teamGovernance", () => ({
 vi.mock("../../db", () => ({
   recordGatewayAudit: mocks.recordGatewayAudit,
   getDb: mocks.getDb,
+}));
+
+vi.mock("../vault", () => ({
+  decryptSecret: mocks.decryptSecret,
+}));
+
+vi.mock("../../middleware/policyEnforcement", () => ({
+  enforcePolicies: mocks.enforcePolicies,
+  buildPreflightEventContext: mocks.buildPreflightEventContext,
 }));
 
 vi.mock("../../_core/env", () => ({
@@ -101,6 +113,8 @@ describe("OpenAI-compatible gateway route enforcement", () => {
     mocks.resolveWorkspaceIdentityId.mockImplementation(
       async (_workspaceId: number, identityId?: number) => identityId,
     );
+    mocks.enforcePolicies.mockResolvedValue(undefined);
+    mocks.decryptSecret.mockReturnValue("openrouter-central-secret");
   });
 
   it("rejects requests without a workspace key", async () => {
@@ -214,5 +228,83 @@ describe("OpenAI-compatible gateway route enforcement", () => {
     expect((res.payload as { error: { code: string } }).error.code).toBe("enforcement_unavailable");
     expect(upstreamFetch).not.toHaveBeenCalled();
     upstreamFetch.mockRestore();
+  });
+
+  it("forwards an allowed OpenRouter request through the configured public upstream after enforcement", async () => {
+    const handler = routeHandler();
+    const res = createResponse();
+    mocks.validateWorkspaceApiKey.mockResolvedValue({
+      keyId: "ak_1",
+      workspaceId: 42,
+      userId: 7,
+      scopes: ["gateway:invoke"],
+      projectId: null,
+    });
+    mocks.evaluateGatewayGovernance.mockResolvedValue({ allowed: true });
+    mocks.getDb.mockResolvedValue({
+      select: vi
+        .fn()
+        .mockReturnValueOnce({
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              orderBy: vi.fn(() => ({
+                limit: vi.fn().mockResolvedValue([
+                  {
+                    id: 91,
+                    adminCredentialId: 92,
+                    metadata: { baseUrl: "https://openrouter.ai/api/v1" },
+                  },
+                ]),
+              })),
+            })),
+          })),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn().mockResolvedValue([
+                {
+                  id: 92,
+                  encryptedValue: "ciphertext:openrouter",
+                  credentialType: "inference_api_key",
+                  status: "active",
+                  expiresAt: null,
+                },
+              ]),
+            })),
+          })),
+        }),
+      update: vi.fn(() => ({ set: vi.fn(() => ({ where: vi.fn().mockResolvedValue([]) })) })),
+    });
+    const upstreamFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        id: "chatcmpl_openrouter",
+        usage: { prompt_tokens: 2, completion_tokens: 3 },
+      }),
+    });
+    vi.stubGlobal("fetch", upstreamFetch);
+
+    await handler(
+      createRequest("Bearer rk_live_test_workspace_key", {
+        "x-rakshex-provider": "openai_compatible",
+      }),
+      res,
+    );
+
+    expect(upstreamFetch).toHaveBeenCalledWith(
+      "https://openrouter.ai/api/v1/chat/completions",
+      expect.objectContaining({
+        headers: expect.objectContaining({ authorization: "Bearer openrouter-central-secret" }),
+      }),
+    );
+    expect(res.statusCode).toBe(200);
+    expect(mocks.recordGatewayAudit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        provider: "openai_compatible",
+        decision: "allowed",
+        workspaceId: 42,
+      }),
+    );
   });
 });

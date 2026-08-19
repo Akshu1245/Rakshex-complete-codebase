@@ -5,13 +5,13 @@ const GATEWAY_NOTE =
 
 export const GOVERNANCE_CAPABILITIES: Record<GovernanceProvider, GovernanceCapabilities> = {
   openai: {
-    seatSync: false,
-    usageSync: false,
+    seatSync: true,
+    usageSync: true,
     providerNativeLimit: false,
     gatewayHardLimit: true,
     personalAccountSupported: false,
-    implementationStatus: "monitor_only",
-    note: `OpenAI Enterprise seat/usage sync is not live yet; import admin exports via CSV. ${GATEWAY_NOTE}`,
+    implementationStatus: "live",
+    note: `OpenAI organization Admin API syncs authorized members plus daily project usage and cost. RaksHex does not set provider-native spend limits in this connector. ${GATEWAY_NOTE}`,
   },
   anthropic: {
     seatSync: false,
