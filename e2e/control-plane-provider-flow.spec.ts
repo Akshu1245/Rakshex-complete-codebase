@@ -9,7 +9,7 @@ type ProviderAccount = {
 };
 
 function trpcResult(data: unknown) {
-  return { result: { data } };
+  return { result: { data: { json: data } } };
 }
 
 test.describe("Provider control plane browser journey", () => {
