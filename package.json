@@ -16,7 +16,7 @@
     "test:db": "pnpm --filter @rakshex/database test",
     "test:integration": "pnpm --filter @rakshex/api exec vitest run services/tenantIsolation.test.ts services/rbac.test.ts services/authorization.test.ts services/gateway/enforcement.test.ts services/gateway/openAiProxy.route.test.ts services/gateway/anthropicProxy.test.ts services/billing/provider.test.ts services/billing/entitlements.test.ts api/bola.twoWorkspace.test.ts services/collectionImport/secureParse.test.ts api/agentFirewall.e2e.test.ts --config vitest.config.ts && pnpm --filter @rakshex/database test",
     "test:security": "pnpm --filter @rakshex/api exec vitest run auth.security.test.ts db.security.test.ts services/tenantIsolation.test.ts services/gateway/enforcement.test.ts services/gateway/openAiProxy.route.test.ts services/gateway/anthropicProxy.test.ts services/billing/entitlements.test.ts api/reports.auth.test.ts api/webhooks.auth.test.ts api/bola.twoWorkspace.test.ts services/privacy/retention.test.ts services/collectionImport/secureParse.test.ts services/workspaceApiKeys.test.ts --config vitest.config.ts && pnpm --filter @rakshex/sdk exec vitest run src/security.contract.test.ts",
-    "test:e2e": "playwright test --grep=Smoke",
+    "test:e2e": "playwright test --grep='Smoke|Provider control plane browser journey'",
     "test:e2e:smoke": "playwright test --grep=Smoke",
     "test:e2e:api": "playwright test e2e/smoke.spec.ts --grep=\"API health\"",
     "smoke:test": "node scripts/smoke-test.mjs",

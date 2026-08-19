@@ -42,3 +42,4 @@
 - [x] Remediate historical secret scan findings without masking new credential leaks.
 - [x] Update production dependency resolutions for high severity audit and container scan findings.
 - [x] Re run Node 24 CI and record final release gate evidence.
+- [ ] Add a pre upstream hard budget block contract test and a provider safe browser control plane journey to the release gate, then validate the updated gate on Node 24.

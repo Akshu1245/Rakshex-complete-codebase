@@ -160,6 +160,39 @@ describe("OpenAI-compatible gateway route enforcement", () => {
     upstreamFetch.mockRestore();
   });
 
+  it("rejects an over-budget routed request before loading credentials or calling the provider", async () => {
+    const handler = routeHandler();
+    const res = createResponse();
+    const upstreamFetch = vi.spyOn(globalThis, "fetch");
+    mocks.validateWorkspaceApiKey.mockResolvedValue({
+      keyId: "ak_1",
+      workspaceId: 42,
+      userId: 7,
+      scopes: ["gateway:invoke"],
+      projectId: null,
+    });
+    mocks.evaluateGatewayGovernance.mockResolvedValue({ allowed: true });
+    mocks.reserveGatewayBudget.mockResolvedValue({
+      reason: "The estimated request would exceed the configured hard gateway budget",
+    });
+
+    await handler(createRequest("Bearer rk_live_test_workspace_key"), res);
+
+    expect(res.statusCode).toBe(403);
+    expect((res.payload as { error: { code: string } }).error.code).toBe("rakshex_budget_blocked");
+    expect(mocks.recordGatewayAudit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: 42,
+        decision: "blocked",
+        blockReason: "The estimated request would exceed the configured hard gateway budget",
+      }),
+    );
+    expect(mocks.getDb).not.toHaveBeenCalled();
+    expect(mocks.decryptSecret).not.toHaveBeenCalled();
+    expect(upstreamFetch).not.toHaveBeenCalled();
+    upstreamFetch.mockRestore();
+  });
+
   it("rejects foreign identity ids before governance evaluation", async () => {
     const handler = routeHandler();
     const res = createResponse();
