@@ -187,28 +187,34 @@ test.describe("Provider control plane browser journey", () => {
 
     await page.getByLabel("OpenAI Admin API key").fill(administrationKey);
     await page.getByRole("button", { name: "Authorize telemetry" }).click();
-    await expect(page.getByRole("status")).toContainText(
+    await expect(
+      page.getByRole("status").filter({ hasText: "OpenAI organization org_ci_authorized" }),
+    ).toContainText(
       "OpenAI organization org_ci_authorized is authorized for administration telemetry",
     );
 
     await page.getByLabel("OpenAI inference key").fill(inferenceKey);
     await page.getByRole("button", { name: "Connect enforced gateway" }).click();
     await expect(page.getByText("OpenAI gateway connected", { exact: true })).toBeVisible();
-    await expect(page.getByRole("status")).toContainText(
-      "Route application calls through /v1/chat/completions",
-    );
+    await expect(
+      page.getByRole("status").filter({ hasText: "OpenAI is connected." }),
+    ).toContainText("Route application calls through /v1/chat/completions");
     await expect(page.locator("main")).not.toContainText(administrationKey);
     await expect(page.locator("main")).not.toContainText(inferenceKey);
 
     await page.getByLabel("Monthly limit in USD").fill("25");
     await page.getByRole("button", { name: "Enforce this budget" }).click();
-    await expect(page.getByRole("status")).toContainText(
+    await expect(
+      page.getByRole("status").filter({ hasText: "Hard gateway budget saved." }),
+    ).toContainText(
       "Hard gateway budget saved. RaksHex reserves the next routed request before provider execution.",
     );
     await expect(page.getByText("Active: $25 limit · $0 used")).toBeVisible();
 
     await page.getByRole("button", { name: "Stop routed traffic now" }).click();
-    await expect(page.getByRole("status")).toContainText("Blocked at gateway for routed traffic");
+    await expect(
+      page.getByRole("status").filter({ hasText: "Blocked at gateway for routed traffic" }),
+    ).toContainText("Blocked at gateway for routed traffic");
     await expect(page.getByRole("button", { name: "Restore routed traffic" })).toBeVisible();
     await expect(
       page.getByText(
