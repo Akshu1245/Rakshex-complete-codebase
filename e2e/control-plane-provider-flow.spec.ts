@@ -199,8 +199,9 @@ test.describe("Provider control plane browser journey", () => {
     await expect(
       page.getByRole("status").filter({ hasText: "OpenAI is connected." }),
     ).toContainText("Route application calls through /v1/chat/completions");
-    await expect(page.locator("main")).not.toContainText(administrationKey);
-    await expect(page.locator("main")).not.toContainText(inferenceKey);
+    const controlPlaneMain = page.getByRole("main").last();
+    await expect(controlPlaneMain).not.toContainText(administrationKey);
+    await expect(controlPlaneMain).not.toContainText(inferenceKey);
 
     await page.getByLabel("Monthly limit in USD").fill("25");
     await page.getByRole("button", { name: "Enforce this budget" }).click();
