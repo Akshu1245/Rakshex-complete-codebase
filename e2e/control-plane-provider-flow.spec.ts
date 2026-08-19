@@ -168,7 +168,7 @@ test.describe("Provider control plane browser journey", () => {
       return route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify(results.length === 1 ? results[0] : results),
+        body: JSON.stringify(results),
       });
     });
   });
