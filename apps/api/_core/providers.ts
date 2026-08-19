@@ -313,7 +313,10 @@ export async function routeLLM(
     });
   }
 
-  // Kill-switch DB lookup if userId is provided
+  // Legacy personal dispatch only. Workspace provider enforcement must use the
+  // OpenAI compatible gateway, which evaluates scoped governance before every
+  // upstream call. Never let this compatibility path fail open on a user safety
+  // state lookup error.
   if (params.userId) {
     try {
       const { getKillSwitchSettings } = await import("../db");
@@ -325,8 +328,11 @@ export async function routeLLM(
       }
     } catch (err) {
       if (err instanceof RuntimePolicyError) throw err;
-      // DB might not be available — fail open
-      logger.warn({ err }, "[Providers] kill-switch check failed, continuing");
+      logger.error({ err, userId: params.userId }, "[Providers] kill-switch check unavailable");
+      throw new RuntimePolicyError(
+        "LLM execution is unavailable because the Rakshex safety state could not be verified.",
+        { context: { userId: params.userId, policy: "kill_switch_lookup_unavailable" } },
+      );
     }
   }
 

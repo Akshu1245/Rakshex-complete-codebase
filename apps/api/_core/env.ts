@@ -21,6 +21,20 @@ import { z } from "zod";
 
 const isProduction = process.env.NODE_ENV === "production";
 
+const INSECURE_PRODUCTION_DEFAULTS = {
+  JWT_SECRET: "production-jwt-secret-min-32-chars-long-rakshex-001",
+  SMTP_PASS: "placeholder-smtp-pass",
+  METRICS_TOKEN: "rakshex-metrics-token-16chars-minimum",
+  GITHUB_WEBHOOK_SECRET: "rakshex-github-webhook-secret",
+} as const;
+
+function isUnsafeProductionPlaceholder(
+  name: keyof typeof INSECURE_PRODUCTION_DEFAULTS,
+  value: string,
+): boolean {
+  return value === INSECURE_PRODUCTION_DEFAULTS[name];
+}
+
 const EnvSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   PORT: z.coerce.number().int().positive().max(65535).default(3000),
@@ -260,16 +274,37 @@ export function validateEnv(): {
   // Production-only — Redis + SMTP are schema-required above; also enforce
   // via validateEnv so callers that skip Zod still fail closed.
   if (ENV.isProduction) {
+    if (isUnsafeProductionPlaceholder("JWT_SECRET", ENV.cookieSecret)) {
+      errors.push(
+        "JWT_SECRET uses the built in placeholder — configure a unique 32+ character secret",
+      );
+    }
     if (!ENV.redisUrl) errors.push("REDIS_URL is not set — required in production (no mock Redis)");
     if (!ENV.smtpHost || !ENV.smtpUser || !ENV.smtpPass) {
       errors.push(
         "SMTP_HOST/SMTP_USER/SMTP_PASS are required in production for transactional mail",
       );
     }
+    if (isUnsafeProductionPlaceholder("SMTP_PASS", ENV.smtpPass)) {
+      errors.push("SMTP_PASS uses the built in placeholder — configure an SMTP credential");
+    }
     if (!ENV.metricsToken)
       errors.push("METRICS_TOKEN is not set — /metrics must not be publicly scrapable");
+    if (isUnsafeProductionPlaceholder("METRICS_TOKEN", ENV.metricsToken)) {
+      errors.push("METRICS_TOKEN uses the built in placeholder — configure a unique access token");
+    }
     if (!ENV.githubWebhookSecret)
       errors.push("GITHUB_WEBHOOK_SECRET is not set — GitHub webhooks must fail closed");
+    if (isUnsafeProductionPlaceholder("GITHUB_WEBHOOK_SECRET", ENV.githubWebhookSecret)) {
+      errors.push(
+        "GITHUB_WEBHOOK_SECRET uses the built in placeholder — configure the GitHub App webhook secret",
+      );
+    }
+    if (!ENV.gatewayServiceToken) {
+      errors.push(
+        "GATEWAY_SERVICE_TOKEN is not set — internal gateway callback routes must not be enabled without a service secret",
+      );
+    }
     if (!ENV.googleClientId) warnings.push("GOOGLE_CLIENT_ID is not set — OAuth login will fail");
     if (!ENV.googleClientSecret)
       warnings.push("GOOGLE_CLIENT_SECRET is not set — OAuth login will fail");
@@ -308,3 +343,7 @@ export function validateEnv(): {
 
   return { valid: errors.length === 0, warnings, errors };
 }
+
+export const __test = {
+  isUnsafeProductionPlaceholder,
+};

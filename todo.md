@@ -42,4 +42,9 @@
 - [x] Remediate historical secret scan findings without masking new credential leaks.
 - [x] Update production dependency resolutions for high severity audit and container scan findings.
 - [x] Re run Node 24 CI and record final release gate evidence.
-- [ ] Add a pre upstream hard budget block contract test and a provider safe browser control plane journey to the release gate, then validate the updated gate on Node 24.
+- [x] Add a pre upstream hard budget block contract test and a provider safe browser control plane journey to the release gate, then validate the updated gate on Node 24.
+
+## Owner Audit Production Hardening
+
+- [x] Reject built in JWT, SMTP, metrics, webhook, and gateway service secret placeholders in the primary API production environment validator.
+- [x] Make the legacy user scoped provider dispatch fail closed when its kill switch state cannot be verified, while keeping workspace routed enforcement on its dedicated scoped gateway path.
