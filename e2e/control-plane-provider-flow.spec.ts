@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import superjson from "superjson";
 
 type ProviderAccount = {
   id: number;
@@ -9,7 +10,7 @@ type ProviderAccount = {
 };
 
 function trpcResult(data: unknown) {
-  return { result: { data: { json: data } } };
+  return { result: { data: superjson.serialize(data) } };
 }
 
 test.describe("Provider control plane browser journey", () => {
@@ -18,7 +19,7 @@ test.describe("Provider control plane browser journey", () => {
     let administrationConnected = false;
     let budgetEnabled = false;
     let routedTrafficStopped = false;
-    const evidence: Array<{ id: number; eventType: string; createdAt: string }> = [];
+    const evidence: Array<{ id: number; action: string; createdAt: Date }> = [];
 
     await page.addInitScript(() => {
       window.localStorage.setItem(
@@ -120,8 +121,8 @@ test.describe("Provider control plane browser journey", () => {
           administrationConnected = true;
           evidence.push({
             id: 1,
-            eventType: "openai_administration_connected",
-            createdAt: new Date().toISOString(),
+            action: "openai_administration_connected",
+            createdAt: new Date(),
           });
           return { organizationId: "org_ci_authorized" };
         }
@@ -129,8 +130,8 @@ test.describe("Provider control plane browser journey", () => {
           gatewayConnected = true;
           evidence.push({
             id: 2,
-            eventType: "openai_gateway_connected",
-            createdAt: new Date().toISOString(),
+            action: "openai_gateway_connected",
+            createdAt: new Date(),
           });
           return { gatewayPath: "/v1/chat/completions" };
         }
@@ -138,8 +139,8 @@ test.describe("Provider control plane browser journey", () => {
           budgetEnabled = true;
           evidence.push({
             id: 3,
-            eventType: "team_governance_budget_set",
-            createdAt: new Date().toISOString(),
+            action: "team_governance_budget_set",
+            createdAt: new Date(),
           });
           return { success: true };
         }
@@ -147,8 +148,8 @@ test.describe("Provider control plane browser journey", () => {
           routedTrafficStopped = true;
           evidence.push({
             id: 4,
-            eventType: "team_governance_kill_switch_set",
-            createdAt: new Date().toISOString(),
+            action: "team_governance_kill_switch_set",
+            createdAt: new Date(),
           });
           return { note: "Blocked at gateway for routed traffic" };
         }
