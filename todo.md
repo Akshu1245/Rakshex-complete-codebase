@@ -35,4 +35,10 @@
 - [x] Finalize the OpenAI API Platform customer handoff, including separate administrative and inference credential activation steps.
 - [x] Add truthful Azure OpenAI and OpenRouter authorization and routed enforcement readiness paths.
 - [x] Validate provider onboarding contracts and update the final customer activation checklist.
-- [x] Update and verify the customer activation checklist for OpenRouter gateway activation and Azure scope readiness.
+- [ ] Update and verify the customer activation checklist for OpenRouter gateway activation and Azure scope readiness.
+
+## CI Release Blocker Remediation
+
+- [ ] Remediate historical secret scan findings without masking new credential leaks.
+- [ ] Update production dependency resolutions for high severity audit and container scan findings.
+- [ ] Re run Node 24 CI and record final release gate evidence.

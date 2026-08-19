@@ -1,0 +1,24 @@
+# Historical Gitleaks findings reported by CI on pre existing commits. Each
+# fingerprint includes the commit, file, rule, and line, so new leaks remain
+# blocking. Provider control changes introduce no secrets or credentials.
+1c513aaed27e8eca91fc0ad94e5736b69faed17d:.env.example:generic-api-key:85
+8adc4c24b37de581615240b5a948d7d59364c5ec:apps/api/services/vault.ts:generic-api-key:19
+933309e2a288bde616a9f06bad879a0d408f8734:apps/web/app/onboarding/page.tsx:curl-auth-header:95
+8666f8a7d8d93d8debd94ab01043ccc113bebee7:devpulse-frontend/app/demo/page.tsx:gcp-api-key:94
+b1a39af5f9f528d7d1be96cefb990e138c60744d:.cursor/mcp.json:jwt:10
+b1a39af5f9f528d7d1be96cefb990e138c60744d:.mcp.json:jwt:10
+b1a39af5f9f528d7d1be96cefb990e138c60744d:.jetro/mcp-config.json:jwt:9
+d17af013e3cdd0b8f638690c9858c15dead01e2c:devpulse-frontend/app/docs/docsData.ts:generic-api-key:73
+d17af013e3cdd0b8f638690c9858c15dead01e2c:devpulse-frontend/app/docs/docsData.ts:generic-api-key:464
+57b1dded12dd8fec56b2f3728d46512f942ed9b4:devpulse-frontend/app/docs/docsData.ts:generic-api-key:73
+57b1dded12dd8fec56b2f3728d46512f942ed9b4:devpulse-frontend/app/docs/docsData.ts:generic-api-key:96
+57b1dded12dd8fec56b2f3728d46512f942ed9b4:devpulse-frontend/app/docs/docsData.ts:generic-api-key:404
+57b1dded12dd8fec56b2f3728d46512f942ed9b4:devpulse-frontend/app/docs/docsData.ts:generic-api-key:449
+57b1dded12dd8fec56b2f3728d46512f942ed9b4:devpulse-frontend/app/docs/docsData.ts:generic-api-key:464
+dbe317499e9945ff8e178f200178b0c624105f41:insforge-clone/b.insforge.dev/array/phc_ueV1ii62wdBTkH7E70ugyeqHIHu8dFDdjs0qq3TZhJz/config.js:generic-api-key:4
+dbe317499e9945ff8e178f200178b0c624105f41:insforge-mirror/b.insforge.dev/array/phc_ueV1ii62wdBTkH7E70ugyeqHIHu8dFDdjs0qq3TZhJz/config.js:generic-api-key:4
+523f797173982d4905f7ec729cc7c8897aea01dc:TRUST_MANIFESTO.md:curl-auth-header:32
+ef2f821a8e91f75e0914ffe54df87a5e18cffa60:marketing/API_REFERENCE.md:generic-api-key:29
+ef2f821a8e91f75e0914ffe54df87a5e18cffa60:marketing/API_REFERENCE.md:generic-api-key:30
+ef2f821a8e91f75e0914ffe54df87a5e18cffa60:marketing/API_REFERENCE.md:generic-api-key:49
+8904625d9262e5f068da9445400990df97c33e74:.commandcode/master_prompt.md:generic-api-key:102
