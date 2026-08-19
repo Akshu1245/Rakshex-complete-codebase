@@ -302,7 +302,10 @@ jobs:
         run: pnpm run db:migrate
         env:
           DATABASE_URL: postgresql://rakshex:rakshex@127.0.0.1:5432/rakshex_e2e
-      - run: pnpm exec playwright install --with-deps chromium
+      # GitHub hosted Ubuntu already carries Chromium's system libraries. Installing
+      # only the pinned Playwright browser avoids an apt based setup stall while
+      # retaining the exact browser binary used by the release suite.
+      - run: pnpm exec playwright install chromium
       - name: Run complete Playwright journey suite
         run: pnpm run test:e2e
         env:
