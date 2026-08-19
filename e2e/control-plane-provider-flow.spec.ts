@@ -71,6 +71,9 @@ test.describe("Provider control plane browser journey", () => {
           : []),
       ];
 
+      if (url.includes("auth.me")) {
+        return respond({ id: 7, email: "operator@example.test", name: "CI Operator", plan: "pro" });
+      }
       if (url.includes("workspaces.listMine")) return respond([{ id: 12, name: "Acme" }]);
       if (url.includes("controlPlane.providers.catalog")) {
         return respond([
