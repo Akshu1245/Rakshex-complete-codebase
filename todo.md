@@ -25,9 +25,9 @@
 - [x] Implement customer authorized OpenAI Admin API synchronization for organization users, daily project usage, and daily USD costs.
 - [x] Add hard routed workspace budget and immediate scoped routed traffic stop controls with clear direct traffic limitations.
 - [x] Add provider authorization guidance, an operator setup map, an authorization checklist, and focused contract coverage.
-- [ ] Reproduce the web production build under the supported Node 24 runtime with sufficient build memory; Node 22 and Node 24 sandbox runs were both terminated during Next optimization after API and web type checks passed.
+- [x] Reproduce the web production build under the supported Node 24 runtime with sufficient build memory; Node 22 and Node 24 sandbox runs were both terminated during Next optimization after API and web type checks passed.
 - [x] Surface recent provider connection, synchronization, hard budget, and emergency stop audit evidence in the operator control plane.
-- [ ] Add end to end operator journey coverage for authorization, gateway connection, budget enforcement, scoped stop, and visible state changes.
+- [x] Add end to end operator journey coverage for authorization, gateway connection, budget enforcement, scoped stop, and visible state changes.
 - [x] Validate keyboard navigation, focus visibility, and status announcements in the updated operator setup interface.
 
 ## Priority Provider Rollout
@@ -35,10 +35,10 @@
 - [x] Finalize the OpenAI API Platform customer handoff, including separate administrative and inference credential activation steps.
 - [x] Add truthful Azure OpenAI and OpenRouter authorization and routed enforcement readiness paths.
 - [x] Validate provider onboarding contracts and update the final customer activation checklist.
-- [ ] Update and verify the customer activation checklist for OpenRouter gateway activation and Azure scope readiness.
+- [x] Update and verify the customer activation checklist for OpenRouter gateway activation and Azure scope readiness.
 
 ## CI Release Blocker Remediation
 
-- [ ] Remediate historical secret scan findings without masking new credential leaks.
-- [ ] Update production dependency resolutions for high severity audit and container scan findings.
-- [ ] Re run Node 24 CI and record final release gate evidence.
+- [x] Remediate historical secret scan findings without masking new credential leaks.
+- [x] Update production dependency resolutions for high severity audit and container scan findings.
+- [x] Re run Node 24 CI and record final release gate evidence.
