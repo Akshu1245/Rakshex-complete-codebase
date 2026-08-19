@@ -39,13 +39,6 @@ test.describe("Provider control plane browser journey", () => {
     // requests are intentionally mocked: customer credentials and external
     // provider administration APIs are not used in CI.
     await page.route("**/api/trpc/**", async (route) => {
-      const url = route.request().url();
-      const respond = (data: unknown) =>
-        route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify(trpcResult(data)),
-        });
       const accounts: ProviderAccount[] = [
         ...(gatewayConnected
           ? [
@@ -71,39 +64,39 @@ test.describe("Provider control plane browser journey", () => {
           : []),
       ];
 
-      if (url.includes("auth.me")) {
-        return respond({ id: 7, email: "operator@example.test", name: "CI Operator", plan: "pro" });
-      }
-      if (url.includes("workspaces.listMine")) return respond([{ id: 12, name: "Acme" }]);
-      if (url.includes("controlPlane.providers.catalog")) {
-        return respond([
-          {
-            id: "openai",
-            name: "OpenAI",
-            category: "api",
-            capabilities: { promptGateway: true, discoverUsage: true },
-          },
-        ]);
-      }
-      if (url.includes("controlPlane.summary")) {
-        return respond({
-          providers: accounts.length,
-          credentials: accounts.length,
-          openFindings: 0,
-          subscriptions: 0,
-        });
-      }
-      if (url.includes("controlPlane.providers.accounts")) return respond(accounts);
-      if (url.includes("controlPlane.discovery.list")) return respond([]);
-      if (url.includes("controlPlane.subscriptions.list")) return respond([]);
-      if (url.includes("controlPlane.resources.list")) return respond([]);
-      if (url.includes("controlPlane.credentials.list")) return respond([]);
-      if (url.includes("controlPlane.usage.summary")) {
-        return respond({ totalCostUsd: 0, totalRequests: 0, byUser: [] });
-      }
-      if (url.includes("teamGovernance.listBudgets")) {
-        return respond(
-          budgetEnabled
+      const responseFor = (path: string): unknown => {
+        if (path === "auth.me") {
+          return { id: 7, email: "operator@example.test", name: "CI Operator", plan: "pro" };
+        }
+        if (path === "workspaces.listMine") return [{ id: 12, name: "Acme" }];
+        if (path === "controlPlane.providers.catalog") {
+          return [
+            {
+              id: "openai",
+              name: "OpenAI",
+              category: "api",
+              capabilities: { promptGateway: true, discoverUsage: true },
+            },
+          ];
+        }
+        if (path === "controlPlane.summary") {
+          return {
+            providers: accounts.length,
+            credentials: accounts.length,
+            openFindings: 0,
+            subscriptions: 0,
+          };
+        }
+        if (path === "controlPlane.providers.accounts") return accounts;
+        if (path === "controlPlane.discovery.list") return [];
+        if (path === "controlPlane.subscriptions.list") return [];
+        if (path === "controlPlane.resources.list") return [];
+        if (path === "controlPlane.credentials.list") return [];
+        if (path === "controlPlane.usage.summary") {
+          return { totalCostUsd: 0, totalRequests: 0, byUser: [] };
+        }
+        if (path === "teamGovernance.listBudgets") {
+          return budgetEnabled
             ? [
                 {
                   id: 31,
@@ -114,59 +107,69 @@ test.describe("Provider control plane browser journey", () => {
                   currentSpendUsd: 0,
                 },
               ]
-            : [],
-        );
-      }
-      if (url.includes("teamGovernance.listKillSwitches")) {
-        return respond(
-          routedTrafficStopped
+            : [];
+        }
+        if (path === "teamGovernance.listKillSwitches") {
+          return routedTrafficStopped
             ? [{ id: 41, scopeType: "workspace", scopeId: "12", active: true }]
-            : [],
-        );
-      }
-      if (url.includes("controlPlane.recentEvidence")) return respond(evidence);
+            : [];
+        }
+        if (path === "controlPlane.recentEvidence") return evidence;
 
-      if (url.includes("controlPlane.providers.connectOpenAiAdministration")) {
-        administrationConnected = true;
-        evidence.push({
-          id: 1,
-          eventType: "openai_administration_connected",
-          createdAt: new Date().toISOString(),
-        });
-        return respond({ organizationId: "org_ci_authorized" });
-      }
-      if (url.includes("controlPlane.providers.connectOpenAiGateway")) {
-        gatewayConnected = true;
-        evidence.push({
-          id: 2,
-          eventType: "openai_gateway_connected",
-          createdAt: new Date().toISOString(),
-        });
-        return respond({ gatewayPath: "/v1/chat/completions" });
-      }
-      if (url.includes("teamGovernance.setBudget")) {
-        budgetEnabled = true;
-        evidence.push({
-          id: 3,
-          eventType: "team_governance_budget_set",
-          createdAt: new Date().toISOString(),
-        });
-        return respond({ success: true });
-      }
-      if (url.includes("teamGovernance.setKillSwitch")) {
-        routedTrafficStopped = true;
-        evidence.push({
-          id: 4,
-          eventType: "team_governance_kill_switch_set",
-          createdAt: new Date().toISOString(),
-        });
-        return respond({ note: "Blocked at gateway for routed traffic" });
-      }
-      if (url.includes("teamGovernance.syncProvider")) {
-        return respond({ status: "success", seatsSynced: 2, usageEventsSynced: 3 });
-      }
+        if (path === "controlPlane.providers.connectOpenAiAdministration") {
+          administrationConnected = true;
+          evidence.push({
+            id: 1,
+            eventType: "openai_administration_connected",
+            createdAt: new Date().toISOString(),
+          });
+          return { organizationId: "org_ci_authorized" };
+        }
+        if (path === "controlPlane.providers.connectOpenAiGateway") {
+          gatewayConnected = true;
+          evidence.push({
+            id: 2,
+            eventType: "openai_gateway_connected",
+            createdAt: new Date().toISOString(),
+          });
+          return { gatewayPath: "/v1/chat/completions" };
+        }
+        if (path === "teamGovernance.setBudget") {
+          budgetEnabled = true;
+          evidence.push({
+            id: 3,
+            eventType: "team_governance_budget_set",
+            createdAt: new Date().toISOString(),
+          });
+          return { success: true };
+        }
+        if (path === "teamGovernance.setKillSwitch") {
+          routedTrafficStopped = true;
+          evidence.push({
+            id: 4,
+            eventType: "team_governance_kill_switch_set",
+            createdAt: new Date().toISOString(),
+          });
+          return { note: "Blocked at gateway for routed traffic" };
+        }
+        if (path === "teamGovernance.syncProvider") {
+          return { status: "success", seatsSynced: 2, usageEventsSynced: 3 };
+        }
 
-      return respond({});
+        return {};
+      };
+
+      const procedurePath = new URL(route.request().url()).pathname
+        .split("/api/trpc/")
+        .at(-1)
+        ?.split(",")
+        .filter(Boolean);
+      const results = (procedurePath ?? []).map((path) => trpcResult(responseFor(path)));
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(results.length === 1 ? results[0] : results),
+      });
     });
   });
 
