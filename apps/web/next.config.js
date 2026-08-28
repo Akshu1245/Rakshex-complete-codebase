@@ -66,28 +66,67 @@ const nextConfig = {
   },
   async redirects() {
     return [
-      // /documentation is a docs-named URL, not an in-app start. Public hello-world is /docs.
-      // Keep /documentation in lib/publicRoutes.ts — proxy.ts runs before redirects.
-      // /get-started stays invite-gated (not listed as public, no redirect here).
+      // Public aliases and legacy URLs must resolve before auth middleware or
+      // stale external links can turn into login bounces / soft 404s.
       {
         source: "/documentation",
         destination: "/docs",
-        permanent: false,
+        permanent: true,
       },
       {
         source: "/docs/getting-started",
         destination: "/docs/agent-firewall",
-        permanent: false,
+        permanent: true,
+      },
+      {
+        source: "/dpa",
+        destination: "/legal/dpa",
+        permanent: true,
+      },
+      {
+        source: "/legal/terms",
+        destination: "/terms",
+        permanent: true,
+      },
+      {
+        source: "/legal/privacy",
+        destination: "/privacy",
+        permanent: true,
+      },
+      {
+        source: "/compare/rakshex-vs-snyk",
+        destination: "/compare/snyk",
+        permanent: true,
+      },
+      {
+        source: "/compare/rakshex-vs-datadog",
+        destination: "/compare/datadog",
+        permanent: true,
+      },
+      {
+        source: "/compare/rakshex-vs-salt",
+        destination: "/compare/salt-security",
+        permanent: true,
+      },
+      {
+        source: "/compare/rakshex-vs-traceable",
+        destination: "/compare/traceable-ai",
+        permanent: true,
+      },
+      {
+        source: "/security.txt",
+        destination: "/.well-known/security.txt",
+        permanent: true,
       },
       {
         source: "/legal/rakshex-terms-of-service.docx",
         destination: "/terms",
-        permanent: false,
+        permanent: true,
       },
       {
         source: "/legal/rakshex-refund-cancellation-policy.docx",
         destination: "/legal/refund",
-        permanent: false,
+        permanent: true,
       },
     ];
   },
