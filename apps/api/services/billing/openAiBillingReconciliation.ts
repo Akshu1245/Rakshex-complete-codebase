@@ -231,8 +231,8 @@ async function fetchAdminJson(url: string, adminKey: string): Promise<unknown> {
     },
   });
   if (!response.ok) {
-    const body = (await response.text()).slice(0, 4096);
-    throw new Error(`OpenAI admin API returned ${response.status}: ${body}`);
+    // Provider error bodies can contain account metadata; never echo them.
+    throw new Error(`OpenAI admin API returned ${response.status}`);
   }
   return response.json();
 }
