@@ -2,6 +2,8 @@
 
 **Repository audit refreshed:** 2026-08-28
 
+**Canonical naming:** use **RaksHex** in human-facing copy, `rakshex` for package/path/domain identifiers, and `RAKSHEX_*` for environment variables. The active repository tree and remote branch/tag names are normalized to this convention.
+
 Read this file before changing architecture or trusting an older readiness document. It is intentionally evidence-first: current source + the GitHub release gate outrank dated reports, old branch names, screenshots, and historical test counts.
 
 ## 1. Product thesis
