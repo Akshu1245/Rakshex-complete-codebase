@@ -110,6 +110,25 @@ function safeScopeHeader(req: Request, name: string): string | undefined {
   return raw;
 }
 
+/**
+ * Hard-budget settlement after a provider attempt.
+ *
+ * If the credentialed POST never left the gateway, release the reservation
+ * ($0). Once fetch() has started, OpenAI may already be billing the org
+ * credential even if the client disconnects or the stream is aborted, so
+ * settle at the conservative preflight estimate until verified usage exists.
+ */
+export function settlementCostAfterProviderAttempt(input: {
+  providerFetchStarted: boolean;
+  providerCompleted: boolean;
+  completedCost: number;
+  estimatedCostUsd: number;
+}): number {
+  if (input.providerCompleted) return input.completedCost;
+  if (input.providerFetchStarted) return input.estimatedCostUsd;
+  return 0;
+}
+
 export function estimateGatewayPreflight(
   input: unknown,
   maxOutputTokens = DEFAULT_PREFLIGHT_OUTPUT_TOKENS,
@@ -322,6 +341,8 @@ async function persistGatewayResult(input: {
   usage?: GatewayUsage;
   estimatedCostUsd: number;
   startedAt: number;
+  /** Attribute the preflight estimate when provider work started but usage never arrived. */
+  chargeEstimated?: boolean;
 }): Promise<number> {
   const endedAt = Date.now();
   await db.recordGatewayAudit({
@@ -339,7 +360,8 @@ async function persistGatewayResult(input: {
     endedAt,
   });
 
-  if (input.decision !== "allowed") return 0;
+  const shouldAttribute = input.decision === "allowed" || Boolean(input.chargeEstimated);
+  if (!shouldAttribute) return 0;
   if (input.providerAccountId == null) {
     throw new Error("Settled gateway call is missing provider account attribution");
   }
@@ -520,7 +542,7 @@ export async function handleOpenAiGatewayRequest(
       res,
       400,
       "unsupported_provider",
-      "Only openai and openai_compatible are currently supported",
+      "Only the OpenAI provider is supported in this P0 gateway",
     );
     return;
   }
@@ -903,11 +925,14 @@ export async function handleOpenAiGatewayRequest(
   }
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
-  req.on("close", () => controller.abort());
+  const onClientClose = () => controller.abort();
+  req.on("close", onClientClose);
+  let providerFetchStarted = false;
   let providerCompleted = false;
   let completedCost = 0;
 
   try {
+    providerFetchStarted = true;
     const upstream = await fetch(connection.url, {
       method: "POST",
       headers: {
@@ -1070,6 +1095,12 @@ export async function handleOpenAiGatewayRequest(
     res.end();
   } catch (err) {
     const aborted = controller.signal.aborted;
+    const settledCost = settlementCostAfterProviderAttempt({
+      providerFetchStarted,
+      providerCompleted,
+      completedCost,
+      estimatedCostUsd: estimate.estimatedCostUsd,
+    });
     logger.error(
       { err, requestId, workspaceId: auth.workspaceId, provider },
       "[Gateway] Upstream request failed",
@@ -1090,12 +1121,13 @@ export async function handleOpenAiGatewayRequest(
         blockReason: aborted ? "upstream_timeout_or_disconnect" : "upstream_error",
         estimatedCostUsd: estimate.estimatedCostUsd,
         startedAt,
+        chargeEstimated: settledCost > 0 && !providerCompleted,
       });
     } catch (auditErr) {
       logger.error({ err: auditErr, requestId }, "[Gateway] Failed to persist error audit");
     }
     try {
-      await settleGatewayBudget(budgetReservation, providerCompleted ? completedCost : 0);
+      await settleGatewayBudget(budgetReservation, settledCost);
       budgetReservation = null;
     } catch (settleErr) {
       logger.error({ err: settleErr, requestId }, "[Gateway] Failed to release budget reservation");
@@ -1109,12 +1141,14 @@ export async function handleOpenAiGatewayRequest(
         identityId,
         projectId,
         agentId,
-        settledCostUsd: providerCompleted ? completedCost : 0,
+        settledCostUsd: settledCost,
         outcome: aborted ? "timeout_or_disconnect" : "upstream_error",
         providerCompleted,
-        billingConfidence: providerCompleted
-          ? "gateway_settled"
-          : "pending_provider_reconciliation",
+        providerFetchStarted,
+        billingConfidence:
+          providerCompleted || providerFetchStarted
+            ? "gateway_settled"
+            : "pending_provider_reconciliation",
       }))
     ) {
       return;
@@ -1131,5 +1165,6 @@ export async function handleOpenAiGatewayRequest(
     }
   } finally {
     clearTimeout(timeout);
+    req.removeListener("close", onClientClose);
   }
 }

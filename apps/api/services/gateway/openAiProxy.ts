@@ -17,6 +17,7 @@ import {
   handleOpenAiGatewayRequest,
   isBlockedUpstreamHost,
   normalizeUpstreamUrl,
+  settlementCostAfterProviderAttempt,
   type NormalizedOpenAiGatewayRequest,
   type OpenAiGatewayNormalizationResult,
 } from "./openAiGatewayCore";
@@ -194,4 +195,5 @@ export const __test = {
   normalizeChatCompletion,
   normalizeResponses,
   responsePolicyMessages,
+  settlementCostAfterProviderAttempt,
 };

@@ -46,6 +46,7 @@ vi.mock("../../_core/logger", () => ({
 }));
 
 import { registerOpenAiGatewayRoutes } from "./openAiProxy";
+import { estimateGatewayPreflight } from "./openAiGatewayCore";
 
 function request() {
   const headers: Record<string, string> = { authorization: "Bearer rk_fixture_workspace" };
@@ -187,5 +188,68 @@ describe("parallel hard-budget race", () => {
       expect.objectContaining({ eventType: "settle" }),
     );
     upstreamFetch.mockRestore();
+  });
+
+  it("settles the reserved estimate when the client disconnects after provider POST", async () => {
+    const reservedUsd = 0.05;
+    mocks.reserveGatewayBudget.mockResolvedValue({
+      allowed: true,
+      reservation: { budgetId: 9, workspaceId: 42, identityId: null, reservedUsd },
+    });
+
+    let closeHandler: (() => void) | undefined;
+    const hangingFetch = vi.spyOn(globalThis, "fetch").mockImplementation((_url, init) => {
+      return new Promise((_resolve, reject) => {
+        const signal = (init as RequestInit | undefined)?.signal;
+        if (!signal) {
+          reject(new Error("missing abort signal"));
+          return;
+        }
+        const onAbort = () => {
+          const err = new Error("The operation was aborted");
+          err.name = "AbortError";
+          reject(err);
+        };
+        if (signal.aborted) onAbort();
+        else signal.addEventListener("abort", onAbort, { once: true });
+      });
+    });
+
+    const req = request() as ReturnType<typeof request> & {
+      on: ReturnType<typeof vi.fn>;
+      removeListener: ReturnType<typeof vi.fn>;
+    };
+    req.on = vi.fn((event: string, handler: () => void) => {
+      if (event === "close") closeHandler = handler;
+      return req;
+    });
+    req.removeListener = vi.fn();
+
+    const pending = handler()(req, response());
+    await vi.waitFor(() => expect(hangingFetch).toHaveBeenCalledTimes(1));
+    expect(closeHandler).toEqual(expect.any(Function));
+    closeHandler!();
+    await pending;
+
+    const expectedCost = estimateGatewayPreflight(
+      req.body.messages,
+      req.body.max_tokens,
+    ).estimatedCostUsd;
+    expect(expectedCost).toBeGreaterThan(0);
+    expect(mocks.settleGatewayBudget).toHaveBeenCalledWith(
+      expect.objectContaining({ budgetId: 9 }),
+      expectedCost,
+    );
+    expect(mocks.ingestUsageBatch).toHaveBeenCalled();
+    expect(mocks.appendActionReceipt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: "settle",
+        payload: expect.objectContaining({
+          settledCostUsd: expectedCost,
+          outcome: "timeout_or_disconnect",
+        }),
+      }),
+    );
+    hangingFetch.mockRestore();
   });
 });

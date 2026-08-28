@@ -170,4 +170,31 @@ describe("OpenAI-compatible enforcement gateway helpers", () => {
       code: "unsupported_background",
     });
   });
+
+  it("settles the reserved estimate after provider POST starts without verified usage", () => {
+    expect(
+      __test.settlementCostAfterProviderAttempt({
+        providerFetchStarted: false,
+        providerCompleted: false,
+        completedCost: 0,
+        estimatedCostUsd: 0.04,
+      }),
+    ).toBe(0);
+    expect(
+      __test.settlementCostAfterProviderAttempt({
+        providerFetchStarted: true,
+        providerCompleted: false,
+        completedCost: 0,
+        estimatedCostUsd: 0.04,
+      }),
+    ).toBe(0.04);
+    expect(
+      __test.settlementCostAfterProviderAttempt({
+        providerFetchStarted: true,
+        providerCompleted: true,
+        completedCost: 0.012,
+        estimatedCostUsd: 0.04,
+      }),
+    ).toBe(0.012);
+  });
 });

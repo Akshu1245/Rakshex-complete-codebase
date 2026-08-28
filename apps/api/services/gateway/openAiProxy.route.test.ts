@@ -421,4 +421,35 @@ describe("OpenAI-compatible gateway route enforcement", () => {
     expect(upstreamFetch).not.toHaveBeenCalled();
     upstreamFetch.mockRestore();
   });
+
+  it("rejects background Responses before governance and upstream fetch", async () => {
+    const handler = routeHandler("/v1/responses");
+    const res = createResponse();
+    const upstreamFetch = vi.spyOn(globalThis, "fetch");
+    mocks.validateWorkspaceApiKey.mockResolvedValue({
+      keyId: "ak_1",
+      workspaceId: 42,
+      userId: 7,
+      scopes: ["gateway:invoke"],
+      projectId: null,
+    });
+
+    await handler(
+      createRequest(
+        "Bearer rk_live_test_workspace_key",
+        {},
+        { model: "gpt-5", input: "hello", background: true },
+      ),
+      res,
+    );
+
+    expect(res.statusCode).toBe(400);
+    expect((res.payload as { error: { code: string } }).error.code).toBe("unsupported_background");
+    expect(mocks.evaluateGatewayGovernance).not.toHaveBeenCalled();
+    expect(mocks.appendActionReceipt).toHaveBeenCalledWith(
+      expect.objectContaining({ eventType: "deny", workspaceId: 42 }),
+    );
+    expect(upstreamFetch).not.toHaveBeenCalled();
+    upstreamFetch.mockRestore();
+  });
 });
