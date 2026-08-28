@@ -1,5 +1,10 @@
 export type RakshexOpenAIProvider = "openai" | "openai_compatible";
 
+export interface RakshexOpenAIMetadata {
+  featureTags?: Record<string, string>;
+  customerTags?: Record<string, string>;
+}
+
 export interface RakshexOpenAIOptions {
   /** Rakshex workspace API key. Defaults to RAKSHEX_API_KEY. */
   apiKey?: string;
@@ -15,6 +20,8 @@ export interface RakshexOpenAIOptions {
   agentId?: string;
   /** Optional centrally managed provider account to use. */
   providerAccountId?: number;
+  /** Bounded non-secret tags used for spend attribution. */
+  metadata?: RakshexOpenAIMetadata;
   /** Additional headers to pass through to the Rakshex gateway. */
   defaultHeaders?: Record<string, string>;
 }
@@ -38,6 +45,15 @@ function required(value: string | undefined, name: string): string {
     throw new Error(`${name} is required`);
   }
   return normalized;
+}
+
+function encodeMetadata(metadata: RakshexOpenAIMetadata | undefined): string | undefined {
+  if (!metadata) return undefined;
+  const encoded = encodeURIComponent(JSON.stringify(metadata));
+  if (encoded.length > 4096) {
+    throw new Error("Rakshex OpenAI metadata exceeds the 4096-byte header limit");
+  }
+  return encoded;
 }
 
 /**
@@ -86,6 +102,10 @@ export function createRakshexOpenAI<TClient>(
   }
   if (options.providerAccountId != null) {
     defaultHeaders["x-rakshex-provider-account-id"] = String(options.providerAccountId);
+  }
+  const metadata = encodeMetadata(options.metadata);
+  if (metadata) {
+    defaultHeaders["x-rakshex-metadata"] = metadata;
   }
 
   return new OpenAIClient({
