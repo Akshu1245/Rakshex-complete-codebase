@@ -38,7 +38,10 @@ export function TerminalDemo() {
   const [scanStep, setScanStep] = useState(0);
 
   useEffect(() => {
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reducedMotion =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
     if (reducedMotion) {
       setScanStep(TERMINAL_LINES.length);
       return;
