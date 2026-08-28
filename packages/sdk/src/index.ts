@@ -62,6 +62,14 @@ export {
 } from "./providers/index.js";
 export type { WrapOptions } from "./providers/index.js";
 
+export { createRakshexOpenAI, normalizeRakshexGatewayUrl } from "./openaiGateway.js";
+export type {
+  OpenAICompatibleConstructor,
+  RakshexOpenAIMetadata,
+  RakshexOpenAIOptions,
+  RakshexOpenAIProvider,
+} from "./openaiGateway.js";
+
 export { AgentFirewallClient, FirewallDeniedError, createAgentFirewallClient } from "./firewall.js";
 export type {
   BrokeredResponse,

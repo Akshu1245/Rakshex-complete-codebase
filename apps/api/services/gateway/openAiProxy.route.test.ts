@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   ),
   recordGatewayAudit: vi.fn(),
   getDb: vi.fn(),
+  appendActionReceipt: vi.fn(),
 }));
 
 vi.mock("../workspaceApiKeys", () => ({
@@ -30,6 +31,10 @@ vi.mock("../../db", () => ({
   getDb: mocks.getDb,
 }));
 
+vi.mock("../receipts/actionReceipts", () => ({
+  appendActionReceipt: mocks.appendActionReceipt,
+}));
+
 vi.mock("../../_core/env", () => ({
   ENV: { nodeEnv: "test" },
 }));
@@ -40,23 +45,36 @@ vi.mock("../../_core/logger", () => ({
 
 import { registerOpenAiGatewayRoutes } from "./openAiProxy";
 
-function createRequest(authorization?: string, extraHeaders: Record<string, string> = {}) {
+const defaultChatBody = {
+  model: "gpt-4o-mini",
+  messages: [{ role: "user", content: "hello" }],
+  stream: false,
+};
+
+const defaultResponsesBody = {
+  model: "gpt-5",
+  input: "hello",
+  stream: false,
+};
+
+function createRequest(
+  authorization?: string,
+  extraHeaders: Record<string, string> = {},
+  body: unknown = defaultChatBody,
+) {
   const headers: Record<string, string> = {
     ...(authorization ? { authorization } : {}),
     ...extraHeaders,
   };
   return {
     headers,
-    body: {
-      model: "gpt-4o-mini",
-      messages: [{ role: "user", content: "hello" }],
-      stream: false,
-    },
+    body,
     ip: "203.0.113.10",
     header(name: string) {
       return headers[name.toLowerCase()];
     },
     on: vi.fn(),
+    removeListener: vi.fn(),
   };
 }
 
@@ -84,11 +102,11 @@ function createResponse() {
   return response;
 }
 
-function routeHandler() {
+function routeHandler(path = "/v1/chat/completions") {
   const post = vi.fn();
   registerOpenAiGatewayRoutes({ post } as never);
-  const registration = post.mock.calls.find(([path]) => path === "/v1/chat/completions");
-  if (!registration) throw new Error("gateway route not registered");
+  const registration = post.mock.calls.find(([registeredPath]) => registeredPath === path);
+  if (!registration) throw new Error(`gateway route not registered: ${path}`);
   return registration[1] as (req: unknown, res: unknown) => Promise<void>;
 }
 
@@ -96,6 +114,7 @@ describe("OpenAI-compatible gateway route enforcement", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.recordGatewayAudit.mockResolvedValue(undefined);
+    mocks.appendActionReceipt.mockResolvedValue({ entryHash: "fixture" });
     mocks.reserveGatewayBudget.mockResolvedValue({ allowed: true, reservation: null });
     mocks.settleGatewayBudget.mockResolvedValue(undefined);
     mocks.resolveWorkspaceIdentityId.mockImplementation(
@@ -111,9 +130,43 @@ describe("OpenAI-compatible gateway route enforcement", () => {
 
     expect(res.statusCode).toBe(401);
     expect(mocks.evaluateGatewayGovernance).not.toHaveBeenCalled();
+    expect(mocks.appendActionReceipt).not.toHaveBeenCalled();
   });
 
-  it("blocks before any upstream call when a scoped kill switch is active", async () => {
+  it("authenticates Responses before revealing request-schema errors", async () => {
+    const handler = routeHandler("/v1/responses");
+    const res = createResponse();
+
+    await handler(createRequest(undefined, {}, {}), res);
+
+    expect(res.statusCode).toBe(401);
+    expect((res.payload as { error: { code: string } }).error.code).toBe("invalid_api_key");
+    expect(mocks.validateWorkspaceApiKey).not.toHaveBeenCalled();
+  });
+
+  it("validates Responses after authentication but before governance", async () => {
+    const handler = routeHandler("/v1/responses");
+    const res = createResponse();
+    mocks.validateWorkspaceApiKey.mockResolvedValue({
+      keyId: "ak_1",
+      workspaceId: 42,
+      userId: 7,
+      scopes: ["gateway:invoke"],
+      projectId: null,
+    });
+
+    await handler(createRequest("Bearer rk_live_test_workspace_key", {}, {}), res);
+
+    expect(res.statusCode).toBe(400);
+    expect((res.payload as { error: { code: string } }).error.code).toBe("invalid_request");
+    expect(mocks.validateWorkspaceApiKey).toHaveBeenCalledOnce();
+    expect(mocks.evaluateGatewayGovernance).not.toHaveBeenCalled();
+    expect(mocks.appendActionReceipt).toHaveBeenCalledWith(
+      expect.objectContaining({ eventType: "deny", workspaceId: 42 }),
+    );
+  });
+
+  it("blocks Chat Completions before any upstream call when a scoped kill switch is active", async () => {
     const handler = routeHandler();
     const res = createResponse();
     const upstreamFetch = vi.spyOn(globalThis, "fetch");
@@ -142,7 +195,152 @@ describe("OpenAI-compatible gateway route enforcement", () => {
         blockReason: "A scoped kill switch is active",
       }),
     );
+    expect(mocks.appendActionReceipt).toHaveBeenCalledWith(
+      expect.objectContaining({ eventType: "kill", workspaceId: 42 }),
+    );
     expect(upstreamFetch).not.toHaveBeenCalled();
+    upstreamFetch.mockRestore();
+  });
+
+  it("blocks Responses before any upstream call when a scoped kill switch is active", async () => {
+    const handler = routeHandler("/v1/responses");
+    const res = createResponse();
+    const upstreamFetch = vi.spyOn(globalThis, "fetch");
+    mocks.validateWorkspaceApiKey.mockResolvedValue({
+      keyId: "ak_1",
+      workspaceId: 42,
+      userId: 7,
+      scopes: ["gateway:invoke"],
+      projectId: null,
+    });
+    mocks.evaluateGatewayGovernance.mockResolvedValue({
+      allowed: false,
+      killActive: true,
+      budgetBlocked: false,
+      budgetReason: null,
+      state: { workspaceDisabled: true },
+    });
+
+    await handler(
+      createRequest("Bearer rk_live_test_workspace_key", {}, defaultResponsesBody),
+      res,
+    );
+
+    expect(res.statusCode).toBe(403);
+    expect(mocks.recordGatewayAudit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenantId: "7",
+        decision: "blocked",
+        blockReason: "A scoped kill switch is active",
+      }),
+    );
+    expect(mocks.appendActionReceipt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: "kill",
+        workspaceId: 42,
+        payload: expect.objectContaining({ endpoint: "responses", model: "gpt-5" }),
+      }),
+    );
+    expect(upstreamFetch).not.toHaveBeenCalled();
+    upstreamFetch.mockRestore();
+  });
+
+  it("keeps unbound header scopes out of governance", async () => {
+    const handler = routeHandler();
+    const res = createResponse();
+    mocks.validateWorkspaceApiKey.mockResolvedValue({
+      keyId: "ak_1",
+      workspaceId: 42,
+      userId: 7,
+      scopes: ["gateway:invoke"],
+      projectId: null,
+      identityId: null,
+      agentId: null,
+    });
+    mocks.resolveWorkspaceIdentityId.mockResolvedValueOnce(12);
+    mocks.evaluateGatewayGovernance.mockResolvedValue({
+      allowed: false,
+      killActive: true,
+      budgetBlocked: false,
+      budgetReason: null,
+      state: { workspaceDisabled: true },
+    });
+
+    await handler(
+      createRequest("Bearer rk_live_test_workspace_key", {
+        "x-rakshex-identity-id": "12",
+        "x-rakshex-project-id": "client-project",
+        "x-rakshex-agent-id": "client-agent",
+      }),
+      res,
+    );
+
+    expect(res.statusCode).toBe(403);
+    expect(mocks.evaluateGatewayGovernance).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: 42,
+        identityId: undefined,
+        projectId: undefined,
+        agentId: undefined,
+      }),
+    );
+  });
+
+  it("uses server-owned request ids despite repeated client X-Request-Id", async () => {
+    const handler = routeHandler();
+    mocks.validateWorkspaceApiKey.mockResolvedValue({
+      keyId: "ak_1",
+      workspaceId: 42,
+      userId: 7,
+      scopes: ["gateway:invoke"],
+      projectId: null,
+    });
+    mocks.evaluateGatewayGovernance.mockResolvedValue({
+      allowed: false,
+      killActive: true,
+      budgetBlocked: false,
+      budgetReason: null,
+      state: { workspaceDisabled: true },
+    });
+    const one = createResponse();
+    const two = createResponse();
+    const request = () =>
+      createRequest("Bearer rk_live_test_workspace_key", { "x-request-id": "fixed-client-id" });
+
+    await handler(request(), one);
+    await handler(request(), two);
+
+    const idOne = one.setHeader.mock.calls.find(([name]) => name === "x-request-id")?.[1];
+    const idTwo = two.setHeader.mock.calls.find(([name]) => name === "x-request-id")?.[1];
+    expect(idOne).toEqual(expect.any(String));
+    expect(idTwo).toEqual(expect.any(String));
+    expect(idOne).not.toBe("fixed-client-id");
+    expect(idTwo).not.toBe("fixed-client-id");
+    expect(idOne).not.toBe(idTwo);
+  });
+
+  it("rejects custom compatible upstreams before any provider egress", async () => {
+    const handler = routeHandler();
+    const res = createResponse();
+    const upstreamFetch = vi.spyOn(globalThis, "fetch");
+    mocks.validateWorkspaceApiKey.mockResolvedValue({
+      keyId: "ak_1",
+      workspaceId: 42,
+      userId: 7,
+      scopes: ["gateway:invoke"],
+      projectId: null,
+    });
+
+    await handler(
+      createRequest("Bearer rk_live_test_workspace_key", {
+        "x-rakshex-provider": "openai_compatible",
+      }),
+      res,
+    );
+
+    expect(res.statusCode).toBe(400);
+    expect(upstreamFetch).not.toHaveBeenCalled();
+    expect(mocks.evaluateGatewayGovernance).not.toHaveBeenCalled();
     upstreamFetch.mockRestore();
   });
 
@@ -167,6 +365,9 @@ describe("OpenAI-compatible gateway route enforcement", () => {
 
     expect(res.statusCode).toBe(403);
     expect(mocks.evaluateGatewayGovernance).not.toHaveBeenCalled();
+    expect(mocks.appendActionReceipt).toHaveBeenCalledWith(
+      expect.objectContaining({ eventType: "deny" }),
+    );
   });
 
   it("rejects attempts to override a key-bound identity", async () => {
@@ -193,6 +394,9 @@ describe("OpenAI-compatible gateway route enforcement", () => {
     expect((res.payload as { error: { code: string } }).error.code).toBe("identity_scope_mismatch");
     expect(mocks.resolveWorkspaceIdentityId).not.toHaveBeenCalled();
     expect(mocks.evaluateGatewayGovernance).not.toHaveBeenCalled();
+    expect(mocks.appendActionReceipt).toHaveBeenCalledWith(
+      expect.objectContaining({ eventType: "deny" }),
+    );
   });
 
   it("fails closed when governance state cannot be loaded", async () => {
@@ -212,6 +416,40 @@ describe("OpenAI-compatible gateway route enforcement", () => {
 
     expect(res.statusCode).toBe(503);
     expect((res.payload as { error: { code: string } }).error.code).toBe("enforcement_unavailable");
+    expect(mocks.appendActionReceipt).toHaveBeenCalledWith(
+      expect.objectContaining({ eventType: "deny" }),
+    );
+    expect(upstreamFetch).not.toHaveBeenCalled();
+    upstreamFetch.mockRestore();
+  });
+
+  it("rejects background Responses before governance and upstream fetch", async () => {
+    const handler = routeHandler("/v1/responses");
+    const res = createResponse();
+    const upstreamFetch = vi.spyOn(globalThis, "fetch");
+    mocks.validateWorkspaceApiKey.mockResolvedValue({
+      keyId: "ak_1",
+      workspaceId: 42,
+      userId: 7,
+      scopes: ["gateway:invoke"],
+      projectId: null,
+    });
+
+    await handler(
+      createRequest(
+        "Bearer rk_live_test_workspace_key",
+        {},
+        { model: "gpt-5", input: "hello", background: true },
+      ),
+      res,
+    );
+
+    expect(res.statusCode).toBe(400);
+    expect((res.payload as { error: { code: string } }).error.code).toBe("unsupported_background");
+    expect(mocks.evaluateGatewayGovernance).not.toHaveBeenCalled();
+    expect(mocks.appendActionReceipt).toHaveBeenCalledWith(
+      expect.objectContaining({ eventType: "deny", workspaceId: 42 }),
+    );
     expect(upstreamFetch).not.toHaveBeenCalled();
     upstreamFetch.mockRestore();
   });

@@ -84,6 +84,8 @@ import { enterpriseRouter } from "./api/enterprise";
 import { controlPlaneRouter } from "./api/controlPlane";
 import { agentFirewallRouter } from "./api/agentFirewall";
 import { teamGovernanceRouter } from "./api/teamGovernance";
+import { providerBillingRouter } from "./api/providerBilling";
+import { actionReceiptsRouter } from "./api/actionReceipts";
 import { ensurePersonalWorkspace } from "./services/workspaceContext";
 import { logger } from "./_core/logger";
 
@@ -875,6 +877,8 @@ export const appRouter = router({
   // ─── Rakshex Enterprise ──────────────────────────────────────────────
   enterprise: enterpriseRouter,
   controlPlane: controlPlaneRouter,
+  providerBilling: providerBillingRouter,
+  actionReceipts: actionReceiptsRouter,
 
   // ─── Agent Firewall (runtime authorization control plane) ────────────
   agentFirewall: agentFirewallRouter,

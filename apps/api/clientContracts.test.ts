@@ -55,4 +55,13 @@ describe("client-to-server tRPC contracts", () => {
     const missing = [...used].filter((procedure) => !hasProcedure(procedure)).sort();
     expect(missing, `Missing VS Code tRPC procedures: ${missing.join(", ")}`).toEqual([]);
   });
+
+  it("registers the P0 billing checksum and signed receipt export procedures", () => {
+    expect(hasProcedure("providerBilling.trackingRule")).toBe(true);
+    expect(hasProcedure("providerBilling.connectionStatus")).toBe(true);
+    expect(hasProcedure("providerBilling.connectOpenAiKey")).toBe(true);
+    expect(hasProcedure("providerBilling.revokeOpenAiKey")).toBe(true);
+    expect(hasProcedure("actionReceipts.exportJson")).toBe(true);
+    expect(hasProcedure("actionReceipts.exportPdf")).toBe(true);
+  });
 });

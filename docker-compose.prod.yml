@@ -1,6 +1,7 @@
 # Production / staging compose overlay
 # Usage:
 #   export POSTGRES_PASSWORD=... JWT_SECRET=... RAKSHEX_VAULT_KEY=... APP_URL=... REDIS_URL=...
+#   export RAKSHEX_RECEIPT_SIGNING_PRIVATE_KEY=... RAKSHEX_RECEIPT_SIGNING_KEY_ID=...
 #   export SMTP_HOST=... SMTP_USER=... SMTP_PASS=... METRICS_TOKEN=...
 #   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 
@@ -21,6 +22,8 @@ services:
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       RAKSHEX_VAULT_KEY: ${RAKSHEX_VAULT_KEY:?RAKSHEX_VAULT_KEY is required}
+      RAKSHEX_RECEIPT_SIGNING_PRIVATE_KEY: ${RAKSHEX_RECEIPT_SIGNING_PRIVATE_KEY:?RAKSHEX_RECEIPT_SIGNING_PRIVATE_KEY is required}
+      RAKSHEX_RECEIPT_SIGNING_KEY_ID: ${RAKSHEX_RECEIPT_SIGNING_KEY_ID:?RAKSHEX_RECEIPT_SIGNING_KEY_ID is required}
       APP_URL: ${APP_URL:?APP_URL is required}
       FRONTEND_URL: ${FRONTEND_URL:-https://app.rakshex.in}
       CORS_ORIGINS: ${CORS_ORIGINS:-}
