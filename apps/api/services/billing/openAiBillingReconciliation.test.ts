@@ -20,6 +20,11 @@ describe("OpenAI billing reconciliation", () => {
     expect(result.status).toBe("drift");
   });
 
+  it("computes an explicit pro-rata factor for per-call reconciled cost", () => {
+    expect(__test.providerAllocationFactor(1.005, 1.0)).toBeCloseTo(1.005, 10);
+    expect(__test.providerAllocationFactor(0, 0)).toBeNull();
+  });
+
   it("builds daily Costs requests with the required provider grouping dimensions", () => {
     const url = new URL(__test.buildAdminUrl("costs", 100, 200));
     expect(url.pathname).toBe("/v1/organization/costs");
