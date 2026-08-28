@@ -1,5 +1,6 @@
 import "./globals-insforge.css";
 import "./globals.css";
+import "./investor-beta.css";
 import type { Metadata, Viewport } from "next";
 import { AuthProvider } from "../components/AuthProvider";
 import { CookieConsent } from "../components/CookieConsent";
