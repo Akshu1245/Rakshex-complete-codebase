@@ -13,10 +13,17 @@ on:
           - minor
           - major
       dryRun:
-        description: "Dry run (no actual publish)"
+        description: "Dry run (package only; do not publish or push version commit)"
         required: false
-        default: false
+        default: true
         type: boolean
+
+permissions:
+  contents: write
+
+env:
+  NODE_VERSION: "24"
+  HUSKY: "0"
 
 jobs:
   publish:
@@ -28,81 +35,104 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "npm"
-          cache-dependency-path: apps/vscode-extension/package-lock.json
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Install monorepo dependencies
+        working-directory: .
+        run: pnpm install --frozen-lockfile
 
-      - name: Lint
-        run: npm run lint --if-present
-
-      - name: Compile TypeScript
-        run: npm run compile
-
-      - name: Run tests
-        run: npm test --if-present
-
-      - name: Validate package.json
+      - name: Verify extension
+        working-directory: .
         run: |
-          node -e "
-            const pkg = require('./package.json');
-            const required = ['name','version','publisher','engines','categories','activationEvents','contributes','repository'];
-            for (const key of required) {
-              if (!pkg[key]) { console.error('Missing required field: ' + key); process.exit(1); }
+          pnpm --filter rakshex-vscode typecheck
+          pnpm --filter rakshex-vscode test
+          pnpm --filter rakshex-vscode build
+
+      - name: Validate package metadata
+        run: |
+          node - <<'NODE'
+          const pkg = require('./package.json');
+          const required = ['name','version','publisher','engines','categories','activationEvents','contributes','repository'];
+          for (const key of required) {
+            if (!pkg[key]) {
+              console.error(`Missing required field: ${key}`);
+              process.exit(1);
             }
-            if (!pkg.engines.vscode) { console.error('Missing engines.vscode'); process.exit(1); }
-            if (!pkg.categories.includes('Other')) { console.warn('Categories should include "Other"'); }
-            console.log('package.json validation passed');
-          "
+          }
+          if (pkg.name !== 'rakshex-vscode') throw new Error('Unexpected extension package name');
+          if (!pkg.engines?.vscode) throw new Error('Missing engines.vscode');
+          if (!pkg.publisher) throw new Error('Missing publisher');
+          console.log(`Validated ${pkg.publisher}.${pkg.name}@${pkg.version}`);
+          NODE
 
-      - name: Bump version
+      - name: Bump package version
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          npm version ${{ inputs.versionBump }} --no-git-tag-version
+          pnpm version "${{ inputs.versionBump }}" --no-git-tag-version
           VERSION=$(node -p "require('./package.json').version")
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "Bumped to $VERSION"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "Prepared extension version $VERSION"
 
-      - name: Generate changelog entry
+      - name: Add changelog release entry
         run: |
-          echo "## [${{ env.VERSION }}] - $(date +%Y-%m-%d)" >> CHANGELOG.md
-          echo "" >> CHANGELOG.md
-          echo "- Release published by GitHub Actions" >> CHANGELOG.md
-          echo "" >> CHANGELOG.md
+          node - <<'NODE'
+          const fs = require('fs');
+          const version = process.env.VERSION;
+          const date = new Date().toISOString().slice(0, 10);
+          const path = 'CHANGELOG.md';
+          const current = fs.existsSync(path) ? fs.readFileSync(path, 'utf8') : '# Changelog\n\n';
+          const header = `## [${version}] - ${date}\n\n- Release prepared by the verified GitHub Actions extension workflow.\n\n`;
+          const titleMatch = current.match(/^# .*\r?\n+/);
+          const next = titleMatch
+            ? `${titleMatch[0]}${header}${current.slice(titleMatch[0].length)}`
+            : `# Changelog\n\n${header}${current}`;
+          fs.writeFileSync(path, next);
+          NODE
 
-      - name: Package extension (dry-run)
-        if: ${{ inputs.dryRun }}
-        run: |
-          npm install -g @vscode/vsce
-          vsce package --out rakshex-${{ env.VERSION }}.vsix
-          echo "Dry-run package created: rakshex-${{ env.VERSION }}.vsix"
-          ls -la *.vsix
+      - name: Package VSIX
+        run: pnpm dlx @vscode/vsce package --out "rakshex-vscode-${{ env.VERSION }}.vsix"
 
-      - name: Publish to marketplace
-        if: ${{ !inputs.dryRun }}
-        run: |
-          npm install -g @vscode/vsce
-          vsce publish -p ${{ secrets.VSCE_PAT }}
-        env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
-
-      - name: Commit version bump
-        if: ${{ !inputs.dryRun }}
-        run: |
-          git add package.json package-lock.json CHANGELOG.md
-          git commit -m "chore(release): ${{ env.VERSION }}"
-          git tag "v${{ env.VERSION }}"
-          git push origin HEAD --tags
-
-      - name: Upload artifact
+      - name: Upload VSIX artifact
         uses: actions/upload-artifact@v4
         with:
           name: rakshex-vscode-${{ env.VERSION }}
-          path: apps/vscode-extension/*.vsix
+          path: apps/vscode-extension/rakshex-vscode-${{ env.VERSION }}.vsix
+          if-no-files-found: error
+
+      - name: Require marketplace token
+        if: ${{ !inputs.dryRun }}
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          if [ -z "$VSCE_PAT" ]; then
+            echo "VSCE_PAT secret is required for marketplace publishing" >&2
+            exit 1
+          fi
+
+      - name: Publish packaged VSIX to marketplace
+        if: ${{ !inputs.dryRun }}
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: pnpm dlx @vscode/vsce publish --packagePath "rakshex-vscode-${{ env.VERSION }}.vsix" -p "$VSCE_PAT"
+
+      - name: Commit version and changelog
+        if: ${{ !inputs.dryRun }}
+        working-directory: .
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/vscode-extension/package.json apps/vscode-extension/CHANGELOG.md
+          git commit -m "chore(extension): release v${VERSION}"
+          git tag "vscode-v${VERSION}"
+          git push origin HEAD:${GITHUB_REF_NAME}
+          git push origin "vscode-v${VERSION}"
