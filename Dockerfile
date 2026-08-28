@@ -26,7 +26,10 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 
-RUN addgroup -g 1001 -S nodejs \
+# Pick up Alpine security patches (openssl CVE-2026-14456: libcrypto3/libssl3
+# 3.5.7-r0 -> 3.5.8-r0). Must run as root before USER nodejs.
+RUN apk upgrade --no-cache libcrypto3 libssl3 \
+  && addgroup -g 1001 -S nodejs \
   && adduser -S -u 1001 -G nodejs -h /app -s /sbin/nologin nodejs
 
 # Runtime uses node + tsx only — drop image-bundled npm to clear Trivy CRITICAL/HIGH on npm deps.
