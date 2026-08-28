@@ -1,590 +1,384 @@
-﻿"use client";
+"use client";
 
-import React, { useState, useCallback } from "react";
+import { useMemo, useState } from "react";
+import Link from "next/link";
 import {
-  Upload,
-  Shield,
-  Zap,
-  DollarSign,
-  AlertTriangle,
-  CheckCircle,
-  ChevronRight,
-  Lock,
-  FileJson,
   ArrowRight,
+  CheckCircle2,
+  ChevronRight,
+  KeyRound,
+  LockKeyhole,
+  RotateCcw,
+  ShieldCheck,
+  XCircle,
 } from "lucide-react";
-import { trpc } from "@/lib/trpc";
 
-interface Finding {
-  id: string;
-  severity: "Critical" | "High" | "Medium" | "Low";
-  title: string;
-  endpoint: string;
-  category: string;
-  remediation: string;
-  lineNumber?: number;
-}
+type Decision = "ALLOW" | "DENY";
 
-interface CredentialLeak {
-  type: string;
-  location: string;
-  keyPreview: string;
-  severity: string;
-}
-
-interface ScanResult {
-  findings: Finding[];
-  credentials: CredentialLeak[];
-  endpoints: string[];
-  riskScore: number;
-  owaspScore: number;
-  pciScore: number;
-  scanTime: number;
-}
-
-const SEVERITY_CONFIG = {
-  Critical: {
-    color: "text-red-600",
-    bg: "bg-red-50",
-    border: "border-red-200",
-    icon: AlertTriangle,
-  },
-  High: {
-    color: "text-orange-600",
-    bg: "bg-orange-50",
-    border: "border-orange-200",
-    icon: AlertTriangle,
-  },
-  Medium: {
-    color: "text-yellow-600",
-    bg: "bg-yellow-50",
-    border: "border-yellow-200",
-    icon: AlertTriangle,
-  },
-  Low: {
-    color: "text-green-600",
-    bg: "bg-green-50",
-    border: "border-green-200",
-    icon: CheckCircle,
-  },
+type DemoRun = {
+  id: number;
+  amount: number;
+  decision: Decision;
+  reason: string;
+  credentialReleased: boolean;
+  ledgerHash: string;
 };
 
+const AUTHORITY_LIMIT = 50;
+
+function shortHash(seed: number, amount: number) {
+  const value = Math.abs((seed * 2654435761 + amount * 7919) >>> 0)
+    .toString(16)
+    .padStart(8, "0");
+  return `0x${value.slice(0, 8)}`;
+}
+
 export default function DemoPage() {
-  const [file, setFile] = useState<File | null>(null);
-  const [scanning, setScanning] = useState(false);
-  const [result, setResult] = useState<(ScanResult & { remaining?: number }) | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [dragActive, setDragActive] = useState(false);
-  const demoScan = trpc.demo.scan.useMutation();
-  const promptScan = trpc.demo.scanPrompt.useMutation();
-
-  function performClientDemoScan(collection: any): ScanResult {
-    const start = Date.now();
-    const findings: any[] = [];
-    const credentials: any[] = [];
-    const endpoints: string[] = [];
-
-    const secretPatterns = [
-      { re: /sk-[A-Za-z0-9]{20,}/g, type: "OpenAI API Key" },
-      { re: /sk-ant-[A-Za-z0-9]{20,}/g, type: "Anthropic API Key" },
-      { re: /AIza[0-9A-Za-z_-]{10,}/g, type: "Google AI / Gemini Key" },
-      { re: /Bearer\s+[A-Za-z0-9._-]{10,}/gi, type: "Bearer Token" },
-      { re: /api[_-]?key\s*[:=]\s*["'][^"']{8,}["']/gi, type: "Hardcoded API Key" },
-      { re: /password\s*[:=]\s*["'][^"']{4,}["']/gi, type: "Hardcoded Password" },
-    ];
-
-    function walkItems(items: any[], path = "") {
-      if (!items || !Array.isArray(items)) return;
-      for (const item of items) {
-        const name = item?.name || "unnamed";
-        const req = item?.request || {};
-        const url = typeof req.url === "string" ? req.url : req.url?.raw || "";
-        if (url) endpoints.push(url);
-
-        const headerStr = JSON.stringify(req.header || {});
-        const bodyStr = typeof req.body === "string" ? req.body : JSON.stringify(req.body || {});
-        const allText = `${url} ${headerStr} ${bodyStr} ${name}`;
-
-        for (const p of secretPatterns) {
-          const matches = allText.match(p.re);
-          if (matches) {
-            matches.forEach((m) => {
-              credentials.push({
-                type: p.type,
-                location: `${path}${name} (header/body/url)`,
-                keyPreview: m.substring(0, 12) + "..." + m.substring(m.length - 4),
-                severity: "Critical",
-              });
-            });
-          }
-        }
-
-        if (url && !/auth|token|key|bearer/i.test(headerStr + bodyStr)) {
-          findings.push({
-            id: `auth-${path}-${name}`,
-            severity: "High",
-            title: "Missing or weak authentication",
-            endpoint: url,
-            category: "Broken Authentication",
-            remediation: "Add Authorization header with Bearer token or API key.",
-          });
-        }
-        if (/select|insert|update|delete|union|--|;/.test(bodyStr + url)) {
-          findings.push({
-            id: `sql-${path}-${name}`,
-            severity: "Critical",
-            title: "Potential SQL/NoSQL injection vector",
-            endpoint: url,
-            category: "Injection",
-            remediation:
-              "Use parameterized queries / ORM. Never concatenate user data into queries.",
-          });
-        }
-
-        if (item.item) walkItems(item.item, `${path}${name}/`);
-      }
-    }
-
-    const items = collection?.item || collection?.paths || [];
-    walkItems(items);
-
-    const uniqueCreds = credentials.filter(
-      (c, idx, self) => self.findIndex((x) => x.keyPreview === c.keyPreview) === idx,
-    );
-    const risk = Math.min(
-      100,
-      Math.max(
-        5,
-        uniqueCreds.length * 25 + findings.filter((f) => f.severity === "Critical").length * 15,
-      ),
-    );
-
-    return {
-      findings: findings.slice(0, 12),
-      credentials: uniqueCreds,
-      endpoints: [...new Set(endpoints)].slice(0, 20),
-      riskScore: Math.round(risk),
-      owaspScore: Math.max(30, 95 - uniqueCreds.length * 8 - findings.length * 3),
-      pciScore: Math.max(20, 90 - uniqueCreds.length * 10),
-      scanTime: Date.now() - start,
-    };
-  }
-
-  const SAMPLE_COLLECTION = {
-    info: {
-      name: "Demo API - Contains Secrets",
-      schema: "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+  const [amount, setAmount] = useState(400);
+  const [runNumber, setRunNumber] = useState(1);
+  const [hasEvaluated, setHasEvaluated] = useState(true);
+  const [history, setHistory] = useState<DemoRun[]>([
+    {
+      id: 0,
+      amount: 400,
+      decision: "DENY",
+      reason: "delegated_authority_exceeded",
+      credentialReleased: false,
+      ledgerHash: "0x8f7a21c4",
     },
-    item: [
-      {
-        name: "Get User Profile",
-        request: {
-          method: "GET",
-          url: { raw: "https://api.example.com/v1/users/me" },
-          header: [
-            { key: "Authorization", value: "Bearer sk-FAKE1234567890abcdefABCDEF1234567890abcdef" },
-            { key: "X-Api-Key", value: "AIzaSyFAKE_GoogleKeyForDemo1234567890AB" },
-          ],
-        },
-      },
-      {
-        name: "Create Payment",
-        request: {
-          method: "POST",
-          url: { raw: "https://api.example.com/v1/payments" },
-          body: {
-            mode: "raw",
-            raw: JSON.stringify({
-              amount: 999,
-              card: "4242-4242-4242-4242",
-              password: "supersecret123",
-            }),
-          },
-        },
-      },
-    ],
-  };
+  ]);
 
-  const handleDrag = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") setDragActive(true);
-    else if (e.type === "dragleave") setDragActive(false);
-  }, []);
+  const decision: Decision = amount <= AUTHORITY_LIMIT ? "ALLOW" : "DENY";
+  const credentialReleased = decision === "ALLOW";
+  const reason =
+    decision === "ALLOW" ? "within_delegated_authority" : "delegated_authority_exceeded";
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    if (e.dataTransfer.files?.[0]) handleFile(e.dataTransfer.files[0]);
-  }, []);
+  const currentHash = useMemo(() => shortHash(runNumber, amount), [amount, runNumber]);
 
-  const handleFile = (f: File) => {
-    if (!f.name.endsWith(".json")) {
-      setError("Please upload a JSON file (Postman Collection v2.1)");
-      return;
-    }
-    setFile(f);
-    setError(null);
-    setResult(null);
-  };
-
-  const loadSample = () => {
-    const json = JSON.stringify(SAMPLE_COLLECTION, null, 2);
-    const blob = new Blob([json], { type: "application/json" });
-    const sampleFile = new File([blob], "demo-collection-with-secrets.json", {
-      type: "application/json",
-    });
-    setFile(sampleFile);
-    setError(null);
-    setResult(null);
-    setScanning(true);
-    setTimeout(() => {
-      const local = performClientDemoScan(SAMPLE_COLLECTION);
-      setResult({ ...local, remaining: 12 });
-      setScanning(false);
-    }, 110);
-  };
-
-  const runScan = async () => {
-    if (!file) return;
-    setScanning(true);
-    setError(null);
-    setResult(null);
-    let collection: any;
-    try {
-      const text = await file.text();
-      if (text.length > 2_100_000) {
-        setError("File too large for instant demo.");
-        setScanning(false);
-        return;
-      }
-      collection = JSON.parse(text);
-    } catch {
-      setError("Invalid JSON. Upload Postman v2.1 or OpenAPI JSON.");
-      setScanning(false);
-      return;
-    }
-
-    const localResult = performClientDemoScan(collection);
-    try {
-      const br: any = await demoScan
-        .mutateAsync({ collection, filename: file.name })
-        .catch(() => null);
-      setResult(
-        br?.findings ? { ...br, remaining: br.remaining ?? 10 } : { ...localResult, remaining: 11 },
-      );
-    } catch {
-      setResult({ ...localResult, remaining: 11 });
-    } finally {
-      setScanning(false);
-    }
-  };
-
-  const clearDemo = () => {
-    setFile(null);
-    setResult(null);
-    setError(null);
-  };
-
-  const copyReport = () => {
-    if (!result) return;
-    const report = {
-      scannedFile: file?.name,
-      ...result,
-      generatedAt: new Date().toISOString(),
-      note: "Public demo result. Nothing stored.",
+  const evaluate = () => {
+    const next: DemoRun = {
+      id: runNumber,
+      amount,
+      decision,
+      reason,
+      credentialReleased,
+      ledgerHash: currentHash,
     };
-    navigator.clipboard.writeText(JSON.stringify(report, null, 2)).then(() => {
-      const orig = document.title;
-      document.title = "Report copied!";
-      setTimeout(() => (document.title = orig), 1200);
-    });
+    setHistory((items) => [next, ...items].slice(0, 5));
+    setRunNumber((value) => value + 1);
+    setHasEvaluated(true);
   };
 
-  const criticalCount = result?.findings.filter((f) => f.severity === "Critical").length || 0;
+  const chooseAmount = (value: number) => {
+    setAmount(value);
+    setHasEvaluated(false);
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white">
-      <div className="max-w-5xl mx-auto px-6 py-16">
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 bg-purple-500/20 border border-purple-400/30 rounded-full px-4 py-2 mb-6">
-            <Zap className="w-4 h-4 text-purple-400" />
-            <span className="text-sm font-medium text-purple-300">
-              Zero setup · No signup · Real production engines (try /demo/judge for focused view)
+    <main className="min-h-screen overflow-x-clip bg-transparent pb-24 pt-[118px] text-white">
+      <section className="mx-auto w-full max-w-[1280px] px-5 pb-12 pt-8 sm:px-6 lg:pt-12 xl:px-8">
+        <div className="grid gap-10 lg:grid-cols-[0.92fr_1.08fr] lg:items-end">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#14B8A6]/25 bg-[#14B8A6]/[0.07] px-3 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.13em] text-[#8FE3D8]">
+              <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+              Public Agent Firewall demo
+            </div>
+            <h1 className="mt-5 max-w-3xl text-4xl font-bold leading-[1.03] tracking-[-0.045em] text-white sm:text-5xl lg:text-6xl">
+              See the decision <span className="text-[#14B8A6]">before</span> the action becomes real.
+            </h1>
+            <p className="mt-5 max-w-2xl text-base leading-7 text-neutral-400 sm:text-lg">
+              A support agent is delegated permission to issue refunds up to ${AUTHORITY_LIMIT}.
+              Change the requested amount, evaluate the semantic action, and inspect whether the
+              credential is released.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-white/[0.08] bg-[#090D14]/70 p-5">
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-500">
+              What this page proves
+            </p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+              {["Action-level decision", "Credential mediation", "Ledger evidence"].map((item) => (
+                <div key={item} className="flex items-center gap-2 text-xs text-neutral-300">
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-[#14B8A6]" aria-hidden="true" />
+                  {item}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto w-full max-w-[1280px] px-5 sm:px-6 xl:px-8">
+        <div className="overflow-hidden rounded-2xl border border-white/[0.09] bg-[#070A0F]/82 shadow-[0_28px_100px_rgba(0,0,0,0.32)]">
+          <div className="flex flex-col gap-3 border-b border-white/[0.08] px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-[#14B8A6]" aria-hidden="true" />
+              <span className="font-mono text-xs font-semibold text-neutral-300">
+                finance-support-prod / financial.refund
+              </span>
+            </div>
+            <span className="w-fit rounded-full border border-white/10 px-2.5 py-1 font-mono text-[10px] text-neutral-500">
+              Simulated public evaluation · no external transaction
             </span>
           </div>
-          <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-white via-purple-200 to-purple-400 bg-clip-text text-transparent">
-            Try Real AI Security in 2 Seconds — No Signup
-          </h1>
-          <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-            Paste an attack prompt or upload a collection. See real prompt injection detection + PII
-            redaction powered by our production engines. estimate your security risk — instantly,
-            for free, no account required.
-          </p>
-        </div>
 
-        <div className="max-w-2xl mx-auto mb-12">
-          <div
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
-            className={`border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300 ${dragActive ? "border-purple-400 bg-purple-500/10 scale-105" : "border-slate-600 bg-slate-800/50 hover:border-slate-500"}`}
-          >
-            <Upload className="w-16 h-16 text-purple-400 mx-auto mb-4" />
-            <p className="text-lg font-medium mb-2">
-              {file ? file.name : "Drop your Postman Collection JSON here"}
-            </p>
-            <p className="text-sm text-slate-400 mb-4">
-              or click to browse · Supports Postman Collection v2.1 / OpenAPI JSON
-            </p>
-            <input
-              type="file"
-              accept=".json"
-              onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
-              className="hidden"
-              id="file-upload"
-            />
-            <label
-              htmlFor="file-upload"
-              className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white px-6 py-3 rounded-lg font-medium cursor-pointer transition-colors"
-            >
-              <FileJson className="w-5 h-5" /> Choose File
-            </label>
-          </div>
+          <div className="grid lg:grid-cols-[0.82fr_1.18fr]">
+            <div className="border-b border-white/[0.08] p-5 sm:p-6 lg:border-b-0 lg:border-r">
+              <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-500">
+                1 · Requested action
+              </p>
 
-          <button
-            onClick={loadSample}
-            disabled={scanning}
-            className="mt-3 w-full border border-purple-400/50 hover:bg-purple-500/10 text-purple-300 py-2 rounded-xl text-sm transition-colors"
-          >
-            Or load sample collection (instantly shows exposed keys + findings)
-          </button>
-
-          {error && (
-            <div className="mt-4 p-4 bg-red-500/20 border border-red-400/30 rounded-lg text-red-300 flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5" /> {error}
-            </div>
-          )}
-
-          {file && !result && (
-            <button
-              onClick={runScan}
-              disabled={scanning}
-              className="mt-6 w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white py-4 rounded-xl font-bold text-lg transition-all disabled:opacity-50 flex items-center justify-center gap-3"
-            >
-              {scanning ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />{" "}
-                  Scanning...
-                </>
-              ) : (
-                <>
-                  <Shield className="w-5 h-5" /> Run Security Scan
-                </>
-              )}
-            </button>
-          )}
-        </div>
-
-        {result && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-sm">
-              {typeof result.remaining === "number" && (
-                <div className="text-slate-400">
-                  Demo scans remaining this hour:{" "}
-                  <span className="font-mono text-purple-300">{result.remaining}</span>
-                </div>
-              )}
-              <div className="flex gap-2">
-                <button
-                  onClick={copyReport}
-                  className="px-4 py-2 rounded-lg border border-slate-600 hover:bg-slate-800 text-slate-300 text-xs font-medium"
-                >
-                  Copy JSON Report
-                </button>
-                <button
-                  onClick={clearDemo}
-                  className="px-4 py-2 rounded-lg border border-slate-600 hover:bg-slate-800 text-slate-300 text-xs font-medium"
-                >
-                  Clear
-                </button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div
-                className={`p-6 rounded-xl border ${criticalCount > 0 ? "bg-red-500/10 border-red-400/30" : "bg-green-500/10 border-green-400/30"}`}
-              >
-                <p className="text-sm text-slate-400 mb-1">Risk Score</p>
-                <p
-                  className={`text-4xl font-bold ${criticalCount > 0 ? "text-red-400" : "text-green-400"}`}
-                >
-                  {result.riskScore}/100
-                </p>
-                <p className="text-xs text-slate-500 mt-1">{result.scanTime}ms scan time</p>
-              </div>
-              <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-                <p className="text-sm text-slate-400 mb-1">Endpoints</p>
-                <p className="text-4xl font-bold text-white">{result.endpoints.length}</p>
-              </div>
-              <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-                <p className="text-sm text-slate-400 mb-1">OWASP Score</p>
-                <p
-                  className={`text-4xl font-bold ${result.owaspScore >= 80 ? "text-green-400" : result.owaspScore >= 50 ? "text-yellow-400" : "text-red-400"}`}
-                >
-                  {result.owaspScore}
-                </p>
-              </div>
-              <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-                <p className="text-sm text-slate-400 mb-1">PCI DSS</p>
-                <p
-                  className={`text-4xl font-bold ${result.pciScore >= 80 ? "text-green-400" : result.pciScore >= 50 ? "text-yellow-400" : "text-red-400"}`}
-                >
-                  {result.pciScore}
-                </p>
-              </div>
-            </div>
-
-            {result.credentials.length > 0 && (
-              <div className="bg-red-500/10 border-2 border-red-400/50 rounded-xl p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <Lock className="w-8 h-8 text-red-400" />
-                  <div>
-                    <h3 className="text-xl font-bold text-red-400">
-                      🚨 {result.credentials.length} Exposed Credential
-                      {result.credentials.length > 1 ? "s" : ""} Found
-                    </h3>
-                    <p className="text-sm text-red-300">
-                      These have been sitting in your collection.
-                    </p>
+              <div className="mt-5 rounded-xl border border-white/[0.08] bg-black/25 p-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="font-mono text-[11px] text-[#8FE3D8]">financial.refund</p>
+                    <p className="mt-1 text-sm font-semibold text-white">Order #8932</p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <span className="block text-[10px] uppercase tracking-wide text-neutral-500">Amount</span>
+                    <span className="text-2xl font-bold text-white">${amount}</span>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  {result.credentials.map((cred, i) => (
-                    <div
-                      key={i}
-                      className="bg-slate-900/50 rounded-lg p-4 flex items-center justify-between"
-                    >
-                      <div>
-                        <p className="font-medium text-white">{cred.type}</p>
-                        <p className="text-sm text-slate-400">Location: {cred.location}</p>
-                        <p className="text-sm font-mono text-red-300 mt-1">{cred.keyPreview}</p>
-                      </div>
-                      <span className="bg-red-500/20 text-red-400 px-3 py-1 rounded-full text-sm font-medium">
-                        {cred.severity}
-                      </span>
+              </div>
+
+              <div className="mt-5">
+                <label htmlFor="refund-amount" className="text-sm font-semibold text-neutral-200">
+                  Requested refund amount
+                </label>
+                <div className="mt-3 flex items-center rounded-lg border border-white/10 bg-black/20 focus-within:border-[#14B8A6]/60">
+                  <span className="border-r border-white/10 px-3 text-sm text-neutral-500">$</span>
+                  <input
+                    id="refund-amount"
+                    type="number"
+                    min={1}
+                    max={10000}
+                    value={amount}
+                    onChange={(event) => {
+                      const next = Math.max(1, Number(event.target.value) || 1);
+                      setAmount(next);
+                      setHasEvaluated(false);
+                    }}
+                    className="min-h-12 min-w-0 flex-1 bg-transparent px-3 text-base font-semibold text-white outline-none"
+                  />
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => chooseAmount(40)}
+                    className="min-h-10 rounded-md border border-white/10 bg-white/[0.02] px-3 text-xs font-semibold text-neutral-300 hover:border-[#14B8A6]/35 hover:text-white"
+                  >
+                    Try $40 · allowed
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => chooseAmount(400)}
+                    className="min-h-10 rounded-md border border-white/10 bg-white/[0.02] px-3 text-xs font-semibold text-neutral-300 hover:border-red-400/35 hover:text-white"
+                  >
+                    Try $400 · denied
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-6 rounded-xl border border-[#14B8A6]/20 bg-[#14B8A6]/[0.05] p-4">
+                <div className="flex items-center gap-2 text-[#8FE3D8]">
+                  <LockKeyhole className="h-4 w-4" aria-hidden="true" />
+                  <span className="text-xs font-semibold">Delegated authority</span>
+                </div>
+                <div className="mt-3 space-y-2 text-xs">
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-neutral-500">Parent scope</span>
+                    <span className="font-mono text-neutral-300">refund ≤ $500</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-neutral-500">Agent child scope</span>
+                    <span className="font-mono font-semibold text-[#14B8A6]">refund ≤ ${AUTHORITY_LIMIT}</span>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={evaluate}
+                className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-[#14B8A6] px-5 text-sm font-semibold text-white hover:bg-[#0D9488]"
+              >
+                Evaluate action <ChevronRight className="h-4 w-4" aria-hidden="true" />
+              </button>
+            </div>
+
+            <div className="p-5 sm:p-6 lg:p-7">
+              <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-500">
+                2 · Runtime decision
+              </p>
+
+              <div
+                className={`mt-5 rounded-xl border p-5 sm:p-6 ${
+                  !hasEvaluated
+                    ? "border-white/10 bg-white/[0.02]"
+                    : decision === "ALLOW"
+                      ? "border-[#14B8A6]/35 bg-[#14B8A6]/[0.07]"
+                      : "border-red-500/30 bg-red-500/[0.06]"
+                }`}
+                aria-live="polite"
+              >
+                {!hasEvaluated ? (
+                  <div className="flex min-h-28 items-center justify-center text-center">
+                    <div>
+                      <RotateCcw className="mx-auto h-6 w-6 text-neutral-600" aria-hidden="true" />
+                      <p className="mt-3 text-sm font-semibold text-neutral-300">Amount changed</p>
+                      <p className="mt-1 text-xs text-neutral-500">Evaluate again to produce a new decision.</p>
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {result.findings.length > 0 && (
-              <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                  <Shield className="w-6 h-6 text-purple-400" /> Security Findings (
-                  {result.findings.length})
-                </h3>
-                <div className="space-y-3">
-                  {result.findings.map((finding) => {
-                    const config = SEVERITY_CONFIG[finding.severity];
-                    const Icon = config.icon;
-                    return (
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
                       <div
-                        key={finding.id}
-                        className={`rounded-lg border p-4 ${config.bg} ${config.border}`}
+                        className={`flex items-center gap-2 ${decision === "ALLOW" ? "text-[#14B8A6]" : "text-red-400"}`}
                       >
-                        <div className="flex items-start gap-3">
-                          <Icon className={`w-5 h-5 mt-0.5 ${config.color}`} />
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className={`text-sm font-bold ${config.color}`}>
-                                {finding.severity}
-                              </span>
-                              <span className="text-slate-500">·</span>
-                              <span className="text-sm text-slate-300">{finding.category}</span>
-                            </div>
-                            <p className="font-medium text-white mb-1">{finding.title}</p>
-                            <p className="text-sm font-mono text-slate-400 mb-2">
-                              {finding.endpoint}
-                            </p>
-                            <div className="bg-slate-900/50 rounded p-3">
-                              <p className="text-sm text-slate-300">
-                                <span className="text-green-400 font-medium">Fix:</span>{" "}
-                                {finding.remediation}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
+                        {decision === "ALLOW" ? (
+                          <CheckCircle2 className="h-6 w-6" aria-hidden="true" />
+                        ) : (
+                          <XCircle className="h-6 w-6" aria-hidden="true" />
+                        )}
+                        <span className="text-2xl font-bold tracking-[-0.02em]">{decision}</span>
                       </div>
-                    );
-                  })}
+                      <p className="mt-3 font-mono text-[11px] text-neutral-400">{reason}</p>
+                    </div>
+                    <div className="rounded-lg border border-white/[0.08] bg-black/20 px-3 py-2 text-left sm:text-right">
+                      <span className="block text-[10px] uppercase tracking-wide text-neutral-500">Action ID</span>
+                      <span className="font-mono text-xs text-neutral-300">act_demo_{runNumber}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-xl border border-white/[0.08] bg-black/20 p-4">
+                  <div className="flex items-center gap-2">
+                    <KeyRound className="h-4 w-4 text-[#14B8A6]" aria-hidden="true" />
+                    <span className="text-xs font-semibold text-neutral-300">Credential broker</span>
+                  </div>
+                  <p
+                    className={`mt-3 text-lg font-bold ${
+                      !hasEvaluated
+                        ? "text-neutral-600"
+                        : credentialReleased
+                          ? "text-[#14B8A6]"
+                          : "text-red-400"
+                    }`}
+                  >
+                    {!hasEvaluated
+                      ? "Awaiting decision"
+                      : credentialReleased
+                        ? "Credential released"
+                        : "Credential not released"}
+                  </p>
+                  <p className="mt-2 text-xs leading-5 text-neutral-500">
+                    In a brokered integration, the action receives the credential only after an
+                    enforceable ALLOW.
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-white/[0.08] bg-black/20 p-4">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-[#14B8A6]" aria-hidden="true" />
+                    <span className="text-xs font-semibold text-neutral-300">Action Ledger</span>
+                  </div>
+                  <p className={`mt-3 font-mono text-lg font-bold ${hasEvaluated ? "text-white" : "text-neutral-600"}`}>
+                    {hasEvaluated ? currentHash : "—"}
+                  </p>
+                  <p className="mt-2 text-xs leading-5 text-neutral-500">
+                    Decision evidence includes action, delegated authority, result, reason, and
+                    ledger linkage.
+                  </p>
                 </div>
               </div>
-            )}
 
-            {result.findings.length === 0 && result.credentials.length === 0 && (
-              <div className="bg-green-500/10 border border-green-400/30 rounded-xl p-8 text-center">
-                <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
-                <h3 className="text-2xl font-bold text-green-400 mb-2">All Clear!</h3>
-                <p className="text-slate-300">
-                  No vulnerabilities or exposed credentials found in this collection.
-                </p>
-              </div>
-            )}
-
-            <div className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-400/30 rounded-xl p-8 text-center">
-              <h3 className="text-2xl font-bold mb-3">Want this in your IDE + CI/CD?</h3>
-              <p className="text-slate-300 mb-6 max-w-lg mx-auto">
-                Get real-time scans as you code, automatic PR checks, cost anomaly alerts, and team
-                dashboards.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <a
-                  href="https://www.rakshex.in/register"
-                  className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white px-8 py-4 rounded-xl font-bold text-lg transition-colors"
-                >
-                  Get RaksHex Free <ArrowRight className="w-5 h-5" />
-                </a>
-                <a
-                  href="https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex-vscode"
-                  className="inline-flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-white px-8 py-4 rounded-xl font-bold text-lg transition-colors"
-                >
-                  <FileJson className="w-5 h-5" /> VS Code Extension
-                </a>
+              <div className="mt-6 rounded-xl border border-white/[0.08] bg-[#090D14] p-4 sm:p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-500">
+                    Recent demo decisions
+                  </p>
+                  <span className="text-[10px] text-neutral-600">local simulation</span>
+                </div>
+                <div className="mt-4 space-y-2">
+                  {history.length === 0 ? (
+                    <div className="rounded-lg border border-dashed border-white/10 px-4 py-6 text-center text-xs text-neutral-500">
+                      No decisions yet. Evaluate an action to create the first receipt.
+                    </div>
+                  ) : (
+                    history.map((item) => (
+                      <div
+                        key={`${item.id}-${item.ledgerHash}`}
+                        className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-white/[0.06] bg-black/20 px-3 py-2.5 sm:grid-cols-[minmax(0,1fr)_auto_auto]"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate font-mono text-[11px] text-neutral-300">
+                            financial.refund · ${item.amount}
+                          </p>
+                          <p className="mt-0.5 truncate font-mono text-[9px] text-neutral-600">
+                            {item.ledgerHash} · {item.reason}
+                          </p>
+                        </div>
+                        <span
+                          className={`font-mono text-[10px] font-bold ${
+                            item.decision === "ALLOW" ? "text-[#14B8A6]" : "text-red-400"
+                          }`}
+                        >
+                          {item.decision}
+                        </span>
+                        <span className="hidden text-[10px] text-neutral-500 sm:inline">
+                          credential {item.credentialReleased ? "released" : "blocked"}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        )}
+        </div>
+      </section>
 
-        {!result && (
-          <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-            <div className="p-6">
-              <Shield className="w-10 h-10 text-purple-400 mx-auto mb-3" />
-              <h3 className="font-bold mb-2">OWASP Top 10 Scanning</h3>
-              <p className="text-sm text-slate-400">
-                Detects BOLA, broken auth, injection, and more
-              </p>
+      <section className="mx-auto w-full max-w-[1280px] px-5 pt-12 sm:px-6 xl:px-8">
+        <div className="grid gap-4 md:grid-cols-3">
+          {[
+            {
+              title: "The action is semantic",
+              body: "The policy reasons about financial.refund instead of forcing teams to encode business intent in an HTTP path.",
+            },
+            {
+              title: "Authority can only narrow",
+              body: "The child agent receives a $50 refund limit even though the parent may hold broader authority.",
+            },
+            {
+              title: "A DENY changes execution",
+              body: "For brokered credentials, the denied caller does not receive the secret required to execute the action.",
+            },
+          ].map((item) => (
+            <div key={item.title} className="rounded-xl border border-white/[0.08] bg-[#090D14]/55 p-5">
+              <h2 className="text-base font-semibold text-white">{item.title}</h2>
+              <p className="mt-2 text-sm leading-6 text-neutral-500">{item.body}</p>
             </div>
-            <div className="p-6">
-              <DollarSign className="w-10 h-10 text-purple-400 mx-auto mb-3" />
-              <h3 className="font-bold mb-2">LLM Cost Intelligence</h3>
-              <p className="text-sm text-slate-400">
-                Track token spend per endpoint and catch anomalies
-              </p>
-            </div>
-            <div className="p-6">
-              <Lock className="w-10 h-10 text-purple-400 mx-auto mb-3" />
-              <h3 className="font-bold mb-2">Secret Detection</h3>
-              <p className="text-sm text-slate-400">
-                Finds API keys, tokens, and passwords in collections
-              </p>
-            </div>
+          ))}
+        </div>
+
+        <div className="mt-10 flex flex-col items-start justify-between gap-6 rounded-xl border border-[#14B8A6]/20 bg-[#0B1414] p-6 sm:flex-row sm:items-center sm:p-8">
+          <div>
+            <h2 className="text-2xl font-bold tracking-[-0.03em] text-white">Want to evaluate this against a real workflow?</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-400">
+              Private-beta pilots start with one agent, one consequential action, and a scoped
+              rollout plan rather than a production-wide switch.
+            </p>
           </div>
-        )}
-      </div>
-    </div>
+          <Link
+            href="/waitlist"
+            className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-md bg-[#14B8A6] px-5 text-sm font-semibold text-white no-underline hover:bg-[#0D9488]"
+          >
+            Request beta access <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
+        </div>
+      </section>
+    </main>
   );
 }
