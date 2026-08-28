@@ -1,86 +1,67 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# RaksHex One-Command Setup
-# Installs dependencies, sets up the database, and seeds demo data.
-# Prerequisites: Node.js 20+, pnpm, PostgreSQL (or Docker)
+# RaksHex development setup.
+# Prerequisites: Node.js 24.x, pnpm, Docker.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+cd "${PROJECT_ROOT}"
 
-echo "======================================"
-echo "  RaksHex Development Setup"
-echo "======================================"
-
-# 1. Check prerequisites
-check_cmd() {
-  if ! command -v "$1" &>/dev/null; then
-    echo "ERROR: $1 is required but not installed."
+require_cmd() {
+  if ! command -v "$1" >/dev/null 2>&1; then
+    echo "ERROR: $1 is required but not installed." >&2
     exit 1
   fi
 }
 
-check_cmd node
-check_cmd pnpm
+require_cmd node
+require_cmd pnpm
+require_cmd docker
 
-echo ""
-echo "Step 1/5: Installing dependencies..."
-cd "${PROJECT_ROOT}"
+NODE_MAJOR="$(node -p "process.versions.node.split('.')[0]")"
+if [ "${NODE_MAJOR}" != "24" ]; then
+  echo "ERROR: this repository declares Node 24.x; found Node ${NODE_MAJOR}." >&2
+  exit 1
+fi
+
+echo "== RaksHex development setup =="
+
+echo "[1/5] Installing dependencies"
 pnpm install --frozen-lockfile
 
-echo ""
-echo "Step 2/5: Setting up environment..."
-if [ ! -f "${PROJECT_ROOT}/.env.local" ]; then
-  if [ -f "${PROJECT_ROOT}/.env.example" ]; then
-    cp "${PROJECT_ROOT}/.env.example" "${PROJECT_ROOT}/.env.local"
-    echo "  Created .env.local from .env.example"
-    echo "  IMPORTANT: Edit .env.local and fill in your secrets (DATABASE_URL, JWT_SECRET, etc.)"
-  else
-    echo "  .env.example not found. Please create .env.local manually."
-  fi
-else
-  echo "  .env.local already exists. Skipping."
+echo "[2/5] Preparing local environment"
+if [ ! -f .env ]; then
+  cp .env.example .env
+  echo "Created .env from .env.example. Review local placeholders before continuing."
 fi
 
-echo ""
-echo "Step 3/5: Running database migrations..."
-if [ -z "${DATABASE_URL:-}" ]; then
-  echo "  DATABASE_URL not set. Trying to load from .env.local..."
-  if [ -f "${PROJECT_ROOT}/.env.local" ]; then
-    export $(grep -v '^#' "${PROJECT_ROOT}/.env.local" | xargs 2>/dev/null || true)
-  fi
+# Load simple KEY=VALUE entries from the local development template so the
+# canonical migration command sees DATABASE_URL. Do not use this helper for
+# production secrets or production deployment.
+set -a
+# shellcheck disable=SC1091
+. ./.env
+set +a
+
+if [ "${NODE_ENV:-development}" = "production" ]; then
+  echo "ERROR: scripts/setup.sh is a local-development helper and refuses NODE_ENV=production." >&2
+  exit 1
 fi
 
-if [ -z "${DATABASE_URL:-}" ]; then
-  echo "  WARNING: DATABASE_URL is not set. Skipping migrations."
-  echo "  Set it and run: pnpm run migrate"
-else
-  pnpm exec tsx scripts/migrate.ts || pnpm exec drizzle-kit migrate
-fi
+echo "[3/5] Starting PostgreSQL and Redis"
+pnpm db:up
 
-echo ""
-echo "Step 4/5: Seeding demo data..."
-if [ -n "${DATABASE_URL:-}" ]; then
-  bash "${SCRIPT_DIR}/seed.sh"
-else
-  echo "  Skipping seed (no DATABASE_URL). Run scripts/seed.sh after setting DATABASE_URL."
-fi
+echo "[4/5] Applying canonical migrations"
+pnpm db:migrate
 
-echo ""
-echo "Step 5/5: Building packages..."
-pnpm run build
+echo "[5/5] Building repository packages/apps"
+pnpm build
 
-echo ""
-echo "======================================"
-echo "  Setup Complete!"
-echo "======================================"
-echo ""
-echo "Next steps:"
-echo "  1. Edit .env.local with your actual credentials"
-echo "  2. Start dev server: pnpm run dev"
-echo "  3. Visit http://localhost:3000"
-echo ""
-echo "Demo accounts (if seeded):"
-echo "  admin@rakshex.in / admin12345"
-echo "  demo@rakshex.in / demo12345"
-echo ""
+echo
+echo "Setup complete."
+echo "Start the app with: pnpm dev"
+echo "Verify the API with: API_URL=http://127.0.0.1:3000 pnpm smoke:test"
+echo
+echo "Optional synthetic local seed: bash scripts/seed.sh"
+echo "Production: follow docs/operations/PRODUCTION_DEPLOYMENT_RUNBOOK.md instead."
