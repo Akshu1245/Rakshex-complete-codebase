@@ -23,6 +23,14 @@ export default defineConfig({
         root,
         "../../packages/database/drizzle/schema-enterprise.ts",
       ),
+      "@rakshex/database/schema-billing": path.resolve(
+        root,
+        "../../packages/database/drizzle/schema-billing.ts",
+      ),
+      "@rakshex/database/schema-pricing": path.resolve(
+        root,
+        "../../packages/database/drizzle/schema-pricing.ts",
+      ),
       "@rakshex/database": path.resolve(root, "../../packages/database/src/index.ts"),
       "@rakshex/scanner-core": path.resolve(root, "../../packages/scanner-core/src/index.ts"),
       "@rakshex/policy-engine": path.resolve(root, "../../packages/policy-engine/src/index.ts"),
