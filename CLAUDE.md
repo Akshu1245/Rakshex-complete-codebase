@@ -368,7 +368,7 @@ it. Wired into `.env.example`, `render.yaml`, `docker-compose.prod.yml`.
     platform and runs `initdb`/`pg_ctl` as the current user — no root, no Docker.
     This is what actually resolved `foundation.test.ts` (see §5 item 1, verified
     2026-08-06): `new EmbeddedPostgres({ databaseDir, user, password, port,
-persistent: false }); await pg.initialise(); await pg.start();` then point
+    persistent: false }); await pg.initialise(); await pg.start();` then point
     `DATABASE_URL` at it. Prefer this over PGlite whenever a test's failure mode
     is ambiguous between "real bug" and "emulator gap" — it removes the emulator
     as a variable entirely.

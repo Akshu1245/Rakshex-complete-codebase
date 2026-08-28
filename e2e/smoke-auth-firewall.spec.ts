@@ -8,6 +8,9 @@ import { dismissBrowserNotices, loginViaUi, signupViaApi, uniqueTestUser } from 
  * is created via the CSRF-exempt signup procedure (the UI register flow
  * redirects to email verification). The decision path is the dashboard
  * Agent Firewall page: register agent → delegate authority → evaluate.
+ *
+ * URL assertions use pathname, not a substring regex: `/login?redirect=%2Fagent-firewall`
+ * matches `/\/agent-firewall/` and would hide an AuthGuard bounce.
  */
 test.describe("Smoke: login and Agent Firewall decision", () => {
   test("signed-in user can evaluate an action on the firewall page", async ({ page }) => {
@@ -19,9 +22,8 @@ test.describe("Smoke: login and Agent Firewall decision", () => {
     await page.context().clearCookies();
 
     await loginViaUi(page, user);
-    await expect(page).toHaveURL(/\/dashboard/, { timeout: 20_000 });
-
     await page.goto("/agent-firewall");
+    await expect(page).toHaveURL((url) => url.pathname === "/agent-firewall");
     await expect(page.getByRole("heading", { name: /agent firewall/i })).toBeVisible({
       timeout: 20_000,
     });
