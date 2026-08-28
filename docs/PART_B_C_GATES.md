@@ -42,7 +42,7 @@ Legend: **Shipping** = new package with tests in this pass. **Partial** = exists
 | 8   | Upload security tests             | Automated                                      | collection import tests                   |
 | 9   | Scanner deterministic rule tests  | Automated                                      | `packages/scanner-core`                   |
 | 10  | GitHub integration e2e            | Playwright / integration                       | `github-action/`, `server/api/github.ts`  |
-| 11  | VS Code integration e2e           | Extension tests                                | `devpulse-vscode`                         |
+| 11  | VS Code integration e2e           | Extension tests                                | `rakshex-vscode`                         |
 | 12  | Kill switch runtime enforced      | Unit + gateway tests                           | kill switch + gateway policy              |
 | 13  | Billing webhooks verified         | Stripe signature tests                         | `server/stripe.ts`                        |
 | 14  | Backups / restore tested          | Runbook + script                               | docs + scripts                            |

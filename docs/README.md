@@ -11,7 +11,7 @@ Use these documents as the current release authority:
 
 Documents named audit, gap inventory, rebuild execution, launch bar, or
 verification report preserve historical analysis and may contain retired
-DevPulse names, old test counts, or superseded deployment assumptions. They are
+RaksHex names, old test counts, or superseded deployment assumptions. They are
 useful provenance, not launch instructions. Where documents conflict, the
 release entry point, production runbook, sign-off matrix, current code, and
 exact-commit CI evidence control.

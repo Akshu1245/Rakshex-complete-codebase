@@ -12,7 +12,7 @@ describe("buildCorsAllowlist", () => {
     expect(list).toContain("https://rakshex.in");
     expect(list).toContain("https://www.rakshex.in");
     expect(list).toContain("https://app.rakshex.in");
-    expect(list).not.toContain("https://app.devpulse.ai");
+    expect(list).not.toContain("https://app.rakshex.ai");
 
     for (const origin of list) {
       expect(origin).not.toMatch(/\*/);

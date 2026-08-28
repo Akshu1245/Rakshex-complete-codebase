@@ -179,7 +179,7 @@ Use this order when documents conflict:
 6. architecture/security/deployment runbooks
 7. dated audits, gap inventories, release-package snapshots, marketing files
 
-Documents such as `docs/FEATURE_MATURITY.md`, `docs/GAP_INVENTORY.md`, `docs/LAUNCH_GAP_REGISTER.md`, older release binders, and old DevPulse-era scripts/docs are historical context unless explicitly refreshed to the current audit date. Do not use them alone as evidence that a feature is live.
+Documents such as `docs/FEATURE_MATURITY.md`, `docs/GAP_INVENTORY.md`, `docs/LAUNCH_GAP_REGISTER.md`, older release binders, and old RaksHex-era scripts/docs are historical context unless explicitly refreshed to the current audit date. Do not use them alone as evidence that a feature is live.
 
 ## 12. Private-beta UI/website direction
 

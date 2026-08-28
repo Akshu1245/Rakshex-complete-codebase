@@ -2,18 +2,18 @@
 
 ## Product decision
 
-DevPulse models AI access as four separate layers:
+RaksHex models AI access as four separate layers:
 
 1. **Identity and seat**: a human or service identity is assigned access to a team product.
 2. **Provider account**: the organization, tenant, cloud account, project, or team that owns the service.
 3. **Credential or connection**: a key, OAuth grant, service principal, IAM role, managed identity, SCIM connection, or provider admin token.
 4. **Usage and evidence**: gateway telemetry, provider usage APIs, billing exports, invoices, audit logs, or estimates.
 
-A team subscription does not imply an API key. DevPulse must show the access mechanism and evidence source on every account card.
+A team subscription does not imply an API key. RaksHex must show the access mechanism and evidence source on every account card.
 
 ## Verified provider patterns
 
-| Provider               | Admin surface                                                                         | What DevPulse can inventory                                                        | Important limitation                                                                                                  |
+| Provider               | Admin surface                                                                         | What RaksHex can inventory                                                        | Important limitation                                                                                                  |
 | ---------------------- | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | Azure / Azure OpenAI   | Microsoft Entra OAuth/service principal/managed identity, Azure RBAC, Cost Management | Tenant, subscription, resource, role scope, model resource, usage and cost exports | Billing visibility depends on scope; Cost Details is asynchronous and exports are preferred at scale                  |
 | AWS Bedrock            | IAM role, STS, Organizations, CUR 2.0, cost allocation tags                           | Account, region, Bedrock usage, principal/session attribution, cost                | Per-user attribution requires role session names or principal tags; do not treat an AWS account as a key              |

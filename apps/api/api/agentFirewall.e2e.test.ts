@@ -54,7 +54,7 @@ import { generateCsrfToken } from "../utils/security";
 
 const HAS_DB = Boolean(process.env.DATABASE_URL?.trim());
 const HAS_VAULT = Boolean(
-  (process.env.RAKSHEX_VAULT_KEY ?? process.env.DEVPULSE_VAULT_KEY ?? "").trim().length >= 32,
+  (process.env.RAKSHEX_VAULT_KEY ?? process.env.RAKSHEX_VAULT_KEY ?? "").trim().length >= 32,
 );
 if (HAS_DB && !HAS_VAULT) {
   throw new Error(

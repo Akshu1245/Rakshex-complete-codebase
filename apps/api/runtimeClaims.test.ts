@@ -36,8 +36,8 @@ describe("customer-facing trust claims", () => {
       path.join(repoRoot, "apps/web/public/.well-known/security.txt"),
     ];
     const forbidden = [
-      /DevPulse/i,
-      /devpulse\.ai/i,
+      /RaksHex/i,
+      /rakshex\.ai/i,
       /\b4 patents?\b/i,
       /\bIndia(?:'|’)?s first\b/i,
       /\bworld[- ]first\b/i,

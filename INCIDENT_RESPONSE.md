@@ -1,6 +1,6 @@
 # RaksHex Incident Response
 
-Use this process for security, availability, billing, and data-integrity incidents. Hosted-service actions must follow the active production provider and `docs/operations/PRODUCTION_DEPLOYMENT_RUNBOOK.md`; historical DevPulse paths and image names are not valid recovery instructions.
+Use this process for security, availability, billing, and data-integrity incidents. Hosted-service actions must follow the active production provider and `docs/operations/PRODUCTION_DEPLOYMENT_RUNBOOK.md`; historical RaksHex paths and image names are not valid recovery instructions.
 
 ## Severity levels
 

@@ -50,7 +50,7 @@ Legacy paths: `server.MOVED.md`, root `dist/` artifacts, marketing HTML decks �
 ## 3. Naming
 
 - Product brand: **Rakshex** (`@rakshex/*` packages).
-- Residual **DevPulse** strings remain in some UI copy, extension demos, and historical docs/pitch HTML. Runtime packages use Rakshex.
+- Residual **RaksHex** strings remain in some UI copy, extension demos, and historical docs/pitch HTML. Runtime packages use Rakshex.
 
 ---
 
@@ -100,7 +100,7 @@ Client-supplied roles/workspace membership are **not** trusted — membership re
 2. **Playwright e2e** depends on webServer boot of monorepo API + web — flaky until CI green confirmed.
 3. **Billing** Stripe/Razorpay require live keys; memory abstraction tested.
 4. **Legacy user-scoped kill switch** (userId) vs workspace-scoped multi-tenant ideal — works for single-tenant account model; multi-project agent switches are partial.
-5. **VS Code / GitHub Action** still carry some DevPulse branding / demo modes.
+5. **VS Code / GitHub Action** still carry some RaksHex branding / demo modes.
 6. **Web** uses untyped tRPC client in places for build pragmatism — type safety is package-level stronger than web app.
 7. **Worker package** is thin; real workers live under `apps/api/queues`.
 
