@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { and, eq, gte, lt, sql } from "drizzle-orm";
 import { z } from "zod";
+import { gatewayCallAttribution } from "@rakshex/database";
 import {
   controlPlaneCredentials,
   providerAccounts,
@@ -187,6 +188,12 @@ export function calculateReconciliation(providerBilledUsd: number, gatewayAttrib
     driftPct,
     status: driftPct > DRIFT_LIMIT ? ("drift" as const) : ("ok" as const),
   };
+}
+
+export function providerAllocationFactor(providerBilledUsd: number, gatewayAttributedUsd: number) {
+  if (!Number.isFinite(providerBilledUsd) || !Number.isFinite(gatewayAttributedUsd)) return null;
+  if (Math.abs(gatewayAttributedUsd) <= Number.EPSILON) return null;
+  return providerBilledUsd / gatewayAttributedUsd;
 }
 
 function buildAdminUrl(
@@ -392,35 +399,47 @@ export async function reconcileOpenAiBilling(input: {
 
   const gatewayAttributedUsd = Number(gateway?.amount ?? 0);
   const result = calculateReconciliation(providerBilledUsd, gatewayAttributedUsd);
-  const [snapshot] = await database
-    .insert(providerReconciliationWindows)
-    .values({
-      workspaceId: input.workspaceId,
-      providerAccountId: input.providerAccountId,
-      provider: "openai",
-      windowStart: input.start,
-      windowEnd: input.end,
-      providerBilledUsd: String(result.providerBilledUsd),
-      gatewayAttributedUsd: String(result.gatewayAttributedUsd),
-      driftUsd: String(result.driftUsd),
-      driftPct: String(result.driftPct),
-      status: result.status,
-      providerRowCount: costRows.length,
-      gatewayRowCount: gateway?.count ?? 0,
-      metadata: {
-        usageRowCount: usageRows.length,
-        source: "openai_admin_api",
-        driftThreshold: DRIFT_LIMIT,
-      },
-    })
-    .onConflictDoUpdate({
-      target: [
-        providerReconciliationWindows.workspaceId,
-        providerReconciliationWindows.providerAccountId,
-        providerReconciliationWindows.windowStart,
-        providerReconciliationWindows.windowEnd,
-      ],
-      set: {
+  const allocationFactor = providerAllocationFactor(providerBilledUsd, gatewayAttributedUsd);
+
+  const snapshot = await database.transaction(async (tx) => {
+    if (allocationFactor == null) {
+      await tx
+        .update(gatewayCallAttribution)
+        .set({ providerReconciledCostUsd: null })
+        .where(
+          and(
+            eq(gatewayCallAttribution.workspaceId, input.workspaceId),
+            eq(gatewayCallAttribution.providerAccountId, input.providerAccountId),
+            eq(gatewayCallAttribution.provider, "openai"),
+            gte(gatewayCallAttribution.occurredAt, input.start),
+            lt(gatewayCallAttribution.occurredAt, input.end),
+          ),
+        );
+    } else {
+      await tx
+        .update(gatewayCallAttribution)
+        .set({
+          providerReconciledCostUsd: sql`${gatewayCallAttribution.settledCostUsd} * ${allocationFactor}`,
+        })
+        .where(
+          and(
+            eq(gatewayCallAttribution.workspaceId, input.workspaceId),
+            eq(gatewayCallAttribution.providerAccountId, input.providerAccountId),
+            eq(gatewayCallAttribution.provider, "openai"),
+            gte(gatewayCallAttribution.occurredAt, input.start),
+            lt(gatewayCallAttribution.occurredAt, input.end),
+          ),
+        );
+    }
+
+    const [row] = await tx
+      .insert(providerReconciliationWindows)
+      .values({
+        workspaceId: input.workspaceId,
+        providerAccountId: input.providerAccountId,
+        provider: "openai",
+        windowStart: input.start,
+        windowEnd: input.end,
         providerBilledUsd: String(result.providerBilledUsd),
         gatewayAttributedUsd: String(result.gatewayAttributedUsd),
         driftUsd: String(result.driftUsd),
@@ -428,16 +447,49 @@ export async function reconcileOpenAiBilling(input: {
         status: result.status,
         providerRowCount: costRows.length,
         gatewayRowCount: gateway?.count ?? 0,
-        reconciledAt: new Date(),
-      },
-    })
-    .returning();
+        metadata: {
+          usageRowCount: usageRows.length,
+          source: "openai_admin_api",
+          driftThreshold: DRIFT_LIMIT,
+          allocationMethod: allocationFactor == null ? "unavailable" : "pro_rata_gateway_settled_cost",
+          allocationFactor,
+        },
+      })
+      .onConflictDoUpdate({
+        target: [
+          providerReconciliationWindows.workspaceId,
+          providerReconciliationWindows.providerAccountId,
+          providerReconciliationWindows.windowStart,
+          providerReconciliationWindows.windowEnd,
+        ],
+        set: {
+          providerBilledUsd: String(result.providerBilledUsd),
+          gatewayAttributedUsd: String(result.gatewayAttributedUsd),
+          driftUsd: String(result.driftUsd),
+          driftPct: String(result.driftPct),
+          status: result.status,
+          providerRowCount: costRows.length,
+          gatewayRowCount: gateway?.count ?? 0,
+          metadata: {
+            usageRowCount: usageRows.length,
+            source: "openai_admin_api",
+            driftThreshold: DRIFT_LIMIT,
+            allocationMethod: allocationFactor == null ? "unavailable" : "pro_rata_gateway_settled_cost",
+            allocationFactor,
+          },
+          reconciledAt: new Date(),
+        },
+      })
+      .returning();
+    return row;
+  });
 
   return {
     ...result,
     providerRowCount: costRows.length,
     usageRowCount: usageRows.length,
     gatewayRowCount: gateway?.count ?? 0,
+    allocationFactor,
     snapshotId: snapshot?.id,
   };
 }
@@ -445,6 +497,7 @@ export async function reconcileOpenAiBilling(input: {
 export const __test = {
   buildAdminUrl,
   calculateReconciliation,
+  providerAllocationFactor,
   normalizeOpenAiCosts,
   normalizeOpenAiCompletionsUsage,
 };
