@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-/** Public CTA alias. Must not bounce to /login. */
+/** Docs-named URL. Public start is /docs, not an in-app surface. */
 export default function DocumentationRedirect() {
-  redirect("/docs/agent-firewall");
+  redirect("/docs");
 }

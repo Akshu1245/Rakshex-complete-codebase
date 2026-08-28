@@ -11,6 +11,8 @@ cd Rakshex-complete-codebase
 pnpm install
 pnpm --filter @rakshex/sdk build`;
 
+export const FIREWALL_ADD_WORKSPACE = `pnpm add ./packages/sdk`;
+
 export const FIREWALL_ADD_LOCAL = `pnpm add /path/to/Rakshex-complete-codebase/packages/sdk`;
 
 /** Client constructor — matches packages/sdk/README.md */

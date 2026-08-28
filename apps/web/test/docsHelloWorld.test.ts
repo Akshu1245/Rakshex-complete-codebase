@@ -48,12 +48,20 @@ describe("public docs hello-world", () => {
       if (/SOC 2 audit in progress/i.test(source)) {
         violations.push(`${rel} still claims a SOC 2 audit in progress`);
       }
-      if (/npm install @rakshex\/sdk/.test(source) && !/will fail/.test(source)) {
-        violations.push(`${rel} documents npm install @rakshex/sdk as if it works`);
+      if (/npm install @rakshex\/sdk/.test(source)) {
+        violations.push(`${rel} documents npm install @rakshex/sdk`);
+      }
+      if (/npm install -g @rakshex\/cli/.test(source)) {
+        violations.push(`${rel} documents npm install -g @rakshex/cli`);
       }
     }
 
     expect(violations, violations.join("\n")).toEqual([]);
+  });
+
+  it("does not redirect /get-started to public docs", () => {
+    const nextConfig = read("next.config.js");
+    expect(nextConfig).not.toMatch(/source:\s*"\/get-started"/);
   });
 });
 

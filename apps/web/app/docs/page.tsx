@@ -3,6 +3,7 @@ import Link from "next/link";
 import { DocsCodeBlock } from "./DocsCodeBlock";
 import {
   FIREWALL_ADD_LOCAL,
+  FIREWALL_ADD_WORKSPACE,
   FIREWALL_AUTHORIZE_AND_RUN,
   FIREWALL_CLIENT,
   FIREWALL_INSTALL,
@@ -32,18 +33,20 @@ export default function DocsOverview() {
 
       <p>
         These docs are public. You do not need an account to read them. The first step is the Node
-        SDK client <code>createAgentFirewallClient</code> from <code>@rakshex/sdk</code> — not the
-        CLI scanner, and not the VS Code extension.
+        client <code>createAgentFirewallClient</code> from this repo&apos;s{" "}
+        <code>packages/sdk</code> — not the CLI scanner, and not the VS Code extension.
       </p>
 
       <h2 id="hello-world">Hello world</h2>
       <p>
-        <code>@rakshex/sdk</code> is the Agent Firewall client. It is not published on the public
-        npm registry during private beta. Install it from the repository, then create a client:
+        This week&apos;s hello-world is the Node client in this repo at <code>packages/sdk</code>.
+        Build that package, then add it by workspace path. The first step is{" "}
+        <code>createAgentFirewallClient</code> — not the CLI scanner, and not the VS Code extension.
       </p>
 
-      <DocsCodeBlock caption="Build the SDK from this repository" code={FIREWALL_INSTALL} />
-      <DocsCodeBlock caption="Add the local package to your app" code={FIREWALL_ADD_LOCAL} />
+      <DocsCodeBlock caption="Build packages/sdk from this repository" code={FIREWALL_INSTALL} />
+      <DocsCodeBlock caption="Workspace path install (inside this repo)" code={FIREWALL_ADD_WORKSPACE} />
+      <DocsCodeBlock caption="Path install from another project" code={FIREWALL_ADD_LOCAL} />
       <DocsCodeBlock caption="Create the Agent Firewall client" code={FIREWALL_CLIENT} />
       <DocsCodeBlock caption="Authorize a semantic action" code={FIREWALL_AUTHORIZE_AND_RUN} />
 

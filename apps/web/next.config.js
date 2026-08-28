@@ -66,16 +66,12 @@ const nextConfig = {
   },
   async redirects() {
     return [
-      // Public CTA aliases must not hit the auth gate. Keep these in
-      // lib/publicRoutes.ts as well — proxy.ts runs before redirects.
-      {
-        source: "/get-started",
-        destination: "/docs/agent-firewall",
-        permanent: false,
-      },
+      // /documentation is a docs-named URL, not an in-app start. Public hello-world is /docs.
+      // Keep /documentation in lib/publicRoutes.ts — proxy.ts runs before redirects.
+      // /get-started stays invite-gated (not listed as public, no redirect here).
       {
         source: "/documentation",
-        destination: "/docs/agent-firewall",
+        destination: "/docs",
         permanent: false,
       },
       {

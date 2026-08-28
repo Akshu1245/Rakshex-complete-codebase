@@ -7,51 +7,13 @@ export interface DocPage {
 
 export const docsData: Record<string, DocPage> = {
   "quickstart/cli": {
-    title: "Connect via CLI",
-    breadcrumb: "Getting Started / Quickstart",
-    lead: "Optional later: scan Postman collections or OpenAPI files from a terminal. Not the Agent Firewall hello-world.",
+    title: "CLI scan (optional later)",
+    breadcrumb: "Getting Started / Optional later",
+    lead: "Not this week's hello-world. The CLI is not on the public npm registry.",
     contentHtml: `
-      <p>The RaksHex CLI scans Postman collections, OpenAPI/Swagger specifications, or HAR files locally. This is an optional surface after the Agent Firewall client, not the public hello-world.</p>
-      
-      <h2>Installation</h2>
-      <p>The CLI requires Node.js v16+ to be installed on your system. You can execute it directly using <code>npx</code> or install it globally:</p>
-      <pre><code>npm install -g @rakshex/cli</code></pre>
-      
-      <h2>Run Your First Scan</h2>
-      <p>To scan an export of your Postman collection or OpenAPI JSON, use the <code>scan</code> command. You will need your project API Key which is found in <code>.insforge/project.json</code> or under your project Settings page:</p>
-      <pre><code>npx RaksHex scan ./collection.json --key ik_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxx</code></pre>
-      
-      <h2>CLI Parameters</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Argument</th>
-            <th>Description</th>
-            <th>Default</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><code>--key</code></td>
-            <td>Your project API Key (or set via <code>RAKSHEX_API_KEY</code> env var).</td>
-            <td>-</td>
-          </tr>
-          <tr>
-            <td><code>--format</code></td>
-            <td>Specify output format (<code>json</code>, <code>csv</code>, <code>table</code>).</td>
-            <td><code>table</code></td>
-          </tr>
-          <tr>
-            <td><code>--fail-on</code></td>
-            <td>Fail the build (exit code 1) on findings of severity (<code>Low</code>, <code>Medium</code>, <code>High</code>, <code>Critical</code>).</td>
-            <td><code>High</code></td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div class="docs-tip" style="background: rgba(20, 184, 166, 0.05); border: 1px solid rgba(20, 184, 166, 0.15); padding: 16px; border-radius: 8px; margin: 24px 0;">
-        <strong>💡 GitHub Action Integration:</strong> Add <code>npx RaksHex scan</code> into your CI pipeline to block pull requests automatically when new security issues or undocumented shadow endpoints are introduced.
-      </div>
+      <p>The public hello-world this week is the Node Agent Firewall client in <code>packages/sdk</code>. The CLI is a later surface. It is not published on the public npm registry, so there is no public install command to run this week.</p>
+      <p>Start here: <a href="/docs/agent-firewall">Agent Firewall getting started</a>.</p>
+      <p>If you already have this repository checked out, the CLI source lives at <code>apps/cli</code> for local development. That is not the stranger onboarding path.</p>
     `,
   },
   "quickstart/vscode": {
@@ -282,13 +244,15 @@ export const docsData: Record<string, DocPage> = {
       <p>Start with the Agent Firewall. The public hello-world is <code>createAgentFirewallClient</code>. See the <a href="/docs/agent-firewall">Agent Firewall getting started</a> for the full walkthrough.</p>
 
       <h2>Install (private beta)</h2>
-      <p>The package name is <code>@rakshex/sdk</code>. It is not on the public npm registry during private beta. Clone the repository, build <code>packages/sdk</code>, and add it from disk:</p>
+      <p>This week&apos;s hello-world is the Node client at <code>packages/sdk</code> in this repository. Build it, then add it by workspace path or filesystem path:</p>
       <pre><code>git clone https://github.com/Akshu1245/Rakshex-complete-codebase.git
 cd Rakshex-complete-codebase
 pnpm install
 pnpm --filter @rakshex/sdk build
 
-pnpm add /path/to/Rakshex-complete-codebase/packages/sdk</code></pre>
+pnpm add ./packages/sdk
+# or from another project:
+# pnpm add /path/to/Rakshex-complete-codebase/packages/sdk</code></pre>
 
       <h2>Agent Firewall (Node)</h2>
       <pre><code>import { createAgentFirewallClient } from "@rakshex/sdk";
@@ -353,8 +317,8 @@ const { decision, result } = await firewall.authorizeAndRun(
     contentHtml: `
       <p>The public hello-world is the Node Agent Firewall client. Collection scanning and the editor extension are later surfaces.</p>
       <ul>
-        <li><strong><a href="/docs/agent-firewall">Agent Firewall</a>:</strong> Install <code>@rakshex/sdk</code> from this repository and call <code>createAgentFirewallClient</code>.</li>
-        <li><strong><a href="/docs/quickstart/cli">CLI scan</a>:</strong> Optional offline collection scanning.</li>
+        <li><strong><a href="/docs/agent-firewall">Agent Firewall</a>:</strong> Path-install <code>packages/sdk</code> and call <code>createAgentFirewallClient</code>.</li>
+        <li><strong><a href="/docs/quickstart/cli">CLI scan</a>:</strong> Optional later. Not on the public npm registry this week.</li>
         <li><strong><a href="/docs/quickstart/vscode">VS Code extension</a>:</strong> Optional editor integration. Not primary onboarding.</li>
         <li><strong><a href="/docs/quickstart/mcp">Model Context Protocol (MCP)</a>:</strong> Optional allowlisted tools for coding agents.</li>
       </ul>

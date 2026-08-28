@@ -3,6 +3,7 @@ import Link from "next/link";
 import { DocsCodeBlock } from "../DocsCodeBlock";
 import {
   FIREWALL_ADD_LOCAL,
+  FIREWALL_ADD_WORKSPACE,
   FIREWALL_AUTHORIZE_AND_RUN,
   FIREWALL_CLIENT,
   FIREWALL_EXECUTE_WITH_CREDENTIAL,
@@ -12,7 +13,7 @@ import {
 export const metadata = {
   title: "Agent Firewall — RaksHex Docs",
   description:
-    "Get started with the RaksHex Agent Firewall: install @rakshex/sdk from this repository, create an Agent Firewall client, and authorize a semantic action. Reading does not require an account.",
+    "Get started with the RaksHex Agent Firewall: path-install packages/sdk from this repository, create an Agent Firewall client, and authorize a semantic action. Reading does not require an account.",
   alternates: { canonical: "/docs/agent-firewall" },
 };
 
@@ -39,22 +40,19 @@ export default function AgentFirewallDocsPage() {
 
       <h2 id="install">Install</h2>
       <p>
-        The package name is <code>@rakshex/sdk</code>. It is <strong>not</strong> on the public npm
-        registry during private beta — a plain <code>npm install @rakshex/sdk</code> will fail. Clone
-        this repository, build the workspace package, then add it from disk:
+        The hello-world client lives at <code>packages/sdk</code> in this repository. Build that
+        package, then add it by workspace path or filesystem path. Publishing to the public npm
+        registry is a separate Build ticket — not this week&apos;s install path.
       </p>
-      <DocsCodeBlock caption="Clone and build @rakshex/sdk" code={FIREWALL_INSTALL} />
-      <DocsCodeBlock caption="Depend on the built package from your app" code={FIREWALL_ADD_LOCAL} />
-      <p className="docs-note">
-        If you already have the monorepo checked out, skip the clone and run the build in place, then
-        point your app at <code>packages/sdk</code>.
-      </p>
+      <DocsCodeBlock caption="Clone this repo and build packages/sdk" code={FIREWALL_INSTALL} />
+      <DocsCodeBlock caption="Inside this repo: workspace path" code={FIREWALL_ADD_WORKSPACE} />
+      <DocsCodeBlock caption="From another project: filesystem path" code={FIREWALL_ADD_LOCAL} />
 
       <h2 id="create-the-client">Create the client</h2>
       <p>
-        Import <code>createAgentFirewallClient</code> from <code>@rakshex/sdk</code>. The workspace
-        key is a RaksHex <code>rk_...</code> key, not a provider key. The capability token is a
-        delegated <code>rk_cap_...</code> authority for this agent.
+        Import <code>createAgentFirewallClient</code> from <code>@rakshex/sdk</code> after the path
+        install. The workspace key is a RaksHex <code>rk_...</code> key, not a provider key. The
+        capability token is a delegated <code>rk_cap_...</code> authority for this agent.
       </p>
       <DocsCodeBlock caption="createAgentFirewallClient" code={FIREWALL_CLIENT} />
 
