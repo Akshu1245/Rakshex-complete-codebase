@@ -17,7 +17,7 @@ the build if it reappears in shipped source.
 The strategic positioning is the **Agent Firewall**: runtime authorization for
 autonomous AI actions. The one-line differentiator, which is defensible and narrow:
 
-> Competitors govern the *session*. RaksHex governs the *action*.
+> Competitors govern the _session_. RaksHex governs the _action_.
 
 Concretely: semantic actions (`financial.refund`), delegated authority with
 parent→child attenuation, a hash-chained tamper-evident Action Ledger, and
@@ -46,7 +46,7 @@ With Postgres + Redis running (`docker compose up -d postgres redis`):
 pnpm db:migrate       # 26 migrations
 pnpm test:integration # 57 tests
 pnpm test:db          # VERIFIED 2026-08-06 on real Postgres 18.4 — 10/10 pass, see §5 item 1
-pnpm test:e2e         # NOT VERIFIED — needs API + web up
+pnpm test:e2e         # Playwright smoke (`--grep=Smoke`): login + firewall decision + health. Needs API + web + DB.
 ```
 
 **As of 2026-08-05 the first two blocks pass.** The API boots against a live DB and
@@ -73,12 +73,12 @@ Percentages are meaningless without an axis, so here are four. Overall single nu
 if you must have one: **~72%** — but read the rows, because they disagree for good
 reasons.
 
-| Axis | % | Basis |
-|---|---|---|
-| **Code exists & compiles** | ~95% | lint + typecheck + build all green, executed |
-| **Verified by execution** | ~75% | 1046 tests pass; app boots; migrations apply/roll back; routes mounted |
+| Axis                               | %    | Basis                                                                                  |
+| ---------------------------------- | ---- | -------------------------------------------------------------------------------------- |
+| **Code exists & compiles**         | ~95% | lint + typecheck + build all green, executed                                           |
+| **Verified by execution**          | ~75% | 1046 tests pass; app boots; migrations apply/roll back; routes mounted                 |
 | **Proven correct in domain terms** | ~40% | tests passing ≠ features behave correctly. ~20 of 296 API files have been read closely |
-| **Business / ops / legal ready** | ~30% | legal review, pen test, live payment keys, SOC2, support all outstanding |
+| **Business / ops / legal ready**   | ~30% | legal review, pen test, live payment keys, SOC2, support all outstanding               |
 
 **Do not tell the user this is "100% market ready."** It is not, and the gap is
 specific and listed in §5 — not vague.
@@ -99,7 +99,7 @@ specific and listed in §5 — not vague.
 ### Security fix — attenuation bypass (`packages/action-control/src/authority.ts`)
 
 `validateAttenuation()` accepted a child authority that **omitted** `resources` /
-`environments`, and an omitted constraint means *unrestricted* at evaluation time —
+`environments`, and an omitted constraint means _unrestricted_ at evaluation time —
 so the child was strictly **broader** than its parent. This falsified the product's
 headline claim. Fixed via two helpers with deliberately opposite semantics:
 
@@ -122,7 +122,7 @@ Non-obvious invariants, each of which has a test:
 1. **Shadow-mode laundering.** In shadow mode `effectiveDecision` is ALLOW even for a
    DENY. Brokering on that alone would execute every denied action. The broker
    requires the **true `decision`** to be ALLOW too.
-2. **Claim before spend.** The egress row is inserted *before* the secret is
+2. **Claim before spend.** The egress row is inserted _before_ the secret is
    decrypted. The unique index on `ledger_id` means two racing calls cannot both win.
 3. **No redirects.** `redirect: "manual"` — a 302 could send the credential to an
    unvetted host.
@@ -310,10 +310,19 @@ despite the columns existing since migration 0013.
    seed, same test file, zero failures under real Postgres. See §6 for how to get a
    real (non-WASM) Postgres in a sandbox with no root and no Docker — the
    `embedded-postgres` npm package ships native binaries and needs neither.
-2. **No authenticated end-to-end broker call.** Route existence and anonymous
-   rejection are proven; the full path (sign in → store credential → evaluate → broker
-   → egress row) is not. Needs user/workspace/session seeding.
-3. **Playwright E2E never run** — needs API + web + DB together.
+2. ~~**No authenticated end-to-end broker call.**~~ **CLOSED** —
+   `apps/api/api/agentFirewall.broker.http.test.ts` drives signup/login over HTTP,
+   stores a credential, evaluates ALLOW, brokers to a public hostname, and asserts
+   the egress row (replay then 409). Upstream fetch for that hostname is intercepted
+   in-process so the SSRF guard is satisfied without a test-only bypass or a real
+   provider. Loopback remains refused in `agentFirewall.e2e.test.ts`. Both files
+   **fail** (do not skip) when `DATABASE_URL` is set without `RAKSHEX_VAULT_KEY`;
+   CI `test:integration` now supplies a test-only vault key.
+3. ~~**Playwright E2E never run**~~ **Smoke is the CI gate.** `pnpm test:e2e` /
+   `pnpm test:e2e:smoke` run `--grep=Smoke` (public pages, health must be 200 with
+   live DB/Redis, login form, Agent Firewall evaluate → ALLOW). The CI `e2e` job is
+   that command, not a skip. Longer journey specs under `e2e/` still exist and are
+   not the release gate.
 4. **Ops/legal** — pen test, legal review, live payment keys, `RAKSHEX_VAULT_KEY` in
    the deploy environment.
 
@@ -325,7 +334,7 @@ it. Wired into `.env.example`, `render.yaml`, `docker-compose.prod.yml`.
 ## 6. Gotchas that will cost you an hour
 
 - **Migrations are driven by a hardcoded `MIGRATION_ORDER` array** in
-  `packages/database/src/migrate.ts` — *not* drizzle-kit's journal, which is stale and
+  `packages/database/src/migrate.ts` — _not_ drizzle-kit's journal, which is stale and
   abandoned after 0001. **A new `.sql` file that isn't added to that array silently
   never runs.** This has already caused a production-shaped bug once.
 - There are **two `0012_` migrations** (compliance_report_types, workspace_subscriptions).

@@ -32,11 +32,15 @@ export default defineConfig({
       env: {
         NODE_ENV: "test",
         PORT: BACKEND_PORT,
-        JWT_SECRET: "test-only-jwt-secret-with-at-least-32-characters",
+        JWT_SECRET: process.env.JWT_SECRET || "test-only-jwt-secret-with-at-least-32-characters",
         DATABASE_URL:
           process.env.DATABASE_URL || "postgresql://rakshex:rakshex@127.0.0.1:5432/rakshex_e2e",
         REDIS_URL: process.env.REDIS_URL || "redis://127.0.0.1:6379",
         USE_IN_MEMORY_REDIS: process.env.USE_IN_MEMORY_REDIS || "false",
+        RAKSHEX_VAULT_KEY:
+          process.env.RAKSHEX_VAULT_KEY || "test-only-vault-key-with-at-least-32-characters",
+        FRONTEND_URL: BASE_URL,
+        CORS_ORIGINS: `${BASE_URL},http://localhost:${BACKEND_PORT}`,
       },
     },
     {
@@ -49,6 +53,10 @@ export default defineConfig({
       timeout: 180_000,
       env: {
         NEXT_PUBLIC_TS_API_URL: `http://localhost:${BACKEND_PORT}`,
+        NEXT_PUBLIC_SITE_URL: BASE_URL,
+        NEXTAUTH_URL: BASE_URL,
+        NEXTAUTH_SECRET:
+          process.env.NEXTAUTH_SECRET || "test-only-nextauth-secret-with-at-least-32-chars",
       },
     },
   ],

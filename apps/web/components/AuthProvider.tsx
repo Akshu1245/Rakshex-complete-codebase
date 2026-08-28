@@ -52,7 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (nextAuthStatus !== "authenticated" || !nextAuthSession) return;
-    if (meQuery.isLoading || meQuery.data) return;
+    if (meQuery.isPending || meQuery.data) return;
     const sessionKey = nextAuthSession.user?.email ?? "session";
     if (syncedForSession.current === sessionKey || oauthSyncMutation.isPending) return;
     syncedForSession.current = sessionKey;
@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // oauthSyncMutation is intentionally omitted from deps: it's a new
     // object each render, and including it would re-run this on every
     // mutation state change instead of only when the session changes.
-  }, [nextAuthStatus, nextAuthSession, meQuery.isLoading, meQuery.data]);
+  }, [nextAuthStatus, nextAuthSession, meQuery.isPending, meQuery.data]);
 
   const logout = useCallback(async () => {
     try {
@@ -81,7 +81,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value: AuthContextType = {
     user: (meQuery.data as User | null | undefined) ?? null,
-    loading: meQuery.isLoading,
+    // AuthGuard redirects to /login when !loading && !user.
+    // isPending covers the first fetch, but is false during a
+    // refetch-after-error (status=error, isFetching=true, data=undefined).
+    // CI traces on 016d7aa show dashboard/error.js then a bounce to
+    // /login while cookies were valid and payment.getCurrentPlan still
+    // had trial data. Treat "no user yet and a fetch is in flight" as
+    // loading so the guard waits for auth.me instead of unmounting
+    // the Agent Firewall form mid-fill.
+    loading: !meQuery.data && (meQuery.isPending || meQuery.isFetching),
     logout,
     refresh,
   };
