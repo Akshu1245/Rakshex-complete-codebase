@@ -197,7 +197,15 @@ function verifyEntry(entry: ReceiptEntryExport, trustedKeys: TrustedReceiptKeys)
     previousHash: entry.previousHash,
   });
   const expectedHash = sha256Hex(canonicalJson(material));
-  if (!crypto.timingSafeEqual(Buffer.from(expectedHash), Buffer.from(entry.entryHash))) {
+  if (!/^[0-9a-f]{64}$/i.test(entry.entryHash)) {
+    return "invalid entry hash encoding";
+  }
+  const expectedHashBytes = Buffer.from(expectedHash, "hex");
+  const entryHashBytes = Buffer.from(entry.entryHash, "hex");
+  if (
+    entryHashBytes.length !== expectedHashBytes.length ||
+    !crypto.timingSafeEqual(expectedHashBytes, entryHashBytes)
+  ) {
     return "entry hash mismatch";
   }
   const publicKey = crypto.createPublicKey(normalizePem(trustedPem));

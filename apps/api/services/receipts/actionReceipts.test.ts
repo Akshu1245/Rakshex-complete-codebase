@@ -86,6 +86,14 @@ describe("signed action receipts", () => {
     expect(verifyReceiptBundle(parsed, trustedKeys)).toMatchObject({ valid: false });
   });
 
+  it("fails closed on a malformed hash length instead of throwing", () => {
+    const { bundle, trustedKeys } = fixtureBundle();
+    const malformed = structuredClone(bundle);
+    malformed.entries[0]!.entryHash = "00";
+    expect(() => verifyReceiptBundle(malformed, trustedKeys)).not.toThrow();
+    expect(verifyReceiptBundle(malformed, trustedKeys)).toMatchObject({ valid: false });
+  });
+
   it("rejects a validly-shaped receipt signed by an untrusted replacement key", () => {
     const { bundle } = fixtureBundle();
     const attacker = fixtureSigner();

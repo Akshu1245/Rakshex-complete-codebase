@@ -58,20 +58,20 @@ describe("createRakshexOpenAI", () => {
     expect(client.options.baseURL).toBe("https://gateway.rakshex.test/v1");
   });
 
-  it("preserves caller headers while forcing the selected governed provider", () => {
+  it("preserves caller headers while forcing the OpenAI P0 provider", () => {
     const client = createRakshexOpenAI(FakeOpenAI, {
       apiKey: "rk_workspace_test",
       gatewayUrl: "https://gateway.rakshex.test",
-      provider: "openai_compatible",
+      provider: "openai",
       defaultHeaders: {
         "x-correlation-id": "corr_123",
-        "x-rakshex-provider": "openai",
+        "x-rakshex-provider": "attacker-controlled-value",
       },
     });
 
     expect(client.options.defaultHeaders).toMatchObject({
       "x-correlation-id": "corr_123",
-      "x-rakshex-provider": "openai_compatible",
+      "x-rakshex-provider": "openai",
     });
   });
 
@@ -96,6 +96,9 @@ describe("normalizeRakshexGatewayUrl", () => {
       "https://gateway.rakshex.test/v1",
     );
     expect(normalizeRakshexGatewayUrl("https://gateway.rakshex.test/v1/")).toBe(
+      "https://gateway.rakshex.test/v1",
+    );
+    expect(normalizeRakshexGatewayUrl(`https://gateway.rakshex.test/v1${"/".repeat(10_000)}`)).toBe(
       "https://gateway.rakshex.test/v1",
     );
   });

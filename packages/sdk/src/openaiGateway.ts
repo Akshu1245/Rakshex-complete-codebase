@@ -1,4 +1,4 @@
-export type RakshexOpenAIProvider = "openai" | "openai_compatible";
+export type RakshexOpenAIProvider = "openai";
 
 export interface RakshexOpenAIMetadata {
   featureTags?: Record<string, string>;
@@ -62,7 +62,10 @@ function encodeMetadata(metadata: RakshexOpenAIMetadata | undefined): string | u
  * synchronous/streaming Responses API share the same governed path.
  */
 export function normalizeRakshexGatewayUrl(value: string): string {
-  const normalized = value.trim().replace(/\/+$/, "");
+  const trimmed = value.trim();
+  let end = trimmed.length;
+  while (end > 0 && trimmed.charCodeAt(end - 1) === 47) end -= 1;
+  const normalized = trimmed.slice(0, end);
   if (!normalized) throw new Error("RAKSHEX_GATEWAY_URL is required");
   return normalized.endsWith("/v1") ? normalized : `${normalized}/v1`;
 }

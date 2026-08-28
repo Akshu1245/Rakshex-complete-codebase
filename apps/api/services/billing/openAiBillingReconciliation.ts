@@ -101,9 +101,14 @@ export interface ProviderEvidenceRow {
   raw: Record<string, unknown>;
 }
 
+const PROVIDER_EVIDENCE_ID_DOMAIN = "rakshex-provider-evidence-v1";
+
 function sourceId(kind: "cost" | "usage", values: readonly unknown[]): string {
+  // This is a collision-resistant row identifier, not password storage. A
+  // fixed domain-separated HMAC prevents credential-like provider IDs from
+  // being treated as password-hash material while preserving idempotency.
   return crypto
-    .createHash("sha256")
+    .createHmac("sha256", PROVIDER_EVIDENCE_ID_DOMAIN)
     .update(JSON.stringify([kind, ...values]))
     .digest("hex");
 }
