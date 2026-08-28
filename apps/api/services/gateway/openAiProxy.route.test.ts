@@ -136,6 +136,25 @@ describe("OpenAI-compatible gateway route enforcement", () => {
     expect(mocks.validateWorkspaceApiKey).not.toHaveBeenCalled();
   });
 
+  it("validates Responses after authentication but before governance", async () => {
+    const handler = routeHandler("/v1/responses");
+    const res = createResponse();
+    mocks.validateWorkspaceApiKey.mockResolvedValue({
+      keyId: "ak_1",
+      workspaceId: 42,
+      userId: 7,
+      scopes: ["gateway:invoke"],
+      projectId: null,
+    });
+
+    await handler(createRequest("Bearer rk_live_test_workspace_key", {}, {}), res);
+
+    expect(res.statusCode).toBe(400);
+    expect((res.payload as { error: { code: string } }).error.code).toBe("invalid_request");
+    expect(mocks.validateWorkspaceApiKey).toHaveBeenCalledOnce();
+    expect(mocks.evaluateGatewayGovernance).not.toHaveBeenCalled();
+  });
+
   it("blocks Chat Completions before any upstream call when a scoped kill switch is active", async () => {
     const handler = routeHandler();
     const res = createResponse();
