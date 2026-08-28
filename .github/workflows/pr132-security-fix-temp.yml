@@ -1,0 +1,535 @@
+name: PR132 security review fixes
+
+on:
+  push:
+    branches: [ci-pr132-security-review-fixes]
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: rakshex/p0-billing-receipts
+          fetch-depth: 0
+
+      - name: Apply focused security fixes
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: str, old: str, new: str):
+              p = Path(path)
+              text = p.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected exactly one replacement, found {count}")
+              p.write_text(text.replace(old, new, 1))
+
+          core = "apps/api/services/gateway/openAiGatewayCore.ts"
+          replace_once(
+              core,
+              'import crypto from "crypto";\nimport type { Request, Response } from "express";',
+              'import crypto from "crypto";\nimport dns from "node:dns/promises";\nimport net from "node:net";\nimport type { Request, Response } from "express";',
+          )
+
+          old_host_block = r'''export function isBlockedUpstreamHost(hostname: string): boolean {
+            const host = hostname.toLowerCase();
+            if (
+              host === "localhost" ||
+              host === "0.0.0.0" ||
+              host === "::1" ||
+              host.endsWith(".local") ||
+              host.endsWith(".internal")
+            ) {
+              return true;
+            }
+            return (
+              /^127\./.test(host) ||
+              /^10\./.test(host) ||
+              /^192\.168\./.test(host) ||
+              /^169\.254\./.test(host) ||
+              /^172\.(1[6-9]|2\d|3[01])\./.test(host)
+            );
+          }
+
+          export function normalizeUpstreamUrl(
+            provider: SupportedGatewayProvider,
+            metadata: unknown,
+            endpoint: OpenAiGatewayEndpoint = "chat/completions",
+          ): string {
+            if (provider === "openai") return `https://api.openai.com/v1/${endpoint}`;
+
+            const record =
+              metadata && typeof metadata === "object" ? (metadata as Record<string, unknown>) : {};
+            const configured = typeof record.baseUrl === "string" ? record.baseUrl.trim() : "";
+            if (!configured) {
+              throw new Error("OpenAI-compatible provider account is missing metadata.baseUrl");
+            }
+
+            const parsed = new URL(configured);
+            if (parsed.protocol !== "https:" || isBlockedUpstreamHost(parsed.hostname)) {
+              throw new Error("OpenAI-compatible base URL must be public HTTPS");
+            }
+
+            let path = parsed.pathname.replace(/\/+$/, "");
+            for (const knownEndpoint of ["/chat/completions", "/responses"]) {
+              if (path.endsWith(knownEndpoint)) {
+                path = path.slice(0, -knownEndpoint.length);
+                break;
+              }
+            }
+            if (!path.endsWith("/v1")) path = `${path}/v1`;
+            parsed.pathname = `${path}/${endpoint}`;
+            parsed.search = "";
+            parsed.hash = "";
+            return parsed.toString();
+          }
+          '''
+
+          new_host_block = r'''function normalizeHostname(hostname: string): string {
+            return hostname
+              .trim()
+              .toLowerCase()
+              .replace(/^\[/, "")
+              .replace(/\]$/, "")
+              .replace(/\.$/, "")
+              .split("%")[0] ?? "";
+          }
+
+          function isBlockedIpv4(address: string): boolean {
+            const parts = address.split(".").map((part) => Number(part));
+            if (parts.length != 4 || parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) {
+              return true;
+            }
+            const [a, b] = parts as [number, number, number, number];
+            if (a === 0 || a === 10 || a === 127) return true;
+            if (a === 100 && b >= 64 && b <= 127) return true;
+            if (a === 169 && b === 254) return true;
+            if (a === 172 && b >= 16 && b <= 31) return true;
+            if (a === 192 && (b === 0 || b === 168)) return true;
+            if (a === 198 && (b === 18 || b === 19)) return true;
+            if (a >= 224) return true;
+            return false;
+          }
+
+          function mappedIpv4(address: string): string | null {
+            const lower = address.toLowerCase();
+            if (!lower.startsWith("::ffff:")) return null;
+            const tail = lower.slice("::ffff:".length);
+            if (net.isIP(tail) === 4) return tail;
+            const pieces = tail.split(":");
+            if (pieces.length !== 2) return null;
+            const high = Number.parseInt(pieces[0] ?? "", 16);
+            const low = Number.parseInt(pieces[1] ?? "", 16);
+            if (!Number.isInteger(high) || !Number.isInteger(low) || high < 0 || high > 0xffff || low < 0 || low > 0xffff) {
+              return null;
+            }
+            return `${high >> 8}.${high & 0xff}.${low >> 8}.${low & 0xff}`;
+          }
+
+          function isBlockedIpv6(address: string): boolean {
+            const lower = address.toLowerCase();
+            const mapped = mappedIpv4(lower);
+            if (mapped) return isBlockedIpv4(mapped);
+            if (lower === "::" || lower === "::1") return true;
+            const first = Number.parseInt(lower.split(":")[0] || "0", 16);
+            if ((first & 0xfe00) === 0xfc00) return true; // fc00::/7 unique-local
+            if ((first & 0xffc0) === 0xfe80) return true; // fe80::/10 link-local
+            if ((first & 0xff00) === 0xff00) return true; // multicast
+            if (lower.startsWith("2001:db8:")) return true; // documentation-only
+            return false;
+          }
+
+          export function isBlockedUpstreamHost(hostname: string): boolean {
+            const host = normalizeHostname(hostname);
+            if (
+              host === "" ||
+              host === "localhost" ||
+              host.endsWith(".localhost") ||
+              host.endsWith(".local") ||
+              host.endsWith(".internal")
+            ) {
+              return true;
+            }
+            const ipVersion = net.isIP(host);
+            if (ipVersion === 4) return isBlockedIpv4(host);
+            if (ipVersion === 6) return isBlockedIpv6(host);
+            return false;
+          }
+
+          async function assertPublicUpstreamResolution(url: string): Promise<void> {
+            const parsed = new URL(url);
+            const hostname = normalizeHostname(parsed.hostname);
+            if (isBlockedUpstreamHost(hostname)) {
+              throw new Error("OpenAI-compatible base URL must resolve to a public HTTPS host");
+            }
+            if (net.isIP(hostname)) return;
+            let records: Awaited<ReturnType<typeof dns.lookup>>;
+            try {
+              records = await dns.lookup(hostname, { all: true, verbatim: true });
+            } catch {
+              throw new Error("OpenAI-compatible base URL could not be resolved safely");
+            }
+            const addresses = Array.isArray(records) ? records : [records];
+            if (addresses.length === 0 || addresses.some((record) => isBlockedUpstreamHost(record.address))) {
+              throw new Error("OpenAI-compatible base URL must resolve only to public addresses");
+            }
+          }
+
+          export function normalizeUpstreamUrl(
+            provider: SupportedGatewayProvider,
+            metadata: unknown,
+            endpoint: OpenAiGatewayEndpoint = "chat/completions",
+          ): string {
+            if (provider === "openai") return `https://api.openai.com/v1/${endpoint}`;
+
+            const record =
+              metadata && typeof metadata === "object" ? (metadata as Record<string, unknown>) : {};
+            const configured = typeof record.baseUrl === "string" ? record.baseUrl.trim() : "";
+            if (!configured) {
+              throw new Error("OpenAI-compatible provider account is missing metadata.baseUrl");
+            }
+
+            const parsed = new URL(configured);
+            if (
+              parsed.protocol !== "https:" ||
+              parsed.username !== "" ||
+              parsed.password !== "" ||
+              isBlockedUpstreamHost(parsed.hostname)
+            ) {
+              throw new Error("OpenAI-compatible base URL must be public HTTPS");
+            }
+
+            let path = parsed.pathname.replace(/\/+$/, "");
+            for (const knownEndpoint of ["/chat/completions", "/responses"]) {
+              if (path.endsWith(knownEndpoint)) {
+                path = path.slice(0, -knownEndpoint.length);
+                break;
+              }
+            }
+            if (!path.endsWith("/v1")) path = `${path}/v1`;
+            parsed.pathname = `${path}/${endpoint}`;
+            parsed.search = "";
+            parsed.hash = "";
+            return parsed.toString();
+          }
+          '''
+          replace_once(core, old_host_block, new_host_block)
+
+          replace_once(
+              core,
+              '''  if (!account?.adminCredentialId) {
+              throw new Error(`No centrally managed ${provider} inference credential is connected`);
+            }
+
+            const [credential] = await database''',
+              '''  if (!account?.adminCredentialId) {
+              throw new Error(`No centrally managed ${provider} inference credential is connected`);
+            }
+
+            const upstreamUrl = normalizeUpstreamUrl(provider, account.metadata, endpoint);
+            if (provider === "openai_compatible") {
+              await assertPublicUpstreamResolution(upstreamUrl);
+            }
+
+            const [credential] = await database''',
+          )
+          replace_once(
+              core,
+              '''  return {
+              provider,
+              url: normalizeUpstreamUrl(provider, account.metadata, endpoint),
+              apiKey,
+              accountId: account.id,
+            };''',
+              '''  return {
+              provider,
+              url: upstreamUrl,
+              apiKey,
+              accountId: account.id,
+            };''',
+          )
+
+          replace_once(
+              core,
+              '  const requestId = req.header("x-request-id")?.slice(0, 128) || crypto.randomUUID();',
+              '  // Request IDs are server-owned uniqueness keys. Client correlation IDs must never control\n  // attribution, usage upserts, or receipt identity.\n  const requestId = crypto.randomUUID();',
+          )
+
+          replace_once(
+              core,
+              '  const requestedProjectId = safeScopeHeader(req, "x-rakshex-project-id");',
+              '  // A client-declared identity is attribution metadata only. Policy, budget and kill-switch\n  // identity scope may come only from the identity cryptographically bound to the API key.\n  const enforcementIdentityId = auth.identityId != null ? identityId : undefined;\n\n  const requestedProjectId = safeScopeHeader(req, "x-rakshex-project-id");',
+          )
+          replace_once(
+              core,
+              '''    const governance = await evaluateGatewayGovernance({
+              workspaceId: auth.workspaceId,
+              identityId,
+              projectId,''',
+              '''    const governance = await evaluateGatewayGovernance({
+              workspaceId: auth.workspaceId,
+              identityId: enforcementIdentityId,
+              projectId,''',
+          )
+          replace_once(
+              core,
+              '          userId: effectiveIdentityId != null ? String(effectiveIdentityId) : undefined,',
+              '          userId: enforcementIdentityId != null ? String(enforcementIdentityId) : undefined,',
+          )
+          replace_once(
+              core,
+              '''    const reservationResult = await reserveGatewayBudget({
+              workspaceId: auth.workspaceId,
+              identityId,
+              estimatedCostUsd: estimate.estimatedCostUsd,
+            });''',
+              '''    const reservationResult = await reserveGatewayBudget({
+              workspaceId: auth.workspaceId,
+              identityId: enforcementIdentityId,
+              estimatedCostUsd: estimate.estimatedCostUsd,
+            });''',
+          )
+
+          replace_once(
+              core,
+              '''    cachedInputTokens: cached,
+              estimatedCostUsd: input.estimatedCostUsd,''',
+              '''    cachedInputTokens: cached,
+              usageVerified: usage != null,
+              estimatedCostUsd: input.estimatedCostUsd,''',
+          )
+
+          replace_once(
+              core,
+              '''      body: JSON.stringify(request.upstreamBody),
+              signal: controller.signal,
+            });''',
+              '''      body: JSON.stringify(request.upstreamBody),
+              signal: controller.signal,
+              // A vetted public origin must not redirect the credential to an unvetted target.
+              redirect: "manual",
+            });''',
+          )
+
+          attribution = "apps/api/services/gateway/gatewayAttribution.ts"
+          replace_once(
+              attribution,
+              '''  cachedInputTokens: number;
+            estimatedCostUsd: number;''',
+              '''  cachedInputTokens: number;
+            usageVerified: boolean;
+            estimatedCostUsd: number;''',
+          )
+          replace_once(
+              attribution,
+              '''  const priced =
+              input.provider === "openai"
+                ? await priceModelUsage({''',
+              '''  const priced =
+              input.provider === "openai" && input.usageVerified
+                ? await priceModelUsage({''',
+          )
+
+          billing = "apps/api/services/billing/openAiBillingReconciliation.ts"
+          replace_once(
+              billing,
+              '''  if (!response.ok) {
+              const body = (await response.text()).slice(0, 4096);
+              throw new Error(`OpenAI admin API returned ${response.status}: ${body}`);
+            }''',
+              '''  if (!response.ok) {
+              // Provider error bodies can contain account metadata. Never copy them into server errors/logs.
+              throw new Error(`OpenAI admin API returned ${response.status}`);
+            }''',
+          )
+
+          helper_tests = "apps/api/services/gateway/openAiProxy.test.ts"
+          replace_once(
+              helper_tests,
+              '''      "localhost",
+              "127.0.0.1",
+              "10.0.0.8",''',
+              '''      "localhost",
+              "localhost.",
+              "127.0.0.1",
+              "[::1]",
+              "[::ffff:127.0.0.1]",
+              "::ffff:7f00:1",
+              "fe80::1",
+              "fc00::1",
+              "10.0.0.8",''',
+          )
+
+          route_tests = Path("apps/api/services/gateway/openAiProxy.route.test.ts")
+          route_text = route_tests.read_text()
+          marker = '''  it("rejects foreign identity ids before governance evaluation", async () => {'''
+          if route_text.count(marker) != 1:
+              raise SystemExit("route test insertion marker not unique")
+          inserted = '''  it("treats an unbound identity header as attribution only, not a governance principal", async () => {
+            const handler = routeHandler();
+            const res = createResponse();
+            mocks.validateWorkspaceApiKey.mockResolvedValue({
+              keyId: "ak_1",
+              workspaceId: 42,
+              userId: 7,
+              scopes: ["gateway:invoke"],
+              projectId: null,
+              identityId: null,
+            });
+            mocks.resolveWorkspaceIdentityId.mockResolvedValueOnce(12);
+            mocks.evaluateGatewayGovernance.mockResolvedValue({
+              allowed: false,
+              killActive: true,
+              budgetBlocked: false,
+              budgetReason: null,
+              state: { workspaceDisabled: true },
+            });
+
+            await handler(
+              createRequest("Bearer rk_live_test_workspace_key", {
+                "x-rakshex-identity-id": "12",
+              }),
+              res,
+            );
+
+            expect(res.statusCode).toBe(403);
+            expect(mocks.resolveWorkspaceIdentityId).toHaveBeenCalledWith(42, 12);
+            expect(mocks.evaluateGatewayGovernance).toHaveBeenCalledWith(
+              expect.objectContaining({ workspaceId: 42, identityId: undefined }),
+            );
+          });
+
+          it("uses a fresh server request id even when the caller repeats X-Request-Id", async () => {
+            const handler = routeHandler();
+            mocks.validateWorkspaceApiKey.mockResolvedValue({
+              keyId: "ak_1",
+              workspaceId: 42,
+              userId: 7,
+              scopes: ["gateway:invoke"],
+              projectId: null,
+            });
+            mocks.evaluateGatewayGovernance.mockResolvedValue({
+              allowed: false,
+              killActive: true,
+              budgetBlocked: false,
+              budgetReason: null,
+              state: { workspaceDisabled: true },
+            });
+
+            const resOne = createResponse();
+            const resTwo = createResponse();
+            const request = () =>
+              createRequest("Bearer rk_live_test_workspace_key", { "x-request-id": "client-fixed-id" });
+
+            await handler(request(), resOne);
+            await handler(request(), resTwo);
+
+            const firstId = resOne.setHeader.mock.calls.find(([name]) => name === "x-request-id")?.[1];
+            const secondId = resTwo.setHeader.mock.calls.find(([name]) => name === "x-request-id")?.[1];
+            expect(firstId).toEqual(expect.any(String));
+            expect(secondId).toEqual(expect.any(String));
+            expect(firstId).not.toBe("client-fixed-id");
+            expect(secondId).not.toBe("client-fixed-id");
+            expect(firstId).not.toBe(secondId);
+          });
+
+          ''' + marker
+          route_tests.write_text(route_text.replace(marker, inserted, 1))
+
+          attribution_test = Path("apps/api/services/gateway/gatewayAttribution.test.ts")
+          attribution_test.write_text('''import { beforeEach, describe, expect, it, vi } from "vitest";
+
+          const mocks = vi.hoisted(() => ({
+            getDb: vi.fn(),
+            priceModelUsage: vi.fn(),
+          }));
+
+          vi.mock("@rakshex/database", () => ({ gatewayCallAttribution: {} }));
+          vi.mock("../../db", () => ({ getDb: mocks.getDb }));
+          vi.mock("../billing/modelPriceRegistry", () => ({ priceModelUsage: mocks.priceModelUsage }));
+
+          import { persistSettledAttribution } from "./gatewayAttribution";
+
+          describe("gateway attribution settlement", () => {
+            beforeEach(() => {
+              vi.clearAllMocks();
+              mocks.getDb.mockResolvedValue({
+                insert: () => ({
+                  values: () => ({
+                    onConflictDoNothing: async () => undefined,
+                  }),
+                }),
+              });
+            });
+
+            it("keeps the conservative preflight estimate when provider usage is missing", async () => {
+              mocks.priceModelUsage.mockResolvedValue({
+                costUsd: 0,
+                price: { id: 99, sourceUrl: "https://example.invalid/price" },
+              });
+
+              const result = await persistSettledAttribution({
+                requestId: "server-owned-id",
+                workspaceId: 42,
+                providerAccountId: 8,
+                provider: "openai",
+                model: "gpt-5",
+                inputTokens: 0,
+                outputTokens: 0,
+                cachedInputTokens: 0,
+                usageVerified: false,
+                estimatedCostUsd: 0.031,
+                occurredAt: new Date("2026-08-28T00:00:00Z"),
+                tags: {},
+                endpoint: "responses",
+              });
+
+              expect(mocks.priceModelUsage).not.toHaveBeenCalled();
+              expect(result.costUsd).toBe(0.031);
+            });
+          });
+          ''')
+          PY
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Format touched files
+        run: >-
+          pnpm exec prettier --write
+          apps/api/services/gateway/openAiGatewayCore.ts
+          apps/api/services/gateway/gatewayAttribution.ts
+          apps/api/services/gateway/gatewayAttribution.test.ts
+          apps/api/services/gateway/openAiProxy.test.ts
+          apps/api/services/gateway/openAiProxy.route.test.ts
+          apps/api/services/billing/openAiBillingReconciliation.ts
+      - name: Run focused gateway tests
+        run: >-
+          pnpm --filter @rakshex/api test --
+          services/gateway/openAiProxy.test.ts
+          services/gateway/openAiProxy.route.test.ts
+          services/gateway/gatewayAttribution.test.ts
+      - name: Commit fixes to PR branch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/api/services/gateway/openAiGatewayCore.ts \
+                  apps/api/services/gateway/gatewayAttribution.ts \
+                  apps/api/services/gateway/gatewayAttribution.test.ts \
+                  apps/api/services/gateway/openAiProxy.test.ts \
+                  apps/api/services/gateway/openAiProxy.route.test.ts \
+                  apps/api/services/billing/openAiBillingReconciliation.ts
+          git commit -m "fix: harden gateway security review findings"
+          git push origin HEAD:rakshex/p0-billing-receipts
