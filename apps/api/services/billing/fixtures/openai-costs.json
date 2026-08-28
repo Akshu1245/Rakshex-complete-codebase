@@ -1,0 +1,30 @@
+{
+  "object": "page",
+  "data": [
+    {
+      "object": "bucket",
+      "start_time": 1787875200,
+      "end_time": 1787961600,
+      "results": [
+        {
+          "object": "organization.costs.result",
+          "amount": { "currency": "usd", "value": 0.603 },
+          "api_key_id": "key_fixture_alpha",
+          "line_item": "api_usage",
+          "project_id": "proj_fixture",
+          "quantity": 1
+        },
+        {
+          "object": "organization.costs.result",
+          "amount": { "currency": "usd", "value": 0.402 },
+          "api_key_id": "key_fixture_alpha",
+          "line_item": "api_usage",
+          "project_id": "proj_fixture",
+          "quantity": 1
+        }
+      ]
+    }
+  ],
+  "has_more": false,
+  "next_page": null
+}
