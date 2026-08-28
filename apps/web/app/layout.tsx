@@ -1,6 +1,6 @@
 import "./globals-insforge.css";
 import "./globals.css";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { AuthProvider } from "../components/AuthProvider";
 import { CookieConsent } from "../components/CookieConsent";
 import { ErrorBoundary } from "../components/ErrorBoundary";
@@ -15,12 +15,13 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.rakshex.in";
 
 export const metadata: Metadata = {
   title: {
-    default: "Competitors govern the session. RaksHex governs the action.",
+    default: "RaksHex — AI Action Control Plane",
     template: "%s | RaksHex",
   },
   description:
-    "RaksHex is an Agent Firewall: runtime authorization for autonomous AI agents. Semantic actions, delegated authority, a hash-chained Action Ledger, and credential mediation so a DENY is enforced, not just logged.",
+    "RaksHex authorizes consequential AI-agent actions before execution, mediates brokered credentials, and records every decision in a tamper-evident Action Ledger.",
   keywords: [
+    "AI Action Control Plane",
     "Agent Firewall",
     "runtime authorization",
     "AI agent security",
@@ -30,78 +31,34 @@ export const metadata: Metadata = {
     "RaksHex",
   ],
   metadataBase: new URL(SITE_URL),
+  manifest: "/site.webmanifest",
   robots: { index: true, follow: true },
-  icons: {
-    icon: [
-      { url: "/favicon.ico?v=2" },
-      { url: "/icon-mark-128.png?v=2", sizes: "128x128", type: "image/png" },
-      { url: "/icon-mark-256.png?v=2", sizes: "256x256", type: "image/png" },
-      { url: "/favicon-32x32.png?v=2", sizes: "32x32", type: "image/png" },
-      { url: "/favicon-16x16.png?v=2", sizes: "16x16", type: "image/png" },
-    ],
-    apple: "/apple-touch-icon.png?v=2",
-  },
   openGraph: {
-    title: "Competitors govern the session. RaksHex governs the action.",
+    title: "RaksHex — AI Action Control Plane",
     description:
-      "Runtime authorization for autonomous AI agents. RaksHex governs the action, not the session.",
+      "Authorize consequential AI-agent actions before execution. Enforce at the credential boundary and keep tamper-evident decision evidence.",
     type: "website",
     siteName: "RaksHex",
     locale: "en_US",
-    images: [
-      {
-        url: "/og-image.png?v=2",
-        width: 1200,
-        height: 630,
-        alt: "RaksHex AI Control Plane",
-      },
-    ],
   },
   twitter: {
-    title: "Competitors govern the session. RaksHex governs the action.",
+    card: "summary_large_image",
+    title: "RaksHex — AI Action Control Plane",
     description:
-      "Runtime authorization for autonomous AI agents. RaksHex governs the action, not the session.",
-    images: ["/og-image.png?v=2"],
+      "Authorize consequential AI-agent actions before execution. Enforce at the credential boundary and keep tamper-evident decision evidence.",
   },
 };
 
-export const viewport = {
+export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#0f172a",
+  themeColor: "#0A0A0A",
+  colorScheme: "dark",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark">
-      <head>
-        <link rel="manifest" href="/manifest.json?v=2" />
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
-        />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@600;700&display=swap"
-        />
-        {/* Favicons */}
-        <link rel="icon" href="/favicon.ico?v=2" sizes="any" />
-        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=2" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=2" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=2" />
-        <link rel="manifest" href="/site.webmanifest" />
-        <meta name="theme-color" content="#0d1f1a" />
-        <meta name="msapplication-TileColor" content="#0d1f1a" />
-        <meta property="og:image" content={`${SITE_URL}/og-image.png`} />
-        <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="630" />
-        <meta property="og:image:type" content="image/png" />
-        <meta property="og:image:alt" content="RaksHex — AI Runtime Governance Platform" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:image" content={`${SITE_URL}/og-image.png`} />
-        <meta name="twitter:image:alt" content="RaksHex — AI Runtime Governance Platform" />
-      </head>
       <body>
         <TRPCProvider>
           <AuthProvider>
