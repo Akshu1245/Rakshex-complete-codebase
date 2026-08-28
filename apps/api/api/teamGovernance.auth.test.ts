@@ -30,13 +30,14 @@ vi.mock("../db/workspaceSeats", () => ({
 }));
 
 import { assertWorkspacePermission } from "../services/workspaceContext";
-import { evaluateGatewayGovernance } from "../services/teamGovernance";
+import { evaluateGatewayGovernance, usageSummary } from "../services/teamGovernance";
 import { teamGovernanceRouter } from "./teamGovernance";
 
 describe("teamGovernance auth", () => {
   beforeEach(() => {
     vi.mocked(assertWorkspacePermission).mockReset();
     vi.mocked(evaluateGatewayGovernance).mockClear();
+    vi.mocked(usageSummary).mockReset();
   });
 
   it("evaluateGateway denies non-members with FORBIDDEN before service call", async () => {
@@ -85,6 +86,29 @@ describe("teamGovernance auth", () => {
       projectId: undefined,
       agentId: undefined,
       estimatedCostUsd: 0.02,
+    });
+  });
+
+  it("usageSummary forwards both since and until boundaries", async () => {
+    vi.mocked(assertWorkspacePermission).mockResolvedValueOnce("admin");
+    vi.mocked(usageSummary).mockResolvedValueOnce({} as never);
+
+    const caller = teamGovernanceRouter.createCaller({
+      user: { id: 3 },
+      req: { headers: {}, protocol: "https" },
+      res: { clearCookie: () => {} },
+    } as never);
+
+    await caller.usageSummary({
+      workspaceId: 12,
+      since: "2026-08-01T00:00:00.000Z",
+      until: "2026-08-15T23:59:59.000Z",
+    });
+
+    expect(assertWorkspacePermission).toHaveBeenCalledWith(12, 3, "audit", "read");
+    expect(usageSummary).toHaveBeenCalledWith(12, {
+      since: new Date("2026-08-01T00:00:00.000Z"),
+      until: new Date("2026-08-15T23:59:59.000Z"),
     });
   });
 });
