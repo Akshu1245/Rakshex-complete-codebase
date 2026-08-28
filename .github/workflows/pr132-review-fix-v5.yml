@@ -1,0 +1,68 @@
+name: PR132 CodeQL and review fixes
+
+on:
+  push:
+    branches:
+      - ci-pr132-security-review-fixes
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Preserve patch script and switch to PR branch
+        run: |
+          cp .github/scripts/pr132_review_fix_v2.py /tmp/pr132_review_fix_v2.py
+          git fetch origin rakshex/p0-billing-receipts
+          git checkout -B pr132-review-fix origin/rakshex/p0-billing-receipts
+      - name: Apply review fixes
+        run: python /tmp/pr132_review_fix_v2.py
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Format touched files
+        run: |
+          pnpm exec prettier --write \
+            apps/api/services/billing/openAiBillingReconciliation.ts \
+            packages/sdk/src/openaiGateway.ts \
+            packages/sdk/src/openaiGateway.test.ts \
+            apps/api/api/providerBilling.ts \
+            apps/api/api/actionReceipts.ts \
+            apps/api/services/receipts/actionReceipts.ts \
+            apps/api/services/receipts/actionReceipts.test.ts \
+            apps/api/services/gateway/openAiGatewayCore.ts
+      - name: Focused API tests
+        run: |
+          pnpm --filter @rakshex/api test -- \
+            services/billing/openAiBillingReconciliation.test.ts \
+            services/receipts/actionReceipts.test.ts \
+            services/gateway/openAiProxy.test.ts \
+            services/gateway/openAiProxy.route.test.ts \
+            services/gateway/gatewayAttribution.test.ts
+      - name: Focused SDK tests
+        run: pnpm --filter @rakshex/sdk test
+      - name: Commit and push reviewed fixes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            apps/api/services/billing/openAiBillingReconciliation.ts \
+            packages/sdk/src/openaiGateway.ts \
+            packages/sdk/src/openaiGateway.test.ts \
+            apps/api/api/providerBilling.ts \
+            apps/api/api/actionReceipts.ts \
+            apps/api/services/receipts/actionReceipts.ts \
+            apps/api/services/receipts/actionReceipts.test.ts \
+            apps/api/services/gateway/openAiGatewayCore.ts
+          git commit -m "fix: address PR 132 CodeQL and review findings"
+          git push origin HEAD:rakshex/p0-billing-receipts
