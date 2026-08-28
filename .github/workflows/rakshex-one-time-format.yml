@@ -1,0 +1,63 @@
+name: RaksHex one-time format cleanup
+
+on:
+  push:
+    branches:
+      - investor-beta-ui-pass
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout consolidation branch
+        uses: actions/checkout@v4
+        with:
+          ref: investor-beta-ui-pass
+          persist-credentials: true
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+        env:
+          HUSKY: "0"
+
+      - name: Format files reported by final CI
+        run: |
+          pnpm exec prettier --write \
+            packages/database/src/seed.guard.test.ts \
+            apps/api/_core/env.ts \
+            apps/api/api/agentFirewall.broker.http.test.ts \
+            apps/api/api/agentFirewall.e2e.test.ts \
+            docs/AI_ACCOUNT_GOVERNANCE_RESEARCH.md \
+            docs/DATABASE_SCHEMA.md \
+            docs/GAP_INVENTORY.md \
+            docs/market-readiness-audit.md \
+            docs/PART_B_C_GATES.md \
+            docs/RAKSHEX_AUDIT_vs_DOSSIER_2026-08-08.md \
+            docs/RAKSHEX_REBUILD_EXECUTION.md \
+            README.md
+
+      - name: Remove one-time workflow and commit
+        run: |
+          rm -f .github/workflows/rakshex-one-time-format.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No formatting changes required."
+            exit 0
+          fi
+          git commit -m "style: format final RaksHex cleanup"
+          git push origin HEAD:investor-beta-ui-pass
