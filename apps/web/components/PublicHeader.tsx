@@ -226,7 +226,7 @@ export function PublicHeader() {
                             Compliance Reports
                           </p>
                           <p className="text-slate-400 text-[11px] leading-relaxed mt-0.5">
-                            SOC2, PCI DSS, OWASP. One-click PDF
+                            Framework mapping and evidence export. Not a certification.
                           </p>
                         </div>
                       </Link>

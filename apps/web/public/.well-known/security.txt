@@ -1,7 +1,5 @@
-Contact: mailto:security@rakshex.com
+Contact: mailto:security@rakshex.in
 Expires: 2027-12-31T23:59:59.000Z
 Preferred-Languages: en
-Canonical: https://rakshex.com/.well-known/security.txt
-Policy: https://rakshex.com/security
-Acknowledgments: https://rakshex.com/security/thanks
-Hiring: https://rakshex.com/careers
+Canonical: https://www.rakshex.in/.well-known/security.txt
+Policy: https://www.rakshex.in/trust

@@ -50,7 +50,7 @@ const features = [
   {
     name: "Compliance Evidence",
     snyk: "Code-level vulnerability mapping",
-    RaksHex: "SOC 2 audit in progress; ledger data exportable as evidence",
+    RaksHex: "Framework mapping and ledger export as evidence; not a certification",
   },
 ];
 

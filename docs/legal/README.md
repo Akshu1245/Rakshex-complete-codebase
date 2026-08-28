@@ -2,16 +2,16 @@
 
 Version: 2026-07-30
 
-This directory is the source of truth for Rakshex customer-facing legal documents. Generated Word documents are published under `apps/web/public/legal`.
+This directory is the source of truth for Rakshex customer-facing legal documents. Generated Word documents for DPA, AUP, SLA, privacy, subprocessors, and AI transparency are published under `apps/web/public/legal`. Terms of Service and Refund Word files are **not** published this week — online `/terms` is the current contract.
 
 ## Documents
 
-- `TERMS_OF_SERVICE.md`: self-serve and online service terms.
+- `TERMS_OF_SERVICE.md`: online service terms. Private-beta access is waitlist, evaluation, or invite; paid access is by invite or Order Form only.
 - `PRIVACY_POLICY.md`: privacy notice for account, website, telemetry, and customer-content processing.
 - `DATA_PROCESSING_ADDENDUM.md`: controller-to-processor terms and processing annexes.
 - `SERVICE_LEVEL_AGREEMENT.md`: enterprise SLA, applicable only when incorporated into an Order Form.
 - `ACCEPTABLE_USE_POLICY.md`: prohibited and controlled uses.
-- `REFUND_CANCELLATION_POLICY.md`: cancellation, renewal, refund, and billing-error rules.
+- `REFUND_CANCELLATION_POLICY.md`: current private-beta access position (no self-serve checkout this week).
 - `SUBPROCESSOR_REGISTER.md`: production vendor register and change procedure.
 - `AI_TRANSPARENCY_STATEMENT.md`: intended use, limits, evidence labels, and human-oversight position.
 

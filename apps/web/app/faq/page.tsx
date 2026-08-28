@@ -18,7 +18,7 @@ const FAQS = [
   },
   {
     q: "What compliance standards do you support?",
-    a: "RaksHex maps findings and audit events to control language from PCI DSS, SOC 2 Trust Services Criteria, HIPAA, OWASP API Top 10, and OWASP LLM Top 10, and can export that evidence for your auditors. A SOC 2 audit is in progress — we do not claim certification until it's complete and published.",
+    a: "RaksHex maps findings and audit events to control language from PCI DSS, SOC 2 Trust Services Criteria, HIPAA, OWASP API Top 10, and OWASP LLM Top 10, and can export that evidence for your auditors. We map product controls to frameworks and produce evidence; we do not claim a certification or independent audit until that assessment is complete and published.",
   },
   {
     q: "How does the kill switch work?",
@@ -37,8 +37,8 @@ const FAQS = [
     a: "Yes. We offer a Docker Compose setup and Kubernetes-friendly production compose for self-hosting within your private cloud or on-premise infrastructure.",
   },
   {
-    q: "What happens when I exceed my plan limits?",
-    a: "When you approach your plan limits, we send warning notifications. If you exceed them, we provide a grace period depending on your plan. For continued high usage, your account will be capped or you will be prompted to upgrade to a higher tier.",
+    q: "How do I get access?",
+    a: "RaksHex is in private beta. Join the waitlist or use an invite to evaluate. Evaluation prices may be shown for planning. Paid access is by invite or Order Form only — there is no self-serve checkout this week.",
   },
   {
     q: "How does thinking token attribution work?",
@@ -47,6 +47,10 @@ const FAQS = [
   {
     q: "How do I evaluate RaksHex?",
     a: "RaksHex is in private beta. There is no self-serve trial or checkout. Join the waitlist to request access; invited teams receive a scoped evaluation workspace.",
+  },
+  {
+    q: "Is there a paid Pro plan I can buy online?",
+    a: "Not this week. Evaluation prices may be shown, but we cannot take money and there is no self-serve checkout, tax/GST collection, or auto-renewal. Paid access, if and when offered, is by invite or an executed Order Form.",
   },
   {
     q: "Can I export compliance reports?",

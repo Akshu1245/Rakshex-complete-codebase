@@ -1,56 +1,67 @@
 import Link from "next/link";
 
+export const metadata = {
+  title: "Security | RaksHex",
+  description:
+    "How RaksHex protects customer data in the Agent Firewall. Evidence, not badges.",
+  alternates: { canonical: "/security" },
+};
+
 export default function SecurityWhitepaper() {
   return (
     <div className="min-h-screen bg-transparent text-white p-8">
       <div className="max-w-4xl mx-auto prose prose-invert">
         <p className="text-blue-400 text-sm font-medium mb-2">RaksHex Security</p>
-        <h1 className="text-4xl font-bold mb-4">Security Architecture Whitepaper</h1>
-        <p className="text-gray-400 mb-8">Last updated: May 2026 · 15 min read</p>
+        <h1 className="text-4xl font-bold mb-4">Security architecture</h1>
+        <p className="text-gray-400 mb-8">
+          Private beta · aligned with the Trust Center. Reviewers should start at{" "}
+          <Link href="/trust" className="text-blue-400 hover:text-blue-300">
+            /trust
+          </Link>{" "}
+          and email{" "}
+          <a href="mailto:security@rakshex.in" className="text-blue-400 hover:text-blue-300">
+            security@rakshex.in
+          </a>
+          .
+        </p>
 
         <section className="mb-10">
-          <h2 className="text-2xl font-bold mb-4">Executive Summary</h2>
+          <h2 className="text-2xl font-bold mb-4">What this page is</h2>
           <p className="text-gray-300 leading-relaxed">
-            RaksHex is an AI Runtime Governance Platform that provides inline security scanning,
-            cost monitoring, and compliance enforcement for production LLM applications. This
-            document describes our security architecture, threat model, and the controls we
-            implement to protect customer data.
+            RaksHex is an Agent Firewall: runtime authorization for autonomous AI actions. This page
+            describes controls that exist in the current product and in{" "}
+            <code className="text-slate-400">docs/SECURITY.md</code>. It is not a certification, an
+            audit report, or a data-residency catalog. Where a control is not yet in the private-beta
+            cut, it is omitted rather than described as shipped.
           </p>
         </section>
 
         <section className="mb-10">
-          <h2 className="text-2xl font-bold mb-4">1. Threat Model</h2>
+          <h2 className="text-2xl font-bold mb-4">1. Threat model</h2>
           <p className="text-gray-300 leading-relaxed mb-3">
-            We protect against the following threat categories:
+            We protect against the following categories when traffic is evaluated through the Agent
+            Firewall and related governance paths:
           </p>
           <div className="space-y-4">
             {[
               {
-                title: "Prompt Injection (LLM01)",
-                desc: "Pattern library with severity-tiered blocking, continuously expanded as new attack vectors appear. All user inputs to LLM endpoints are scanned before reaching the model.",
+                title: "Unauthorised agent actions",
+                desc: "Semantic actions are authorised against delegated authority before they run. A child authority cannot exceed its parent. A DENY is enforced at credential mediation, not only as an advisory log line.",
               },
               {
-                title: "Insecure Output Handling (LLM02)",
-                desc: "Response validation with JSON schema enforcement on tool calls. Blocked outputs never reach downstream systems.",
+                title: "Prompt injection and insecure output handling",
+                desc: "Gateway and scanning paths inspect prompts and tool calls for injection and unsafe output patterns. Coverage depends on deployment configuration.",
               },
               {
-                title: "Sensitive Information Disclosure (LLM06)",
-                desc: "12-rule PII redaction engine (credit cards, SSN, Aadhaar, PAN, email, phone) with Luhn and Verhoeff verification. Streaming output redaction for SSE responses.",
+                title: "Credential and secret exposure",
+                desc: "Workspace credentials are encrypted before storage. List APIs return masked metadata and fingerprints. Discovery is designed to send masked metadata rather than secret values.",
               },
               {
-                title: "Insecure Plugin Design (LLM07)",
-                desc: "MCP tool registry with risk scoring. Tools requiring network egress, file write, shell exec, or secret access are flagged and gated.",
+                title: "Excessive agency",
+                desc: "Kill switches, budgets, and tool allowlists can stop further calls when a policy trips. Response time depends on deployment topology.",
               },
-              {
-                title: "Excessive Agency (LLM08)",
-                desc: "Per-agent tool-call allowlists. Kill switch with sub-second trip time. Budget caps with hard enforcement.",
-              },
-              {
-                title: "Model Theft (LLM10)",
-                desc: "Request fingerprinting with SHA-256. Anomaly detection on request patterns. Rate limiting per tenant.",
-              },
-            ].map((item, i) => (
-              <div key={i} className="bg-black/50 p-4 rounded-lg border border-gray-700">
+            ].map((item) => (
+              <div key={item.title} className="bg-black/50 p-4 rounded-lg border border-gray-700">
                 <h3 className="font-bold text-blue-400 mb-1">{item.title}</h3>
                 <p className="text-gray-400 text-sm">{item.desc}</p>
               </div>
@@ -59,126 +70,94 @@ export default function SecurityWhitepaper() {
         </section>
 
         <section className="mb-10">
-          <h2 className="text-2xl font-bold mb-4">2. Encryption & Key Management</h2>
+          <h2 className="text-2xl font-bold mb-4">2. Encryption and authentication</h2>
           <ul className="space-y-3 text-gray-300 leading-relaxed">
             <li>
-              <strong>Data in transit:</strong> TLS 1.3 enforced. HTTP Strict Transport Security
-              (HSTS) with 1-year max-age and preload.
+              <strong>Passwords:</strong> hashed with Argon2id. Legacy PBKDF2-SHA512 hashes are
+              verified only for migration and upgraded on next successful login.
             </li>
             <li>
-              <strong>Data at rest:</strong> AES-256-GCM with per-tenant key derivation.
-              Authenticated encryption with AAD binding prevents cross-tenant access.
+              <strong>Sessions:</strong> server-side sessions with HTTP-only cookies and CSRF
+              protections on browser flows. OAuth uses PKCE.
             </li>
             <li>
-              <strong>Secrets:</strong> API keys stored server-side only, never logged. Pino
-              structured logger with PII redaction. Sentry event scrubbing before egress.
+              <strong>Multi-factor:</strong> TOTP-based 2FA is available for accounts that enable it.
             </li>
             <li>
-              <strong>Passwords:</strong> PBKDF2-SHA512 with 100,000 iterations and per-user 32-byte
-              salt. Never stored in plaintext.
+              <strong>Workspace access:</strong> membership-scoped RBAC. API keys are hashed at rest.
+              Cross-tenant access is denied by authorization helpers.
+            </li>
+            <li>
+              <strong>Credentials:</strong> encrypted in a workspace-scoped vault. Secrets are not
+              returned on list endpoints and do not leave the server on brokered calls.
             </li>
           </ul>
         </section>
 
         <section className="mb-10">
-          <h2 className="text-2xl font-bold mb-4">3. Authentication & Authorization</h2>
+          <h2 className="text-2xl font-bold mb-4">3. Runtime enforcement</h2>
           <ul className="space-y-3 text-gray-300 leading-relaxed">
             <li>
-              <strong>Session management:</strong> HTTP-only, SameSite=Lax, Secure cookies. CSRF
-              double-submit cookie pattern. Session token rotation on password change.
+              <strong>Action Ledger:</strong> hash-chained, tamper-evident record of authorization
+              decisions.
             </li>
             <li>
-              <strong>Multi-factor:</strong> TOTP-based 2FA with 6-digit codes. Verified at login
-              and sensitive operations.
+              <strong>Credential mediation:</strong> a DENY prevents the secret from being used. Shadow
+              mode cannot launder a denied action into a brokered call.
             </li>
             <li>
-              <strong>SSO:</strong> SAML 2.0 with signed assertions. OpenID Connect with PKCE
-              (S256). JIT provisioning with namespace-isolated subject IDs.
+              <strong>Kill switch:</strong> workspace, project, and agent kill switches on the gateway
+              path. Fail-open versus fail-closed is configurable; emergency bypass is audited.
             </li>
             <li>
-              <strong>RBAC:</strong> 4 roles (owner, admin, editor, viewer) × 9 resources × 3
-              actions. DB-backed with 60s in-process cache.
+              <strong>Logging:</strong> structured logs redact passwords, tokens, API keys, and
+              cookies. Raw prompts are not retained by default in hosted audit records.
             </li>
           </ul>
         </section>
 
         <section className="mb-10">
-          <h2 className="text-2xl font-bold mb-4">4. Infrastructure Security</h2>
-          <ul className="space-y-3 text-gray-300 leading-relaxed">
-            <li>
-              <strong>Headers:</strong> Helmet.js with strict CSP (nonce-based), COEP, COOP, CORP,
-              Referrer-Policy, Permissions-Policy.
-            </li>
-            <li>
-              <strong>Rate limiting:</strong> Redis-backed sliding window. Per-IP global limits.
-              Per-user API limits. Stricter auth endpoint limits.
-            </li>
-            <li>
-              <strong>Webhook security:</strong> HMAC-SHA-256 signature verification. Idempotency
-              via processed_webhook_events table.
-            </li>
-            <li>
-              <strong>CORS:</strong> Strict allowlist (rakshex.in, app.rakshex.in). No wildcard or
-              dynamic reflection.
-            </li>
-            <li>
-              <strong>Dependencies:</strong> npm audit run in CI. Lockfile committed. No arbitrary
-              code execution from untrusted packages.
-            </li>
-          </ul>
-        </section>
-
-        <section className="mb-10">
-          <h2 className="text-2xl font-bold mb-4">5. Compliance</h2>
-          <ul className="space-y-3 text-gray-300 leading-relaxed">
-            <li>
-              <strong>SOC 2:</strong> 11-control evidence pack builder covering a minimum-viable
-              Trust Services scope. Programmatic control evaluation over 90-day windows, exported in
-              a format Vanta/Drata can import. No certification is claimed.
-            </li>
-            <li>
-              <strong>PCI DSS v4.0.1:</strong> Requirement mapping for OWASP findings. PDF report
-              generation with compliance scores.
-            </li>
-            <li>
-              <strong>GDPR:</strong> Data processing addendum available. EU/US data residency
-              options. Right-to-erasure and data portability API.
-            </li>
-            <li>
-              <strong>DPDP Act 2023 (India):</strong> Consent management. Data fiduciary
-              obligations. Grievance redressal mechanism.
-            </li>
-          </ul>
-        </section>
-
-        <section className="mb-10">
-          <h2 className="text-2xl font-bold mb-4">6. Incident Response</h2>
+          <h2 className="text-2xl font-bold mb-4">4. Compliance</h2>
           <p className="text-gray-300 leading-relaxed mb-3">
-            Our incident response process follows NIST SP 800-61:
+            RaksHex maps product controls to common frameworks (including OWASP, NIST AI RMF, ISO,
+            SOC 2, GDPR, DPDP, and the EU AI Act) and can export that evidence.{" "}
+            <strong className="text-white">
+              We do not claim a certification or independent audit until that assessment is complete
+              and published.
+            </strong>{" "}
+            Dashboard scores and PDFs, where present, are mapping artifacts for your own audit
+            workflow — not an attestation that RaksHex is SOC 2, PCI DSS, OWASP, or ISO certified.
           </p>
-          <ol className="list-decimal list-inside space-y-2 text-gray-300">
-            <li>Detection: Automated alerts via PagerDuty + Slack + Discord</li>
-            <li>
-              Containment: Kill switch (sub-second trip), API key revocation, session termination
-            </li>
-            <li>Investigation: Full audit trail across auth, billing, scans, admin actions</li>
-            <li>
-              Notification: 72-hour supervisory authority notification. User notification without
-              undue delay for high-risk breaches.
-            </li>
-            <li>
-              Post-mortem: Blameless post-mortem with timeline, root cause, and corrective actions.
-            </li>
-          </ol>
+          <p className="text-gray-300 leading-relaxed">
+            Data-processing terms, subprocessors, and transfer language live in the{" "}
+            <Link href="/legal" className="text-blue-400 hover:text-blue-300">
+              Legal Center
+            </Link>
+            . Residency, private relay, and self-hosted deployment are agreed on an enterprise Order
+            Form when they apply; they are not marketed here as a standard product option.
+          </p>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="text-2xl font-bold mb-4">5. Incident contact</h2>
+          <p className="text-gray-300 leading-relaxed">
+            Report suspected vulnerabilities or security incidents to{" "}
+            <a href="mailto:security@rakshex.in" className="text-blue-400 hover:text-blue-300">
+              security@rakshex.in
+            </a>
+            . Do not send provider keys, passwords, or sensitive evidence by email. Privacy requests:
+            privacy@rakshex.in. Legal notices: legal@rakshex.in.
+          </p>
         </section>
 
         <div className="mt-12 pt-8 border-t border-gray-700">
           <p className="text-gray-500 text-sm">
-            For questions about this whitepaper, contact{" "}
-            <a href="mailto:security@rakshex.in" className="text-blue-400 hover:text-blue-300">
-              security@rakshex.in
-            </a>
-            .
+            Verifiable commitments are on the{" "}
+            <Link href="/trust" className="text-blue-400 hover:text-blue-300">
+              Trust Center
+            </Link>
+            . This page will not list a badge, audit-in-progress status, or residency region until
+            that evidence is published.
           </p>
           <div className="mt-4">
             <Link href="/" className="text-blue-400 hover:text-blue-300 text-sm">

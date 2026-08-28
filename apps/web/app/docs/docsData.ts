@@ -237,14 +237,14 @@ app.post('/api/chat', RaksHex.middleware(), async (req, res) => {
   compliance: {
     title: "Compliance Evidence Builder",
     breadcrumb: "Products / Compliance",
-    lead: "Auto-generate audit logs and export evidence to support PCI DSS and SOC 2 preparation (SOC 2 audit in progress — not yet certified).",
+    lead: "Auto-generate audit logs and export evidence mapped to PCI DSS, SOC 2, and OWASP control language. We map product controls to frameworks and produce evidence; we do not claim a certification or independent audit until that assessment is complete and published.",
     contentHtml: `
-      <p>Securing enterprise contracts requires demonstrating rigorous compliance controls. RaksHex collects scan telemetry and security events to construct auditor-ready evidence logs. We are not currently SOC 2 or PCI DSS certified — our SOC 2 audit is in progress, and these tools are designed to help you build toward that evidence, not to assert a certification we don't hold.</p>
+      <p>Securing enterprise contracts requires demonstrating rigorous compliance controls. RaksHex collects scan telemetry and security events to construct auditor-facing evidence logs. These tools map findings to framework language so you can share evidence with auditors. They are not a SOC 2, PCI DSS, OWASP, or ISO certification.</p>
 
       <h2>Supported Frameworks</h2>
       <ul>
         <li><strong>PCI DSS:</strong> Maps API vulnerability findings to relevant requirements around vulnerability management and secure coding.</li>
-        <li><strong>SOC 2:</strong> Evidence building for the Common Criteria (Security, Confidentiality, and Availability). Our own SOC 2 audit is in progress.</li>
+        <li><strong>SOC 2:</strong> Evidence building for the Common Criteria (Security, Confidentiality, and Availability). Mapping and evidence only — not a certification.</li>
         <li><strong>OWASP LLM Top 10:</strong> Verification logs showing that inputs are scanned for prompt injections (LLM01) and sensitive data disclosures (LLM06).</li>
       </ul>
 

@@ -82,7 +82,7 @@ export default function BlogPortkeyAlternative() {
                   ["Shadow API detection", "❌", "✅"],
                   ["Kill switch / hard stop", "❌", "✅"],
                   ["Cost anomaly detection", "⚠️ Basic", "✅ Advanced"],
-                  ["Compliance evidence export", "❌", "✅ SOC 2 audit in progress"],
+                  ["Compliance evidence export", "❌", "✅ Mapping and evidence, not a certification"],
                   ["Self-hosted", "❌ Enterprise only", "✅ All tiers"],
                 ].map(([cap, port, dev]) => (
                   <tr key={cap}>

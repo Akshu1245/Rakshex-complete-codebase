@@ -85,7 +85,7 @@ export default function BlogHeliconeAlternative() {
                   ["Shadow API discovery", "❌", "✅"],
                   ["Credential leak scanning", "❌", "✅"],
                   ["Kill switch / budget cap", "⚠️ Alert only", "✅ Hard stop"],
-                  ["Compliance evidence export", "❌", "✅ SOC 2 audit in progress"],
+                  ["Compliance evidence export", "❌", "✅ Mapping and evidence, not a certification"],
                   ["Self-hosted option", "❌", "✅ Docker"],
                 ].map(([cap, hel, dev]) => (
                   <tr key={cap}>

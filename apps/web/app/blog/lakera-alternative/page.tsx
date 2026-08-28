@@ -81,7 +81,7 @@ export default function BlogLakeraAlternative() {
                   ["Credential leak scanning", "❌", "✅"],
                   ["LLM cost monitoring", "❌", "✅"],
                   ["Kill switch / budget cap", "❌", "✅"],
-                  ["Compliance evidence export", "❌", "✅ SOC 2 audit in progress"],
+                  ["Compliance evidence export", "❌", "✅ Mapping and evidence, not a certification"],
                   ["Self-hosted", "❌ Enterprise only", "✅ All tiers"],
                 ].map(([cap, lak, dev]) => (
                   <tr key={cap}>
@@ -113,8 +113,8 @@ export default function BlogLakeraAlternative() {
           <ul className="list-disc list-inside space-y-2">
             <li>You want prompt injection defense + API security in one platform</li>
             <li>You need cost governance and a real kill switch</li>
-            <li>You need an exportable, auditor-facing evidence trail (SOC 2 audit in progress)</li>
-            <li>You prefer self-hosted with Indian data residency</li>
+            <li>You need an exportable, auditor-facing evidence trail (mapping, not a certification)</li>
+            <li>You prefer self-hosted deployment for data-handling control</li>
           </ul>
 
           <h2 className="text-2xl font-bold text-white mt-8">The Verdict</h2>
