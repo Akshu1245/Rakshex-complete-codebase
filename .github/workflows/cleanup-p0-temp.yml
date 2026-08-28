@@ -1,0 +1,75 @@
+name: P0 diff cleanup
+
+on:
+  push:
+    branches:
+      - ci-p0-diff-cleanup
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore baseline files and apply only intended additions
+        run: |
+          git fetch origin main
+          git checkout origin/main -- apps/api/routers.ts packages/sdk/src/index.ts
+          python - <<'PY'
+          from pathlib import Path
+
+          router = Path('apps/api/routers.ts')
+          data = router.read_bytes()
+          nl = b'\r\n' if b'\r\n' in data else b'\n'
+          needle = b'import { teamGovernanceRouter } from "./api/teamGovernance";' + nl
+          addition = (
+              b'import { providerBillingRouter } from "./api/providerBilling";' + nl +
+              b'import { actionReceiptsRouter } from "./api/actionReceipts";' + nl
+          )
+          if addition not in data:
+              if needle not in data:
+                  raise SystemExit('teamGovernance import anchor not found')
+              data = data.replace(needle, needle + addition, 1)
+          reg = b'  controlPlane: controlPlaneRouter,' + nl
+          reg_add = (
+              b'  providerBilling: providerBillingRouter,' + nl +
+              b'  actionReceipts: actionReceiptsRouter,' + nl
+          )
+          if reg_add not in data:
+              if reg not in data:
+                  raise SystemExit('controlPlane registration anchor not found')
+              data = data.replace(reg, reg + reg_add, 1)
+          router.write_bytes(data)
+
+          sdk = Path('packages/sdk/src/index.ts')
+          data = sdk.read_bytes()
+          nl = b'\r\n' if b'\r\n' in data else b'\n'
+          firewall = b'export { AgentFirewallClient, FirewallDeniedError, createAgentFirewallClient } from "./firewall.js";' + nl
+          block = (
+              b'export {' + nl +
+              b'  createRakshexOpenAI,' + nl +
+              b'  normalizeRakshexGatewayUrl,' + nl +
+              b'} from "./openaiGateway.js";' + nl +
+              b'export type {' + nl +
+              b'  OpenAICompatibleConstructor,' + nl +
+              b'  RakshexOpenAIOptions,' + nl +
+              b'  RakshexOpenAIProvider,' + nl +
+              b'} from "./openaiGateway.js";' + nl + nl
+          )
+          if b'createRakshexOpenAI' not in data:
+              if firewall not in data:
+                  raise SystemExit('firewall export anchor not found')
+              data = data.replace(firewall, block + firewall, 1)
+          sdk.write_bytes(data)
+          PY
+      - name: Commit cleanup on disposable branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/api/routers.ts packages/sdk/src/index.ts
+          git commit -m "ci minimal p0 diff cleanup"
+          git push origin HEAD:ci-p0-diff-cleanup
