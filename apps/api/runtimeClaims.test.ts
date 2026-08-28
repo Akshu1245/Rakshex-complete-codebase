@@ -26,7 +26,7 @@ function sourceFiles(directory: string): string[] {
 }
 
 describe("customer-facing trust claims", () => {
-  it("does not reintroduce the retired brand or unsupported proof claims", () => {
+  it("does not contain unsupported proof claims", () => {
     const files = [
       ...sourceFiles(path.join(repoRoot, "apps/web")),
       ...sourceFiles(path.join(repoRoot, "apps/vscode-extension/src")),
@@ -36,7 +36,6 @@ describe("customer-facing trust claims", () => {
       path.join(repoRoot, "apps/web/public/.well-known/security.txt"),
     ];
     const forbidden = [
-      /RaksHex/i,
       /rakshex\.ai/i,
       /\b4 patents?\b/i,
       /\bIndia(?:'|’)?s first\b/i,

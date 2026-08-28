@@ -7,8 +7,6 @@ export default defineConfig({
     exclude: [
       "rakshex-frontend/**",
       "rakshex-vscode/**",
-      "rakshex-frontend/**",
-      "rakshex-vscode/**",
       "e2e/**",
       "node_modules/**",
       "dist/**",
