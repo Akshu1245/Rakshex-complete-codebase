@@ -6,8 +6,6 @@ import {
   Power,
   BarChart2,
   Brain,
-  Ghost,
-  Key,
   FileText,
   Network,
   type LucideIcon,
@@ -25,7 +23,7 @@ function FeatureCard({ title, description, link, icon: Icon, animClass }: Featur
   return (
     <Link
       href={link}
-      className="block w-full bg-transparent border border-[#14B8A6]/10 hover:border-[#14B8A6]/35 rounded-lg p-6 transition-all duration-200 hover:scale-[1.02] hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(20,184,166,0.15)] transform group text-left anti-gravity-float"
+      className="block w-full bg-transparent border border-[#14B8A6]/10 hover:border-[#14B8A6]/35 rounded-lg p-6 transition-all duration-200 hover:scale-[1.02] hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(20,184,166,0.15)] transform group text-left"
     >
       {/* Icon: Teal (#14B8A6), 32x32px */}
       <div className="w-8 h-8 text-[#14B8A6] group-hover:text-[#0D9488] mb-4 transition-colors duration-150">
@@ -55,7 +53,7 @@ export function FeatureCards() {
       title: "Agent Firewall",
       description:
         "Semantic action authorization evaluated against delegated authority, in real time.",
-      link: "/features#security-scanner",
+      link: "/features",
       icon: Shield,
       animClass: "animate-pulse-shield",
     },
@@ -81,20 +79,6 @@ export function FeatureCards() {
       animClass: "animate-pulse-brain",
     },
     {
-      title: "Shadow API Discovery",
-      description: "Static route extraction across Express, FastAPI, Flask, Django, and Spring.",
-      link: "/features#shadow-api",
-      icon: Ghost,
-      animClass: "animate-fade-ghost",
-    },
-    {
-      title: "Credential Scanner",
-      description: "Finds exposed AWS, GitHub, OpenAI, and Stripe keys in scanned repositories.",
-      link: "/features#credentials",
-      icon: Key,
-      animClass: "animate-rotate-key",
-    },
-    {
       title: "Audit Evidence",
       description: "Exportable JSON/CSV/PDF evidence packs built from the Action Ledger.",
       link: "/features#compliance",
@@ -111,7 +95,7 @@ export function FeatureCards() {
   ];
 
   return (
-    <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
+    <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
       {cards.map((card, idx) => (
         <FeatureCard
           key={idx}

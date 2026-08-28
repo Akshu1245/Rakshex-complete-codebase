@@ -12,11 +12,6 @@ export function ChangelogSection() {
     },
     {
       date: "May 2026",
-      title: "Interactive demo scanner with Postman parsing",
-      link: "/changelog#demo-scanner",
-    },
-    {
-      date: "May 2026",
       title: "Waitlist system with email confirmation",
       link: "/changelog#waitlist",
     },
@@ -35,7 +30,7 @@ export function ChangelogSection() {
           See what&apos;s new in RaksHex
         </p>
       </div>
-      <div className="mx-auto grid w-full max-w-[1256px] grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="mx-auto grid w-full max-w-[1256px] grid-cols-1 gap-6 md:grid-cols-3">
         {entries.map((entry) => (
           <Link
             key={entry.title}

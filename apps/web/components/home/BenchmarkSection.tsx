@@ -3,14 +3,14 @@ import { ArrowRight, CheckCircle2 } from "lucide-react";
 
 const capabilities = [
   {
-    title: "Discover without exfiltration",
+    title: "Govern the action, not the session",
     detail:
-      "Local and CI scanners send masked findings and fingerprints, never plaintext keys or raw repository content.",
+      "Each semantic action is authorized against attenuated authority in real time. A valid session is not a blank check.",
   },
   {
-    title: "Govern API and subscription access",
+    title: "Deny at the credential",
     detail:
-      "Track credentials separately from provider accounts, cloud resources, plans, seats, owners, and renewal evidence.",
+      "The credential broker mediates brokered requests. A DENY blocks the secret from reaching the caller.",
   },
   {
     title: "Enforce at runtime",
@@ -33,9 +33,9 @@ export function BenchmarkSection() {
           Security, FinOps, and developer access should agree on what AI is running.
         </h2>
         <p className="mt-4 text-base leading-7 text-neutral-400">
-          Point tools solve isolated pieces. RaksHex connects discovery, ownership, policy, and
-          evidence so the same answer holds up in an engineering review, a finance review, and an
-          audit.
+          Point tools solve isolated pieces. RaksHex connects authorization, credential mediation,
+          and evidence so the same answer holds up in an engineering review, a finance review, and
+          an audit.
         </p>
       </div>
       <div className="mt-12 grid w-full gap-4 md:grid-cols-3">
