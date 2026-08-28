@@ -7,438 +7,290 @@ export interface DocPage {
 
 export const docsData: Record<string, DocPage> = {
   "quickstart/cli": {
-    title: "CLI scan (optional later)",
-    breadcrumb: "Getting Started / Optional later",
-    lead: "Not this week's hello-world. The CLI is not on the public npm registry.",
+    title: "CLI scan",
+    breadcrumb: "Getting Started / Optional surface",
+    lead: "The CLI exists in this repository but is not advertised as a public npm install during private beta.",
     contentHtml: `
-      <p>The public hello-world this week is the Node Agent Firewall client in <code>packages/sdk</code>. The CLI is a later surface. It is not published on the public npm registry, so there is no public install command to run this week.</p>
-      <p>Start here: <a href="/docs/agent-firewall">Agent Firewall getting started</a>.</p>
-      <p>If you already have this repository checked out, the CLI source lives at <code>apps/cli</code> for local development. That is not the stranger onboarding path.</p>
+      <p>The CLI source lives at <code>apps/cli</code>. Use it from a checked-out RaksHex repository while the package is private-beta source rather than inventing a public registry command.</p>
+      <pre><code>pnpm install --frozen-lockfile
+pnpm --filter @rakshex/cli exec -- --help</code></pre>
+      <p>For the strategic runtime-control hello-world, start with the <a href="/docs/agent-firewall">Agent Firewall</a>.</p>
     `,
   },
+
   "quickstart/vscode": {
-    title: "Connect via VS Code Extension",
-    breadcrumb: "Getting Started / Quickstart",
-    lead: "Optional later: editor integration. VS Code is not the first onboarding step.",
+    title: "VS Code extension",
+    breadcrumb: "Getting Started / Optional surface",
+    lead: "The editor extension is implemented and packageable; public Marketplace availability must be verified separately.",
     contentHtml: `
-      <p>The RaksHex VS Code extension brings the power of runtime security scanning and LLM cost intelligence directly to your development workflow. It highlights vulnerabilities inline, identifies shadow endpoints, and displays budget stats in your status bar.</p>
-      
-      <h2>Installation</h2>
-      <ol>
-        <li>Open VS Code.</li>
-        <li>Open the Extensions view (<code>Ctrl+Shift+X</code> or <code>Cmd+Shift+X</code>).</li>
-        <li>Search for <strong>RaksHex</strong> and click <strong>Install</strong>.</li>
-      </ol>
-      
-      <h2>Configuration</h2>
-      <p>Once installed, click the RaksHex icon in the sidebar. You will be prompted to connect your project. Retrieve your API Key from the RaksHex portal or <code>.insforge/project.json</code> and paste it in the extension settings:</p>
-      <pre><code>"RaksHex.apiKey": "ik_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxx"</code></pre>
-      
-      <h2>Key Features</h2>
-      <ul>
-        <li><strong>Inline Diagnostics:</strong> Highlights dangerous API configurations, missing auth headers, or unsecured LLM calls directly in your code.</li>
-        <li><strong>Interactive Webview Sidebar:</strong> View the live security score, audit logs, and cost analytics without leaving your editor.</li>
-        <li><strong>Command Palette:</strong> Open command palette (<code>Ctrl+Shift+P</code>) and search for <code>RaksHex: Scan Current File</code> to trigger a manual scan.</li>
-      </ul>
+      <p>The extension source lives at <code>apps/vscode-extension</code>. It supports workspace scanning/findings workflows and stores its RaksHex credential through VS Code SecretStorage.</p>
+      <h2>Private-beta installation</h2>
+      <p>Build/package a VSIX from the exact release commit, then install that artifact in VS Code. Do not assume a Marketplace listing exists until the external listing has actually been published and checked.</p>
+      <pre><code>pnpm install --frozen-lockfile
+pnpm --filter rakshex-vscode typecheck
+pnpm --filter rakshex-vscode test
+pnpm --filter rakshex-vscode build
+cd apps/vscode-extension
+pnpm dlx @vscode/vsce package --out rakshex-vscode-local.vsix</code></pre>
+      <h2>Connect</h2>
+      <p>Point the extension at the intended beta/staging API and use a RaksHex workspace API key created by the product. Provider API secrets do not belong in extension settings.</p>
+      <p>See <code>apps/vscode-extension/PUBLISHING.md</code> for the verified publishing workflow.</p>
     `,
   },
+
   "quickstart/mcp": {
-    title: "Connect via Model Context Protocol (MCP)",
-    breadcrumb: "Getting Started / Quickstart",
-    lead: "Expose secure database schema context and API endpoints directly to agentic coding tools with strict safety controls.",
+    title: "MCP security & governance",
+    breadcrumb: "Getting Started / Optional surface",
+    lead: "RaksHex contains MCP security inventory/governance code; it does not advertise an unverified public npx MCP-server package.",
     contentHtml: `
-      <p>RaksHex acts as a Model Context Protocol (MCP) host, allowing AI coding assistants to retrieve database schema metadata and query logs while enforcing granular security policies, allowlists, and execution bounds.</p>
-      
-      <h2>Setup MCP Server</h2>
-      <p>To run the RaksHex MCP server locally, reference it in your Claude Desktop or Cursor configuration file (usually located at <code>%APPDATA%\\Claude\\claude_desktop_config.json</code> on Windows):</p>
-      <pre><code>{
-  "mcpServers": {
-    "RaksHex-mcp": {
-      "command": "npx",
-      "args": ["-y", "@rakshex/mcp-server", "--key", "ik_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxx"]
-    }
-  }
-}</code></pre>
-      
-      <h2>Exposed Tools</h2>
-      <ul>
-        <li><code>get_allowed_tables</code>: Retrieve tables that are allowlisted for AI agent context querying.</li>
-        <li><code>get_query_log</code>: Review recent SQL queries executed by AI agents.</li>
-        <li><code>evaluate_safety</code>: Run the LLM input through the RaksHex prompt injection classifier.</li>
-      </ul>
+      <p>The repository includes <code>@rakshex/mcp-security</code> plus API-side MCP governance. These surfaces are used to inventory and assess MCP/tool risk and to attach governance findings to workspace state.</p>
+      <p>There is currently no public installation claim here for <code>@rakshex/mcp-server</code>. If you are evaluating the private-beta MCP work, use the checked-out repository and the procedures exposed by the current API instead of copying an invented registry command.</p>
+      <h2>Boundary</h2>
+      <p>MCP security analysis does not by itself mean RaksHex universally proxies or blocks every MCP tool call. Enforcement depends on the path actually integrated with RaksHex.</p>
     `,
   },
+
   "security-scanner": {
-    title: "Security Scanner",
+    title: "Security scanner",
     breadcrumb: "Products / Security",
-    lead: "Run automated security checks mapped to the OWASP API Top 10 and LLM security standards.",
+    lead: "Deterministic collection and developer-workflow scanning with evidence-backed findings.",
     contentHtml: `
-      <p>RaksHex includes an active runtime security scanner designed to detect vulnerabilities in your API routes and LLM prompts. By auditing inputs and responses in real-time, the scanner detects anomalies before they trigger critical data leaks or model compromises.</p>
-      
-      <h2>OWASP API Top 10 Coverage</h2>
-      <p>Our scanner actively flags routes for:</p>
-      <ul>
-        <li><strong>API1:2023 Broken Object Level Authorization (BOLA):</strong> Accessing records with unauthorized ID manipulation.</li>
-        <li><strong>API2:2023 Broken Authentication:</strong> Missing tokens, invalid validation, or signature bypass.</li>
-        <li><strong>API5:2023 Broken Function Level Authorization (BFLA):</strong> Standard users accessing administrative endpoints.</li>
-        <li><strong>API8:2023 Security Misconfiguration:</strong> CORS headers set to wildcard (<code>*</code>), unencrypted payloads, or verbose stack traces in responses.</li>
-      </ul>
-
-      <h2>Prompt Injection Classifiers</h2>
-      <p>The scanner draws on a growing library of payloads representing indirect prompt injections, jailbreaks, and system prompt leakage attacks, covering common attack patterns targeting OpenAI, Anthropic, and Gemini models.</p>
+      <p>RaksHex parses supported API collection/spec inputs and runs deterministic rules from <code>@rakshex/scanner-core</code>. Findings are persisted and surfaced through supported web, CLI, VS Code and GitHub workflows.</p>
+      <h2>What a finding means</h2>
+      <p>A scanner finding is evidence produced by an implemented rule. Rules can flag concrete risky patterns such as exposed credentials, insecure transport/configuration and authorization-sensitive API shapes where the scanner has a matching rule.</p>
+      <p>Do not treat a clean scan as proof that an application is vulnerability-free, and do not describe the scanner as a replacement for a penetration test or formal audit.</p>
+      <h2>OWASP mapping</h2>
+      <p>Where a rule is mapped to OWASP/CWE language, the mapping helps classification and remediation. It is not a claim of complete coverage of every OWASP category.</p>
     `,
   },
+
   "kill-switch": {
-    title: "Kill Switch",
-    breadcrumb: "Products / Cost & Governance",
-    lead: "Set autonomous circuit breakers that block LLM gateways when budget caps or security anomalies are detected.",
+    title: "Gateway kill switch",
+    breadcrumb: "Products / Governance",
+    lead: "Fail-closed controls for RaksHex-routed traffic, with durable PostgreSQL state and Redis propagation.",
     contentHtml: `
-      <p>The Kill Switch is response middleware that intercepts outbound model calls. It acts as an autonomous circuit breaker to protect your company from runaway cost spikes and prompt injection attacks.</p>
-      
-      <h2>How It Works</h2>
-      <p>When an API gateway call is initiated, RaksHex evaluates the request context against your active workspace rules. Runtime authorization of autonomous actions is the <a href="/docs/agent-firewall">Agent Firewall</a> — use <code>createAgentFirewallClient</code> from <code>@rakshex/sdk</code>.</p>
-
-      <h2>Trigger Conditions</h2>
-      <ul>
-        <li><strong>Daily / Monthly Budget Caps:</strong> Shuts down the gateway once a team or workspace budget is exceeded.</li>
-        <li><strong>Security Anomalies:</strong> Blocks prompts with injection confidence scores above 0.90.</li>
-        <li><strong>Spike Protection:</strong> Shuts down the route when token consumption spikes exceed 3 standard deviations in an hour.</li>
-      </ul>
+      <p>Workspace, identity, project and agent scoped kill-switch state can be evaluated before a RaksHex-routed provider request. The gateway reconciles low-latency Redis state with durable PostgreSQL state so a cache miss must not silently clear an active durable switch.</p>
+      <h2>Budgets</h2>
+      <p>Hard <code>gateway</code> budgets apply to traffic routed through the RaksHex gateway. <code>monitor_only</code> budgets are visibility/alerting and must not be described as blocks. <code>provider_native</code> enforcement is attempted only for provider capabilities that genuinely support it.</p>
+      <h2>Critical boundary</h2>
+      <p>A RaksHex gateway kill switch cannot truthfully be described as disabling direct provider traffic that bypasses RaksHex. Provider-side revocation/limits require a supported, authorised provider-native control.</p>
+      <p>Runtime authorization of consequential agent actions is the separate <a href="/docs/agent-firewall">Agent Firewall</a> path.</p>
     `,
   },
+
   "cost-monitor": {
-    title: "Cost Monitor & Intelligence",
+    title: "Usage & cost attribution",
     breadcrumb: "Products / Cost",
-    lead: "Track token consumption in real-time, isolate reasoning step overheads, and forecast next-month spend.",
+    lead: "Attribute usage that RaksHex observes or imports while preserving where the data came from and how certain it is.",
     contentHtml: `
-      <p>The RaksHex Cost Monitor tracks every single request sent to model providers. It attributes tokens, costs, and response latencies to individual user IDs, collections, or routes.</p>
-      
-      <h2>Real-time Attribution</h2>
-      <p>Unlike general-purpose cloud monitoring tools, RaksHex decodes API responses to read exact model token returns, supporting:</p>
-      <ul>
-        <li>OpenAI GPT-4o, GPT-4, and o1/o3-series models.</li>
-        <li>Anthropic Claude 3.5 Sonnet / Opus.</li>
-        <li>Google Gemini 1.5 Pro / Flash.</li>
-        <li>DeepSeek R1 / V3.</li>
-      </ul>
-
-      <h2>Trend Forecasting</h2>
-      <p>We analyze hourly, weekly, and monthly consumption trends to give you a forward-looking estimate of when your LLM spend is likely to approach budget limits.</p>
+      <p>RaksHex can aggregate workspace usage by member, provider, model and date from supported gateway/admin/import paths. Reporting supports bounded time windows and can associate usage with RaksHex identities where attribution data exists.</p>
+      <h2>Source confidence matters</h2>
+      <p>Usage/cost records can be provider-verified, imported, estimated or inferred depending on the connector and event source. The UI/API must preserve that distinction rather than labeling every number as exact provider billing.</p>
+      <h2>Coverage boundary</h2>
+      <p>RaksHex does not see “every request” made by a team unless those requests pass through an integrated observable path. Direct provider traffic with no supported admin/billing feed may be invisible.</p>
     `,
   },
+
   "thinking-tokens": {
-    title: "Thinking Token Cost Isolation",
+    title: "Reasoning-token attribution",
     breadcrumb: "Products / Cost",
-    lead: "Tracking and isolation of reasoning/thinking tokens to attribute processing costs.",
+    lead: "Use provider-returned usage metadata when it exposes reasoning-token details; do not invent hidden-token precision when it does not.",
     contentHtml: `
-      <p>Reasoning models like OpenAI <code>o1</code>, <code>o3-mini</code>, and DeepSeek <code>R1</code> generate internal "thinking" or reasoning steps. These steps consume output tokens that are charged at output rates, yet they are excluded from the final visible response.</p>
-      
-      <h2>The Challenge</h2>
-      <p>Since thinking tokens are not returned in the message content payload, standard APM logs tend to miss them, leading to cost misattribution. RaksHex addresses this by parsing the usage metadata object in the API response payload.</p>
-      
-      <h2>Attribution Analytics</h2>
-      <p>The Cost Dashboard highlights the exact percentage of your model spend going towards reasoning steps vs standard output, helping developers evaluate if a model's logical depth is worth the extra cost for a given task.</p>
+      <p>Some model/provider responses expose additional usage detail for reasoning or cached-token categories. When that metadata is present, RaksHex can retain it as part of the observed usage record.</p>
+      <p>If a provider does not return a reasoning-token breakdown, latency or model speed is not a truthful substitute for an exact hidden-token count. Any derived estimate must remain labeled as an estimate.</p>
     `,
   },
+
   "shadow-api": {
-    title: "Shadow API Discovery",
+    title: "Shadow API discovery",
     breadcrumb: "Products / Security",
-    lead: "Scan and map your entire server route schema statically without routing production traffic.",
+    lead: "Developer-workflow discovery for routes/endpoints the current analyzers can recognize, without claiming universal framework coverage.",
     contentHtml: `
-      <p>Undocumented, forgotten, or "shadow" API routes are one of the most common vectors for database exploits. RaksHex scans your source code directories to build a complete endpoint registry.</p>
-      
-      <h2>Supported Frameworks</h2>
-      <p>The static analysis engine extracts routing trees from:</p>
-      <ul>
-        <li><strong>FastAPI / Starlette:</strong> Python</li>
-        <li><strong>Express.js / Koa:</strong> Node.js</li>
-        <li><strong>Spring Boot:</strong> Java</li>
-        <li><strong>Django / Flask:</strong> Python</li>
-      </ul>
-      
-      <h2>How to Run Route Extraction</h2>
-      <p>Use the CLI to perform a static scan on your backend repository:</p>
-      <pre><code>npx RaksHex discover ./backend-src --framework fastapi</code></pre>
-      <p>The output will list all discovered endpoints, auth status, and compare them against your allowlisted documentation endpoints.</p>
+      <p>The repository includes shadow-API discovery paths used by the developer tooling/control plane to compare discovered routes or API artifacts with known inventory.</p>
+      <h2>Framework coverage</h2>
+      <p>Support is determined by the analyzers present in the exact repository commit. This documentation intentionally does not claim universal FastAPI, Koa, Spring, Django, Flask or other framework extraction without a matching tested implementation.</p>
+      <p>The CLI is not published as a public npm command during private beta, so use repository-local commands and the extension/dashboard flows that are actually available.</p>
     `,
   },
+
   credentials: {
-    title: "Credential Scanner & PII Redaction",
+    title: "Credential scanning & privacy controls",
     breadcrumb: "Products / Security",
-    lead: "Automatically redact passwords, tokens, API keys, and PII from prompts before sending them to public LLM APIs.",
+    lead: "Detect supported secret patterns and keep telemetry/content handling aligned with explicit privacy modes.",
     contentHtml: `
-      <p>The Credential Scanner inspects model inputs for sensitive developer secrets and customer PII (Personally Identifiable Information), helping support compliance efforts under local data protection laws (like India's DPDP Act and EU's GDPR).</p>
-      
-      <h2>Secret Detection Patterns</h2>
-      <p>We scan prompts for over 120 key signatures, including:</p>
-      <ul>
-        <li>AWS access keys and secret keys.</li>
-        <li>GitHub personal access tokens.</li>
-        <li>OpenAI, Anthropic, and Cohere API keys.</li>
-        <li>Stripe, Slack, and Twilio secrets.</li>
-      </ul>
-      
-      <h2>Indian ID & Compliance Redaction</h2>
-      <p>Includes optimized regex and checksum models for:</p>
-      <ul>
-        <li>Aadhaar numbers (UIDAI compliance check).</li>
-        <td>PAN numbers.</td>
-        <td>Indian passport and voter IDs.</td>
-      </ul>
+      <p>RaksHex includes deterministic secret/credential scanning and redaction/scrubbing paths used by collection scanning, logging and telemetry controls.</p>
+      <h2>No inflated detector count</h2>
+      <p>This page does not publish a fixed “120+ signatures” number or claim specialised Aadhaar/PAN/passport checksum coverage unless the exact scanner implementation and tests demonstrate those patterns.</p>
+      <h2>Telemetry privacy</h2>
+      <p>AgentGuard supports privacy modes including metadata-first behavior. Provider credentials should remain in approved secret stores/mediation paths and must not be copied into browser-exposed variables or logs.</p>
     `,
   },
+
   compliance: {
-    title: "Compliance Evidence Builder",
+    title: "Compliance evidence builder",
     breadcrumb: "Products / Compliance",
-    lead: "Auto-generate audit logs and export evidence mapped to PCI DSS, SOC 2, and OWASP control language. We map product controls to frameworks and produce evidence; we do not claim a certification or independent audit until that assessment is complete and published.",
+    lead: "Map implemented controls and evidence to framework language without claiming certification.",
     contentHtml: `
-      <p>Securing enterprise contracts requires demonstrating rigorous compliance controls. RaksHex collects scan telemetry and security events to construct auditor-facing evidence logs. These tools map findings to framework language so you can share evidence with auditors. They are not a SOC 2, PCI DSS, OWASP, or ISO certification.</p>
-
-      <h2>What you can export</h2>
+      <p>RaksHex stores security/governance evidence and can map supported records to compliance-control language for reporting/review.</p>
+      <h2>What it can support</h2>
       <ul>
-        <li><strong>PCI DSS:</strong> Maps API vulnerability findings to relevant requirements around vulnerability management and secure coding.</li>
-        <li><strong>SOC 2:</strong> Evidence building for the Common Criteria (Security, Confidentiality, and Availability). Mapping and evidence only — not a certification.</li>
-        <li><strong>OWASP LLM Top 10:</strong> Verification logs showing that inputs are scanned for prompt injections (LLM01) and sensitive data disclosures (LLM06).</li>
-        <li>Hashed PDFs or CSV spreadsheets from the Compliance tab in the dashboard.</li>
+        <li>control/evidence mapping for supported framework catalogs,</li>
+        <li>workspace-scoped audit and report evidence,</li>
+        <li>exports provided by the current compliance/report implementation.</li>
       </ul>
-
-      <h2>What this is not</h2>
-      <p>Evidence export is a product surface. It does not mean RaksHex is certified, audited, or attested against any third-party framework.</p>
+      <h2>What it is not</h2>
+      <p>Framework mapping is not SOC 2, ISO, PCI DSS, GDPR, EU AI Act or other certification/attestation. External assessment and legal/compliance ownership remain separate.</p>
     `,
   },
+
   mcp: {
-    title: "Model Context Protocol (MCP) Governance",
-    breadcrumb: "Products / Compliance",
-    lead: "Implement policies, logs, and guardrails to govern AI agents executing database operations.",
+    title: "MCP governance",
+    breadcrumb: "Products / Security",
+    lead: "Inventory and assess MCP/tool risk, then connect supported findings/governance to the RaksHex workspace model.",
     contentHtml: `
-      <p>While Model Context Protocol enables powerful AI workflows, giving agents raw access to database tools can lead to accidental deletions, data corruption, or information leaks. RaksHex adds a proxy governor between your agent and your tools.</p>
-      
-      <h2>Governance Policies</h2>
-      <ul>
-        <li><strong>Allowlisted Operations:</strong> Restrict agent queries to safe <code>SELECT</code> requests, blocking <code>UPDATE</code>, <code>DELETE</code>, and <code>DROP</code> statements.</li>
-        <li><strong>Rate Limiting:</strong> Cap the number of database records or token sizes that an agent can request in a single turn.</li>
-        <li><strong>Human-in-the-loop (HITL):</strong> Require manual user approval in the extension dashboard for high-risk operations.</li>
-      </ul>
+      <p><code>@rakshex/mcp-security</code> and the API-side MCP governance code provide the current MCP security surface.</p>
+      <p>Do not infer a universal SQL proxy, human-approval layer, or blanket MCP tool blocker from the existence of this package. Whether an action can actually be blocked depends on whether that execution path is integrated with RaksHex enforcement.</p>
+      <p>For consequential autonomous actions that are mediated through RaksHex, see the <a href="/docs/agent-firewall">Agent Firewall</a>.</p>
     `,
   },
-  community: {
-    title: "Community & Support",
-    breadcrumb: "Resources",
-    lead: "Connect with the RaksHex developer community, access open-source repositories, and get support.",
-    contentHtml: `
-      <p>We are developer-first. Reach out via community channels to share ideas, request features, or report bugs.</p>
-      
-      <h2>Developer Channels</h2>
-      <ul>
-        <li><strong>Community access:</strong> Connect with other teams building secure AI systems. <a href="mailto:support@rakshex.in">Email us to request access</a>.</li>
-        <li><strong>GitHub:</strong> Star our SDK and CLI repositories, read code, or submit pull requests. <a href="https://github.com/rakshex-hq" target="_blank">View GitHub Organisation</a>.</li>
-        <li><strong>Support Email:</strong> For direct assistance or plan inquiries, contact <code>support@rakshex.in</code>.</li>
-      </ul>
-    `,
-  },
-  sdk: {
-    title: "SDK & Examples",
-    breadcrumb: "Documentation",
-    lead: "Node @rakshex/sdk ships the Agent Firewall client and the AgentGuard telemetry client in one package.",
-    contentHtml: `
-      <p>Start with the Agent Firewall. The public hello-world is <code>createAgentFirewallClient</code>. See the <a href="/docs/agent-firewall">Agent Firewall getting started</a> for the full walkthrough.</p>
 
-      <h2>Install (private beta)</h2>
-      <p>This week&apos;s hello-world is the Node client at <code>packages/sdk</code> in this repository. Build it, then add it by workspace path or filesystem path:</p>
+  community: {
+    title: "Community & support",
+    breadcrumb: "Resources",
+    lead: "Use the public repository for source/issues and the published RaksHex support contacts for private-beta questions.",
+    contentHtml: `
+      <ul>
+        <li><strong>Repository:</strong> <a href="https://github.com/Akshu1245/Rakshex-complete-codebase" target="_blank" rel="noreferrer">Akshu1245/Rakshex-complete-codebase</a>.</li>
+        <li><strong>Support:</strong> <a href="mailto:support@rakshex.in">support@rakshex.in</a> where that mailbox is operational.</li>
+        <li><strong>Security:</strong> use the repository/security.txt process rather than posting suspected credentials publicly.</li>
+      </ul>
+      <p>Do not assume an unverified GitHub organisation, Discord, Slack community or other channel exists just because an old document mentioned one.</p>
+    `,
+  },
+
+  sdk: {
+    title: "SDK & examples",
+    breadcrumb: "Documentation",
+    lead: "Private-beta Node and Python clients for AgentGuard telemetry and Agent Firewall/action-control integration.",
+    contentHtml: `
+      <h2>Node source install</h2>
+      <p>The repository package <code>@rakshex/sdk</code> includes AgentGuard telemetry/privacy support and an Agent Firewall client. During private beta, use the checked-out source unless/until a public registry release is explicitly verified.</p>
       <pre><code>git clone https://github.com/Akshu1245/Rakshex-complete-codebase.git
 cd Rakshex-complete-codebase
-pnpm install
-pnpm --filter @rakshex/sdk build
+pnpm install --frozen-lockfile
+pnpm --filter @rakshex/sdk build</code></pre>
 
-pnpm add ./packages/sdk
-# or from another project:
-# pnpm add /path/to/Rakshex-complete-codebase/packages/sdk</code></pre>
-
-      <h2>Agent Firewall (Node)</h2>
+      <h2>Agent Firewall</h2>
       <pre><code>import { createAgentFirewallClient } from "@rakshex/sdk";
 
 const firewall = createAgentFirewallClient({
-  apiKey: process.env.RAKSHEX_API_KEY!, // rk_... workspace key
+  apiKey: process.env.RAKSHEX_API_KEY!,
   workspaceId: 1,
   agentId: "agent_123",
-  capabilityToken: process.env.RAKSHEX_CAPABILITY_TOKEN!, // rk_cap_... delegated authority
-});
-
-const { decision, result } = await firewall.authorizeAndRun(
-  { provider: "stripe", operation: "financial.refund", amountMinor: 5000, currency: "USD" },
-  async () => stripe.refunds.create({ /* ... */ }),
-);</code></pre>
-      <p><code>authorizeAndRun</code> leaves the provider key in your process. <code>executeWithCredential</code> has RaksHex broker the call so a DENY is enforced. Running either needs a private-beta workspace key. Reading this page does not.</p>
-
-      <h2>AgentGuard (telemetry)</h2>
-      <p>The same package also exports <code>createAgentGuardClient</code> and provider wrappers (<code>wrapOpenAI</code>, and others) for LLM usage metadata. That client is not the getting-started path.</p>
+  capabilityToken: process.env.RAKSHEX_CAPABILITY_TOKEN!,
+});</code></pre>
+      <p>Use the brokered credential path when you need a DENY to prevent release/use of a centrally mediated provider credential. A callback run inside your own process still keeps that process responsible for the credential it already holds.</p>
 
       <h2>Python</h2>
-      <p>The Python package <code>rakshex-agentguard</code> is AgentGuard only — there is no Python Agent Firewall client yet. A Python integrator who wants the Firewall today has to call the tRPC HTTP endpoints directly.</p>
+      <p>The source package <code>rakshex-agentguard</code> includes both <code>AgentGuardClient</code> and <code>AgentFirewallClient</code>. It is not claimed as a public PyPI package yet.</p>
+      <pre><code>python -m pip install -e "packages/agentguard-python[dev]"
+python -m pytest packages/agentguard-python/tests</code></pre>
     `,
   },
+
   api: {
-    title: "API Reference",
+    title: "API reference overview",
     breadcrumb: "Documentation",
-    lead: "Reference guide for the RaksHex REST API to ingest telemetry and query findings.",
+    lead: "Use current tRPC router types and explicitly mounted compatibility endpoints; do not copy invented REST routes from old docs.",
     contentHtml: `
-      <p>If you are not using our SDKs, you can interact with the RaksHex portal directly via our REST API. All requests must be authenticated using the <code>Authorization: Bearer &lt;API_KEY&gt;</code> header.</p>
-      
-      <h2>1. Ingest Telemetry</h2>
-      <p>Record a completed model request and token metrics.</p>
-      <p><strong>Endpoint:</strong> <code>POST /v1/telemetry</code></p>
-      <p><strong>Payload Example:</strong></p>
-      <pre><code>{
-  "model": "gpt-4o",
-  "prompt_tokens": 128,
-  "completion_tokens": 256,
-  "reasoning_tokens": 64,
-  "latency_ms": 420,
-  "user_id": "usr_93812",
-  "status": "success",
-  "endpoint": "/api/chat"
-}</code></pre>
-
-      <h2>2. Retrieve Security Findings</h2>
-      <p>Fetch the list of unresolved vulnerabilities or shadow API alerts.</p>
-      <p><strong>Endpoint:</strong> <code>GET /v1/findings</code></p>
-      <p><strong>Query Parameters:</strong></p>
-      <ul>
-        <li><code>severity</code>: Filter by <code>Critical</code>, <code>High</code>, <code>Medium</code>, or <code>Low</code>.</li>
-        <li><code>resolved</code>: Filter by <code>true</code> or <code>false</code>.</li>
-      </ul>
+      <p>Default local API origin: <code>http://localhost:3000</code>.</p>
+      <h2>Health</h2>
+      <pre><code>GET /api/health
+GET /api/health/ready</code></pre>
+      <h2>Application API</h2>
+      <p>The main application API is tRPC. Current procedure names live in <code>apps/api/api/*.ts</code> and the application router types; use those types rather than a stale copied endpoint list.</p>
+      <h2>Gateway compatibility</h2>
+      <p>The repository includes OpenAI-compatible chat-completions and Anthropic Messages gateway routes. Those routes are subject to RaksHex workspace authentication/governance and are not a general unauthenticated proxy.</p>
+      <h2>Telemetry</h2>
+      <p>AgentGuard uses the implemented telemetry ingest path described by the SDK/API source. This page intentionally does not claim old <code>/v1/telemetry</code> or <code>/v1/findings</code> REST routes unless the current server actually mounts them.</p>
     `,
   },
-  // Add direct fallback maps for shortened urls
+
   quickstart: {
-    title: "Quickstart Guides",
+    title: "Quickstart guides",
     breadcrumb: "Getting Started",
-    lead: "Start with the Agent Firewall. CLI scan and VS Code are optional later.",
+    lead: "Start with the Agent Firewall; use scanner/CLI/editor/MCP surfaces where their private-beta path fits your evaluation.",
     contentHtml: `
-      <p>The public hello-world is the Node Agent Firewall client. Collection scanning and the editor extension are later surfaces.</p>
       <ul>
-        <li><strong><a href="/docs/agent-firewall">Agent Firewall</a>:</strong> Path-install <code>packages/sdk</code> and call <code>createAgentFirewallClient</code>.</li>
-        <li><strong><a href="/docs/quickstart/cli">CLI scan</a>:</strong> Optional later. Not on the public npm registry this week.</li>
-        <li><strong><a href="/docs/quickstart/vscode">VS Code extension</a>:</strong> Optional editor integration. Not primary onboarding.</li>
-        <li><strong><a href="/docs/quickstart/mcp">Model Context Protocol (MCP)</a>:</strong> Optional allowlisted tools for coding agents.</li>
+        <li><strong><a href="/docs/agent-firewall">Agent Firewall:</a></strong> authorise consequential actions before execution.</li>
+        <li><strong><a href="/docs/quickstart/cli">CLI:</a></strong> repository-local scanning surface.</li>
+        <li><strong><a href="/docs/quickstart/vscode">VS Code:</a></strong> packageable private-beta editor integration.</li>
+        <li><strong><a href="/docs/quickstart/mcp">MCP:</a></strong> security inventory/governance work without an invented public package claim.</li>
       </ul>
     `,
   },
+
   frameworks: {
-    title: "Framework Integrations",
+    title: "Framework integration status",
     breadcrumb: "Getting Started",
-    lead: "Set up route telemetry interception for FastAPI, Express, Django, Flask, or NestJS.",
+    lead: "RaksHex does not ship the old claimed drop-in FastAPI/Django/Flask/NestJS middleware packages shown in historical docs.",
     contentHtml: `
-      <p>RaksHex includes drop-in middleware hooks for major programming languages and web frameworks. Refer to the specific quickstart for your setup:</p>
+      <p>Integrate through the SDK/gateway/telemetry surfaces that actually exist in this repository. Framework-specific pages below are retained so old links do not break, but they now describe the current status rather than showing non-existent import paths.</p>
       <ul>
-        <li><strong><a href="/docs/frameworks/fastapi">FastAPI Middleware</a>:</strong> Async python route tracking.</li>
-        <li><strong><a href="/docs/frameworks/express">Express.js Middleware</a>:</strong> Node.js request intercepts.</li>
+        <li><a href="/docs/frameworks/fastapi">FastAPI / Python</a></li>
+        <li><a href="/docs/frameworks/express">Express / Node</a></li>
+        <li><a href="/docs/frameworks/django">Django</a></li>
+        <li><a href="/docs/frameworks/flask">Flask</a></li>
+        <li><a href="/docs/frameworks/nestjs">NestJS</a></li>
       </ul>
     `,
   },
+
   "frameworks/fastapi": {
-    title: "FastAPI Middleware Setup",
+    title: "FastAPI / Python integration",
     breadcrumb: "Getting Started / Frameworks",
-    lead: "Integrate RaksHex with FastAPI for async route discovery and request telemetry.",
+    lead: "Use the Python AgentGuard/Agent Firewall source client; no official RaksHex FastAPI middleware package is claimed today.",
     contentHtml: `
-      <p>Add route security checks and telemetry auditing to your FastAPI backend using our official python client package.</p>
-      <h2>Integration</h2>
-      <pre><code>from fastapi import FastAPI
-from rakshex.integrations.fastapi import RakshexMiddleware
-
-app = FastAPI()
-
-# Add the middleware as the first layer
-app.add_middleware(
-    RaksHexMiddleware,
-    api_key="ik_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-    exclude_paths=["/healthz", "/metrics"]
-)
-
-@app.post("/generate")
-async def generate_response(prompt: str):
-    return {"message": "Success"}</code></pre>
+      <p>The private-beta Python package lives at <code>packages/agentguard-python</code>. It can be installed from the checked-out repository and used around the provider/action calls you want RaksHex to observe or govern.</p>
+      <pre><code>python -m pip install -e "packages/agentguard-python[dev]"</code></pre>
+      <p>Historical examples importing <code>rakshex.integrations.fastapi.RakshexMiddleware</code> were not supported by the current package and have been removed.</p>
     `,
   },
+
   "frameworks/express": {
-    title: "Express.js Middleware Setup",
+    title: "Express / Node integration",
     breadcrumb: "Getting Started / Frameworks",
-    lead: "Set up automatic route scanning and cost logging in Node.js Express apps.",
+    lead: "Use @rakshex/sdk and the RaksHex gateway/action clients around the calls that need telemetry or enforcement.",
     contentHtml: `
-      <p>Add route security auditing, shadow API discovery, and token budgets to Node.js express apps.</p>
-      <h2>Integration</h2>
-      <pre><code>const express = require('express');
-const { RaksHex } = require('@rakshex/sdk');
-
-const app = express();
-const RaksHex = new RaksHex({ apiKey: process.env.RAKSHEX_API_KEY });
-
-// Inject middleware before any routers
-app.use(RaksHex.middleware());
-
-app.post('/chat', (req, res) => {
-  res.json({ message: "Done" });
-});</code></pre>
+      <p>The current Node SDK exports AgentGuard and Agent Firewall clients/provider wrappers; this documentation does not claim a generic <code>RaksHex.middleware()</code> Express API that is not present in the package.</p>
+      <p>Build the repository package with <code>pnpm --filter @rakshex/sdk build</code> and follow the SDK/Agent Firewall examples.</p>
     `,
   },
+
   "frameworks/django": {
-    title: "Django Middleware Setup",
+    title: "Django integration status",
     breadcrumb: "Getting Started / Frameworks",
-    lead: "Integrate RaksHex middleware with Django project settings.",
+    lead: "No dedicated RaksHex Django middleware package is claimed in the current private-beta source.",
     contentHtml: `
-      <p>Expose Django view endpoints to shadow API scans and audit requests.</p>
-      <h2>Integration</h2>
-      <p>Add the middleware in your Django <code>settings.py</code>:</p>
-      <pre><code>MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'RaksHex.integrations.django.RaksHexMiddleware',
-    # Other middlewares...
-]
-
-RaksHex = {
-    'API_KEY': 'ik_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-}</code></pre>
+      <p>For Python applications, use the source <code>rakshex-agentguard</code> client around the LLM/action integrations you want to observe or govern. The historical <code>RaksHex.integrations.django</code> import path is not documented as available.</p>
     `,
   },
+
   "frameworks/flask": {
-    title: "Flask Middleware Setup",
+    title: "Flask integration status",
     breadcrumb: "Getting Started / Frameworks",
-    lead: "Set up request telemetry audit logs in python Flask apps.",
+    lead: "No dedicated RaksHex Flask extension is claimed in the current private-beta source.",
     contentHtml: `
-      <p>Monitor flask router calls and validate LLM prompt payloads at runtime.</p>
-      <h2>Integration</h2>
-      <pre><code>from flask import Flask
-from rakshex.integrations.flask import RaksHex
-
-app = Flask(__name__)
-RaksHex = RaksHex(app, api_key="ik_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-
-@app.route("/chat", methods=["POST"])
-def chat():
-    return "OK"</code></pre>
+      <p>Use the Python AgentGuard/Agent Firewall clients from <code>packages/agentguard-python</code> at the provider/action boundary. The old <code>rakshex.integrations.flask</code> example was removed because it did not match the current package.</p>
     `,
   },
-  "frameworks/nestjs": {
-    title: "NestJS Interceptor Setup",
-    breadcrumb: "Getting Started / Frameworks",
-    lead: "Use NestJS interceptors to report request telemetry and evaluate security policies.",
-    contentHtml: `
-      <p>Add structured lifecycle interceptors to log reasoning tokens and control route budgets in NestJS.</p>
-      <h2>Integration</h2>
-      <p>Inject the interceptor in your NestJS module:</p>
-      <pre><code>import { Module } from '@nestjs/common';
-import { APP_INTERCEPTOR } from '@nestjs/core';
-import { RakshexInterceptor } from '@rakshex/nestjs';
 
-@Module({
-  providers: [
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: RaksHexInterceptor,
-    },
-  ],
-})
-export class AppModule {}</code></pre>
+  "frameworks/nestjs": {
+    title: "NestJS integration status",
+    breadcrumb: "Getting Started / Frameworks",
+    lead: "No separate @rakshex/nestjs package is claimed in the current repository.",
+    contentHtml: `
+      <p>Use the Node <code>@rakshex/sdk</code> clients inside your NestJS service where LLM calls or consequential agent actions occur. The historical <code>RakshexInterceptor</code> package example was not a current shipped package and has been removed.</p>
     `,
   },
 };
