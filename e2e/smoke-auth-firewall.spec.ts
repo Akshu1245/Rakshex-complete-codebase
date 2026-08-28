@@ -32,7 +32,9 @@ test.describe("Smoke: login and Agent Firewall decision", () => {
     await page.getByPlaceholder("Finance support agent").fill("Smoke Refund Agent");
     await page.getByPlaceholder("finance-support-prod").fill(agentKey);
     await page.getByRole("button", { name: /register agent/i }).click();
-    await expect(page.getByRole("option", { name: /Smoke Refund Agent/ })).toBeVisible({
+    // Native <option> elements are in the accessibility tree but `hidden`
+    // until the <select> is opened. Attached is the honest check.
+    await expect(page.getByRole("option", { name: /Smoke Refund Agent/ })).toBeAttached({
       timeout: 15_000,
     });
 

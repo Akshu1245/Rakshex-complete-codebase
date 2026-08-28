@@ -1,4 +1,4 @@
-import { type APIResponse, type Page, expect } from "@playwright/test";
+import { type Page, expect } from "@playwright/test";
 
 /**
  * Sign-in is OAuth-capable in the UI and also still exposes email/password.
@@ -10,6 +10,11 @@ import { type APIResponse, type Page, expect } from "@playwright/test";
  * by the API process (port 3000). Playwright treats different ports as
  * different origins, so those cookies are mirrored onto the frontend origin
  * (port 3001) or the document request to `/agent-firewall` is bounced to login.
+ *
+ * Playwright `addCookies` rejects `{ url, path }` together ("Cookie should have
+ * either url or path"). Path=/ cookies are bound with `url` only so they are
+ * host-only on :3001. `domain=localhost` cookies are not used — Chromium does
+ * not send them reliably.
  */
 
 export interface TestUser {
@@ -36,7 +41,11 @@ export function apiOrigin(): string {
 }
 
 export function frontendOrigin(): string {
-  return (process.env.PLAYWRIGHT_BASE_URL || "http://localhost:3001").replace(/\/$/, "");
+  if (process.env.PLAYWRIGHT_BASE_URL) {
+    return process.env.PLAYWRIGHT_BASE_URL.replace(/\/$/, "");
+  }
+  const port = process.env.PLAYWRIGHT_FRONTEND_PORT || "3001";
+  return `http://localhost:${port}`;
 }
 
 export async function dismissBrowserNotices(page: Page): Promise<void> {
@@ -55,21 +64,18 @@ function mutationBody(input: unknown) {
 
 function trpcFailed(status: number, body: unknown): string | null {
   if (status >= 400) return `HTTP ${status} ${JSON.stringify(body)}`;
-  if (!body || typeof body !== "object") return null;
-  const rec = body as Record<string, unknown>;
-  const err = (rec.error ?? (rec.json as Record<string, unknown> | undefined)?.error) as
-    Record<string, unknown> | undefined;
-  if (!err) return null;
-  return JSON.stringify(err);
+  const items = Array.isArray(body) ? body : [body];
+  for (const raw of items) {
+    if (!raw || typeof raw !== "object") continue;
+    const rec = raw as Record<string, unknown>;
+    const err = (rec.error ?? (rec.json as Record<string, unknown> | undefined)?.error) as
+      Record<string, unknown> | undefined;
+    if (err) return JSON.stringify(err);
+  }
+  return null;
 }
 
-const SESSION_COOKIE_NAMES = new Set([
-  "access_token",
-  "session",
-  "csrf-token",
-  "app_session_id",
-  "refresh_token",
-]);
+const SESSION_COOKIE_NAMES = new Set(["access_token", "session", "csrf-token", "app_session_id"]);
 
 function parseSetCookie(header: string): {
   name: string;
@@ -94,18 +100,35 @@ function parseSetCookie(header: string): {
   return { name, value, path, httpOnly };
 }
 
-export async function applyApiCookiesToFrontend(page: Page, res: APIResponse): Promise<void> {
-  const headers = res.headersArray();
-  const cookies = headers
+async function setCookieHeaders(res: {
+  headersArray?: () => Array<{ name: string; value: string }>;
+  headerValues?: (name: string) => Promise<string[]>;
+}): Promise<string[]> {
+  if (typeof res.headerValues === "function") {
+    return res.headerValues("set-cookie");
+  }
+  return (res.headersArray?.() ?? [])
     .filter((h) => h.name.toLowerCase() === "set-cookie")
-    .map((h) => parseSetCookie(h.value))
-    .filter((c): c is NonNullable<typeof c> => Boolean(c && SESSION_COOKIE_NAMES.has(c.name)));
+    .map((h) => h.value);
+}
+
+export async function applyApiCookiesToFrontend(
+  page: Page,
+  res: {
+    headersArray?: () => Array<{ name: string; value: string }>;
+    headerValues?: (name: string) => Promise<string[]>;
+  },
+): Promise<void> {
+  const raw = await setCookieHeaders(res);
+  const cookies = raw
+    .map(parseSetCookie)
+    .filter((c): c is NonNullable<typeof c> => Boolean(c && SESSION_COOKIE_NAMES.has(c.name)))
+    // Path=/ only: Playwright forbids url+path together, and Chromium will not
+    // send Domain=localhost cookies. Host-only via url is the reliable bind.
+    .filter((c) => c.path === "/");
   expect(
     cookies.some((c) => c.name === "access_token"),
-    `API auth response missing access_token (${headers
-      .filter((h) => h.name.toLowerCase() === "set-cookie")
-      .map((h) => h.value)
-      .join(" | ")})`,
+    `API auth response missing access_token (${raw.join(" | ")})`,
   ).toBe(true);
   const origin = frontendOrigin();
   await page.context().addCookies(
@@ -113,7 +136,6 @@ export async function applyApiCookiesToFrontend(page: Page, res: APIResponse): P
       name: c.name,
       value: c.value,
       url: `${origin}/`,
-      path: c.path,
       httpOnly: c.httpOnly,
       sameSite: "Lax" as const,
       expires: Math.floor(Date.now() / 1000) + 60 * 60,
@@ -122,18 +144,18 @@ export async function applyApiCookiesToFrontend(page: Page, res: APIResponse): P
 }
 
 export async function signupViaApi(page: Page, user: TestUser): Promise<void> {
-  const res = await page.request.post(`${apiOrigin()}/api/trpc/auth.signup`, {
+  // Hit the Next rewrite so this uses the same origin the dashboard will.
+  const res = await page.request.post("/api/trpc/auth.signup", {
     headers: { "content-type": "application/json" },
     data: mutationBody({ email: user.email, password: user.password, name: user.name }),
   });
   const body = await res.json().catch(() => ({}));
   const fail = trpcFailed(res.status(), body);
   expect(fail, `signup failed: ${fail}`).toBeNull();
-  await applyApiCookiesToFrontend(page, res);
 }
 
 export async function loginViaApi(page: Page, user: TestUser): Promise<void> {
-  const res = await page.request.post(`${apiOrigin()}/api/trpc/auth.login`, {
+  const res = await page.request.post("/api/trpc/auth.login", {
     headers: { "content-type": "application/json" },
     data: mutationBody({ email: user.email, password: user.password }),
   });
@@ -157,7 +179,9 @@ export async function loginViaUi(page: Page, user: TestUser): Promise<void> {
   const body = await res.json().catch(() => ({}));
   const fail = trpcFailed(res.status(), body);
   expect(fail, `UI login mutation failed: ${fail}`).toBeNull();
-  // Mirror the API-origin session onto the frontend origin. Next rewrites
-  // do not always attach the API Set-Cookie headers to localhost:3001.
-  await loginViaApi(page, user);
+  // Stamp Path=/ session cookies onto the frontend origin. The rewrite may
+  // already have applied them; addCookies with `url` (no path) is idempotent
+  // and does not replace them with Domain=localhost cookies Chromium drops.
+  await applyApiCookiesToFrontend(page, res);
+  await expect(page).toHaveURL((url) => url.pathname === "/dashboard", { timeout: 20_000 });
 }
