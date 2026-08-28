@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   getDb: vi.fn(),
   persistSettledAttribution: vi.fn(),
   enforcePolicies: vi.fn(),
+  appendActionReceipt: vi.fn(),
 }));
 
 vi.mock("../workspaceApiKeys", () => ({ validateWorkspaceApiKey: mocks.validateWorkspaceApiKey }));
@@ -29,6 +30,9 @@ vi.mock("../vault", () => ({ decryptSecret: vi.fn(() => "sk_fixture_not_live") }
 vi.mock("./gatewayAttribution", () => ({
   parseGatewayMetadataHeader: vi.fn(() => ({})),
   persistSettledAttribution: mocks.persistSettledAttribution,
+}));
+vi.mock("../receipts/actionReceipts", () => ({
+  appendActionReceipt: mocks.appendActionReceipt,
 }));
 vi.mock("../../middleware/policyEnforcement", () => ({
   buildPreflightEventContext: vi.fn(() => ({})),
@@ -113,6 +117,7 @@ describe("parallel hard-budget race", () => {
     mocks.ingestUsageBatch.mockResolvedValue({ inserted: 1, skipped: 0 });
     mocks.persistSettledAttribution.mockResolvedValue({ costUsd: 0.00001 });
     mocks.enforcePolicies.mockResolvedValue({ action: "allow" });
+    mocks.appendActionReceipt.mockResolvedValue({ entryHash: "fixture" });
 
     const providerAccount = { id: 88, adminCredentialId: 77, metadata: {} };
     const credential = {
@@ -169,6 +174,16 @@ describe("parallel hard-budget race", () => {
     expect([first.statusCode, second.statusCode].sort()).toEqual([200, 403]);
     expect(upstreamFetch).toHaveBeenCalledTimes(1);
     expect(mocks.persistSettledAttribution).toHaveBeenCalledTimes(1);
+    expect(mocks.appendActionReceipt).toHaveBeenCalledTimes(3);
+    expect(mocks.appendActionReceipt).toHaveBeenCalledWith(
+      expect.objectContaining({ eventType: "deny" }),
+    );
+    expect(mocks.appendActionReceipt).toHaveBeenCalledWith(
+      expect.objectContaining({ eventType: "allow" }),
+    );
+    expect(mocks.appendActionReceipt).toHaveBeenCalledWith(
+      expect.objectContaining({ eventType: "settle" }),
+    );
     upstreamFetch.mockRestore();
   });
 });
