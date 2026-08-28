@@ -1,135 +1,132 @@
-"use client";
-
 import Link from "next/link";
+import { ExternalLink, Github, Mail } from "lucide-react";
 import { RaksHexLogo } from "@/components/common/RaksHexLogo";
+
+const VSCODE_URL =
+  "https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex-vscode";
+const GITHUB_URL = "https://github.com/Akshu1245/Rakshex-complete-codebase";
 
 export function Footer() {
   return (
-    <footer className="w-full bg-transparent py-10 border-t border-white/8 z-5 relative select-none">
-      <div className="min-h-[112px] max-w-[1280px] mx-auto px-6 sm:px-10 flex flex-col justify-between gap-y-10">
-        {/* Top Grid / Row */}
-        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[auto_minmax(0,1fr)] lg:items-start">
-          {/* Left Side: Logo + Vertical Line + Social Icons */}
-          <div className="flex flex-col items-start justify-between">
-            <div className="flex flex-row flex-wrap items-center gap-x-6 gap-y-4">
-              <Link className="flex items-center gap-2 no-underline shrink-0" href="/">
-                <RaksHexLogo size={30} />
-              </Link>
-
-              <div className="hidden sm:block w-px h-6 bg-[#414141]"></div>
-
-              {/* Social links */}
-              <div className="flex flex-row gap-4 items-center justify-start text-neutral-400">
-                {/* Discord */}
-                <a
-                  aria-label="Click to visit RaksHex's discord page"
-                  className="flex items-center justify-center cursor-pointer hover:text-white transition-colors duration-200"
-                  href="https://discord.gg/rakshex"
-                  rel="noopener noreferrer"
-                  target="_blank"
-                >
-                  <svg
-                    fill="currentColor"
-                    height="20"
-                    width="20"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057.1 18.08.11 18.1.128 18.116a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z" />
-                  </svg>
-                </a>
-
-                {/* GitHub */}
-                <a
-                  aria-label="Click to visit RaksHex's github page"
-                  className="flex items-center justify-center cursor-pointer hover:text-white transition-colors duration-200"
-                  href="https://github.com/Akshu1245/Rakshex-complete-codebase"
-                  rel="noopener noreferrer"
-                  target="_blank"
-                >
-                  <svg
-                    fill="currentColor"
-                    height="20"
-                    width="20"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      clipRule="evenodd"
-                      d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"
-                    />
-                  </svg>
-                </a>
-              </div>
+    <footer className="relative w-full border-t border-white/[0.08] bg-[#070A0F]/70 py-12">
+      <div className="mx-auto w-full max-w-[1280px] px-5 sm:px-6 xl:px-8">
+        <div className="grid gap-10 lg:grid-cols-[1.35fr_repeat(3,0.75fr)]">
+          <div className="max-w-sm">
+            <Link href="/" className="inline-flex no-underline" aria-label="RaksHex home">
+              <RaksHexLogo size={30} />
+            </Link>
+            <p className="mt-4 text-sm leading-6 text-neutral-500">
+              The AI Action Control Plane for teams that need to authorize consequential agent
+              actions before execution and keep verifiable evidence afterward.
+            </p>
+            <div className="mt-5 flex flex-wrap items-center gap-2">
+              <a
+                href={GITHUB_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-10 items-center gap-2 rounded-md border border-white/10 px-3 text-xs font-medium text-neutral-300 no-underline hover:border-white/20 hover:text-white"
+              >
+                <Github className="h-4 w-4" aria-hidden="true" /> GitHub
+              </a>
+              <a
+                href={VSCODE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-10 items-center gap-2 rounded-md border border-white/10 px-3 text-xs font-medium text-neutral-300 no-underline hover:border-white/20 hover:text-white"
+              >
+                VS Code <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+              </a>
             </div>
           </div>
 
-          {/* Right Side: Links Row (Blog | Docs | Pricing | Contact | Privacy Policy | Terms | Trust Center) */}
-          <div className="flex flex-wrap justify-start gap-x-8 gap-y-4 sm:gap-x-10 lg:justify-end xl:gap-x-12">
-            <Link
-              href="/blog"
-              className="w-fit shrink-0 whitespace-nowrap text-base text-neutral-400 hover:text-white transition-all duration-200 font-manrope relative hover:text-shadow-[0_0_8px_rgba(255,255,255,0.5)]"
-            >
-              Blog
-            </Link>
-            <Link
-              href="/docs"
-              className="w-fit shrink-0 whitespace-nowrap text-base text-neutral-400 hover:text-white transition-all duration-200 font-manrope relative hover:text-shadow-[0_0_8px_rgba(255,255,255,0.5)]"
-            >
-              Docs
-            </Link>
-            <Link
-              href="/pricing"
-              className="w-fit shrink-0 whitespace-nowrap text-base text-neutral-400 hover:text-white transition-all duration-200 font-manrope relative hover:text-shadow-[0_0_8px_rgba(255,255,255,0.5)]"
-            >
-              Pricing
-            </Link>
-            <a
-              href="mailto:akshay@rakshex.in"
-              className="w-fit shrink-0 whitespace-nowrap text-base text-neutral-400 hover:text-white transition-all duration-200 font-manrope relative hover:text-shadow-[0_0_8px_rgba(255,255,255,0.5)]"
-            >
-              Contact
-            </a>
-            <Link
-              href="/privacy"
-              className="w-fit shrink-0 whitespace-nowrap text-base text-neutral-400 hover:text-white transition-all duration-200 font-manrope relative hover:text-shadow-[0_0_8px_rgba(255,255,255,0.5)]"
-            >
-              Privacy Policy
-            </Link>
-            <Link
-              href="/terms"
-              className="w-fit shrink-0 whitespace-nowrap text-base text-neutral-400 hover:text-white transition-all duration-200 font-manrope relative hover:text-shadow-[0_0_8px_rgba(255,255,255,0.5)]"
-            >
-              Terms &amp; Conditions
-            </Link>
-            <Link
-              href="/legal"
-              className="w-fit shrink-0 whitespace-nowrap text-base text-neutral-400 hover:text-white transition-all duration-200 font-manrope relative hover:text-shadow-[0_0_8px_rgba(255,255,255,0.5)]"
-            >
-              Legal Center
-            </Link>
-            <Link
-              href="/trust"
-              className="w-fit shrink-0 whitespace-nowrap text-base text-neutral-400 hover:text-white transition-all duration-200 font-manrope relative hover:text-shadow-[0_0_8px_rgba(255,255,255,0.5)]"
-            >
-              Trust Center
-            </Link>
+          <div>
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-500">
+              Product
+            </p>
+            <div className="mt-4 flex flex-col gap-3 text-sm">
+              <Link href="/overview" className="w-fit text-neutral-400 no-underline hover:text-white">
+                Overview
+              </Link>
+              <Link href="/demo" className="w-fit text-neutral-400 no-underline hover:text-white">
+                Public demo
+              </Link>
+              <Link href="/pricing" className="w-fit text-neutral-400 no-underline hover:text-white">
+                Pricing
+              </Link>
+              <Link href="/changelog" className="w-fit text-neutral-400 no-underline hover:text-white">
+                Changelog
+              </Link>
+            </div>
+          </div>
+
+          <div>
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-500">
+              Developers
+            </p>
+            <div className="mt-4 flex flex-col gap-3 text-sm">
+              <Link href="/docs" className="w-fit text-neutral-400 no-underline hover:text-white">
+                Documentation
+              </Link>
+              <Link href="/docs/agent-firewall" className="w-fit text-neutral-400 no-underline hover:text-white">
+                Agent Firewall
+              </Link>
+              <a
+                href={VSCODE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex w-fit items-center gap-1.5 text-neutral-400 no-underline hover:text-white"
+              >
+                VS Code extension <ExternalLink className="h-3 w-3" aria-hidden="true" />
+              </a>
+              <a
+                href={GITHUB_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex w-fit items-center gap-1.5 text-neutral-400 no-underline hover:text-white"
+              >
+                Source repository <ExternalLink className="h-3 w-3" aria-hidden="true" />
+              </a>
+            </div>
+          </div>
+
+          <div>
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-500">
+              Trust
+            </p>
+            <div className="mt-4 flex flex-col gap-3 text-sm">
+              <Link href="/trust" className="w-fit text-neutral-400 no-underline hover:text-white">
+                Trust Center
+              </Link>
+              <Link href="/privacy" className="w-fit text-neutral-400 no-underline hover:text-white">
+                Privacy
+              </Link>
+              <Link href="/terms" className="w-fit text-neutral-400 no-underline hover:text-white">
+                Terms
+              </Link>
+              <Link href="/legal/dpa" className="w-fit text-neutral-400 no-underline hover:text-white">
+                DPA
+              </Link>
+              <Link href="/legal/refund" className="w-fit text-neutral-400 no-underline hover:text-white">
+                Refund policy
+              </Link>
+            </div>
           </div>
         </div>
 
-        {/* Bottom Section: Operational dot and copyright */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-t border-white/8 pt-6">
-          <p className="text-sm font-normal text-neutral-400 font-manrope text-left order-2 md:order-1">
-            © 2026 RaksHex by Rashi Technologies. Bengaluru, India.
-          </p>
-          <Link
-            href="/status"
-            className="flex items-center gap-2 text-sm text-neutral-400 font-manrope hover:text-white transition-colors duration-200 order-1 md:order-2 w-fit"
-          >
-            <span className="w-2 h-2 rounded-full bg-[#14B8A6] animate-pulse" />
-            <span>View service status</span>
-          </Link>
+        <div className="mt-10 flex flex-col gap-4 border-t border-white/[0.08] pt-6 text-sm text-neutral-500 md:flex-row md:items-center md:justify-between">
+          <p>© 2026 RaksHex by Rashi Technologies. Bengaluru, India.</p>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <a
+              href="mailto:akshay@rakshex.in"
+              className="inline-flex items-center gap-1.5 text-neutral-400 no-underline hover:text-white"
+            >
+              <Mail className="h-3.5 w-3.5" aria-hidden="true" /> akshay@rakshex.in
+            </a>
+            <Link href="/status" className="inline-flex items-center gap-2 text-neutral-400 no-underline hover:text-white">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#14B8A6]" aria-hidden="true" />
+              Service status
+            </Link>
+          </div>
         </div>
       </div>
     </footer>
