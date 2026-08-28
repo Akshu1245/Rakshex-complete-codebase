@@ -4,6 +4,8 @@
 
 **Canonical naming:** use **RaksHex** in human-facing copy, `rakshex` for package/path/domain identifiers, and `RAKSHEX_*` for environment variables. The active repository tree and remote branch/tag names are normalized to this convention.
 
+**Brand verification:** the 2026-08-28 cleanup scanned the complete active tracked text tree plus remote branch/tag refs for retired naming variants and passed with zero remaining matches.
+
 Read this file before changing architecture or trusting an older readiness document. It is intentionally evidence-first: current source + the GitHub release gate outrank dated reports, old branch names, screenshots, and historical test counts.
 
 ## 1. Product thesis
