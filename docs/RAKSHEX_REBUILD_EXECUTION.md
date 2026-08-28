@@ -12,12 +12,12 @@ Strategy: **incremental monorepo**, not a big-bang rewrite
 | -------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | PostgreSQL + Redis               | **Mostly done**       | `docker-compose.yml` uses `rakshex-postgres` / `rakshex-redis`                                                      |
 | Backend surface                  | **Strong**            | Large tRPC API under `server/api/*` (auth, scans, keys, kill-switch, control plane, GitHub, billing, compliance, …) |
-| Frontend                         | **Working, misnamed** | Still `rakshex-frontend` package name                                                                              |
-| VS Code extension                | **Partial**           | Still `rakshex-vscode`                                                                                             |
+| Frontend                         | **Working, misnamed** | Still `rakshex-frontend` package name                                                                               |
+| VS Code extension                | **Partial**           | Still `rakshex-vscode`                                                                                              |
 | GitHub Action                    | **Partial**           | `github-action/` exists                                                                                             |
 | Scanner rules                    | **Heuristic / thin**  | Logic lives in `server/utils/scanning.ts` — not a versioned rule package                                            |
 | Monorepo (`apps/` + `packages/`) | **Missing**           | Flat layout; no `pnpm-workspace` / Turbo yet                                                                        |
-| Product naming                   | **Partial**           | Compose + vault key use Rakshex; root package still `rakshex`; DB URL defaults still `rakshex`                    |
+| Product naming                   | **Partial**           | Compose + vault key use Rakshex; root package still `rakshex`; DB URL defaults still `rakshex`                      |
 | TypeScript strict                | **Off**               | Root `strict: false`                                                                                                |
 | AgentGuard SDK packages          | **Partial**           | Services exist; no published `@rakshex/node` / Python SDK                                                           |
 | CLI                              | **Missing**           | No `@rakshex/cli`                                                                                                   |

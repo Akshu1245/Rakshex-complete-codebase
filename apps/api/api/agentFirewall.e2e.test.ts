@@ -53,9 +53,7 @@ import { getDb } from "../db";
 import { generateCsrfToken } from "../utils/security";
 
 const HAS_DB = Boolean(process.env.DATABASE_URL?.trim());
-const HAS_VAULT = Boolean(
-  (process.env.RAKSHEX_VAULT_KEY ?? "").trim().length >= 32,
-);
+const HAS_VAULT = Boolean((process.env.RAKSHEX_VAULT_KEY ?? "").trim().length >= 32);
 if (HAS_DB && !HAS_VAULT) {
   throw new Error(
     "DATABASE_URL is set but RAKSHEX_VAULT_KEY is missing or shorter than 32 characters. " +

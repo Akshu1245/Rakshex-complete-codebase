@@ -147,7 +147,9 @@ const parsed = (() => {
     process.exit(1);
   }
 
-  console.warn("[ENV] ⚠ schema mismatch (non-production, continuing with safe defaults):\n" + issues);
+  console.warn(
+    "[ENV] ⚠ schema mismatch (non-production, continuing with safe defaults):\n" + issues,
+  );
   return EnvSchema.parse({});
 })();
 
@@ -248,7 +250,8 @@ export function validateEnv(): {
   if (!ENV.databaseUrl) errors.push("DATABASE_URL is not set — database connection will fail");
 
   if (ENV.isProduction) {
-    if (!ENV.vaultKey) errors.push("RAKSHEX_VAULT_KEY is not set — credential vault cannot operate");
+    if (!ENV.vaultKey)
+      errors.push("RAKSHEX_VAULT_KEY is not set — credential vault cannot operate");
     if (!ENV.redisUrl) errors.push("REDIS_URL is not set — required in production (no mock Redis)");
     if (!ENV.smtpHost || !ENV.smtpUser || !ENV.smtpPass) {
       errors.push(
@@ -262,7 +265,8 @@ export function validateEnv(): {
       errors.push("GITHUB_WEBHOOK_SECRET is not set — GitHub webhooks must fail closed");
     }
     if (!ENV.googleClientId) warnings.push("GOOGLE_CLIENT_ID is not set — Google OAuth disabled");
-    if (!ENV.googleClientSecret) warnings.push("GOOGLE_CLIENT_SECRET is not set — Google OAuth disabled");
+    if (!ENV.googleClientSecret)
+      warnings.push("GOOGLE_CLIENT_SECRET is not set — Google OAuth disabled");
     if (!ENV.razorpayKeyId) warnings.push("RAZORPAY_KEY_ID is not set — Razorpay disabled");
     if (!ENV.razorpayKeySecret) warnings.push("RAZORPAY_KEY_SECRET is not set — Razorpay disabled");
     if (!ENV.razorpayWebhookSecret) {

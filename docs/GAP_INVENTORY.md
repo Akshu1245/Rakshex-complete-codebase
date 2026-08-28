@@ -30,7 +30,7 @@ Unconditional public GA for regulated enterprise buyers still requires operator 
 | Local gates: format, lint, typecheck, unit, security, integration, build | green                     |
 | Live smoke (db/redis/queue) when Docker + API up                         | `pnpm smoke:test`         |
 | Legal drafts, runbooks, trust center, waitlist                           | docs + web routes         |
-| Residual RaksHex branding removed from user-facing runtime paths        | this pass                 |
+| Residual RaksHex branding removed from user-facing runtime paths         | this pass                 |
 
 ---
 
@@ -45,7 +45,7 @@ All prior half-done items (UI polish, gateway, MCP, SSO scaffolding, billing abs
 | G   | Live Stripe / Razorpay      | Full code path + webhook verification tests; keys = operator                           |
 | H   | Live GitHub App PR scans    | Implemented + fail-closed without secrets                                              |
 | I   | VS Code polish              | Marketplace-ready package + publish workflow                                           |
-| J   | Residual RaksHex strings   | Cleaned this pass (FAQ, CORS, vault, runbooks)                                         |
+| J   | Residual RaksHex strings    | Cleaned this pass (FAQ, CORS, vault, runbooks)                                         |
 | K   | Worker package surface      | Documented monorepo entry; runtime entry stable                                        |
 | L   | OTel prod exporter          | Traces instrumented; exporter config = env                                             |
 

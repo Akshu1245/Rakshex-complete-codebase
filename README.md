@@ -18,22 +18,22 @@ The repository also contains API/secret scanning, team AI governance, gateway bu
 
 ## What is actually available in source
 
-| Surface | Current status |
-| --- | --- |
-| Agent Firewall authorization | Available and covered by API/E2E tests |
-| Delegated authority / attenuation | Available in `@rakshex/action-control` |
-| Credential mediation | Available for the enforced broker path |
-| Action Ledger | Available; tamper-evident/hash-chained records |
-| OpenAI-compatible + Anthropic gateway paths | Available for RaksHex-routed traffic |
-| Gateway budgets and kill switches | Available; enforcement applies to RaksHex-routed traffic |
-| Scanner core / collection import | Available |
-| GitHub scanning path | Available when the GitHub App is configured |
-| VS Code extension | Available in source and Marketplace workflow |
-| Node SDK | Available in source |
-| Python AgentGuard + AgentFirewallClient | Available in source; **not published on PyPI yet** |
-| Team governance provider connectors | Capability-dependent; unsupported provider-native operations remain explicitly `NOT_IMPLEMENTED`/`NOT_CONFIGURED` rather than simulated |
-| Compliance | Evidence mapping only; **not certification** |
-| Paid billing | Code paths exist; live launch still requires production credentials and real payment exercises |
+| Surface                                     | Current status                                                                                                                          |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Agent Firewall authorization                | Available and covered by API/E2E tests                                                                                                  |
+| Delegated authority / attenuation           | Available in `@rakshex/action-control`                                                                                                  |
+| Credential mediation                        | Available for the enforced broker path                                                                                                  |
+| Action Ledger                               | Available; tamper-evident/hash-chained records                                                                                          |
+| OpenAI-compatible + Anthropic gateway paths | Available for RaksHex-routed traffic                                                                                                    |
+| Gateway budgets and kill switches           | Available; enforcement applies to RaksHex-routed traffic                                                                                |
+| Scanner core / collection import            | Available                                                                                                                               |
+| GitHub scanning path                        | Available when the GitHub App is configured                                                                                             |
+| VS Code extension                           | Available in source and Marketplace workflow                                                                                            |
+| Node SDK                                    | Available in source                                                                                                                     |
+| Python AgentGuard + AgentFirewallClient     | Available in source; **not published on PyPI yet**                                                                                      |
+| Team governance provider connectors         | Capability-dependent; unsupported provider-native operations remain explicitly `NOT_IMPLEMENTED`/`NOT_CONFIGURED` rather than simulated |
+| Compliance                                  | Evidence mapping only; **not certification**                                                                                            |
+| Paid billing                                | Code paths exist; live launch still requires production credentials and real payment exercises                                          |
 
 ## Non-claims
 

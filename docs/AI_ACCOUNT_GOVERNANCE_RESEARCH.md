@@ -13,7 +13,7 @@ A team subscription does not imply an API key. RaksHex must show the access mech
 
 ## Verified provider patterns
 
-| Provider               | Admin surface                                                                         | What RaksHex can inventory                                                        | Important limitation                                                                                                  |
+| Provider               | Admin surface                                                                         | What RaksHex can inventory                                                         | Important limitation                                                                                                  |
 | ---------------------- | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | Azure / Azure OpenAI   | Microsoft Entra OAuth/service principal/managed identity, Azure RBAC, Cost Management | Tenant, subscription, resource, role scope, model resource, usage and cost exports | Billing visibility depends on scope; Cost Details is asynchronous and exports are preferred at scale                  |
 | AWS Bedrock            | IAM role, STS, Organizations, CUR 2.0, cost allocation tags                           | Account, region, Bedrock usage, principal/session attribution, cost                | Per-user attribution requires role session names or principal tags; do not treat an AWS account as a key              |

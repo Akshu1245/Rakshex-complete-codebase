@@ -13,8 +13,6 @@ describe("database seed environment guard", () => {
 
   it("requires the exact explicit production confirmation", () => {
     expect(() => assertSeedEnvironment("production", "yes")).toThrow(/Refusing to seed/);
-    expect(() =>
-      assertSeedEnvironment("production", PRODUCTION_SEED_CONFIRMATION),
-    ).not.toThrow();
+    expect(() => assertSeedEnvironment("production", PRODUCTION_SEED_CONFIRMATION)).not.toThrow();
   });
 });

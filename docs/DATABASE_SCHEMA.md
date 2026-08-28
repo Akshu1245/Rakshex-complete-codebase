@@ -46,38 +46,38 @@ postgresql://rakshex:rakshex@127.0.0.1:5432/rakshex
 
 The current forward order is:
 
-| Order | Migration | Purpose / area |
-| ---: | --- | --- |
-| 1 | `0000_curly_dark_phoenix` | original core schema |
-| 2 | `0001_notifications_and_feature_flags` | notifications / flags |
-| 3 | `0002_auth_and_settings` | auth / settings |
-| 4 | `0003_enterprise` | enterprise schema foundation |
-| 5 | `0004_api_key_hardening` | API-key hardening |
-| 6 | `0005_universal_control_plane` | control-plane foundation |
-| 7 | `0006_github_installations` | GitHub App installation state |
-| 8 | `0007_market_ready_foundation` | workspace/foundation hardening |
-| 9 | `0008_auth_resource_model` | auth/resource model |
-| 10 | `0009_findings_lifecycle` | findings lifecycle |
-| 11 | `0010_p1_workspace_tenancy` | workspace-tenancy hardening |
-| 12 | `0011_p3_hot_path_indexes` | hot-path indexes |
-| 13 | `0012_compliance_report_types` | compliance report types |
-| 14 | `0012_workspace_subscriptions` | workspace subscription model |
-| 15 | `0013_token_usage_attribution` | usage attribution |
-| 16 | `0014_team_ai_governance` | team AI governance |
-| 17 | `0015_governance_extensions` | governance extensions |
-| 18 | `0016_shadow_key_lifecycle` | shadow-key lifecycle |
-| 19 | `0017_secure_scan_reports` | secure scan reports |
-| 20 | `0018_gateway_key_bindings` | gateway key bindings |
-| 21 | `0019_workspace_webhooks` | workspace webhooks |
-| 22 | `0020_gateway_audit_workspace` | workspace gateway audit |
-| 23 | `0021_mcp_server_command` | MCP server command metadata |
-| 24 | `0022_agent_firewall` | Agent Firewall / action-control persistence |
-| 25 | `0023_mcp_tool_security_findings` | MCP tool security findings |
-| 26 | `0024_credential_mediation` | credential-mediation persistence |
-| 27 | `0025_openai_billing_reconciliation` | OpenAI billing reconciliation |
-| 28 | `0026_versioned_model_prices` | versioned model pricing |
-| 29 | `0027_gateway_call_attribution` | gateway-call attribution |
-| 30 | `0028_signed_action_receipts` | signed action receipts |
+| Order | Migration                              | Purpose / area                              |
+| ----: | -------------------------------------- | ------------------------------------------- |
+|     1 | `0000_curly_dark_phoenix`              | original core schema                        |
+|     2 | `0001_notifications_and_feature_flags` | notifications / flags                       |
+|     3 | `0002_auth_and_settings`               | auth / settings                             |
+|     4 | `0003_enterprise`                      | enterprise schema foundation                |
+|     5 | `0004_api_key_hardening`               | API-key hardening                           |
+|     6 | `0005_universal_control_plane`         | control-plane foundation                    |
+|     7 | `0006_github_installations`            | GitHub App installation state               |
+|     8 | `0007_market_ready_foundation`         | workspace/foundation hardening              |
+|     9 | `0008_auth_resource_model`             | auth/resource model                         |
+|    10 | `0009_findings_lifecycle`              | findings lifecycle                          |
+|    11 | `0010_p1_workspace_tenancy`            | workspace-tenancy hardening                 |
+|    12 | `0011_p3_hot_path_indexes`             | hot-path indexes                            |
+|    13 | `0012_compliance_report_types`         | compliance report types                     |
+|    14 | `0012_workspace_subscriptions`         | workspace subscription model                |
+|    15 | `0013_token_usage_attribution`         | usage attribution                           |
+|    16 | `0014_team_ai_governance`              | team AI governance                          |
+|    17 | `0015_governance_extensions`           | governance extensions                       |
+|    18 | `0016_shadow_key_lifecycle`            | shadow-key lifecycle                        |
+|    19 | `0017_secure_scan_reports`             | secure scan reports                         |
+|    20 | `0018_gateway_key_bindings`            | gateway key bindings                        |
+|    21 | `0019_workspace_webhooks`              | workspace webhooks                          |
+|    22 | `0020_gateway_audit_workspace`         | workspace gateway audit                     |
+|    23 | `0021_mcp_server_command`              | MCP server command metadata                 |
+|    24 | `0022_agent_firewall`                  | Agent Firewall / action-control persistence |
+|    25 | `0023_mcp_tool_security_findings`      | MCP tool security findings                  |
+|    26 | `0024_credential_mediation`            | credential-mediation persistence            |
+|    27 | `0025_openai_billing_reconciliation`   | OpenAI billing reconciliation               |
+|    28 | `0026_versioned_model_prices`          | versioned model pricing                     |
+|    29 | `0027_gateway_call_attribution`        | gateway-call attribution                    |
+|    30 | `0028_signed_action_receipts`          | signed action receipts                      |
 
 There are two intentionally distinct `0012_*` migrations. Their order is explicit in `MIGRATION_ORDER`; numeric-prefix sorting alone is not the migration algorithm.
 
@@ -174,14 +174,14 @@ Administrative role promotion, when needed, is a separate explicit operator acti
 
 Core local services include:
 
-| Service | Image / role | Default port |
-| --- | --- | ---: |
-| `postgres` | PostgreSQL 15 Alpine | 5432 |
-| `redis` | Redis 7 Alpine | 6379 |
-| `migrate` | one-shot canonical migration gate | — |
-| `api` | RaksHex API | 3000 |
-| `worker` | BullMQ worker | — |
-| `web` | Next.js web | configured by Compose |
+| Service    | Image / role                      |          Default port |
+| ---------- | --------------------------------- | --------------------: |
+| `postgres` | PostgreSQL 15 Alpine              |                  5432 |
+| `redis`    | Redis 7 Alpine                    |                  6379 |
+| `migrate`  | one-shot canonical migration gate |                     — |
+| `api`      | RaksHex API                       |                  3000 |
+| `worker`   | BullMQ worker                     |                     — |
+| `web`      | Next.js web                       | configured by Compose |
 
 Use `docker compose config`/`docker compose ps` against the current file rather than copying old service/container names from historical reports.
 

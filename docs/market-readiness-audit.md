@@ -15,7 +15,7 @@
 | Local automated gates                                     | **Green**                                       |
 | Live health with real Postgres/Redis                      | **Green when stack up**                         |
 | Feature maturity (all shippable surfaces)                 | **Available** (see FEATURE_MATURITY.md)         |
-| Residual branding / RaksHex                              | **Cleaned**                                     |
+| Residual branding / RaksHex                               | **Cleaned**                                     |
 | Staging human journey                                     | **Operator**                                    |
 | Remote CI release-gate / branch protection                | **Operator push + GitHub settings**             |
 | Live billing / GitHub App secrets                         | **Optional for free launch; required for paid** |
