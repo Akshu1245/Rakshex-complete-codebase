@@ -64,6 +64,33 @@ const nextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      // /documentation is a docs-named URL, not an in-app start. Public hello-world is /docs.
+      // Keep /documentation in lib/publicRoutes.ts — proxy.ts runs before redirects.
+      // /get-started stays invite-gated (not listed as public, no redirect here).
+      {
+        source: "/documentation",
+        destination: "/docs",
+        permanent: false,
+      },
+      {
+        source: "/docs/getting-started",
+        destination: "/docs/agent-firewall",
+        permanent: false,
+      },
+      {
+        source: "/legal/rakshex-terms-of-service.docx",
+        destination: "/terms",
+        permanent: false,
+      },
+      {
+        source: "/legal/rakshex-refund-cancellation-policy.docx",
+        destination: "/legal/refund",
+        permanent: false,
+      },
+    ];
+  },
   async rewrites() {
     return [
       // All API traffic goes to the Node tRPC backend. The legacy Python
@@ -96,20 +123,6 @@ const nextConfig = {
       {
         source: "/api/import/:path*",
         destination: `${TS_BACKEND_URL}/api/import/:path*`,
-      },
-    ];
-  },
-  async redirects() {
-    return [
-      {
-        source: "/legal/rakshex-terms-of-service.docx",
-        destination: "/terms",
-        permanent: false,
-      },
-      {
-        source: "/legal/rakshex-refund-cancellation-policy.docx",
-        destination: "/legal/refund",
-        permanent: false,
       },
     ];
   },

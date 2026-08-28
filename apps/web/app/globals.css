@@ -1740,6 +1740,96 @@ textarea:focus,
   border-color: #14b8a6 !important;
 }
 
+.docs-article pre,
+.docs-code-block pre {
+  background: #0b0f17;
+  border: 1px solid rgba(20, 184, 166, 0.2);
+  border-radius: 8px;
+  padding: 16px 18px;
+  overflow-x: auto;
+  margin: 0;
+}
+
+.docs-article pre code,
+.docs-code-block pre code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 13px;
+  color: #5eead4;
+  line-height: 1.65;
+  white-space: pre;
+}
+
+.docs-article :not(pre) > code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 13px;
+  background: rgba(20, 184, 166, 0.1);
+  color: #5eead4;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.docs-article ul,
+.docs-article ol {
+  margin: 0 0 20px 1.25rem;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.docs-article li {
+  margin-bottom: 6px;
+}
+
+.docs-note {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+  border-left: 2px solid #14b8a6;
+  padding-left: 12px;
+  margin: 8px 0 24px;
+}
+
+.docs-code-block {
+  margin: 16px 0 24px;
+}
+
+.docs-code-caption {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.45);
+  margin-bottom: 8px;
+}
+
+.docs-code-pre-wrap {
+  position: relative;
+}
+
+.docs-code-copy {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.55);
+  background: rgba(20, 184, 166, 0.12);
+  border: 1px solid rgba(20, 184, 166, 0.25);
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.docs-code-copy:hover {
+  color: white;
+  border-color: #14b8a6;
+}
+
+.docs-code-block pre {
+  padding-right: 72px;
+}
+
+.sidenav-child.active {
+  color: #14b8a6;
+}
+
 /* Global Selection Styling */
 ::selection {
   background: #14b8a6 !important;

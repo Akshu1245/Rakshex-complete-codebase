@@ -7,57 +7,19 @@ export interface DocPage {
 
 export const docsData: Record<string, DocPage> = {
   "quickstart/cli": {
-    title: "Connect via CLI",
-    breadcrumb: "Getting Started / Quickstart",
-    lead: "Audit your API collections and scan for security vulnerabilities directly from your terminal or CI/CD pipeline.",
+    title: "CLI scan (optional later)",
+    breadcrumb: "Getting Started / Optional later",
+    lead: "Not this week's hello-world. The CLI is not on the public npm registry.",
     contentHtml: `
-      <p>The RaksHex CLI is the easiest way to perform ad-hoc scans on your Postman collections, OpenAPI/Swagger specifications, or raw HAR files. It runs completely locally in memory and uploads only anonymized metadata and findings to your RaksHex portal.</p>
-      
-      <h2>Installation</h2>
-      <p>The CLI requires Node.js v16+ to be installed on your system. You can execute it directly using <code>npx</code> or install it globally:</p>
-      <pre><code>npm install -g @rakshex/cli</code></pre>
-      
-      <h2>Run Your First Scan</h2>
-      <p>To scan an export of your Postman collection or OpenAPI JSON, use the <code>scan</code> command. You will need your project API Key which is found in <code>.insforge/project.json</code> or under your project Settings page:</p>
-      <pre><code>npx RaksHex scan ./collection.json --key ik_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxx</code></pre>
-      
-      <h2>CLI Parameters</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Argument</th>
-            <th>Description</th>
-            <th>Default</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><code>--key</code></td>
-            <td>Your project API Key (or set via <code>RAKSHEX_API_KEY</code> env var).</td>
-            <td>-</td>
-          </tr>
-          <tr>
-            <td><code>--format</code></td>
-            <td>Specify output format (<code>json</code>, <code>csv</code>, <code>table</code>).</td>
-            <td><code>table</code></td>
-          </tr>
-          <tr>
-            <td><code>--fail-on</code></td>
-            <td>Fail the build (exit code 1) on findings of severity (<code>Low</code>, <code>Medium</code>, <code>High</code>, <code>Critical</code>).</td>
-            <td><code>High</code></td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div class="docs-tip" style="background: rgba(20, 184, 166, 0.05); border: 1px solid rgba(20, 184, 166, 0.15); padding: 16px; border-radius: 8px; margin: 24px 0;">
-        <strong>💡 GitHub Action Integration:</strong> Add <code>npx RaksHex scan</code> into your CI pipeline to block pull requests automatically when new security issues or undocumented shadow endpoints are introduced.
-      </div>
+      <p>The public hello-world this week is the Node Agent Firewall client in <code>packages/sdk</code>. The CLI is a later surface. It is not published on the public npm registry, so there is no public install command to run this week.</p>
+      <p>Start here: <a href="/docs/agent-firewall">Agent Firewall getting started</a>.</p>
+      <p>If you already have this repository checked out, the CLI source lives at <code>apps/cli</code> for local development. That is not the stranger onboarding path.</p>
     `,
   },
   "quickstart/vscode": {
     title: "Connect via VS Code Extension",
     breadcrumb: "Getting Started / Quickstart",
-    lead: "Get real-time security warnings and runtime cost alerts directly inside your code editor as you write code.",
+    lead: "Optional later: editor integration. VS Code is not the first onboarding step.",
     contentHtml: `
       <p>The RaksHex VS Code extension brings the power of runtime security scanning and LLM cost intelligence directly to your development workflow. It highlights vulnerabilities inline, identifies shadow endpoints, and displays budget stats in your status bar.</p>
       
@@ -134,16 +96,7 @@ export const docsData: Record<string, DocPage> = {
       <p>The Kill Switch is response middleware that intercepts outbound model calls. It acts as an autonomous circuit breaker to protect your company from runaway cost spikes and prompt injection attacks.</p>
       
       <h2>How It Works</h2>
-      <p>When an API gateway call is initiated, the RaksHex middleware evaluates the request context against your active workspace rules:</p>
-      <pre><code>import { RaksHex } from '@rakshex/sdk';
-
-const RaksHex = new RaksHex({ apiKey: process.env.RAKSHEX_API_KEY });
-
-// The middleware automatically throws a 402 Payment Required or 403 Forbidden 
-// if a budget or security policy rule is violated
-app.post('/api/chat', RaksHex.middleware(), async (req, res) => {
-  // Chat logic here...
-});</code></pre>
+      <p>When an API gateway call is initiated, RaksHex evaluates the request context against your active workspace rules. Runtime authorization of autonomous actions is the <a href="/docs/agent-firewall">Agent Firewall</a> — use <code>createAgentFirewallClient</code> from <code>@rakshex/sdk</code>.</p>
 
       <h2>Trigger Conditions</h2>
       <ul>
@@ -241,15 +194,16 @@ app.post('/api/chat', RaksHex.middleware(), async (req, res) => {
     contentHtml: `
       <p>Securing enterprise contracts requires demonstrating rigorous compliance controls. RaksHex collects scan telemetry and security events to construct auditor-facing evidence logs. These tools map findings to framework language so you can share evidence with auditors. They are not a SOC 2, PCI DSS, OWASP, or ISO certification.</p>
 
-      <h2>Supported Frameworks</h2>
+      <h2>What you can export</h2>
       <ul>
         <li><strong>PCI DSS:</strong> Maps API vulnerability findings to relevant requirements around vulnerability management and secure coding.</li>
         <li><strong>SOC 2:</strong> Evidence building for the Common Criteria (Security, Confidentiality, and Availability). Mapping and evidence only — not a certification.</li>
         <li><strong>OWASP LLM Top 10:</strong> Verification logs showing that inputs are scanned for prompt injections (LLM01) and sensitive data disclosures (LLM06).</li>
+        <li>Hashed PDFs or CSV spreadsheets from the Compliance tab in the dashboard.</li>
       </ul>
 
-      <h2>Audit Exports</h2>
-      <p>You can export logs as hashed PDFs or CSV spreadsheets from the Compliance tab in the dashboard for use in your own audit or compliance workflow.</p>
+      <h2>What this is not</h2>
+      <p>Evidence export is a product surface. It does not mean RaksHex is certified, audited, or attested against any third-party framework.</p>
     `,
   },
   mcp: {
@@ -285,47 +239,42 @@ app.post('/api/chat', RaksHex.middleware(), async (req, res) => {
   sdk: {
     title: "SDK & Examples",
     breadcrumb: "Documentation",
-    lead: "Integrate RaksHex with a single line of code in Node.js, Python, or Go.",
+    lead: "Node @rakshex/sdk ships the Agent Firewall client and the AgentGuard telemetry client in one package.",
     contentHtml: `
-      <p>We provide official client libraries to intercept LLM calls, calculate costs, scan prompts, and trigger kill-switches. Our SDKs run locally with asynchronous caching to keep overhead on your application's hot path low.</p>
-      
-      <h2>Node.js SDK</h2>
-      <p>Install via npm:</p>
-      <pre><code>npm install @rakshex/sdk</code></pre>
-      <p>Usage example with OpenAI:</p>
-      <pre><code>import { RaksHex } from '@rakshex/sdk';
-import OpenAI from 'openai';
+      <p>Start with the Agent Firewall. The public hello-world is <code>createAgentFirewallClient</code>. See the <a href="/docs/agent-firewall">Agent Firewall getting started</a> for the full walkthrough.</p>
 
-const RaksHex = new RaksHex({ apiKey: process.env.RAKSHEX_API_KEY });
-const openai = RaksHex.wrap(new OpenAI());
+      <h2>Install (private beta)</h2>
+      <p>This week&apos;s hello-world is the Node client at <code>packages/sdk</code> in this repository. Build it, then add it by workspace path or filesystem path:</p>
+      <pre><code>git clone https://github.com/Akshu1245/Rakshex-complete-codebase.git
+cd Rakshex-complete-codebase
+pnpm install
+pnpm --filter @rakshex/sdk build
 
-// The wrapped client automatically reports costs, attributes usage, 
-// and scans for prompt injections in the background.
-const response = await openai.chat.completions.create({
-  model: 'gpt-4o',
-  messages: [{ role: 'user', content: 'What is the cost of capital?' }],
-  user: 'user_12938' // Essential for per-user cost tracking
-});</code></pre>
+pnpm add ./packages/sdk
+# or from another project:
+# pnpm add /path/to/Rakshex-complete-codebase/packages/sdk</code></pre>
 
-      <h2>Python SDK</h2>
-      <p>Install via pip:</p>
-      <pre><code>pip install RaksHex-sdk</code></pre>
-      <p>Usage example with Anthropic:</p>
-      <pre><code>from rakshex import RaksHex
-from anthropic import Anthropic
+      <h2>Agent Firewall (Node)</h2>
+      <pre><code>import { createAgentFirewallClient } from "@rakshex/sdk";
 
-RaksHex = RaksHex(api_key="your_api_key")
-client = Anthropic()
+const firewall = createAgentFirewallClient({
+  apiKey: process.env.RAKSHEX_API_KEY!, // rk_... workspace key
+  workspaceId: 1,
+  agentId: "agent_123",
+  capabilityToken: process.env.RAKSHEX_CAPABILITY_TOKEN!, // rk_cap_... delegated authority
+});
 
-# Wrap the client
-wrapped_client = RaksHex.wrap(client)
+const { decision, result } = await firewall.authorizeAndRun(
+  { provider: "stripe", operation: "financial.refund", amountMinor: 5000, currency: "USD" },
+  async () => stripe.refunds.create({ /* ... */ }),
+);</code></pre>
+      <p><code>authorizeAndRun</code> leaves the provider key in your process. <code>executeWithCredential</code> has RaksHex broker the call so a DENY is enforced. Running either needs a private-beta workspace key. Reading this page does not.</p>
 
-response = wrapped_client.messages.create(
-    model="claude-3-5-sonnet-20241022",
-    max_tokens=1024,
-    messages=[{"role": "user", "content": "Analyze code security."}],
-    metadata={"user_id": "usr_9921"}
-)</code></pre>
+      <h2>AgentGuard (telemetry)</h2>
+      <p>The same package also exports <code>createAgentGuardClient</code> and provider wrappers (<code>wrapOpenAI</code>, and others) for LLM usage metadata. That client is not the getting-started path.</p>
+
+      <h2>Python</h2>
+      <p>The Python package <code>rakshex-agentguard</code> is AgentGuard only — there is no Python Agent Firewall client yet. A Python integrator who wants the Firewall today has to call the tRPC HTTP endpoints directly.</p>
     `,
   },
   api: {
@@ -364,13 +313,14 @@ response = wrapped_client.messages.create(
   quickstart: {
     title: "Quickstart Guides",
     breadcrumb: "Getting Started",
-    lead: "Get connected and start securing your environment.",
+    lead: "Start with the Agent Firewall. CLI scan and VS Code are optional later.",
     contentHtml: `
-      <p>Welcome to RaksHex. To get started, select the implementation path that fits your development workflow:</p>
+      <p>The public hello-world is the Node Agent Firewall client. Collection scanning and the editor extension are later surfaces.</p>
       <ul>
-        <li><strong><a href="/docs/quickstart/cli">CLI Integration</a>:</strong> Set up ad-hoc scanning in your local console or continuous integration pipelines.</li>
-        <li><strong><a href="/docs/quickstart/vscode">VS Code Extension</a>:</strong> Add inline security warnings and status bar budget metrics directly to your editor.</li>
-        <li><strong><a href="/docs/quickstart/mcp">Model Context Protocol (MCP)</a>:</strong> Expose allowlisted schema tools safely to AI agents.</li>
+        <li><strong><a href="/docs/agent-firewall">Agent Firewall</a>:</strong> Path-install <code>packages/sdk</code> and call <code>createAgentFirewallClient</code>.</li>
+        <li><strong><a href="/docs/quickstart/cli">CLI scan</a>:</strong> Optional later. Not on the public npm registry this week.</li>
+        <li><strong><a href="/docs/quickstart/vscode">VS Code extension</a>:</strong> Optional editor integration. Not primary onboarding.</li>
+        <li><strong><a href="/docs/quickstart/mcp">Model Context Protocol (MCP)</a>:</strong> Optional allowlisted tools for coding agents.</li>
       </ul>
     `,
   },

@@ -72,8 +72,8 @@ export default async function DocSubPage({ params }: PageProps) {
         <Link href="/docs" className="docs-link">
           ← Back to overview
         </Link>
-        <Link href="/register" className="docs-cta">
-          Try RaksHex Free
+        <Link href="/waitlist" className="docs-cta">
+          Request access
         </Link>
       </div>
     </article>
