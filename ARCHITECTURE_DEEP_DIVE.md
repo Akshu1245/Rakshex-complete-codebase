@@ -1,288 +1,197 @@
-# How Rakshex Works: Architecture Deep Dive
+# RaksHex Architecture Deep Dive
 
-> Technical explanation for developers, investors, and technical writers.
-> Date: 2026-05-17
+> **Refreshed:** 2026-08-28. This document explains implemented architecture. It does not assert certifications, patent status, production benchmarks, or scale limits that are not demonstrated by the repository release evidence.
 
----
+For the compact canonical map, see `docs/ARCHITECTURE.md`. For current engineering status and claim boundaries, read `CLAUDE.md` first.
 
-## 1. SYSTEM OVERVIEW
+## 1. System context
 
-Rakshex is a VS Code extension + Node.js backend that protects AI applications from:
+RaksHex is an **AI Action Control Plane** with scanning and governance surfaces around a shared API/control plane.
 
-1. Hidden LLM costs
-2. Infinite agent loops
-3. API security vulnerabilities
+```text
+Browser / VS Code / CLI / GitHub / Node SDK / Python SDK
+                          |
+                          v
+                 apps/api (Express + tRPC)
+                   /        |         \
+                  v         v          v
+            PostgreSQL    Redis      BullMQ workers
+                  |         |
+                  |         +--> low-latency control/cache/queue paths
+                  +------------> durable tenant, policy, audit and usage state
 
-```
-Developer's Machine          Rakshex Cloud
-┌──────────────────┐       ┌──────────────────────────┐
-│ VS Code          │◄─────►│ Node.js API (tRPC)       │
-│ ├─ Sidebar       │  WS   │ ├─ Auth (JWT)            │
-│ ├─ Status Bar    │       │ ├─ Scanner Engine        │
-│ ├─ Security Panel│       │ ├─ AgentGuard            │
-│ └─ Welcome View  │       │ ├─ Queue (BullMQ)        │
-└──────────────────┘       │ ├─ Vault (AES-256)     │
-       │                   │ └─ Telemetry             │
-       │                   └──────────────────────────┘
-       │                            │
-       │                   ┌────────┴────────┐
-       │                   │ MySQL    Redis   │
-       │                   │ (data)   (cache) │
-       │                   └─────────────────┘
-       │
-       ▼
-LLM Providers
-(OpenAI, Anthropic, etc.)
+RaksHex-routed provider/action traffic
+                          |
+                          v
+          Agent Firewall / gateway enforcement
+                          |
+             ALLOW -------+------- DENY
+               |                    |
+       credential mediation       no provider/action execution
+               |
+               v
+          provider/action target
 ```
 
----
+Primary repository applications:
 
-## 2. THE SCANNING ENGINE
+- `apps/api` — API, authentication, tenancy, gateway and enforcement paths
+- `apps/web` — product website and operator dashboard
+- `apps/worker` plus API queue workers — asynchronous jobs
+- `apps/vscode-extension` — editor integration
+- `apps/cli` — local/CI scanning
 
-### What It Does
+Primary packages:
 
-Analyzes API collections (Postman, OpenAPI, Bruno) for security issues.
+- `@rakshex/action-control` — Agent Firewall/delegated-authority primitives
+- `@rakshex/policy-engine` — policy evaluation
+- `@rakshex/database` — PostgreSQL schema/migrations
+- `@rakshex/scanner-core` — deterministic scanning
+- `@rakshex/pricing-engine` — versioned pricing/cost calculation
+- `@rakshex/sdk` — Node AgentGuard + Agent Firewall client
+- `rakshex-agentguard` source — Python AgentGuard + Agent Firewall client
+- `@rakshex/mcp-security` — MCP security analysis
+- `@rakshex/compliance-engine` — evidence/control mapping
 
-### How It Works
+## 2. Agent Firewall: the strategic action path
 
-**Step 1: Parse**
+The core design point is to authorize a consequential **action before it executes**, rather than only observing the surrounding AI session.
 
-```
-Collection JSON → Extract endpoints, headers, body, auth
-```
+Canonical flow:
 
-**Step 2: Detect**
+1. An agent proposes a semantic action such as `financial.refund`.
+2. RaksHex resolves the agent/workspace identity and delegated capability constraints.
+3. The policy engine evaluates the action context.
+4. A `DENY` stops the RaksHex-mediated execution path.
+5. An `ALLOW` may release a centrally mediated credential for the authorised operation.
+6. Authorization/action evidence is recorded in the Action Ledger/audit path.
 
-```
-For each endpoint:
-  - Check for secrets in headers/body
-  - Verify auth presence on mutating methods
-  - Detect injection patterns in query params
-  - Flag debug headers in production
-  - Check for integer IDs (IDOR risk)
-  - Validate HTTPS usage
-```
+Delegated authority is attenuated: a child capability should not gain authority its parent did not have.
 
-**Step 3: Enrich**
+### Enforcement boundary
 
-```
-Raw finding → Enriched finding:
-  + Confidence score (0-100)
-  + What happened
-  + Why it matters
-  + How dangerous
-  + How to fix
-  + Evidence snippets
-  + Reference URLs (CWE, OWASP)
-```
+A RaksHex decision governs traffic/actions that actually pass through the RaksHex enforcement path. It is not truthful to claim that a gateway kill switch universally disables traffic sent directly to a provider outside RaksHex. Provider-native controls are used only where an adapter and customer-authorised provider capability actually support them.
 
-**Step 4: Deduplicate**
+## 3. LLM gateway governance
 
-```
-Same endpoint + same CWE = one finding
-Merge evidence, take highest confidence
-```
+The repository contains OpenAI-compatible and Anthropic Messages gateway paths. A governed request can be checked against:
 
-**Step 5: Prioritize**
+- workspace/identity/project/agent kill-switch state
+- applicable hard gateway budget
+- supported policy constraints
+- workspace-scoped credentials and attribution
 
-```
-Sort by: Severity → Confidence → Fix ease
-```
+Durable kill-switch state is stored in PostgreSQL and the low-latency propagation path uses Redis. Enforcement reconciles durable state so a cache miss must not silently clear a durable active switch.
 
----
+Budget enforcement distinguishes modes:
 
-## 3. AGENTGUARD (The Kill Switch)
+- `gateway` — hard enforcement on RaksHex-routed traffic
+- `provider_native` — only when the provider adapter supports a real provider-side control
+- `monitor_only` — visibility/alerting without pretending RaksHex blocked provider traffic
 
-### What It Does
+## 4. Team AI governance and provider adapters
 
-Monitors LLM API calls in real-time and stops anomalous behavior.
+Provider visibility is capability-specific. The control plane normalizes supported seat, usage and spend information into workspace-scoped records while retaining source/confidence semantics.
 
-### How It Works
+Valid capability outcomes include `NOT_IMPLEMENTED`, `NOT_CONFIGURED`, unsupported/unavailable states, partial syncs, imported data and estimates. Those are deliberate honesty states, not UI failures that should be converted into fake success.
 
-**Step 1: Intercept**
+Usage reporting supports bounded windows (`since` and `until`) and aggregates by member, provider, model and date.
 
-```
-Every outbound LLM API call passes through AgentGuard proxy
-```
+## 5. Scanning flow
 
-**Step 2: Analyze Patterns**
+A collection/security scan follows this broad path:
 
-```
-Track per API key:
-  - Call rate (calls/minute)
-  - Token burn rate (tokens/minute)
-  - Cost trajectory ($/hour)
-  - Recursion depth (A calls B calls A)
-```
+1. Parse an imported Postman/OpenAPI-compatible input through size/structure limits.
+2. Normalize endpoints and relevant security metadata.
+3. Run deterministic scanner rules from `@rakshex/scanner-core`.
+4. Persist workspace-scoped scan/findings state.
+5. Expose findings through the web, CLI, VS Code and supported GitHub paths.
 
-**Step 3: Detect Anomalies**
+Scanner findings are evidence produced by implemented rules. They are not a substitute for a formal penetration test or certification.
 
-```
-Trigger if:
-  - > 20 calls in 60 seconds (infinite loop)
-  - Cost > 3× baseline (cost spike)
-  - Recursion depth > 5 (runaway agent)
-  - Duplicate prompts > 80% (retry storm)
-```
+## 6. Policy architecture
 
-**Step 4: Kill Switch**
+There are two related policy inputs without a second competing evaluator:
 
-```
-On trigger:
-  1. Block the next API call
-  2. Return error to calling code
-  3. Alert developer via VS Code notification
-  4. Log security event
-  5. Update dashboard
-```
+- dashboard-authored `policy_rules`
+- static YAML policy-as-code documents
 
-### Latency
+Dashboard rules pass through the API adapter into `@rakshex/policy-engine`, preserving active state, action pattern, deterministic priority/order, threat-level constraints, condition and effect. YAML policy-as-code has its own input schema but uses the same canonical policy-engine package for evaluation behavior.
 
-```
-Detection: < 10ms
-Kill switch activation: < 50ms
-Total overhead per call: < 5ms
-```
+## 7. Credential and secret handling
 
----
+Important implemented boundaries:
 
-## 4. HIDDEN COST DETECTION
+- workspace/API keys are hashed where the product only needs verification
+- stored provider/control-plane credentials use the encrypted vault path
+- `RAKSHEX_VAULT_KEY` is a production-required root secret
+- VS Code uses SecretStorage for extension credentials
+- production configuration must provide explicit secrets rather than repository-known defaults
+- server secrets must never be exposed through `NEXT_PUBLIC_*`
 
-### The Problem
+Credential mediation is what makes an Agent Firewall `DENY` meaningful for mediated operations: a denied action does not receive the protected credential through that path.
 
-OpenAI's API response includes:
+## 8. Data and tenancy
 
-```json
-{
-  "usage": {
-    "prompt_tokens": 100,
-    "completion_tokens": 50,
-    "total_tokens": 150
-  }
-}
-```
+The database is **PostgreSQL**, not MySQL. Redis is used for cache/queue/control propagation, and BullMQ provides asynchronous job processing.
 
-But hidden reasoning tokens (for o1 models) are NOT included in `completion_tokens`.
+Core data classes include:
 
-### How We Detect
+| Class | Examples | Main handling expectation |
+| --- | --- | --- |
+| Secrets | workspace keys, provider credentials | hash or encrypt; redact from logs |
+| Tenant identity | users, memberships, provider identities | workspace-scoped authorization |
+| Governance telemetry | tokens, cost, provider/model metadata | workspace scoped; source/confidence retained |
+| Findings | scan evidence, MCP/security results | workspace scoped |
+| Action evidence | authorization decisions/receipts/ledger records | durable audit/evidence path |
 
-```
-Step 1: Intercept API call
-Step 2: Record visible tokens from response
-Step 3: Estimate hidden reasoning tokens:
-  hidden = total_latency × model_speed - visible_tokens
-Step 4: Calculate real cost:
-  real_cost = (visible_tokens + hidden_tokens) × price_per_token
-Step 5: Alert if real_cost > 3 × visible_cost
+Tenant isolation and authorization are release-gate concerns; a passing UI alone is not evidence of isolation.
+
+## 9. Runtime and deployment baseline
+
+Declared runtime baseline:
+
+- Node.js 24.x
+- pnpm 10.32.1
+- PostgreSQL
+- Redis + BullMQ
+- Python SDK supports Python >=3.10
+
+Container targets exist for API, worker and web. The repository release workflow builds/scans the production images, applies migrations to a real PostgreSQL service, performs backup/restore smoke testing, and runs Playwright smoke coverage.
+
+Use the canonical migration command:
+
+```bash
+pnpm db:migrate
 ```
 
-### Patent
+`packages/database/src/migrate.order.test.ts` protects the explicit migration order from silently omitting a forward SQL migration.
 
-This method is patent pending (NHCE/DEV/2026/001).
+## 10. Observability and failure behavior
 
----
+The API provides health/readiness endpoints and metrics instrumentation. Optional OpenTelemetry/Sentry integrations are configuration-dependent.
 
-## 5. SECURITY ARCHITECTURE
+Important fail-closed expectations include:
 
-### Defense in Depth
+- production startup rejects missing critical configuration
+- production queue/enforcement code must not silently switch to development in-memory behavior when Redis is absent
+- gateway enforcement state/database failures should not become implicit `ALLOW`
+- unsupported provider-native operations should remain explicit unsupported states
 
-| Layer              | Protection                                          |
-| ------------------ | --------------------------------------------------- |
-| **Network**        | TLS 1.3, CORS strict, rate limiting                 |
-| **Application**    | JWT auth, CSRF tokens, input validation             |
-| **Data**           | AES-256-GCM at rest, parameterized queries          |
-| **Infrastructure** | Connection pooling, circuit breakers, health checks |
-| **Monitoring**     | Security event logging, anomaly detection           |
+## 11. Evidence and performance claims
 
-### Secret Handling
+This document intentionally does **not** publish fixed numbers such as “<5 ms overhead,” “50,000 users,” or fixed concurrent-scan capacity without a reproducible benchmark tied to an exact commit and environment.
 
-```
-API keys stored in:
-  - VS Code: SecretStorage (OS keychain)
-  - Server: Vault with AES-256-GCM
-  - Never in logs, never in error messages
-```
+Likewise, cost data can contain exact provider-reported values, imported values or estimates depending on source. UI/API surfaces must preserve that distinction rather than presenting every number as provider-verified billing truth.
 
----
+## 12. Compliance and intellectual-property claims
 
-## 6. SCALING ARCHITECTURE
+The repository provides compliance evidence/control mapping. It does **not** itself prove SOC 2, ISO, GDPR, EU AI Act or other certification/compliance status.
 
-### Current (Single Node)
+This repository documentation makes **no patent-status claim**. Any patent/application statement must be supported by separately verified legal records before it appears in public product copy.
 
-- ~500 concurrent users
-- ~100 req/s webhooks
-- ~50 concurrent scans
+## 13. Release proof
 
-### Scaling Path
+Architecture being implemented is not the same as a release being safe to promote. For the exact commit being promoted, require both GitHub **CI** and the independent **Security scan** to be green. The release gate covers formatting, lint, type checking, Node tests, Python SDK tests, PostgreSQL/Redis integration, security tests, builds, Docker, migration/restore, Playwright smoke, dependency audit, secret scan, SBOM and container scanning.
 
-```
-1,000 users   → Read replica + CDN
-5,000 users   → Separate scan worker pool
-10,000 users  → Redis Cluster + DB sharding
-50,000 users  → Microservices (gateway, scanner, realtime)
-```
-
----
-
-## 7. TECHNOLOGY CHOICES
-
-### Why TypeScript + Node.js?
-
-- Team expertise
-- Fast iteration
-- Rich ecosystem (tRPC, Drizzle, Zod)
-- Same language across stack
-
-### Why tRPC over REST?
-
-- End-to-end type safety
-- No API drift
-- Built-in batching
-- Automatic validation
-
-### Why MySQL over Postgres?
-
-- Existing team expertise
-- JSON support for flexible collection storage
-- Easier managed hosting (Render)
-
-### Why Redis?
-
-- Rate limiting (sliding window)
-- Session cache
-- Pub/sub for real-time
-- Job queues (BullMQ)
-
----
-
-## 8. DEPLOYMENT
-
-### CI/CD Pipeline
-
-```
-Push to main
-    ↓
-GitHub Actions:
-  1. Lint + Type Check
-  2. Unit Tests (596 tests)
-  3. Security Audit (dependency + secrets + SAST)
-  4. E2E Tests (Playwright)
-  5. Docker Build + Push to GHCR
-    ↓
-Render deploy (API)
-Vercel deploy (Frontend)
-VS Code Marketplace publish (Extension)
-```
-
-### Environments
-
-| Env        | Purpose            | Data        |
-| ---------- | ------------------ | ----------- |
-| Local      | Development        | Mock/seeded |
-| Staging    | QA + chaos testing | Synthetic   |
-| Production | Live users         | Real        |
-
----
-
-_Architecture documentation maintained by engineering team._
-_Updated when significant changes occur._
+External production configuration—DNS/TLS, SMTP, provider/payment credentials, monitoring ownership, legal/tax sign-off and the later Vercel promotion—remains separate from repository correctness.
