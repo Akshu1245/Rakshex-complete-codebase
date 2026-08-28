@@ -4,7 +4,7 @@ const mocks = vi.hoisted(() => ({ getDb: vi.fn(), priceModelUsage: vi.fn() }));
 vi.mock("@rakshex/database", () => ({ gatewayCallAttribution: {} }));
 vi.mock("../../db", () => ({ getDb: mocks.getDb }));
 vi.mock("../billing/modelPriceRegistry", () => ({ priceModelUsage: mocks.priceModelUsage }));
-import { persistSettledAttribution } from "./gatewayAttribution";
+import { persistSettledAttribution, parseGatewayMetadataHeader } from "./gatewayAttribution";
 
 describe("gateway attribution settlement", () => {
   beforeEach(() => {
@@ -36,5 +36,21 @@ describe("gateway attribution settlement", () => {
     });
     expect(mocks.priceModelUsage).not.toHaveBeenCalled();
     expect(result.costUsd).toBe(0.031);
+  });
+
+  it("parses bounded feature and customer tags and drops oversized or secret-like values", () => {
+    const encoded = encodeURIComponent(
+      JSON.stringify({
+        featureTags: { surface: "refunds" },
+        customerTags: { team: "payments", note: "" },
+        ignored: { nested: true },
+      }),
+    );
+    expect(parseGatewayMetadataHeader(encoded)).toEqual({
+      featureTags: { surface: "refunds" },
+      customerTags: { team: "payments" },
+    });
+    expect(parseGatewayMetadataHeader("not-json")).toEqual({});
+    expect(parseGatewayMetadataHeader("x".repeat(4097))).toEqual({});
   });
 });

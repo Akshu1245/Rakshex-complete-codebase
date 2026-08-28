@@ -14,7 +14,7 @@ import pg from "pg";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DRIZZLE_DIR = path.resolve(__dirname, "../drizzle");
 
-const MIGRATION_ORDER = [
+export const MIGRATION_ORDER = [
   "0000_curly_dark_phoenix.sql",
   "0001_notifications_and_feature_flags.sql",
   "0002_auth_and_settings.sql",

@@ -88,6 +88,34 @@ describe("createRakshexOpenAI", () => {
 
     expect(() => createRakshexOpenAI(FakeOpenAI)).toThrow("RAKSHEX_GATEWAY_URL is required");
   });
+
+  it("encodes bounded attribution metadata and rejects oversized headers", () => {
+    const client = createRakshexOpenAI(FakeOpenAI, {
+      apiKey: "rk_workspace_test",
+      gatewayUrl: "https://gateway.rakshex.test",
+      metadata: {
+        featureTags: { surface: "refunds" },
+        customerTags: { team: "payments" },
+      },
+    });
+
+    expect(client.options.defaultHeaders?.["x-rakshex-metadata"]).toBe(
+      encodeURIComponent(
+        JSON.stringify({
+          featureTags: { surface: "refunds" },
+          customerTags: { team: "payments" },
+        }),
+      ),
+    );
+
+    expect(() =>
+      createRakshexOpenAI(FakeOpenAI, {
+        apiKey: "rk_workspace_test",
+        gatewayUrl: "https://gateway.rakshex.test",
+        metadata: { customerTags: { note: "n".repeat(5000) } },
+      }),
+    ).toThrow("Rakshex OpenAI metadata exceeds the 4096-byte header limit");
+  });
 });
 
 describe("normalizeRakshexGatewayUrl", () => {

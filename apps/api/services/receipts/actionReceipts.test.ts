@@ -7,6 +7,7 @@ import {
   createSignedReceiptEntry,
   receiptBundleJson,
   renderSignedReceiptPdf,
+  signerFromEnvironment,
   verifyReceiptBundle,
   verifyReceiptPdf,
   type ReceiptBundle,
@@ -111,5 +112,39 @@ describe("signed action receipts", () => {
     expect(offset).toBeGreaterThan(0);
     tampered[offset] = tampered[offset]! ^ 1;
     expect(verifyReceiptPdf(tampered, trustedKeys)).toMatchObject({ valid: false });
+  });
+
+  it("fails closed when receipt signing environment is missing", () => {
+    const previousKey = process.env.RAKSHEX_RECEIPT_SIGNING_PRIVATE_KEY;
+    const previousId = process.env.RAKSHEX_RECEIPT_SIGNING_KEY_ID;
+    delete process.env.RAKSHEX_RECEIPT_SIGNING_PRIVATE_KEY;
+    delete process.env.RAKSHEX_RECEIPT_SIGNING_KEY_ID;
+    try {
+      expect(() => signerFromEnvironment()).toThrow(/RAKSHEX_RECEIPT_SIGNING_PRIVATE_KEY/);
+    } finally {
+      if (previousKey == null) delete process.env.RAKSHEX_RECEIPT_SIGNING_PRIVATE_KEY;
+      else process.env.RAKSHEX_RECEIPT_SIGNING_PRIVATE_KEY = previousKey;
+      if (previousId == null) delete process.env.RAKSHEX_RECEIPT_SIGNING_KEY_ID;
+      else process.env.RAKSHEX_RECEIPT_SIGNING_KEY_ID = previousId;
+    }
+  });
+
+  it("loads an Ed25519 signer from environment PEM with literal newline escapes", () => {
+    const { privateKey } = crypto.generateKeyPairSync("ed25519");
+    const pem = privateKey.export({ type: "pkcs8", format: "pem" }).toString();
+    const previousKey = process.env.RAKSHEX_RECEIPT_SIGNING_PRIVATE_KEY;
+    const previousId = process.env.RAKSHEX_RECEIPT_SIGNING_KEY_ID;
+    process.env.RAKSHEX_RECEIPT_SIGNING_PRIVATE_KEY = pem.replace(/\n/g, "\\n");
+    process.env.RAKSHEX_RECEIPT_SIGNING_KEY_ID = "receipts-fixture";
+    try {
+      const signer = signerFromEnvironment();
+      expect(signer.keyId).toBe("receipts-fixture");
+      expect(signer.privateKey.asymmetricKeyType).toBe("ed25519");
+    } finally {
+      if (previousKey == null) delete process.env.RAKSHEX_RECEIPT_SIGNING_PRIVATE_KEY;
+      else process.env.RAKSHEX_RECEIPT_SIGNING_PRIVATE_KEY = previousKey;
+      if (previousId == null) delete process.env.RAKSHEX_RECEIPT_SIGNING_KEY_ID;
+      else process.env.RAKSHEX_RECEIPT_SIGNING_KEY_ID = previousId;
+    }
   });
 });

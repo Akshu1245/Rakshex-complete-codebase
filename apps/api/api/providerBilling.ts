@@ -22,6 +22,15 @@ export const BILLING_CHECKSUM_COPY = {
     "This key is used only for OpenAI Costs and Usage reads. It is never used to send prompts.",
 } as const;
 
+export function openAiBillingKeyShapeError(secret: string): string | null {
+  const key = secret.trim();
+  if (!key) return "OpenAI admin key is required";
+  if (key.startsWith("sk-") && !key.startsWith("sk-admin-")) {
+    return "Use an OpenAI organization Admin API key with read access to Costs and Usage";
+  }
+  return null;
+}
+
 async function readAccess(workspaceId: number, userId: number) {
   return assertWorkspacePermission(workspaceId, userId, "billing", "read");
 }
@@ -35,18 +44,11 @@ function noDb(): never {
 }
 
 async function assertOpenAiAdminReadAccess(secret: string) {
+  const shapeError = openAiBillingKeyShapeError(secret);
+  if (shapeError) {
+    throw new TRPCError({ code: "BAD_REQUEST", message: shapeError });
+  }
   const key = secret.trim();
-  if (!key) {
-    throw new TRPCError({ code: "BAD_REQUEST", message: "OpenAI admin key is required" });
-  }
-
-  if (key.startsWith("sk-") && !key.startsWith("sk-admin-")) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: "Use an OpenAI organization Admin API key with read access to Costs and Usage",
-    });
-  }
-
   const end = Math.floor(Date.now() / 1000);
   const start = end - 24 * 60 * 60;
   const urls = [

@@ -68,6 +68,7 @@ export {
 } from "./openaiGateway.js";
 export type {
   OpenAICompatibleConstructor,
+  RakshexOpenAIMetadata,
   RakshexOpenAIOptions,
   RakshexOpenAIProvider,
 } from "./openaiGateway.js";
