@@ -33,10 +33,7 @@ export const actionReceiptLedger = pgTable(
       table.workspaceId,
       table.id,
     ),
-    requestIdx: index("action_receipt_ledger_request_idx").on(
-      table.workspaceId,
-      table.requestId,
-    ),
+    requestIdx: index("action_receipt_ledger_request_idx").on(table.workspaceId, table.requestId),
   }),
 );
 

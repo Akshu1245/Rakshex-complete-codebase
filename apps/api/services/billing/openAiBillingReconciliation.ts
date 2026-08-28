@@ -16,8 +16,7 @@ import * as db from "../../db";
 import { decryptSecret } from "../vault";
 
 const OPENAI_COSTS_URL = "https://api.openai.com/v1/organization/costs";
-const OPENAI_COMPLETIONS_USAGE_URL =
-  "https://api.openai.com/v1/organization/usage/completions";
+const OPENAI_COMPLETIONS_USAGE_URL = "https://api.openai.com/v1/organization/usage/completions";
 const DRIFT_LIMIT = 0.01;
 
 const nullableString = z.string().nullable().optional();
@@ -103,7 +102,10 @@ export interface ProviderEvidenceRow {
 }
 
 function sourceId(kind: "cost" | "usage", values: readonly unknown[]): string {
-  return crypto.createHash("sha256").update(JSON.stringify([kind, ...values])).digest("hex");
+  return crypto
+    .createHash("sha256")
+    .update(JSON.stringify([kind, ...values]))
+    .digest("hex");
 }
 
 export function normalizeOpenAiCosts(page: unknown): ProviderEvidenceRow[] {
@@ -302,7 +304,10 @@ async function fetchAllEvidence(
   let page: string | undefined;
 
   do {
-    const payload = await fetchAdminJson(buildAdminUrl(endpoint, startTime, endTime, page), adminKey);
+    const payload = await fetchAdminJson(
+      buildAdminUrl(endpoint, startTime, endTime, page),
+      adminKey,
+    );
     if (endpoint === "costs") {
       const parsed = openAiCostsPageSchema.parse(payload);
       all.push(...normalizeOpenAiCosts(parsed));
@@ -451,7 +456,8 @@ export async function reconcileOpenAiBilling(input: {
           usageRowCount: usageRows.length,
           source: "openai_admin_api",
           driftThreshold: DRIFT_LIMIT,
-          allocationMethod: allocationFactor == null ? "unavailable" : "pro_rata_gateway_settled_cost",
+          allocationMethod:
+            allocationFactor == null ? "unavailable" : "pro_rata_gateway_settled_cost",
           allocationFactor,
         },
       })
@@ -474,7 +480,8 @@ export async function reconcileOpenAiBilling(input: {
             usageRowCount: usageRows.length,
             source: "openai_admin_api",
             driftThreshold: DRIFT_LIMIT,
-            allocationMethod: allocationFactor == null ? "unavailable" : "pro_rata_gateway_settled_cost",
+            allocationMethod:
+              allocationFactor == null ? "unavailable" : "pro_rata_gateway_settled_cost",
             allocationFactor,
           },
           reconciledAt: new Date(),

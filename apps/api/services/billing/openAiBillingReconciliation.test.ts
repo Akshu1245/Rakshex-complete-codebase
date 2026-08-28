@@ -29,11 +29,7 @@ describe("OpenAI billing reconciliation", () => {
     const url = new URL(__test.buildAdminUrl("costs", 100, 200));
     expect(url.pathname).toBe("/v1/organization/costs");
     expect(url.searchParams.get("bucket_width")).toBe("1d");
-    expect(url.searchParams.getAll("group_by")).toEqual([
-      "project_id",
-      "api_key_id",
-      "line_item",
-    ]);
+    expect(url.searchParams.getAll("group_by")).toEqual(["project_id", "api_key_id", "line_item"]);
   });
 
   it("normalizes cached tokens from the documented completions Usage API shape", () => {
