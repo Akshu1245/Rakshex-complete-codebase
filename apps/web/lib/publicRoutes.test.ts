@@ -19,13 +19,21 @@ describe("isPublicPath", () => {
     expect(isPublicPath("/trust")).toBe(true);
   });
 
-  it("treats docs and the /documentation alias as public, and keeps /get-started gated", () => {
+  it("lets a logged-out stranger read public docs", () => {
     expect(PUBLIC_PATH_PREFIXES).toContain("/docs");
     expect(PUBLIC_PATH_PREFIXES).toContain("/documentation");
-    expect(PUBLIC_PATH_PREFIXES).not.toContain("/get-started");
     expect(isPublicPath("/docs")).toBe(true);
     expect(isPublicPath("/docs/agent-firewall")).toBe(true);
+    expect(isPublicPath("/docs/getting-started")).toBe(true);
     expect(isPublicPath("/documentation")).toBe(true);
+  });
+
+  it("treats /documentation as a docs-named URL (redirects to /docs)", () => {
+    expect(isPublicPath("/documentation")).toBe(true);
+  });
+
+  it("keeps /get-started invite-gated as the in-app start", () => {
+    expect(PUBLIC_PATH_PREFIXES).not.toContain("/get-started");
     expect(isPublicPath("/get-started")).toBe(false);
   });
 
@@ -42,5 +50,7 @@ describe("isPublicPath", () => {
     expect(isPublicPath("/compliance")).toBe(false);
     expect(isPublicPath("/billing")).toBe(false);
     expect(isPublicPath("/collections")).toBe(false);
+    expect(isPublicPath("/onboarding")).toBe(false);
+    expect(isPublicPath("/api-keys")).toBe(false);
   });
 });

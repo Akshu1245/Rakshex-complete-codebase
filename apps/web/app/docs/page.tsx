@@ -1,10 +1,17 @@
 import React from "react";
 import Link from "next/link";
+import { DocsCodeBlock } from "./DocsCodeBlock";
+import {
+  FIREWALL_ADD_LOCAL,
+  FIREWALL_AUTHORIZE_AND_RUN,
+  FIREWALL_CLIENT,
+  FIREWALL_INSTALL,
+} from "./firewallSnippets";
 
 export const metadata = {
-  title: "Documentation",
+  title: "Docs — RaksHex Agent Firewall",
   description:
-    "RaksHex Agent Firewall documentation: semantic action authorization, delegated authority, credential mediation, and the Action Ledger.",
+    "Public getting started for the RaksHex Agent Firewall. Create a Node client with createAgentFirewallClient. Reading does not require an account.",
   alternates: { canonical: "/docs" },
 };
 
@@ -15,89 +22,90 @@ export default function DocsOverview() {
 
       <div className="docs-article-header">
         <div>
-          <h1>Overview</h1>
+          <h1>Agent Firewall</h1>
           <p className="docs-lead">
-            The AI-native security and governance platform for production AI agents.
+            Runtime authorization for autonomous AI actions. Competitors govern the session. RaksHex
+            governs the action.
           </p>
         </div>
-        <button className="docs-copy-btn">
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <rect x="9" y="9" width="13" height="13" rx="2" />
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-          </svg>
-          Copy page
-        </button>
       </div>
 
       <p>
-        RaksHex gives your AI agents and APIs real-time security scanning, LLM cost attribution,
-        prompt injection blocking, and compliance evidence mapping — all in one platform.
+        These docs are public. You do not need an account to read them. The first step is the Node
+        SDK client <code>createAgentFirewallClient</code> from <code>@rakshex/sdk</code> — not the
+        CLI scanner, and not the VS Code extension.
       </p>
 
-      <h2 id="connect-first">Connect first</h2>
+      <h2 id="hello-world">Hello world</h2>
       <p>
-        Required setup. Pick one path to link your environment to RaksHex before you start building.
-        Start with the CLI for a universal terminal-based setup; add the VS Code extension if you
-        prefer in-editor visibility.
+        <code>@rakshex/sdk</code> is the Agent Firewall client. It is not published on the public
+        npm registry during private beta. Install it from the repository, then create a client:
       </p>
 
+      <DocsCodeBlock caption="Build the SDK from this repository" code={FIREWALL_INSTALL} />
+      <DocsCodeBlock caption="Add the local package to your app" code={FIREWALL_ADD_LOCAL} />
+      <DocsCodeBlock caption="Create the Agent Firewall client" code={FIREWALL_CLIENT} />
+      <DocsCodeBlock caption="Authorize a semantic action" code={FIREWALL_AUTHORIZE_AND_RUN} />
+
+      <p>
+        <Link href="/docs/agent-firewall" className="docs-link">
+          Full Agent Firewall getting started →
+        </Link>
+      </p>
+
+      <h2 id="running-vs-reading">Reading vs running</h2>
+      <p>
+        Reading this page does not require a login. Running the client against the live API does: you
+        need a private-beta invite, a workspace API key (<code>rk_...</code>), and a capability token
+        (<code>rk_cap_...</code>). Request access on the waitlist if you do not have keys yet.
+      </p>
+      <p>
+        <Link href="/waitlist" className="docs-link">
+          Request private-beta access →
+        </Link>
+      </p>
+
+      <h2 id="optional-later">Optional later</h2>
+      <p>
+        Collection scanning and the editor extension are later surfaces. They are not the hello-world
+        path.
+      </p>
       <div className="docs-card-grid cols-2">
         <Link href="/docs/quickstart/cli" className="docs-card">
           <div className="docs-card-icon">›_</div>
-          <div className="docs-card-title">Connect via CLI</div>
-          <p>npx RaksHex scan ./collection.json — works in any terminal.</p>
+          <div className="docs-card-title">CLI scan</div>
+          <p>Offline collection scanning. Optional after the Agent Firewall client.</p>
         </Link>
         <Link href="/docs/quickstart/vscode" className="docs-card">
           <div className="docs-card-icon">⚡</div>
-          <div className="docs-card-title">Connect via VS Code</div>
-          <p>Install the RaksHex extension for inline scanning and cost alerts.</p>
+          <div className="docs-card-title">VS Code extension</div>
+          <p>Editor integration. Not the first onboarding step.</p>
         </Link>
       </div>
 
-      <h2 id="pick-a-framework">Pick a framework</h2>
-
-      <div className="docs-card-grid cols-5">
-        {["FastAPI", "Express", "Django", "Flask", "NestJS"].map((fw) => (
-          <Link
-            key={fw}
-            href={`/docs/frameworks/${fw.toLowerCase()}`}
-            className="docs-card docs-card-sm"
-          >
-            <div className="docs-card-title">{fw}</div>
-          </Link>
-        ))}
-      </div>
-      <Link href="/docs/quickstart" className="docs-link">
-        All quickstart guides →
-      </Link>
-
-      <h2 id="core-products">Core products</h2>
-
+      <h2 id="other-surfaces">Other surfaces</h2>
+      <p>
+        Scanner, cost, and evidence export exist in the product. They are not the core path. The
+        Agent Firewall is.
+      </p>
       <div className="docs-card-grid cols-2">
         {[
           {
             title: "Security Scanner",
             icon: "🔒",
-            desc: "Prompt injection payload library. OWASP Top 10.",
+            desc: "Prompt-injection and API collection scanning.",
             href: "/docs/security-scanner",
           },
           {
             title: "Kill Switch",
             icon: "⚡",
-            desc: "Autonomous circuit breaker.",
+            desc: "Circuit breaker for budget and policy trips.",
             href: "/docs/kill-switch",
           },
           {
             title: "Cost Monitor",
             icon: "💰",
-            desc: "Trend forecasting. Per-model breakdown.",
+            desc: "Token and model cost visibility.",
             href: "/docs/cost-monitor",
           },
           {
@@ -109,17 +117,17 @@ export default function DocsOverview() {
           {
             title: "Shadow API",
             icon: "👻",
-            desc: "Static route extraction for all major frameworks.",
+            desc: "Static route extraction for common frameworks.",
             href: "/docs/shadow-api",
           },
           {
             title: "Credential Scanner",
             icon: "🔑",
-            desc: "AWS, GitHub, Aadhaar, PAN detection.",
+            desc: "Detects leaked cloud keys and secrets in collections.",
             href: "/docs/credentials",
           },
           {
-            title: "Compliance Reports",
+            title: "Compliance evidence",
             icon: "📋",
             desc: "Map controls to PCI DSS, SOC 2, and OWASP. Evidence, not a certification.",
             href: "/docs/compliance",

@@ -64,43 +64,25 @@ const nextConfig = {
       },
     ];
   },
-  async rewrites() {
-    return [
-      // All API traffic goes to the Node tRPC backend. The legacy Python
-      // FastAPI service has been retired; do not proxy unknown /api/* to a
-      // dead host or pages will silently 404 in production.
-      {
-        source: "/api/oauth/:path*",
-        destination: `${TS_BACKEND_URL}/api/oauth/:path*`,
-      },
-      {
-        source: "/api/trpc/:path*",
-        destination: `${TS_BACKEND_URL}/api/trpc/:path*`,
-      },
-      {
-        source: "/api/health",
-        destination: `${TS_BACKEND_URL}/api/health`,
-      },
-      {
-        source: "/api/create-order",
-        destination: `${TS_BACKEND_URL}/api/create-order`,
-      },
-      {
-        source: "/api/verify-payment",
-        destination: `${TS_BACKEND_URL}/api/verify-payment`,
-      },
-      {
-        source: "/api/waitlist",
-        destination: `${TS_BACKEND_URL}/api/waitlist`,
-      },
-      {
-        source: "/api/import/:path*",
-        destination: `${TS_BACKEND_URL}/api/import/:path*`,
-      },
-    ];
-  },
   async redirects() {
     return [
+      // Public CTA aliases must not hit the auth gate. Keep these in
+      // lib/publicRoutes.ts as well — proxy.ts runs before redirects.
+      {
+        source: "/get-started",
+        destination: "/docs/agent-firewall",
+        permanent: false,
+      },
+      {
+        source: "/documentation",
+        destination: "/docs/agent-firewall",
+        permanent: false,
+      },
+      {
+        source: "/docs/getting-started",
+        destination: "/docs/agent-firewall",
+        permanent: false,
+      },
       {
         source: "/legal/rakshex-terms-of-service.docx",
         destination: "/terms",
