@@ -62,7 +62,8 @@ export const LEGAL_DOCUMENTS: Record<LegalDocId, LegalDocument> = {
     id: "refund",
     slug: "refund",
     title: "Refund and Cancellation Policy",
-    description: "Self-serve cancellation, renewal, payment failure, and refund review process.",
+    description:
+      "Private beta: no self-serve checkout this week. Paid access is by invite or Order Form only.",
     effective: "12 July 2026",
     download: "/legal/rakshex-refund-cancellation-policy.docx",
     markdown: refund,

@@ -58,8 +58,9 @@ export default function CookiePolicy() {
           <section>
             <h2 className="text-xl font-semibold text-white">Optional providers</h2>
             <p className="mt-3">
-              Payment providers may use their own essential checkout technologies when you choose to
-              pay. Optional support chat loads only when configured and after optional consent. We
+              If and when a customer pays through a payment provider, that provider may use its own
+              essential payment technologies. There is no self-serve checkout on the Service this
+              week. Optional support chat loads only when configured and after optional consent. We
               do not enable advertising cookies by default.
             </p>
           </section>

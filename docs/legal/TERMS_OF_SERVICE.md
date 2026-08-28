@@ -36,11 +36,13 @@ The Service connects to third-party cloud, source-control, payment, identity, ob
 
 AI output, automated findings, cost estimates, compliance mappings, and remediation suggestions may be incomplete or incorrect. They are decision-support material, not legal advice, a certification, a penetration-test attestation, or a substitute for qualified human review. You are responsible for validating actions before production use.
 
-## 6. Fees, Taxes, Renewal, and Cancellation
+## 6. Access, Evaluation, and Paid Orders
 
-Prices, billing intervals, included usage, and plan limits appear at checkout or in an Order Form. Fees are exclusive of taxes unless stated otherwise. You authorise the selected payment provider to charge recurring fees. Self-serve subscriptions renew for the same billing period until cancelled. Cancellation takes effect at the end of the paid period unless law or an Order Form requires otherwise.
+This week the Service is in private beta. Access is by waitlist, evaluation, or invite. Evaluation prices may be shown for planning. They are not an offer to sell and do not start a paid subscription.
 
-The Refund and Cancellation Policy at https://rakshex.in/legal#refunds applies to self-serve purchases. Enterprise commitments, minimums, and service credits are governed by the Order Form and any incorporated SLA. We may suspend paid features after reasonable notice for overdue undisputed fees.
+RaksHex cannot take money this week. There is no live checkout, tax or GST collection, auto-renewal, or self-serve purchase. Paid access, if and when offered, is by invite or an executed Order Form only. An Order Form controls fees, taxes, term, cancellation, and any credits for that purchase.
+
+Self-serve cancellation, renewal, and refund terms do not apply this week because self-serve purchases are not offered. Contact legal@rakshex.in for notices about access or orders.
 
 ## 7. Confidentiality
 

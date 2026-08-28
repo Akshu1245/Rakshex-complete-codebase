@@ -50,11 +50,12 @@ export default function Terms() {
             </p>
           </section>
           <section>
-            <h2 className="text-xl font-semibold text-white">Fees and cancellation</h2>
+            <h2 className="text-xl font-semibold text-white">Access, evaluation, and paid orders</h2>
             <p className="mt-3">
-              Paid plans renew until cancelled. Pricing, usage limits, taxes, and billing intervals
-              are shown at checkout or in an Order Form. The Refund and Cancellation Policy governs
-              self-serve purchases; an executed Order Form governs enterprise commitments.
+              RaksHex is in private beta. Access is by waitlist, evaluation, or invite. Evaluation
+              prices may be shown for planning. We cannot take money this week: there is no live
+              checkout, tax or GST collection, auto-renewal, or self-serve purchase. Paid access, if
+              and when offered, is by invite or an executed Order Form only.
             </p>
           </section>
           <section>
@@ -79,8 +80,8 @@ export default function Terms() {
         </div>
 
         <div className="mt-12 border border-slate-800 p-6 text-sm text-slate-400">
-          The complete contract pack, including the Data Processing Addendum, enterprise SLA,
-          Acceptable Use Policy, and refund policy, is available in the{" "}
+          The complete contract pack, including the Data Processing Addendum, enterprise SLA, and
+          Acceptable Use Policy, is available in the{" "}
           <Link className="font-semibold text-[#14B8A6] hover:underline" href="/legal">
             RaksHex Legal Center
           </Link>

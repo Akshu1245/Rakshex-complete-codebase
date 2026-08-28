@@ -13,7 +13,8 @@ export const dynamic = "force-static";
 const documents = [
   {
     title: "Terms of Service",
-    description: "Online service terms, billing, acceptable use, confidentiality, and liability.",
+    description:
+      "Online service terms, acceptable use, confidentiality, and liability. Private-beta access is waitlist, evaluation, or invite.",
     href: "/terms",
     download: "/legal/rakshex-terms-of-service.docx",
     icon: Scale,
@@ -51,7 +52,8 @@ const documents = [
   },
   {
     title: "Refund and Cancellation Policy",
-    description: "Self-serve cancellation, renewal, payment failure, and refund review process.",
+    description:
+      "Private beta: no self-serve checkout this week. Paid access is by invite or Order Form only.",
     href: "/legal/refund",
     download: "/legal/rakshex-refund-cancellation-policy.docx",
     icon: FileText,
@@ -84,9 +86,11 @@ export default function LegalCenter() {
             Clear documents. Honest boundaries.
           </h1>
           <p className="mt-5 text-lg leading-8 text-slate-400">
-            These documents explain how RaksHex is sold, operated, secured, and governed. Enterprise
-            paperwork becomes binding when incorporated into an executed Order Form. Online copies
-            match the published 12 July 2026 customer pack.
+            These documents explain how RaksHex is offered, operated, secured, and governed. This
+            week is private beta: waitlist, evaluation, and invite login. Evaluation prices may be
+            shown; paid access is by invite or an executed Order Form only. There is no live
+            checkout, tax or GST collection, auto-renewal, or self-serve purchase. Enterprise
+            paperwork becomes binding when incorporated into an executed Order Form.
           </p>
         </header>
 
@@ -109,6 +113,12 @@ export default function LegalCenter() {
             </article>
           ))}
         </section>
+
+        <p className="mt-8 max-w-3xl text-sm leading-6 text-slate-500">
+          Word downloads of Terms and the Refund policy may still contain July 2026 self-serve
+          checkout clauses. Those clauses do not apply this week. The online pages are the current
+          private-beta access position.
+        </p>
 
         <section className="mt-12 border border-slate-800 p-7">
           <h2 className="text-2xl font-semibold text-white">Security and privacy requests</h2>

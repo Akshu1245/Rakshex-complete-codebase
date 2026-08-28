@@ -57,5 +57,12 @@ describe("baked legal pack", () => {
     expect(dpa).toMatch(/security@rakshex\.in/);
     expect(subprocessors).toMatch(/privacy@rakshex\.in/);
     expect(dpa).not.toMatch(/security@rakshex\.com/);
+    const refund = fs.readFileSync(
+      path.join(webDir, "content/legal/REFUND_CANCELLATION_POLICY.md"),
+      "utf8",
+    );
+    expect(refund).toMatch(/Effective date:\s*12 July 2026/);
+    expect(refund).toMatch(/cannot take money this week/);
+    expect(refund).not.toMatch(/shown at checkout/);
   });
 });
