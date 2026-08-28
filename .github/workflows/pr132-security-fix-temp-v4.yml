@@ -1,0 +1,45 @@
+name: PR132 security fix runner
+
+on:
+  push:
+    branches:
+      - ci-pr132-security-review-fixes
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Preserve patch script and switch to PR branch
+        run: |
+          cp .github/scripts/pr132_security_fix.py /tmp/pr132_security_fix.py
+          git fetch origin rakshex/p0-billing-receipts
+          git checkout -B pr132-fix origin/rakshex/p0-billing-receipts
+      - name: Apply patch
+        run: python /tmp/pr132_security_fix.py
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Format touched files
+        run: |
+          pnpm exec prettier --write apps/api/services/gateway/openAiGatewayCore.ts apps/api/services/gateway/gatewayAttribution.ts apps/api/services/gateway/gatewayAttribution.test.ts apps/api/services/gateway/openAiProxy.route.test.ts apps/api/services/billing/openAiBillingReconciliation.ts
+      - name: Focused tests
+        run: |
+          pnpm --filter @rakshex/api test -- services/gateway/openAiProxy.test.ts services/gateway/openAiProxy.route.test.ts services/gateway/gatewayAttribution.test.ts
+      - name: Commit and push fixes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/api/services/gateway/openAiGatewayCore.ts apps/api/services/gateway/gatewayAttribution.ts apps/api/services/gateway/gatewayAttribution.test.ts apps/api/services/gateway/openAiProxy.route.test.ts apps/api/services/billing/openAiBillingReconciliation.ts
+          git commit -m "fix: harden PR 132 gateway security findings"
+          git push origin HEAD:rakshex/p0-billing-receipts
