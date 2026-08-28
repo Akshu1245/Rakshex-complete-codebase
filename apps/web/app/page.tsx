@@ -1,7 +1,7 @@
 import HomePageClient from "./HomePageClient";
 
 export const metadata = {
-  title: "RaksHex — AI Action Control Plane",
+  title: { absolute: "RaksHex — AI Action Control Plane" },
   description:
     "RaksHex authorizes consequential AI-agent actions before execution, mediates brokered credentials, and records every decision in a tamper-evident Action Ledger.",
   alternates: { canonical: "/" },
