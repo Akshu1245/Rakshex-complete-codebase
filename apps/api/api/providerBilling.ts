@@ -18,7 +18,8 @@ export const BILLING_CHECKSUM_COPY = {
   primaryMeter: "The Rakshex gateway is the live tracking and control plane.",
   optionalChecksum:
     "Optional: add a read-only OpenAI admin key to match gateway-attributed spend to OpenAI Costs and Usage. Live tracking works without this key.",
-  scope: "This key is used only for OpenAI Costs and Usage reads. It is never used to send prompts.",
+  scope:
+    "This key is used only for OpenAI Costs and Usage reads. It is never used to send prompts.",
 } as const;
 
 async function readAccess(workspaceId: number, userId: number) {
@@ -72,7 +73,10 @@ async function assertOpenAiAdminReadAccess(secret: string) {
     }
     if (!response.ok) {
       throw new TRPCError({
-        code: response.status === 401 || response.status === 403 ? "BAD_REQUEST" : "SERVICE_UNAVAILABLE",
+        code:
+          response.status === 401 || response.status === 403
+            ? "BAD_REQUEST"
+            : "SERVICE_UNAVAILABLE",
         message:
           response.status === 401 || response.status === 403
             ? "That key cannot read OpenAI organization Costs and Usage"

@@ -39,9 +39,9 @@ describe("versioned model price registry", () => {
     expect(historicalSettledCost).toBeCloseTo(0.75, 10);
     expect(currentCost).toBeCloseTo(3.55, 10);
     // Adding a later version never changes the price selected for the old timestamp.
-    expect(calculatePrice(selectEffectivePrice(versions, new Date("2026-07-15T12:00:00Z"))!, usage)).toBe(
-      historicalSettledCost,
-    );
+    expect(
+      calculatePrice(selectEffectivePrice(versions, new Date("2026-07-15T12:00:00Z"))!, usage),
+    ).toBe(historicalSettledCost);
   });
 
   it("charges cached input at the cached rate and never above input token count", () => {

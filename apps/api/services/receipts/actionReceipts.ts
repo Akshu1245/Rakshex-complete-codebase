@@ -159,7 +159,9 @@ export function createSignedReceiptEntry(
   const occurredAt = input.occurredAt.toISOString();
   const material = entryMaterial({ ...input, occurredAt, payload });
   const entryHash = sha256Hex(canonicalJson(material));
-  const signature = crypto.sign(null, Buffer.from(entryHash, "hex"), signer.privateKey).toString("base64");
+  const signature = crypto
+    .sign(null, Buffer.from(entryHash, "hex"), signer.privateKey)
+    .toString("base64");
   return {
     version: RECEIPT_VERSION,
     ...(input.id == null ? {} : { id: input.id }),
@@ -260,13 +262,15 @@ export function verifyReceiptBundle(
     previousHash = entry.entryHash;
   }
   const expectedHead = bundle.entries.at(-1)?.entryHash ?? GENESIS_HASH;
-  if (bundle.chainHead !== expectedHead) return { valid: false, error: "bundle chain head mismatch" };
+  if (bundle.chainHead !== expectedHead)
+    return { valid: false, error: "bundle chain head mismatch" };
   if ((bundle.entries.at(-1)?.id ?? null) !== bundle.throughEntryId) {
     return { valid: false, error: "bundle terminal entry id mismatch" };
   }
 
   const trustedPem = trustedKeys[bundle.bundleSigningKeyId];
-  if (!trustedPem) return { valid: false, error: `untrusted bundle key: ${bundle.bundleSigningKeyId}` };
+  if (!trustedPem)
+    return { valid: false, error: `untrusted bundle key: ${bundle.bundleSigningKeyId}` };
   if (normalizePem(trustedPem).trim() !== bundle.bundlePublicKeyPem.trim()) {
     return { valid: false, error: "bundle public key mismatch" };
   }
@@ -278,7 +282,9 @@ export function verifyReceiptBundle(
     crypto.createPublicKey(normalizePem(trustedPem)),
     Buffer.from(bundleSignature, "base64"),
   );
-  return signatureOk ? { valid: true } : { valid: false, error: "bundle signature verification failed" };
+  return signatureOk
+    ? { valid: true }
+    : { valid: false, error: "bundle signature verification failed" };
 }
 
 function fromRow(row: ActionReceiptLedgerEntry): ReceiptEntryExport {
@@ -403,7 +409,9 @@ export function renderSignedReceiptPdf(bundle: ReceiptBundle): Buffer {
     "BT",
     "/F1 12 Tf",
     "72 760 Td",
-    ...lines.flatMap((line, index) => [index === 0 ? "" : "0 -22 Td", `(${pdfEscape(line)}) Tj`]).filter(Boolean),
+    ...lines
+      .flatMap((line, index) => [index === 0 ? "" : "0 -22 Td", `(${pdfEscape(line)}) Tj`])
+      .filter(Boolean),
     "ET",
   ].join("\n");
   const objects = [

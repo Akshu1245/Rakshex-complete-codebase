@@ -6,7 +6,9 @@ const mocks = vi.hoisted(() => ({
   reserveGatewayBudget: vi.fn(),
   settleGatewayBudget: vi.fn(),
   ingestUsageBatch: vi.fn(),
-  resolveWorkspaceIdentityId: vi.fn(async (_workspaceId: number, identityId?: number) => identityId),
+  resolveWorkspaceIdentityId: vi.fn(
+    async (_workspaceId: number, identityId?: number) => identityId,
+  ),
   recordGatewayAudit: vi.fn(),
   getDb: vi.fn(),
   persistSettledAttribution: vi.fn(),

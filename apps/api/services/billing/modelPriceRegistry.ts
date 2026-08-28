@@ -29,11 +29,16 @@ export function selectEffectivePrice<T extends { effectiveFrom: Date }>(
 }
 
 export function calculatePrice(rate: PriceRate, usage: PriceableUsage): number {
-  const cached = Math.min(Math.max(0, usage.cachedInputTokens ?? 0), Math.max(0, usage.inputTokens));
+  const cached = Math.min(
+    Math.max(0, usage.cachedInputTokens ?? 0),
+    Math.max(0, usage.inputTokens),
+  );
   const uncached = Math.max(0, usage.inputTokens - cached);
   const cachedRate = rate.cachedInputPerMillion ?? rate.inputPerMillion;
   return (
-    (uncached * rate.inputPerMillion + cached * cachedRate + usage.outputTokens * rate.outputPerMillion) /
+    (uncached * rate.inputPerMillion +
+      cached * cachedRate +
+      usage.outputTokens * rate.outputPerMillion) /
     1_000_000
   );
 }

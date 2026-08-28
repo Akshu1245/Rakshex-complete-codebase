@@ -30,10 +30,7 @@ import {
   persistSettledAttribution,
   type GatewayAttributionTags,
 } from "./gatewayAttribution";
-import {
-  appendActionReceipt,
-  type ActionReceiptEventType,
-} from "../receipts/actionReceipts";
+import { appendActionReceipt, type ActionReceiptEventType } from "../receipts/actionReceipts";
 
 const MAX_UPSTREAM_ERROR_BYTES = 8_192;
 const MAX_STREAM_AUDIT_BYTES = 2 * 1024 * 1024;
@@ -794,7 +791,10 @@ export async function handleOpenAiGatewayRequest(
       }))
     ) {
       await settleGatewayBudget(budgetReservation, 0).catch((settleErr) =>
-        logger.error({ err: settleErr, requestId }, "[Gateway] Failed to release budget reservation"),
+        logger.error(
+          { err: settleErr, requestId },
+          "[Gateway] Failed to release budget reservation",
+        ),
       );
       budgetReservation = null;
       return;
@@ -1085,7 +1085,9 @@ export async function handleOpenAiGatewayRequest(
         settledCostUsd: providerCompleted ? completedCost : 0,
         outcome: aborted ? "timeout_or_disconnect" : "upstream_error",
         providerCompleted,
-        billingConfidence: providerCompleted ? "gateway_settled" : "pending_provider_reconciliation",
+        billingConfidence: providerCompleted
+          ? "gateway_settled"
+          : "pending_provider_reconciliation",
       }))
     ) {
       return;
