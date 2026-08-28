@@ -11,6 +11,7 @@
     "./schema-foundation": "./drizzle/schema-foundation.ts",
     "./schema-enterprise": "./drizzle/schema-enterprise.ts",
     "./schema-billing": "./drizzle/schema-billing.ts",
+    "./schema-pricing": "./drizzle/schema-pricing.ts",
     "./relations": "./drizzle/relations.ts",
     "./migrate": "./src/migrate.ts",
     "./seed": "./src/seed.ts",
