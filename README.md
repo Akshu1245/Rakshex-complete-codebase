@@ -1,148 +1,129 @@
-# Rakshex
+# RaksHex
 
-> **Read `CLAUDE.md` first.** This README (2026-07-30) predates the Agent
-> Firewall (`@rakshex/action-control` — delegated authority, Action Ledger,
-> credential mediation, gateway enforcement), which is real, tested code
-> shipped since and is the current strategic core of the product. This file
-> is accurate for the scanner/SDK/compliance surfaces it describes but is
-> not the full picture — `CLAUDE.md` is the single current status doc.
+**AI Action Control Plane for autonomous software.** RaksHex authorizes consequential agent actions before execution, narrows delegated authority, mediates credentials, and records decisions in a tamper-evident Action Ledger.
 
-AI agent and API security platform — monorepo for scanning, governance, AgentGuard telemetry, and control-plane tooling.
+> **Private beta.** This repository contains working product code and release gates, but it does not claim certification, universal provider coverage, or paid-GA readiness. Read [`CLAUDE.md`](CLAUDE.md) for the current engineering handoff and [`LAUNCH_CHECKLIST.md`](LAUNCH_CHECKLIST.md) for the evidence-based launch gate.
 
-**Status:** **Deployable release candidate** as of 2026-07-30. Private beta
-requires the production worker, SMTP, exact origins, monitoring, and a signed
-HTTPS buyer journey. Paid GA additionally requires live billing exercises,
-tax/legal approval, and named operational owners. Start with
-[release/README_START_HERE.md](release/README_START_HERE.md).
+## Strategic core
 
-## Feature maturity
+The Agent Firewall path is the product thesis:
 
-| Area                                     | Status        | Notes                                            |
-| ---------------------------------------- | ------------- | ------------------------------------------------ |
-| Auth (email, sessions, OAuth PKCE, TOTP) | **Available** | Argon2id passwords; workspace RBAC               |
-| Workspaces / API keys / projects         | **Available** | Hashed keys; tenant isolation helpers            |
-| Collection import + secure parse         | **Available** | YAML/JSON bomb limits                            |
-| Scanner core (API + AI rules)            | **Available** | Deterministic rules in `@rakshex/scanner-core`   |
-| Findings lifecycle                       | **Available** | Open → resolved / false positive / etc.          |
-| Web dashboard                            | **Available** | Real backend wiring                              |
-| CLI offline scan                         | **Available** | `@rakshex/cli`                                   |
-| VS Code extension                        | **Available** | SecretStorage; scan workspace commands           |
-| GitHub Action / App                      | **Available** | Live credentials required for production CI path |
-| AgentGuard Node/Python SDKs              | **Available** | Metadata-only privacy by default                 |
-| Gateway kill switch / enforcement        | **Available** | Redis + PG; unit-tested core                     |
-| Policy-as-code                           | **Available** | YAML schema, dry-run, immutability               |
-| Pricing engine                           | **Available** | Versioned catalog; estimates labeled             |
-| Billing (Stripe/Razorpay)                | **Available** | Code + webhooks; live keys required for paid     |
-| MCP security inventory                   | **Available** | Scan package + API governance                    |
-| Compliance report mapping                | **Available** | Evidence-based; **not a certification**          |
-| Observability (OTel, health)             | **Available** | Health/ready; secret redaction in logs           |
+1. An agent proposes a semantic action such as `financial.refund`.
+2. RaksHex validates delegated authority and policy.
+3. The decision is `ALLOW` or `DENY` before the action executes.
+4. Credential mediation releases a credential only when the decision permits it.
+5. The Action Ledger records the authorization evidence.
 
-### Explicit non-claims
+The repository also contains API/secret scanning, team AI governance, gateway budgets and kill switches, compliance evidence mapping, a VS Code extension, Node SDKs, and a Python SDK.
 
-This repository does **not** claim:
+## What is actually available in source
 
-- SOC 2 / ISO / GDPR / EU AI Act **certification** (mapping only)
-- Patent status
-- “Fully production-ready for every regulated customer” without operator validation
-- Exact test counts as a marketing metric
-- Encryption or HSM features beyond what the code implements (verify in code)
+| Surface | Current status |
+| --- | --- |
+| Agent Firewall authorization | Available and covered by API/E2E tests |
+| Delegated authority / attenuation | Available in `@rakshex/action-control` |
+| Credential mediation | Available for the enforced broker path |
+| Action Ledger | Available; tamper-evident/hash-chained records |
+| OpenAI-compatible + Anthropic gateway paths | Available for RaksHex-routed traffic |
+| Gateway budgets and kill switches | Available; enforcement applies to RaksHex-routed traffic |
+| Scanner core / collection import | Available |
+| GitHub scanning path | Available when the GitHub App is configured |
+| VS Code extension | Available in source and Marketplace workflow |
+| Node SDK | Available in source |
+| Python AgentGuard + AgentFirewallClient | Available in source; **not published on PyPI yet** |
+| Team governance provider connectors | Capability-dependent; unsupported provider-native operations remain explicitly `NOT_IMPLEMENTED`/`NOT_CONFIGURED` rather than simulated |
+| Compliance | Evidence mapping only; **not certification** |
+| Paid billing | Code paths exist; live launch still requires production credentials and real payment exercises |
 
-## Stack
+## Non-claims
 
-- **Monorepo:** pnpm + turbo
+RaksHex does **not** claim:
+
+- SOC 2, ISO 27001, GDPR, EU AI Act, PCI, or other certification from repository code alone.
+- Patent status.
+- A hard kill switch for provider traffic that bypasses the RaksHex enforcement path.
+- Provider-native seat/budget controls where the provider capability catalog says they are unavailable or not implemented.
+- Public PyPI availability for the Python SDK.
+- Paid public launch without production payment, legal, security, and operator sign-off.
+
+## Repository stack
+
+- **Runtime:** Node.js **24.x**
+- **Package manager:** pnpm **10.32.1**
+- **Monorepo:** Turborepo
 - **API:** Express + tRPC (`apps/api`)
 - **Web:** Next.js (`apps/web`)
-- **DB:** PostgreSQL (Drizzle)
+- **Database:** PostgreSQL + Drizzle
 - **Cache/queues:** Redis + BullMQ
-- **Packages:** `packages/*` (scanner, policy, pricing, sdk, …)
+- **Python SDK:** Python **>=3.10** (`packages/agentguard-python`)
 
-## Quick start (clean machine)
-
-### Prerequisites
-
-- Node.js **≥ 20**
-- pnpm **≥ 9** (repo pins `packageManager`)
-- Docker Desktop (Postgres + Redis)
-
-### Steps
+## Clean-machine setup
 
 ```bash
 git clone https://github.com/Akshu1245/Rakshex-complete-codebase.git
 cd Rakshex-complete-codebase
 
+corepack enable
 pnpm install --frozen-lockfile
-
-# Infrastructure
 pnpm db:up
-# equivalent: docker compose up -d postgres redis
 
 cp .env.example .env
-# Set at least: DATABASE_URL, JWT_SECRET (≥32 chars), REDIS_URL, RAKSHEX_VAULT_KEY (≥32 chars)
+# Set at minimum for local enforced flows:
+# DATABASE_URL
+# REDIS_URL
+# JWT_SECRET (>=32 chars)
+# RAKSHEX_VAULT_KEY (>=32 chars)
 
 pnpm db:migrate
 pnpm dev
 ```
 
-- API: `http://localhost:3000` (or configured `PORT`)
-- Web: see `apps/web` dev script (often `http://localhost:3001`)
+Typical local endpoints:
+
+- API: `http://localhost:3000`
+- Web: `http://localhost:3001`
 - Health: `GET /api/health` and `GET /api/health/ready`
 
-### Full Docker stack
+## Release gates
+
+The GitHub CI release gate runs reproducible install, formatting, lint, type checking, Node/package tests, Python SDK tests on Python 3.10 and 3.12, integration tests, security tests, production build, PostgreSQL migration/restore verification, Docker builds, Playwright smoke, dependency audit, secret scan, SBOM generation, and Trivy container scanning.
+
+Useful local commands:
 
 ```bash
-export JWT_SECRET="change-me-to-a-long-random-secret-value"
-export POSTGRES_PASSWORD="rakshex"
-docker compose build
-docker compose up -d
-pnpm smoke:test   # requires API reachable; set API_URL if needed
+pnpm install --frozen-lockfile
+pnpm format:check
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm test:integration
+pnpm test:security
+pnpm build
+pnpm db:migrate
+pnpm test:e2e:smoke
+
+python -m pip install -e "packages/agentguard-python[dev]"
+python -m pytest packages/agentguard-python/tests
 ```
 
-## Scripts (delivery gates)
+Do not describe a commit as release-ready unless the **Release gate** and independent **Security scan** are green on that commit.
 
-| Command                            | Purpose                                                               |
-| ---------------------------------- | --------------------------------------------------------------------- |
-| `pnpm install --frozen-lockfile`   | Reproducible install                                                  |
-| `pnpm format:check`                | Prettier on source/docs                                               |
-| `pnpm lint`                        | ESLint (packages + api/cli/worker)                                    |
-| `pnpm typecheck`                   | Package typecheck                                                     |
-| `pnpm test`                        | Unit tests (packages)                                                 |
-| `pnpm test:integration`            | Integration-oriented API + DB tests                                   |
-| `pnpm test:security`               | Authz, kill-switch, privacy, parse bombs                              |
-| `pnpm build`                       | Package builds                                                        |
-| `pnpm test:e2e` / `test:e2e:smoke` | Playwright smoke (`--grep=Smoke`): health + login + firewall decision |
-| `pnpm smoke:test`                  | Live HTTP health against running API                                  |
-| `pnpm market:check`                | Market readiness helper                                               |
-| `pnpm db:backup` / restore scripts | Postgres dump + restore verification                                  |
+## Documentation order
 
-CI stages: install → format → lint → typecheck → unit → integration → security → build → docker → migration → e2e → audit → secret scan → SBOM → container scan. **Failures block release.**
+1. [`CLAUDE.md`](CLAUDE.md) — current engineering handoff, architecture boundaries, verified gaps.
+2. [`LAUNCH_CHECKLIST.md`](LAUNCH_CHECKLIST.md) — current private-beta launch gate.
+3. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — system architecture.
+4. [`docs/SECURITY.md`](docs/SECURITY.md) — security posture.
+5. [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — deployment mechanics and rollback.
+6. [`docs/operations/PRODUCTION_DEPLOYMENT_RUNBOOK.md`](docs/operations/PRODUCTION_DEPLOYMENT_RUNBOOK.md) — operator deployment runbook.
+7. [`packages/agentguard-python/README.md`](packages/agentguard-python/README.md) — Python SDK, including the Agent Firewall client.
 
-## Documentation
-
-| Doc                                                                                                  | Description                               |
-| ---------------------------------------------------------------------------------------------------- | ----------------------------------------- |
-| [GETTING_STARTED.md](GETTING_STARTED.md)                                                             | Local setup                               |
-| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)                                                             | Staging, rollback, versioning             |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)                                                         | System architecture                       |
-| [docs/SECURITY.md](docs/SECURITY.md)                                                                 | Security posture                          |
-| [docs/PRIVACY.md](docs/PRIVACY.md)                                                                   | Privacy / retention                       |
-| [docs/API.md](docs/API.md)                                                                           | API overview                              |
-| [docs/CLI.md](docs/CLI.md)                                                                           | CLI                                       |
-| [docs/EXTENSION.md](docs/EXTENSION.md)                                                               | VS Code extension                         |
-| [docs/SDK.md](docs/SDK.md)                                                                           | AgentGuard SDKs                           |
-| [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)                                                   | Common failures                           |
-| [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md)                                               | Release gate checklist                    |
-| [docs/FEATURE_MATURITY.md](docs/FEATURE_MATURITY.md)                                                 | Available / Beta / Experimental / Planned |
-| [release/README_START_HERE.md](release/README_START_HERE.md)                                         | Canonical release entry point             |
-| [docs/operations/PRODUCTION_DEPLOYMENT_RUNBOOK.md](docs/operations/PRODUCTION_DEPLOYMENT_RUNBOOK.md) | Production deployment                     |
-| [docs/market-readiness-audit.md](docs/market-readiness-audit.md)                                     | Historical audit findings                 |
-| [docs/GAP_INVENTORY.md](docs/GAP_INVENTORY.md)                                                       | Closed product gaps                       |
-
-SDK package READMEs: `packages/sdk` (Node — AgentGuard + Agent Firewall clients), `packages/agentguard-python` (Python — AgentGuard only).
+Older dated audits, launch-gap inventories, and release-package documents are historical snapshots unless they explicitly say otherwise. Current source, current CI, `CLAUDE.md`, and this README take precedence.
 
 ## Security contact
 
-See `apps/web/public/.well-known/security.txt` and [docs/SECURITY.md](docs/SECURITY.md).
+See `apps/web/public/.well-known/security.txt` and [`docs/SECURITY.md`](docs/SECURITY.md).
 
 ## License
 
-See [LICENSE](LICENSE).
+See [`LICENSE`](LICENSE).
