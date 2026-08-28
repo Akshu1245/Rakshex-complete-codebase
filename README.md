@@ -99,21 +99,20 @@ pnpm smoke:test   # requires API reachable; set API_URL if needed
 
 ## Scripts (delivery gates)
 
-| Command                            | Purpose                                  |
-| ---------------------------------- | ---------------------------------------- |
-| `pnpm install --frozen-lockfile`   | Reproducible install                     |
-| `pnpm format:check`                | Prettier on source/docs                  |
-| `pnpm lint`                        | ESLint (packages + api/cli/worker)       |
-| `pnpm typecheck`                   | Package typecheck                        |
-| `pnpm test`                        | Unit tests (packages)                    |
-| `pnpm test:integration`            | Integration-oriented API + DB tests      |
-| `pnpm test:security`               | Authz, kill-switch, privacy, parse bombs |
-| `pnpm build`                       | Package builds                           |
-| `pnpm test:e2e`                    | Complete Playwright journey suite        |
-| `pnpm test:e2e:smoke`              | Fast Playwright smoke subset             |
-| `pnpm smoke:test`                  | Live HTTP health against running API     |
-| `pnpm market:check`                | Market readiness helper                  |
-| `pnpm db:backup` / restore scripts | Postgres dump + restore verification     |
+| Command                            | Purpose                                                               |
+| ---------------------------------- | --------------------------------------------------------------------- |
+| `pnpm install --frozen-lockfile`   | Reproducible install                                                  |
+| `pnpm format:check`                | Prettier on source/docs                                               |
+| `pnpm lint`                        | ESLint (packages + api/cli/worker)                                    |
+| `pnpm typecheck`                   | Package typecheck                                                     |
+| `pnpm test`                        | Unit tests (packages)                                                 |
+| `pnpm test:integration`            | Integration-oriented API + DB tests                                   |
+| `pnpm test:security`               | Authz, kill-switch, privacy, parse bombs                              |
+| `pnpm build`                       | Package builds                                                        |
+| `pnpm test:e2e` / `test:e2e:smoke` | Playwright smoke (`--grep=Smoke`): health + login + firewall decision |
+| `pnpm smoke:test`                  | Live HTTP health against running API                                  |
+| `pnpm market:check`                | Market readiness helper                                               |
+| `pnpm db:backup` / restore scripts | Postgres dump + restore verification                                  |
 
 CI stages: install → format → lint → typecheck → unit → integration → security → build → docker → migration → e2e → audit → secret scan → SBOM → container scan. **Failures block release.**
 

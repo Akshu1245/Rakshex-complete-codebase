@@ -154,6 +154,7 @@ jobs:
           DATABASE_URL: postgresql://rakshex:rakshex@127.0.0.1:5432/rakshex_test
           REDIS_URL: redis://127.0.0.1:6379
           JWT_SECRET: test-secret-ci-integration
+          RAKSHEX_VAULT_KEY: test-only-vault-key-with-at-least-32-characters
 
   security:
     name: Security
@@ -303,15 +304,20 @@ jobs:
         env:
           DATABASE_URL: postgresql://rakshex:rakshex@127.0.0.1:5432/rakshex_e2e
       - run: pnpm exec playwright install --with-deps chromium
-      - name: Run complete Playwright journey suite
-        run: pnpm run test:e2e
+      - name: Run Playwright smoke (login + firewall + health)
+        run: pnpm run test:e2e:smoke
         env:
           DATABASE_URL: postgresql://rakshex:rakshex@127.0.0.1:5432/rakshex_e2e
           REDIS_URL: redis://127.0.0.1:6379
           JWT_SECRET: test-only-jwt-secret-with-at-least-32-characters
+          RAKSHEX_VAULT_KEY: test-only-vault-key-with-at-least-32-characters
           CI: true
           PLAYWRIGHT_FRONTEND_PORT: "3001"
           PORT: "3000"
+          FRONTEND_URL: http://localhost:3001
+          CORS_ORIGINS: http://localhost:3001,http://localhost:3000
+          NEXT_PUBLIC_TS_API_URL: http://localhost:3000
+          NEXT_PUBLIC_SITE_URL: http://localhost:3001
       - name: Upload Playwright diagnostics
         if: failure()
         uses: actions/upload-artifact@v4

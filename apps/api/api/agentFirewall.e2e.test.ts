@@ -14,16 +14,14 @@
  * per-piece-correct system usually turns out to be broken.
  *
  * ── On what is deliberately NOT asserted here ───────────────────────────────
- * There is no successful brokered HTTP call below, and that is a property of
- * the design rather than a gap in the test. `authorizeBrokeredRequest` refuses
- * any non-https target and any private/loopback host, because a brokered call
- * is a server-side fetch carrying a real provider secret and is therefore a
- * textbook SSRF sink. A local test upstream is by definition loopback, so the
- * broker correctly refuses it. The options were to weaken the guard behind a
- * test-only bypass flag, or to accept the limit. A bypass on an SSRF control
- * is exactly the kind of flag that survives into production, so the guard
- * stays and the real egress stays covered by credentialBroker.network.test.ts
- * (10 real-socket tests) and the replay control by the DB unique index.
+ * This file drives the router via `createCaller` and a loopback upstream, so
+ * every broker attempt below is refused by the SSRF/private-host guard. That
+ * is a property of the design rather than a gap: a bypass flag on an SSRF
+ * control is exactly the kind of flag that survives into production. The
+ * successful ALLOW → broker → egress-row path (real HTTP sign-in, public
+ * hostname, no SSRF bypass) lives in `agentFirewall.broker.http.test.ts`.
+ * Real-socket injection/redirect behaviour stays in
+ * credentialBroker.network.test.ts; replay stays on the DB unique index.
  *
  * What that leaves — and what this file proves end to end — is every
  * authorization decision between a signed-in user and the secret:
@@ -32,8 +30,10 @@
  *   - a revoked credential is refused
  *   - the stored secret is never returned by any endpoint
  *
- * Requires DATABASE_URL and RAKSHEX_VAULT_KEY; skips cleanly without them so
- * the default unit-test run is unaffected.
+ * Requires DATABASE_URL and RAKSHEX_VAULT_KEY. Skips only when DATABASE_URL
+ * is unset (unit runs). If DATABASE_URL is set without a vault key, this
+ * file fails rather than skip — that was how CI used to silently miss the
+ * whole suite.
  */
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createServer, type Server } from "node:http";
@@ -52,10 +52,17 @@ import { appRouter } from "../routers";
 import { getDb } from "../db";
 import { generateCsrfToken } from "../utils/security";
 
-const HAS_DB = Boolean(process.env.DATABASE_URL);
+const HAS_DB = Boolean(process.env.DATABASE_URL?.trim());
 const HAS_VAULT = Boolean(
   (process.env.RAKSHEX_VAULT_KEY ?? process.env.DEVPULSE_VAULT_KEY ?? "").trim().length >= 32,
 );
+if (HAS_DB && !HAS_VAULT) {
+  throw new Error(
+    "DATABASE_URL is set but RAKSHEX_VAULT_KEY is missing or shorter than 32 characters. " +
+      "The Agent Firewall e2e suite will not skip in a DB-configured environment — " +
+      "set a test-only vault key (see .env.example).",
+  );
+}
 const RUN = HAS_DB && HAS_VAULT;
 const d = RUN ? describe : describe.skip;
 

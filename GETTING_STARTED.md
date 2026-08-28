@@ -22,6 +22,9 @@ Verify:
 ```bash
 curl -s http://localhost:3000/api/health
 pnpm smoke:test
+# Playwright smoke (API + web + DB, Chromium). Playwright starts both apps.
+# Requires DATABASE_URL, REDIS_URL, JWT_SECRET (≥32 chars), RAKSHEX_VAULT_KEY (≥32 chars).
+pnpm test:e2e:smoke
 ```
 
 ## First scan (when API + web are up)
