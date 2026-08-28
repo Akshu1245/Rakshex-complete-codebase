@@ -67,6 +67,21 @@ const capturedUpstream: Array<{ url: string; authorization: string | undefined; 
   [];
 const originalFetch = globalThis.fetch;
 
+/**
+ * Intercept only the fixture hostname. `startsWith(origin)` is incomplete URL
+ * sanitization (`https://broker-e2e.example.evil.com` would match) and is
+ * what CodeQL's new-alerts check flagged on this file. Origin equality is
+ * the same check the broker uses for allowedOrigin.
+ */
+function isFixtureUpstream(urlString: string): boolean {
+  try {
+    const parsed = new URL(urlString);
+    return parsed.protocol === "https:" && parsed.hostname === "broker-e2e.example";
+  } catch {
+    return false;
+  }
+}
+
 function headerValue(headers: HeadersInit | undefined, name: string): string | undefined {
   if (!headers) return undefined;
   const want = name.toLowerCase();
@@ -194,7 +209,7 @@ beforeAll(async () => {
 
   globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
-    if (url.startsWith(UPSTREAM_ORIGIN)) {
+    if (isFixtureUpstream(url)) {
       capturedUpstream.push({
         url,
         authorization: headerValue(init?.headers, "authorization"),
