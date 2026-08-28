@@ -40,18 +40,30 @@ vi.mock("../../_core/logger", () => ({
 
 import { registerOpenAiGatewayRoutes } from "./openAiProxy";
 
-function createRequest(authorization?: string, extraHeaders: Record<string, string> = {}) {
+const defaultChatBody = {
+  model: "gpt-4o-mini",
+  messages: [{ role: "user", content: "hello" }],
+  stream: false,
+};
+
+const defaultResponsesBody = {
+  model: "gpt-5",
+  input: "hello",
+  stream: false,
+};
+
+function createRequest(
+  authorization?: string,
+  extraHeaders: Record<string, string> = {},
+  body: unknown = defaultChatBody,
+) {
   const headers: Record<string, string> = {
     ...(authorization ? { authorization } : {}),
     ...extraHeaders,
   };
   return {
     headers,
-    body: {
-      model: "gpt-4o-mini",
-      messages: [{ role: "user", content: "hello" }],
-      stream: false,
-    },
+    body,
     ip: "203.0.113.10",
     header(name: string) {
       return headers[name.toLowerCase()];
@@ -84,11 +96,11 @@ function createResponse() {
   return response;
 }
 
-function routeHandler() {
+function routeHandler(path = "/v1/chat/completions") {
   const post = vi.fn();
   registerOpenAiGatewayRoutes({ post } as never);
-  const registration = post.mock.calls.find(([path]) => path === "/v1/chat/completions");
-  if (!registration) throw new Error("gateway route not registered");
+  const registration = post.mock.calls.find(([registeredPath]) => registeredPath === path);
+  if (!registration) throw new Error(`gateway route not registered: ${path}`);
   return registration[1] as (req: unknown, res: unknown) => Promise<void>;
 }
 
@@ -113,7 +125,18 @@ describe("OpenAI-compatible gateway route enforcement", () => {
     expect(mocks.evaluateGatewayGovernance).not.toHaveBeenCalled();
   });
 
-  it("blocks before any upstream call when a scoped kill switch is active", async () => {
+  it("authenticates Responses before revealing request-schema errors", async () => {
+    const handler = routeHandler("/v1/responses");
+    const res = createResponse();
+
+    await handler(createRequest(undefined, {}, {}), res);
+
+    expect(res.statusCode).toBe(401);
+    expect((res.payload as { error: { code: string } }).error.code).toBe("invalid_api_key");
+    expect(mocks.validateWorkspaceApiKey).not.toHaveBeenCalled();
+  });
+
+  it("blocks Chat Completions before any upstream call when a scoped kill switch is active", async () => {
     const handler = routeHandler();
     const res = createResponse();
     const upstreamFetch = vi.spyOn(globalThis, "fetch");
@@ -133,6 +156,42 @@ describe("OpenAI-compatible gateway route enforcement", () => {
     });
 
     await handler(createRequest("Bearer rk_live_test_workspace_key"), res);
+
+    expect(res.statusCode).toBe(403);
+    expect(mocks.recordGatewayAudit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenantId: "7",
+        decision: "blocked",
+        blockReason: "A scoped kill switch is active",
+      }),
+    );
+    expect(upstreamFetch).not.toHaveBeenCalled();
+    upstreamFetch.mockRestore();
+  });
+
+  it("blocks Responses before any upstream call when a scoped kill switch is active", async () => {
+    const handler = routeHandler("/v1/responses");
+    const res = createResponse();
+    const upstreamFetch = vi.spyOn(globalThis, "fetch");
+    mocks.validateWorkspaceApiKey.mockResolvedValue({
+      keyId: "ak_1",
+      workspaceId: 42,
+      userId: 7,
+      scopes: ["gateway:invoke"],
+      projectId: null,
+    });
+    mocks.evaluateGatewayGovernance.mockResolvedValue({
+      allowed: false,
+      killActive: true,
+      budgetBlocked: false,
+      budgetReason: null,
+      state: { workspaceDisabled: true },
+    });
+
+    await handler(
+      createRequest("Bearer rk_live_test_workspace_key", {}, defaultResponsesBody),
+      res,
+    );
 
     expect(res.statusCode).toBe(403);
     expect(mocks.recordGatewayAudit).toHaveBeenCalledWith(
