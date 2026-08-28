@@ -426,9 +426,9 @@ export function PublicHeader() {
             </Link>
             <Link
               className="bg-[#14B8A6] hover:bg-[#0D9488] active:bg-[#0A7F6F] text-white font-semibold text-sm font-sans px-4 py-2 rounded-[6px] transition-all duration-200"
-              href="/register"
+              href="/waitlist"
             >
-              Start Free
+              Join waitlist
             </Link>
             <button
               className="lg:hidden text-white"
@@ -604,10 +604,10 @@ export function PublicHeader() {
               </Link>
               <Link
                 className="flex-1 text-center bg-[#14B8A6] text-white hover:bg-[#0D9488] active:bg-[#0A7F6F] py-2.5 rounded font-bold text-sm transition-all duration-200"
-                href="/register"
+                href="/waitlist"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Start Free
+                Join waitlist
               </Link>
             </div>
           </div>

@@ -118,6 +118,9 @@ export function TRPCProvider({ children }: { children: ReactNode }) {
   const [trpcClient] = useState(() =>
     trpc.createClient({
       links: [
+        // tRPC v11 query procedures reject POST (405 METHOD_NOT_SUPPORTED on
+        // payment.getPlans). httpBatchLink already uses GET for queries and
+        // POST for mutations; do not set methodOverride: "POST".
         httpBatchLink({
           url: `${getBaseUrl()}/api/trpc`,
           transformer: superjson as any,

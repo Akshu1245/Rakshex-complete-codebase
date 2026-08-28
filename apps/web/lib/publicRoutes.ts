@@ -12,6 +12,7 @@ export const PUBLIC_PATH_PREFIXES = [
   "/privacy",
   "/terms",
   "/cookies",
+  "/legal",
   "/pricing",
   "/waitlist",
   "/landing",

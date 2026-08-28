@@ -53,10 +53,10 @@ export function HeroSection({ antiGravity, setAntiGravity }: HeroSectionProps) {
           {/* CTA Buttons */}
           <div className="hero-buttons flex flex-wrap items-center gap-4 w-full mb-12">
             <Link
-              href="/login"
+              href="/waitlist"
               className="px-6 py-3 bg-[#14B8A6] text-white font-sans font-semibold text-sm rounded-lg hover:bg-[#0D9488] active:bg-[#0A7F6F] hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_4px_12px_rgba(20,184,166,0.2)] transition-all duration-200 text-center flex items-center justify-center gap-2 transform"
             >
-              Get started free &rarr;
+              Join the waitlist &rarr;
             </Link>
             <Link
               href="/pricing"
