@@ -217,7 +217,7 @@ export const appRouter = router({
           );
           const rawRefresh = parsed[REFRESH_TOKEN_COOKIE];
           if (rawRefresh && typeof rawRefresh === "string") {
-            const tokenHash = hashToken(rawRefresh);
+            const tokenHash = hashRefreshToken(rawRefresh);
             const session = await db.getUserSessionByRefreshTokenHash(tokenHash);
             if (session) {
               await db.revokeUserSession(session.id);
