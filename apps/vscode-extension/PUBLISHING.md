@@ -1,163 +1,130 @@
-# Publishing the Rakshex VS Code extension
+# Publishing the RaksHex VS Code extension
 
-This guide walks through publishing `rakshex-vscode` to the VS Code
-Marketplace (marketplace.visualstudio.com) and the Open VSX registry
-(open-vsx.org). Keep this file out of the packaged `.vsix` (it is listed
-in `.vscodeignore`).
+The extension source lives at `apps/vscode-extension`. The repository workflow `.github/workflows/publish-extension.yml` is the preferred packaging/publishing path because it verifies the extension on the same **Node 24 + pnpm** baseline as the monorepo before producing a VSIX.
 
-## 1. Prerequisites
+## Prerequisites
 
-1. **Node.js** 18+ and **npm**.
-2. **vsce** (the official packaging / publishing CLI):
-   ```bash
-   npm install -g @vscode/vsce
-   ```
-3. (Optional for Open VSX) **ovsx**:
-   ```bash
-   npm install -g ovsx
-   ```
+- Node.js **24.x**
+- pnpm from the repository `packageManager` declaration
+- a clean checkout of the monorepo
+- for Marketplace publishing: an Azure DevOps/VS Code Marketplace publisher whose ID matches `apps/vscode-extension/package.json`
+- for Open VSX publishing: an Open VSX namespace/token
 
-## 2. One-time publisher setup
+Do not commit marketplace personal access tokens or Open VSX tokens.
 
-> **Prerequisite:** `vsce publish` will fail unless the publisher ID in
-> `package.json` (`"publisher": "rakshex"`) resolves to an account you
-> own on marketplace.visualstudio.com. If `rakshex` is already taken by
-> someone else, or you do not yet have an Azure DevOps account, the
-> steps below are mandatory before any publish command will work. This
-> is a one-time manual setup — it cannot be automated.
+## Local verification
 
-1. Create an Azure DevOps account: <https://dev.azure.com/>.
-2. Under **User settings → Personal access tokens**, create a token with:
-   - Organization: **All accessible organizations**
-   - Scopes → **Custom defined** → **Marketplace → Manage**
-   - Expiration: pick the longest you are comfortable with.
-3. Create a publisher at <https://marketplace.visualstudio.com/manage>.
-   The publisher ID **must match exactly** the `publisher` field in
-   `package.json` (currently `"rakshex"`). If the `rakshex` slug is
-   taken, either:
-   - Request transfer of the namespace from the current owner, or
-   - Pick a different publisher ID (e.g. `rakshex-app`, `rakshex-io`)
-     and update `package.json → publisher` accordingly before
-     publishing. Keep the change in sync across
-     `rakshex-vscode/package.json`,
-     `rakshex-vscode/README.md` badge URLs, and the recommended
-     screenshot links.
-4. Authenticate `vsce` once per machine:
-   ```bash
-   vsce login rakshex
-   # paste the personal access token when prompted
-   ```
+From the repository root:
 
-For Open VSX:
+```bash
+corepack enable
+pnpm install --frozen-lockfile
+pnpm --filter rakshex-vscode typecheck
+pnpm --filter rakshex-vscode test
+pnpm --filter rakshex-vscode build
+```
 
-1. Create an account at <https://open-vsx.org/> (GitHub OAuth works).
-2. Generate an access token from **Settings → Access Tokens**.
-3. Store it:
-   ```bash
-   export OVSX_PAT=<token>
-   ```
+The full repository CI also includes the extension in the root typecheck/test/build graph. A Marketplace release should be cut only from a commit whose required repository CI/security gates are green.
 
-## 3. Local dev loop
+## Package a VSIX locally
 
 ```bash
 cd apps/vscode-extension
-npm install
-npm run build          # esbuild minify → ./dist
-# Press F5 in VS Code (Run Extension / Run Rakshex VS Code Extension),
-# or use the launch profile under .vscode/ — preLaunchTask starts esbuild-watch.
+pnpm dlx @vscode/vsce package --out rakshex-vscode-local.vsix
 ```
 
-Run `npm run check` before every commit — it typechecks the whole
-extension without writing anything to disk.
-
-## 4. Package a `.vsix` for manual install / review
+Install the resulting local artifact for review:
 
 ```bash
+code --install-extension rakshex-vscode-local.vsix --force
+```
+
+A local VSIX proves packaging, not Marketplace publication.
+
+## One-time VS Code Marketplace publisher setup
+
+The package currently declares publisher `rakshex`. Before a non-dry-run workflow can publish:
+
+1. Create/access an Azure DevOps account.
+2. Create a Marketplace publisher matching the package `publisher` field exactly.
+3. Create a Marketplace-scoped token according to Microsoft's current Marketplace instructions.
+4. Store the token as the repository/environment GitHub Actions secret `VSCE_PAT`.
+
+If the declared publisher namespace is unavailable, update the package publisher and all Marketplace links deliberately in a reviewed commit; do not silently publish under an unrelated identity.
+
+## GitHub Actions release path
+
+Run **Publish VS Code Extension** manually.
+
+Inputs:
+
+- `versionBump`: `patch`, `minor`, or `major`
+- `dryRun`: defaults to `true`
+
+### Dry run
+
+The workflow:
+
+1. installs the monorepo with the frozen pnpm lockfile on Node 24,
+2. typechecks/tests/builds `rakshex-vscode`,
+3. prepares a version/changelog in the temporary runner checkout,
+4. packages a VSIX,
+5. uploads the VSIX as a workflow artifact,
+6. does **not** publish or push a version commit.
+
+Use this first for every release candidate.
+
+### Marketplace publish
+
+With `dryRun=false`, the workflow additionally:
+
+1. requires `VSCE_PAT`,
+2. publishes the exact packaged VSIX,
+3. commits the version/changelog update back to the dispatch branch,
+4. creates a `vscode-v<version>` tag.
+
+Do not use the production publish mode on an arbitrary feature branch. Promote/merge the intended release commit first, then dispatch the release from the branch/tag policy you have chosen.
+
+## Manual Marketplace publish (fallback)
+
+Only use this when the GitHub workflow cannot be used and preserve the same verification sequence:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm --filter rakshex-vscode typecheck
+pnpm --filter rakshex-vscode test
+pnpm --filter rakshex-vscode build
 cd apps/vscode-extension
-npm install
-npm run build
-vsce package
+pnpm dlx @vscode/vsce package --out rakshex-vscode-release.vsix
+pnpm dlx @vscode/vsce publish --packagePath rakshex-vscode-release.vsix -p "$VSCE_PAT"
 ```
 
-This produces `rakshex-vscode-<version>.vsix` in the current
-directory. Install it locally with:
+Keep the token in an environment variable/secret manager; do not paste it into scripts or documentation.
 
-```bash
-code --install-extension rakshex-vscode-<version>.vsix
-```
+## Open VSX (optional)
 
-Share this file with reviewers/beta users before publishing.
+Open VSX publication is a separate external account action. After creating the matching namespace and storing a token locally/securely, publish the already-reviewed package with the current `ovsx` CLI. Do not claim Open VSX availability until the listing is actually verified.
 
-## 5. Publish to the VS Code Marketplace
+## Marketplace assets
 
-1. Bump the version in `package.json` (SemVer).
-2. Add a matching entry at the top of `CHANGELOG.md`.
-3. Publish:
-   ```bash
-   vsce publish
-   # or for a prerelease:
-   vsce publish --pre-release
-   ```
-   Listing will appear at
-   <https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex-vscode>
-   within ~1 minute.
+`package.json` uses `resources/icon.png`. Keep screenshots/assets under the extension directory and make sure every Marketplace README URL resolves publicly before publishing. Avoid fake usage numbers, badges or customer logos.
 
-`vsce publish minor` / `vsce publish patch` will also auto-bump the
-version field if you prefer.
+Recommended screenshots:
 
-## 6. Publish to Open VSX (optional but recommended)
+- findings tree grouped by severity
+- status bar / health state
+- scan command flow
+- extension settings/backend connection state
 
-Open VSX is the registry used by VSCodium, Gitpod, Theia, and other
-non-Microsoft VS Code distributions.
+## Post-publish verification
 
-```bash
-cd rakshex-vscode
-ovsx publish --pat "$OVSX_PAT"
-```
+After Marketplace publication:
 
-If the namespace `rakshex` does not exist yet, create it first:
-`ovsx create-namespace rakshex --pat "$OVSX_PAT"`.
+1. verify the listing resolves for `publisher.name`,
+2. install the published version into a clean VS Code profile,
+3. authenticate with a beta/test workspace key,
+4. exercise refresh + scan + finding navigation,
+5. verify backend URL/configuration points to the intended environment,
+6. record the published version and source commit.
 
-## 7. Screenshots & marketplace listing
-
-The Marketplace listing pulls the top of `README.md` for the description
-and `package.json → icon` (128×128 PNG — already set to
-`resources/icon.png`) for the square tile. Screenshots referenced from
-`README.md` must be hosted on a public URL (e.g. raw.githubusercontent)
-— relative paths are not rendered on the Marketplace.
-
-Recommended shots (1280 × 720 or 1440 × 900):
-
-1. **Findings tree view** grouped by severity with inline actions.
-2. **Status bar** showing `Rakshex · N open · $X.XX/wk`.
-3. **Run scan** command palette entry + progress notification.
-4. **Settings** page (`@ext:rakshex.rakshex-vscode`) for backend URL
-   and heartbeat controls.
-
-Drop the PNGs under `rakshex-vscode/docs/screenshots/` and update
-`README.md` with links such as:
-
-```markdown
-![Findings tree](https://raw.githubusercontent.com/rakshex/rakshex/main/rakshex-vscode/docs/screenshots/findings.png)
-```
-
-## 8. Verify after publish
-
-```bash
-vsce show rakshex.rakshex-vscode
-code --install-extension rakshex.rakshex-vscode --force
-```
-
-Then open the Command Palette, run **Rakshex: Sign in with API Key**,
-and confirm the findings tree / status bar populate against your
-running backend.
-
-## 9. Unpublishing
-
-```bash
-vsce unpublish rakshex.rakshex-vscode@<version>   # remove a single version
-vsce unpublish rakshex.rakshex-vscode              # remove the extension entirely
-```
-
-Use with care — published versions cannot be restored under the same
-version number. Bump the version and republish instead.
+Marketplace/Open VSX publication is external deployment work. Source code or a packaged VSIX alone does not prove the public listing is live.

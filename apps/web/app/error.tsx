@@ -1,5 +1,8 @@
 "use client";
 
+import Link from "next/link";
+import { AlertTriangle, RotateCcw } from "lucide-react";
+
 export default function Error({
   error,
   reset,
@@ -8,45 +11,48 @@ export default function Error({
   reset: () => void;
 }) {
   return (
-    <div className="min-h-screen bg-transparent flex flex-col items-center justify-center p-8">
-      <div className="max-w-md w-full text-center">
-        <div className="w-20 h-20 bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-          <svg
-            className="w-10 h-10 text-red-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
-            />
-          </svg>
+    <main className="flex min-h-[calc(100svh-94px)] items-center justify-center px-5 py-16 sm:px-6">
+      <div className="w-full max-w-xl rounded-2xl border border-red-500/20 bg-[#090D14]/80 p-7 text-left shadow-[0_24px_80px_rgba(0,0,0,0.28)] sm:p-10">
+        <div className="flex h-11 w-11 items-center justify-center rounded-lg border border-red-500/20 bg-red-500/[0.08] text-red-400">
+          <AlertTriangle className="h-5 w-5" aria-hidden="true" />
         </div>
-        <h1 className="text-2xl font-bold text-white mb-2">Something went wrong</h1>
-        <p className="text-gray-400 mb-2">An unexpected error occurred while loading this page.</p>
-        {error?.message && (
-          <p className="text-red-400 text-sm bg-red-900/20 border border-red-500/30 rounded-lg p-3 mb-6 font-mono">
-            {error.message}
+        <p className="mt-6 font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-red-400">
+          Request failed safely
+        </p>
+        <h1 className="mt-3 text-3xl font-bold tracking-[-0.03em] text-white">
+          RaksHex could not finish this page.
+        </h1>
+        <p className="mt-4 text-sm leading-6 text-neutral-400">
+          Retry the request. If the problem continues, use the public status page or contact the
+          team. Internal exception details are intentionally not exposed here.
+        </p>
+        {error.digest && (
+          <p className="mt-4 rounded-md border border-white/[0.08] bg-black/20 px-3 py-2 font-mono text-[11px] text-neutral-500">
+            Reference: {error.digest}
           </p>
         )}
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+        <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <button
+            type="button"
             onClick={reset}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-[#14B8A6] px-4 text-sm font-semibold text-white hover:bg-[#0D9488]"
           >
-            Try Again
+            <RotateCcw className="h-4 w-4" aria-hidden="true" /> Try again
           </button>
-          <a
-            href="/dashboard"
-            className="px-6 py-2 bg-black/50 text-gray-300 rounded-lg hover:bg-gray-700 transition-colors font-medium"
+          <Link
+            href="/status"
+            className="inline-flex min-h-11 items-center justify-center rounded-md border border-white/10 px-4 text-sm font-semibold text-white no-underline hover:border-[#14B8A6]/40"
           >
-            Go to Dashboard
-          </a>
+            Service status
+          </Link>
+          <Link
+            href="/"
+            className="inline-flex min-h-11 items-center justify-center rounded-md border border-white/10 px-4 text-sm font-semibold text-white no-underline hover:border-[#14B8A6]/40"
+          >
+            Go home
+          </Link>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

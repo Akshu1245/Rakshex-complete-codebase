@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { CheckCircle2, XCircle, Circle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { CheckCircle2, Circle, XCircle } from "lucide-react";
 
 interface TraceStep {
   label: string;
@@ -26,7 +26,7 @@ const RECENT_LEDGER: LedgerEntry[] = [
   { action: "financial.refund", decision: "DENY" },
 ];
 
-const terminalLines = [
+const TERMINAL_LINES = [
   "> agent.call(financial.refund, { amount: 400 })",
   "✓ authority checked: parent scope ≤ $50",
   "⛔ DENY: exceeds delegated limit",
@@ -38,72 +38,78 @@ export function TerminalDemo() {
   const [scanStep, setScanStep] = useState(0);
 
   useEffect(() => {
-    const delays = [1200, 800, 800, 800, 800];
-    let currentStep = 0;
-    let timer: NodeJS.Timeout;
+    const reducedMotion =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    const runScan = () => {
-      if (currentStep < terminalLines.length) {
+    if (reducedMotion) {
+      setScanStep(TERMINAL_LINES.length);
+      return;
+    }
+
+    const delays = [1100, 750, 750, 750, 750];
+    let currentStep = 0;
+    let timer: ReturnType<typeof setTimeout>;
+
+    const run = () => {
+      if (currentStep < TERMINAL_LINES.length) {
         setScanStep(currentStep + 1);
-        timer = setTimeout(runScan, delays[currentStep]);
-        currentStep++;
-      } else {
-        timer = setTimeout(() => {
-          currentStep = 0;
-          setScanStep(0);
-          runScan();
-        }, 4500);
+        timer = setTimeout(run, delays[currentStep]);
+        currentStep += 1;
+        return;
       }
+
+      timer = setTimeout(() => {
+        currentStep = 0;
+        setScanStep(0);
+        run();
+      }, 4200);
     };
 
-    runScan();
+    run();
     return () => clearTimeout(timer);
   }, []);
 
-  // Trace steps light up roughly in step with the terminal lines (4 trace
-  // steps mapped across 5 terminal lines — the first two terminal lines
-  // both belong to "authority checked").
   const traceStepIndex = Math.max(0, Math.min(TRACE_STEPS.length, scanStep - 1));
   const decided = scanStep >= 3;
 
   return (
-    <div className="w-full max-w-[640px] rounded-lg border border-[#14B8A6] bg-transparent flex flex-col md:flex-row gap-5 p-5 items-stretch shadow-md relative">
-      {/* Left panel: terminal */}
-      <div className="flex-1 bg-black/40 rounded border border-[#14B8A6]/20 p-4 font-mono text-xs text-left min-h-[280px] flex flex-col">
-        <span className="text-[9px] text-[#9CA3AF] uppercase tracking-widest font-sans font-semibold mb-3">
+    <div className="relative flex w-full max-w-[640px] flex-col gap-4 rounded-xl border border-[#14B8A6]/45 bg-[#070A0F]/85 p-4 shadow-[0_24px_80px_rgba(0,0,0,0.35)] sm:p-5 md:flex-row md:gap-5">
+      <div className="flex min-h-[245px] min-w-0 flex-1 flex-col rounded-lg border border-white/[0.08] bg-black/35 p-4 text-left font-mono text-xs">
+        <span className="mb-3 font-sans text-[9px] font-semibold uppercase tracking-[0.16em] text-[#8B939F]">
           Decision trace
         </span>
-        <div className="space-y-2 flex-1">
-          {terminalLines.slice(0, scanStep).map((line, idx) => {
-            let color = "text-[#FFFFFF]";
+        <div className="min-w-0 flex-1 space-y-2">
+          {TERMINAL_LINES.slice(0, scanStep).map((line) => {
+            let color = "text-white";
             if (line.startsWith("✓")) color = "text-[#14B8A6]";
             else if (line.startsWith("⛔")) color = "text-red-400";
-            else if (line.startsWith("🔗")) color = "text-amber-400";
-            else if (line.startsWith("🔒")) color = "text-orange-400";
+            else if (line.startsWith("🔗")) color = "text-amber-300";
+            else if (line.startsWith("🔒")) color = "text-orange-300";
+
             return (
-              <p key={idx} className={`${color} font-mono leading-relaxed`}>
+              <p key={line} className={`break-words font-mono leading-relaxed ${color}`}>
                 {line}
               </p>
             );
           })}
-          {scanStep < terminalLines.length && (
-            <span className="inline-block w-1.5 h-3 bg-[#14B8A6] ml-1 animate-pulse" />
+          {scanStep < TERMINAL_LINES.length && (
+            <span className="ml-1 inline-block h-3 w-1.5 bg-[#14B8A6] motion-safe:animate-pulse" />
           )}
         </div>
 
-        {/* Recent Action Ledger entries — fills the lower terminal space
-            with something informative instead of blank space, and
-            reinforces the ledger concept beyond this one demo action. */}
-        <div className="mt-4 pt-3 border-t border-white/5 shrink-0">
-          <span className="text-[9px] text-[#9CA3AF] uppercase tracking-widest font-sans font-semibold block mb-2">
+        <div className="mt-4 shrink-0 border-t border-white/[0.06] pt-3">
+          <span className="mb-2 block font-sans text-[9px] font-semibold uppercase tracking-[0.16em] text-[#8B939F]">
             Recent Action Ledger
           </span>
           <div className="space-y-1.5">
-            {RECENT_LEDGER.map((entry, i) => (
-              <div key={i} className="flex items-center justify-between gap-2 text-[10px]">
-                <span className="text-[#9CA3AF] font-mono truncate">{entry.action}</span>
+            {RECENT_LEDGER.map((entry) => (
+              <div key={entry.action} className="flex items-center justify-between gap-2 text-[10px]">
+                <span className="min-w-0 flex-1 truncate font-mono text-[#9CA3AF]">{entry.action}</span>
                 <span
-                  className={`font-mono font-semibold shrink-0 ${entry.decision === "ALLOW" ? "text-[#14B8A6]" : "text-red-400"}`}
+                  className={`shrink-0 font-mono font-semibold ${
+                    entry.decision === "ALLOW" ? "text-[#14B8A6]" : "text-red-400"
+                  }`}
                 >
                   {entry.decision}
                 </span>
@@ -113,45 +119,54 @@ export function TerminalDemo() {
         </div>
       </div>
 
-      {/* Right panel: live decision trace */}
-      <div className="w-full md:w-64 bg-black/40 rounded border border-[#14B8A6]/20 p-4 flex flex-col shrink-0">
-        <span className="text-[9px] text-[#9CA3AF] uppercase tracking-widest font-sans font-semibold mb-3">
-          Live Decision
+      <div className="flex w-full shrink-0 flex-col rounded-lg border border-white/[0.08] bg-black/35 p-4 md:w-64">
+        <span className="mb-3 font-sans text-[9px] font-semibold uppercase tracking-[0.16em] text-[#8B939F]">
+          Live decision
         </span>
 
         <div className="flex-1 space-y-0">
-          {TRACE_STEPS.map((step, i) => {
-            const isDone = i < traceStepIndex;
-            const isCurrent = i === traceStepIndex && scanStep > 0 && scanStep < 5;
-            const isDenyStep = i === 2;
+          {TRACE_STEPS.map((step, index) => {
+            const isDone = index < traceStepIndex;
+            const isCurrent = index === traceStepIndex && scanStep > 0 && scanStep < 5;
+            const isDenyStep = index === 2;
+
             return (
-              <div key={i} className="flex gap-2.5">
+              <div key={step.label} className="flex gap-2.5">
                 <div className="flex flex-col items-center">
                   {isDone ? (
                     isDenyStep ? (
-                      <XCircle className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                      <XCircle className="h-3.5 w-3.5 shrink-0 text-red-400" aria-hidden="true" />
                     ) : (
-                      <CheckCircle2 className="w-3.5 h-3.5 text-[#14B8A6] shrink-0" />
+                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-[#14B8A6]" aria-hidden="true" />
                     )
                   ) : (
                     <Circle
-                      className={`w-3.5 h-3.5 shrink-0 ${isCurrent ? "text-[#14B8A6] animate-pulse" : "text-white/15"}`}
+                      className={`h-3.5 w-3.5 shrink-0 ${
+                        isCurrent ? "text-[#14B8A6] motion-safe:animate-pulse" : "text-white/15"
+                      }`}
+                      aria-hidden="true"
                     />
                   )}
-                  {i < TRACE_STEPS.length - 1 && (
+                  {index < TRACE_STEPS.length - 1 && (
                     <span
-                      className={`w-px flex-1 min-h-[14px] ${isDone ? "bg-[#14B8A6]/30" : "bg-white/10"}`}
+                      className={`min-h-[14px] w-px flex-1 ${
+                        isDone ? "bg-[#14B8A6]/30" : "bg-white/10"
+                      }`}
                     />
                   )}
                 </div>
                 <div className="pb-3">
                   <p
-                    className={`text-[10px] font-sans font-semibold ${isDone || isCurrent ? "text-white" : "text-white/30"}`}
+                    className={`font-sans text-[10px] font-semibold ${
+                      isDone || isCurrent ? "text-white" : "text-white/30"
+                    }`}
                   >
                     {step.label}
                   </p>
                   <p
-                    className={`text-[9px] font-mono mt-0.5 ${isDone ? (isDenyStep ? "text-red-400" : "text-[#9CA3AF]") : "text-white/20"}`}
+                    className={`mt-0.5 font-mono text-[9px] ${
+                      isDone ? (isDenyStep ? "text-red-400" : "text-[#9CA3AF]") : "text-white/20"
+                    }`}
                   >
                     {step.detail}
                   </p>
@@ -162,14 +177,15 @@ export function TerminalDemo() {
         </div>
 
         <div
-          className={`mt-2 rounded px-2.5 py-2 text-center border transition-colors duration-500 ${
+          className={`mt-2 rounded-md border px-2.5 py-2 text-center ${
             decided
               ? "border-red-500/30 bg-red-500/10 text-red-400"
               : "border-white/10 bg-white/[0.02] text-white/30"
           }`}
+          aria-live="polite"
         >
-          <span className="text-[10px] font-mono font-bold tracking-wider">
-            {decided ? "DENY" : "EVALUATING…"}
+          <span className="font-mono text-[10px] font-bold tracking-wider">
+            {decided ? "DENY · CREDENTIAL NOT RELEASED" : "EVALUATING…"}
           </span>
         </div>
       </div>

@@ -1,288 +1,162 @@
-# Rakshex Launch Checklist
+# RaksHex private-beta launch checklist
 
-> Final checklist to take Rakshex from "code complete" to "fully live."
-> Everything marked [x] is DONE. Everything marked [ ] requires YOUR action.
+**Updated:** 2026-08-28
 
----
+This is the current operational launch gate. It deliberately avoids "100% complete" language and does not treat roadmap integrations as shipped features.
 
-## PHASE 1: Backend Deployment (30 min)
+> Vercel production promotion is intentionally deferred for the current consolidation pass. Finishing the repository and merging a green commit to `main` is separate from promoting the web deployment.
 
-### 1.1 Add Payment Method to Render
+## 1. Source-control gate
 
-- [ ] Go to https://dashboard.render.com → Billing → Add Payment Method
-- [ ] Enter your card details
-- [ ] Verify with OTP if required
+- [ ] The intended release commit is on `main`.
+- [ ] No open PR contains newer required product code.
+- [ ] Old branches have been checked for unique work; superseded branches are **not** blindly merged.
+- [ ] `README.md`, `CLAUDE.md`, and this file agree on runtime, product stage, and non-claims.
+- [ ] Public UI does not advertise unsupported provider-native capabilities, certifications, fake customer proof, or unpublished package install paths.
 
-### 1.2 Deploy Backend Services
+## 2. Automated release gate
 
-```bash
-cd /path/to/Rakshex_Complete_Codebase
-render login
-render blueprints apply --confirm
-```
+The release commit must pass the GitHub **CI** workflow and the independent **Security scan** workflow.
 
-- [ ] Run the commands above
-- [ ] Verify `rakshex-backend` web service appears in Render dashboard
-- [ ] Verify `rakshex-redis` appears in Render dashboard
+The CI release gate includes:
 
-### 1.3 Create MySQL Database
+- frozen pnpm install
+- format check
+- lint
+- TypeScript/type checking
+- Node/package unit tests
+- Python SDK tests on Python 3.10 and 3.12
+- integration tests with PostgreSQL and Redis
+- security-focused tests
+- production build
+- Docker API/worker builds
+- PostgreSQL migration + backup/restore smoke
+- Playwright smoke (health, login, Agent Firewall decision)
+- production dependency audit
+- Gitleaks secret scan
+- CycloneDX SBOM generation
+- Trivy container scan for high/critical vulnerabilities
 
-**Option A: Render MySQL (easiest)**
+Do not promote a commit if any required job is red or skipped because of an upstream failure.
 
-- [ ] Go to https://dashboard.render.com → New → MySQL
-- [ ] Name: `rakshex-db`
-- [ ] Plan: Starter ($7/mo)
-- [ ] Region: Singapore (for India users)
-- [ ] Wait for "Available" status
-- [ ] Copy the **External Connection String**
+## 3. Runtime baseline
 
-**Option B: PlanetScale (serverless)**
+Use the same declared runtime everywhere:
 
-- [ ] Go to https://planetscale.com → Sign up
-- [ ] Create database: `rakshex`
-- [ ] Copy connection string from **Connect** → **Node.js**
+- Node.js **24.x**
+- pnpm **10.32.1**
+- PostgreSQL (the repository does **not** use MySQL)
+- Redis for queues/low-latency enforcement state
+- Python **>=3.10** only for the Python SDK
 
-### 1.4 Set Environment Variables on Render
+Production Docker images are also based on Node 24.
 
-Go to Render Dashboard → `rakshex-backend` → **Environment**:
+## 4. Required backend configuration
 
-```
-DATABASE_URL=postgresql://rakshex:rakshex@host:5432/rakshex    ← REQUIRED (PostgreSQL only)
-APP_URL=https://rakshex-backend-xxx.onrender.com            ← auto-set
-NEXT_PUBLIC_APP_URL=https://app.rakshex.in                  ← after domain
-SMTP_HOST=smtp.sendgrid.net                                    ← after email setup
-SMTP_PORT=587
-SMTP_USER=apikey
-SMTP_PASS=SG.xxx.your-sendgrid-api-key                         ← after email setup
-SMTP_FROM=noreply@rakshex.in
-RAZORPAY_KEY_ID=rzp_live_xxx                                   ← after Razorpay
-RAZORPAY_KEY_SECRET=xxx                                        ← after Razorpay
-SENTRY_DSN=xxx                                                 ← after Sentry
-```
+At minimum, enforced private-beta flows require correctly scoped production values for:
 
-### 1.5 Run Database Migrations
+- `DATABASE_URL` — PostgreSQL connection string
+- `REDIS_URL`
+- `JWT_SECRET` — strong production secret
+- `RAKSHEX_VAULT_KEY` — strong production key; load-bearing for encrypted stored credentials
+- production frontend/origin configuration (`FRONTEND_URL` / `CORS_ORIGINS` as used by the deployment)
 
-```bash
-# From Render dashboard shell, or locally with production DATABASE_URL
-export DATABASE_URL="your-production-url"
-npx drizzle-kit migrate
-```
+Never commit production values to GitHub or expose server secrets through `NEXT_PUBLIC_*` variables.
 
-### 1.6 Verify Backend Health
+Feature-specific credentials are required only when that feature is enabled, for example SMTP/email, GitHub App, provider credentials, Sentry/OTel exporters, or payment-provider credentials.
 
-```bash
-curl https://rakshex-backend-xxx.onrender.com/api/health
-# Expected: {"status":"ok","timestamp":"..."}
-```
+## 5. Database gate
 
----
-
-## PHASE 2: Frontend Domain (15 min)
-
-### 2.1 Update API URL in Vercel
-
-- [ ] Go to https://vercel.com/dashboard → `rakshex-frontend` → **Settings** → **Environment Variables**
-- [ ] Update `NEXT_PUBLIC_TS_API_URL` to your Render backend URL
-- [ ] Click **Redeploy**
-
-### 2.2 Buy Domain (optional but recommended)
-
-- [ ] Buy `rakshex.in` on Namecheap / GoDaddy / Cloudflare
-- [ ] Add A record: `@` → `76.76.21.21` (Vercel IP)
-- [ ] Add CNAME: `www` → `cname.vercel-dns.com`
-- [ ] Add domain in Vercel dashboard
-
----
-
-## PHASE 3: Email Service (15 min)
-
-### 3.1 SendGrid Setup
-
-- [ ] Sign up at https://sendgrid.com
-- [ ] Verify `rakshex.in` domain (add CNAME records to DNS)
-- [ ] Create API key: Settings → API Keys → Create API Key (Full Access)
-- [ ] Copy API key to Render env var `SMTP_PASS`
-
-### 3.2 Test Email
-
-- [ ] Sign up on your deployed frontend
-- [ ] Check inbox for welcome email
-
----
-
-## PHASE 4: Payments (10 min)
-
-### 4.1 Razorpay (India)
-
-- [ ] Go to https://dashboard.razorpay.com
-- [ ] Generate API keys (Live mode)
-- [ ] Add to Render env vars: `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`
-- [ ] Set webhook URL: `https://api.rakshex.in/api/trpc/payment.handleWebhook`
-- [ ] Add webhook secret to env var `RAZORPAY_WEBHOOK_SECRET`
-
----
-
-## PHASE 5: Monitoring (10 min)
-
-### 5.1 Sentry
-
-- [ ] Create account at https://sentry.io
-- [ ] Add Next.js project → copy DSN to Vercel env var `NEXT_PUBLIC_SENTRY_DSN`
-- [ ] Add Node.js project → copy DSN to Render env var `SENTRY_DSN`
-
-### 5.2 UptimeRobot
-
-- [ ] Sign up at https://uptimerobot.com
-- [ ] Add monitors for `https://rakshex.in` and `https://api.rakshex.in/api/health`
-
----
-
-## PHASE 6: VS Code Extension (15 min)
-
-### 6.1 Publisher Account (one-time)
-
-- [ ] Create Azure DevOps account: https://dev.azure.com/
-- [ ] Create Personal Access Token with "Marketplace" scope
-- [ ] Run: `npx @vscode/vsce login rakshex`
-- [ ] Enter your PAT when prompted
-
-### 6.2 Publish Extension
+Use the repository migration runner, not an ad-hoc Drizzle command:
 
 ```bash
-cd rakshex-vscode
-npm install
-npm run esbuild
-npx @vscode/vsce package --no-dependencies
-npx @vscode/vsce publish
+pnpm db:migrate
 ```
 
-### 6.3 Verify
+The runner is PostgreSQL-only and uses the ordered SQL files in `packages/database/drizzle`.
 
-- [ ] Search "Rakshex" in VS Code Extensions marketplace
-- [ ] Install and test with your deployed backend
+Before production promotion:
 
----
+- [ ] Migration job passes on a clean PostgreSQL database.
+- [ ] Backup/restore smoke passes.
+- [ ] `packages/database/src/migrate.order.test.ts` passes; it fails when a forward migration exists outside `MIGRATION_ORDER`.
+- [ ] Production backup ownership and retention are assigned to a real operator.
 
-## PHASE 7: Social Media (20 min)
+## 6. API + worker gate
 
-### 7.1 Twitter/X
+Deploy the API and BullMQ worker as separate processes/images.
 
-- [ ] Create account @rakshexhq
-- [ ] Upload profile pic and banner (from `marketing/SOCIAL_MEDIA_LAUNCH_KIT.md`)
-- [ ] Pin the launch tweet (already written in social kit)
+Before routing beta traffic:
 
-### 7.2 LinkedIn
+- [ ] API process starts with production configuration.
+- [ ] Worker process starts and can reach Redis/PostgreSQL.
+- [ ] `GET /api/health` is healthy.
+- [ ] `GET /api/health/ready` is healthy before traffic is admitted.
+- [ ] Queue failures do not silently fall back to an in-memory production mock.
+- [ ] A real Agent Firewall ALLOW and DENY path is exercised against the deployed backend.
+- [ ] A DENY does not release the mediated credential.
+- [ ] Action Ledger evidence is written for the exercised decision path.
+- [ ] Gateway kill switch is exercised for RaksHex-routed traffic.
 
-- [ ] Create Rakshex company page
-- [ ] Upload logo and cover image
-- [ ] Post launch announcement (already written in social kit)
+## 7. Provider-governance truth gate
 
-### 7.3 GitHub
+The team-governance capability catalog is the source of truth for provider-specific automation.
 
-- [ ] Make repo public (if not already)
-      [ ] Enable GitHub Discussions
-- [ ] Add issue templates
+- [ ] `AVAILABLE` capabilities are exercised with real configured credentials before being called live.
+- [ ] `NOT_CONFIGURED`, `NOT_IMPLEMENTED`, and `UNAVAILABLE` stay visible as such.
+- [ ] Do **not** replace unsupported provider APIs with simulated success.
+- [ ] Provider-native budget/seat controls are never described as universal.
+- [ ] Direct provider traffic that bypasses RaksHex is not described as controlled by the RaksHex gateway kill switch.
 
----
+## 8. SDK / developer surface gate
 
-## PHASE 8: Product Hunt Launch (30 min)
+- [ ] Node SDK tests pass in the release gate.
+- [ ] Python SDK tests pass on Python 3.10 and 3.12.
+- [ ] Python `AgentFirewallClient` fail-closed behavior is exercised.
+- [ ] Python package remains documented as source-install/private-beta until it is actually published on PyPI.
+- [ ] VS Code extension Marketplace listing/install path is verified if it is being presented in the beta pitch.
+- [ ] GitHub App flows are called available only when the production GitHub App configuration is present.
 
-- [ ] Create account at https://producthunt.com
-- [ ] Prepare gallery images (3 screenshots from deployed app)
-- [ ] Write tagline: "AI Runtime Governance — security, cost, compliance in one platform"
-- [ ] Schedule launch for Tuesday 12:01 AM PST (best engagement)
-- [ ] Prepare maker comment (already written in `marketing/PRODUCT_HUNT_LAUNCH.md`)
+## 9. Payments, legal, and compliance boundary
 
----
+Code existing is not the same as external readiness.
 
-## PHASE 9: Demo Video (60 min)
+Before enabling paid public checkout:
 
-- [ ] Record 60-second Loom following script in `marketing/DEMO_VIDEO_SCRIPT.md`
-- [ ] Upload to YouTube (unlisted)
-- [ ] Embed on landing page hero section
-- [ ] Add to Product Hunt gallery
+- [ ] Live payment-provider credentials are installed through the deployment secret store.
+- [ ] Real payment + webhook + refund/cancellation flows are exercised in the intended production provider mode.
+- [ ] Tax/invoice obligations for the selling entity are reviewed.
+- [ ] Terms, Privacy, DPA/data-retention language, and security representations are reviewed by the appropriate human/legal owner.
 
----
+RaksHex compliance screens are evidence mappings. They are **not** SOC 2, ISO, GDPR, EU AI Act, PCI, or other certifications.
 
-## PHASE 10: Final Verification (15 min)
+## 10. Monitoring and incident response
 
-- [ ] Frontend loads at `https://rakshex.in` (or Vercel URL)
-- [ ] Signup flow works end-to-end
-- [ ] Welcome email arrives in inbox
-- [ ] Razorpay test payment succeeds
-- [ ] Dashboard shows live data
-- [ ] VS Code extension connects to backend
-- [ ] Sentry receives first error event
-- [ ] All 45 pages load without errors
+- [ ] Error/telemetry destination is configured for the production deployment.
+- [ ] API readiness and public web availability are monitored externally.
+- [ ] Alert ownership is assigned.
+- [ ] `INCIDENT_RESPONSE.md` and `ONCALL_RUNBOOK.md` are reviewed against the actual deployment endpoints and contacts before relying on them operationally.
+- [ ] Secret rotation procedure is tested for `JWT_SECRET`, `RAKSHEX_VAULT_KEY`, provider credentials, and payment secrets as applicable.
 
----
+## 11. Web / Vercel gate — deferred in this pass
 
-## SUMMARY
+Do this only when web production promotion is intentionally resumed:
 
-**Code Status: 100% COMPLETE**
+- [ ] Confirm the desired Vercel project and production branch.
+- [ ] Confirm production API origin/TLS before pointing browser traffic at it.
+- [ ] Confirm `rakshex.in`, `www`, and any API/docs subdomains resolve to the intended services.
+- [ ] Run the investor path on mobile and desktop: Homepage → Product → Demo → Trust/Docs → Beta Request.
+- [ ] Verify 404, error, empty, success, metadata/OG, favicon/app icon, and horizontal-overflow behavior on the deployed build.
+- [ ] Run a final real-device smoke after DNS/TLS propagation.
 
-- Frontend: 45 pages, deployed to Vercel
-- Backend: API routers, automated release suite, and container targets (use current QA evidence)
-- VS Code Extension: Compiled, packaged as .vsix
-- Marketing: Pitch deck, press kit, email templates, social kit
-- Documentation: API reference, self-hosting guide, migration guides
+## 12. Release decision
 
-**Your Remaining Tasks: ~4 hours**
+A repository commit is ready to merge when:
 
-| Phase               | Time   | Critical?   |
-| ------------------- | ------ | ----------- |
-| Backend deployment  | 30 min | YES         |
-| Domain + DNS        | 15 min | Recommended |
-| Email (SendGrid)    | 15 min | YES         |
-| Payments (Razorpay) | 10 min | YES         |
-| Monitoring (Sentry) | 10 min | Recommended |
-| VS Code publish     | 15 min | Recommended |
-| Social media        | 20 min | Recommended |
-| Product Hunt        | 30 min | Recommended |
-| Demo video          | 60 min | Recommended |
-| Final verification  | 15 min | YES         |
+1. all intended code is in the PR,
+2. no superseded branch is being mistaken for missing work,
+3. the full CI release gate is green on the final head,
+4. the independent Security scan is green on the final head, and
+5. remaining items are explicitly external/operational rather than hidden code stubs.
 
-**Total estimated time to fully live: 4 hours**
-
-## AUTONOMOUS PROGRESS UPDATE
-
-**PR Scanning now fully functional in code**:
-
-- Real secret scanning via secretScanner
-- Worker registered + mock support
-- In-memory GitHub installation linking
-- Polished GitHub dashboard with demo connect
-- Type checks clean
-
-See recent code changes in server/queues/workers/prScanWorker.ts, server/services/githubApp.ts, server/api/github.ts, devpulse-frontend/app/dashboard/github/page.tsx and workers/index.ts.
-
-## MARKET-READY STATUS (Autonomous Update - June 2026)
-
-**Build**: Successful (tsc + post-build script)
-**Lint**: Clean (after fixes)
-**PR Scanning**: Fully wired end-to-end
-
-- prScanWorker registered + started
-- Real secret scanning (secretScanner + heuristics for keys, localhost, auth issues, etc.)
-- Mock + BullMQ support
-- GitHub App persistence (in-memory + dev mocks)
-- tRPC + webhook enqueue working
-- Frontend demo flow + test scan button
-  **Frontend Stubs Reduced**: Partners, salt-security compare, noname compare, GitHub dashboard, integrations, changelog roadmap polished
-  **Duplicates Noted**: Legacy server/github.ts marked deprecated; primary flow in api/github.ts + githubApp + prScanWorker
-  **Core**: Scanning, queues, GitHub integration functional in dev/prod mode
-
-Next for full enterprise (per PRD): Azure Key Vault integration, full SSO, one-click compliance.
-
-## Latest Autonomous Verification (June 2026)
-
-- Build: ✅ SUCCESS (tsc + dist rewrite)
-- Type Check: ✅ pnpm run check passed
-- Lint: ✅ Clean
-- Tests: ✅ 603 tests passed across 41 files (vitest)
-- PR Scanning: Fully wired + real engines + demo UI + persistence
-- Frontend stubs: Major reductions (traceable-ai, salt, partners, integrations, changelog, GitHub page now functional)
-- VS Code extension: Build process exercised
-- Docs: Updated with demo instructions and status
-
-The GitHub PR security scanning flow is now a working, demoable core feature that directly supports the Rakshex Enterprise PRD goals around key leak detection, GitHub integration, and developer workflow.
+A **private beta can proceed** after the applicable production backend, operator, security, and buyer-journey checks above are exercised. A **paid GA launch** has a higher bar and must not be inferred from green repository CI alone.

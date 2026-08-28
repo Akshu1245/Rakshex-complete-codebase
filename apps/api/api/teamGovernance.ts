@@ -76,13 +76,22 @@ export const teamGovernanceRouter = router({
     }),
 
   usageSummary: protectedProcedure
-    .input(workspaceInput.extend({ since: z.string().datetime().optional() }))
+    .input(
+      workspaceInput.extend({
+        since: z.string().datetime().optional(),
+        until: z.string().datetime().optional(),
+      }),
+    )
     .query(async ({ ctx, input }) => {
       await requireGovAccess(input.workspaceId, ctx.user.id, "audit", "read");
-      return gov.usageSummary(
-        input.workspaceId,
-        input.since ? { since: new Date(input.since) } : undefined,
-      );
+      const range =
+        input.since || input.until
+          ? {
+              since: input.since ? new Date(input.since) : undefined,
+              until: input.until ? new Date(input.until) : undefined,
+            }
+          : undefined;
+      return gov.usageSummary(input.workspaceId, range);
     }),
 
   listBudgets: protectedProcedure.input(workspaceInput).query(async ({ ctx, input }) => {

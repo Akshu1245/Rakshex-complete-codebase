@@ -1,192 +1,208 @@
-# Rakshex PostgreSQL Schema
+# RaksHex PostgreSQL Schema
 
 **Dialect:** PostgreSQL 15+  
-**ORM:** Drizzle ORM (`drizzle-orm` + `drizzle-kit`)  
+**ORM:** Drizzle ORM  
 **Package:** `@rakshex/database`  
-**Migrations:** `packages/database/drizzle/0000_*.sql` … `0007_*.sql`
+**Migration source of truth:** `packages/database/src/migrate.ts`
 
----
+> Refreshed 2026-08-28. Do not infer schema currency from a copied migration count in this document. The executable `MIGRATION_ORDER` plus `packages/database/src/migrate.order.test.ts` controls the repository migration contract.
 
 ## Overview
 
-Rakshex standardizes on **PostgreSQL**. MySQL is not supported for new work.
+RaksHex standardizes on **PostgreSQL**. MySQL is not a supported application database.
 
-Multi-tenant isolation is **workspace-scoped**: new foundation tables carry `workspace_id` (integer FK → `workspaces.id`). Legacy tables gained nullable `workspace_id` in migration `0007` for gradual backfill.
+Workspace-owned product data is expected to carry/enforce the tenant boundary appropriate to that table. Historical core tables were progressively hardened through later workspace-tenancy migrations; current code/tests, not the earliest schema file alone, define the access contract.
 
----
+Redis is separate infrastructure used for cache, queue and low-latency control propagation. It is not the durable application database.
 
-## Migration history
-
-| Tag                                    | Purpose                             |
-| -------------------------------------- | ----------------------------------- |
-| `0000_curly_dark_phoenix`              | Core product tables                 |
-| `0001_notifications_and_feature_flags` | Notifications / flags               |
-| `0002_auth_and_settings`               | Auth tokens, sessions, audit        |
-| `0003_enterprise`                      | Enterprise extensions               |
-| `0004_api_key_hardening`               | API key hardening                   |
-| `0005_universal_control_plane`         | Control plane                       |
-| `0006_github_installations`            | GitHub App installs                 |
-| `0007_market_ready_foundation`         | Market-ready tables + FKs + uniques |
-
-Tracking table: `rakshex_schema_migrations` (tag, applied_at).
-
-Reversible: `0007_market_ready_foundation.down.sql` drops additive foundation objects only.
-
----
-
-## Commands
+## Canonical commands
 
 ```bash
-# Start Postgres + Redis
+# Start local PostgreSQL + Redis
 pnpm db:up
 
-# Apply all migrations from zero
+# Apply every forward migration in the authoritative order
 pnpm db:migrate
 
-# Drop public schema + re-migrate (local only)
+# Local-only destructive reset + remigrate
 pnpm db:reset
 
-# Synthetic local seed (no real PII)
+# Synthetic local seed; production is guarded against accidental seeding
 pnpm db:seed
 
-# Integration tests (needs running Postgres)
+# Database package tests
 pnpm test:db
 ```
 
-Default local URL:
+Do **not** substitute an ad-hoc `drizzle-kit migrate` command for the repository migrator in production. The RaksHex migrator records tags in `rakshex_schema_migrations` and deliberately controls ordering.
+
+Default local Compose URL:
 
 ```text
 postgresql://rakshex:rakshex@127.0.0.1:5432/rakshex
 ```
 
----
+## Migration chain
 
-## Required foundation tables
+The current forward order is:
 
-### Auth & tenancy
+| Order | Migration                              | Purpose / area                              |
+| ----: | -------------------------------------- | ------------------------------------------- |
+|     1 | `0000_curly_dark_phoenix`              | original core schema                        |
+|     2 | `0001_notifications_and_feature_flags` | notifications / flags                       |
+|     3 | `0002_auth_and_settings`               | auth / settings                             |
+|     4 | `0003_enterprise`                      | enterprise schema foundation                |
+|     5 | `0004_api_key_hardening`               | API-key hardening                           |
+|     6 | `0005_universal_control_plane`         | control-plane foundation                    |
+|     7 | `0006_github_installations`            | GitHub App installation state               |
+|     8 | `0007_market_ready_foundation`         | workspace/foundation hardening              |
+|     9 | `0008_auth_resource_model`             | auth/resource model                         |
+|    10 | `0009_findings_lifecycle`              | findings lifecycle                          |
+|    11 | `0010_p1_workspace_tenancy`            | workspace-tenancy hardening                 |
+|    12 | `0011_p3_hot_path_indexes`             | hot-path indexes                            |
+|    13 | `0012_compliance_report_types`         | compliance report types                     |
+|    14 | `0012_workspace_subscriptions`         | workspace subscription model                |
+|    15 | `0013_token_usage_attribution`         | usage attribution                           |
+|    16 | `0014_team_ai_governance`              | team AI governance                          |
+|    17 | `0015_governance_extensions`           | governance extensions                       |
+|    18 | `0016_shadow_key_lifecycle`            | shadow-key lifecycle                        |
+|    19 | `0017_secure_scan_reports`             | secure scan reports                         |
+|    20 | `0018_gateway_key_bindings`            | gateway key bindings                        |
+|    21 | `0019_workspace_webhooks`              | workspace webhooks                          |
+|    22 | `0020_gateway_audit_workspace`         | workspace gateway audit                     |
+|    23 | `0021_mcp_server_command`              | MCP server command metadata                 |
+|    24 | `0022_agent_firewall`                  | Agent Firewall / action-control persistence |
+|    25 | `0023_mcp_tool_security_findings`      | MCP tool security findings                  |
+|    26 | `0024_credential_mediation`            | credential-mediation persistence            |
+|    27 | `0025_openai_billing_reconciliation`   | OpenAI billing reconciliation               |
+|    28 | `0026_versioned_model_prices`          | versioned model pricing                     |
+|    29 | `0027_gateway_call_attribution`        | gateway-call attribution                    |
+|    30 | `0028_signed_action_receipts`          | signed action receipts                      |
 
-| Table                   | Notes                                          |
-| ----------------------- | ---------------------------------------------- |
-| `users`                 | Legacy + current auth principal                |
-| `identities`            | Provider links (email/google/github/oidc/saml) |
-| `sessions`              | Foundation sessions (hashed tokens)            |
-| `user_sessions`         | Legacy sessions (kept for app compat)          |
-| `verification_tokens`   | Email / MFA verification                       |
-| `password_reset_tokens` | Password reset                                 |
-| `workspaces`            | Tenant boundary                                |
-| `workspace_members`     | Membership + role (unique workspace+user)      |
-| `workspace_invitations` | Pending invites                                |
-| `roles`                 | System + workspace roles                       |
-| `permissions`           | Global permission catalog                      |
-| `role_permissions`      | Role ↔ permission                              |
+There are two intentionally distinct `0012_*` migrations. Their order is explicit in `MIGRATION_ORDER`; numeric-prefix sorting alone is not the migration algorithm.
 
-### API keys & assets
+### Migration invariant
 
-| Table                 | Notes                                          |
-| --------------------- | ---------------------------------------------- |
-| `api_keys`            | Hashed secrets, `rk_*` prefix, workspace-owned |
-| `projects`            | Workspace projects                             |
-| `repositories`        | Linked code repos                              |
-| `collections`         | API collections (legacy; + `workspace_id`)     |
-| `collection_versions` | Versioned collection payloads                  |
+`packages/database/src/migrate.order.test.ts` enumerates every forward `.sql` file under `packages/database/drizzle` and compares that set with `MIGRATION_ORDER`. A newly added forward SQL file that is not wired into the runner therefore fails the database test instead of silently sitting unused.
 
-### Scanning & findings
+Migration files are applied transactionally one at a time and recorded in:
 
-| Table                  | Notes                                     |
-| ---------------------- | ----------------------------------------- |
-| `scans`                | Scan records (+ `workspace_id`)           |
-| `scan_jobs`            | Queue jobs, idempotency key per workspace |
-| `findings`             | Findings (+ `workspace_id`)               |
-| `finding_instances`    | Occurrences / fingerprints                |
-| `finding_comments`     | Discussion                                |
-| `finding_suppressions` | Suppressions with expiry                  |
-| `accepted_risks`       | Formal risk acceptance                    |
-
-### Policy & governance
-
-| Table                   | Notes                                   |
-| ----------------------- | --------------------------------------- |
-| `policies`              | Policy-as-code documents                |
-| `policy_versions`       | Versioned YAML/JSON docs                |
-| `policy_violations`     | Runtime violations                      |
-| `integrations`          | GitHub/Slack/etc.                       |
-| `notification_channels` | Delivery channels                       |
-| `notifications`         | In-app notifications (+ `workspace_id`) |
-| `kill_switch_events`    | Legacy kill-switch audit                |
-| `audit_logs`            | Canonical append-only audit trail       |
-
-### Agent / cost / billing / compliance
-
-| Table                   | Notes                              |
-| ----------------------- | ---------------------------------- |
-| `agent_runs`            | Agent execution runs               |
-| `agent_steps`           | Steps within a run                 |
-| `llm_requests`          | LLM call telemetry                 |
-| `tool_calls`            | Tool invocations                   |
-| `usage_events`          | Metered usage                      |
-| `pricing_versions`      | Versioned model prices             |
-| `cost_records`          | Cost lines (estimate vs confirmed) |
-| `subscriptions`         | Billing subscriptions (legacy)     |
-| `invoices`              | Invoices                           |
-| `compliance_frameworks` | Framework catalog                  |
-| `compliance_controls`   | Controls per framework             |
-| `compliance_evidence`   | Workspace evidence                 |
-
-Enterprise-only tables remain in `schema-enterprise.ts` (Azure, control plane, etc.).
-
----
-
-## Tenant scoping rule
-
-```sql
--- Always filter workspace-owned tables:
-SELECT * FROM policies WHERE workspace_id = $1;
+```text
+rakshex_schema_migrations(tag, applied_at)
 ```
 
-Integration tests assert:
+## Schema modules
 
-1. Same-named policies in two workspaces do not leak across `workspace_id` filters.
-2. FK rejects `api_keys` for non-existent workspaces.
-3. Unique constraints on `(workspace_id, slug)` for projects, etc.
+The Drizzle schema is split by concern. Current source files under `packages/database/drizzle` include core/re-export modules plus focused enterprise, billing, pricing, attribution and receipt schema modules.
 
----
+Important public package exports are declared by `packages/database/package.json`, including:
 
-## Seed data
+- `@rakshex/database`
+- `@rakshex/database/schema`
+- `@rakshex/database/schema-foundation`
+- `@rakshex/database/schema-enterprise`
+- `@rakshex/database/schema-billing`
+- `@rakshex/database/schema-pricing`
+- `@rakshex/database/schema-attribution`
+- `@rakshex/database/schema-receipts`
+- `@rakshex/database/relations`
+- `@rakshex/database/migrate`
+- `@rakshex/database/seed`
 
-`pnpm db:seed` inserts **synthetic** fixtures only:
+Do not copy table definitions into another package to avoid imports; use the database package exports.
 
-- Email domain: `@example.local`
-- Name: `Local Dev User`
-- Workspace slug: `local-dev`
-- API key material is hashed; plaintext is not stored
+## Major data areas
 
-Never use real personal information in seeds.
+This is a conceptual map, not an exhaustive substitute for the Drizzle schema.
 
----
+### Auth and tenancy
+
+Includes users/identities/sessions, workspaces, memberships/invitations, roles/permissions and related auth/resource records.
+
+### API assets and scanning
+
+Includes API keys, projects/repositories/collections, scans/jobs, findings/instances/comments/suppressions and scan-report evidence.
+
+### Policy and governance
+
+Includes policy records/versions/violations, provider/control-plane records, team AI identities/usage/budgets, runtime kill switches, webhooks and audit state.
+
+### Agent Firewall / action control
+
+Later migrations add Agent Firewall/action-control persistence, credential mediation, gateway attribution and signed action receipts. Those tables are part of the current strategic core and must not be omitted from architecture diagrams simply because they did not exist in `0000`/`0007`.
+
+### Usage, pricing and billing
+
+Includes usage/attribution records, versioned model prices, subscription/billing records and provider reconciliation state. A stored/estimated cost is not automatically provider-confirmed billing truth; source/confidence semantics must be preserved by callers.
+
+### MCP and compliance evidence
+
+Includes MCP inventory/security findings and compliance framework/control/report/evidence data. Compliance records support evidence mapping; their presence does not mean RaksHex or a customer is certified.
+
+## Tenant-scoping rule
+
+Every repository/service query that reads or mutates workspace-owned state must prove the requested object belongs to the active workspace instead of trusting a guessed numeric/string ID.
+
+Illustrative SQL shape:
+
+```sql
+SELECT *
+FROM policies
+WHERE workspace_id = $1
+  AND id = $2;
+```
+
+The actual column casing/names for a specific table come from the Drizzle schema; use repository helpers rather than hand-writing a parallel data-access layer unless required.
+
+Release tests exercise tenant isolation and BOLA-style cross-workspace access on critical paths.
+
+## Seed safety
+
+`pnpm db:seed` inserts **synthetic local-development fixtures**. The canonical seed now rejects `NODE_ENV=production` unless an explicit exact override is deliberately supplied for a controlled environment.
+
+Seed expectations:
+
+- synthetic/example identities only
+- no real PII
+- no plaintext production credentials
+- API-key material stored only in the representation required by the product
+- never use the seed as a production account/bootstrap mechanism
+
+Administrative role promotion, when needed, is a separate explicit operator action and should not grant billing entitlements implicitly.
 
 ## Docker Compose
 
-`docker-compose.yml` services:
+Core local services include:
 
-| Service    | Image                | Port |
-| ---------- | -------------------- | ---- |
-| `postgres` | `postgres:15-alpine` | 5432 |
-| `redis`    | `redis:7-alpine`     | 6379 |
+| Service    | Image / role                      |          Default port |
+| ---------- | --------------------------------- | --------------------: |
+| `postgres` | PostgreSQL 15 Alpine              |                  5432 |
+| `redis`    | Redis 7 Alpine                    |                  6379 |
+| `migrate`  | one-shot canonical migration gate |                     — |
+| `api`      | RaksHex API                       |                  3000 |
+| `worker`   | BullMQ worker                     |                     — |
+| `web`      | Next.js web                       | configured by Compose |
 
-Credentials: user/db/password `rakshex` (local default).
+Use `docker compose config`/`docker compose ps` against the current file rather than copying old service/container names from historical reports.
 
----
+## Backup / restore
 
-## Schema sources
+Repository-supported commands:
 
+```bash
+pnpm db:backup
+pnpm db:restore-test
 ```
-packages/database/drizzle/
-  schema.ts              # Core + re-exports
-  schema-foundation.ts   # Market-ready additive tables
-  schema-enterprise.ts   # Enterprise extensions
-  relations*.ts
-  0000_…sql … 0007_….sql
-  0007_….down.sql
-```
 
-Drizzle config: `packages/database/drizzle.config.ts` (dialect: `postgresql` only).
+CI also performs a PostgreSQL migration plus backup/restore smoke. A production restore still requires operator-owned backups, credentials, storage and recovery verification in the target environment.
+
+## Source-of-truth rule
+
+When this document conflicts with code, use this order:
+
+1. current Drizzle schema and migration SQL
+2. `packages/database/src/migrate.ts`
+3. `packages/database/src/migrate.order.test.ts`
+4. green database/integration CI for the exact commit
+5. this document
+6. historical audits/release snapshots

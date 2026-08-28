@@ -2,7 +2,7 @@
  * Team AI governance service — identities, usage, budgets, seats, sync, kill switches.
  * Never stores raw prompts or plaintext provider credentials.
  */
-import { and, desc, eq, gte, isNull, sql, sum } from "drizzle-orm";
+import { and, desc, eq, gte, isNull, lte, sql, sum } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import * as db from "../db";
 import {
@@ -286,6 +286,10 @@ export async function usageSummary(workspaceId: number, opts?: { since?: Date; u
     };
   }
   const since = opts?.since ?? periodStartMonthly();
+  const until = opts?.until;
+  if (until && until < since) {
+    throw new TRPCError({ code: "BAD_REQUEST", message: "until must be on or after since" });
+  }
   const rows = await database
     .select({
       identityId: teamAiUsageEvents.identityId,
@@ -309,7 +313,11 @@ export async function usageSummary(workspaceId: number, opts?: { since?: Date; u
       ),
     )
     .where(
-      and(eq(teamAiUsageEvents.workspaceId, workspaceId), gte(teamAiUsageEvents.occurredAt, since)),
+      and(
+        eq(teamAiUsageEvents.workspaceId, workspaceId),
+        gte(teamAiUsageEvents.occurredAt, since),
+        until ? lte(teamAiUsageEvents.occurredAt, until) : undefined,
+      ),
     )
     .limit(10000);
 
@@ -407,6 +415,7 @@ export async function usageSummary(workspaceId: number, opts?: { since?: Date; u
     totalRequests,
     totalTokens,
     periodStart: since.toISOString(),
+    periodEnd: until?.toISOString() ?? null,
     byMember: sortCost([...byMember.values()]),
     byProvider: sortCost([...byProvider.values()]),
     byModel: sortCost([...byModel.values()]),

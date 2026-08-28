@@ -1,14 +1,13 @@
 /**
  * Application vault singleton for encrypting enterprise credentials.
  * Uses AES-256-GCM via `encryptedVault` with RAKSHEX_VAULT_KEY.
- * Legacy DEVPULSE_VAULT_KEY is accepted only as a temporary migration fallback.
  */
 import { createVault, type VaultHandle } from "./encryptedVault";
 
 let _vault: VaultHandle | null = null;
 
 function resolveVaultKeyMaterial(): string {
-  const key = process.env.RAKSHEX_VAULT_KEY?.trim() || process.env.DEVPULSE_VAULT_KEY?.trim();
+  const key = process.env.RAKSHEX_VAULT_KEY?.trim();
   if (!key || key.length < 32) {
     throw new Error(
       "Vault key not configured: set RAKSHEX_VAULT_KEY (32+ chars). " +

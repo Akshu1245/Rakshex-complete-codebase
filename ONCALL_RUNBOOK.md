@@ -1,113 +1,130 @@
-# DevPulse On-Call Runbook
+# RaksHex On-Call Runbook
 
-## Health Check Endpoints
+This runbook covers repository-supported health checks and the Docker Compose stack. For hosted production incidents, use the provider dashboard together with `docs/operations/PRODUCTION_DEPLOYMENT_RUNBOOK.md`; do not assume a specific SSH host or container path.
 
-| Endpoint                | Expected                 | Notes                  |
-| ----------------------- | ------------------------ | ---------------------- |
-| `GET /api/health`       | 200 OK                   | Basic liveness         |
-| `GET /api/health/ready` | 200 OK                   | Readiness (DB + Redis) |
-| `GET /api/health/db`    | `{"status":"connected"}` | Database connectivity  |
-| `GET /api/health/redis` | `{"status":"connected"}` | Redis connectivity     |
+## Health checks
 
-## Common Alerts
+| Endpoint | Expected | Purpose |
+| --- | --- | --- |
+| `GET /api/health` | `200` | Aggregate service health |
+| `GET /api/health/ready` | `200` when dependencies are ready | Readiness |
+| `GET /api/health/db` | healthy/connected response | PostgreSQL connectivity |
+| `GET /api/health/redis` | healthy/connected response | Redis connectivity |
 
-### High Error Rate (>5% 5xx in 5 min)
-
-```bash
-# Check recent errors
-ssh deployer@$DEPLOY_HOST
-docker logs devpulse-app-1 --tail 200 | grep ERROR
-
-# Check DB connection
-docker exec devpulse-app-1 node -e "fetch('http://localhost:3000/api/health/db').then(r=>r.json()).then(console.log)"
-
-# Check Redis
-docker exec devpulse-app-1 node -e "fetch('http://localhost:3000/api/health/redis').then(r=>r.json()).then(console.log)"
-```
-
-### Payment Webhook Failures
+Local verification:
 
 ```bash
-# Check Razorpay webhook delivery log (in Razorpay dashboard)
-# Check app logs for signature errors
-docker logs devpulse-app-1 --tail 100 | grep "webhook"
-
-# Verify webhook secret
-docker exec devpulse-app-1 printenv RAZORPAY_WEBHOOK_SECRET
+curl -fsS http://127.0.0.1:3000/api/health
+curl -fsS http://127.0.0.1:3000/api/health/ready
+API_URL=http://127.0.0.1:3000 pnpm smoke:test
 ```
 
-### Database Connection Pool Exhaustion
+## First-response checks
 
 ```bash
-# Check active connections
-docker exec devpulse-db-1 psql -U devpulse -d devpulse_db -c "SELECT count(*) FROM pg_stat_activity;"
-
-# Check for long-running queries
-docker exec devpulse-db-1 psql -U devpulse -d devpulse_db -c "SELECT pid, now() - pg_stat_activity.query_start AS duration, query FROM pg_stat_activity WHERE state = 'active' ORDER BY duration DESC LIMIT 10;"
-
-# Kill stuck queries by PID
-# docker exec devpulse-db-1 psql -U devpulse -d devpulse_db -c "SELECT pg_terminate_backend(<pid>);"
+docker compose ps
+docker compose logs api --tail 200
+docker compose logs worker --tail 200
+docker compose exec -T postgres pg_isready -U rakshex -d rakshex
+docker compose exec -T redis redis-cli ping
 ```
 
-### Redis Memory Pressure
+Never print production secrets while debugging. Check only whether required variables are present through the hosting provider's secret-management UI.
+
+## Common alerts
+
+### High 5xx rate or API outage
+
+1. Check `/api/health` and `/api/health/ready`.
+2. Review API logs by request/correlation ID.
+3. Check PostgreSQL and Redis health.
+4. Check recent deploys and migration status before restarting anything.
+5. If the incident follows a release, prefer a known-good application rollback over ad-hoc database changes.
+
+### Worker/queue backlog
 
 ```bash
-# Check Redis memory
-docker exec devpulse-redis-1 redis-cli INFO memory
-
-# Check eviction policy
-docker exec devpulse-redis-1 redis-cli CONFIG GET maxmemory-policy
+docker compose logs worker --tail 200
+docker compose exec -T redis redis-cli ping
 ```
 
-### High Latency (>2s p95)
+Confirm Redis is healthy before restarting the worker. Do not substitute the development in-memory queue in production.
+
+### Database pressure
 
 ```bash
-# Check CPU/memory
-docker stats devpulse-app-1 --no-stream
-
-# Check slow DB queries
-docker exec devpulse-db-1 psql -U devpulse -d devpulse_db -c "SELECT query, calls, mean_exec_time FROM pg_stat_statements ORDER BY mean_exec_time DESC LIMIT 10;"
+docker compose exec -T postgres psql -U rakshex -d rakshex -c "SELECT count(*) FROM pg_stat_activity;"
+docker compose exec -T postgres psql -U rakshex -d rakshex -c "SELECT pid, now() - query_start AS duration, state, left(query, 160) AS query FROM pg_stat_activity WHERE state <> 'idle' ORDER BY duration DESC LIMIT 20;"
 ```
 
-## Restart Procedures
+Do not terminate sessions without identifying the owning operation and recording the incident action.
 
-### Graceful Restart (no downtime)
+### Redis pressure
 
 ```bash
-ssh deployer@$DEPLOY_HOST
-cd /opt/devpulse
-docker compose -f docker-compose.prod.yml up -d --no-deps --force-recreate app
+docker compose exec -T redis redis-cli INFO memory
+docker compose exec -T redis redis-cli INFO stats
+docker compose exec -T redis redis-cli CONFIG GET maxmemory-policy
 ```
 
-### Full Restart
+### Payment webhook failures
+
+Use the payment provider's delivery log to identify failed events, then correlate them with RaksHex logs. Verify webhook configuration in the provider dashboard; never echo webhook secrets into terminals, tickets, or chat.
+
+## Restart procedures
+
+For the local/self-hosted Compose stack:
 
 ```bash
-ssh deployer@$DEPLOY_HOST
-cd /opt/devpulse
-docker compose -f docker-compose.prod.yml down
-docker compose -f docker-compose.prod.yml up -d
+# Restart one stateless service
+docker compose up -d --no-deps --force-recreate api
+# or
+docker compose up -d --no-deps --force-recreate worker
+
+# Verify afterwards
+curl -fsS http://127.0.0.1:3000/api/health/ready
 ```
 
-### Database Restore (Emergency)
+For hosted production, use the documented provider deployment/rollback mechanism. Do not use an unrecorded SSH path copied from historical documentation.
+
+## Backup and restore
+
+Create backups with the repository-supported backup command and periodically verify restores:
 
 ```bash
-ssh deployer@$DEPLOY_HOST
-cd /opt/devpulse
-docker compose -f docker-compose.prod.yml down app frontend
-docker exec -i devpulse-db-1 psql -U devpulse -d devpulse_db < /opt/devpulse/backups/latest.sql
-docker compose -f docker-compose.prod.yml up -d
+pnpm db:backup
+pnpm db:restore-test
 ```
 
-## Monitoring Dashboards
+During an incident, restore only from a verified backup into a controlled target first whenever possible. Apply schema migrations with the canonical repository command:
 
-- Sentry: `${SENTRY_DSN}`
-- Logs: `docker logs devpulse-app-1 --follow`
-- GitHub Actions CI: `.github/workflows/ci.yml`
+```bash
+pnpm db:migrate
+```
 
-## Escalation
+Do not run raw `drizzle-kit migrate` against production as an improvised recovery step.
 
-| Tier                  | Contact | When                     |
-| --------------------- | ------- | ------------------------ |
-| L1 — On-call          | <TBD>   | All P0/P1 alerts         |
-| L2 — Engineering Lead | <TBD>   | Unresolved after 30 min  |
-| L3 — CTO              | <TBD>   | Unresolved after 2 hours |
+## Security incident handling
+
+For suspected credential exposure, auth bypass, cross-tenant access, or tampering:
+
+1. Treat it as P0/P1 according to `INCIDENT_RESPONSE.md`.
+2. Disable affected credentials or scopes using the supported control path.
+3. Preserve logs and Action Ledger/audit evidence.
+4. Do not paste secrets, raw provider credentials, prompts, or customer data into incident chat.
+5. Rotate affected credentials after containment.
+
+## Monitoring
+
+Repository sources of operational truth:
+
+- GitHub Actions: `.github/workflows/ci.yml` and `.github/workflows/security-scan.yml`
+- Production runbook: `docs/operations/PRODUCTION_DEPLOYMENT_RUNBOOK.md`
+- Incident process: `INCIDENT_RESPONSE.md`
+- Release gate: `LAUNCH_CHECKLIST.md`
+
+External Sentry, uptime, status-page, and on-call ownership must be configured by the account owner before a public paid launch.
+
+## Escalation ownership
+
+Do not commit personal phone numbers or private escalation details to the public repository. Record named L1/L2/security/business owners in the private operations system before launch. If those owners are not configured, that is an explicit operator blocker, not a completed launch item.

@@ -1,17 +1,17 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Live Demo — RaksHex API Security Scanner",
+  title: "Agent Firewall Demo",
   description:
-    "Drop your Postman collection and find vulnerabilities in 3 seconds. No signup required.",
+    "Try a public RaksHex Agent Firewall decision: change a requested refund amount, evaluate delegated authority, and inspect credential mediation plus Action Ledger evidence.",
   alternates: {
     canonical: "/demo",
   },
   openGraph: {
-    title: "Live Demo — RaksHex API Security Scanner",
+    title: "RaksHex Agent Firewall Demo",
     description:
-      "Drop your Postman collection and find vulnerabilities in 3 seconds. No signup required.",
-    url: "https://rakshex.in/demo",
+      "See an AI action get allowed or denied before execution, including whether the brokered credential is released.",
+    url: "/demo",
   },
 };
 

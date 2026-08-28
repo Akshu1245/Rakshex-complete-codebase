@@ -1,6 +1,6 @@
 # Rakshex production multi-stage image (API + worker)
 # Non-root user, healthcheck, graceful SIGTERM via Node server handlers.
-FROM node:22-alpine AS base
+FROM node:24-alpine AS base
 RUN corepack enable pnpm
 ENV HUSKY=0
 
@@ -21,18 +21,17 @@ COPY --from=deps /app/github-action ./github-action
 COPY . .
 RUN pnpm run build
 
-FROM node:22-alpine AS runner
+FROM node:24-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Pick up Alpine security patches (openssl CVE-2026-14456: libcrypto3/libssl3
-# 3.5.7-r0 -> 3.5.8-r0). Must run as root before USER nodejs.
+# Pick up Alpine security patches before dropping privileges.
 RUN apk upgrade --no-cache libcrypto3 libssl3 \
   && addgroup -g 1001 -S nodejs \
   && adduser -S -u 1001 -G nodejs -h /app -s /sbin/nologin nodejs
 
-# Runtime uses node + tsx only — drop image-bundled npm to clear Trivy CRITICAL/HIGH on npm deps.
+# Runtime uses node + tsx only — drop image-bundled npm to reduce runtime attack surface.
 RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx || true
 
 COPY --from=builder --chown=nodejs:nodejs /app/package.json ./

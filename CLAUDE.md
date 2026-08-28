@@ -1,393 +1,235 @@
-# RaksHex — agent handoff
+# RaksHex — canonical engineering handoff
 
-**Last verified:** 2026-08-06 (every claim below was executed, not inferred)
+**Repository audit refreshed:** 2026-08-28
 
-Read this file first. It exists so you don't have to re-derive the state of the repo by
-reading 10,000 files. Where a claim is unverified, it says so explicitly — trust the
-labels, and re-run the commands in §2 before believing anything is still true.
+**Canonical naming:** use **RaksHex** in human-facing copy, `rakshex` for package/path/domain identifiers, and `RAKSHEX_*` for environment variables. The active repository tree and remote branch/tag names are normalized to this convention.
 
----
+**Brand verification:** the 2026-08-28 cleanup scanned the complete active tracked text tree plus remote branch/tag refs for retired naming variants and passed with zero remaining matches.
 
-## 1. What this is
+Read this file before changing architecture or trusting an older readiness document. It is intentionally evidence-first: current source + the GitHub release gate outrank dated reports, old branch names, screenshots, and historical test counts.
 
-pnpm + turbo monorepo. "AI agent and API security platform." Previously branded
-**DevPulse** — that name is retired and a test (`apps/api/runtimeClaims.test.ts`) fails
-the build if it reappears in shipped source.
+## 1. Product thesis
 
-The strategic positioning is the **Agent Firewall**: runtime authorization for
-autonomous AI actions. The one-line differentiator, which is defensible and narrow:
+RaksHex is an **AI Action Control Plane**. The strategic core is the Agent Firewall: authorize consequential autonomous actions **before execution**, narrow delegated authority, mediate credentials, and record the decision in a tamper-evident Action Ledger.
 
-> Competitors govern the _session_. RaksHex governs the _action_.
+Canonical action path:
 
-Concretely: semantic actions (`financial.refund`), delegated authority with
-parent→child attenuation, a hash-chained tamper-evident Action Ledger, and
-credential mediation so a DENY is enforceable rather than advisory.
+1. Agent proposes a semantic action such as `financial.refund`.
+2. RaksHex resolves delegated authority/capability constraints.
+3. Policy evaluates to `ALLOW` or `DENY`.
+4. Credential mediation releases a credential only for an allowed action.
+5. Action Ledger records the authorization evidence.
 
-- **API** — `apps/api`, Express + tRPC, port 3000
-- **Web** — `apps/web`, Next.js, port 3001
-- **Packages** — `packages/*`, all `workspace:*`
+The repository also contains scanning, team AI governance, gateway budgets/kill switches, compliance evidence mapping, GitHub/VS Code developer surfaces, and Node/Python SDKs.
 
----
+## 2. Product truth boundaries
 
-## 2. Verified state — run these to confirm
+These boundaries are intentional and must survive future UI/copy work:
+
+- A RaksHex gateway kill switch controls **RaksHex-routed traffic**. Do not claim it universally disables provider traffic that bypasses RaksHex.
+- Provider-native seat, spend-limit, usage, or entitlement operations are capability-specific. `NOT_IMPLEMENTED`, `NOT_CONFIGURED`, and `UNAVAILABLE` are valid honest states, not placeholders to hide with fake success.
+- Compliance output is evidence/mapping support, **not certification**.
+- Python `rakshex-agentguard` source includes `AgentGuardClient` and `AgentFirewallClient`, but the package is **not public on PyPI yet**.
+- Billing code existing does not make paid GA operationally complete. Production keys, real payment exercises, tax/legal review, monitoring, and named operators remain external launch requirements.
+- Do not add fake customer logos, fake usage counters, fake trust badges, or unverified benchmarks.
+
+## 3. Runtime baseline
+
+The repository declares and now tests against:
+
+- Node.js **24.x**
+- pnpm **10.32.1**
+- PostgreSQL
+- Redis + BullMQ
+- Python SDK: Python **>=3.10**
+
+Production API/worker/web Dockerfiles are Node 24 based. If a workflow, Dockerfile, setup guide, or cloud runtime uses a different major version, treat it as a release-blocking consistency bug until deliberately reconciled.
+
+## 4. Release gate — evidence, not memory
+
+Never quote a hard-coded historical test count as proof of readiness. For the exact commit being promoted, the GitHub **CI** workflow and independent **Security scan** must be green.
+
+The CI release gate covers:
+
+- `pnpm install --frozen-lockfile`
+- format check
+- lint
+- type checking
+- Node/package unit tests
+- Python SDK tests on Python 3.10 and 3.12
+- integration tests with PostgreSQL + Redis
+- security-focused tests
+- production build
+- Docker API/worker builds
+- PostgreSQL migration + backup/restore smoke
+- Playwright smoke (health/login/Agent Firewall decision)
+- production dependency audit
+- Gitleaks secret scan
+- CycloneDX SBOM
+- Trivy high/critical container scan
+
+Useful local equivalents:
 
 ```bash
-pnpm install
-pnpm lint          # clean, --max-warnings=0
-pnpm typecheck     # 18/18 packages
-pnpm build         # 18/18
-pnpm test:api      # 872 tests, 81 files (was 831 — +policy differential corpus, +SIEM export)
-pnpm test:packages # 158 tests
+corepack enable
+pnpm install --frozen-lockfile
+pnpm format:check
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm test:integration
+pnpm test:security
+pnpm build
+pnpm db:migrate
+pnpm test:e2e:smoke
+
+python -m pip install -e "packages/agentguard-python[dev]"
+python -m pytest packages/agentguard-python/tests
 ```
 
-With Postgres + Redis running (`docker compose up -d postgres redis`):
+## 5. Repository map
+
+- `apps/api` — Express + tRPC API and gateway/enforcement paths
+- `apps/web` — Next.js web product/marketing/dashboard
+- `apps/worker` / API queue workers — asynchronous jobs
+- `apps/vscode-extension` — VS Code developer surface
+- `apps/cli` — CLI surface
+- `packages/action-control` — Agent Firewall/delegated-authority core
+- `packages/policy-engine` — canonical policy evaluator
+- `packages/database` — PostgreSQL schema/migrations
+- `packages/scanner-core` — deterministic scanning
+- `packages/sdk` — Node SDK
+- `packages/agentguard-python` — Python AgentGuard + AgentFirewall client
+- `packages/compliance-engine` — evidence/report mapping
+- `packages/mcp-security` — MCP security package
+
+## 6. Critical secrets and fail-closed paths
+
+`RAKSHEX_VAULT_KEY` is load-bearing for encrypted stored credentials. Production credential mediation/provider connector flows must not run with an improvised or missing vault key.
+
+Other common production requirements include `DATABASE_URL`, `REDIS_URL`, a strong `JWT_SECRET`, correct frontend/origin configuration, and feature-specific provider/payment/email/monitoring secrets.
+
+Do not expose server secrets through `NEXT_PUBLIC_*` variables.
+
+Production queues are expected to fail when Redis is unavailable rather than silently becoming an in-memory production queue. Development/test mocks are acceptable only when clearly scoped to development/test.
+
+## 7. Database migration invariant
+
+`packages/database/src/migrate.ts` uses an explicit `MIGRATION_ORDER` over `packages/database/drizzle`.
+
+The historical risk was: a new SQL file could exist but be omitted from the hard-coded order and therefore never apply. That risk is now covered by `packages/database/src/migrate.order.test.ts`, which compares every forward `.sql` file against `MIGRATION_ORDER`.
+
+Use:
 
 ```bash
-pnpm db:migrate       # 26 migrations
-pnpm test:integration # 57 tests
-pnpm test:db          # VERIFIED 2026-08-06 on real Postgres 18.4 — 10/10 pass, see §5 item 1
-pnpm test:e2e         # Playwright smoke (`--grep=Smoke`): login + firewall decision + health. Needs API + web + DB.
+pnpm db:migrate
 ```
 
-**As of 2026-08-05 the first two blocks pass.** The API boots against a live DB and
-`/api/health` returns `{"status":"ok","db":"ok","redis":"ok","queue":"ok"}`.
+Do not replace the repository migration path with an ad-hoc production `drizzle-kit migrate` command without deliberately changing and testing the release process.
 
-> **Important history:** before 2026-08-05 this repo **did not typecheck** — 7
-> pre-existing errors, including four calls to DB functions that did not exist. That
-> means the CI typecheck gate was not being enforced. Several status docs asserted
-> "code-complete and test-covered" while the build was broken. Seven of them were
-> **deleted on 2026-08-05** (`MARKET_READY.md`, `MARKET_READINESS_LAUNCH_BAR.md`,
-> `LAUNCH_BAR.md`, `PRODUCTION_READINESS_REPORT_2026-07-30.md`,
-> `rakshex_verification_report.md`, `docs/MARKET_READY_COMPLETE.md`,
-> `ARCHITECTURE_AUDIT.md`) because a future reader inheriting their false baseline is
-> worse than having no status doc at all. **This file is now the only status doc.**
-> `docs/FEATURE_MATURITY.md` and `docs/GAP_INVENTORY.md` survive but are still dated
-> 2026-07-30 — treat them as marketing, not evidence. Some docs still contain dangling
-> links to the deleted files; harmless, but fix on sight.
+## 8. Policy-engine status
 
----
+Dashboard-authored `policy_rules` do **not** need to serialize through the static policy-as-code `PolicyDocument` parser. The dashboard path flows through `apps/api/engines/policyEngine.ts` into `@rakshex/policy-engine`.
 
-## 3. Completion, honestly
+The adapter preserves legacy dashboard intent by mapping:
 
-Percentages are meaningless without an axis, so here are four. Overall single number
-if you must have one: **~72%** — but read the rows, because they disagree for good
-reasons.
+- action pattern
+- active state
+- deterministic priority/order
+- threat-level constraints
+- rule condition
+- effect
 
-| Axis                               | %    | Basis                                                                                  |
-| ---------------------------------- | ---- | -------------------------------------------------------------------------------------- |
-| **Code exists & compiles**         | ~95% | lint + typecheck + build all green, executed                                           |
-| **Verified by execution**          | ~75% | 1046 tests pass; app boots; migrations apply/roll back; routes mounted                 |
-| **Proven correct in domain terms** | ~40% | tests passing ≠ features behave correctly. ~20 of 296 API files have been read closely |
-| **Business / ops / legal ready**   | ~30% | legal review, pen test, live payment keys, SOC2, support all outstanding               |
+Static YAML policy-as-code remains a separate input format. Do not reintroduce duplicate policy evaluators to "fix" an old handoff note.
 
-**Do not tell the user this is "100% market ready."** It is not, and the gap is
-specific and listed in §5 — not vague.
+## 9. Team-governance status
 
-### What is genuinely done and proven
+Provider capabilities are explicit in the team-governance capability catalog. Unsupported provider-native operations should continue returning structured unsupported states.
 
-- Agent Firewall core (`packages/action-control`) — 61 tests
-- Credential mediation — service, schema, router, SDK, UI; 58 unit + 10 real-socket tests
-- MCP adversarial-intent scanning — 11 tests
-- All 26 migrations apply **and roll back**, verified on real Postgres 18.3
-- Anti-replay is enforced by a **DB unique index**, proven by a failing duplicate insert
-- App boots; every new tRPC route confirmed mounted and auth-gated
+The usage summary contract supports bounded reporting windows with optional `since` and `until`; the service must enforce both boundaries and reject an inverted range.
 
----
+Never infer universal team/person usage visibility from one provider adapter. The product must describe data confidence/source honestly (`verified`, `imported`, `estimated`, etc.).
 
-## 4. What changed recently (and why it matters)
+## 10. Branch/PR consolidation rule
 
-### Security fix — attenuation bypass (`packages/action-control/src/authority.ts`)
+This repository has accumulated many historical branches. A branch being ahead of `main` does **not** mean it contains missing work.
 
-`validateAttenuation()` accepted a child authority that **omitted** `resources` /
-`environments`, and an omitted constraint means _unrestricted_ at evaluation time —
-so the child was strictly **broader** than its parent. This falsified the product's
-headline claim. Fixed via two helpers with deliberately opposite semantics:
+Recent lineage already consolidated major old branches:
 
-- `actionsCovered()` — empty list means **deny all** (restrictive)
-- `constraintCovered()` — empty list means **no restriction** (permissive)
+- OpenAI governance/responses/billing-receipt P0 work from old PRs/branches was consolidated into merged PR #136.
+- Python Agent Firewall work from the earlier branch/PR was superseded by merged PR #143 on current main.
+- Security fixes from the earlier private-beta branch were absorbed into the merged private-beta lock work.
+- Public-route/docs/legal/homepage cleanup landed through the subsequent merged PRs before the current investor-beta pass.
 
-That asymmetry is the whole point. Do not "simplify" them back into one function.
+Before merging any old branch:
 
-> **Behaviour change:** existing authorities in a live DB that omit these fields under
-> a scoped parent will now be **rejected**. Audit production data before deploying.
+1. compare it against current `main`,
+2. identify unique commits/files,
+3. check whether a newer merged PR superseded them,
+4. cherry-pick only genuinely missing current work,
+5. run the complete release gate again.
 
-### Credential mediation (the enforcement story)
+Do **not** merge all stale branches as a cleanup strategy.
 
-`apps/api/services/credentialBroker.ts` — all security decisions live in the **pure**
-`authorizeBrokeredRequest()` so they are exhaustively testable. Router wiring is in
-`apps/api/api/agentFirewall.ts` under `credentials`.
+## 11. Documentation precedence
 
-Non-obvious invariants, each of which has a test:
+Use this order when documents conflict:
 
-1. **Shadow-mode laundering.** In shadow mode `effectiveDecision` is ALLOW even for a
-   DENY. Brokering on that alone would execute every denied action. The broker
-   requires the **true `decision`** to be ALLOW too.
-2. **Claim before spend.** The egress row is inserted _before_ the secret is
-   decrypted. The unique index on `ledger_id` means two racing calls cannot both win.
-3. **No redirects.** `redirect: "manual"` — a 302 could send the credential to an
-   unvetted host.
-4. **Secret never leaves the server.** `credentials.list` uses an explicit column list,
-   never `select()`. Never add `secretCiphertext` to a response.
+1. current source code
+2. green CI/Security workflows for the commit being discussed
+3. this `CLAUDE.md`
+4. root `README.md`
+5. `LAUNCH_CHECKLIST.md`
+6. architecture/security/deployment runbooks
+7. dated audits, gap inventories, release-package snapshots, marketing files
 
-### SDK/router scope mismatch on `ledger.outcome` — fixed 2026-08-09
+Documents such as `docs/FEATURE_MATURITY.md`, `docs/GAP_INVENTORY.md`, `docs/LAUNCH_GAP_REGISTER.md`, older release binders, and old RaksHex-era scripts/docs are historical context unless explicitly refreshed to the current audit date. Do not use them alone as evidence that a feature is live.
 
-Found by comparing what `packages/agentguard-sdk/src/firewall.ts`'s
-`AgentFirewallClient` actually calls against what
-`apps/api/api/agentFirewall.ts` actually requires, endpoint by endpoint —
-not by reading either file in isolation. `evaluate` and `credentials.broker`
-both authorize a runtime call via
-`assertRuntimeApiKeyScope(ctx.user, workspaceId, "agent:execute")` — the
-scope on the API key itself, independent of the underlying user's workspace
-RBAC role. `ledger.outcome` instead required the full `security:write` RBAC
-permission (minimum role `security_lead`, rank 5 of 7). The SDK's
-`recordOutcome()` is called by the exact same key that called `evaluate()`,
-and `authorizeAndRun()`'s success path awaits it **uncaught** — so a
-correctly least-privileged agent key (scope: `agent:execute` only, which is
-the product's own recommended deployment shape) would 403 on `ledger.outcome`
-even though the action it just took was correctly evaluated and allowed,
-and `authorizeAndRun()` would throw after the real work already succeeded.
+## 12. Private-beta UI/website direction
 
-Fixed: `ledger.outcome` now uses the same `assertRuntimeApiKeyScope(...,
-"agent:execute")` check as its two siblings. Verified by execution, not
-assumed — a new regression test
-(`apps/api/api/agentFirewall.e2e.test.ts`, describe block "runtime key scope
-for ledger.outcome (regression)") creates a workspace member with role
-`developer` (rank 3, well under the `security_lead` the old check required)
-holding an `agent:execute`-only key, and asserts `ledger.outcome` succeeds.
-Confirmed this test actually catches the bug by reverting the fix locally
-and re-running: 12/13 pass with a `FORBIDDEN` failure on exactly this test;
-13/13 pass with the fix restored. Full `apps/api` typecheck: 0 errors.
+Public investor path should tell one story:
 
-### CLI `login`/`--api-url` were dead config — fixed 2026-08-09
+**Homepage → Product → Agent Firewall Demo → Trust/Docs → Beta Request**
 
-`apps/cli/src/index.ts`'s `login` command persisted `apiKey`/`apiUrl` to
-`~/.rakshex/config.json`, but nothing in the file ever read them back — the
-CLI's `scan`/`report`/`policy` commands run entirely offline through
-`@rakshex/scanner-core`, and no `fetch(` call existed anywhere in the file.
-The stored credential did nothing; `rakshex login` was cosmetic. The CLI's
-own `doctor` command was honest about this ("offline scan still works"),
-so it wasn't concealed, but it was still misleading: a security CLI that
-lets you "log in" and silently does nothing with it is a real gap for a
-product being pushed toward market.
+Positioning:
 
-Fixed by adding an explicit, opt-in `scan --upload` flag that POSTs the
-scanned collection to the **existing** `/api/github/scan` REST route (the
-same authenticated endpoint the GitHub Action integration already uses —
-no new server surface invented) via `x-api-key`. Deliberately **not**
-automatic just because a key is configured: an API spec can itself be
-sensitive, so upload must be requested on every invocation. A failed or
-declined upload never changes the scan's exit code — offline scanning
-stays authoritative for CI gating; uploading is a best-effort side report
-layered on top. `doctor` now also reports the configured upload target
-when a key is present, instead of only ever mentioning the offline path.
+> **RaksHex — AI Action Control Plane**
+>
+> AI agents don't just generate. They act. Control what happens next.
 
-Verified by execution against a real local HTTP server, not assumed:
-offline `scan` (exit code governed only by findings) unaffected;
-`scan --upload` with no key configured warns and still exits correctly;
-`scan --upload` against an unreachable server warns without changing the
-exit code; `scan --upload` against a live mock server sends the exact
-`{"collection": <parsed file>}` body with the right `x-api-key` header and
-receives a 200. `apps/cli` typecheck: 0 errors. Existing `cli.test.ts`:
-2/2 pass, unmodified.
+UI quality requirements include mobile/no-horizontal-overflow behavior, meaningful empty/error/success/404 states, reduced-motion support, accurate metadata/social assets, truthful links, and no fake trust proof.
 
-### The "AgentGuard" naming reality, resolved — `packages/agentguard-sdk` → `packages/sdk` (2026-08-09)
+Do not add a pile of UI libraries. The existing Tailwind/Lucide/motion stack is sufficient; prefer small composable primitives and a controlled dependency surface.
 
-There were three genuinely distinct things all called "AgentGuard," not one
-misnamed file:
+## 13. External/operational work vs code work
 
-1. `apps/api/api/agentGuard.ts` — prompt-injection/PII scanning router.
-2. `apps/api/services/agentguard/engine.ts` — a real, separately-scoped
-   enterprise feature: autonomous risk-signal evaluation and auto-kill
-   actions on Azure-discovered keys, backed by its own DB tables
-   (`agentGuardPolicies`, `agentGuardEvents`) and its own dashboard tab
-   (`apps/web/components/enterprise/AgentGuardTab.tsx`).
-3. `@rakshex/agentguard-sdk` (npm) / `rakshex-agentguard` (PyPI) — the
-   published client SDK. The Node package's actual exports were never
-   confused internally (`AgentGuardClient` for telemetry/privacy,
-   `AgentFirewallClient` for the Agent Firewall, both clearly named) — the
-   confusion was one level up: a package that ships **both** clients was
-   named after only one of them, and the one it wasn't named after
-   (`AgentFirewallClient`) is the product's headline differentiator
-   ("competitors govern the session, Rakshex governs the action").
+Green repository CI means the commit passed the repository's automated release gates. It does **not** automatically prove external infrastructure is correctly configured.
 
-**Decision (founder call, not a bug fix):** #1 and #2 keep their names —
-both are real, correctly-scoped AgentGuard features and renaming either
-would mean touching live enterprise DB tables for no functional gain.
-#3 (Node) is renamed: `packages/agentguard-sdk` → `packages/sdk`,
-`@rakshex/agentguard-sdk` → `@rakshex/sdk`. A developer installing the SDK
-should not have to already know the history to guess it also contains the
-Firewall client. The Python package (`rakshex-agentguard`) is untouched —
-it genuinely only contains the AgentGuard client today; there is no Python
-`AgentFirewallClient` yet, and that gap is now stated explicitly in
-`docs/SDK.md` rather than left implicit.
+External items must be verified in the target environment before calling them live, including as applicable:
 
-Every reference was updated, not just the directory: `package.json` name/
-description/keywords, the `SDK_NAME` constant in `client.ts`, `index.ts`'s
-header doc (now explains why both clients live in one package),
-`packages/sdk/README.md` (added a full Agent Firewall client section that
-never existed before — the addition of `firewall.ts` had never been
-documented), `docs/SDK.md`, `docs/ARCHITECTURE.md`, root `README.md`,
-`tsconfig.json`/`tsconfig.base.json` path mappings, `apps/api/package.json`/
-`tsconfig.json`/`vitest.config.ts`, root `package.json` script filters, and
-`pnpm-lock.yaml` (hand-edited precisely rather than copying a
-sandbox-regenerated lockfile that had accumulated unrelated drift from
-`packages/agent-memory` being out of sync with its own package.json — a
-**pre-existing, unrelated issue this session did not introduce and did not
-fix**; `pnpm install --frozen-lockfile` will fail on that until someone
-regenerates the lockfile for real, separately from this change).
+- DNS/TLS for web/API/docs domains
+- production database/Redis reachability and backup ownership
+- production vault/JWT/provider secrets
+- SMTP/email deliverability
+- GitHub App credentials/webhook delivery
+- payment-provider live-mode exercises
+- monitoring/on-call ownership
+- legal/tax/security review
 
-Verified by execution, not assumed: `@rakshex/sdk` typecheck 0 errors,
-14/14 existing tests pass unmodified under the new name; `apps/api`
-typecheck 0 errors with the renamed dependency; the SDK's actual publish
-build (`tsc -p tsconfig.build.json`) succeeds and produces correct `dist/`
-output including `firewall.js`/`firewall.d.ts`; confirmed no consumer in
-`apps/` actually imports `@rakshex/agentguard-sdk` at the source level (the
-dependency was declared in `apps/api/package.json` but never imported —
-so the internal blast radius of this rename was genuinely limited to
-config/build files, not application logic).
+For the 2026-08-28 consolidation, **Vercel production promotion is intentionally deferred**. Do not block repository consolidation on Vercel, but do not claim the newest web commit is live on the public domain until a later deployment verification proves it.
 
-### Missing DB functions implemented (`apps/api/db.ts`)
+## 14. Definition of "done" for a repository consolidation
 
-`getAuditLogForUserPage`, `getScansPageByCollectionId`, `saveScanWithFindings`,
-`createWorkspaceWithOwner`, `getLatestComplianceScoresForUser`. The middle two are
-**transactional** — their call sites always documented them as atomic but they did
-not exist at all. Also: `recordTokenUsage` was silently discarding cost attribution
-despite the columns existing since migration 0013.
+A consolidation is done only when:
 
----
+- intended current code is on one review branch,
+- known real code defects found during the audit are fixed,
+- intentionally unsupported external capabilities remain honestly labeled rather than faked,
+- stale canonical docs are corrected,
+- all declared runtimes are consistent,
+- the full final-head CI release gate is green,
+- the independent final-head Security scan is green,
+- the PR is merged to `main`, and
+- `main` is rechecked after merge.
 
-## 5. Known gaps — start here
-
-0. ~~**TWO POLICY ENGINES ARE LIVE AT ONCE.**~~ **RESOLVED 2026-08-09** — see
-   `docs/POLICY_ENGINE_UNIFICATION.md` for the full account. Original finding
-   (2026-08-06), kept for history: two different functions both called
-   `evaluatePolicy`, incompatible data models, both live on different request
-   paths (`apps/api/engines/policyEngine.ts` vs `packages/policy-engine`),
-   with a differential test proving 3 of 10 real policy intents got different
-   verdicts depending only on which code path handled them.
-
-   **Fix, verified by execution, not asserted:** `packages/policy-engine`
-   gained a generic, priority-ordered `rules` field (`GenericRule` in
-   `types.ts`) that is a faithful port of the app engine's entire condition
-   model — every operator, threat-level comparison, multi-tool matching.
-   `apps/api/engines/policyEngine.ts` is now a thin adapter that delegates
-   every decision to that mechanism and translates types/vocabulary at the
-   boundary; its external contract (types, function signature, return shape)
-   is byte-identical, so `middleware/policyEnforcement.ts`,
-   `services/policyCache.ts`, `api/policies.ts`, `api/policyRules.ts`
-   required zero changes. There is now exactly one function that makes
-   policy decisions.
-
-   Verified this session against a real local install (not read-only code
-   review): `packages/policy-engine` 14/14 tests pass; the **unmodified**
-   `apps/api/engines/policyEngine.test.ts` 21/21 pass (proves behavioral
-   equivalence to the old standalone engine); the differential test now
-   asserts 9/10 agreement (up from 7/10) with 12/12 passing;
-   `promptInjectionEngine.test.ts`, `services/gateway/enforcement.test.ts`,
-   `services/policyDecisionCompat.test.ts` — 83 more tests, all pass; full
-   `apps/api` TypeScript compile — 0 errors.
-
-   **One item remains genuinely open, not an engine gap:** `AIEventContext`
-   (the AI-telemetry event shape) has no network-destination field at all,
-   because that data doesn't exist at the point telemetry events are built.
-   This is a data-shape limitation of one event type, not a decision
-   disagreement — network policy is correctly enforced in
-   `services/gateway/enforcement.ts`, whose context does carry
-   `ctx.destination`. Documented as such in the differential test rather
-   than left unexplained.
-
-   **A second item is not yet verified:** whichever surface serializes
-   dashboard-authored policies into a `PolicyDocument` today (e.g.
-   `services/policyAsCode.ts`) should be checked to confirm it actually
-   emits `rules` entries for threat-level/priority intents now that the
-   engine supports it — the engine-level fix is done, but audit the
-   authoring path before claiming every dashboard policy can express these.
-
-1. ~~`pnpm test:db` / `foundation.test.ts` — UNVERIFIED.~~ **VERIFIED 2026-08-06 on
-   real Postgres 18.4 — 10/10 pass.** The earlier 6 PGlite failures
-   (`Received unexpected rowDescription message from backend`) were confirmed as a
-   **PGlite wire-protocol emulation bug**, not a schema defect: same migrations, same
-   seed, same test file, zero failures under real Postgres. See §6 for how to get a
-   real (non-WASM) Postgres in a sandbox with no root and no Docker — the
-   `embedded-postgres` npm package ships native binaries and needs neither.
-2. ~~**No authenticated end-to-end broker call.**~~ **CLOSED** —
-   `apps/api/api/agentFirewall.broker.http.test.ts` drives signup/login over HTTP,
-   stores a credential, evaluates ALLOW, brokers to a public hostname, and asserts
-   the egress row (replay then 409). Upstream fetch for that hostname is intercepted
-   in-process so the SSRF guard is satisfied without a test-only bypass or a real
-   provider. Loopback remains refused in `agentFirewall.e2e.test.ts`. Both files
-   **fail** (do not skip) when `DATABASE_URL` is set without `RAKSHEX_VAULT_KEY`;
-   CI `test:integration` now supplies a test-only vault key.
-3. ~~**Playwright E2E never run**~~ **Smoke is the CI gate.** `pnpm test:e2e` /
-   `pnpm test:e2e:smoke` run `--grep=Smoke` (public pages, health must be 200 with
-   live DB/Redis, login form, Agent Firewall evaluate → ALLOW). The CI `e2e` job is
-   that command, not a skip. Longer journey specs under `e2e/` still exist and are
-   not the release gate.
-4. **Ops/legal** — pen test, legal review, live payment keys, `RAKSHEX_VAULT_KEY` in
-   the deploy environment.
-
-`RAKSHEX_VAULT_KEY` is now **load-bearing**: `credentials.create` fails closed without
-it. Wired into `.env.example`, `render.yaml`, `docker-compose.prod.yml`.
-
----
-
-## 6. Gotchas that will cost you an hour
-
-- **Migrations are driven by a hardcoded `MIGRATION_ORDER` array** in
-  `packages/database/src/migrate.ts` — _not_ drizzle-kit's journal, which is stale and
-  abandoned after 0001. **A new `.sql` file that isn't added to that array silently
-  never runs.** This has already caused a production-shaped bug once.
-- There are **two `0012_` migrations** (compliance_report_types, workspace_subscriptions).
-  Intentional, ordered by file date. Don't "fix" it.
-- `apps/api/tsconfig.json` runs `strict: false`. Wrong-arity and wrong-order function
-  calls can slip through review. **Check signatures; don't trust the type checker.**
-  `requireWorkspacePermission(workspaceId, userId, resource, action)` — that order,
-  four args. `requireWorkspaceMembership(workspaceId, userId)`.
-- New `logSecurityEvent` strings must be added to the `SecurityEventType` union in
-  `apps/api/services/securityEvents.ts` or typecheck fails.
-- Workspace packages must be added to **both** `tsconfig.base.json` and
-  `apps/api/tsconfig.json` `paths`.
-- The `report_type` enum value is **`pci_dss`**, not `pci`.
-- `apps/api/runtimeClaims.test.ts` fails the build on retired brand names and
-  unverifiable superiority claims ("India's first", "world-first"). It is a
-  **legal guardrail** — fix the copy, don't weaken the test.
-
-### If you're in a sandboxed environment
-
-- Bulk `rsync`/`cp` of the whole repo over a mounted FS times out.
-  `tar cf - --exclude=node_modules | tar xf -` into `/tmp` works.
-- turbo needs `pnpm` on `PATH`; a `corepack pnpm@10.32.1 "$@"` shim works.
-- No root, so no apt Postgres. Two options, and they are not interchangeable:
-  - **`@electric-sql/pglite`** gives you Postgres 18 compiled to **WASM**, and
-    `@electric-sql/pglite-socket` exposes it over TCP so the real `pg` driver
-    connects. Good enough for migrations and most integration tests. **Not** good
-    enough for `foundation.test.ts` — 6 tests fail with
-    `Received unexpected rowDescription message from backend`, a wire-protocol
-    emulation gap in PGlite itself.
-  - **`embedded-postgres`** (npm) ships **real native Postgres binaries** per
-    platform and runs `initdb`/`pg_ctl` as the current user — no root, no Docker.
-    This is what actually resolved `foundation.test.ts` (see §5 item 1, verified
-    2026-08-06): `new EmbeddedPostgres({ databaseDir, user, password, port,
-    persistent: false }); await pg.initialise(); await pg.start();` then point
-    `DATABASE_URL` at it. Prefer this over PGlite whenever a test's failure mode
-    is ambiguous between "real bug" and "emulator gap" — it removes the emulator
-    as a variable entirely.
-- Each bash call is a fresh PID namespace — background servers do not survive between
-  calls. Start the server and run the tests in **one** invocation (wrap start →
-  migrate/test → `pg.stop()` in a single Node script, not separate bash calls).
-- The API boots in dev with `REDIS_URL=""` (falls back to in-memory MockRedis).
-  Required env to boot: `DATABASE_URL`, `JWT_SECRET` (32+ chars), `RAKSHEX_VAULT_KEY`.
-
----
-
-## 7. Working agreement
-
-The user is the founder and moves fast. They have said "I agree with everything you
-say" — **do not take that as licence.** Multiple real bugs in this codebase were
-introduced by confident, plausible-looking code, including by prior agents. Two were
-introduced during the session that produced this file and caught only by checking
-actual function signatures against the source.
-
-State confidence honestly, lead with the uncomfortable finding, and verify by
-executing rather than by reading. When you can't verify something, say so plainly and
-name the command that would settle it.
+Anything after that is deployment/environment work and should be named as such.

@@ -1,79 +1,76 @@
 #!/usr/bin/env node
 /**
- * One-off CLI to promote (or create) an admin user.
+ * Explicitly promote an existing local account to the application-level admin role.
+ *
+ * This helper deliberately does NOT create users, accept passwords on the command
+ * line, or change billing entitlements. Create the account through the normal auth
+ * flow first, then run this one-off operation from a trusted operator shell.
  *
  * Usage:
- *   node --loader tsx scripts/create-admin.ts <email> [name] [password]
- *
- * - If the user already exists, their role is set to "admin".
- * - If the user doesn't exist and a password is provided, a new account is
- *   created with role=admin, plan=enterprise, and PBKDF2-hashed password.
- * - If the user doesn't exist and no password is provided, the script exits
- *   with an error (we refuse to create passwordless accounts).
- *
- * Environment:
- *   DATABASE_URL must point at a MySQL instance with the current schema.
+ *   RAKSHEX_ADMIN_PROMOTION_CONFIRM=user@example.com \
+ *   DATABASE_URL=postgresql://... \
+ *   pnpm exec tsx scripts/create-admin.ts user@example.com
  */
 import "dotenv/config";
-import { eq } from "drizzle-orm";
-import * as db from "../server/db";
-import { users } from "../drizzle/schema";
-import { hashPassword } from "../server/utils/password";
+import pg from "pg";
 
 async function main() {
-  const [, , emailArg, nameArg, passwordArg] = process.argv;
-
+  const [, , emailArg] = process.argv;
   if (!emailArg) {
-    console.error("Usage: node --loader tsx scripts/create-admin.ts <email> [name] [password]");
-    process.exit(1);
+    throw new Error("Usage: pnpm exec tsx scripts/create-admin.ts <existing-account-email>");
   }
 
   const email = emailArg.trim().toLowerCase();
-  const name = (nameArg ?? "Admin").trim();
-
-  const driver = await db.getDb();
-  if (!driver) {
-    console.error("DATABASE_URL is not configured — cannot connect to the database.");
-    process.exit(1);
+  if (!email || !email.includes("@")) {
+    throw new Error("A valid account email is required");
   }
 
-  const existing = await db.getUserByEmail(email);
-
-  if (existing) {
-    await driver
-      .update(users)
-      .set({ role: "admin", plan: "enterprise" })
-      .where(eq(users.id, existing.id));
-    console.log(`[create-admin] Promoted ${email} (id=${existing.id}) to admin.`);
-    return;
-  }
-
-  if (!passwordArg) {
-    console.error(
-      `[create-admin] No account found for ${email} and no password argument was provided. ` +
-        "Refusing to create a passwordless account. Re-run with: create-admin <email> <name> <password>",
+  const confirmation = process.env.RAKSHEX_ADMIN_PROMOTION_CONFIRM?.trim().toLowerCase();
+  if (confirmation !== email) {
+    throw new Error(
+      "Refusing admin promotion. Set RAKSHEX_ADMIN_PROMOTION_CONFIRM to the exact target email.",
     );
-    process.exit(1);
   }
 
-  if (passwordArg.length < 8) {
-    console.error("[create-admin] Password must be at least 8 characters.");
-    process.exit(1);
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    throw new Error("DATABASE_URL is required");
+  }
+  if (!databaseUrl.startsWith("postgres")) {
+    throw new Error("DATABASE_URL must be a PostgreSQL connection string");
   }
 
-  const passwordHash = hashPassword(passwordArg);
-  const created = await db.createLocalUser({ email, name, passwordHash });
-  await driver
-    .update(users)
-    .set({ role: "admin", plan: "enterprise" })
-    .where(eq(users.id, created.id));
+  const client = new pg.Client({ connectionString: databaseUrl });
+  await client.connect();
+  try {
+    await client.query("BEGIN");
+    const result = await client.query<{ id: number; email: string | null }>(
+      `UPDATE users
+       SET role = 'admin', "updatedAt" = now()
+       WHERE lower(email) = lower($1)
+       RETURNING id, email`,
+      [email],
+    );
 
-  console.log(`[create-admin] Created admin ${email} (id=${created.id}, plan=enterprise).`);
+    if (result.rowCount !== 1) {
+      throw new Error(
+        result.rowCount === 0
+          ? `No existing user found for ${email}; create the account through normal auth first.`
+          : `Expected one user for ${email}, found ${result.rowCount}.`,
+      );
+    }
+
+    await client.query("COMMIT");
+    console.log(`[create-admin] Promoted existing user id=${result.rows[0]!.id} email=${email}`);
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    await client.end();
+  }
 }
 
-main()
-  .then(() => process.exit(0))
-  .catch((err) => {
-    console.error("[create-admin] Failed:", err);
-    process.exit(1);
-  });
+main().catch((error) => {
+  console.error("[create-admin] Failed:", error instanceof Error ? error.message : error);
+  process.exit(1);
+});

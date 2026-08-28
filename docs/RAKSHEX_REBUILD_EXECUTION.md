@@ -1,7 +1,7 @@
 # Rakshex Rebuild Execution Plan
 
 Source: `RAKSHEX COMPLETE CODEBASE REBUILD A.txt`  
-Workspace: this repo (advanced DevPulse → Rakshex line, not the older zip alone)  
+Workspace: this repo (advanced RaksHex → Rakshex line, not the older zip alone)  
 Strategy: **incremental monorepo**, not a big-bang rewrite
 
 ---
@@ -12,12 +12,12 @@ Strategy: **incremental monorepo**, not a big-bang rewrite
 | -------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | PostgreSQL + Redis               | **Mostly done**       | `docker-compose.yml` uses `rakshex-postgres` / `rakshex-redis`                                                      |
 | Backend surface                  | **Strong**            | Large tRPC API under `server/api/*` (auth, scans, keys, kill-switch, control plane, GitHub, billing, compliance, …) |
-| Frontend                         | **Working, misnamed** | Still `devpulse-frontend` package name                                                                              |
-| VS Code extension                | **Partial**           | Still `devpulse-vscode`                                                                                             |
+| Frontend                         | **Working, misnamed** | Still `rakshex-frontend` package name                                                                               |
+| VS Code extension                | **Partial**           | Still `rakshex-vscode`                                                                                              |
 | GitHub Action                    | **Partial**           | `github-action/` exists                                                                                             |
 | Scanner rules                    | **Heuristic / thin**  | Logic lives in `server/utils/scanning.ts` — not a versioned rule package                                            |
 | Monorepo (`apps/` + `packages/`) | **Missing**           | Flat layout; no `pnpm-workspace` / Turbo yet                                                                        |
-| Product naming                   | **Partial**           | Compose + vault key use Rakshex; root package still `devpulse`; DB URL defaults still `devpulse`                    |
+| Product naming                   | **Partial**           | Compose + vault key use Rakshex; root package still `rakshex`; DB URL defaults still `rakshex`                      |
 | TypeScript strict                | **Off**               | Root `strict: false`                                                                                                |
 | AgentGuard SDK packages          | **Partial**           | Services exist; no published `@rakshex/node` / Python SDK                                                           |
 | CLI                              | **Missing**           | No `@rakshex/cli`                                                                                                   |
@@ -39,8 +39,8 @@ Strategy: **incremental monorepo**, not a big-bang rewrite
 
 - Soft map:
   - `server` → eventual `apps/api`
-  - `devpulse-frontend` → `apps/web` (rename + package scope)
-  - `devpulse-vscode` → `apps/vscode-extension`
+  - `rakshex-frontend` → `apps/web` (rename + package scope)
+  - `rakshex-vscode` → `apps/vscode-extension`
   - `github-action` → keep or `apps/github-action`
 - Add `tsconfig.base.json` (strict for **new** packages first)
 - Keep existing entrypoints (`pnpm start`, Docker) working during the move
@@ -122,7 +122,7 @@ Market-ready is **false** until every gate in Part C is green (automated + manua
 - [x] Root package named `rakshex` (private monorepo root)
 - [x] `.env.example` uses `rakshex` DB defaults
 - [x] `pnpm-workspace.yaml` + `tsconfig.base.json` scaffolded
-- [x] Frontend package renamed to `@rakshex/web` (folder still `devpulse-frontend`)
+- [x] Frontend package renamed to `@rakshex/web` (folder still `rakshex-frontend`)
 - [x] VS Code package renamed to `rakshex-vscode` (publisher `rakshex`)
 
 ---

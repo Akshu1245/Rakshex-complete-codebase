@@ -19,7 +19,7 @@ permissions:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: akshu1245/rakshex
-  NODE_VERSION: "22"
+  NODE_VERSION: "24"
   HUSKY: "0"
 
 # Fail-fast policy: critical jobs never use continue-on-error.
@@ -109,6 +109,25 @@ jobs:
         env:
           JWT_SECRET: test-secret-ci-unit
           REDIS_URL: redis://127.0.0.1:6379
+
+  python-sdk:
+    name: Python SDK (${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: packages/agentguard-python/pyproject.toml
+      - name: Install Python SDK test dependencies
+        run: python -m pip install -e "packages/agentguard-python[dev]"
+      - name: Run Python SDK tests
+        run: python -m pytest packages/agentguard-python/tests
 
   integration:
     name: Integration
@@ -402,6 +421,7 @@ jobs:
         lint,
         typecheck,
         unit,
+        python-sdk,
         integration,
         security,
         build,
