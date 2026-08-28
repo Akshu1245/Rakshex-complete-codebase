@@ -70,14 +70,9 @@ export function TerminalDemo() {
     <div className="w-full max-w-[640px] rounded-lg border border-[#14B8A6] bg-transparent flex flex-col md:flex-row gap-5 p-5 items-stretch shadow-md relative">
       {/* Left panel: terminal */}
       <div className="flex-1 bg-black/40 rounded border border-[#14B8A6]/20 p-4 font-mono text-xs text-left min-h-[280px] flex flex-col">
-        <div className="flex items-center gap-1.5 mb-3 border-b border-white/5 pb-2 shrink-0">
-          <div className="w-2.5 h-2.5 rounded-full bg-[#14B8A6]/40" />
-          <div className="w-2.5 h-2.5 rounded-full bg-[#14B8A6]/60" />
-          <div className="w-2.5 h-2.5 rounded-full bg-[#14B8A6]" />
-          <span className="text-[10px] text-[#9CA3AF] ml-2 font-sans font-medium">
-            bash — agent firewall
-          </span>
-        </div>
+        <span className="text-[9px] text-[#9CA3AF] uppercase tracking-widest font-sans font-semibold mb-3">
+          Decision trace
+        </span>
         <div className="space-y-2 flex-1">
           {terminalLines.slice(0, scanStep).map((line, idx) => {
             let color = "text-[#FFFFFF]";

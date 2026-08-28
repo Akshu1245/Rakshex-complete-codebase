@@ -52,12 +52,12 @@ export function PublicHeader() {
       {/* SECTION 1 — sticky announcement bar */}
       {showBanner && (
         <div className="w-full bg-[#0B0F14]/80 backdrop-blur-md border-b border-[#14B8A6]/40">
-          <Link className="block" href="/changelog">
+          <Link className="block" href="/waitlist">
             <div className="mx-auto flex h-10 w-full max-w-[1280px] items-center justify-between px-6">
               <p className="min-w-0 truncate text-left text-xs font-medium text-white sm:text-sm">
                 {countdownActive
-                  ? "RaksHex private beta opens soon."
-                  : "RaksHex AI Control Plane is available for hands-on evaluation."}
+                  ? "RaksHex private beta opens soon. Request access."
+                  : "RaksHex is in private beta. Request access for a scoped evaluation."}
               </p>
               {countdownActive ? (
                 <span
@@ -72,7 +72,7 @@ export function PublicHeader() {
                 </span>
               ) : (
                 <span className="hidden shrink-0 text-xs text-white sm:inline">
-                  Review the release notes
+                  Request beta access
                 </span>
               )}
             </div>
@@ -267,31 +267,24 @@ export function PublicHeader() {
                   >
                     <Link
                       className="text-white hover:text-[#14B8A6] text-xs py-1.5 transition-colors border-b border-[#1A1F2E] pb-2"
-                      href="/compare/rakshex-vs-snyk"
-                      onClick={forceClose}
-                    >
-                      RaksHex vs Snyk →
-                    </Link>
-                    <Link
-                      className="text-white hover:text-[#14B8A6] text-xs py-1.5 transition-colors border-b border-[#1A1F2E] pb-2"
-                      href="/compare/rakshex-vs-datadog"
+                      href="/compare/datadog"
                       onClick={forceClose}
                     >
                       RaksHex vs Datadog →
                     </Link>
                     <Link
                       className="text-white hover:text-[#14B8A6] text-xs py-1.5 transition-colors border-b border-[#1A1F2E] pb-2"
-                      href="/compare/rakshex-vs-traceable"
+                      href="/compare/lakera"
                       onClick={forceClose}
                     >
-                      RaksHex vs Traceable AI →
+                      RaksHex vs Lakera →
                     </Link>
                     <Link
                       className="text-white hover:text-[#14B8A6] text-xs py-1.5 transition-colors"
-                      href="/compare/rakshex-vs-salt"
+                      href="/compare/portkey"
                       onClick={forceClose}
                     >
-                      RaksHex vs Salt Security →
+                      RaksHex vs Portkey →
                     </Link>
                   </div>
                 </div>
@@ -408,7 +401,7 @@ export function PublicHeader() {
             </a>
             {/* GitHub */}
             <a
-              href="https://github.com/rakshex-hq"
+              href="https://github.com/Akshu1245/Rakshex-complete-codebase"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="GitHub"
@@ -428,7 +421,7 @@ export function PublicHeader() {
               className="bg-[#14B8A6] hover:bg-[#0D9488] active:bg-[#0A7F6F] text-white font-semibold text-sm font-sans px-4 py-2 rounded-[6px] transition-all duration-200"
               href="/waitlist"
             >
-              Join waitlist
+              Request beta access
             </Link>
             <button
               className="lg:hidden text-white"
@@ -513,24 +506,24 @@ export function PublicHeader() {
               <div className="flex flex-col gap-2">
                 <Link
                   className="text-sm text-neutral-300"
-                  href="/compare/rakshex-vs-snyk"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  RaksHex vs Snyk
-                </Link>
-                <Link
-                  className="text-sm text-neutral-300"
-                  href="/compare/rakshex-vs-datadog"
+                  href="/compare/datadog"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   RaksHex vs Datadog
                 </Link>
                 <Link
                   className="text-sm text-neutral-300"
-                  href="/compare/rakshex-vs-traceable"
+                  href="/compare/lakera"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  RaksHex vs Traceable AI
+                  RaksHex vs Lakera
+                </Link>
+                <Link
+                  className="text-sm text-neutral-300"
+                  href="/compare/portkey"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  RaksHex vs Portkey
                 </Link>
               </div>
             </div>
@@ -607,7 +600,7 @@ export function PublicHeader() {
                 href="/waitlist"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Join waitlist
+                Request beta access
               </Link>
             </div>
           </div>

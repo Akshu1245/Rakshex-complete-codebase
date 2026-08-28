@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "RaksHex FAQ – AI Runtime Governance Questions Answered",
+  title: "FAQ",
   description:
-    "Frequently asked questions about RaksHex. Learn how it blocks prompt injection, controls LLM costs, discovers shadow APIs, and helps with compliance.",
+    "Frequently asked questions about RaksHex, the Agent Firewall for action-level runtime authorization.",
   alternates: { canonical: "/faq" },
 };
 
@@ -45,8 +45,8 @@ const FAQS = [
     a: "For models with reasoning tokens (like OpenAI o1/o3 or DeepSeek R1), RaksHex parses the raw API response, isolates the thinking tokens, and attributes their exact cost separately from standard output tokens.",
   },
   {
-    q: "Is there a free trial for Pro?",
-    a: "Yes. We offer a 14-day free trial for the Pro plan, with no credit card required. You can experience advanced scanning, Slack alerts, and team features immediately.",
+    q: "How do I evaluate RaksHex?",
+    a: "RaksHex is in private beta. There is no self-serve trial or checkout. Join the waitlist to request access; invited teams receive a scoped evaluation workspace.",
   },
   {
     q: "Can I export compliance reports?",

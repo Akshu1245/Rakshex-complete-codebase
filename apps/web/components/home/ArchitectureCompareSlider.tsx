@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import { Shield, AlertTriangle, CheckCircle2, XCircle, Sliders, Server } from "lucide-react";
+import { Shield, AlertTriangle, CheckCircle2, XCircle, Sliders, Server, GripVertical } from "lucide-react";
 
 interface ArchitectureCard {
   title: string;
@@ -306,7 +306,7 @@ export function ArchitectureCompareSlider() {
           >
             {/* Draggable Knob */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-[#0B0F17] border-2 border-[#14B8A6] text-[#14B8A6] flex items-center justify-center shadow-xl hover:scale-110 active:scale-95 transition-transform">
-              <span className="font-bold text-xs tracking-tighter">:::</span>
+              <GripVertical className="w-4 h-4" />
             </div>
           </div>
         </div>

@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Shield, Zap, Lock, BarChart2, ArrowRight, X, Sparkles, CheckCircle2 } from "lucide-react";
-import Link from "next/link";
+import { Shield, Zap, Lock, BarChart2, ArrowRight, X, Sparkles } from "lucide-react";
 import { RaksHexLogo } from "@/components/common/RaksHexLogo";
 
 interface OverviewSplashProps {
@@ -118,11 +117,7 @@ export function OverviewSplash({ isOpen: externalIsOpen, onClose }: OverviewSpla
         </div>
 
         {/* Action CTAs */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 border-t border-slate-800">
-          <div className="flex items-center gap-2 text-xs text-emerald-400 font-mono">
-            <CheckCircle2 className="w-4 h-4" /> 1,000+ tests passing, 26 migrations
-            rollback-verified
-          </div>
+        <div className="flex flex-col sm:flex-row items-center justify-end gap-4 pt-2 border-t border-slate-800">
           <div className="flex items-center gap-3 w-full sm:w-auto">
             <button
               onClick={handleClose}

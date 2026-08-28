@@ -28,47 +28,12 @@ interface CompetitorProfile {
 
 const COMPETITORS: CompetitorProfile[] = [
   {
-    id: "snyk",
-    name: "Snyk",
-    category: "Static Code & Dependency Scanner",
-    summary:
-      "Snyk scans repos and dependencies for known CVEs before code ships. It doesn't evaluate what an already-running AI agent is authorized to do at call time.",
-    link: "/compare/rakshex-vs-snyk",
-    features: [
-      {
-        name: "Primary Security Focus",
-        raksHex: { supported: true, detail: "Runtime action authorization for AI agents" },
-        competitor: { supported: false, detail: "Static code vulnerabilities (SAST/SCA)" },
-      },
-      {
-        name: "Semantic Action Authorization",
-        raksHex: { supported: true, detail: "Evaluates each action against delegated authority" },
-        competitor: { supported: false, detail: "No runtime action model" },
-      },
-      {
-        name: "Credential Mediation",
-        raksHex: { supported: true, detail: "Broker enforces DENY at the credential" },
-        competitor: { supported: false, detail: "No credential brokering" },
-      },
-      {
-        name: "Tamper-Evident Action Ledger",
-        raksHex: { supported: true, detail: "Hash-chained record of every decision" },
-        competitor: { supported: false, detail: "No runtime decision ledger" },
-      },
-      {
-        name: "MCP Tool Governance",
-        raksHex: { supported: true, detail: "Adversarial-intent scanning on tool calls" },
-        competitor: { supported: "partial", detail: "Scans hardcoded secrets in source" },
-      },
-    ],
-  },
-  {
     id: "datadog",
     name: "Datadog",
     category: "General APM & Infrastructure Observability",
     summary:
       "Datadog is built to observe and alert on what already happened. It has no concept of authorizing an individual agent action before it executes.",
-    link: "/compare/rakshex-vs-datadog",
+    link: "/compare/datadog",
     features: [
       {
         name: "Enforcement vs Observability",
@@ -103,7 +68,7 @@ const COMPETITORS: CompetitorProfile[] = [
     category: "Point Solution Prompt Guard",
     summary:
       "Lakera focuses on detecting prompt injection at the input layer. RaksHex operates a layer deeper: authorizing the action the model wants to take, independent of how the prompt was worded.",
-    link: "/compare/rakshex-vs-lakera",
+    link: "/compare/lakera",
     features: [
       {
         name: "Scope",
@@ -138,7 +103,7 @@ const COMPETITORS: CompetitorProfile[] = [
     category: "LLM Gateway & Request Router",
     summary:
       "Portkey and Helicone route and log LLM traffic. Routing tells you a request went through; it doesn't tell you whether that specific action should have been allowed.",
-    link: "/compare/rakshex-vs-portkey",
+    link: "/compare/portkey",
     features: [
       {
         name: "Action-Level Authorization",
@@ -173,7 +138,7 @@ const COMPETITORS: CompetitorProfile[] = [
     category: "Legacy API Security Platform",
     summary:
       "Traceable and Salt Security analyze REST/GraphQL API traffic patterns. Neither has a concept of an AI agent's delegated authority or a semantic action model.",
-    link: "/compare/rakshex-vs-traceable",
+    link: "/compare/traceable-ai",
     features: [
       {
         name: "AI Agent-Specific Model",
@@ -202,10 +167,45 @@ const COMPETITORS: CompetitorProfile[] = [
       },
     ],
   },
+  {
+    id: "snyk",
+    name: "Snyk",
+    category: "Runtime authorization vs static scanning",
+    summary:
+      "Snyk scans repos and dependencies for known CVEs before code ships. It doesn't evaluate what an already-running AI agent is authorized to do at call time.",
+    link: "/compare/snyk",
+    features: [
+      {
+        name: "Primary Security Focus",
+        raksHex: { supported: true, detail: "Runtime action authorization for AI agents" },
+        competitor: { supported: false, detail: "Static code vulnerabilities (SAST/SCA)" },
+      },
+      {
+        name: "Semantic Action Authorization",
+        raksHex: { supported: true, detail: "Evaluates each action against delegated authority" },
+        competitor: { supported: false, detail: "No runtime action model" },
+      },
+      {
+        name: "Credential Mediation",
+        raksHex: { supported: true, detail: "Broker enforces DENY at the credential" },
+        competitor: { supported: false, detail: "No credential brokering" },
+      },
+      {
+        name: "Tamper-Evident Action Ledger",
+        raksHex: { supported: true, detail: "Hash-chained record of every decision" },
+        competitor: { supported: false, detail: "No runtime decision ledger" },
+      },
+      {
+        name: "MCP Tool Governance",
+        raksHex: { supported: true, detail: "Adversarial-intent scanning on tool calls" },
+        competitor: { supported: "partial", detail: "Scans hardcoded secrets in source" },
+      },
+    ],
+  },
 ];
 
 export function OneOnOneMatrix() {
-  const [selectedCompetitor, setSelectedCompetitor] = useState<string>("snyk");
+  const [selectedCompetitor, setSelectedCompetitor] = useState<string>("datadog");
 
   const currentProfile = COMPETITORS.find((c) => c.id === selectedCompetitor) || COMPETITORS[0];
 

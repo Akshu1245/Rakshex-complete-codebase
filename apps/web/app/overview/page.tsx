@@ -61,7 +61,7 @@ export default function OverviewPage() {
               href="/waitlist"
               className="px-6 py-3 rounded-lg bg-[#14B8A6] hover:bg-[#0D9488] text-black font-semibold text-sm sm:text-base transition-all shadow-[0_0_20px_rgba(20,184,166,0.3)] flex items-center gap-2"
             >
-              <span>Join the waitlist</span>
+              <span>Request beta access</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
@@ -72,17 +72,9 @@ export default function OverviewPage() {
             </Link>
           </div>
 
-          {/* Proof strip — matches the homepage hero's proof strip exactly */}
+          {/* Product claim — matches the homepage hero */}
           <div className="pt-8 border-t border-slate-800/80 max-w-3xl mx-auto">
             <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-mono text-slate-400">
-              <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#14B8A6]" />
-                1,000+ tests passing
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#14B8A6]" />
-                26 migrations, rollback-verified
-              </span>
               <span className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#14B8A6]" />
                 Hash-chained Action Ledger
