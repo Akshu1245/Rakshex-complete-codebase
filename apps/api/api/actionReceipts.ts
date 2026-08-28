@@ -13,7 +13,7 @@ const exportInput = z.object({
 });
 
 async function assertRead(workspaceId: number, userId: number) {
-  return assertWorkspacePermission(workspaceId, userId, "policies", "read");
+  return assertWorkspacePermission(workspaceId, userId, "audit", "read");
 }
 
 function fileStem(requestId?: string) {

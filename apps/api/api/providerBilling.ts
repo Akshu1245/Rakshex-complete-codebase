@@ -23,11 +23,11 @@ export const BILLING_CHECKSUM_COPY = {
 } as const;
 
 async function readAccess(workspaceId: number, userId: number) {
-  return assertWorkspacePermission(workspaceId, userId, "policies", "read");
+  return assertWorkspacePermission(workspaceId, userId, "billing", "read");
 }
 
 async function writeAccess(workspaceId: number, userId: number) {
-  return assertWorkspacePermission(workspaceId, userId, "policies", "write");
+  return assertWorkspacePermission(workspaceId, userId, "billing", "write");
 }
 
 function noDb(): never {

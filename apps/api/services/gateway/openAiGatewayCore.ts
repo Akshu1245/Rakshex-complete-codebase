@@ -607,6 +607,7 @@ export async function handleOpenAiGatewayRequest(
   // Header scopes remain attribution metadata. Enforcement scope comes only
   // from the validated API key, preventing same-tenant principal impersonation.
   const enforcementIdentityId = auth.identityId != null ? identityId : undefined;
+  identityId = enforcementIdentityId;
 
   const requestedProjectId = safeScopeHeader(req, "x-rakshex-project-id");
   if (auth.projectId && requestedProjectId && auth.projectId !== requestedProjectId) {
@@ -624,8 +625,8 @@ export async function handleOpenAiGatewayRequest(
     openAiError(res, 403, "project_scope_mismatch", "API key is restricted to another project");
     return;
   }
-  const projectId = auth.projectId ?? requestedProjectId;
   const enforcementProjectId = auth.projectId ?? undefined;
+  const projectId = enforcementProjectId;
 
   const requestedAgentId = safeScopeHeader(req, "x-rakshex-agent-id");
   if (auth.agentId && requestedAgentId && auth.agentId !== requestedAgentId) {
@@ -644,8 +645,8 @@ export async function handleOpenAiGatewayRequest(
     openAiError(res, 403, "agent_scope_mismatch", "API key is restricted to another agent");
     return;
   }
-  const agentId = auth.agentId ?? requestedAgentId;
   const enforcementAgentId = auth.agentId ?? undefined;
+  const agentId = enforcementAgentId;
   const tags = parseGatewayMetadataHeader(req.header("x-rakshex-metadata"));
   const estimate = estimateGatewayPreflight(request.estimatedInput, request.maxOutputTokens);
   const requestedProviderAccountId = positiveIntegerHeader(req, "x-rakshex-provider-account-id");
@@ -788,30 +789,6 @@ export async function handleOpenAiGatewayRequest(
       return;
     }
     budgetReservation = reservationResult.reservation;
-
-    if (
-      !(await appendReceiptOrBlock("allow", {
-        provider,
-        endpoint: request.endpoint,
-        model: request.model,
-        identityId,
-        projectId,
-        agentId,
-        requestedProviderAccountId,
-        estimatedCostUsd: estimate.estimatedCostUsd,
-        featureTags: tags.featureTags,
-        customerTags: tags.customerTags,
-      }))
-    ) {
-      await settleGatewayBudget(budgetReservation, 0).catch((settleErr) =>
-        logger.error(
-          { err: settleErr, requestId },
-          "[Gateway] Failed to release budget reservation",
-        ),
-      );
-      budgetReservation = null;
-      return;
-    }
   } catch (err) {
     logger.error(
       { err, requestId, workspaceId: auth.workspaceId },
@@ -860,6 +837,21 @@ export async function handleOpenAiGatewayRequest(
       { err, requestId, workspaceId: auth.workspaceId, provider },
       "[Gateway] Provider connection unavailable",
     );
+    await persistGatewayResult({
+      auth,
+      requestId,
+      provider,
+      endpoint: request.endpoint,
+      model: request.model,
+      identityId,
+      projectId,
+      agentId,
+      tags,
+      decision: "blocked",
+      blockReason: "provider_not_configured",
+      estimatedCostUsd: estimate.estimatedCostUsd,
+      startedAt,
+    });
     try {
       await settleGatewayBudget(budgetReservation, 0);
       budgetReservation = null;
@@ -889,6 +881,26 @@ export async function handleOpenAiGatewayRequest(
     return;
   }
 
+  if (
+    !(await appendReceiptOrBlock("allow", {
+      provider,
+      endpoint: request.endpoint,
+      model: request.model,
+      identityId,
+      projectId,
+      agentId,
+      requestedProviderAccountId,
+      estimatedCostUsd: estimate.estimatedCostUsd,
+      featureTags: tags.featureTags,
+      customerTags: tags.customerTags,
+    }))
+  ) {
+    await settleGatewayBudget(budgetReservation, 0).catch((settleErr) =>
+      logger.error({ err: settleErr, requestId }, "[Gateway] Failed to release budget reservation"),
+    );
+    budgetReservation = null;
+    return;
+  }
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
   req.on("close", () => controller.abort());
