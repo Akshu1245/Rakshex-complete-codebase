@@ -1,51 +1,36 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { trpc } from "@/lib/trpc";
-
-type PaidPlan = "pro" | "enterprise";
+import { EVALUATION_PLANS, type EvaluationPlan, type EvaluationPlanId } from "@/lib/billingCatalog";
 
 export default function PricingPage() {
-  const [selectedPlan, setSelectedPlan] = useState<PaidPlan | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<EvaluationPlanId | null>(null);
   const [email, setEmail] = useState("");
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const { data: me } = trpc.auth.me.useQuery(undefined, { retry: false });
-  const { data: plans, isLoading } = trpc.payment.getPlans.useQuery();
-
-  const createSubscription = trpc.payment.createSubscription.useMutation({
-    onSuccess: (data) => {
-      if (data?.shortUrl) window.location.href = data.shortUrl;
-    },
-    onError: (err) => setError(err.message || "Failed to initiate subscription"),
-  });
 
   const joinMutation = trpc.waitlist.join.useMutation({
     onSuccess: () => {
       setSuccess(true);
       setError(null);
     },
-    onError: (err) => setError(err.message || "Failed to join waitlist. Please try again."),
+    onError: (err: { message?: string }) =>
+      setError(err.message || "Failed to join waitlist. Please try again."),
   });
-
-  const byId = useMemo(() => {
-    const map = new Map<string, NonNullable<typeof plans>[number]>();
-    for (const p of plans ?? []) map.set(p.id, p);
-    return map;
-  }, [plans]);
-
-  const free = byId.get("free");
-  const pro = byId.get("pro");
-  const enterprise = byId.get("enterprise");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
-    const capitalizedPlan = selectedPlan
-      ? selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)
-      : "Free";
+    if (!email || !selectedPlan) return;
+    const capitalizedPlan = selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1);
     joinMutation.mutate({ email, plan: capitalizedPlan, source: "pricing_page" });
+  };
+
+  const openWaitlist = (planId: EvaluationPlanId) => {
+    setSelectedPlan(planId);
+    setEmail("");
+    setSuccess(false);
+    setError(null);
   };
 
   return (
@@ -54,102 +39,46 @@ export default function PricingPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 pb-6 border-b border-neutral-900">
           <div>
             <h1 className="text-3xl sm:text-4xl font-bold text-white font-manrope">
-              {me ? "Choose your plan" : "Pricing"}
+              Evaluation pricing
             </h1>
-            <p className="text-neutral-400 mt-2">
-              Plans come from the server billing catalog — the same source checkout uses.
+            <p className="text-neutral-400 mt-2 max-w-2xl">
+              Private-beta list prices from the billing catalog. Self-serve checkout is not open.
+              Join the waitlist, or{" "}
+              <Link href="/login" className="text-teal-accent hover:underline">
+                sign in with an invite
+              </Link>
+              .
             </p>
           </div>
         </div>
 
-        {(createSubscription.error || error) && (
+        {error && !selectedPlan && (
           <div className="mb-6 p-4 bg-red-950/20 border border-red-500/30 rounded-lg text-red-400 text-sm font-mono max-w-md">
-            {createSubscription.error?.message || error}
+            {error}
           </div>
         )}
 
-        {isLoading ? (
-          <p className="text-neutral-500 font-mono text-sm">Loading plans…</p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {EVALUATION_PLANS.map((plan) => (
             <PlanCard
-              name={free?.name ?? "Free"}
-              usdCents={free?.usdAmount ?? 0}
-              inrPaise={free?.amount ?? 0}
-              features={free?.features ?? []}
+              key={plan.id}
+              plan={plan}
               footer={
-                me ? (
-                  <span className="block w-full py-3 bg-neutral-800 text-neutral-400 rounded-lg font-medium text-center font-mono mt-auto border border-neutral-700">
-                    Current Plan
-                  </span>
-                ) : (
-                  <Link
-                    href="/register"
-                    className="block w-full py-3 bg-neutral-800 hover:bg-neutral-750 text-white rounded-lg font-medium transition-colors text-center font-mono mt-auto"
-                  >
-                    Get Started
-                  </Link>
-                )
+                <button
+                  type="button"
+                  onClick={() => openWaitlist(plan.id)}
+                  className={`block w-full py-3 rounded-lg font-medium transition-colors text-center font-mono mt-auto ${
+                    plan.popular
+                      ? "bg-teal-accent hover:bg-[#0D9488] text-white font-bold"
+                      : "bg-neutral-800 hover:bg-neutral-750 text-white"
+                  }`}
+                >
+                  Join waitlist
+                </button>
               }
             />
-
-            <PlanCard
-              name={pro?.name ?? "Pro"}
-              usdCents={pro?.usdAmount ?? 9900}
-              inrPaise={pro?.amount ?? 829900}
-              popular
-              features={pro?.features ?? []}
-              footer={
-                me ? (
-                  <button
-                    onClick={() => createSubscription.mutate({ plan: "pro" })}
-                    disabled={createSubscription.isPending}
-                    className="block w-full py-3 bg-teal-accent hover:bg-[#0D9488] disabled:opacity-50 text-white font-bold rounded-lg transition-colors text-center font-mono mt-auto"
-                  >
-                    {createSubscription.isPending ? "Processing..." : "Upgrade to Pro"}
-                  </button>
-                ) : (
-                  <Link
-                    href="/login?redirect=/pricing"
-                    className="block w-full py-3 bg-teal-accent hover:bg-[#0D9488] text-white font-bold rounded-lg transition-colors text-center font-mono mt-auto"
-                  >
-                    Sign up to upgrade
-                  </Link>
-                )
-              }
-            />
-
-            <PlanCard
-              name={enterprise?.name ?? "Enterprise"}
-              usdCents={enterprise?.usdAmount ?? 49900}
-              inrPaise={enterprise?.amount ?? 4159900}
-              features={enterprise?.features ?? []}
-              footer={
-                me ? (
-                  <button
-                    onClick={() => createSubscription.mutate({ plan: "enterprise" })}
-                    disabled={createSubscription.isPending}
-                    className="block w-full py-3 bg-neutral-800 hover:bg-neutral-750 disabled:opacity-50 text-white rounded-lg font-medium transition-colors text-center font-mono mt-auto"
-                  >
-                    {createSubscription.isPending ? "Processing..." : "Upgrade to Enterprise"}
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => {
-                      setSelectedPlan("enterprise");
-                      setEmail("");
-                      setSuccess(false);
-                      setError(null);
-                    }}
-                    className="block w-full py-3 bg-neutral-800 hover:bg-neutral-750 text-white rounded-lg font-medium transition-colors text-center font-mono mt-auto"
-                  >
-                    Join Enterprise Waitlist
-                  </button>
-                )
-              }
-            />
-          </div>
-        )}
+          ))}
+        </div>
       </div>
 
       {selectedPlan && (
@@ -164,10 +93,10 @@ export default function PricingPage() {
             {!success ? (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <h3 className="text-xl font-bold capitalize font-mono text-teal-accent">
-                  Join {selectedPlan} Waitlist
+                  Join {selectedPlan} waitlist
                 </h3>
                 <p className="text-sm text-neutral-400">
-                  Enter your email to request access to the {selectedPlan} plan.
+                  Enter your email to request a scoped evaluation for the {selectedPlan} plan.
                 </p>
                 {error && (
                   <div className="p-3 bg-red-950/20 border border-red-500/30 rounded-lg text-red-400 text-sm font-mono">
@@ -188,7 +117,7 @@ export default function PricingPage() {
                   disabled={joinMutation.isPending}
                   className="w-full py-3 bg-teal-accent hover:bg-[#0D9488] disabled:opacity-50 text-white font-bold rounded-lg transition-colors font-mono"
                 >
-                  {joinMutation.isPending ? "Submitting…" : "Submit Request"}
+                  {joinMutation.isPending ? "Submitting…" : "Submit request"}
                 </button>
               </form>
             ) : (
@@ -211,31 +140,24 @@ export default function PricingPage() {
   );
 }
 
-function PlanCard(props: {
-  name: string;
-  usdCents: number;
-  inrPaise: number;
-  features: readonly string[];
-  popular?: boolean;
-  footer: React.ReactNode;
-}) {
-  const usd = (props.usdCents / 100).toLocaleString("en-US", { maximumFractionDigits: 0 });
-  const inr = (props.inrPaise / 100).toLocaleString("en-IN");
+function PlanCard(props: { plan: EvaluationPlan; footer: React.ReactNode }) {
+  const usd = (props.plan.usdAmount / 100).toLocaleString("en-US", { maximumFractionDigits: 0 });
+  const inr = (props.plan.amount / 100).toLocaleString("en-IN");
   return (
     <div
       className={`bg-transparent p-8 rounded-xl border relative flex flex-col justify-between ${
-        props.popular
+        props.plan.popular
           ? "border-teal-accent/50"
           : "border-neutral-850 hover:border-neutral-800 transition-colors"
       }`}
     >
-      {props.popular && (
+      {props.plan.popular && (
         <div className="absolute top-4 right-4 text-teal-accent text-[10px] font-bold font-mono tracking-wider uppercase bg-teal-accent/10 border border-teal-accent/20 rounded-full px-2 py-0.5">
           POPULAR
         </div>
       )}
       <div>
-        <h2 className="text-2xl font-bold mb-2">{props.name}</h2>
+        <h2 className="text-2xl font-bold mb-2">{props.plan.name}</h2>
         <div className="mb-6">
           <p className="text-4xl font-bold text-white">
             ${usd}
@@ -244,9 +166,11 @@ function PlanCard(props: {
           <p className="text-xs text-neutral-500 mt-1">≈ ₹{inr}/month</p>
         </div>
         <ul className="space-y-3 mb-8 text-neutral-400 text-sm">
-          {props.features.map((f) => (
+          {props.plan.features.map((f) => (
             <li key={f} className="flex items-start gap-2">
-              <span className={props.popular ? "text-teal-accent" : "text-emerald-400"}>✓</span>
+              <span className={props.plan.popular ? "text-teal-accent" : "text-emerald-400"}>
+                ✓
+              </span>
               <span>{f}</span>
             </li>
           ))}
