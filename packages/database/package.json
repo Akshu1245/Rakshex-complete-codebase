@@ -10,6 +10,7 @@
     "./schema": "./drizzle/schema.ts",
     "./schema-foundation": "./drizzle/schema-foundation.ts",
     "./schema-enterprise": "./drizzle/schema-enterprise.ts",
+    "./schema-billing": "./drizzle/schema-billing.ts",
     "./relations": "./drizzle/relations.ts",
     "./migrate": "./src/migrate.ts",
     "./seed": "./src/seed.ts",
