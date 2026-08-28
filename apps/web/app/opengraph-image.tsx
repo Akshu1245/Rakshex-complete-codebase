@@ -24,13 +24,13 @@ export default function OpenGraphImage() {
       <div
         style={{
           position: "absolute",
-          width: 520,
-          height: 520,
-          right: -110,
-          top: -160,
-          borderRadius: "50%",
-          background: "rgba(20,184,166,0.14)",
-          filter: "blur(30px)",
+          width: 460,
+          height: 460,
+          right: -120,
+          top: -165,
+          borderRadius: 230,
+          background: "rgba(20,184,166,0.10)",
+          border: "1px solid rgba(20,184,166,0.18)",
         }}
       />
 
@@ -43,20 +43,22 @@ export default function OpenGraphImage() {
             alignItems: "center",
             justifyContent: "center",
             border: "2px solid #14B8A6",
+            borderRadius: 15,
             background: "#07110F",
             color: "#E9FFFC",
             fontSize: 27,
             fontWeight: 800,
-            clipPath: "polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)",
           }}
         >
           R
         </div>
-        <div style={{ fontSize: 34, fontWeight: 800, letterSpacing: -1.5 }}>
-          Raks<span style={{ color: "#14B8A6" }}>Hex</span>
+        <div style={{ display: "flex", alignItems: "baseline", fontSize: 34, fontWeight: 800, letterSpacing: -1.5 }}>
+          <span>Raks</span>
+          <span style={{ color: "#14B8A6" }}>Hex</span>
         </div>
         <div
           style={{
+            display: "flex",
             marginLeft: 12,
             border: "1px solid rgba(20,184,166,0.32)",
             borderRadius: 999,
@@ -70,12 +72,24 @@ export default function OpenGraphImage() {
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 22, position: "relative" }}>
-        <div style={{ fontSize: 68, lineHeight: 1.02, fontWeight: 800, letterSpacing: -3.5, maxWidth: 930 }}>
-          AI agents don&apos;t just generate.
-          <br />
-          <span style={{ color: "#14B8A6" }}>They act.</span> Control what happens next.
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            fontSize: 68,
+            lineHeight: 1.02,
+            fontWeight: 800,
+            letterSpacing: -3.5,
+            maxWidth: 940,
+          }}
+        >
+          <span>AI agents don&apos;t just generate.</span>
+          <span style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
+            <span style={{ color: "#14B8A6" }}>They act.</span>
+            <span>Control what happens next.</span>
+          </span>
         </div>
-        <div style={{ color: "#A7ADB7", fontSize: 25, lineHeight: 1.4, maxWidth: 930 }}>
+        <div style={{ display: "flex", color: "#A7ADB7", fontSize: 25, lineHeight: 1.4, maxWidth: 940 }}>
           Pre-execution authorization · delegated authority · credential mediation · tamper-evident Action Ledger
         </div>
       </div>
@@ -86,7 +100,7 @@ export default function OpenGraphImage() {
           <span>Credential Broker</span>
           <span>Action Ledger</span>
         </div>
-        <div style={{ color: "#14B8A6", fontSize: 20, fontWeight: 700 }}>rakshex.in</div>
+        <div style={{ display: "flex", color: "#14B8A6", fontSize: 20, fontWeight: 700 }}>rakshex.in</div>
       </div>
     </div>,
     size,
