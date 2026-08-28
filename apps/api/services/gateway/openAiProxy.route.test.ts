@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   ),
   recordGatewayAudit: vi.fn(),
   getDb: vi.fn(),
+  appendActionReceipt: vi.fn(),
 }));
 
 vi.mock("../workspaceApiKeys", () => ({
@@ -28,6 +29,10 @@ vi.mock("../teamGovernance", () => ({
 vi.mock("../../db", () => ({
   recordGatewayAudit: mocks.recordGatewayAudit,
   getDb: mocks.getDb,
+}));
+
+vi.mock("../receipts/actionReceipts", () => ({
+  appendActionReceipt: mocks.appendActionReceipt,
 }));
 
 vi.mock("../../_core/env", () => ({
@@ -108,6 +113,7 @@ describe("OpenAI-compatible gateway route enforcement", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.recordGatewayAudit.mockResolvedValue(undefined);
+    mocks.appendActionReceipt.mockResolvedValue({ entryHash: "fixture" });
     mocks.reserveGatewayBudget.mockResolvedValue({ allowed: true, reservation: null });
     mocks.settleGatewayBudget.mockResolvedValue(undefined);
     mocks.resolveWorkspaceIdentityId.mockImplementation(
@@ -123,6 +129,7 @@ describe("OpenAI-compatible gateway route enforcement", () => {
 
     expect(res.statusCode).toBe(401);
     expect(mocks.evaluateGatewayGovernance).not.toHaveBeenCalled();
+    expect(mocks.appendActionReceipt).not.toHaveBeenCalled();
   });
 
   it("authenticates Responses before revealing request-schema errors", async () => {
@@ -153,6 +160,9 @@ describe("OpenAI-compatible gateway route enforcement", () => {
     expect((res.payload as { error: { code: string } }).error.code).toBe("invalid_request");
     expect(mocks.validateWorkspaceApiKey).toHaveBeenCalledOnce();
     expect(mocks.evaluateGatewayGovernance).not.toHaveBeenCalled();
+    expect(mocks.appendActionReceipt).toHaveBeenCalledWith(
+      expect.objectContaining({ eventType: "deny", workspaceId: 42 }),
+    );
   });
 
   it("blocks Chat Completions before any upstream call when a scoped kill switch is active", async () => {
@@ -183,6 +193,9 @@ describe("OpenAI-compatible gateway route enforcement", () => {
         decision: "blocked",
         blockReason: "A scoped kill switch is active",
       }),
+    );
+    expect(mocks.appendActionReceipt).toHaveBeenCalledWith(
+      expect.objectContaining({ eventType: "kill", workspaceId: 42 }),
     );
     expect(upstreamFetch).not.toHaveBeenCalled();
     upstreamFetch.mockRestore();
@@ -220,6 +233,13 @@ describe("OpenAI-compatible gateway route enforcement", () => {
         blockReason: "A scoped kill switch is active",
       }),
     );
+    expect(mocks.appendActionReceipt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: "kill",
+        workspaceId: 42,
+        payload: expect.objectContaining({ endpoint: "responses", model: "gpt-5" }),
+      }),
+    );
     expect(upstreamFetch).not.toHaveBeenCalled();
     upstreamFetch.mockRestore();
   });
@@ -245,6 +265,9 @@ describe("OpenAI-compatible gateway route enforcement", () => {
 
     expect(res.statusCode).toBe(403);
     expect(mocks.evaluateGatewayGovernance).not.toHaveBeenCalled();
+    expect(mocks.appendActionReceipt).toHaveBeenCalledWith(
+      expect.objectContaining({ eventType: "deny" }),
+    );
   });
 
   it("rejects attempts to override a key-bound identity", async () => {
@@ -271,6 +294,9 @@ describe("OpenAI-compatible gateway route enforcement", () => {
     expect((res.payload as { error: { code: string } }).error.code).toBe("identity_scope_mismatch");
     expect(mocks.resolveWorkspaceIdentityId).not.toHaveBeenCalled();
     expect(mocks.evaluateGatewayGovernance).not.toHaveBeenCalled();
+    expect(mocks.appendActionReceipt).toHaveBeenCalledWith(
+      expect.objectContaining({ eventType: "deny" }),
+    );
   });
 
   it("fails closed when governance state cannot be loaded", async () => {
@@ -290,6 +316,9 @@ describe("OpenAI-compatible gateway route enforcement", () => {
 
     expect(res.statusCode).toBe(503);
     expect((res.payload as { error: { code: string } }).error.code).toBe("enforcement_unavailable");
+    expect(mocks.appendActionReceipt).toHaveBeenCalledWith(
+      expect.objectContaining({ eventType: "deny" }),
+    );
     expect(upstreamFetch).not.toHaveBeenCalled();
     upstreamFetch.mockRestore();
   });
