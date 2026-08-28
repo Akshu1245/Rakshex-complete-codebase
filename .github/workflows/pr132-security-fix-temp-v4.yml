@@ -18,6 +18,16 @@ jobs:
       - name: Preserve patch script and switch to PR branch
         run: |
           cp .github/scripts/pr132_security_fix.py /tmp/pr132_security_fix.py
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('/tmp/pr132_security_fix.py')
+          text = p.read_text()
+          needle = "    '''  // Header scopes remain attribution metadata."
+          replacement = "    r'''  // Header scopes remain attribution metadata."
+          if text.count(needle) != 1:
+              raise SystemExit('expected one non-raw replacement block')
+          p.write_text(text.replace(needle, replacement, 1))
+          PY
           git fetch origin rakshex/p0-billing-receipts
           git checkout -B pr132-fix origin/rakshex/p0-billing-receipts
       - name: Apply patch
