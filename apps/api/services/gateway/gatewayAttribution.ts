@@ -44,13 +44,14 @@ export async function persistSettledAttribution(input: {
   inputTokens: number;
   outputTokens: number;
   cachedInputTokens: number;
+  usageVerified: boolean;
   estimatedCostUsd: number;
   occurredAt: Date;
   tags: GatewayAttributionTags;
   endpoint: string;
 }): Promise<{ costUsd: number; priceVersionId?: number; priceSourceUrl?: string }> {
   const priced =
-    input.provider === "openai"
+    input.provider === "openai" && input.usageVerified
       ? await priceModelUsage({
           provider: "openai",
           model: input.model,

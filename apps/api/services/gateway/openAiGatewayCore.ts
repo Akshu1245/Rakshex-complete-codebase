@@ -184,6 +184,9 @@ async function loadUpstreamConnection(
   endpoint: OpenAiGatewayEndpoint,
   requestedAccountId?: number,
 ): Promise<UpstreamConnection> {
+  if (provider !== "openai") {
+    throw new Error("Custom OpenAI-compatible upstreams are disabled in the OpenAI P0 gateway");
+  }
   const database = await db.getDb();
   if (!database) throw new Error("Database unavailable");
 
@@ -233,7 +236,7 @@ async function loadUpstreamConnection(
 
   return {
     provider,
-    url: normalizeUpstreamUrl(provider, account.metadata, endpoint),
+    url: `https://api.openai.com/v1/${endpoint}`,
     apiKey,
     accountId: account.id,
   };
@@ -357,6 +360,7 @@ async function persistGatewayResult(input: {
     inputTokens: prompt,
     outputTokens: output,
     cachedInputTokens: cached,
+    usageVerified: usage != null,
     estimatedCostUsd: input.estimatedCostUsd,
     occurredAt: new Date(input.startedAt),
     tags: input.tags ?? {},
@@ -397,7 +401,9 @@ async function persistGatewayResult(input: {
 
 function providerFromRequest(req: Request): SupportedGatewayProvider | null {
   const provider = (req.header("x-rakshex-provider") ?? "openai").toLowerCase();
-  return provider === "openai" || provider === "openai_compatible" ? provider : null;
+  // P0 permits only OpenAI's fixed origin. Custom compatible upstreams stay
+  // fail-closed until the transport can pin and revalidate a vetted origin.
+  return provider === "openai" ? "openai" : null;
 }
 
 function appendAuditTail(current: string, chunk: string): string {
@@ -413,7 +419,8 @@ export async function handleOpenAiGatewayRequest(
   normalizeRequest: () => OpenAiGatewayNormalizationResult,
 ): Promise<void> {
   const startedAt = Date.now();
-  const requestId = req.header("x-request-id")?.slice(0, 128) || crypto.randomUUID();
+  // Client correlation IDs are untrusted and cannot be uniqueness keys.
+  const requestId = crypto.randomUUID();
   res.setHeader("x-request-id", requestId);
   res.setHeader("Cache-Control", "no-store");
 
@@ -597,6 +604,10 @@ export async function handleOpenAiGatewayRequest(
     return;
   }
 
+  // Header scopes remain attribution metadata. Enforcement scope comes only
+  // from the validated API key, preventing same-tenant principal impersonation.
+  const enforcementIdentityId = auth.identityId != null ? identityId : undefined;
+
   const requestedProjectId = safeScopeHeader(req, "x-rakshex-project-id");
   if (auth.projectId && requestedProjectId && auth.projectId !== requestedProjectId) {
     if (
@@ -614,6 +625,7 @@ export async function handleOpenAiGatewayRequest(
     return;
   }
   const projectId = auth.projectId ?? requestedProjectId;
+  const enforcementProjectId = auth.projectId ?? undefined;
 
   const requestedAgentId = safeScopeHeader(req, "x-rakshex-agent-id");
   if (auth.agentId && requestedAgentId && auth.agentId !== requestedAgentId) {
@@ -633,6 +645,7 @@ export async function handleOpenAiGatewayRequest(
     return;
   }
   const agentId = auth.agentId ?? requestedAgentId;
+  const enforcementAgentId = auth.agentId ?? undefined;
   const tags = parseGatewayMetadataHeader(req.header("x-rakshex-metadata"));
   const estimate = estimateGatewayPreflight(request.estimatedInput, request.maxOutputTokens);
   const requestedProviderAccountId = positiveIntegerHeader(req, "x-rakshex-provider-account-id");
@@ -641,9 +654,9 @@ export async function handleOpenAiGatewayRequest(
   try {
     const governance = await evaluateGatewayGovernance({
       workspaceId: auth.workspaceId,
-      identityId,
-      projectId,
-      agentId,
+      identityId: enforcementIdentityId,
+      projectId: enforcementProjectId,
+      agentId: enforcementAgentId,
       estimatedCostUsd: estimate.estimatedCostUsd,
     });
     if (!governance.allowed) {
@@ -691,8 +704,8 @@ export async function handleOpenAiGatewayRequest(
           model: request.model,
           provider,
           estimatedCostUsd: estimate.estimatedCostUsd,
-          agentId,
-          userId: effectiveIdentityId != null ? String(effectiveIdentityId) : undefined,
+          agentId: enforcementAgentId,
+          userId: enforcementIdentityId != null ? String(enforcementIdentityId) : undefined,
           messages: request.policyMessages,
           tools: request.policyTools,
         }),
@@ -737,7 +750,7 @@ export async function handleOpenAiGatewayRequest(
 
     const reservationResult = await reserveGatewayBudget({
       workspaceId: auth.workspaceId,
-      identityId,
+      identityId: enforcementIdentityId,
       estimatedCostUsd: estimate.estimatedCostUsd,
     });
     if ("reason" in reservationResult) {
@@ -893,6 +906,8 @@ export async function handleOpenAiGatewayRequest(
       },
       body: JSON.stringify(request.upstreamBody),
       signal: controller.signal,
+      // Never let a credential-bearing request follow a redirect.
+      redirect: "manual",
     });
 
     if (!upstream.ok) {

@@ -244,6 +244,105 @@ describe("OpenAI-compatible gateway route enforcement", () => {
     upstreamFetch.mockRestore();
   });
 
+  it("keeps unbound header scopes out of governance", async () => {
+    const handler = routeHandler();
+    const res = createResponse();
+    mocks.validateWorkspaceApiKey.mockResolvedValue({
+      keyId: "ak_1",
+      workspaceId: 42,
+      userId: 7,
+      scopes: ["gateway:invoke"],
+      projectId: null,
+      identityId: null,
+      agentId: null,
+    });
+    mocks.resolveWorkspaceIdentityId.mockResolvedValueOnce(12);
+    mocks.evaluateGatewayGovernance.mockResolvedValue({
+      allowed: false,
+      killActive: true,
+      budgetBlocked: false,
+      budgetReason: null,
+      state: { workspaceDisabled: true },
+    });
+
+    await handler(
+      createRequest("Bearer rk_live_test_workspace_key", {
+        "x-rakshex-identity-id": "12",
+        "x-rakshex-project-id": "client-project",
+        "x-rakshex-agent-id": "client-agent",
+      }),
+      res,
+    );
+
+    expect(res.statusCode).toBe(403);
+    expect(mocks.evaluateGatewayGovernance).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: 42,
+        identityId: undefined,
+        projectId: undefined,
+        agentId: undefined,
+      }),
+    );
+  });
+
+  it("uses server-owned request ids despite repeated client X-Request-Id", async () => {
+    const handler = routeHandler();
+    mocks.validateWorkspaceApiKey.mockResolvedValue({
+      keyId: "ak_1",
+      workspaceId: 42,
+      userId: 7,
+      scopes: ["gateway:invoke"],
+      projectId: null,
+    });
+    mocks.evaluateGatewayGovernance.mockResolvedValue({
+      allowed: false,
+      killActive: true,
+      budgetBlocked: false,
+      budgetReason: null,
+      state: { workspaceDisabled: true },
+    });
+    const one = createResponse();
+    const two = createResponse();
+    const request = () =>
+      createRequest("Bearer rk_live_test_workspace_key", { "x-request-id": "fixed-client-id" });
+
+    await handler(request(), one);
+    await handler(request(), two);
+
+    const idOne = one.setHeader.mock.calls.find(([name]) => name === "x-request-id")?.[1];
+    const idTwo = two.setHeader.mock.calls.find(([name]) => name === "x-request-id")?.[1];
+    expect(idOne).toEqual(expect.any(String));
+    expect(idTwo).toEqual(expect.any(String));
+    expect(idOne).not.toBe("fixed-client-id");
+    expect(idTwo).not.toBe("fixed-client-id");
+    expect(idOne).not.toBe(idTwo);
+  });
+
+  it("rejects custom compatible upstreams before any provider egress", async () => {
+    const handler = routeHandler();
+    const res = createResponse();
+    const upstreamFetch = vi.spyOn(globalThis, "fetch");
+    mocks.validateWorkspaceApiKey.mockResolvedValue({
+      keyId: "ak_1",
+      workspaceId: 42,
+      userId: 7,
+      scopes: ["gateway:invoke"],
+      projectId: null,
+    });
+
+    await handler(
+      createRequest("Bearer rk_live_test_workspace_key", {
+        "x-rakshex-provider": "openai_compatible",
+      }),
+      res,
+    );
+
+    expect(res.statusCode).toBe(400);
+    expect(upstreamFetch).not.toHaveBeenCalled();
+    expect(mocks.evaluateGatewayGovernance).not.toHaveBeenCalled();
+    upstreamFetch.mockRestore();
+  });
+
   it("rejects foreign identity ids before governance evaluation", async () => {
     const handler = routeHandler();
     const res = createResponse();
