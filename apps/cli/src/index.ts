@@ -227,7 +227,9 @@ async function maybeUploadScan(
 ): Promise<void> {
   if (!requested) return;
   if (!cfg.apiKey) {
-    console.warn("--upload requested but no API key configured. Run: rakshex login --api-key <key>");
+    console.warn(
+      "--upload requested but no API key configured. Run: rakshex login --api-key <key>",
+    );
     return;
   }
   const base = (cfg.apiUrl ?? DEFAULT_API_URL).replace(/\/$/, "");
@@ -403,10 +405,7 @@ function cmdPolicy(positional: string[], flags: Record<string, string | boolean>
   return result.passed ? 0 : 1;
 }
 
-function cmdReport(
-  positional: string[],
-  flags: Record<string, string | boolean>,
-): Promise<number> {
+function cmdReport(positional: string[], flags: Record<string, string | boolean>): Promise<number> {
   return cmdScan(positional, { ...flags, format: flags.format ?? "sarif" });
 }
 

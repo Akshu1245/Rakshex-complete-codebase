@@ -10,7 +10,7 @@ Two independent functions named `evaluatePolicy` were live in production on diff
 - `apps/api/engines/policyEngine.ts` — a rule list, priority-sorted, first-match-wins, vocabulary `allow|block|redact|alert_only|require_approval`.
 - `packages/policy-engine/src/evaluate.ts` — a compiled `PolicyDocument` with hardcoded category order (agent limits → models → tools → network → data), vocabulary `allow|deny|redact|warn|require_approval`.
 
-A differential test (`apps/api/engines/policyEngine.differential.test.ts`) proved they disagreed on 3 of 10 real-world policy intents, and the disagreement was a *passing, pinned* test assertion — not an open bug someone forgot about. For a product whose entire pitch is "we decide whether an action is allowed," having two different answers depending on which code path handled the request was the single most serious defect in the codebase.
+A differential test (`apps/api/engines/policyEngine.differential.test.ts`) proved they disagreed on 3 of 10 real-world policy intents, and the disagreement was a _passing, pinned_ test assertion — not an open bug someone forgot about. For a product whose entire pitch is "we decide whether an action is allowed," having two different answers depending on which code path handled the request was the single most serious defect in the codebase.
 
 ## What changed
 

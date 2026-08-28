@@ -1,15 +1,16 @@
 /**
  * Standalone Keep-Alive Pinger for Render Free Tier Web Services.
  * Pings the backend health check endpoint every 5 minutes to prevent sleep.
- * 
+ *
  * Usage:
  *   node scripts/keep-alive-pinger.mjs
  */
 
 import https from "node:https";
 
-const BACKEND_URL = process.env.BACKEND_URL || "https://rakshex-backend.onrender.com/api/health/live";
-const INTERVAL_MS = (parseInt(process.env.PING_INTERVAL_MINUTES || "5", 10)) * 60 * 1000;
+const BACKEND_URL =
+  process.env.BACKEND_URL || "https://rakshex-backend.onrender.com/api/health/live";
+const INTERVAL_MS = parseInt(process.env.PING_INTERVAL_MINUTES || "5", 10) * 60 * 1000;
 
 function ping() {
   const time = new Date().toISOString();

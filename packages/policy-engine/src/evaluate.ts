@@ -97,7 +97,10 @@ function evaluateRuleCondition(condition: RuleCondition, ctx: EvaluationContext)
     }
   }
 
-  if ((condition.field === "toolName" || condition.field === "tool_name") && condition.op === "eq") {
+  if (
+    (condition.field === "toolName" || condition.field === "tool_name") &&
+    condition.op === "eq"
+  ) {
     const tools = ctx.toolCalls?.map((t) => t.name) ?? (ctx.toolName ? [ctx.toolName] : []);
     return tools.some((t) => t === String(condition.value));
   }
@@ -151,9 +154,7 @@ function evaluateGenericRules(
   ctx: EvaluationContext,
 ): PolicyDecision | null {
   if (!rules?.length) return null;
-  const sorted = rules
-    .filter((r) => r.enabled !== false)
-    .sort((a, b) => a.priority - b.priority);
+  const sorted = rules.filter((r) => r.enabled !== false).sort((a, b) => a.priority - b.priority);
 
   for (const rule of sorted) {
     if (evaluateRuleGroup(rule.conditions, ctx)) {
