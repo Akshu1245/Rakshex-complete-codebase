@@ -1165,6 +1165,6 @@ export async function handleOpenAiGatewayRequest(
     }
   } finally {
     clearTimeout(timeout);
-    req.removeListener("close", onClientClose);
+    req.removeListener?.("close", onClientClose);
   }
 }

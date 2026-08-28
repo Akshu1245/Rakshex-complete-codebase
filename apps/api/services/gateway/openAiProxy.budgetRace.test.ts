@@ -63,6 +63,7 @@ function request() {
       return headers[name.toLowerCase()];
     },
     on: vi.fn(),
+    removeListener: vi.fn(),
   };
 }
 

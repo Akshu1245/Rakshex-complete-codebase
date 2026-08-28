@@ -74,6 +74,7 @@ function createRequest(
       return headers[name.toLowerCase()];
     },
     on: vi.fn(),
+    removeListener: vi.fn(),
   };
 }
 
