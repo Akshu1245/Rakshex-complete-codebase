@@ -19,6 +19,16 @@ describe("isPublicPath", () => {
     expect(isPublicPath("/trust")).toBe(true);
   });
 
+  it("treats docs and the /documentation alias as public, and keeps /get-started gated", () => {
+    expect(PUBLIC_PATH_PREFIXES).toContain("/docs");
+    expect(PUBLIC_PATH_PREFIXES).toContain("/documentation");
+    expect(PUBLIC_PATH_PREFIXES).not.toContain("/get-started");
+    expect(isPublicPath("/docs")).toBe(true);
+    expect(isPublicPath("/docs/agent-firewall")).toBe(true);
+    expect(isPublicPath("/documentation")).toBe(true);
+    expect(isPublicPath("/get-started")).toBe(false);
+  });
+
   it("keeps evaluation marketing and invite paths public", () => {
     expect(isPublicPath("/")).toBe(true);
     expect(isPublicPath("/pricing")).toBe(true);

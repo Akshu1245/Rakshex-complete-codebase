@@ -25,6 +25,7 @@ export const PUBLIC_PATH_PREFIXES = [
   "/demo",
   "/blog",
   "/docs",
+  "/documentation",
   "/compare",
   "/roi-calculator",
   "/features",
