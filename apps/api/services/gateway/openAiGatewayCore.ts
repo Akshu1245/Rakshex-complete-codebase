@@ -12,7 +12,6 @@ import { and, desc, eq } from "drizzle-orm";
 import { controlPlaneCredentials, providerAccounts } from "@rakshex/database/schema-enterprise";
 import { logger } from "../../_core/logger";
 import * as db from "../../db";
-import { calculateThinkingCost } from "../thinkingTokens";
 import { validateWorkspaceApiKey, type ValidatedApiKey } from "../workspaceApiKeys";
 import { decryptSecret } from "../vault";
 import {
@@ -26,6 +25,11 @@ import {
 import type { GovernanceProvider } from "../teamGovernance/types";
 import { buildPreflightEventContext, enforcePolicies } from "../../middleware/policyEnforcement";
 import { RuntimePolicyError } from "../../_core/errors";
+import {
+  parseGatewayMetadataHeader,
+  persistSettledAttribution,
+  type GatewayAttributionTags,
+} from "./gatewayAttribution";
 
 const MAX_UPSTREAM_ERROR_BYTES = 8_192;
 const MAX_STREAM_AUDIT_BYTES = 2 * 1024 * 1024;
@@ -48,6 +52,7 @@ export interface GatewayUsage {
   completion_tokens: number;
   total_tokens: number;
   reasoning_tokens?: number;
+  cached_input_tokens?: number;
 }
 
 export interface NormalizedOpenAiGatewayRequest {
@@ -112,9 +117,8 @@ export function estimateGatewayPreflight(
   const inputTokens = Math.ceil(serialized.length / 4);
   const outputTokens = Math.max(1, maxOutputTokens);
   const estimatedTokens = inputTokens + outputTokens;
-  // This conservative fallback is intentionally retained until the dedicated
-  // versioned price-registry slice lands. Exact provider usage is reconciled
-  // after the call.
+  // Reservation remains deliberately conservative. Final settlement uses the
+  // versioned price registry at the request timestamp.
   const estimatedCostUsd =
     (estimatedTokens / 1_000_000) * PREFLIGHT_FALLBACK_USD_PER_MILLION_TOKENS;
   return { estimatedTokens, estimatedCostUsd };
@@ -253,18 +257,28 @@ export function extractUsage(payload: unknown): GatewayUsage | undefined {
     record.output_tokens_details && typeof record.output_tokens_details === "object"
       ? (record.output_tokens_details as Record<string, unknown>)
       : undefined;
+  const promptDetails =
+    record.prompt_tokens_details && typeof record.prompt_tokens_details === "object"
+      ? (record.prompt_tokens_details as Record<string, unknown>)
+      : undefined;
+  const inputDetails =
+    record.input_tokens_details && typeof record.input_tokens_details === "object"
+      ? (record.input_tokens_details as Record<string, unknown>)
+      : undefined;
   const reasoning = Number(
     completionDetails?.reasoning_tokens ??
       outputDetails?.reasoning_tokens ??
       record.reasoning_tokens ??
       0,
   );
+  const cached = Number(promptDetails?.cached_tokens ?? inputDetails?.cached_tokens ?? 0);
 
   return {
     prompt_tokens: Math.max(0, prompt),
     completion_tokens: Math.max(0, completion),
     total_tokens: Math.max(0, total),
     ...(Number.isFinite(reasoning) && reasoning > 0 ? { reasoning_tokens: reasoning } : {}),
+    ...(Number.isFinite(cached) && cached > 0 ? { cached_input_tokens: cached } : {}),
   };
 }
 
@@ -288,14 +302,6 @@ export function extractStreamingUsage(raw: string): GatewayUsage | undefined {
   return latest;
 }
 
-function gatewayCost(model: string, usage: GatewayUsage | undefined, estimatedCostUsd: number) {
-  if (!usage) return estimatedCostUsd;
-  const reasoning = usage.reasoning_tokens ?? 0;
-  const prompt = usage.prompt_tokens ?? 0;
-  const completion = Math.max(0, usage.completion_tokens - reasoning);
-  return calculateThinkingCost(model, prompt, completion, reasoning).totalCost;
-}
-
 async function persistGatewayResult(input: {
   auth: ValidatedApiKey;
   requestId: string;
@@ -304,6 +310,9 @@ async function persistGatewayResult(input: {
   endpoint: OpenAiGatewayEndpoint;
   model: string;
   identityId?: number;
+  projectId?: string;
+  agentId?: string;
+  tags?: GatewayAttributionTags;
   decision: "allowed" | "blocked" | "errored";
   blockReason?: string;
   usage?: GatewayUsage;
@@ -312,8 +321,8 @@ async function persistGatewayResult(input: {
 }): Promise<number> {
   const endedAt = Date.now();
   await db.recordGatewayAudit({
-    // The legacy gateway audit table is user-scoped; workspaceId is the
-    // tenant key for governance. Team usage below is the budget source.
+    // Audit is written before settled attribution. A successful provider call
+    // can therefore never become an unattributed silent action.
     tenantId: String(input.auth.userId),
     workspaceId: input.auth.workspaceId,
     requestId: input.requestId,
@@ -327,10 +336,31 @@ async function persistGatewayResult(input: {
   });
 
   if (input.decision !== "allowed") return 0;
+  if (input.providerAccountId == null) {
+    throw new Error("Settled gateway call is missing provider account attribution");
+  }
+
   const usage = input.usage;
-  const reasoning = usage?.reasoning_tokens ?? 0;
   const prompt = usage?.prompt_tokens ?? 0;
-  const cost = gatewayCost(input.model, usage, input.estimatedCostUsd);
+  const output = usage?.completion_tokens ?? 0;
+  const cached = usage?.cached_input_tokens ?? 0;
+  const settlement = await persistSettledAttribution({
+    requestId: input.requestId,
+    workspaceId: input.auth.workspaceId,
+    projectId: input.projectId,
+    agentId: input.agentId,
+    identityId: input.identityId,
+    providerAccountId: input.providerAccountId,
+    provider: input.provider,
+    model: input.model,
+    inputTokens: prompt,
+    outputTokens: output,
+    cachedInputTokens: cached,
+    estimatedCostUsd: input.estimatedCostUsd,
+    occurredAt: new Date(input.startedAt),
+    tags: input.tags ?? {},
+    endpoint: input.endpoint,
+  });
 
   await ingestUsageBatch(input.auth.workspaceId, [
     {
@@ -341,19 +371,27 @@ async function persistGatewayResult(input: {
       occurredAt: new Date(input.startedAt),
       requestCount: 1,
       inputTokens: prompt,
-      outputTokens: usage?.completion_tokens ?? 0,
-      costUsd: cost,
+      outputTokens: output,
+      costUsd: settlement.costUsd,
       model: input.model,
       confidence: usage ? "verified" : "estimated",
       identityId: input.identityId,
       metadata: {
         gateway: true,
         endpoint: input.endpoint,
+        projectId: input.projectId,
+        agentId: input.agentId,
+        cachedInputTokens: cached,
+        estimatedCostUsd: input.estimatedCostUsd,
+        priceVersionId: settlement.priceVersionId,
+        priceSourceUrl: settlement.priceSourceUrl,
+        featureTags: input.tags?.featureTags,
+        customerTags: input.tags?.customerTags,
         latencyMs: endedAt - input.startedAt,
       },
     },
   ]);
-  return cost;
+  return settlement.costUsd;
 }
 
 function providerFromRequest(req: Request): SupportedGatewayProvider | null {
@@ -482,7 +520,6 @@ export async function handleOpenAiGatewayRequest(
     openAiError(res, 403, "project_scope_mismatch", "API key is restricted to another project");
     return;
   }
-  // Prefer key-bound project; do not let clients expand beyond the key's scope.
   const projectId = auth.projectId ?? requestedProjectId;
 
   const requestedAgentId = safeScopeHeader(req, "x-rakshex-agent-id");
@@ -491,6 +528,7 @@ export async function handleOpenAiGatewayRequest(
     return;
   }
   const agentId = auth.agentId ?? requestedAgentId;
+  const tags = parseGatewayMetadataHeader(req.header("x-rakshex-metadata"));
   const estimate = estimateGatewayPreflight(request.estimatedInput, request.maxOutputTokens);
   let budgetReservation: GatewayBudgetReservation | null = null;
 
@@ -515,6 +553,9 @@ export async function handleOpenAiGatewayRequest(
         endpoint: request.endpoint,
         model: request.model,
         identityId,
+        projectId,
+        agentId,
+        tags,
         decision: "blocked",
         blockReason: reason,
         estimatedCostUsd: estimate.estimatedCostUsd,
@@ -546,6 +587,9 @@ export async function handleOpenAiGatewayRequest(
           endpoint: request.endpoint,
           model: request.model,
           identityId,
+          projectId,
+          agentId,
+          tags,
           decision: "blocked",
           blockReason: err.message,
           estimatedCostUsd: estimate.estimatedCostUsd,
@@ -570,6 +614,9 @@ export async function handleOpenAiGatewayRequest(
         endpoint: request.endpoint,
         model: request.model,
         identityId,
+        projectId,
+        agentId,
+        tags,
         decision: "blocked",
         blockReason: reservationResult.reason,
         estimatedCostUsd: estimate.estimatedCostUsd,
@@ -651,6 +698,9 @@ export async function handleOpenAiGatewayRequest(
         endpoint: request.endpoint,
         model: request.model,
         identityId,
+        projectId,
+        agentId,
+        tags,
         decision: "errored",
         blockReason: `upstream_${upstream.status}`,
         estimatedCostUsd: estimate.estimatedCostUsd,
@@ -666,8 +716,8 @@ export async function handleOpenAiGatewayRequest(
       const payload = await upstream.json();
       const usage = extractUsage(payload);
       providerCompleted = true;
-      completedCost = gatewayCost(request.model, usage, estimate.estimatedCostUsd);
-      await persistGatewayResult({
+      completedCost = estimate.estimatedCostUsd;
+      completedCost = await persistGatewayResult({
         auth,
         requestId,
         provider,
@@ -675,6 +725,9 @@ export async function handleOpenAiGatewayRequest(
         endpoint: request.endpoint,
         model: request.model,
         identityId,
+        projectId,
+        agentId,
+        tags,
         decision: "allowed",
         usage,
         estimatedCostUsd: estimate.estimatedCostUsd,
@@ -706,8 +759,8 @@ export async function handleOpenAiGatewayRequest(
 
     const usage = extractStreamingUsage(auditBuffer);
     providerCompleted = true;
-    completedCost = gatewayCost(request.model, usage, estimate.estimatedCostUsd);
-    await persistGatewayResult({
+    completedCost = estimate.estimatedCostUsd;
+    completedCost = await persistGatewayResult({
       auth,
       requestId,
       provider,
@@ -715,6 +768,9 @@ export async function handleOpenAiGatewayRequest(
       endpoint: request.endpoint,
       model: request.model,
       identityId,
+      projectId,
+      agentId,
+      tags,
       decision: "allowed",
       usage,
       estimatedCostUsd: estimate.estimatedCostUsd,
@@ -738,6 +794,9 @@ export async function handleOpenAiGatewayRequest(
         endpoint: request.endpoint,
         model: request.model,
         identityId,
+        projectId,
+        agentId,
+        tags,
         decision: "errored",
         blockReason: aborted ? "upstream_timeout_or_disconnect" : "upstream_error",
         estimatedCostUsd: estimate.estimatedCostUsd,
