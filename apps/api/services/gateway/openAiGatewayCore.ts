@@ -164,6 +164,12 @@ export function isBlockedUpstreamHost(hostname: string): boolean {
   );
 }
 
+function stripTrailingSlashes(value: string): string {
+  let end = value.length;
+  while (end > 0 && value.charCodeAt(end - 1) === 47) end -= 1;
+  return value.slice(0, end);
+}
+
 export function normalizeUpstreamUrl(
   provider: SupportedGatewayProvider,
   metadata: unknown,
@@ -183,7 +189,7 @@ export function normalizeUpstreamUrl(
     throw new Error("OpenAI-compatible base URL must be public HTTPS");
   }
 
-  let path = parsed.pathname.replace(/\/+$/, "");
+  let path = stripTrailingSlashes(parsed.pathname);
   for (const knownEndpoint of ["/chat/completions", "/responses"]) {
     if (path.endsWith(knownEndpoint)) {
       path = path.slice(0, -knownEndpoint.length);

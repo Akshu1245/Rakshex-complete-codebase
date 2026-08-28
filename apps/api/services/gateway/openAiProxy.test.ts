@@ -140,6 +140,14 @@ describe("OpenAI-compatible enforcement gateway helpers", () => {
     );
   });
 
+  it("strips trailing slashes from compatible base URLs in linear time", () => {
+    expect(
+      __test.normalizeUpstreamUrl("openai_compatible", {
+        baseUrl: `https://llm.example.com/api${"/".repeat(10_000)}`,
+      }),
+    ).toBe("https://llm.example.com/api/v1/chat/completions");
+  });
+
   it("maps Responses text inputs into preflight policy messages", () => {
     const normalized = __test.normalizeResponses({
       model: "gpt-5",

@@ -56,16 +56,19 @@ function encodeMetadata(metadata: RakshexOpenAIMetadata | undefined): string | u
   return encoded;
 }
 
+function stripTrailingSlashes(value: string): string {
+  let end = value.length;
+  while (end > 0 && value.charCodeAt(end - 1) === 47) end -= 1;
+  return value.slice(0, end);
+}
+
 /**
  * OpenAI SDK baseURL must include /v1 so supported official-client routes
  * land on the Rakshex OpenAI-compatible gateway. Chat Completions and the
  * synchronous/streaming Responses API share the same governed path.
  */
 export function normalizeRakshexGatewayUrl(value: string): string {
-  const trimmed = value.trim();
-  let end = trimmed.length;
-  while (end > 0 && trimmed.charCodeAt(end - 1) === 47) end -= 1;
-  const normalized = trimmed.slice(0, end);
+  const normalized = stripTrailingSlashes(value.trim());
   if (!normalized) throw new Error("RAKSHEX_GATEWAY_URL is required");
   return normalized.endsWith("/v1") ? normalized : `${normalized}/v1`;
 }

@@ -103,14 +103,27 @@ export interface ProviderEvidenceRow {
 
 const PROVIDER_EVIDENCE_ID_DOMAIN = "rakshex-provider-evidence-v1";
 
-function sourceId(kind: "cost" | "usage", values: readonly unknown[]): string {
-  // This is a collision-resistant row identifier, not password storage. A
-  // fixed domain-separated HMAC prevents credential-like provider IDs from
-  // being treated as password-hash material while preserving idempotency.
-  return crypto
+function boundedProviderKeyRef(value: string | null | undefined): string {
+  if (!value) return "";
+  return Buffer.from(value, "utf8").toString("base64url").slice(0, 48);
+}
+
+function sourceId(
+  kind: "cost" | "usage",
+  values: readonly unknown[],
+  providerKeyRef?: string | null,
+): string {
+  // Idempotency key for provider evidence rows. OpenAI's `api_key_id` is a
+  // provider identifier, not a password, so it is not fed into a hash
+  // function (HMAC-SHA256 is not a password KDF). Non-secret dimensions are
+  // HMAC'd; the key ref is appended as a bounded token so two keys in the
+  // same bucket cannot collide.
+  const digest = crypto
     .createHmac("sha256", PROVIDER_EVIDENCE_ID_DOMAIN)
     .update(JSON.stringify([kind, ...values]))
     .digest("hex");
+  const keyPart = boundedProviderKeyRef(providerKeyRef);
+  return keyPart ? `${digest}:${keyPart}`.slice(0, 128) : digest;
 }
 
 export function normalizeOpenAiCosts(page: unknown): ProviderEvidenceRow[] {
@@ -124,16 +137,19 @@ export function normalizeOpenAiCosts(page: unknown): ProviderEvidenceRow[] {
       if (amount == null) continue;
       rows.push({
         rowKind: "cost",
-        sourceRowId: sourceId("cost", [
-          bucket.start_time,
-          bucket.end_time,
-          result.project_id ?? null,
-          result.api_key_id ?? null,
-          result.line_item ?? null,
-          currency ?? null,
-          amount,
-          result.quantity ?? null,
-        ]),
+        sourceRowId: sourceId(
+          "cost",
+          [
+            bucket.start_time,
+            bucket.end_time,
+            result.project_id ?? null,
+            result.line_item ?? null,
+            currency ?? null,
+            amount,
+            result.quantity ?? null,
+          ],
+          result.api_key_id,
+        ),
         bucketStart: new Date(bucket.start_time * 1000),
         bucketEnd: new Date(bucket.end_time * 1000),
         projectId: result.project_id ?? undefined,
@@ -157,17 +173,20 @@ export function normalizeOpenAiCompletionsUsage(page: unknown): ProviderEvidence
     for (const result of bucket.results) {
       rows.push({
         rowKind: "usage",
-        sourceRowId: sourceId("usage", [
-          bucket.start_time,
-          bucket.end_time,
-          result.project_id ?? null,
-          result.api_key_id ?? null,
-          result.model ?? null,
-          result.input_tokens,
-          result.output_tokens,
-          result.input_cached_tokens,
-          result.num_model_requests,
-        ]),
+        sourceRowId: sourceId(
+          "usage",
+          [
+            bucket.start_time,
+            bucket.end_time,
+            result.project_id ?? null,
+            result.model ?? null,
+            result.input_tokens,
+            result.output_tokens,
+            result.input_cached_tokens,
+            result.num_model_requests,
+          ],
+          result.api_key_id,
+        ),
         bucketStart: new Date(bucket.start_time * 1000),
         bucketEnd: new Date(bucket.end_time * 1000),
         projectId: result.project_id ?? undefined,

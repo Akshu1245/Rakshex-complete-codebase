@@ -68,4 +68,37 @@ describe("OpenAI billing reconciliation", () => {
       model: "gpt-5-mini",
     });
   });
+
+  it("keeps distinct provider key refs from colliding without hashing them", () => {
+    const pageFor = (apiKeyId: string) => ({
+      object: "page",
+      data: [
+        {
+          object: "bucket",
+          start_time: 100,
+          end_time: 200,
+          results: [
+            {
+              object: "organization.costs.result",
+              amount: { currency: "usd", value: 1.25 },
+              api_key_id: apiKeyId,
+              line_item: "gpt-5-mini",
+              project_id: "proj_fixture",
+            },
+          ],
+        },
+      ],
+      has_more: false,
+      next_page: null,
+    });
+
+    const left = __test.normalizeOpenAiCosts(pageFor("key_alpha"))[0]!;
+    const right = __test.normalizeOpenAiCosts(pageFor("key_beta"))[0]!;
+    const again = __test.normalizeOpenAiCosts(pageFor("key_alpha"))[0]!;
+
+    expect(left.sourceRowId).not.toBe(right.sourceRowId);
+    expect(left.sourceRowId).toBe(again.sourceRowId);
+    expect(left.sourceRowId.length).toBeLessThanOrEqual(128);
+    expect(left.apiKeyId).toBe("key_alpha");
+  });
 });
