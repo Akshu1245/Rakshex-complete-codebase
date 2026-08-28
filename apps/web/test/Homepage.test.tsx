@@ -142,4 +142,24 @@ describe("homepage private-beta cut", () => {
       expect(source, path.basename(file)).not.toMatch(/Join the waitlist/);
     }
   });
+
+  it("gives waitlist and docs their own title and canonical, not the homepage ones", () => {
+    const homepage = fs.readFileSync(path.resolve(__dirname, "../app/page.tsx"), "utf8");
+    const waitlist = fs.readFileSync(path.resolve(__dirname, "../app/waitlist/layout.tsx"), "utf8");
+    const docs = fs.readFileSync(path.resolve(__dirname, "../app/docs/page.tsx"), "utf8");
+    const rootLayout = fs.readFileSync(path.resolve(__dirname, "../app/layout.tsx"), "utf8");
+
+    expect(homepage).toMatch(/canonical: "\/"/);
+    expect(homepage).toMatch(/Competitors govern the session/);
+    expect(rootLayout).not.toMatch(/alternates:\s*\{\s*canonical:\s*"\/"/);
+    expect(rootLayout).not.toMatch(/Prompt Injection & LLM Cost Control/);
+    expect(rootLayout).not.toMatch(/discover shadow APIs/);
+
+    expect(waitlist).toMatch(/canonical: "\/waitlist"/);
+    expect(waitlist).not.toMatch(/canonical: "\/"/);
+
+    expect(docs).toMatch(/canonical: "\/docs"/);
+    expect(docs).toMatch(/title: "Documentation"/);
+    expect(docs).not.toMatch(/canonical: "\/"/);
+  });
 });

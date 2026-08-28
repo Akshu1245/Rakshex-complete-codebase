@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "RaksHex FAQ – AI Runtime Governance Questions Answered",
+  title: "FAQ",
   description:
     "Frequently asked questions about RaksHex, the Agent Firewall for action-level runtime authorization.",
   alternates: { canonical: "/faq" },

@@ -1,6 +1,13 @@
 import React from "react";
 import Link from "next/link";
 
+export const metadata = {
+  title: "Documentation",
+  description:
+    "RaksHex Agent Firewall documentation: semantic action authorization, delegated authority, credential mediation, and the Action Ledger.",
+  alternates: { canonical: "/docs" },
+};
+
 export default function DocsOverview() {
   return (
     <article className="docs-article">
