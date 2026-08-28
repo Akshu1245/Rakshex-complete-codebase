@@ -28,7 +28,7 @@ const firewall = createAgentFirewallClient({
 /** Option A — caller holds the provider key. Copied from packages/sdk/README.md */
 export const FIREWALL_AUTHORIZE_AND_RUN = `const { decision, result } = await firewall.authorizeAndRun(
   { provider: "stripe", operation: "financial.refund", amountMinor: 5000, currency: "USD" },
-  async () => stripe.refunds.create({ /* ... */ }),
+  async () => stripe.refunds.create({/* ... */}),
 );`;
 
 /** Option B — RaksHex brokers the call. Copied from packages/sdk/README.md */

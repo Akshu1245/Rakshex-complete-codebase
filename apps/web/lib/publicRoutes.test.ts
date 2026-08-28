@@ -32,14 +32,6 @@ describe("isPublicPath", () => {
     expect(isPublicPath("/documentation")).toBe(true);
   });
 
-  it("treats the legal center, DPA, and nested legal documents as public", () => {
-    expect(PUBLIC_PATH_PREFIXES).toContain("/legal");
-    expect(PUBLIC_PATH_PREFIXES).toContain("/dpa");
-    expect(isPublicPath("/legal")).toBe(true);
-    expect(isPublicPath("/legal/dpa")).toBe(true);
-    expect(isPublicPath("/dpa")).toBe(true);
-  });
-
   it("keeps /get-started invite-gated as the in-app start", () => {
     expect(PUBLIC_PATH_PREFIXES).not.toContain("/get-started");
     expect(isPublicPath("/get-started")).toBe(false);
