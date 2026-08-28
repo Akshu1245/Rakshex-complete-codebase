@@ -5,6 +5,7 @@ import { render, screen } from "@testing-library/react";
 import React from "react";
 import { HeroSection } from "@/components/home/HeroSection";
 import { FeatureCards } from "@/components/home/FeatureCards";
+import { PublicHeader } from "@/components/PublicHeader";
 
 vi.mock("next/link", () => ({
   default: ({ href, children, ...props }: { href: string; children: React.ReactNode }) => (
@@ -14,9 +15,29 @@ vi.mock("next/link", () => ({
   ),
 }));
 
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/",
+}));
+
+vi.mock("@/lib/animations/countdown", () => ({
+  useCountdown: () => ({ days: 0, hours: 0, minutes: 0, seconds: 0 }),
+}));
+
+vi.mock("@/lib/animations/megamenu", () => ({
+  useMegaMenu: () => ({
+    activeMenu: null,
+    handleMouseEnter: () => undefined,
+    handleMouseLeave: () => undefined,
+    forceClose: () => undefined,
+  }),
+}));
+
 const homepageDir = path.resolve(__dirname, "../components/home");
 const homepageFiles = [
   path.resolve(__dirname, "../app/page.tsx"),
+  path.resolve(__dirname, "../app/HomePageClient.tsx"),
+  path.resolve(__dirname, "../app/layout.tsx"),
+  path.resolve(__dirname, "../app/overview/page.tsx"),
   path.join(homepageDir, "HeroSection.tsx"),
   path.join(homepageDir, "FeatureCards.tsx"),
   path.join(homepageDir, "ChangelogSection.tsx"),
@@ -24,6 +45,7 @@ const homepageFiles = [
   path.join(homepageDir, "BenchmarkSection.tsx"),
   path.join(homepageDir, "OverviewSplash.tsx"),
   path.join(homepageDir, "OneOnOneMatrix.tsx"),
+  path.join(homepageDir, "ArchitectureCompareSlider.tsx"),
 ];
 
 const leftoverCopy = [
@@ -41,6 +63,9 @@ const leftoverCopy = [
   /bash — agent firewall/,
   /Discover without exfiltration/,
   /Interactive demo scanner/,
+  /14-day free trial/,
+  /discover shadow APIs/i,
+  /Prompt Injection & LLM Cost Control/,
 ];
 
 describe("homepage private-beta cut", () => {
@@ -50,7 +75,9 @@ describe("homepage private-beta cut", () => {
       const source = fs.readFileSync(file, "utf8");
       for (const pattern of leftoverCopy) {
         if (pattern.test(source)) {
-          violations.push(`${path.relative(path.resolve(__dirname, ".."), file)} matched ${pattern}`);
+          violations.push(
+            `${path.relative(path.resolve(__dirname, ".."), file)} matched ${pattern}`,
+          );
         }
       }
     }
@@ -65,13 +92,24 @@ describe("homepage private-beta cut", () => {
   it("renders Request beta access to /waitlist and keeps the Action Ledger claim", () => {
     render(<HeroSection />);
 
-    const cta = screen.getByRole("link", { name: /request beta access/i });
+    const cta = screen.getByRole("link", { name: /^request beta access$/i });
     expect(cta).toHaveAttribute("href", "/waitlist");
     expect(screen.getByRole("link", { name: /see pricing/i })).toHaveAttribute("href", "/pricing");
     expect(screen.getByText("Hash-chained Action Ledger")).toBeInTheDocument();
     expect(screen.queryByText(/get started free/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/activate anti-gravity/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/1,000\+ tests passing/i)).not.toBeInTheDocument();
+  });
+
+  it("uses Request beta access on the public header, pointing at /waitlist", () => {
+    render(<PublicHeader />);
+
+    const ctas = screen.getAllByRole("link", { name: /^request beta access$/i });
+    expect(ctas.length).toBeGreaterThanOrEqual(1);
+    for (const cta of ctas) {
+      expect(cta).toHaveAttribute("href", "/waitlist");
+    }
+    expect(screen.queryByText(/^Start Free$/)).not.toBeInTheDocument();
   });
 
   it("keeps Agent Firewall product cards and drops scanner/discovery cards", () => {
@@ -83,5 +121,25 @@ describe("homepage private-beta cut", () => {
     expect(screen.getByRole("heading", { name: "Action Ledger" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Shadow API Discovery" })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Credential Scanner" })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: /learn more/i })[0]).toHaveAttribute(
+      "href",
+      "/overview",
+    );
+  });
+
+  it("hero, header, and overview labels are exactly Request beta access to /waitlist", () => {
+    const files = [
+      path.join(homepageDir, "HeroSection.tsx"),
+      path.resolve(__dirname, "../components/PublicHeader.tsx"),
+      path.resolve(__dirname, "../app/overview/page.tsx"),
+    ];
+    for (const file of files) {
+      const source = fs.readFileSync(file, "utf8");
+      expect(source, path.basename(file)).toMatch(/Request beta access/);
+      expect(source, path.basename(file)).toMatch(/href="\/waitlist"/);
+      expect(source, path.basename(file)).not.toMatch(/Get started free/);
+      expect(source, path.basename(file)).not.toMatch(/Start Free/);
+      expect(source, path.basename(file)).not.toMatch(/Join the waitlist/);
+    }
   });
 });

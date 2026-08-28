@@ -15,23 +15,21 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.rakshex.in";
 
 export const metadata: Metadata = {
   title: {
-    default: "RaksHex — AI Runtime Governance, Prompt Injection & LLM Cost Control",
+    default: "Competitors govern the session. RaksHex governs the action.",
     template: "%s | RaksHex",
   },
   description:
-    "India's AI Runtime Governance platform. Block prompt injection, control LLM costs, discover shadow APIs, and generate compliance reports in one place.",
+    "RaksHex is an Agent Firewall: runtime authorization for autonomous AI agents. Semantic actions, delegated authority, a hash-chained Action Ledger, and credential mediation so a DENY is enforced, not just logged.",
   keywords: [
-    "AI runtime governance",
-    "prompt injection blocking",
-    "LLM cost control",
-    "shadow API discovery",
+    "Agent Firewall",
+    "runtime authorization",
     "AI agent security",
-    "MCP governance",
-    "OWASP AI Top 10",
+    "delegated authority",
+    "credential mediation",
+    "Action Ledger",
     "RaksHex",
   ],
   metadataBase: new URL(SITE_URL),
-  alternates: { canonical: "/" },
   robots: { index: true, follow: true },
   icons: {
     icon: [
@@ -44,9 +42,9 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png?v=2",
   },
   openGraph: {
-    title: "RaksHex – AI Runtime Governance & Prompt Injection Protection",
+    title: "Competitors govern the session. RaksHex governs the action.",
     description:
-      "AI Runtime Governance for Indian teams. Block prompt injection, control LLM costs, discover shadow APIs, and generate compliance reports.",
+      "Runtime authorization for autonomous AI agents. RaksHex governs the action, not the session.",
     type: "website",
     siteName: "RaksHex",
     locale: "en_US",
@@ -60,9 +58,9 @@ export const metadata: Metadata = {
     ],
   },
   twitter: {
-    title: "RaksHex – AI Runtime Governance",
-    description: "Block prompt injection, control LLM costs, and govern AI agents with RaksHex.",
-    creator: "@rakshexhq",
+    title: "Competitors govern the session. RaksHex governs the action.",
+    description:
+      "Runtime authorization for autonomous AI agents. RaksHex governs the action, not the session.",
     images: ["/og-image.png?v=2"],
   },
 };

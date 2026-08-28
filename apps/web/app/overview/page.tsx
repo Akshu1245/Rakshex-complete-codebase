@@ -61,7 +61,7 @@ export default function OverviewPage() {
               href="/waitlist"
               className="px-6 py-3 rounded-lg bg-[#14B8A6] hover:bg-[#0D9488] text-black font-semibold text-sm sm:text-base transition-all shadow-[0_0_20px_rgba(20,184,166,0.3)] flex items-center gap-2"
             >
-              <span>Join the waitlist</span>
+              <span>Request beta access</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
             <Link

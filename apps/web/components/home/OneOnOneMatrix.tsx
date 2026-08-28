@@ -33,7 +33,7 @@ const COMPETITORS: CompetitorProfile[] = [
     category: "General APM & Infrastructure Observability",
     summary:
       "Datadog is built to observe and alert on what already happened. It has no concept of authorizing an individual agent action before it executes.",
-    link: "/compare/rakshex-vs-datadog",
+    link: "/compare/datadog",
     features: [
       {
         name: "Enforcement vs Observability",
@@ -68,7 +68,7 @@ const COMPETITORS: CompetitorProfile[] = [
     category: "Point Solution Prompt Guard",
     summary:
       "Lakera focuses on detecting prompt injection at the input layer. RaksHex operates a layer deeper: authorizing the action the model wants to take, independent of how the prompt was worded.",
-    link: "/compare/rakshex-vs-lakera",
+    link: "/compare/lakera",
     features: [
       {
         name: "Scope",
@@ -103,7 +103,7 @@ const COMPETITORS: CompetitorProfile[] = [
     category: "LLM Gateway & Request Router",
     summary:
       "Portkey and Helicone route and log LLM traffic. Routing tells you a request went through; it doesn't tell you whether that specific action should have been allowed.",
-    link: "/compare/rakshex-vs-portkey",
+    link: "/compare/portkey",
     features: [
       {
         name: "Action-Level Authorization",
@@ -138,7 +138,7 @@ const COMPETITORS: CompetitorProfile[] = [
     category: "Legacy API Security Platform",
     summary:
       "Traceable and Salt Security analyze REST/GraphQL API traffic patterns. Neither has a concept of an AI agent's delegated authority or a semantic action model.",
-    link: "/compare/rakshex-vs-traceable",
+    link: "/compare/traceable-ai",
     features: [
       {
         name: "AI Agent-Specific Model",
@@ -173,7 +173,7 @@ const COMPETITORS: CompetitorProfile[] = [
     category: "Runtime authorization vs static scanning",
     summary:
       "Snyk scans repos and dependencies for known CVEs before code ships. It doesn't evaluate what an already-running AI agent is authorized to do at call time.",
-    link: "/compare/rakshex-vs-snyk",
+    link: "/compare/snyk",
     features: [
       {
         name: "Primary Security Focus",
