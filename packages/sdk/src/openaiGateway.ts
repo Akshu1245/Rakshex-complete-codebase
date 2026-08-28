@@ -41,9 +41,9 @@ function required(value: string | undefined, name: string): string {
 }
 
 /**
- * OpenAI SDK baseURL must include /v1 so the official client's
- * `responses.create()` and `chat.completions.create()` routes land on the
- * existing Rakshex OpenAI-compatible gateway endpoints.
+ * OpenAI SDK baseURL must include /v1 so supported official-client routes
+ * land on the Rakshex OpenAI-compatible gateway. Chat Completions is wired
+ * today; Responses API support is intentionally a separate gateway change.
  */
 export function normalizeRakshexGatewayUrl(value: string): string {
   const normalized = value.trim().replace(/\/+$/, "");
