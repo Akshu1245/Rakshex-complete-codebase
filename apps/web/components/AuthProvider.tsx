@@ -81,11 +81,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value: AuthContextType = {
     user: (meQuery.data as User | null | undefined) ?? null,
-    // isPending, not isLoading: React Query v5's isLoading is
-    // isPending && isFetching. A gap where the query is pending but not
-    // fetching looks like "logged out" and AuthGuard unmounts the page
-    // (including the Agent Firewall register form) mid-fill.
-    loading: meQuery.isPending,
+    // AuthGuard redirects to /login when !loading && !user.
+    // isPending covers the first fetch, but is false during a
+    // refetch-after-error (status=error, isFetching=true, data=undefined).
+    // CI traces on 016d7aa show dashboard/error.js then a bounce to
+    // /login while cookies were valid and payment.getCurrentPlan still
+    // had trial data. Treat "no user yet and a fetch is in flight" as
+    // loading so the guard waits for auth.me instead of unmounting
+    // the Agent Firewall form mid-fill.
+    loading: !meQuery.data && (meQuery.isPending || meQuery.isFetching),
     logout,
     refresh,
   };

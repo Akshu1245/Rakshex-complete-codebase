@@ -165,8 +165,16 @@ export async function loginViaApi(page: Page, user: TestUser): Promise<void> {
   await applyApiCookiesToFrontend(page, res);
 }
 
-export async function loginViaUi(page: Page, user: TestUser): Promise<void> {
-  await page.goto("/login");
+export async function loginViaUi(
+  page: Page,
+  user: TestUser,
+  redirectTo = "/agent-firewall",
+): Promise<void> {
+  // Login's onSuccess does router.push(redirect || "/dashboard"). CI traces
+  // on 016d7aa show dashboard/error.js then AuthGuard bouncing to
+  // /login?redirect=/dashboard, which unmounts the firewall form. Send the
+  // product's own redirect param so success lands on the page under test.
+  await page.goto(`/login?redirect=${encodeURIComponent(redirectTo)}`);
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await page.locator("#email").fill(user.email);
   await page.locator("#password").fill(user.password);
@@ -183,6 +191,8 @@ export async function loginViaUi(page: Page, user: TestUser): Promise<void> {
   // already have applied them; addCookies with `url` (no path) is idempotent
   // and does not replace them with Domain=localhost cookies Chromium drops.
   await applyApiCookiesToFrontend(page, res);
-  await expect(page).toHaveURL((url) => url.pathname === "/dashboard", { timeout: 20_000 });
-  await expect(page.getByRole("heading", { name: /welcome to rakshex/i })).toHaveCount(0);
+  await expect(
+    page,
+    `login did not reach ${redirectTo}; AuthGuard likely bounced to /login`,
+  ).toHaveURL((url) => url.pathname === redirectTo, { timeout: 20_000 });
 }

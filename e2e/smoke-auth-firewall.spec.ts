@@ -26,9 +26,17 @@ test.describe("Smoke: login and Agent Firewall decision", () => {
     await signupViaApi(page, user);
     await page.context().clearCookies();
 
-    await loginViaUi(page, user);
+    await loginViaUi(page, user, "/agent-firewall");
+    // Full document load: cookies must survive without the dashboard hop
+    // that 016d7aa CI traces show crashing (dashboard/error.js) then
+    // bouncing to /login?redirect=/dashboard.
     await page.goto("/agent-firewall");
     await expect(page).toHaveURL((url) => url.pathname === "/agent-firewall");
+    await expect(
+      page.getByRole("heading", { name: /welcome to rakshex/i }),
+      "AuthGuard bounced to login; session cookies did not survive navigation",
+    ).toHaveCount(0);
+    await expect(page.getByText(/^authenticating/i)).toHaveCount(0, { timeout: 20_000 });
     await expect(page.getByRole("heading", { name: /agent firewall/i })).toBeVisible({
       timeout: 20_000,
     });
