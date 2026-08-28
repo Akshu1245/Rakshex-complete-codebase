@@ -138,8 +138,8 @@ export default function IntegrationsPage() {
             Find an Integration
           </h1>
           <p className="text-base text-white/50 font-sans">
-            Only GitHub and Slack webhook are Available today. Everything else is honestly labeled
-            Planned or Coming soon.
+            GitHub, Slack webhook, and the OpenAI + Anthropic gateway are available today. Roadmap
+            connectors remain explicitly labeled Planned or Coming soon.
           </p>
         </header>
 
