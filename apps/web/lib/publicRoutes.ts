@@ -13,6 +13,7 @@ export const PUBLIC_PATH_PREFIXES = [
   "/terms",
   "/cookies",
   "/legal",
+  "/dpa",
   "/pricing",
   "/waitlist",
   "/landing",

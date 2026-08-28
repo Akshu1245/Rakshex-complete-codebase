@@ -101,6 +101,10 @@ const nextConfig = {
   },
   // Bundle splitting: extract vendor chunks and enable code splitting
   webpack: (config, { isServer }) => {
+    config.module.rules.push({
+      test: /\.md$/,
+      type: "asset/source",
+    });
     if (!isServer) {
       config.optimization.splitChunks = {
         chunks: "all",

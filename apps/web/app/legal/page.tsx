@@ -8,6 +8,8 @@ export const metadata = {
   alternates: { canonical: "/legal" },
 };
 
+export const dynamic = "force-static";
+
 const documents = [
   {
     title: "Terms of Service",
@@ -43,24 +45,28 @@ const documents = [
     title: "Acceptable Use Policy",
     description:
       "Boundaries for authorised scans, integrations, models, and AI-supported workflows.",
+    href: "/legal/aup",
     download: "/legal/rakshex-acceptable-use-policy.docx",
     icon: FileText,
   },
   {
     title: "Refund and Cancellation Policy",
     description: "Self-serve cancellation, renewal, payment failure, and refund review process.",
+    href: "/legal/refund",
     download: "/legal/rakshex-refund-cancellation-policy.docx",
     icon: FileText,
   },
   {
     title: "Subprocessor Register",
     description: "Active, conditional, and customer-directed service-provider categories.",
+    href: "/legal/subprocessors",
     download: "/legal/rakshex-subprocessor-register.docx",
     icon: FileText,
   },
   {
     title: "AI Transparency Statement",
     description: "Intended use, human oversight, data labels, limits, and provider boundaries.",
+    href: "/legal/ai-transparency",
     download: "/legal/rakshex-ai-transparency-statement.docx",
     icon: Sparkles,
   },
@@ -79,7 +85,8 @@ export default function LegalCenter() {
           </h1>
           <p className="mt-5 text-lg leading-8 text-slate-400">
             These documents explain how RaksHex is sold, operated, secured, and governed. Enterprise
-            paperwork becomes binding when incorporated into an executed Order Form.
+            paperwork becomes binding when incorporated into an executed Order Form. Online copies
+            match the published 12 July 2026 customer pack.
           </p>
         </header>
 
@@ -107,9 +114,9 @@ export default function LegalCenter() {
           <h2 className="text-2xl font-semibold text-white">Security and privacy requests</h2>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-400">
             For a signed DPA, completed security questionnaire, subprocessor notice, private relay,
-            data-residency requirement, or incident contact, email privacy@rakshex.in or
-            security@rakshex.in. Do not send provider keys, passwords, or sensitive incident
-            evidence by email.
+            data-residency requirement, or incident contact, email privacy@rakshex.in,
+            security@rakshex.in, or legal@rakshex.in. Do not send provider keys, passwords, or
+            sensitive incident evidence by email.
           </p>
         </section>
       </div>
