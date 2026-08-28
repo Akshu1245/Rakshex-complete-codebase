@@ -1,6 +1,6 @@
 # Reproducible Next.js web image built from the monorepo root:
 #   docker build -f apps/web/Dockerfile -t rakshex-web .
-FROM node:22-alpine AS base
+FROM node:24-alpine AS base
 RUN corepack enable pnpm
 ENV HUSKY=0
 
@@ -20,7 +20,7 @@ WORKDIR /app/apps/web
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm build
 
-FROM node:22-alpine AS runner
+FROM node:24-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
