@@ -2,25 +2,16 @@
 
 ## Node — `@rakshex/sdk`
 
-Package: `@rakshex/sdk` (`packages/sdk`, renamed 2026-08-09 from
-`@rakshex/agentguard-sdk` — it ships two distinct clients and shouldn't be
-named after only one of them; see `packages/sdk/src/index.ts` header and
-`CLAUDE.md` for why).
-
-Two clients, one package:
+Source package: `@rakshex/sdk` (`packages/sdk`). It contains two clients:
 
 ```ts
-// AgentGuard: LLM telemetry, PII/secret redaction, provider wrappers.
-import { createAgentGuardClient, wrapOpenAI } from "@rakshex/sdk";
+import { createAgentGuardClient, createAgentFirewallClient } from "@rakshex/sdk";
 
 const guard = createAgentGuardClient({
   apiKey: process.env.RAKSHEX_API_KEY!,
   privacyMode: "metadata_only",
   failOpen: true,
 });
-
-// Agent Firewall: authorize an autonomous action before it runs.
-import { createAgentFirewallClient } from "@rakshex/sdk";
 
 const firewall = createAgentFirewallClient({
   apiKey: process.env.RAKSHEX_API_KEY!,
@@ -30,26 +21,35 @@ const firewall = createAgentFirewallClient({
 });
 ```
 
-Providers (AgentGuard side): OpenAI, Anthropic, Gemini, Azure OpenAI, Bedrock, OpenRouter wrappers.
+AgentGuard covers telemetry/privacy/provider wrappers. Agent Firewall authorizes autonomous actions before execution.
 
-See package `README.md` and `examples/`.
+> Public package availability must be verified before advertising an npm install command. The repository source is canonical during private beta.
 
 ## Python — `rakshex-agentguard`
 
-Package: `rakshex-agentguard` (`packages/agentguard-python`). This is
-**AgentGuard only** — there is no Python `AgentFirewallClient` yet. A Python
-integrator who wants to call the Agent Firewall today has to call the tRPC
-HTTP endpoints directly (`agentFirewall.evaluate`, `.credentials.broker`,
-`.ledger.outcome`, `.approvals.consume`); porting the TS `firewall.ts`
-client to Python is real, tracked, unbuilt work, not a documentation gap.
+Source package: `packages/agentguard-python`. It now contains both:
+
+- `AgentGuardClient` / `create_client` — telemetry, privacy modes, provider wrappers and fail-open telemetry ingest.
+- `AgentFirewallClient` / `create_firewall_client` — action evaluation, credential brokering, approval consumption and ledger outcome recording.
+
+`AgentFirewallClient` uses the workspace key on `x-api-key`, requires delegated capability input, and fails closed when authorization cannot be obtained.
+
+> `rakshex-agentguard` is **not published on PyPI yet**. Use the source checkout during private beta.
 
 ```bash
+git clone https://github.com/Akshu1245/Rakshex-complete-codebase.git
+cd Rakshex-complete-codebase
 pip install -e packages/agentguard-python
 pytest packages/agentguard-python/tests
 ```
 
-## Guarantees (tested)
+For private-beta integrations, configure the gateway URL supplied for the deployment; do not assume a public API hostname until it is operational.
 
-- Default no prompt content capture
-- Fail-open offline queue when gateway down
-- Provider keys not forwarded in telemetry bodies
+## Guarantees covered by tests
+
+- Default no prompt-content capture in metadata-only telemetry mode
+- Fail-open telemetry queue when the telemetry gateway is unavailable
+- Provider keys are not forwarded in telemetry bodies
+- Agent Firewall authorization is fail-closed
+- A DENY does not execute or broker a provider call
+- `record_outcome` uses `agentFirewall.ledger.outcome` with the same workspace-key authorization path as evaluation
