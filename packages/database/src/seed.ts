@@ -8,6 +8,24 @@
 import { createHash, randomBytes } from "node:crypto";
 import pg from "pg";
 
+export const PRODUCTION_SEED_CONFIRMATION = "I_UNDERSTAND_THIS_WRITES_SYNTHETIC_DATA";
+
+/**
+ * Protect production databases from an accidental local/demo seed.
+ * The explicit confirmation exists for controlled recovery/test environments only;
+ * normal production deployment must never set it.
+ */
+export function assertSeedEnvironment(
+  nodeEnv = process.env.NODE_ENV,
+  confirmation = process.env.RAKSHEX_ALLOW_PRODUCTION_SEED,
+): void {
+  if (nodeEnv === "production" && confirmation !== PRODUCTION_SEED_CONFIRMATION) {
+    throw new Error(
+      "Refusing to seed with NODE_ENV=production. Synthetic seed data is local-development-only.",
+    );
+  }
+}
+
 function id(prefix: string): string {
   return `${prefix}_${randomBytes(8).toString("hex")}`;
 }
@@ -34,6 +52,8 @@ export const SEED_FIXTURES = {
 } as const;
 
 export async function seed(databaseUrl?: string): Promise<void> {
+  assertSeedEnvironment();
+
   const url = databaseUrl ?? process.env.DATABASE_URL;
   if (!url) throw new Error("DATABASE_URL is required for seed");
 
@@ -43,7 +63,6 @@ export async function seed(databaseUrl?: string): Promise<void> {
   try {
     await client.query("BEGIN");
 
-    // User
     const userRes = await client.query<{ id: number }>(
       `INSERT INTO users ("openId", name, email, "loginMethod", role, plan, "passwordHash", "scansRemaining", "onboardingCompleted", "createdAt", "updatedAt", "lastSignedIn")
        VALUES ($1, $2, $3, 'email', 'admin', 'free', $4, 100, true, now(), now(), now())
@@ -58,7 +77,6 @@ export async function seed(databaseUrl?: string): Promise<void> {
     );
     const userId = userRes.rows[0]!.id;
 
-    // Workspace
     const wsRes = await client.query<{ id: number }>(
       `INSERT INTO workspaces (slug, name, "ownerUserId", "isPersonal", "createdAt", "updatedAt")
        VALUES ($1, $2, $3, true, now(), now())
@@ -77,7 +95,6 @@ export async function seed(databaseUrl?: string): Promise<void> {
       [workspaceId, userId],
     );
 
-    // Identity
     const identityId = id("idn");
     await client.query(
       `INSERT INTO identities (id, user_id, provider, provider_subject, email, email_verified_at, created_at, updated_at)
@@ -86,7 +103,6 @@ export async function seed(databaseUrl?: string): Promise<void> {
       [identityId, userId, SEED_FIXTURES.user.openId, SEED_FIXTURES.user.email],
     );
 
-    // Permissions + system role
     const permId = id("perm");
     await client.query(
       `INSERT INTO permissions (id, key, resource, action, description, created_at)
@@ -102,7 +118,6 @@ export async function seed(databaseUrl?: string): Promise<void> {
       [roleId],
     );
 
-    // Project
     const projectId = id("prj");
     await client.query(
       `INSERT INTO projects (id, workspace_id, name, slug, description, created_at, updated_at)
@@ -111,7 +126,6 @@ export async function seed(databaseUrl?: string): Promise<void> {
       [projectId, workspaceId, SEED_FIXTURES.project.name, SEED_FIXTURES.project.slug],
     );
 
-    // API key (hash only — secret never stored)
     const keyId = id("key");
     const prefix = "rk_live_seed";
     await client.query(
@@ -121,7 +135,6 @@ export async function seed(databaseUrl?: string): Promise<void> {
       [keyId, workspaceId, userId, prefix, hash("rk_live_seed_local_only_secret")],
     );
 
-    // Compliance framework sample
     const fwId = id("fw");
     await client.query(
       `INSERT INTO compliance_frameworks (id, key, name, version, description, created_at)
@@ -138,7 +151,6 @@ export async function seed(databaseUrl?: string): Promise<void> {
       [controlId],
     );
 
-    // Pricing version sample (public list prices — not customer data)
     const pvId = id("pv");
     await client.query(
       `INSERT INTO pricing_versions (id, provider, model, region, currency, input_per_1m, output_per_1m, effective_from, created_at)
