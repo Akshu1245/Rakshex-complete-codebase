@@ -13,7 +13,7 @@ allowBuilds:
 overrides:
   qs: "6.15.2"
   ws: "8.21.0"
-  postcss: "8.5.24"
+  postcss: "8.5.26"
   esbuild: "0.28.1"
   form-data: "4.0.6"
   undici: "8.7.0"
@@ -21,6 +21,11 @@ overrides:
   sharp: "0.35.3"
   "@opentelemetry/core": "2.9.0"
   "@napi-rs/wasm-runtime": "1.1.6"
+  # GHSA-2v37-7h3g-55p8 — custom generators can loop indefinitely when size
+  # is zero. postcss 8.5.24 pulled nanoid 3.3.16; 8.5.26 depends on ^3.3.17
+  # and resolves to 3.3.18. Pin the 3.x line explicitly so any other path
+  # cannot regress below the patched release.
+  "nanoid@<3.3.18": "3.3.18"
   # GHSA-rgw5-rvv9-x895 — DoS via unbounded intermediate arrays, which
   # bypasses the earlier CVE-2026-14257 mitigation. Vulnerable <5.0.9, so the
   # previous 5.0.8 pin was one patch short and still flagged high by both
