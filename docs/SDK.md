@@ -36,12 +36,34 @@ See package `README.md` and `examples/`.
 
 ## Python — `rakshex-agentguard`
 
-Package: `rakshex-agentguard` (`packages/agentguard-python`). This is
-**AgentGuard only** — there is no Python `AgentFirewallClient` yet. A Python
-integrator who wants to call the Agent Firewall today has to call the tRPC
-HTTP endpoints directly (`agentFirewall.evaluate`, `.credentials.broker`,
-`.ledger.outcome`, `.approvals.consume`); porting the TS `firewall.ts`
-client to Python is real, tracked, unbuilt work, not a documentation gap.
+Package: `rakshex-agentguard` (`packages/agentguard-python`). The PyPI name
+is still AgentGuard-shaped — same honest-naming issue the Node package had
+before it became `@rakshex/sdk`. It now ships both clients:
+
+- `AgentGuardClient` / `create_client` — telemetry, privacy modes, provider wrappers, fail-open ingest.
+- `AgentFirewallClient` / `create_firewall_client` — Python port of Node
+  `packages/sdk/src/firewall.ts`. Same tRPC mutations
+  (`agentFirewall.evaluate`, `.credentials.broker`, `.ledger.outcome`,
+  `.approvals.consume`), same `x-api-key` header, same fail-closed
+  constructor (workspace key must start with `rk_`, capability token with
+  `rk_cap_`, empty gateway URL is rejected). `ledger.outcome` is called with
+  the same key as `evaluate`; the server authorizes it with
+  `agent:execute`, not `security:write`.
+
+```python
+from rakshex_agentguard import create_client, create_firewall_client
+
+guard = create_client(api_key, privacy_mode="metadata_only", fail_open=True)
+
+firewall = create_firewall_client(
+    api_key=api_key,            # rk_... workspace key, agent:execute is enough
+    workspace_id=1,
+    agent_id="agent_123",
+    capability_token=cap_token, # rk_cap_...
+)
+decision = firewall.evaluate({"provider": "stripe", "operation": "financial.refund"})
+firewall.record_outcome(decision["ledgerId"], "succeeded")
+```
 
 ```bash
 pip install -e packages/agentguard-python
@@ -53,3 +75,5 @@ pytest packages/agentguard-python/tests
 - Default no prompt content capture
 - Fail-open offline queue when gateway down
 - Provider keys not forwarded in telemetry bodies
+- Agent Firewall client is fail-closed (missing `rk_` key / `rk_cap_` token / gateway URL, or a gateway outage, never runs the action)
+- Python `record_outcome` hits `agentFirewall.ledger.outcome` with the same workspace key as `evaluate` (server scope: `agent:execute`)

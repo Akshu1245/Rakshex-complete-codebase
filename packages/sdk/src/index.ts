@@ -23,9 +23,10 @@
  * three unrelated things all answered to "AgentGuard" — this scanning-vs-
  * governance-vs-firewall confusion is documented in CLAUDE.md). Renamed to
  * @rakshex/sdk because a package that ships both clients shouldn't be named
- * after only one of them. No Python equivalent of AgentFirewallClient
- * exists yet — rakshex-agentguard (PyPI) still only covers the AgentGuard
- * half; that gap is real and not yet closed.
+ * after only one of them. The Python package (rakshex-agentguard on PyPI)
+ * now ships both clients as well — AgentFirewallClient lives in
+ * packages/agentguard-python/src/rakshex_agentguard/firewall.py. The PyPI
+ * name was not renamed in that change; see docs/SDK.md.
  */
 
 export type {

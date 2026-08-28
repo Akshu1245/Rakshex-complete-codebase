@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rakshex-agentguard"
-version = "0.1.0"
-description = "Rakshex AgentGuard runtime SDK for Python"
+version = "0.2.0"
+description = "Rakshex runtime SDK for Python — AgentGuard telemetry/privacy and the Agent Firewall client"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "Rakshex" }]
-keywords = ["agentguard", "llm", "telemetry", "governance"]
+keywords = ["agentguard", "agent-firewall", "llm", "telemetry", "governance", "authorization"]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",

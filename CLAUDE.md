@@ -216,10 +216,15 @@ would mean touching live enterprise DB tables for no functional gain.
 #3 (Node) is renamed: `packages/agentguard-sdk` → `packages/sdk`,
 `@rakshex/agentguard-sdk` → `@rakshex/sdk`. A developer installing the SDK
 should not have to already know the history to guess it also contains the
-Firewall client. The Python package (`rakshex-agentguard`) is untouched —
-it genuinely only contains the AgentGuard client today; there is no Python
-`AgentFirewallClient` yet, and that gap is now stated explicitly in
-`docs/SDK.md` rather than left implicit.
+Firewall client. The Python package name (`rakshex-agentguard` on PyPI) is
+unchanged — renaming a published distribution is a separate call — but as
+of 2026-08-28 it ships both clients too (`AgentGuardClient` and
+`AgentFirewallClient` in `packages/agentguard-python`). The Firewall client
+is a faithful port of Node `packages/sdk/src/firewall.ts` against
+`apps/api/api/agentFirewall.ts` (evaluate / credentials.broker /
+ledger.outcome / approvals.consume; `x-api-key`; fail-closed; `ledger.outcome`
+uses `agent:execute`). The package name still only mentions AgentGuard;
+that is documented in `docs/SDK.md` rather than left implicit.
 
 Every reference was updated, not just the directory: `package.json` name/
 description/keywords, the `SDK_NAME` constant in `client.ts`, `index.ts`'s

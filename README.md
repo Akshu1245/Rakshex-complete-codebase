@@ -138,7 +138,7 @@ CI stages: install → format → lint → typecheck → unit → integration �
 | [docs/market-readiness-audit.md](docs/market-readiness-audit.md)                                     | Historical audit findings                 |
 | [docs/GAP_INVENTORY.md](docs/GAP_INVENTORY.md)                                                       | Closed product gaps                       |
 
-SDK package READMEs: `packages/sdk` (Node — AgentGuard + Agent Firewall clients), `packages/agentguard-python` (Python — AgentGuard only).
+SDK package READMEs: `packages/sdk` (Node — AgentGuard + Agent Firewall clients), `packages/agentguard-python` (Python — AgentGuard + Agent Firewall clients; PyPI name `rakshex-agentguard`).
 
 ## Security contact
 
