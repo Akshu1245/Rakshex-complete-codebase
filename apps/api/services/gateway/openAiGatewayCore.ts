@@ -61,6 +61,16 @@ export interface NormalizedOpenAiGatewayRequest {
   upstreamBody: Record<string, unknown>;
 }
 
+export type OpenAiGatewayNormalizationResult =
+  | { ok: true; request: NormalizedOpenAiGatewayRequest }
+  | {
+      ok: false;
+      status: number;
+      code: string;
+      message: string;
+      type?: string;
+    };
+
 export function openAiError(
   res: Response,
   status: number,
@@ -361,7 +371,7 @@ function appendAuditTail(current: string, chunk: string): string {
 export async function handleOpenAiGatewayRequest(
   req: Request,
   res: Response,
-  request: NormalizedOpenAiGatewayRequest,
+  normalizeRequest: () => OpenAiGatewayNormalizationResult,
 ): Promise<void> {
   const startedAt = Date.now();
   const requestId = req.header("x-request-id")?.slice(0, 128) || crypto.randomUUID();
@@ -394,6 +404,19 @@ export async function handleOpenAiGatewayRequest(
     );
     return;
   }
+
+  const normalized = normalizeRequest();
+  if (!normalized.ok) {
+    openAiError(
+      res,
+      normalized.status,
+      normalized.code,
+      normalized.message,
+      normalized.type ?? "invalid_request_error",
+    );
+    return;
+  }
+  const request = normalized.request;
 
   const provider = providerFromRequest(req);
   if (!provider) {
