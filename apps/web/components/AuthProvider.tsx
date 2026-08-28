@@ -52,7 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (nextAuthStatus !== "authenticated" || !nextAuthSession) return;
-    if (meQuery.isLoading || meQuery.data) return;
+    if (meQuery.isPending || meQuery.data) return;
     const sessionKey = nextAuthSession.user?.email ?? "session";
     if (syncedForSession.current === sessionKey || oauthSyncMutation.isPending) return;
     syncedForSession.current = sessionKey;
@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // oauthSyncMutation is intentionally omitted from deps: it's a new
     // object each render, and including it would re-run this on every
     // mutation state change instead of only when the session changes.
-  }, [nextAuthStatus, nextAuthSession, meQuery.isLoading, meQuery.data]);
+  }, [nextAuthStatus, nextAuthSession, meQuery.isPending, meQuery.data]);
 
   const logout = useCallback(async () => {
     try {
@@ -81,7 +81,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value: AuthContextType = {
     user: (meQuery.data as User | null | undefined) ?? null,
-    loading: meQuery.isLoading,
+    // isPending, not isLoading: React Query v5's isLoading is
+    // isPending && isFetching. A gap where the query is pending but not
+    // fetching looks like "logged out" and AuthGuard unmounts the page
+    // (including the Agent Firewall register form) mid-fill.
+    loading: meQuery.isPending,
     logout,
     refresh,
   };

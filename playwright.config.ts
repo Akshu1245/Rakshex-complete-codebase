@@ -54,6 +54,9 @@ export default defineConfig({
       env: {
         NEXT_PUBLIC_TS_API_URL: `http://localhost:${BACKEND_PORT}`,
         NEXT_PUBLIC_SITE_URL: BASE_URL,
+        NEXTAUTH_URL: BASE_URL,
+        NEXTAUTH_SECRET:
+          process.env.NEXTAUTH_SECRET || "test-only-nextauth-secret-with-at-least-32-chars",
       },
     },
   ],

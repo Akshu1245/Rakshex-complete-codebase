@@ -11,10 +11,15 @@ import { dismissBrowserNotices, loginViaUi, signupViaApi, uniqueTestUser } from 
  *
  * URL assertions use pathname, not a substring regex: `/login?redirect=%2Fagent-firewall`
  * matches `/\/agent-firewall/` and would hide an AuthGuard bounce.
+ *
+ * The register form labels are "Display name" and "Stable agent key" (placeholders
+ * "Finance support agent" / "finance-support-prod"). Locators use the labels and
+ * wait until both inputs are editable so a slow workspace load cannot fill the
+ * name field and then hang on a key input that is not mounted yet.
  */
 test.describe("Smoke: login and Agent Firewall decision", () => {
   test("signed-in user can evaluate an action on the firewall page", async ({ page }) => {
-    test.setTimeout(90_000);
+    test.setTimeout(180_000);
     await dismissBrowserNotices(page);
 
     const user = uniqueTestUser("fw");
@@ -27,11 +32,23 @@ test.describe("Smoke: login and Agent Firewall decision", () => {
     await expect(page.getByRole("heading", { name: /agent firewall/i })).toBeVisible({
       timeout: 20_000,
     });
+    await expect(page.getByText(/create a workspace first/i)).toHaveCount(0);
+
+    const register = page.locator("form").filter({
+      has: page.getByRole("heading", { name: /register an agent/i }),
+    });
+    await expect(register).toBeVisible({ timeout: 20_000 });
+
+    const nameInput = register.getByLabel(/^display name$/i);
+    const keyInput = register.getByLabel(/^stable agent key$/i);
+    await expect(nameInput).toBeEditable({ timeout: 15_000 });
+    await expect(keyInput).toBeEditable({ timeout: 15_000 });
 
     const agentKey = `smoke-agent-${Date.now().toString(36)}`;
-    await page.getByPlaceholder("Finance support agent").fill("Smoke Refund Agent");
-    await page.getByPlaceholder("finance-support-prod").fill(agentKey);
-    await page.getByRole("button", { name: /register agent/i }).click();
+    await nameInput.fill("Smoke Refund Agent");
+    await expect(page).toHaveURL((url) => url.pathname === "/agent-firewall");
+    await keyInput.fill(agentKey);
+    await register.getByRole("button", { name: /register agent/i }).click();
     // Native <option> elements are in the accessibility tree but `hidden`
     // until the <select> is opened. Attached is the honest check.
     await expect(page.getByRole("option", { name: /Smoke Refund Agent/ })).toBeAttached({

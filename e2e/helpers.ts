@@ -184,4 +184,5 @@ export async function loginViaUi(page: Page, user: TestUser): Promise<void> {
   // and does not replace them with Domain=localhost cookies Chromium drops.
   await applyApiCookiesToFrontend(page, res);
   await expect(page).toHaveURL((url) => url.pathname === "/dashboard", { timeout: 20_000 });
+  await expect(page.getByRole("heading", { name: /welcome to rakshex/i })).toHaveCount(0);
 }
