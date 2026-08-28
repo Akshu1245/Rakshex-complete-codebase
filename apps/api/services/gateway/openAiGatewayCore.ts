@@ -30,6 +30,10 @@ import {
   persistSettledAttribution,
   type GatewayAttributionTags,
 } from "./gatewayAttribution";
+import {
+  appendActionReceipt,
+  type ActionReceiptEventType,
+} from "../receipts/actionReceipts";
 
 const MAX_UPSTREAM_ERROR_BYTES = 8_192;
 const MAX_STREAM_AUDIT_BYTES = 2 * 1024 * 1024;
@@ -443,8 +447,49 @@ export async function handleOpenAiGatewayRequest(
     return;
   }
 
+  const appendReceiptOrBlock = async (
+    eventType: ActionReceiptEventType,
+    payload: Record<string, unknown>,
+  ): Promise<boolean> => {
+    try {
+      await appendActionReceipt({
+        workspaceId: auth.workspaceId,
+        requestId,
+        eventType,
+        occurredAt: new Date(),
+        payload,
+      });
+      return true;
+    } catch (err) {
+      logger.error(
+        { err, requestId, workspaceId: auth.workspaceId, eventType },
+        "[Gateway] Signed receipt ledger unavailable",
+      );
+      if (!res.headersSent) {
+        openAiError(
+          res,
+          503,
+          "receipt_unavailable",
+          "Signed receipt ledger is unavailable; request blocked fail-closed",
+          "policy_error",
+        );
+      } else {
+        res.end();
+      }
+      return false;
+    }
+  };
+
   const normalized = normalizeRequest();
   if (!normalized.ok) {
+    if (
+      !(await appendReceiptOrBlock("deny", {
+        reason: normalized.code,
+        status: normalized.status,
+      }))
+    ) {
+      return;
+    }
     openAiError(
       res,
       normalized.status,
@@ -458,6 +503,15 @@ export async function handleOpenAiGatewayRequest(
 
   const provider = providerFromRequest(req);
   if (!provider) {
+    if (
+      !(await appendReceiptOrBlock("deny", {
+        reason: "unsupported_provider",
+        endpoint: request.endpoint,
+        model: request.model,
+      }))
+    ) {
+      return;
+    }
     openAiError(
       res,
       400,
@@ -473,6 +527,16 @@ export async function handleOpenAiGatewayRequest(
     requestedIdentityId != null &&
     auth.identityId !== requestedIdentityId
   ) {
+    if (
+      !(await appendReceiptOrBlock("deny", {
+        provider,
+        endpoint: request.endpoint,
+        model: request.model,
+        reason: "identity_scope_mismatch",
+      }))
+    ) {
+      return;
+    }
     openAiError(
       res,
       403,
@@ -495,6 +559,16 @@ export async function handleOpenAiGatewayRequest(
       { err, requestId, workspaceId: auth.workspaceId },
       "[Gateway] Identity lookup unavailable",
     );
+    if (
+      !(await appendReceiptOrBlock("deny", {
+        provider,
+        endpoint: request.endpoint,
+        model: request.model,
+        reason: "identity_lookup_unavailable",
+      }))
+    ) {
+      return;
+    }
     openAiError(
       res,
       503,
@@ -505,6 +579,17 @@ export async function handleOpenAiGatewayRequest(
     return;
   }
   if (effectiveIdentityId && identityId == null) {
+    if (
+      !(await appendReceiptOrBlock("deny", {
+        provider,
+        endpoint: request.endpoint,
+        model: request.model,
+        reason: "identity_scope_mismatch",
+        requestedIdentityId: effectiveIdentityId,
+      }))
+    ) {
+      return;
+    }
     openAiError(
       res,
       403,
@@ -517,6 +602,17 @@ export async function handleOpenAiGatewayRequest(
 
   const requestedProjectId = safeScopeHeader(req, "x-rakshex-project-id");
   if (auth.projectId && requestedProjectId && auth.projectId !== requestedProjectId) {
+    if (
+      !(await appendReceiptOrBlock("deny", {
+        provider,
+        endpoint: request.endpoint,
+        model: request.model,
+        identityId,
+        reason: "project_scope_mismatch",
+      }))
+    ) {
+      return;
+    }
     openAiError(res, 403, "project_scope_mismatch", "API key is restricted to another project");
     return;
   }
@@ -524,12 +620,25 @@ export async function handleOpenAiGatewayRequest(
 
   const requestedAgentId = safeScopeHeader(req, "x-rakshex-agent-id");
   if (auth.agentId && requestedAgentId && auth.agentId !== requestedAgentId) {
+    if (
+      !(await appendReceiptOrBlock("deny", {
+        provider,
+        endpoint: request.endpoint,
+        model: request.model,
+        identityId,
+        projectId,
+        reason: "agent_scope_mismatch",
+      }))
+    ) {
+      return;
+    }
     openAiError(res, 403, "agent_scope_mismatch", "API key is restricted to another agent");
     return;
   }
   const agentId = auth.agentId ?? requestedAgentId;
   const tags = parseGatewayMetadataHeader(req.header("x-rakshex-metadata"));
   const estimate = estimateGatewayPreflight(request.estimatedInput, request.maxOutputTokens);
+  const requestedProviderAccountId = positiveIntegerHeader(req, "x-rakshex-provider-account-id");
   let budgetReservation: GatewayBudgetReservation | null = null;
 
   try {
@@ -561,6 +670,20 @@ export async function handleOpenAiGatewayRequest(
         estimatedCostUsd: estimate.estimatedCostUsd,
         startedAt,
       });
+      if (
+        !(await appendReceiptOrBlock(governance.killActive ? "kill" : "deny", {
+          provider,
+          endpoint: request.endpoint,
+          model: request.model,
+          identityId,
+          projectId,
+          agentId,
+          estimatedCostUsd: estimate.estimatedCostUsd,
+          reason,
+        }))
+      ) {
+        return;
+      }
       openAiError(res, 403, "rakshex_policy_blocked", reason, "policy_error");
       return;
     }
@@ -595,6 +718,20 @@ export async function handleOpenAiGatewayRequest(
           estimatedCostUsd: estimate.estimatedCostUsd,
           startedAt,
         });
+        if (
+          !(await appendReceiptOrBlock("deny", {
+            provider,
+            endpoint: request.endpoint,
+            model: request.model,
+            identityId,
+            projectId,
+            agentId,
+            estimatedCostUsd: estimate.estimatedCostUsd,
+            reason: err.message,
+          }))
+        ) {
+          return;
+        }
         openAiError(res, 403, "rakshex_policy_blocked", err.message, "policy_error");
         return;
       }
@@ -622,15 +759,71 @@ export async function handleOpenAiGatewayRequest(
         estimatedCostUsd: estimate.estimatedCostUsd,
         startedAt,
       });
+      if (
+        !(await appendReceiptOrBlock("deny", {
+          provider,
+          endpoint: request.endpoint,
+          model: request.model,
+          identityId,
+          projectId,
+          agentId,
+          estimatedCostUsd: estimate.estimatedCostUsd,
+          reason: reservationResult.reason,
+          control: "gateway_budget",
+        }))
+      ) {
+        return;
+      }
       openAiError(res, 403, "rakshex_budget_blocked", reservationResult.reason, "policy_error");
       return;
     }
     budgetReservation = reservationResult.reservation;
+
+    if (
+      !(await appendReceiptOrBlock("allow", {
+        provider,
+        endpoint: request.endpoint,
+        model: request.model,
+        identityId,
+        projectId,
+        agentId,
+        requestedProviderAccountId,
+        estimatedCostUsd: estimate.estimatedCostUsd,
+        featureTags: tags.featureTags,
+        customerTags: tags.customerTags,
+      }))
+    ) {
+      await settleGatewayBudget(budgetReservation, 0).catch((settleErr) =>
+        logger.error({ err: settleErr, requestId }, "[Gateway] Failed to release budget reservation"),
+      );
+      budgetReservation = null;
+      return;
+    }
   } catch (err) {
     logger.error(
       { err, requestId, workspaceId: auth.workspaceId },
       "[Gateway] Enforcement unavailable",
     );
+    try {
+      await settleGatewayBudget(budgetReservation, 0);
+      budgetReservation = null;
+    } catch (settleErr) {
+      logger.error({ err: settleErr, requestId }, "[Gateway] Failed to release budget reservation");
+    }
+    if (
+      !(await appendReceiptOrBlock("deny", {
+        provider,
+        endpoint: request.endpoint,
+        model: request.model,
+        identityId,
+        projectId,
+        agentId,
+        estimatedCostUsd: estimate.estimatedCostUsd,
+        reason: "enforcement_unavailable",
+      }))
+    ) {
+      return;
+    }
     openAiError(
       res,
       503,
@@ -647,18 +840,12 @@ export async function handleOpenAiGatewayRequest(
       auth.workspaceId,
       provider,
       request.endpoint,
-      positiveIntegerHeader(req, "x-rakshex-provider-account-id"),
+      requestedProviderAccountId,
     );
   } catch (err) {
     logger.warn(
       { err, requestId, workspaceId: auth.workspaceId, provider },
       "[Gateway] Provider connection unavailable",
-    );
-    openAiError(
-      res,
-      503,
-      "provider_not_configured",
-      err instanceof Error ? err.message : "Provider is not configured",
     );
     try {
       await settleGatewayBudget(budgetReservation, 0);
@@ -666,6 +853,26 @@ export async function handleOpenAiGatewayRequest(
     } catch (settleErr) {
       logger.error({ err: settleErr, requestId }, "[Gateway] Failed to release budget reservation");
     }
+    if (
+      !(await appendReceiptOrBlock("deny", {
+        provider,
+        endpoint: request.endpoint,
+        model: request.model,
+        identityId,
+        projectId,
+        agentId,
+        estimatedCostUsd: estimate.estimatedCostUsd,
+        reason: "provider_not_configured",
+      }))
+    ) {
+      return;
+    }
+    openAiError(
+      res,
+      503,
+      "provider_not_configured",
+      err instanceof Error ? err.message : "Provider is not configured",
+    );
     return;
   }
 
@@ -708,6 +915,23 @@ export async function handleOpenAiGatewayRequest(
       });
       await settleGatewayBudget(budgetReservation, 0);
       budgetReservation = null;
+      if (
+        !(await appendReceiptOrBlock("settle", {
+          provider,
+          providerAccountId: connection.accountId,
+          endpoint: request.endpoint,
+          model: request.model,
+          identityId,
+          projectId,
+          agentId,
+          settledCostUsd: 0,
+          outcome: "upstream_error",
+          upstreamStatus: upstream.status,
+          billingConfidence: "pending_provider_reconciliation",
+        }))
+      ) {
+        return;
+      }
       res.status(upstream.status).type("application/json").send(upstreamError);
       return;
     }
@@ -735,6 +959,25 @@ export async function handleOpenAiGatewayRequest(
       });
       await settleGatewayBudget(budgetReservation, completedCost);
       budgetReservation = null;
+      if (
+        !(await appendReceiptOrBlock("settle", {
+          provider,
+          providerAccountId: connection.accountId,
+          endpoint: request.endpoint,
+          model: request.model,
+          identityId,
+          projectId,
+          agentId,
+          inputTokens: usage?.prompt_tokens ?? 0,
+          outputTokens: usage?.completion_tokens ?? 0,
+          cachedInputTokens: usage?.cached_input_tokens ?? 0,
+          estimatedCostUsd: estimate.estimatedCostUsd,
+          settledCostUsd: completedCost,
+          outcome: "completed",
+        }))
+      ) {
+        return;
+      }
       res.status(200).json(payload);
       return;
     }
@@ -778,6 +1021,25 @@ export async function handleOpenAiGatewayRequest(
     });
     await settleGatewayBudget(budgetReservation, completedCost);
     budgetReservation = null;
+    if (
+      !(await appendReceiptOrBlock("settle", {
+        provider,
+        providerAccountId: connection.accountId,
+        endpoint: request.endpoint,
+        model: request.model,
+        identityId,
+        projectId,
+        agentId,
+        inputTokens: usage?.prompt_tokens ?? 0,
+        outputTokens: usage?.completion_tokens ?? 0,
+        cachedInputTokens: usage?.cached_input_tokens ?? 0,
+        estimatedCostUsd: estimate.estimatedCostUsd,
+        settledCostUsd: completedCost,
+        outcome: "completed",
+      }))
+    ) {
+      return;
+    }
     res.end();
   } catch (err) {
     const aborted = controller.signal.aborted;
@@ -805,6 +1067,29 @@ export async function handleOpenAiGatewayRequest(
     } catch (auditErr) {
       logger.error({ err: auditErr, requestId }, "[Gateway] Failed to persist error audit");
     }
+    try {
+      await settleGatewayBudget(budgetReservation, providerCompleted ? completedCost : 0);
+      budgetReservation = null;
+    } catch (settleErr) {
+      logger.error({ err: settleErr, requestId }, "[Gateway] Failed to release budget reservation");
+    }
+    if (
+      !(await appendReceiptOrBlock("settle", {
+        provider,
+        providerAccountId: connection.accountId,
+        endpoint: request.endpoint,
+        model: request.model,
+        identityId,
+        projectId,
+        agentId,
+        settledCostUsd: providerCompleted ? completedCost : 0,
+        outcome: aborted ? "timeout_or_disconnect" : "upstream_error",
+        providerCompleted,
+        billingConfidence: providerCompleted ? "gateway_settled" : "pending_provider_reconciliation",
+      }))
+    ) {
+      return;
+    }
     if (!res.headersSent) {
       openAiError(
         res,
@@ -814,12 +1099,6 @@ export async function handleOpenAiGatewayRequest(
       );
     } else {
       res.end();
-    }
-    try {
-      await settleGatewayBudget(budgetReservation, providerCompleted ? completedCost : 0);
-      budgetReservation = null;
-    } catch (settleErr) {
-      logger.error({ err: settleErr, requestId }, "[Gateway] Failed to release budget reservation");
     }
   } finally {
     clearTimeout(timeout);
