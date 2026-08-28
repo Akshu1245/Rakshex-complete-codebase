@@ -44,6 +44,10 @@ const MIGRATION_ORDER = [
   "0022_agent_firewall.sql",
   "0023_mcp_tool_security_findings.sql",
   "0024_credential_mediation.sql",
+  "0025_openai_billing_reconciliation.sql",
+  "0026_versioned_model_prices.sql",
+  "0027_gateway_call_attribution.sql",
+  "0028_signed_action_receipts.sql",
 ];
 
 export async function migrate(databaseUrl?: string): Promise<string[]> {
