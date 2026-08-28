@@ -1,0 +1,159 @@
+name: RaksHex one-time branding sweep
+
+on:
+  push:
+    branches:
+      - investor-beta-ui-pass
+
+permissions:
+  contents: write
+
+jobs:
+  sweep:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout active consolidation branch
+        uses: actions/checkout@v4
+        with:
+          ref: investor-beta-ui-pass
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Replace legacy product naming in tracked tree
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import os
+
+          ROOT = Path('.')
+          WORKFLOW = Path('.github/workflows/rakshex-branding-sweep.yml')
+          SKIP_DIRS = {'.git', 'node_modules', '.next', 'dist', 'build', 'coverage', '.turbo'}
+
+          # Human-facing spelling is RaksHex. Identifier/url/env spellings keep
+          # syntax-safe casing while eliminating the previous product name.
+          replacements = [
+              ('DEV PULSE', 'RaksHex'),
+              ('Dev Pulse', 'RaksHex'),
+              ('dev pulse', 'RaksHex'),
+              ('DEVPULSE', 'RAKSHEX'),
+              ('DevPulse', 'RaksHex'),
+              ('devpulse', 'rakshex'),
+              ('DEV-PULSE', 'RAKSHEX'),
+              ('Dev-Pulse', 'RaksHex'),
+              ('dev-pulse', 'rakshex'),
+              ('DEV_PULSE', 'RAKSHEX'),
+              ('Dev_Pulse', 'RaksHex'),
+              ('dev_pulse', 'rakshex'),
+          ]
+
+          def skipped(path: Path) -> bool:
+              return any(part in SKIP_DIRS for part in path.parts)
+
+          changed_files = []
+          for path in ROOT.rglob('*'):
+              if not path.is_file() or skipped(path) or path == WORKFLOW:
+                  continue
+              try:
+                  raw = path.read_bytes()
+              except OSError:
+                  continue
+              if b'\x00' in raw[:8192]:
+                  continue
+              try:
+                  text = raw.decode('utf-8')
+              except UnicodeDecodeError:
+                  continue
+              updated = text
+              for old, new in replacements:
+                  updated = updated.replace(old, new)
+              if updated != text:
+                  path.write_text(updated, encoding='utf-8', newline='')
+                  changed_files.append(str(path))
+
+          # Rename any tracked paths carrying the old brand. Work deepest-first
+          # so children are moved before parent directories.
+          def renamed_component(name: str) -> str:
+              out = name
+              for old, new in replacements:
+                  out = out.replace(old, new)
+              return out
+
+          paths = [p for p in ROOT.rglob('*') if not skipped(p) and p != WORKFLOW]
+          renamed_paths = []
+          for path in sorted(paths, key=lambda p: len(p.parts), reverse=True):
+              if not path.exists():
+                  continue
+              new_name = renamed_component(path.name)
+              if new_name == path.name:
+                  continue
+              target = path.with_name(new_name)
+              if target.exists():
+                  raise SystemExit(f'Cannot rename {path} -> {target}: target exists')
+              path.rename(target)
+              renamed_paths.append((str(path), str(target)))
+
+          print(f'Updated {len(changed_files)} text files')
+          for p in changed_files:
+              print(f'  content: {p}')
+          print(f'Renamed {len(renamed_paths)} paths')
+          for old, new in renamed_paths:
+              print(f'  path: {old} -> {new}')
+          PY
+
+      - name: Verify old branding is absent from active tree
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          ROOT = Path('.')
+          WORKFLOW = Path('.github/workflows/rakshex-branding-sweep.yml')
+          SKIP_DIRS = {'.git', 'node_modules', '.next', 'dist', 'build', 'coverage', '.turbo'}
+          needles = (
+              'DevPulse', 'devpulse', 'DEVPULSE',
+              'Dev Pulse', 'dev pulse', 'DEV PULSE',
+              'Dev-Pulse', 'dev-pulse', 'DEV-PULSE',
+              'Dev_Pulse', 'dev_pulse', 'DEV_PULSE',
+          )
+
+          failures = []
+          for path in ROOT.rglob('*'):
+              if any(part in SKIP_DIRS for part in path.parts) or path == WORKFLOW:
+                  continue
+              if any(n in path.name for n in needles):
+                  failures.append(f'PATH {path}')
+              if not path.is_file():
+                  continue
+              try:
+                  raw = path.read_bytes()
+                  if b'\x00' in raw[:8192]:
+                      continue
+                  text = raw.decode('utf-8')
+              except (OSError, UnicodeDecodeError):
+                  continue
+              for index, line in enumerate(text.splitlines(), start=1):
+                  if any(n in line for n in needles):
+                      failures.append(f'TEXT {path}:{index}: {line[:240]}')
+
+          if failures:
+              print('Legacy branding remains:')
+              print('\n'.join(failures[:500]))
+              raise SystemExit(1)
+          print('PASS: no previous-product branding remains in the active repository tree.')
+          PY
+
+      - name: Commit cleaned tree and remove one-time workflow
+        shell: bash
+        run: |
+          rm -f .github/workflows/rakshex-branding-sweep.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No branding changes were needed."
+            exit 0
+          fi
+          git commit -m "chore(brand): standardize repository on RaksHex"
+          git push origin HEAD:investor-beta-ui-pass
