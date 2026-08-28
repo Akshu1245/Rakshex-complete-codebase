@@ -14,7 +14,7 @@ describe("OpenAI-compatible enforcement gateway helpers", () => {
     expect(estimate.estimatedCostUsd).toBeGreaterThan(0);
   });
 
-  it("extracts standard and reasoning usage without trusting invalid values", () => {
+  it("extracts Chat Completions usage without trusting invalid values", () => {
     expect(
       __test.extractUsage({
         usage: {
@@ -34,7 +34,25 @@ describe("OpenAI-compatible enforcement gateway helpers", () => {
     expect(__test.extractUsage({ usage: { prompt_tokens: "not-a-number" } })).toBeUndefined();
   });
 
-  it("finds usage in OpenAI SSE streams", () => {
+  it("normalizes Responses usage into the gateway accounting shape", () => {
+    expect(
+      __test.extractUsage({
+        usage: {
+          input_tokens: 37,
+          output_tokens: 11,
+          total_tokens: 48,
+          output_tokens_details: { reasoning_tokens: 4 },
+        },
+      }),
+    ).toEqual({
+      prompt_tokens: 37,
+      completion_tokens: 11,
+      total_tokens: 48,
+      reasoning_tokens: 4,
+    });
+  });
+
+  it("finds usage in Chat Completions SSE streams", () => {
     const raw = [
       'data: {"id":"one","choices":[{"delta":{"content":"hi"}}]}',
       "",
@@ -47,6 +65,24 @@ describe("OpenAI-compatible enforcement gateway helpers", () => {
       prompt_tokens: 4,
       completion_tokens: 2,
       total_tokens: 6,
+    });
+  });
+
+  it("finds usage in the final Responses response.completed SSE event", () => {
+    const raw = [
+      'event: response.output_text.delta',
+      'data: {"type":"response.output_text.delta","delta":"hello"}',
+      "",
+      'event: response.completed',
+      'data: {"type":"response.completed","response":{"status":"completed","usage":{"input_tokens":9,"output_tokens":5,"total_tokens":14,"output_tokens_details":{"reasoning_tokens":2}}}}',
+      "",
+    ].join("\n");
+
+    expect(__test.extractStreamingUsage(raw)).toEqual({
+      prompt_tokens: 9,
+      completion_tokens: 5,
+      total_tokens: 14,
+      reasoning_tokens: 2,
     });
   });
 
@@ -69,15 +105,57 @@ describe("OpenAI-compatible enforcement gateway helpers", () => {
     ).toThrow(/public HTTPS/);
   });
 
-  it("normalizes public compatible endpoints to chat completions", () => {
+  it("normalizes public compatible endpoints for both OpenAI surfaces", () => {
     expect(
       __test.normalizeUpstreamUrl("openai_compatible", {
         baseUrl: "https://llm.example.com/api",
       }),
     ).toBe("https://llm.example.com/api/v1/chat/completions");
 
+    expect(
+      __test.normalizeUpstreamUrl(
+        "openai_compatible",
+        { baseUrl: "https://llm.example.com/api/v1/chat/completions" },
+        "responses",
+      ),
+    ).toBe("https://llm.example.com/api/v1/responses");
+
     expect(__test.normalizeUpstreamUrl("openai", {})).toBe(
       "https://api.openai.com/v1/chat/completions",
     );
+    expect(__test.normalizeUpstreamUrl("openai", {}, "responses")).toBe(
+      "https://api.openai.com/v1/responses",
+    );
+  });
+
+  it("maps Responses text inputs into preflight policy messages", () => {
+    const normalized = __test.normalizeResponses({
+      model: "gpt-5",
+      instructions: "Do not expose secrets",
+      input: "Summarize this record",
+      stream: false,
+    });
+
+    expect(normalized.ok).toBe(true);
+    if (!normalized.ok) throw new Error("expected normalized Responses request");
+    expect(normalized.request.endpoint).toBe("responses");
+    expect(normalized.request.policyMessages).toEqual([
+      { role: "system", content: "Do not expose secrets" },
+      { role: "user", content: "Summarize this record" },
+    ]);
+  });
+
+  it("rejects background Responses until asynchronous usage settlement exists", () => {
+    const normalized = __test.normalizeResponses({
+      model: "gpt-5",
+      input: "hello",
+      background: true,
+    });
+
+    expect(normalized).toMatchObject({
+      ok: false,
+      status: 400,
+      code: "unsupported_background",
+    });
   });
 });
