@@ -24,10 +24,10 @@ export default function Icon() {
           justifyContent: "center",
           background: "#07110F",
           border: "2px solid #14B8A6",
+          borderRadius: "15px",
           color: "#E9FFFC",
           fontSize: "26px",
           fontWeight: 800,
-          clipPath: "polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)",
         }}
       >
         R
