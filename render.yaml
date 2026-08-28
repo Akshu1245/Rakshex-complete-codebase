@@ -22,6 +22,10 @@ services:
         sync: false
       - key: RAKSHEX_VAULT_KEY
         sync: false
+      - key: RAKSHEX_RECEIPT_SIGNING_PRIVATE_KEY
+        sync: false
+      - key: RAKSHEX_RECEIPT_SIGNING_KEY_ID
+        sync: false
       - key: APP_URL
         sync: false
       - key: FRONTEND_URL
