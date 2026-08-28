@@ -23,7 +23,7 @@ That is not the comparison to make.
 ## Where they actually overlap with RaksHex
 
 Only one of Archestra's nine pillars — **Security & Guardrails** — covers the same ground as RaksHex's Agent
-Firewall. Their mechanism: when a tool call returns data judged sensitive, the *conversation* is marked
+Firewall. Their mechanism: when a tool call returns data judged sensitive, the _conversation_ is marked
 "tainted," and risky tool categories (email, web requests) are switched off for the rest of that session.
 Deterministic, enforced at the proxy — not a system-prompt request. This targets the same threat class Simon
 Willison calls the "lethal trifecta" (private data access + untrusted content + exfiltration channel).
@@ -32,20 +32,20 @@ Willison calls the "lethal trifecta" (private data access + untrusted content + 
 
 **Archestra governs the session. RaksHex governs the action.**
 
-| | Archestra guardrails | RaksHex Agent Firewall |
-| --- | --- | --- |
-| Scope of a decision | Whole conversation ("tainted" or not) | One semantic action (`financial.refund`, `code.merge`, ...) |
-| Authority model | Tool category on/off | Delegated scope: exact actions, resources, amount, currency, count, time window |
-| Delegation | Not a modeled concept | Parent→child attenuation, cryptographically enforced (child can never exceed parent) |
-| Record | Traces/logs (OTel) | Hash-chained, idempotency-keyed Action Ledger — tamper-evident by construction |
-| Approval | Not a first-class primitive here | One-time-consumption approval grants tied to a specific ledger record |
+|                     | Archestra guardrails                  | RaksHex Agent Firewall                                                               |
+| ------------------- | ------------------------------------- | ------------------------------------------------------------------------------------ |
+| Scope of a decision | Whole conversation ("tainted" or not) | One semantic action (`financial.refund`, `code.merge`, ...)                          |
+| Authority model     | Tool category on/off                  | Delegated scope: exact actions, resources, amount, currency, count, time window      |
+| Delegation          | Not a modeled concept                 | Parent→child attenuation, cryptographically enforced (child can never exceed parent) |
+| Record              | Traces/logs (OTel)                    | Hash-chained, idempotency-keyed Action Ledger — tamper-evident by construction       |
+| Approval            | Not a first-class primitive here      | One-time-consumption approval grants tied to a specific ledger record                |
 
 This is a real, narrow, defensible difference — not a claim that Archestra's approach is worse. Session-level
 taint tracking and per-action delegated authority solve adjacent but different problems, and a buyer running
 high-consequence agents (payments, prod DB writes, code merges) may want both. **Do not pitch this as "we
-replace Archestra."** The honest pitch is: *"If you need to know not just that an agent touched sensitive
+replace Archestra."** The honest pitch is: _"If you need to know not just that an agent touched sensitive
 data, but exactly what business action it was authorized to take, by whom, within what limit, with a
-tamper-evident record of the decision — that's what RaksHex adds."*
+tamper-evident record of the decision — that's what RaksHex adds."_
 
 ## Why this claim doesn't survive due diligence yet
 

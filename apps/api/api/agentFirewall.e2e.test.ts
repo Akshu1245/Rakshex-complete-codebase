@@ -395,9 +395,7 @@ d("Agent Firewall — runtime key scope for ledger.outcome (regression)", () => 
     if (!RUN || !devUserId) return;
     const db = await getDb();
     if (!db) return;
-    await db
-      .delete(workspaceMembers)
-      .where(eq(workspaceMembers.userId, devUserId));
+    await db.delete(workspaceMembers).where(eq(workspaceMembers.userId, devUserId));
     await db.delete(users).where(eq(users.id, devUserId));
   });
 

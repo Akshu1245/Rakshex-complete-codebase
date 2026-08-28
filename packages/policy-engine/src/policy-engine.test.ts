@@ -139,7 +139,11 @@ models:
   it("parses a `rules` block from YAML", () => {
     const doc = parsePolicy(YAML_WITH_RULES);
     expect(doc.rules).toHaveLength(2);
-    expect(doc.rules?.[0]).toMatchObject({ ruleId: "block-critical-threat", priority: 1, action: "deny" });
+    expect(doc.rules?.[0]).toMatchObject({
+      ruleId: "block-critical-threat",
+      priority: 1,
+      action: "deny",
+    });
   });
 
   it("evaluates a threat-level rule authored via YAML (was unrepresentable before unification)", () => {

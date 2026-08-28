@@ -295,9 +295,7 @@ export interface BrokerExecuteResult {
  * Performs the upstream call with the secret injected. Assumes authorization
  * has already passed — callers must not invoke this directly.
  */
-export async function executeBrokeredCall(
-  input: BrokerExecuteInput,
-): Promise<BrokerExecuteResult> {
+export async function executeBrokeredCall(input: BrokerExecuteInput): Promise<BrokerExecuteResult> {
   const started = Date.now();
   const doFetch = input.fetchImpl ?? globalThis.fetch;
   const { headers: forwarded, dropped } = sanitizeForwardHeaders(input.headers);

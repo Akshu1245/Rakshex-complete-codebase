@@ -215,19 +215,24 @@ function withStdioSession<T>(
 }
 
 async function discoverViaStdio(command: string[]): Promise<McpDiscoverResult> {
-  return withStdioSession(command, 15_000, "MCP stdio discovery timed out after 15s", async (session) => {
-    const result = (await stdioRequest(session, "tools/list")) as { tools?: McpToolDef[] };
-    const tools = Array.isArray(result.tools) ? result.tools : [];
+  return withStdioSession(
+    command,
+    15_000,
+    "MCP stdio discovery timed out after 15s",
+    async (session) => {
+      const result = (await stdioRequest(session, "tools/list")) as { tools?: McpToolDef[] };
+      const tools = Array.isArray(result.tools) ? result.tools : [];
 
-    return {
-      server: { name: command.join(" "), version: "unknown" },
-      tools: tools.map((t) => ({
-        name: t.name,
-        description: t.description,
-        inputSchema: t.inputSchema ?? {},
-      })),
-    };
-  });
+      return {
+        server: { name: command.join(" "), version: "unknown" },
+        tools: tools.map((t) => ({
+          name: t.name,
+          description: t.description,
+          inputSchema: t.inputSchema ?? {},
+        })),
+      };
+    },
+  );
 }
 
 /**

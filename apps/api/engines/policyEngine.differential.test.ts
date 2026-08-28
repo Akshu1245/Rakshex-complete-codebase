@@ -22,7 +22,11 @@
  * disagreement.
  */
 import { describe, expect, it } from "vitest";
-import { evaluatePolicy as evaluateAppPolicy, type AIEventContext, type PolicyRule } from "./policyEngine";
+import {
+  evaluatePolicy as evaluateAppPolicy,
+  type AIEventContext,
+  type PolicyRule,
+} from "./policyEngine";
 import { evaluatePolicy as evaluatePackagePolicy } from "@rakshex/policy-engine";
 import type { EvaluationContext, PolicyDocument } from "@rakshex/policy-engine";
 import { normalizeAction, type CanonicalPolicyAction } from "../services/policyDecisionCompat";
@@ -73,49 +77,102 @@ const corpus: Scenario[] = [
   {
     name: "denied model",
     appEvent: event({ model: "gpt-3.5-untrusted" }),
-    appRules: [rule({ conditions: { operator: "AND", rules: [{ field: "model", op: "eq", value: "gpt-3.5-untrusted" }] }, action: "block" })],
+    appRules: [
+      rule({
+        conditions: {
+          operator: "AND",
+          rules: [{ field: "model", op: "eq", value: "gpt-3.5-untrusted" }],
+        },
+        action: "block",
+      }),
+    ],
     packageDoc: doc({ models: { deny: ["gpt-3.5-untrusted"] } }),
     packageCtx: { model: "gpt-3.5-untrusted" },
   },
   {
     name: "tool requires human approval",
     appEvent: event({ toolCalls: [{ name: "financial.wire_transfer" }] }),
-    appRules: [rule({ conditions: { operator: "AND", rules: [{ field: "tool_name", op: "eq", value: "financial.wire_transfer" }] }, action: "require_approval" })],
+    appRules: [
+      rule({
+        conditions: {
+          operator: "AND",
+          rules: [{ field: "tool_name", op: "eq", value: "financial.wire_transfer" }],
+        },
+        action: "require_approval",
+      }),
+    ],
     packageDoc: doc({ tools: { require_approval: ["financial.wire_transfer"] } }),
     packageCtx: { toolName: "financial.wire_transfer" },
   },
   {
     name: "tool outright denied",
     appEvent: event({ toolCalls: [{ name: "shell.exec" }] }),
-    appRules: [rule({ conditions: { operator: "AND", rules: [{ field: "tool_name", op: "eq", value: "shell.exec" }] }, action: "block" })],
+    appRules: [
+      rule({
+        conditions: {
+          operator: "AND",
+          rules: [{ field: "tool_name", op: "eq", value: "shell.exec" }],
+        },
+        action: "block",
+      }),
+    ],
     packageDoc: doc({ tools: { deny: ["shell.exec"] } }),
     packageCtx: { toolName: "shell.exec" },
   },
   {
     name: "PII-shaped keyword flagged for redaction",
     appEvent: event({ prompt: "here is my credit-card number for the refund" }),
-    appRules: [rule({ conditions: { operator: "AND", rules: [{ field: "promptContains", op: "keyword", value: "credit-card" }] }, action: "redact" })],
+    appRules: [
+      rule({
+        conditions: {
+          operator: "AND",
+          rules: [{ field: "promptContains", op: "keyword", value: "credit-card" }],
+        },
+        action: "redact",
+      }),
+    ],
     packageDoc: doc({ data: { redact: ["credit_card"], action: "mask" } }),
     packageCtx: { dataLabels: ["credit_card"] },
   },
   {
     name: "hard-blocked data label (secret key)",
     appEvent: event({ prompt: "the key is sk_live_fixture_not_real" }),
-    appRules: [rule({ conditions: { operator: "AND", rules: [{ field: "promptContains", op: "keyword", value: "sk_live_" }] }, action: "block" })],
+    appRules: [
+      rule({
+        conditions: {
+          operator: "AND",
+          rules: [{ field: "promptContains", op: "keyword", value: "sk_live_" }],
+        },
+        action: "block",
+      }),
+    ],
     packageDoc: doc({ data: { block: ["api_key"], action: "block" } }),
     packageCtx: { dataLabels: ["api_key"] },
   },
   {
     name: "cost budget exceeded",
     appEvent: event({ costUsd: 12 }),
-    appRules: [rule({ conditions: { operator: "AND", rules: [{ field: "costUsd", op: "gt", value: 5 }] }, action: "block" })],
+    appRules: [
+      rule({
+        conditions: { operator: "AND", rules: [{ field: "costUsd", op: "gt", value: 5 }] },
+        action: "block",
+      }),
+    ],
     packageDoc: doc({ agent: { max_cost_usd: 5 } }),
     packageCtx: { costUsdSoFar: 12 },
   },
   {
     name: "no rule matches — default allow",
     appEvent: event(),
-    appRules: [rule({ conditions: { operator: "AND", rules: [{ field: "model", op: "eq", value: "some-other-model" }] }, action: "block" })],
+    appRules: [
+      rule({
+        conditions: {
+          operator: "AND",
+          rules: [{ field: "model", op: "eq", value: "some-other-model" }],
+        },
+        action: "block",
+      }),
+    ],
     packageDoc: doc({ models: { deny: ["some-other-model"] } }),
     packageCtx: { model: "gpt-4o" },
   },
@@ -126,14 +183,25 @@ const corpus: Scenario[] = [
     // package engine's old schema. Now that both sides can use the shared
     // `rules` mechanism, the same condition reaches the same decision.
     appEvent: event({ threatLevel: "critical" }),
-    appRules: [rule({ conditions: { operator: "AND", rules: [{ field: "threatLevel", op: "gte", value: "high" }] }, action: "block" })],
+    appRules: [
+      rule({
+        conditions: {
+          operator: "AND",
+          rules: [{ field: "threatLevel", op: "gte", value: "high" }],
+        },
+        action: "block",
+      }),
+    ],
     packageDoc: doc({
       rules: [
         {
           ruleId: "r1",
           priority: 10,
           enabled: true,
-          conditions: { operator: "AND", rules: [{ field: "threatLevel", op: "gte", value: "high" }] },
+          conditions: {
+            operator: "AND",
+            rules: [{ field: "threatLevel", op: "gte", value: "high" }],
+          },
           action: "deny",
         },
       ],
@@ -153,13 +221,19 @@ const corpus: Scenario[] = [
       rule({
         ruleId: "tool-alert",
         priority: 1,
-        conditions: { operator: "AND", rules: [{ field: "tool_name", op: "eq", value: "read_only.lookup" }] },
+        conditions: {
+          operator: "AND",
+          rules: [{ field: "tool_name", op: "eq", value: "read_only.lookup" }],
+        },
         action: "alert_only",
       }),
       rule({
         ruleId: "model-deny",
         priority: 2,
-        conditions: { operator: "AND", rules: [{ field: "model", op: "eq", value: "gpt-3.5-untrusted" }] },
+        conditions: {
+          operator: "AND",
+          rules: [{ field: "model", op: "eq", value: "gpt-3.5-untrusted" }],
+        },
         action: "block",
       }),
     ],
@@ -169,14 +243,20 @@ const corpus: Scenario[] = [
           ruleId: "tool-alert",
           priority: 1,
           enabled: true,
-          conditions: { operator: "AND", rules: [{ field: "toolName", op: "eq", value: "read_only.lookup" }] },
+          conditions: {
+            operator: "AND",
+            rules: [{ field: "toolName", op: "eq", value: "read_only.lookup" }],
+          },
           action: "warn",
         },
         {
           ruleId: "model-deny",
           priority: 2,
           enabled: true,
-          conditions: { operator: "AND", rules: [{ field: "model", op: "eq", value: "gpt-3.5-untrusted" }] },
+          conditions: {
+            operator: "AND",
+            rules: [{ field: "model", op: "eq", value: "gpt-3.5-untrusted" }],
+          },
           action: "deny",
         },
       ],
@@ -197,7 +277,15 @@ const corpus: Scenario[] = [
     // `ctx.destination` — this scenario documents why that split is
     // intentional, not a bug to chase here.
     appEvent: event(),
-    appRules: [rule({ conditions: { operator: "AND", rules: [{ field: "destination", op: "eq", value: "evil.example.com" }] }, action: "block" })],
+    appRules: [
+      rule({
+        conditions: {
+          operator: "AND",
+          rules: [{ field: "destination", op: "eq", value: "evil.example.com" }],
+        },
+        action: "block",
+      }),
+    ],
     packageDoc: doc({ network: { deny_domains: ["evil.example.com"] } }),
     packageCtx: { destination: "https://evil.example.com/exfil" },
     expectDivergence: {
@@ -238,8 +326,12 @@ describe("policy engine differential corpus", () => {
   it("reports the agreement rate so a future migration has a baseline number", () => {
     let agree = 0;
     for (const scenario of corpus) {
-      const appCanonical = normalizeAction(evaluateAppPolicy(scenario.appEvent, scenario.appRules).action);
-      const pkgCanonical = normalizeAction(evaluatePackagePolicy(scenario.packageDoc, scenario.packageCtx).action);
+      const appCanonical = normalizeAction(
+        evaluateAppPolicy(scenario.appEvent, scenario.appRules).action,
+      );
+      const pkgCanonical = normalizeAction(
+        evaluatePackagePolicy(scenario.packageDoc, scenario.packageCtx).action,
+      );
       if (appCanonical === pkgCanonical) agree += 1;
     }
     // 9 of 10 corpus scenarios agree post-unification; 1 is a documented

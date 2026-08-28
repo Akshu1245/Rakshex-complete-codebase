@@ -128,7 +128,7 @@ const firewall = createAgentFirewallClient({
 // Option A: your process holds the real provider key. RaksHex only decides.
 const { decision, result } = await firewall.authorizeAndRun(
   { provider: "stripe", operation: "financial.refund", amountMinor: 5000, currency: "USD" },
-  async () => stripe.refunds.create({ /* ... */ }),
+  async () => stripe.refunds.create({/* ... */}),
 );
 
 // Option B: RaksHex holds the provider key and makes the call itself — a DENY
