@@ -1,0 +1,404 @@
+name: PR132 security review fixes v2
+
+on:
+  push:
+    branches: [ci-pr132-security-review-fixes]
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: rakshex/p0-billing-receipts
+          fetch-depth: 0
+
+      - name: Apply focused security fixes
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: str, old: str, new: str):
+              p = Path(path)
+              text = p.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected one occurrence of {old[:80]!r}, found {count}")
+              p.write_text(text.replace(old, new, 1))
+
+          core = "apps/api/services/gateway/openAiGatewayCore.ts"
+
+          # P0 is OpenAI-first. Do not let a workspace-controlled custom URL reach the
+          # credential-bearing fetch path until an origin-pinned transport is implemented.
+          replace_once(
+              core,
+              '''function providerFromRequest(req: Request): SupportedGatewayProvider | null {
+            const provider = (req.header("x-rakshex-provider") ?? "openai").toLowerCase();
+            return provider === "openai" || provider === "openai_compatible" ? provider : null;
+          }''',
+              '''function providerFromRequest(req: Request): SupportedGatewayProvider | null {
+            const provider = (req.header("x-rakshex-provider") ?? "openai").toLowerCase();
+            // P0 deliberately permits only the fixed OpenAI origin. Custom compatible
+            // upstreams stay fail-closed until the transport can pin a vetted origin/IP.
+            return provider === "openai" ? "openai" : null;
+          }''',
+          )
+
+          replace_once(
+              core,
+              '''async function loadUpstreamConnection(
+            workspaceId: number,
+            provider: SupportedGatewayProvider,
+            endpoint: OpenAiGatewayEndpoint,
+            requestedAccountId?: number,
+          ): Promise<UpstreamConnection> {
+            const database = await db.getDb();''',
+              '''async function loadUpstreamConnection(
+            workspaceId: number,
+            provider: SupportedGatewayProvider,
+            endpoint: OpenAiGatewayEndpoint,
+            requestedAccountId?: number,
+          ): Promise<UpstreamConnection> {
+            if (provider !== "openai") {
+              throw new Error("Custom OpenAI-compatible upstreams are disabled in the OpenAI P0 gateway");
+            }
+            const database = await db.getDb();''',
+          )
+
+          replace_once(
+              core,
+              '''  return {
+            provider,
+            url: normalizeUpstreamUrl(provider, account.metadata, endpoint),
+            apiKey,
+            accountId: account.id,
+          };''',
+              '''  return {
+            provider,
+            url: `https://api.openai.com/v1/${endpoint}`,
+            apiKey,
+            accountId: account.id,
+          };''',
+          )
+
+          replace_once(
+              core,
+              '  const requestId = req.header("x-request-id")?.slice(0, 128) || crypto.randomUUID();',
+              '''  // Untrusted client correlation IDs cannot be ledger/usage uniqueness keys.
+            const requestId = crypto.randomUUID();''',
+          )
+
+          replace_once(
+              core,
+              '  const requestedProjectId = safeScopeHeader(req, "x-rakshex-project-id");',
+              '''  // Requested scopes are useful attribution labels, but enforcement scope must
+            // come from the validated key. An unbound workspace key cannot impersonate a
+            // same-tenant identity/project/agent merely by setting headers.
+            const enforcementIdentityId = auth.identityId != null ? identityId : undefined;
+
+            const requestedProjectId = safeScopeHeader(req, "x-rakshex-project-id");''',
+          )
+
+          replace_once(
+              core,
+              '''  const projectId = auth.projectId ?? requestedProjectId;
+
+            const requestedAgentId = safeScopeHeader(req, "x-rakshex-agent-id");''',
+              '''  const projectId = auth.projectId ?? requestedProjectId;
+            const enforcementProjectId = auth.projectId ?? undefined;
+
+            const requestedAgentId = safeScopeHeader(req, "x-rakshex-agent-id");''',
+          )
+
+          replace_once(
+              core,
+              '''  const agentId = auth.agentId ?? requestedAgentId;
+            const tags = parseGatewayMetadataHeader(req.header("x-rakshex-metadata"));''',
+              '''  const agentId = auth.agentId ?? requestedAgentId;
+            const enforcementAgentId = auth.agentId ?? undefined;
+            const tags = parseGatewayMetadataHeader(req.header("x-rakshex-metadata"));''',
+          )
+
+          replace_once(
+              core,
+              '''    const governance = await evaluateGatewayGovernance({
+              workspaceId: auth.workspaceId,
+              identityId,
+              projectId,
+              agentId,
+              estimatedCostUsd: estimate.estimatedCostUsd,
+            });''',
+              '''    const governance = await evaluateGatewayGovernance({
+              workspaceId: auth.workspaceId,
+              identityId: enforcementIdentityId,
+              projectId: enforcementProjectId,
+              agentId: enforcementAgentId,
+              estimatedCostUsd: estimate.estimatedCostUsd,
+            });''',
+          )
+
+          replace_once(
+              core,
+              '''          agentId,
+              userId: effectiveIdentityId != null ? String(effectiveIdentityId) : undefined,
+              messages: request.policyMessages,''',
+              '''          agentId: enforcementAgentId,
+              userId: enforcementIdentityId != null ? String(enforcementIdentityId) : undefined,
+              messages: request.policyMessages,''',
+          )
+
+          replace_once(
+              core,
+              '''    const reservationResult = await reserveGatewayBudget({
+              workspaceId: auth.workspaceId,
+              identityId,
+              estimatedCostUsd: estimate.estimatedCostUsd,
+            });''',
+              '''    const reservationResult = await reserveGatewayBudget({
+              workspaceId: auth.workspaceId,
+              identityId: enforcementIdentityId,
+              estimatedCostUsd: estimate.estimatedCostUsd,
+            });''',
+          )
+
+          replace_once(
+              core,
+              '''    cachedInputTokens: cached,
+              estimatedCostUsd: input.estimatedCostUsd,''',
+              '''    cachedInputTokens: cached,
+              usageVerified: usage != null,
+              estimatedCostUsd: input.estimatedCostUsd,''',
+          )
+
+          replace_once(
+              core,
+              '''      body: JSON.stringify(request.upstreamBody),
+              signal: controller.signal,
+            });''',
+              '''      body: JSON.stringify(request.upstreamBody),
+              signal: controller.signal,
+              // Never permit a credential-bearing request to follow a provider redirect.
+              redirect: "manual",
+            });''',
+          )
+
+          attribution = "apps/api/services/gateway/gatewayAttribution.ts"
+          replace_once(
+              attribution,
+              '''  cachedInputTokens: number;
+            estimatedCostUsd: number;''',
+              '''  cachedInputTokens: number;
+            usageVerified: boolean;
+            estimatedCostUsd: number;''',
+          )
+          replace_once(
+              attribution,
+              '''  const priced =
+            input.provider === "openai"
+              ? await priceModelUsage({''',
+              '''  const priced =
+            input.provider === "openai" && input.usageVerified
+              ? await priceModelUsage({''',
+          )
+
+          billing = "apps/api/services/billing/openAiBillingReconciliation.ts"
+          replace_once(
+              billing,
+              '''  if (!response.ok) {
+            const body = (await response.text()).slice(0, 4096);
+            throw new Error(`OpenAI admin API returned ${response.status}: ${body}`);
+          }''',
+              '''  if (!response.ok) {
+            // Provider error bodies may contain account metadata; never echo them into logs/errors.
+            throw new Error(`OpenAI admin API returned ${response.status}`);
+          }''',
+          )
+
+          route_path = "apps/api/services/gateway/openAiProxy.route.test.ts"
+          route = Path(route_path).read_text()
+          marker = '  it("rejects foreign identity ids before governance evaluation", async () => {'
+          if route.count(marker) != 1:
+              raise SystemExit("route insertion marker not unique")
+          extra = '''  it("does not let an unbound identity header become an enforcement principal", async () => {
+            const handler = routeHandler();
+            const res = createResponse();
+            mocks.validateWorkspaceApiKey.mockResolvedValue({
+              keyId: "ak_1",
+              workspaceId: 42,
+              userId: 7,
+              scopes: ["gateway:invoke"],
+              projectId: null,
+              identityId: null,
+              agentId: null,
+            });
+            mocks.resolveWorkspaceIdentityId.mockResolvedValueOnce(12);
+            mocks.evaluateGatewayGovernance.mockResolvedValue({
+              allowed: false,
+              killActive: true,
+              budgetBlocked: false,
+              budgetReason: null,
+              state: { workspaceDisabled: true },
+            });
+
+            await handler(
+              createRequest("Bearer rk_live_test_workspace_key", {
+                "x-rakshex-identity-id": "12",
+                "x-rakshex-project-id": "client-project",
+                "x-rakshex-agent-id": "client-agent",
+              }),
+              res,
+            );
+
+            expect(res.statusCode).toBe(403);
+            expect(mocks.evaluateGatewayGovernance).toHaveBeenCalledWith(
+              expect.objectContaining({
+                workspaceId: 42,
+                identityId: undefined,
+                projectId: undefined,
+                agentId: undefined,
+              }),
+            );
+          });
+
+          it("uses server-owned request ids even when the caller repeats X-Request-Id", async () => {
+            const handler = routeHandler();
+            mocks.validateWorkspaceApiKey.mockResolvedValue({
+              keyId: "ak_1",
+              workspaceId: 42,
+              userId: 7,
+              scopes: ["gateway:invoke"],
+              projectId: null,
+            });
+            mocks.evaluateGatewayGovernance.mockResolvedValue({
+              allowed: false,
+              killActive: true,
+              budgetBlocked: false,
+              budgetReason: null,
+              state: { workspaceDisabled: true },
+            });
+
+            const one = createResponse();
+            const two = createResponse();
+            const request = () =>
+              createRequest("Bearer rk_live_test_workspace_key", { "x-request-id": "fixed-client-id" });
+            await handler(request(), one);
+            await handler(request(), two);
+
+            const idOne = one.setHeader.mock.calls.find(([name]) => name === "x-request-id")?.[1];
+            const idTwo = two.setHeader.mock.calls.find(([name]) => name === "x-request-id")?.[1];
+            expect(idOne).toEqual(expect.any(String));
+            expect(idTwo).toEqual(expect.any(String));
+            expect(idOne).not.toBe("fixed-client-id");
+            expect(idTwo).not.toBe("fixed-client-id");
+            expect(idOne).not.toBe(idTwo);
+          });
+
+          it("rejects custom OpenAI-compatible upstream selection before provider egress", async () => {
+            const handler = routeHandler();
+            const res = createResponse();
+            const upstreamFetch = vi.spyOn(globalThis, "fetch");
+            mocks.validateWorkspaceApiKey.mockResolvedValue({
+              keyId: "ak_1",
+              workspaceId: 42,
+              userId: 7,
+              scopes: ["gateway:invoke"],
+              projectId: null,
+            });
+
+            await handler(
+              createRequest("Bearer rk_live_test_workspace_key", {
+                "x-rakshex-provider": "openai_compatible",
+              }),
+              res,
+            );
+
+            expect(res.statusCode).toBe(400);
+            expect(upstreamFetch).not.toHaveBeenCalled();
+            expect(mocks.evaluateGatewayGovernance).not.toHaveBeenCalled();
+            upstreamFetch.mockRestore();
+          });
+
+          '''
+          Path(route_path).write_text(route.replace(marker, extra + marker, 1))
+
+          Path("apps/api/services/gateway/gatewayAttribution.test.ts").write_text('''import { beforeEach, describe, expect, it, vi } from "vitest";
+
+          const mocks = vi.hoisted(() => ({ getDb: vi.fn(), priceModelUsage: vi.fn() }));
+          vi.mock("@rakshex/database", () => ({ gatewayCallAttribution: {} }));
+          vi.mock("../../db", () => ({ getDb: mocks.getDb }));
+          vi.mock("../billing/modelPriceRegistry", () => ({ priceModelUsage: mocks.priceModelUsage }));
+          import { persistSettledAttribution } from "./gatewayAttribution";
+
+          describe("gateway attribution settlement", () => {
+            beforeEach(() => {
+              vi.clearAllMocks();
+              mocks.getDb.mockResolvedValue({
+                insert: () => ({ values: () => ({ onConflictDoNothing: async () => undefined }) }),
+              });
+            });
+
+            it("keeps the conservative reservation when provider usage is missing", async () => {
+              mocks.priceModelUsage.mockResolvedValue({
+                costUsd: 0,
+                price: { id: 99, sourceUrl: "https://example.invalid/price" },
+              });
+              const result = await persistSettledAttribution({
+                requestId: "server-id",
+                workspaceId: 42,
+                providerAccountId: 8,
+                provider: "openai",
+                model: "gpt-5",
+                inputTokens: 0,
+                outputTokens: 0,
+                cachedInputTokens: 0,
+                usageVerified: false,
+                estimatedCostUsd: 0.031,
+                occurredAt: new Date("2026-08-28T00:00:00Z"),
+                tags: {},
+                endpoint: "responses",
+              });
+              expect(mocks.priceModelUsage).not.toHaveBeenCalled();
+              expect(result.costUsd).toBe(0.031);
+            });
+          });
+          ''')
+          PY
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Format touched files
+        run: >-
+          pnpm exec prettier --write
+          apps/api/services/gateway/openAiGatewayCore.ts
+          apps/api/services/gateway/gatewayAttribution.ts
+          apps/api/services/gateway/gatewayAttribution.test.ts
+          apps/api/services/gateway/openAiProxy.route.test.ts
+          apps/api/services/billing/openAiBillingReconciliation.ts
+      - name: Focused tests
+        run: >-
+          pnpm --filter @rakshex/api test --
+          services/gateway/openAiProxy.test.ts
+          services/gateway/openAiProxy.route.test.ts
+          services/gateway/gatewayAttribution.test.ts
+      - name: Commit and push only reviewed security fixes
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/api/services/gateway/openAiGatewayCore.ts \
+                  apps/api/services/gateway/gatewayAttribution.ts \
+                  apps/api/services/gateway/gatewayAttribution.test.ts \
+                  apps/api/services/gateway/openAiProxy.route.test.ts \
+                  apps/api/services/billing/openAiBillingReconciliation.ts
+          git commit -m "fix: harden PR 132 gateway security findings"
+          git push origin HEAD:rakshex/p0-billing-receipts
