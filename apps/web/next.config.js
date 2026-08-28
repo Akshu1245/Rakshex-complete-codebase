@@ -91,6 +91,41 @@ const nextConfig = {
       },
     ];
   },
+  async rewrites() {
+    return [
+      // All API traffic goes to the Node tRPC backend. The legacy Python
+      // FastAPI service has been retired; do not proxy unknown /api/* to a
+      // dead host or pages will silently 404 in production.
+      {
+        source: "/api/oauth/:path*",
+        destination: `${TS_BACKEND_URL}/api/oauth/:path*`,
+      },
+      {
+        source: "/api/trpc/:path*",
+        destination: `${TS_BACKEND_URL}/api/trpc/:path*`,
+      },
+      {
+        source: "/api/health",
+        destination: `${TS_BACKEND_URL}/api/health`,
+      },
+      {
+        source: "/api/create-order",
+        destination: `${TS_BACKEND_URL}/api/create-order`,
+      },
+      {
+        source: "/api/verify-payment",
+        destination: `${TS_BACKEND_URL}/api/verify-payment`,
+      },
+      {
+        source: "/api/waitlist",
+        destination: `${TS_BACKEND_URL}/api/waitlist`,
+      },
+      {
+        source: "/api/import/:path*",
+        destination: `${TS_BACKEND_URL}/api/import/:path*`,
+      },
+    ];
+  },
   // Bundle splitting: extract vendor chunks and enable code splitting
   webpack: (config, { isServer }) => {
     config.module.rules.push({

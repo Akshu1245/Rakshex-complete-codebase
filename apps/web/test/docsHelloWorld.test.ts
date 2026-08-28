@@ -63,6 +63,13 @@ describe("public docs hello-world", () => {
     const nextConfig = read("next.config.js");
     expect(nextConfig).not.toMatch(/source:\s*"\/get-started"/);
   });
+
+  it("still proxies API health and tRPC to the Node backend", () => {
+    const nextConfig = read("next.config.js");
+    expect(nextConfig).toMatch(/async rewrites\(\)/);
+    expect(nextConfig).toMatch(/source:\s*"\/api\/health"/);
+    expect(nextConfig).toMatch(/source:\s*"\/api\/trpc\/:path\*"/);
+  });
 });
 
 function collectSource(directory: string): string[] {
