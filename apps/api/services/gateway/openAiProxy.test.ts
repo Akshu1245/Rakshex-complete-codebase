@@ -69,12 +69,24 @@ describe("OpenAI-compatible enforcement gateway helpers", () => {
   });
 
   it("finds usage in the final Responses response.completed SSE event", () => {
+    const completedEvent = {
+      type: "response.completed",
+      response: {
+        status: "completed",
+        usage: {
+          input_tokens: 9,
+          output_tokens: 5,
+          total_tokens: 14,
+          output_tokens_details: { reasoning_tokens: 2 },
+        },
+      },
+    };
     const raw = [
-      'event: response.output_text.delta',
+      "event: response.output_text.delta",
       'data: {"type":"response.output_text.delta","delta":"hello"}',
       "",
-      'event: response.completed',
-      'data: {"type":"response.completed","response":{"status":"completed","usage":{"input_tokens":9,"output_tokens":5,"total_tokens":14,"output_tokens_details":{"reasoning_tokens":2}}}}',
+      "event: response.completed",
+      `data: ${JSON.stringify(completedEvent)}`,
       "",
     ].join("\n");
 
