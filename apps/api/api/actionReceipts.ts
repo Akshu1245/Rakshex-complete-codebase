@@ -23,8 +23,12 @@ function fileStem(requestId?: string) {
 
 export const actionReceiptsRouter = router({
   exportJson: protectedProcedure.input(exportInput).query(async ({ input, ctx }) => {
-    await assertRead(input.workspaceId, ctx.user.id);
-    const bundle = await exportReceiptBundle(input);
+    const workspaceId = input.workspaceId;
+    await assertRead(workspaceId, ctx.user.id);
+    const bundle = await exportReceiptBundle({
+      workspaceId,
+      requestId: input.requestId,
+    });
     return {
       filename: `${fileStem(input.requestId)}.json`,
       mediaType: "application/json",
@@ -35,8 +39,12 @@ export const actionReceiptsRouter = router({
   }),
 
   exportPdf: protectedProcedure.input(exportInput).query(async ({ input, ctx }) => {
-    await assertRead(input.workspaceId, ctx.user.id);
-    const bundle = await exportReceiptBundle(input);
+    const workspaceId = input.workspaceId;
+    await assertRead(workspaceId, ctx.user.id);
+    const bundle = await exportReceiptBundle({
+      workspaceId,
+      requestId: input.requestId,
+    });
     const pdf = renderSignedReceiptPdf(bundle);
     return {
       filename: `${fileStem(input.requestId)}.pdf`,

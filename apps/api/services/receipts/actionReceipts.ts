@@ -380,7 +380,13 @@ export async function exportReceiptBundle(input: {
     .orderBy(asc(actionReceiptLedger.id));
   let selected = rows;
   if (input.requestId) {
-    const terminal = rows.findLastIndex((row) => row.requestId === input.requestId);
+    let terminal = -1;
+    for (let i = rows.length - 1; i >= 0; i--) {
+      if (rows[i]!.requestId === input.requestId) {
+        terminal = i;
+        break;
+      }
+    }
     if (terminal < 0) throw new Error("Receipt request id not found in workspace ledger");
     selected = rows.slice(0, terminal + 1);
   }
@@ -458,7 +464,11 @@ export function verifyReceiptPdf(
     return { valid: false, error: "embedded receipt bundle is invalid" };
   }
   const verification = verifyReceiptBundle(bundle, trustedKeys);
-  if (!verification.valid) return verification;
+  if (!verification.valid) {
+    const error =
+      "error" in verification ? verification.error : "Receipt bundle verification failed";
+    return { valid: false, error };
+  }
   const expected = renderSignedReceiptPdf(bundle);
   if (expected.length !== pdf.length || !crypto.timingSafeEqual(expected, pdf)) {
     return { valid: false, error: "PDF bytes do not match the signed receipt bundle" };

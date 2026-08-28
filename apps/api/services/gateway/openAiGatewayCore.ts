@@ -514,21 +514,15 @@ export async function handleOpenAiGatewayRequest(
 
   const normalized = normalizeRequest();
   if (!normalized.ok) {
-    if (
-      !(await appendReceiptOrBlock("deny", {
-        reason: normalized.code,
-        status: normalized.status,
-      }))
-    ) {
+    const denial = normalized as Extract<OpenAiGatewayNormalizationResult, { ok: false }>;
+    const status = denial.status;
+    const code = denial.code;
+    const message = denial.message;
+    const type = denial.type ?? "invalid_request_error";
+    if (!(await appendReceiptOrBlock("deny", { reason: code, status }))) {
       return;
     }
-    openAiError(
-      res,
-      normalized.status,
-      normalized.code,
-      normalized.message,
-      normalized.type ?? "invalid_request_error",
-    );
+    openAiError(res, status, code, message, type);
     return;
   }
   const request = normalized.request;
