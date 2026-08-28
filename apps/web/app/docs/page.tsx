@@ -38,8 +38,7 @@ export default function DocsOverview() {
 
       <p>
         RaksHex gives your AI agents and APIs real-time security scanning, LLM cost attribution,
-        prompt injection blocking, and compliance reporting — all in one platform. 1000+ server
-        tests.
+        prompt injection blocking, and compliance evidence mapping — all in one platform.
       </p>
 
       <h2 id="connect-first">Connect first</h2>
@@ -122,7 +121,7 @@ export default function DocsOverview() {
           {
             title: "Compliance Reports",
             icon: "📋",
-            desc: "PCI DSS, OWASP evidence. SOC 2 audit in progress.",
+            desc: "Map controls to PCI DSS, SOC 2, and OWASP. Evidence, not a certification.",
             href: "/docs/compliance",
           },
           {

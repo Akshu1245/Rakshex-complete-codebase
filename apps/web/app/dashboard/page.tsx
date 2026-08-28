@@ -623,10 +623,10 @@ export default function Dashboard() {
                   description
                 </span>
                 <div>
-                  <h4 className="font-semibold text-white">1-Click SOC2 Audit Reports</h4>
+                  <h4 className="font-semibold text-white">Compliance Evidence Export</h4>
                   <p className="text-slate-400 text-[11px]">
-                    Generate tamper-evident, hash-chained PDF evidence bundles for enterprise
-                    compliance.
+                    Export tamper-evident, hash-chained ledger evidence for your auditors. Mapping
+                    only — not a certification.
                   </p>
                 </div>
               </div>

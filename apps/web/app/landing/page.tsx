@@ -70,7 +70,7 @@ export default function LandingPage() {
     {
       icon: <Globe className="w-5 h-5" />,
       title: "Compliance Automation",
-      desc: "Generate PCI DSS, GDPR & SOC2 reports from your API security posture.",
+      desc: "Map API-security findings to common framework language and export evidence. Not a certification.",
       color: "from-purple-500/20 to-fuchsia-500/10",
       border: "border-purple-500/20",
     },
@@ -177,7 +177,7 @@ export default function LandingPage() {
                 <Lock className="w-3 h-3" /> AES-256 Encrypted
               </span>
               <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10">
-                <Shield className="w-3 h-3" /> SOC2 In Progress
+                <Shield className="w-3 h-3" /> Evidence, not badges
               </span>
               <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10">
                 <Zap className="w-3 h-3" /> Real-time

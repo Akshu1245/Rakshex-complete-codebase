@@ -50,7 +50,7 @@ const features = [
   {
     name: "Compliance Evidence",
     datadog: "General log collection",
-    RaksHex: "SOC 2 audit in progress; ledger exportable as evidence",
+    RaksHex: "Framework mapping and ledger export as evidence; not a certification",
   },
 ];
 

@@ -18,7 +18,7 @@ const FAQS = [
   },
   {
     q: "What compliance standards do you support?",
-    a: "RaksHex maps findings and audit events to control language from PCI DSS, SOC 2 Trust Services Criteria, HIPAA, OWASP API Top 10, and OWASP LLM Top 10, and can export that evidence for your auditors. A SOC 2 audit is in progress — we do not claim certification until it's complete and published.",
+    a: "RaksHex maps findings and audit events to control language from PCI DSS, SOC 2 Trust Services Criteria, HIPAA, OWASP API Top 10, and OWASP LLM Top 10, and can export that evidence for your auditors. We map product controls to frameworks and produce evidence; we do not claim a certification or independent audit until that assessment is complete and published.",
   },
   {
     q: "How does the kill switch work?",

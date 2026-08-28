@@ -45,7 +45,7 @@ const features = [
   {
     name: "Compliance Evidence",
     helicone: "Not available",
-    RaksHex: "SOC 2 audit in progress; policy and ledger data exportable as evidence",
+    RaksHex: "Framework mapping; policy and ledger data exportable as evidence; not a certification",
   },
   {
     name: "Rate Limiting / Fallback Routing",

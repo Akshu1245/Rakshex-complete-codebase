@@ -18,7 +18,12 @@ function sourceFiles(directory: string): string[] {
       }
       return sourceFiles(target);
     }
-    if (!/\.(ts|tsx|js|jsx|json|svg)$/.test(entry.name) || /\.test\./.test(entry.name)) return [];
+    if (
+      !/\.(ts|tsx|js|jsx|json|svg|md|txt)$/.test(entry.name) ||
+      /\.test\./.test(entry.name)
+    ) {
+      return [];
+    }
     return [target];
   });
 }
@@ -30,6 +35,8 @@ describe("customer-facing trust claims", () => {
       ...sourceFiles(path.join(repoRoot, "apps/vscode-extension/src")),
       path.join(repoRoot, "apps/vscode-extension/package.json"),
       path.join(repoRoot, "apps/api/email.ts"),
+      path.join(repoRoot, "docs/SECURITY.md"),
+      path.join(repoRoot, "apps/web/public/.well-known/security.txt"),
     ];
     const forbidden = [
       /DevPulse/i,
@@ -42,6 +49,14 @@ describe("customer-facing trust claims", () => {
       /\b12\.8K\b/i,
       /\b94\.2K\b/i,
       /\b295K\b/i,
+      /SOC 2 audit in progress/i,
+      /SOC2 audit in progress/i,
+      /SOC2 In Progress/,
+      /One-click PDF/i,
+      /1-Click SOC2/i,
+      /SOC2, PCI DSS, OWASP/,
+      /1000\+\s*server tests/i,
+      /security@rakshex\.com/i,
     ];
     const violations: string[] = [];
 

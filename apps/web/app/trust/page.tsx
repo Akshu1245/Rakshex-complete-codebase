@@ -99,7 +99,8 @@ export default function TrustCenter() {
 
         <p className="mt-8 text-sm leading-6 text-slate-500">
           For a DPA, security questionnaire, architecture review, or private deployment
-          requirements, contact the RaksHex team before connecting production accounts.
+          requirements, email privacy@rakshex.in, security@rakshex.in, or legal@rakshex.in before
+          connecting production accounts.
         </p>
       </div>
     </main>

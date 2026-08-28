@@ -381,7 +381,7 @@ But observability isn't security.
 | API security scanning | ❌ | ✅ OWASP Top 10 |
 | Credential scanner | ❌ | ✅ AWS, GitHub, Aadhaar, PAN |
 | Kill switch (budget + count caps) | ❌ | ✅ |
-| Compliance evidence | ❌ | ✅ SOC 2 audit in progress |
+| Compliance evidence | ❌ | ✅ Mapping and evidence, not a certification |
 | MCP governance | ❌ | ✅ Tool registry + risk scores |
 | Shadow API detection | ❌ | ✅ |
 | Audit log (tamper-resistant) | Limited | ✅ Full event log |
@@ -443,7 +443,7 @@ RaksHex is not a gateway. It's a security and governance layer that works alongs
 | Prompt injection detection | Basic | ✅ Payload library |
 | Credential scanner | ❌ | ✅ |
 | Autonomous kill switch | ❌ | ✅ |
-| Compliance evidence | ❌ | ✅ SOC 2 audit in progress |
+| Compliance evidence | ❌ | ✅ Mapping and evidence, not a certification |
 | Shadow API discovery | ❌ | ✅ |
 | MCP tool governance | ❌ | ✅ |
 | Tamper-resistant audit log | ❌ | ✅ |
@@ -488,7 +488,7 @@ RaksHex takes a broader approach: we treat prompt injection as one vulnerability
 | Prompt injection detection | ✅ Best-in-class | ✅ Payload library |
 | API security scanning | ❌ | ✅ OWASP Top 10 |
 | Credential scanner | PII only | ✅ Secrets + PII |
-| Compliance evidence | ❌ | ✅ SOC 2 audit in progress |
+| Compliance evidence | ❌ | ✅ Mapping and evidence, not a certification |
 | Kill switch | ❌ | ✅ |
 | MCP governance | ❌ | ✅ |
 | Shadow API discovery | ❌ | ✅ |

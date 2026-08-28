@@ -34,7 +34,7 @@ Rakshex processes API collections, AI agent telemetry, and governance controls. 
 
 ## Reporting vulnerabilities
 
-See `/.well-known/security.txt` and email security@rakshex.com.
+See `/.well-known/security.txt` and email security@rakshex.in.
 
 ## Compliance reports
 
