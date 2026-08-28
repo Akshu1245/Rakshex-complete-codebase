@@ -159,7 +159,8 @@ describe("homepage private-beta cut", () => {
     expect(waitlist).not.toMatch(/canonical: "\/"/);
 
     expect(docs).toMatch(/canonical: "\/docs"/);
-    expect(docs).toMatch(/title: "Documentation"/);
+    expect(docs).toMatch(/title: "Docs — RaksHex Agent Firewall"/);
+    expect(docs).not.toMatch(/title: "Competitors govern the session/);
     expect(docs).not.toMatch(/canonical: "\/"/);
   });
 });
