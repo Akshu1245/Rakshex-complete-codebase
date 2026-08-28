@@ -1,11 +1,11 @@
 /**
- * Evaluation billing catalog for public pages.
+ * Fallback copy of the server billing catalog (`PLAN_CONFIG` /
+ * `payment.getPlans`). Amounts and feature bullets must stay identical to
+ * that procedure — this is not a second price list.
  *
- * Amounts and feature lists must stay aligned with `PLAN_CONFIG` in
- * `apps/api/payments.ts` (the server catalog `payment.getPlans` returns).
- * `/pricing` renders this module synchronously so a stranger can see
- * evaluation prices when `api.rakshex.in` is unreachable (TLS SAN mismatch
- * or a hung tRPC rewrite). Do not gate this page on a network fetch.
+ * Production same-origin GET `/api/trpc/payment.getPlans` already returns
+ * this catalog. `/pricing` prefers that GET; this module is used only when
+ * the GET fails or has not arrived yet, so first paint is not "Loading plans…".
  */
 export type EvaluationPlanId = "free" | "pro" | "enterprise";
 
@@ -81,4 +81,37 @@ export function evaluationPlanById(id: EvaluationPlanId): EvaluationPlan {
     throw new Error(`Unknown evaluation plan: ${id}`);
   }
   return plan;
+}
+
+export type CatalogPlan = {
+  id: string;
+  name: string;
+  usdAmount: number;
+  amount: number;
+  features: readonly string[];
+};
+
+/** Decode a tRPC superjson GET envelope or a raw plan array. */
+export function parseGetPlansPayload(payload: unknown): CatalogPlan[] | null {
+  let data: unknown = payload;
+  if (payload && typeof payload === "object" && "result" in payload) {
+    data = (payload as { result?: { data?: { json?: unknown } } }).result?.data?.json;
+  }
+  if (!Array.isArray(data)) return null;
+  const plans: CatalogPlan[] = [];
+  for (const row of data) {
+    if (!row || typeof row !== "object") continue;
+    const r = row as Record<string, unknown>;
+    if (typeof r.id !== "string" || typeof r.name !== "string") continue;
+    if (typeof r.usdAmount !== "number" || typeof r.amount !== "number") continue;
+    if (!Array.isArray(r.features)) continue;
+    plans.push({
+      id: r.id,
+      name: r.name,
+      usdAmount: r.usdAmount,
+      amount: r.amount,
+      features: r.features.filter((f): f is string => typeof f === "string"),
+    });
+  }
+  return plans.length > 0 ? plans : null;
 }

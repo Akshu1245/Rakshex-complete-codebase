@@ -27,6 +27,8 @@ test.describe("Public evaluation pages without API", () => {
     await expect(page.getByText("$499")).toBeVisible();
     await expect(page.getByRole("button", { name: /join waitlist/i }).first()).toBeVisible();
     await expect(page.getByRole("button", { name: /upgrade to pro/i })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: /get started/i })).toHaveCount(0);
+    await expect(page.locator('a[href="/register"]')).toHaveCount(0);
   });
 
   test("legal center renders static documents without API", async ({ page }) => {
