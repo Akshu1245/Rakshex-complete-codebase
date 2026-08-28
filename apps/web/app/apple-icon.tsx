@@ -25,10 +25,10 @@ export default function AppleIcon() {
           justifyContent: "center",
           background: "#07110F",
           border: "5px solid #14B8A6",
+          borderRadius: "34px",
           color: "#E9FFFC",
           fontSize: "70px",
           fontWeight: 800,
-          clipPath: "polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)",
         }}
       >
         R
