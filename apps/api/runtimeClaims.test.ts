@@ -18,10 +18,7 @@ function sourceFiles(directory: string): string[] {
       }
       return sourceFiles(target);
     }
-    if (
-      !/\.(ts|tsx|js|jsx|json|svg|md|txt)$/.test(entry.name) ||
-      /\.test\./.test(entry.name)
-    ) {
+    if (!/\.(ts|tsx|js|jsx|json|svg|md|txt)$/.test(entry.name) || /\.test\./.test(entry.name)) {
       return [];
     }
     return [target];
