@@ -63,7 +63,7 @@
     "prom-client": "^15.1.0",
     "rate-limit-redis": "^4.2.0",
     "razorpay": "^2.9.6",
-    "redis": "5.12.1",
+    "redis": "6.2.1",
     "socket.io": "^4.7.0",
     "sqlstring": "^2.3.3",
     "stripe": "^16.0.0",
