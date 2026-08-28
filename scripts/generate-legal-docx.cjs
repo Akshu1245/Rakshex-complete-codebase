@@ -15,15 +15,17 @@ const sourceDir = path.join(root, "docs", "legal");
 const outputDir = path.join(root, "apps", "web", "public", "legal");
 
 const documents = [
-  ["TERMS_OF_SERVICE.md", "rakshex-terms-of-service.docx"],
   ["PRIVACY_POLICY.md", "rakshex-privacy-policy.docx"],
   ["DATA_PROCESSING_ADDENDUM.md", "rakshex-data-processing-addendum.docx"],
   ["SERVICE_LEVEL_AGREEMENT.md", "rakshex-enterprise-sla.docx"],
   ["ACCEPTABLE_USE_POLICY.md", "rakshex-acceptable-use-policy.docx"],
-  ["REFUND_CANCELLATION_POLICY.md", "rakshex-refund-cancellation-policy.docx"],
   ["SUBPROCESSOR_REGISTER.md", "rakshex-subprocessor-register.docx"],
   ["AI_TRANSPARENCY_STATEMENT.md", "rakshex-ai-transparency-statement.docx"],
 ];
+
+// Terms and Refund Word files are not published this week. Online /terms is the
+// current contract. Do not emit rakshex-terms-of-service.docx or
+// rakshex-refund-cancellation-policy.docx into apps/web/public/legal.
 
 function plain(value) {
   return value

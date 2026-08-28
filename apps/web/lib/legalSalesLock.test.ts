@@ -66,4 +66,34 @@ describe("private-beta sales lock on public legal surfaces", () => {
     expect(refund).toMatch(/legal@rakshex\.in/);
     expect(refund).not.toMatch(/Subscriptions renew for the same period until cancelled/);
   });
+
+  it("does not publish or link Terms/Refund Word files that still contain self-serve checkout", () => {
+    const withdrawn = [
+      "rakshex-terms-of-service.docx",
+      "rakshex-refund-cancellation-policy.docx",
+    ];
+    const publicLegal = path.join(webDir, "public/legal");
+    for (const name of withdrawn) {
+      expect(fs.existsSync(path.join(publicLegal, name)), name).toBe(false);
+    }
+
+    const hrefPattern =
+      /(?:href|download)\s*[:=]\s*["'`][^"'`]*rakshex-(?:terms-of-service|refund-cancellation-policy)\.docx["'`]/i;
+    const pageRoots = [
+      path.join(webDir, "app"),
+      path.join(webDir, "components"),
+      path.join(webDir, "lib"),
+    ];
+    const violations: string[] = [];
+    for (const root of pageRoots) {
+      for (const file of collect(root)) {
+        if (!/\.(ts|tsx)$/.test(file)) continue;
+        const source = fs.readFileSync(file, "utf8");
+        if (hrefPattern.test(source)) {
+          violations.push(path.relative(webDir, file));
+        }
+      }
+    }
+    expect(violations, violations.join("\n")).toEqual([]);
+  });
 });

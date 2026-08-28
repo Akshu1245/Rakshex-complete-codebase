@@ -15,10 +15,14 @@ export function LegalDocumentPage({ document }: { document: LegalDocument }) {
           <Link href="/legal" className="text-[#14B8A6] hover:underline">
             Legal center
           </Link>
-          {" · "}
-          <a href={document.download} className="text-[#14B8A6] hover:underline">
-            Download DOCX
-          </a>
+          {document.download ? (
+            <>
+              {" · "}
+              <a href={document.download} className="text-[#14B8A6] hover:underline">
+                Download DOCX
+              </a>
+            </>
+          ) : null}
         </p>
         <div
           className="mt-8 text-sm leading-7 text-slate-300"

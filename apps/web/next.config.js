@@ -99,6 +99,20 @@ const nextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: "/legal/rakshex-terms-of-service.docx",
+        destination: "/terms",
+        permanent: false,
+      },
+      {
+        source: "/legal/rakshex-refund-cancellation-policy.docx",
+        destination: "/legal/refund",
+        permanent: false,
+      },
+    ];
+  },
   // Bundle splitting: extract vendor chunks and enable code splitting
   webpack: (config, { isServer }) => {
     config.module.rules.push({

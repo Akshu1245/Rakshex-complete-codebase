@@ -19,7 +19,7 @@ export type LegalDocument = {
   title: string;
   description: string;
   effective: string;
-  download: string;
+  download?: string;
   markdown: string;
 };
 
@@ -65,7 +65,6 @@ export const LEGAL_DOCUMENTS: Record<LegalDocId, LegalDocument> = {
     description:
       "Private beta: no self-serve checkout this week. Paid access is by invite or Order Form only.",
     effective: "12 July 2026",
-    download: "/legal/rakshex-refund-cancellation-policy.docx",
     markdown: refund,
   },
   subprocessors: {

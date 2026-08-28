@@ -14,9 +14,8 @@ const documents = [
   {
     title: "Terms of Service",
     description:
-      "Online service terms, acceptable use, confidentiality, and liability. Private-beta access is waitlist, evaluation, or invite.",
+      "Online service terms, acceptable use, confidentiality, and liability. Private-beta access is waitlist, evaluation, or invite. The online /terms page is the current contract.",
     href: "/terms",
-    download: "/legal/rakshex-terms-of-service.docx",
     icon: Scale,
   },
   {
@@ -53,9 +52,8 @@ const documents = [
   {
     title: "Refund and Cancellation Policy",
     description:
-      "Private beta: no self-serve checkout this week. Paid access is by invite or Order Form only.",
+      "Private beta: no self-serve checkout this week. Paid access is by invite or Order Form only. Read the online page — there is no Word download this week.",
     href: "/legal/refund",
-    download: "/legal/rakshex-refund-cancellation-policy.docx",
     icon: FileText,
   },
   {
@@ -90,7 +88,8 @@ export default function LegalCenter() {
             week is private beta: waitlist, evaluation, and invite login. Evaluation prices may be
             shown; paid access is by invite or an executed Order Form only. There is no live
             checkout, tax or GST collection, auto-renewal, or self-serve purchase. Enterprise
-            paperwork becomes binding when incorporated into an executed Order Form.
+            paperwork becomes binding when incorporated into an executed Order Form. The online
+            Terms page is the current contract.
           </p>
         </header>
 
@@ -106,19 +105,15 @@ export default function LegalCenter() {
                     Read online
                   </Link>
                 ) : null}
-                <a className="text-slate-200 hover:text-white hover:underline" href={download}>
-                  Download DOCX
-                </a>
+                {download ? (
+                  <a className="text-slate-200 hover:text-white hover:underline" href={download}>
+                    Download DOCX
+                  </a>
+                ) : null}
               </div>
             </article>
           ))}
         </section>
-
-        <p className="mt-8 max-w-3xl text-sm leading-6 text-slate-500">
-          Word downloads of Terms and the Refund policy may still contain July 2026 self-serve
-          checkout clauses. Those clauses do not apply this week. The online pages are the current
-          private-beta access position.
-        </p>
 
         <section className="mt-12 border border-slate-800 p-7">
           <h2 className="text-2xl font-semibold text-white">Security and privacy requests</h2>

@@ -2,7 +2,7 @@
 
 Version: 2026-07-30
 
-This directory is the source of truth for Rakshex customer-facing legal documents. Generated Word documents are published under `apps/web/public/legal`.
+This directory is the source of truth for Rakshex customer-facing legal documents. Generated Word documents for DPA, AUP, SLA, privacy, subprocessors, and AI transparency are published under `apps/web/public/legal`. Terms of Service and Refund Word files are **not** published this week — online `/terms` is the current contract.
 
 ## Documents
 
