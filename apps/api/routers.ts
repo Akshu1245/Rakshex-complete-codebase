@@ -239,9 +239,17 @@ export const appRouter = router({
       ctx.res.clearCookie("session", { ...cookieOptions, maxAge: -1 });
       return { success: true };
     }),
+    /**
+     * Sign out of every active session for the calling user. Used by the
+     * "I see suspicious activity, log me out everywhere" flow on the
+     * settings page and as the default revoke step after a successful
+     * password reset. We also clear the local cookie so the user has to
+     * re-authenticate on this device.
+     */
     logoutAllSessions: protectedProcedure.mutation(async ({ ctx }) => {
       const sessions = await db.getUserSessions(ctx.user.id);
       await db.revokeAllUserSessions(ctx.user.id);
+      // Redis fast-path revocation for all active sessions
       for (const s of sessions) {
         if (s.refreshTokenHash) {
           try {
@@ -263,6 +271,11 @@ export const appRouter = router({
       ctx.res.clearCookie(REFRESH_TOKEN_COOKIE, { ...cookieOptions, maxAge: -1 });
       return { success: true };
     }),
+    /**
+     * List the active sessions for the calling user — feeds the
+     * "Your devices" panel so users can spot a session they don't
+     * recognize and revoke it.
+     */
     listSessions: protectedProcedure.query(async ({ ctx }) => {
       const sessions = await db.getUserSessions(ctx.user.id);
       return sessions.map((s) => ({
@@ -274,6 +287,9 @@ export const appRouter = router({
         expiresAt: s.expiresAt,
       }));
     }),
+    /**
+     * Revoke a specific session by id (the row id, not the cookie).
+     */
     revokeSession: protectedProcedure
       .input(z.object({ sessionId: z.string().min(1) }))
       .mutation(async ({ input, ctx }) => {
@@ -286,6 +302,7 @@ export const appRouter = router({
           });
         }
         await db.revokeUserSession(input.sessionId);
+        // Redis fast-path revocation
         if (owned.refreshTokenHash) {
           try {
             await redis.set(`revoked:${owned.refreshTokenHash}`, "1", "EX", 3600);
@@ -327,6 +344,7 @@ export const appRouter = router({
           passwordHash,
         });
 
+        // First user auto-promotion
         try {
           const driver = await db.getDb();
           if (driver) {
@@ -343,6 +361,7 @@ export const appRouter = router({
           logger.warn({ err: err }, "[signup] first-user promotion skipped");
         }
 
+        // Auto-create the user's personal workspace — fail hard (no silent skip)
         try {
           await ensurePersonalWorkspace(created.id, input.name.trim());
         } catch (err) {
@@ -357,6 +376,7 @@ export const appRouter = router({
           });
         }
 
+        // Create session with dual tokens
         const refreshToken = generateRefreshToken();
         const refreshTokenHash = hashRefreshToken(refreshToken);
         const expiresAt = new Date(Date.now() + REFRESH_TOKEN_MAX_AGE_MS);
@@ -383,6 +403,7 @@ export const appRouter = router({
           maxAge: REFRESH_TOKEN_MAX_AGE_MS,
           path: "/api/trpc/auth.refreshToken",
         });
+        // Middleware-compatible alias
         ctx.res.cookie("session", accessToken, {
           ...cookieOptions,
           maxAge: ACCESS_TOKEN_MAX_AGE_MS,
@@ -445,6 +466,7 @@ export const appRouter = router({
 
         await db.resetFailedLoginAttempts(user.id);
 
+        // Transparent upgrade to Argon2id
         if (needsRehash(user.passwordHash)) {
           try {
             await db.updateUserPassword(user.id, hashPassword(input.password));
@@ -453,6 +475,7 @@ export const appRouter = router({
           }
         }
 
+        // Check 2FA
         const userWithTotp = await db.getUserById(user.id);
         if (userWithTotp && (userWithTotp as any).totpSecret) {
           return {
@@ -463,6 +486,7 @@ export const appRouter = router({
           };
         }
 
+        // Create session with dual tokens
         const refreshToken = generateRefreshToken();
         const refreshTokenHash = hashRefreshToken(refreshToken);
         const expiresAt = new Date(Date.now() + REFRESH_TOKEN_MAX_AGE_MS);
@@ -506,6 +530,11 @@ export const appRouter = router({
 
         return { success: true, userId: user.id };
       }),
+    /**
+     * Refresh token rotation: validates the refresh token from the httpOnly
+     * cookie, issues a new access token, and rotates the refresh token
+     * (invalidate old, issue new in an atomic transaction).
+     */
     refreshToken: publicProcedure.mutation(async ({ ctx }) => {
       const cookies = ctx.req.headers.cookie;
       if (!cookies) {
@@ -526,6 +555,7 @@ export const appRouter = router({
 
       const tokenHash = hashRefreshToken(rawToken);
 
+      // Fast-path: check Redis revocation list
       try {
         const revoked = await redis.get(`revoked:${tokenHash}`);
         if (revoked) {
@@ -535,18 +565,22 @@ export const appRouter = router({
         // Redis down — fall through to DB check
       }
 
+      // DB lookup
       const session = await db.getUserSessionByRefreshTokenHash(tokenHash);
       if (!session) {
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid refresh token" });
       }
 
+      // Revoke the old refresh token
       await db.rotateRefreshToken(session.id, "");
 
+      // Issue new refresh token (rotation)
       const newRefreshToken = generateRefreshToken();
       const newRefreshTokenHash = hashRefreshToken(newRefreshToken);
 
       await db.rotateRefreshToken(session.id, newRefreshTokenHash);
 
+      // Issue new access token
       const accessToken = await generateAccessToken(session.userId, session.id);
       const cookieOptions = getSessionCookieOptions(ctx.req);
 
@@ -571,11 +605,15 @@ export const appRouter = router({
 
       return { success: true };
     }),
+    /**
+     * Verify 2FA code during login. Creates session with dual tokens on success.
+     */
     verify2FALogin: publicProcedure
       .input(
         z.object({
           userId: z.union([z.string().min(1).max(32), z.number().int().positive()]),
           code: z.string().min(6).max(20),
+          /** When true, `code` is treated as a recovery code. */
           useRecoveryCode: z.boolean().optional(),
         }),
       )
@@ -625,6 +663,7 @@ export const appRouter = router({
           throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid 2FA code" });
         }
 
+        // Create session with dual tokens
         const refreshToken = generateRefreshToken();
         const refreshTokenHash = hashRefreshToken(refreshToken);
         const expiresAt = new Date(Date.now() + REFRESH_TOKEN_MAX_AGE_MS);
@@ -675,6 +714,7 @@ export const appRouter = router({
         if (user && user.email) {
           const token = generateSecureToken(32);
           const tokenHash = hashToken(token);
+          // 1 hour expiry, single-use
           const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
           await db.createPasswordResetToken(user.id, tokenHash, expiresAt);
           const appUrl = process.env.FRONTEND_URL || process.env.APP_URL || "https://rakshex.in";
@@ -705,6 +745,7 @@ export const appRouter = router({
         const tokenHash = hashToken(input.token);
         const resetToken =
           (await db.getPasswordResetToken(tokenHash)) ??
+          // Legacy: plaintext token rows created before hashing migration
           (await db.getPasswordResetToken(input.token));
         if (!resetToken) {
           throw new TRPCError({
@@ -724,6 +765,7 @@ export const appRouter = router({
             message: "Token has already been used",
           });
         }
+        // Mark used FIRST (single-use) before password update to prevent races
         await db.markPasswordResetTokenUsed(resetToken.id);
         const hashedPassword = hashPassword(input.newPassword);
         await db.updateUserPassword(resetToken.userId, hashedPassword);
@@ -740,6 +782,9 @@ export const appRouter = router({
           message: "Password has been reset successfully",
         };
       }),
+    /**
+     * Request email verification link (authenticated).
+     */
     requestEmailVerification: protectedProcedure.mutation(async ({ ctx }) => {
       const user = await db.getUserById(ctx.user.id);
       if (!user?.email) {
@@ -755,6 +800,7 @@ export const appRouter = router({
         "email_verify",
         new Date(Date.now() + 24 * 60 * 60 * 1000),
       );
+      // Email delivery is best-effort; token returned only in non-production for tests
       logger.info({ userId: ctx.user.id }, "[Auth] Email verification token issued");
       return {
         success: true,
@@ -839,6 +885,10 @@ export const appRouter = router({
   teamGovernance: teamGovernanceRouter,
 });
 
+// Register the appRouter with the apiDocs introspector so its `spec`
+// procedure can walk the live router. We do this here instead of via
+// dynamic import inside apiDocs.ts to avoid a tRPC type cycle that
+// breaks react-query inference on the client.
 setAppRouterForDocs(appRouter);
 
 export type AppRouter = typeof appRouter;
