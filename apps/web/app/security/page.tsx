@@ -19,8 +19,8 @@ export default function SecurityWhitepaper() {
             /trust
           </Link>{" "}
           and email{" "}
-          <a href="mailto:security@rakshex.in" className="text-blue-400 hover:text-blue-300">
-            security@rakshex.in
+          <a href="mailto:rakshex@gmail.com" className="text-blue-400 hover:text-blue-300">
+            rakshex@gmail.com
           </a>
           .
         </p>
@@ -141,12 +141,11 @@ export default function SecurityWhitepaper() {
         <section className="mb-10">
           <h2 className="text-2xl font-bold mb-4">5. Incident contact</h2>
           <p className="text-gray-300 leading-relaxed">
-            Report suspected vulnerabilities or security incidents to{" "}
-            <a href="mailto:security@rakshex.in" className="text-blue-400 hover:text-blue-300">
-              security@rakshex.in
+            Report suspected vulnerabilities, privacy requests, legal notices, or security incidents to{" "}
+            <a href="mailto:rakshex@gmail.com" className="text-blue-400 hover:text-blue-300">
+              rakshex@gmail.com
             </a>
-            . Do not send provider keys, passwords, or sensitive evidence by email. Privacy requests:
-            privacy@rakshex.in. Legal notices: legal@rakshex.in.
+            . Do not send provider keys, passwords, or sensitive evidence by email.
           </p>
         </section>
 

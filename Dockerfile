@@ -48,14 +48,16 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
-# API entry — apps/api runs via tsx/node depending on deploy packaging
-CMD ["node", "--import", "tsx", "apps/api/_core/index.ts"]
+# Use the package-local tsx binary. In a pnpm workspace, tsx is installed under
+# apps/api/node_modules because @rakshex/api declares it directly; resolving the
+# bare "tsx" package from /app is not reliable in the production image.
+CMD ["./apps/api/node_modules/.bin/tsx", "apps/api/_core/index.ts"]
 
 FROM runner AS worker
 ENV WORKER_CONCURRENCY=3
 # Worker has no HTTP listener — clear inherited API healthcheck.
 HEALTHCHECK NONE
-CMD ["node", "--import", "tsx", "apps/api/queues/workers/index.ts"]
+CMD ["./apps/api/node_modules/.bin/tsx", "apps/api/queues/workers/index.ts"]
 
 FROM runner AS api
-CMD ["node", "--import", "tsx", "apps/api/_core/index.ts"]
+CMD ["./apps/api/node_modules/.bin/tsx", "apps/api/_core/index.ts"]

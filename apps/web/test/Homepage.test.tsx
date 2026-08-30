@@ -103,14 +103,14 @@ describe("homepage investor/private-beta cut", () => {
     expect(screen.getByRole("heading", { name: "Action Ledger" })).toBeInTheDocument();
   });
 
-  it("removes the noisy comparison/feature wall from the homepage narrative", () => {
+  it("removes the noisy comparison/feature wall while keeping the investor research section", () => {
     const source = fs.readFileSync(path.resolve(__dirname, "../app/HomePageClient.tsx"), "utf8");
 
     expect(source).not.toMatch(/PerformanceCostMatrix/);
     expect(source).not.toMatch(/OneOnOneMatrix/);
     expect(source).not.toMatch(/ComparisonSubNav/);
     expect(source).not.toMatch(/OverviewSplash/);
-    expect(source).not.toMatch(/AskAISection/);
+    expect(source).toMatch(/AskAISection/);
     expect(source).not.toMatch(/Signature Dotted Grid Background Pattern/);
     expect(source).toMatch(/Put one consequential AI action behind RaksHex/);
   });

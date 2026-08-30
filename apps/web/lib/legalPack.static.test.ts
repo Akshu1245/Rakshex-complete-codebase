@@ -62,7 +62,8 @@ describe("baked legal pack", () => {
       "utf8",
     );
     expect(refund).toMatch(/Effective date:\s*12 July 2026/);
-    expect(refund).toMatch(/cannot take money this week/);
+    expect(refund).toMatch(/There is no live checkout, tax or GST collection/);
+    expect(refund).not.toMatch(/cannot take money this week/);
     expect(refund).not.toMatch(/shown at checkout/);
     expect(fs.existsSync(path.join(webDir, "public/legal/rakshex-terms-of-service.docx"))).toBe(
       false,
