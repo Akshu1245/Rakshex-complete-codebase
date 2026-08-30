@@ -1,10 +1,14 @@
 import Link from "next/link";
-import { ExternalLink, Github, Mail } from "lucide-react";
+import { ExternalLink, Github, Instagram, Mail, MessageCircle } from "lucide-react";
 import { RaksHexLogo } from "@/components/common/RaksHexLogo";
 
 const VSCODE_URL =
   "https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex-vscode";
 const GITHUB_URL = "https://github.com/Akshu1245/Rakshex-complete-codebase";
+const INSTAGRAM_URL = "https://www.instagram.com/rakshex.in?igsi=YWlzcDg2ODcybmpz";
+const REDDIT_URL = "https://www.reddit.com/u/RaksHex_in/s/8zzCSUdomW";
+const CONTACT_EMAIL = "rakshex@gmail.com";
+const FOUNDER_EMAIL = "akshaykammar31@gmail.com";
 
 export function Footer() {
   return (
@@ -19,6 +23,9 @@ export function Footer() {
               The AI Action Control Plane for teams that need to authorize consequential agent
               actions before execution and keep verifiable evidence afterward.
             </p>
+            <p className="mt-3 text-xs leading-5 text-neutral-600">
+              Private beta · Founded and built by Akshay Kammar · Bengaluru, India
+            </p>
             <div className="mt-5 flex flex-wrap items-center gap-2">
               <a
                 href={GITHUB_URL}
@@ -29,12 +36,20 @@ export function Footer() {
                 <Github className="h-4 w-4" aria-hidden="true" /> GitHub
               </a>
               <a
-                href={VSCODE_URL}
+                href={INSTAGRAM_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex min-h-10 items-center gap-2 rounded-md border border-white/10 px-3 text-xs font-medium text-neutral-300 no-underline hover:border-white/20 hover:text-white"
               >
-                VS Code <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                <Instagram className="h-4 w-4" aria-hidden="true" /> Instagram
+              </a>
+              <a
+                href={REDDIT_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-10 items-center gap-2 rounded-md border border-white/10 px-3 text-xs font-medium text-neutral-300 no-underline hover:border-white/20 hover:text-white"
+              >
+                <MessageCircle className="h-4 w-4" aria-hidden="true" /> Reddit
               </a>
             </div>
           </div>
@@ -114,13 +129,19 @@ export function Footer() {
         </div>
 
         <div className="mt-10 flex flex-col gap-4 border-t border-white/[0.08] pt-6 text-sm text-neutral-500 md:flex-row md:items-center md:justify-between">
-          <p>© 2026 RaksHex by Rashi Technologies. Bengaluru, India.</p>
+          <p>© 2026 RaksHex. Bengaluru, India.</p>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
             <a
-              href="mailto:akshay@rakshex.in"
+              href={`mailto:${CONTACT_EMAIL}`}
               className="inline-flex items-center gap-1.5 text-neutral-400 no-underline hover:text-white"
             >
-              <Mail className="h-3.5 w-3.5" aria-hidden="true" /> akshay@rakshex.in
+              <Mail className="h-3.5 w-3.5" aria-hidden="true" /> {CONTACT_EMAIL}
+            </a>
+            <a
+              href={`mailto:${FOUNDER_EMAIL}`}
+              className="inline-flex items-center gap-1.5 text-neutral-400 no-underline hover:text-white"
+            >
+              Founder contact
             </a>
             <Link href="/status" className="inline-flex items-center gap-2 text-neutral-400 no-underline hover:text-white">
               <span className="h-1.5 w-1.5 rounded-full bg-[#14B8A6]" aria-hidden="true" />
