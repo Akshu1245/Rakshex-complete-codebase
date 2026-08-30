@@ -52,10 +52,10 @@ export default function Terms() {
           <section>
             <h2 className="text-xl font-semibold text-white">Access, evaluation, and paid orders</h2>
             <p className="mt-3">
-              RaksHex is in private beta. Access is by waitlist, evaluation, or invite. Evaluation
-              prices may be shown for planning. We cannot take money this week: there is no live
-              checkout, tax or GST collection, auto-renewal, or self-serve purchase. Paid access, if
-              and when offered, is by invite or an executed Order Form only.
+              RaksHex is currently in private beta. Self-serve paid checkout is not yet enabled.
+              Access is by waitlist, evaluation, or invite, and commercial pilots may be offered
+              through direct agreements as the beta progresses. Any future paid access remains
+              subject to the applicable order terms, taxes, and payment-provider requirements.
             </p>
           </section>
           <section>
@@ -73,14 +73,14 @@ export default function Terms() {
             <h2 className="text-xl font-semibold text-white">Governing law and contact</h2>
             <p className="mt-3">
               These terms are governed by the laws of India and disputes are subject to the courts
-              at Bengaluru, Karnataka, subject to mandatory consumer rights. Contact
-              legal@rakshex.in for notices or support@rakshex.in for service help.
+              at Bengaluru, Karnataka, subject to mandatory consumer rights. For legal, service, or
+              support contact, email rakshex@gmail.com.
             </p>
           </section>
         </div>
 
         <div className="mt-12 border border-slate-800 p-6 text-sm text-slate-400">
-          The complete contract pack, including the Data Processing Addendum, enterprise SLA, and
+          The current contract and policy pack, including the Data Processing Addendum and
           Acceptable Use Policy, is available in the{" "}
           <Link className="font-semibold text-[#14B8A6] hover:underline" href="/legal">
             RaksHex Legal Center
