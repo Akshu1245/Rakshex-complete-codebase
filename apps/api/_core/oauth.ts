@@ -2,6 +2,7 @@ import { COOKIE_NAME, ONE_YEAR_MS } from "@rakshex/shared-types/const";
 import type { Express, Request, Response } from "express";
 import * as db from "../db";
 import { getSessionCookieOptions } from "./cookies";
+import { ENV } from "./env";
 import { sdk } from "./sdk";
 import { logger } from "./logger";
 
@@ -11,6 +12,17 @@ function getQueryParam(req: Request, key: string): string | undefined {
 }
 
 export function registerOAuthRoutes(app: Express) {
+  // Legacy external OAuth is intentionally opt-in. The hosted private beta
+  // must not contact a third-party auth service simply because a historical
+  // default existed in source.
+  if (!ENV.oAuthServerUrl || !ENV.appId) {
+    logger.info("[OAuth] Legacy external OAuth disabled (not configured)");
+    app.get("/api/oauth/callback", (_req: Request, res: Response) => {
+      res.status(404).json({ error: "OAuth provider not configured" });
+    });
+    return;
+  }
+
   app.get("/api/oauth/callback", async (req: Request, res: Response) => {
     const code = getQueryParam(req, "code");
     const state = getQueryParam(req, "state");
@@ -29,7 +41,6 @@ export function registerOAuthRoutes(app: Express) {
         return;
       }
 
-      // upsertUser defaults newly created users to role "editor"
       await db.upsertUser({
         openId: userInfo.openId,
         name: userInfo.name || null,
