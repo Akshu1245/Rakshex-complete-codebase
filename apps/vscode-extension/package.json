@@ -546,7 +546,7 @@
     "lint": "echo rakshex-vscode lint ok"
   },
   "devDependencies": {
-    "@types/node": "^20.11.0",
+    "@types/node": "^26.4.0",
     "@types/vscode": "^1.85.0",
     "esbuild": "^0.28.0",
     "typescript": "^5.9.3",
