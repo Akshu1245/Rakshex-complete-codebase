@@ -149,7 +149,8 @@ export function planAdaptiveCapacity(
       if (!canUseEmergency(request.priority, policy.emergencyMinPriority)) continue;
     }
 
-    const protectedUsd = source.type === "member_shareable" ? money(source.protectedUsd ?? 0) : 0;
+    const protectedUsd =
+      source.type === "member_shareable" ? money(source.protectedUsd ?? 0) : 0;
     let usableUsd = money(source.availableUsd - protectedUsd);
     if (usableUsd <= 0) continue;
 
@@ -175,12 +176,16 @@ export function planAdaptiveCapacity(
   const reservedUsd = money(requestedUsd - remaining);
   const requiresApproval = borrowedUsd > money(policy.approvalThresholdUsd);
 
-  if (borrowedUsd > 0) reasons.push(`planned ${borrowedUsd.toFixed(2)} USD from shareable capacity`);
+  if (borrowedUsd > 0) {
+    reasons.push(`planned ${borrowedUsd.toFixed(2)} USD from shareable capacity`);
+  }
   if (slices.some((slice) => slice.sourceType === "emergency_reserve")) {
     reasons.push("emergency reserve included");
   }
   if (requiresApproval) reasons.push("borrow amount exceeds automatic approval threshold");
-  if (remaining > 0) reasons.push(`insufficient approved capacity; shortfall ${remaining.toFixed(2)} USD`);
+  if (remaining > 0) {
+    reasons.push(`insufficient approved capacity; shortfall ${remaining.toFixed(2)} USD`);
+  }
 
   return {
     requestId: request.requestId,
