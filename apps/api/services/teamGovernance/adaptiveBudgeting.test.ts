@@ -21,7 +21,13 @@ describe("adaptive AI budgeting", () => {
 
     expect(plan.allowed).toBe(true);
     expect(plan.slices).toEqual([
-      { sourceId: "personal", sourceType: "personal", amountUsd: 8, ownerIdentityId: undefined, ownerProjectId: undefined },
+      {
+        sourceId: "personal",
+        sourceType: "personal",
+        amountUsd: 8,
+        ownerIdentityId: undefined,
+        ownerProjectId: undefined,
+      },
     ]);
   });
 
