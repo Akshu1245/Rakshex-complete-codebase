@@ -21,8 +21,8 @@ function AuthGuard({ children }: { children: ReactNode }) {
 
   if (loading && !isPublicPath(pathname)) {
     return (
-      <div className="min-h-screen bg-transparent flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
+      <div className="min-h-screen bg-transparent flex items-center justify-center px-4">
+        <div className="flex flex-col items-center gap-4 text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#14B8A6]" />
           <p className="text-neutral-400 text-sm">Authenticating...</p>
         </div>
@@ -32,8 +32,8 @@ function AuthGuard({ children }: { children: ReactNode }) {
 
   if (!user && !isPublicPath(pathname)) {
     return (
-      <div className="min-h-screen bg-transparent flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
+      <div className="min-h-screen bg-transparent flex items-center justify-center px-4">
+        <div className="flex flex-col items-center gap-4 text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#14B8A6]" />
           <p className="text-neutral-400 text-sm">Redirecting to login...</p>
         </div>
@@ -63,11 +63,11 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-transparent flex">
+      <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-transparent flex">
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         <DashboardHeader onMenuOpen={() => setSidebarOpen(true)} />
-        <div className="flex-1 flex flex-col min-w-0 md:ml-64 mt-16">
-          <main className="flex-1">{children}</main>
+        <div className="flex-1 flex flex-col min-w-0 w-full max-w-full md:ml-64 mt-16">
+          <main className="flex-1 min-w-0 w-full max-w-full overflow-x-hidden">{children}</main>
         </div>
       </div>
     </AuthGuard>
