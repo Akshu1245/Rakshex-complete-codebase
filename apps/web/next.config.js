@@ -8,8 +8,14 @@ try {
 const path = require("path");
 
 /** @type {import('next').NextConfig} */
+const RAILWAY_PRODUCTION_API_URL = "https://api-production-0a2b.up.railway.app";
 const TS_BACKEND_URL =
-  process.env.NEXT_PUBLIC_TS_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+  process.env.RAKSHEX_BACKEND_URL ||
+  (process.env.NODE_ENV === "production"
+    ? RAILWAY_PRODUCTION_API_URL
+    : process.env.NEXT_PUBLIC_TS_API_URL ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      "http://localhost:3000");
 
 const nextConfig = {
   serverExternalPackages: ["async_hooks"],
@@ -58,7 +64,7 @@ const nextConfig = {
           {
             key: "Content-Security-Policy",
             value:
-              "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' wss: https://api.rakshex.in https://*.sentry.io https://script.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;",
+              "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' wss: https://api.rakshex.in https://api-production-0a2b.up.railway.app wss://api-production-0a2b.up.railway.app https://*.sentry.io https://script.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;",
           },
         ],
       },
@@ -132,9 +138,9 @@ const nextConfig = {
   },
   async rewrites() {
     return [
-      // All API traffic goes to the Node tRPC backend. The legacy Python
-      // FastAPI service has been retired; do not proxy unknown /api/* to a
-      // dead host or pages will silently 404 in production.
+      // All API traffic goes to the Node tRPC backend on Railway. The legacy
+      // Python/Vercel backend has been retired; production intentionally uses
+      // the known Railway origin unless RAKSHEX_BACKEND_URL explicitly overrides it.
       {
         source: "/api/oauth/:path*",
         destination: `${TS_BACKEND_URL}/api/oauth/:path*`,
@@ -146,6 +152,10 @@ const nextConfig = {
       {
         source: "/api/health",
         destination: `${TS_BACKEND_URL}/api/health`,
+      },
+      {
+        source: "/api/health/ready",
+        destination: `${TS_BACKEND_URL}/api/health/ready`,
       },
       {
         source: "/api/create-order",
