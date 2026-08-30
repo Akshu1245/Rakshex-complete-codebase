@@ -12,23 +12,27 @@ function getQueryParam(req: Request, key: string): string | undefined {
 }
 
 export function registerOAuthRoutes(app: Express) {
-  // Legacy external OAuth is intentionally opt-in. The hosted private beta
-  // must not contact a third-party auth service simply because a historical
-  // default existed in source.
-  if (!ENV.oAuthServerUrl || !ENV.appId) {
+  const configured = Boolean(ENV.oAuthServerUrl && ENV.appId);
+  if (!configured) {
     logger.info("[OAuth] Legacy external OAuth disabled (not configured)");
-    app.get("/api/oauth/callback", (_req: Request, res: Response) => {
-      res.status(404).json({ error: "OAuth provider not configured" });
-    });
-    return;
   }
 
   app.get("/api/oauth/callback", async (req: Request, res: Response) => {
     const code = getQueryParam(req, "code");
     const state = getQueryParam(req, "state");
 
+    // Preserve the public callback contract for malformed requests without
+    // ever contacting an external provider.
     if (!code || !state) {
       res.status(400).json({ error: "code and state are required" });
+      return;
+    }
+
+    // A well-formed callback is still disabled unless an operator explicitly
+    // configured the legacy provider. This prevents historical source defaults
+    // from creating an unexpected outbound authentication dependency.
+    if (!configured) {
+      res.status(404).json({ error: "OAuth provider not configured" });
       return;
     }
 
