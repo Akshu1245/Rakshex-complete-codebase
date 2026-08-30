@@ -31,12 +31,12 @@ const EnvSchema = z.object({
   DATABASE_URL: isProduction ? requiredString("DATABASE_URL") : z.string().default(""),
   REDIS_URL: isProduction ? requiredString("REDIS_URL") : z.string().default(""),
 
-  // OAuth (legacy Manus auth remains optional; Google/GitHub are optional product paths).
+  // Legacy external OAuth is optional and explicitly opt-in. No third-party auth
+  // endpoint is contacted unless an operator configures OAUTH_SERVER_URL.
   VITE_APP_ID: z.string().default(""),
   OAUTH_SERVER_URL: z
-    .string()
-    .url("OAUTH_SERVER_URL must be a valid URL")
-    .default("https://auth.manus.app"),
+    .union([z.literal(""), z.string().url("OAUTH_SERVER_URL must be a valid URL")])
+    .default(""),
   GOOGLE_CLIENT_ID: z.string().default(""),
   GOOGLE_CLIENT_SECRET: z.string().default(""),
   GITHUB_CLIENT_ID: z.string().default(""),
