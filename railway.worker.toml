@@ -1,7 +1,7 @@
 [build]
 builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
-dockerfileTarget = "worker"
+dockerBuildTarget = "worker"
 
 [deploy]
 restartPolicyType = "ON_FAILURE"
