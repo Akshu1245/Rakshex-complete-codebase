@@ -149,8 +149,7 @@ export function planAdaptiveCapacity(
       if (!canUseEmergency(request.priority, policy.emergencyMinPriority)) continue;
     }
 
-    const protectedUsd =
-      source.type === "member_shareable" ? money(source.protectedUsd ?? 0) : 0;
+    const protectedUsd = source.type === "member_shareable" ? money(source.protectedUsd ?? 0) : 0;
     let usableUsd = money(source.availableUsd - protectedUsd);
     if (usableUsd <= 0) continue;
 
