@@ -71,7 +71,12 @@ export function buildUsageEnvelope(input: {
   const push = (unit: UsageUnit, quantity: number | undefined) => {
     const normalized = finiteNonNegative(quantity);
     if (normalized == null || normalized === 0) return;
-    measurements.push({ domain: input.domain, unit, quantity: normalized, confidence });
+    measurements.push({
+      domain: input.domain,
+      unit,
+      quantity: normalized,
+      confidence,
+    });
   };
 
   push("request", input.requestCount);
