@@ -43,26 +43,26 @@ describe("production environment validation", () => {
     expect(exit).toHaveBeenCalledWith(1);
   });
 
-  it("accepts explicit production-critical configuration", async () => {
+  it("accepts production-critical configuration with transactional email disabled", async () => {
     Object.assign(process.env, {
       NODE_ENV: "production",
       JWT_SECRET: "test-production-jwt-secret-at-least-32-characters",
       RAKSHEX_VAULT_KEY: "test-production-vault-key-at-least-32-characters",
       DATABASE_URL: "postgresql://rakshex:test@127.0.0.1:5432/rakshex",
       REDIS_URL: "redis://127.0.0.1:6379",
-      SMTP_HOST: "smtp.example.test",
-      SMTP_USER: "mailer@example.test",
-      SMTP_PASS: "test-production-smtp-password",
-      SMTP_FROM: "noreply@example.test",
       APP_URL: "https://app.example.test",
       FRONTEND_URL: "https://app.example.test",
       CORS_ORIGINS: "https://www.example.test",
       METRICS_TOKEN: "test-metrics-token-at-least-16",
       GITHUB_WEBHOOK_SECRET: "test-github-webhook-secret-at-least-16",
     });
+    for (const key of ["SMTP_HOST", "SMTP_USER", "SMTP_PASS", "SMTP_FROM"]) {
+      delete process.env[key];
+    }
 
     const { ENV, validateEnv } = await import("./env");
     expect(ENV.isProduction).toBe(true);
+    expect(ENV.smtpHost).toBe("");
     expect(() => validateEnv()).not.toThrow();
   });
 });
