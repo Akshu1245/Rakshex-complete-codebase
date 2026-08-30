@@ -9,6 +9,7 @@ import { BenchmarkSection } from "@/components/home/BenchmarkSection";
 import { ChangelogSection } from "@/components/home/ChangelogSection";
 import { TestimonialsSection } from "@/components/home/TestimonialsSection";
 import { InvestorFaq } from "@/components/home/InvestorFaq";
+import { AskAISection } from "@/components/home/AskAISection";
 import { Footer } from "@/components/layout/Footer";
 
 const PROOF_FLOW = [
@@ -49,6 +50,62 @@ export default function RootHomePage() {
       <EcosystemIntegrations />
       <BenchmarkSection />
       <TestimonialsSection />
+      <AskAISection />
+
+      <section className="mx-auto w-full max-w-[1280px] px-5 py-20 sm:px-6 xl:px-8" id="founder">
+        <div className="grid gap-8 rounded-2xl border border-white/[0.08] bg-[#090D14]/70 p-6 sm:p-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-center lg:p-10">
+          <div>
+            <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-[#14B8A6]">
+              Founder
+            </p>
+            <h2 className="mt-3 text-3xl font-bold tracking-[-0.03em] text-white sm:text-4xl">
+              Akshay Kammar
+            </h2>
+            <p className="mt-2 text-sm font-medium text-neutral-300">Founder & Builder, RaksHex</p>
+          </div>
+          <div>
+            <p className="max-w-2xl text-sm leading-7 text-neutral-400 sm:text-base">
+              Building RaksHex to make autonomous AI agents controllable across actions,
+              credentials, permissions, and spend before execution — with evidence teams can inspect
+              afterward. RaksHex is currently a private-beta, pre-incorporation startup focused on
+              technical validation and early design partners.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3 text-sm">
+              <a
+                href="https://github.com/Akshu1245/Rakshex-complete-codebase"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-md border border-white/10 px-4 py-2.5 font-semibold text-white no-underline hover:border-[#14B8A6]/50"
+              >
+                GitHub repository
+              </a>
+              <a
+                href="mailto:akshaykammar31@gmail.com"
+                className="rounded-md border border-white/10 px-4 py-2.5 font-semibold text-white no-underline hover:border-[#14B8A6]/50"
+              >
+                Founder email
+              </a>
+              <a
+                href="https://www.instagram.com/rakshex.in?igsi=YWlzcDg2ODcybmpz"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-md border border-white/10 px-4 py-2.5 font-semibold text-white no-underline hover:border-[#14B8A6]/50"
+              >
+                Instagram
+              </a>
+              <a
+                href="https://www.reddit.com/u/RaksHex_in/s/8zzCSUdomW"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-md border border-white/10 px-4 py-2.5 font-semibold text-white no-underline hover:border-[#14B8A6]/50"
+              >
+                Reddit
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <ChangelogSection />
       <InvestorFaq />
 
