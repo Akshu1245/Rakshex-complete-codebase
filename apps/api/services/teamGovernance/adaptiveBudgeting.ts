@@ -1,11 +1,7 @@
 export type AllocationMode = "locked" | "shareable" | "pooled";
 export type CapacityPriority = "experimental" | "normal" | "customer" | "critical";
 export type CapacitySourceType =
-  | "personal"
-  | "project"
-  | "team_shared"
-  | "member_shareable"
-  | "emergency_reserve";
+  "personal" | "project" | "team_shared" | "member_shareable" | "emergency_reserve";
 
 export interface CapacitySource {
   id: string;
