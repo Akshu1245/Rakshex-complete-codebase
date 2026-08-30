@@ -73,10 +73,7 @@ function money(value: number): number {
   return Math.max(0, Math.round(value * 1_000_000) / 1_000_000);
 }
 
-function canUseEmergency(
-  priority: CapacityPriority,
-  minPriority: CapacityPriority,
-): boolean {
+function canUseEmergency(priority: CapacityPriority, minPriority: CapacityPriority): boolean {
   return PRIORITY_ORDER[priority] >= PRIORITY_ORDER[minPriority];
 }
 
@@ -152,8 +149,7 @@ export function planAdaptiveCapacity(
       if (!canUseEmergency(request.priority, policy.emergencyMinPriority)) continue;
     }
 
-    const protectedUsd =
-      source.type === "member_shareable" ? money(source.protectedUsd ?? 0) : 0;
+    const protectedUsd = source.type === "member_shareable" ? money(source.protectedUsd ?? 0) : 0;
     let usableUsd = money(source.availableUsd - protectedUsd);
     if (usableUsd <= 0) continue;
 
