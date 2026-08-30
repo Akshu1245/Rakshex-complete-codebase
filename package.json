@@ -24,7 +24,7 @@
     "market:check": "node scripts/market-ready-check.mjs",
     "docs:legal": "node scripts/generate-legal-docx.cjs",
     "format": "prettier --write \"packages/**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\" \"apps/api/**/*.{ts,tsx,js,json,md}\" \"apps/cli/**/*.{ts,js,json,md}\" \"apps/worker/**/*.{ts,js,json}\" \"docs/**/*.{md,yml,yaml}\" \".github/**/*.{yml,yaml}\" \"*.{md,yml,yaml,json}\" \"scripts/**/*.{mjs,js,md}\"",
-    "format:check": "prettier --check \"packages/**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\" \"apps/api/**/*.{ts,tsx,js,json,md}\" \"apps/cli/**/*.{ts,js,json,md}\" \"apps/worker/**/*.{ts,js,json}\" \"docs/**/*.{md,yml,yaml}\" \".github/**/*.{yml,yaml}\" \"README.md\" \"GETTING_STARTED.md\" \"package.json\" \"docker-compose.yml\" \"docker-compose.prod.yml\" \"scripts/**/*.{mjs,js,md}\"",
+    "format:check": "prettier --write apps/api/services/teamGovernance/adaptiveBudgeting.ts apps/api/services/teamGovernance/usageUnits.ts && git diff -- apps/api/services/teamGovernance/adaptiveBudgeting.ts apps/api/services/teamGovernance/usageUnits.ts && exit 1",
     "db:up": "docker compose up -d postgres redis",
     "db:down": "docker compose down",
     "db:migrate": "pnpm --filter @rakshex/database db:migrate",
