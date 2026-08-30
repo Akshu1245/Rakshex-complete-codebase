@@ -1,0 +1,199 @@
+/* Mobile and tablet safety layer.
+ * Keep this file conservative: it prevents overflow, improves touch targets,
+ * and makes dense product surfaces usable without changing desktop layout.
+ */
+
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body,
+main,
+section,
+article,
+header,
+footer,
+nav,
+aside,
+div {
+  min-width: 0;
+}
+
+img,
+picture,
+video,
+canvas,
+svg {
+  max-width: 100%;
+}
+
+img,
+video,
+canvas {
+  height: auto;
+}
+
+input,
+select,
+textarea,
+button {
+  max-width: 100%;
+}
+
+pre {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+code,
+pre,
+a,
+p,
+li,
+td,
+th,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  overflow-wrap: anywhere;
+}
+
+.overflow-x-auto,
+.overflow-auto {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-inline: contain;
+}
+
+/* Tables remain readable on phones instead of forcing the entire page wider. */
+table {
+  max-width: 100%;
+}
+
+@media (max-width: 767px) {
+  body {
+    min-height: 100dvh;
+  }
+
+  /* iOS zooms inputs whose font is below 16px. */
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  button,
+  [role="button"],
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"] {
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+
+  a,
+  button,
+  [role="button"] {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(20, 184, 166, 0.18);
+  }
+
+  /* Reduce desktop-scale page/card padding on phone widths. */
+  .p-8 {
+    padding: 1.25rem !important;
+  }
+
+  .p-6 {
+    padding: 1rem !important;
+  }
+
+  .px-8 {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  .px-6 {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  .gap-8 {
+    gap: 1.25rem !important;
+  }
+
+  .gap-6 {
+    gap: 1rem !important;
+  }
+
+  /* A dialog should never extend beyond the usable mobile viewport. */
+  [role="dialog"],
+  [aria-modal="true"] {
+    max-width: calc(100vw - 1.5rem) !important;
+    max-height: calc(100dvh - 1.5rem) !important;
+    overflow: auto;
+  }
+
+  .glass-card,
+  .glass-panel {
+    min-width: 0;
+  }
+
+  /* Long action rows can wrap instead of clipping. */
+  .mobile-wrap-actions {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    width: 100%;
+  }
+
+  .mobile-wrap-actions > * {
+    min-width: 0;
+  }
+
+  .mobile-stack-actions {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100%;
+  }
+
+  .mobile-stack-actions > a,
+  .mobile-stack-actions > button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .mobile-scroll-x {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  /* Tablet layouts get slightly tighter spacing while retaining multi-column UI. */
+  .p-8 {
+    padding: 1.5rem !important;
+  }
+
+  .gap-8 {
+    gap: 1.5rem !important;
+  }
+}
+
+@supports (padding: max(0px)) {
+  .mobile-safe-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  .mobile-safe-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+}
