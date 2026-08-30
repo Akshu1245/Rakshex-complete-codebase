@@ -13,7 +13,7 @@
     "test": "vitest run --config vitest.config.ts"
   },
   "dependencies": {
-    "@azure/identity": "^4.13.1",
+    "@azure/identity": "^4.13.2",
     "@azure/keyvault-secrets": "^4.11.2",
     "@noble/hashes": "^2.2.0",
     "@octokit/app": "^16.1.2",
