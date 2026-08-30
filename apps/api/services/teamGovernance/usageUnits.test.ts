@@ -34,12 +34,10 @@ describe("usage unit normalization", () => {
       costUsd: 0.7,
     });
 
-    expect(
-      event.measurements.some((m) => m.unit === "audio_second" && m.quantity === 95),
-    ).toBe(true);
-    expect(event.measurements.some((m) => m.unit === "credit" && m.quantity === 320)).toBe(
+    expect(event.measurements.some((m) => m.unit === "audio_second" && m.quantity === 95)).toBe(
       true,
     );
+    expect(event.measurements.some((m) => m.unit === "credit" && m.quantity === 320)).toBe(true);
     expect(event.measurements.some((m) => m.unit.includes("token"))).toBe(false);
   });
 
