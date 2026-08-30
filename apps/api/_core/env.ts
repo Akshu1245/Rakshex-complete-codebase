@@ -51,15 +51,14 @@ const EnvSchema = z.object({
   OPENROUTER_API_KEY: z.string().default(""),
   OPENROUTER_DEFAULT_MODEL: z.string().default("deepseek/deepseek-chat-v3-0324:free"),
 
-  // Transactional email. Production must provide real configuration rather than
-  // silently inheriting a placeholder credential.
-  SMTP_HOST: isProduction ? requiredString("SMTP_HOST") : z.string().default(""),
+  // Transactional email is optional during private beta. When SMTP is not configured,
+  // email-dependent flows remain unavailable rather than blocking the entire control plane.
+  // Do not ship placeholder SMTP credentials just to satisfy startup validation.
+  SMTP_HOST: z.string().default(""),
   SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(587),
-  SMTP_USER: isProduction ? requiredString("SMTP_USER") : z.string().default(""),
-  SMTP_PASS: isProduction ? requiredString("SMTP_PASS") : z.string().default(""),
-  SMTP_FROM: isProduction
-    ? z.string().email("SMTP_FROM must be a valid email")
-    : z.string().default("noreply@rakshex.in"),
+  SMTP_USER: z.string().default(""),
+  SMTP_PASS: z.string().default(""),
+  SMTP_FROM: z.string().default(""),
   APP_URL: isProduction
     ? requiredUrl("APP_URL")
     : z.string().url("APP_URL must be a valid URL").default("http://localhost:3001"),
@@ -253,10 +252,8 @@ export function validateEnv(): {
     if (!ENV.vaultKey)
       errors.push("RAKSHEX_VAULT_KEY is not set — credential vault cannot operate");
     if (!ENV.redisUrl) errors.push("REDIS_URL is not set — required in production (no mock Redis)");
-    if (!ENV.smtpHost || !ENV.smtpUser || !ENV.smtpPass) {
-      errors.push(
-        "SMTP_HOST/SMTP_USER/SMTP_PASS are required in production for transactional mail",
-      );
+    if (!ENV.smtpHost || !ENV.smtpUser || !ENV.smtpPass || !ENV.smtpFrom) {
+      warnings.push("SMTP is not configured — transactional email flows are disabled");
     }
     if (!ENV.metricsToken) {
       errors.push("METRICS_TOKEN is not set — /metrics must not be publicly scrapable");
