@@ -40,31 +40,28 @@ export default function ReportListPage() {
       addToast("error", "No findings to include — run a scan first");
       return;
     }
-    createReport.mutate({
-      scanId: latestScanId,
-      expiresInDays,
-    });
+    createReport.mutate({ scanId: latestScanId, expiresInDays });
   };
 
   return (
-    <div className="text-white p-8 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-blue-400">Scan Reports</h1>
-          <p className="text-gray-400 mt-1">
+    <div className="text-white p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto overflow-x-hidden">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-8">
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold text-blue-400">Scan Reports</h1>
+          <p className="text-gray-400 mt-1 break-words">
             Generate a shareable report from your current findings, or open an existing report ID.
           </p>
         </div>
-        <Link href="/dashboard" className="text-blue-400 hover:text-blue-300 text-sm">
+        <Link href="/dashboard" className="inline-flex min-h-11 items-center text-blue-400 hover:text-blue-300 text-sm shrink-0">
           ← Dashboard
         </Link>
       </div>
 
-      <div className="bg-black/50 border border-gray-700 rounded-lg p-6 mb-8 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
+      <div className="bg-black/50 border border-gray-700 rounded-lg p-4 sm:p-6 mb-8 space-y-4 min-w-0">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
             <h2 className="text-lg font-semibold">Generate from findings</h2>
-            <p className="text-sm text-gray-400 mt-1">
+            <p className="text-sm text-gray-400 mt-1 break-all">
               {findingsQuery.isLoading
                 ? "Loading findings…"
                 : latestScanId
@@ -72,11 +69,11 @@ export default function ReportListPage() {
                   : "No completed scan findings available"}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-2 w-full sm:w-auto sm:flex-row sm:items-center">
             <select
               value={expiresInDays}
               onChange={(event) => setExpiresInDays(Number(event.target.value))}
-              className="px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-sm"
+              className="w-full sm:w-auto px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-sm"
               aria-label="Report expiry"
             >
               <option value={7}>Expires in 7 days</option>
@@ -87,7 +84,7 @@ export default function ReportListPage() {
               type="button"
               onClick={handleGenerate}
               disabled={createReport.isPending || findingsQuery.isLoading || !latestScanId}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-md text-sm font-semibold"
+              className="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-md text-sm font-semibold"
             >
               {createReport.isPending ? "Generating…" : "Generate report"}
             </button>
@@ -103,10 +100,10 @@ export default function ReportListPage() {
         )}
       </div>
 
-      <div className="bg-black/50 border border-gray-700 rounded-lg p-6 mb-8">
+      <div className="bg-black/50 border border-gray-700 rounded-lg p-4 sm:p-6 mb-8 min-w-0">
         <h2 className="text-lg font-semibold mb-3">Open by report ID</h2>
         <form
-          className="flex gap-2"
+          className="flex flex-col gap-2 sm:flex-row"
           onSubmit={(e) => {
             e.preventDefault();
             const id = openId.trim();
@@ -118,39 +115,28 @@ export default function ReportListPage() {
             value={openId}
             onChange={(e) => setOpenId(e.target.value)}
             placeholder="Report ID"
-            className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-sm"
+            className="min-w-0 flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-sm"
           />
-          <button
-            type="submit"
-            className="px-4 py-2 border border-gray-500 rounded-md text-sm hover:bg-gray-700"
-          >
+          <button type="submit" className="w-full sm:w-auto px-4 py-2 border border-gray-500 rounded-md text-sm hover:bg-gray-700">
             Open
           </button>
         </form>
       </div>
 
-      <div className="bg-black/50 border border-gray-700 rounded-lg p-6">
+      <div className="bg-black/50 border border-gray-700 rounded-lg p-4 sm:p-6 min-w-0">
         <h2 className="text-lg font-semibold mb-3">Your generated reports</h2>
         {reportsQuery.isLoading ? (
           <p className="text-sm text-gray-400">Loading reports…</p>
         ) : !reportsQuery.data?.length ? (
-          <EmptyState
-            compact
-            title="No recent reports"
-            description="Authenticated, expiring reports you create will appear here."
-          />
+          <EmptyState compact title="No recent reports" description="Authenticated, expiring reports you create will appear here." />
         ) : (
           <ul className="space-y-2">
             {reportsQuery.data.map((r) => (
-              <li
-                key={r.id}
-                className="flex items-center justify-between gap-3 p-3 rounded-md border border-gray-700"
-              >
+              <li key={r.id} className="flex flex-col gap-3 p-3 rounded-md border border-gray-700 sm:flex-row sm:items-center sm:justify-between">
                 <Link href={`/report/${r.id}`} className="min-w-0 flex-1 hover:border-blue-500/50">
-                  <p className="font-mono text-sm text-blue-300">{r.id}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Score {r.score} · {r.findingCount} findings ·{" "}
-                    {new Date(r.createdAt).toLocaleString()}
+                  <p className="font-mono text-sm text-blue-300 break-all">{r.id}</p>
+                  <p className="text-xs text-gray-500 mt-1 break-words">
+                    Score {r.score} · {r.findingCount} findings · {new Date(r.createdAt).toLocaleString()}
                     {r.revokedAt
                       ? " · revoked"
                       : r.expiresAt
@@ -158,22 +144,20 @@ export default function ReportListPage() {
                         : ""}
                   </p>
                 </Link>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:shrink-0">
                   {!r.revokedAt && (
                     <button
                       type="button"
-                      className="text-xs px-3 py-1.5 rounded-md border border-red-500/40 text-red-300 hover:bg-red-900/20"
+                      className="w-full sm:w-auto text-xs px-3 py-1.5 rounded-md border border-red-500/40 text-red-300 hover:bg-red-900/20"
                       disabled={revokeReport.isPending}
                       onClick={() => {
-                        if (confirm("Revoke this shareable report link?")) {
-                          revokeReport.mutate({ id: r.id });
-                        }
+                        if (confirm("Revoke this shareable report link?")) revokeReport.mutate({ id: r.id });
                       }}
                     >
                       Revoke
                     </button>
                   )}
-                  <Link href={`/report/${r.id}`} className="text-sm text-gray-400">
+                  <Link href={`/report/${r.id}`} className="inline-flex min-h-11 items-center justify-center text-sm text-gray-400">
                     View →
                   </Link>
                 </div>
