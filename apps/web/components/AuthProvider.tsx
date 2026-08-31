@@ -35,6 +35,21 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function ensureCsrfCookie(): void {
+  if (typeof document === "undefined") return;
+  const existing = document.cookie
+    .split("; ")
+    .find((row) => row.startsWith("csrf-token="))
+    ?.split("=")[1];
+  if (existing) return;
+
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  const token = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  const secure = window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `csrf-token=${token}; Path=/; SameSite=Lax${secure}`;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { data: nextAuthSession, status: nextAuthStatus } = useSession();
@@ -55,6 +70,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (meQuery.isPending || meQuery.data) return;
     const sessionKey = nextAuthSession.user?.email ?? "session";
     if (syncedForSession.current === sessionKey || oauthSyncMutation.isPending) return;
+
+    // Social sign-in creates a NextAuth session but does not pass through
+    // auth.login/auth.signup, so the app's double-submit CSRF cookie may not
+    // exist yet. Bootstrap the same cryptographically-random browser token
+    // before oauthSync so the tRPC client can mirror it in x-csrf-token.
+    ensureCsrfCookie();
+
     syncedForSession.current = sessionKey;
     oauthSyncMutation.mutate(undefined, {
       onSuccess: () => meQuery.refetch(),
