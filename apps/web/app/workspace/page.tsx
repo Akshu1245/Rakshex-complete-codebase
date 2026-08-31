@@ -27,20 +27,20 @@ export default function WorkspacePage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white p-8 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
-        <div>
+    <div className="min-h-screen bg-[#0a0a0a] text-white p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto overflow-x-hidden">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
+        <div className="min-w-0">
           <h1 className="text-2xl font-semibold">Workspace</h1>
           <p className="text-neutral-500 text-sm">Settings, members, and permissions</p>
         </div>
-        <div className="flex gap-3 text-sm">
-          <Link href="/team" className="text-teal-400 hover:underline">
+        <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+          <Link href="/team" className="text-teal-400 hover:underline min-h-11 inline-flex items-center">
             Team
           </Link>
-          <Link href="/projects" className="text-teal-400 hover:underline">
+          <Link href="/projects" className="text-teal-400 hover:underline min-h-11 inline-flex items-center">
             Projects
           </Link>
-          <Link href="/api-keys" className="text-teal-400 hover:underline">
+          <Link href="/api-keys" className="text-teal-400 hover:underline min-h-11 inline-flex items-center">
             API keys
           </Link>
         </div>
@@ -50,14 +50,14 @@ export default function WorkspacePage() {
 
       {workspace && (
         <div className="space-y-6">
-          <section className="border border-neutral-800 rounded-lg p-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="font-medium">{workspace.name}</h2>
+          <section className="border border-neutral-800 rounded-lg p-4 sm:p-6">
+            <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <h2 className="font-medium break-words">{workspace.name}</h2>
               {workspaces.length > 1 && (
                 <select
                   value={workspace.id}
                   onChange={(event) => switchWorkspace(Number(event.target.value))}
-                  className="rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm"
+                  className="w-full sm:w-auto rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm"
                   aria-label="Active workspace"
                 >
                   {workspaces.map((item) => (
@@ -68,22 +68,22 @@ export default function WorkspacePage() {
                 </select>
               )}
             </div>
-            <p className="text-sm text-neutral-500">
+            <p className="mt-2 text-sm text-neutral-500 break-words">
               slug: {workspace.slug} · your role: {perms.data?.role ?? "…"}
             </p>
           </section>
 
-          <section className="border border-neutral-800 rounded-lg p-6">
+          <section className="border border-neutral-800 rounded-lg p-4 sm:p-6">
             <h2 className="font-medium mb-4">Members</h2>
             <ul className="space-y-2">
               {(members.data ?? []).map(
                 (m: { userId: number; role: string; name?: string | null; email?: string }) => (
                   <li
                     key={m.userId}
-                    className="flex justify-between text-sm border-b border-neutral-900 py-2"
+                    className="flex flex-col gap-1 text-sm border-b border-neutral-900 py-3 sm:flex-row sm:items-center sm:justify-between"
                   >
-                    <span>{m.name || m.email || `User #${m.userId}`}</span>
-                    <span className="text-neutral-400">{m.role}</span>
+                    <span className="min-w-0 break-words">{m.name || m.email || `User #${m.userId}`}</span>
+                    <span className="text-neutral-400 shrink-0">{m.role}</span>
                   </li>
                 ),
               )}
@@ -91,38 +91,38 @@ export default function WorkspacePage() {
           </section>
 
           {perms.data?.permissions.billing.read && (
-            <section className="border border-neutral-800 rounded-lg p-6">
+            <section className="border border-neutral-800 rounded-lg p-4 sm:p-6 overflow-hidden">
               <WorkspaceSubscriptionCard workspaceId={workspaceId} />
             </section>
           )}
         </div>
       )}
 
-      <section className="border border-neutral-800 rounded-lg p-6 mt-6">
+      <section className="border border-neutral-800 rounded-lg p-4 sm:p-6 mt-6">
         <h2 className="font-medium mb-4">Create workspace</h2>
         <form
           onSubmit={(e) => {
             e.preventDefault();
             create.mutate({ name });
           }}
-          className="flex gap-2"
+          className="flex flex-col gap-2 sm:flex-row"
         >
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Workspace name"
-            className="flex-1 px-3 py-2 bg-neutral-900 border border-neutral-700 rounded-md text-sm"
+            className="min-w-0 flex-1 px-3 py-2 bg-neutral-900 border border-neutral-700 rounded-md text-sm"
             required
           />
           <button
             type="submit"
             disabled={create.isPending}
-            className="px-4 py-2 bg-teal-600 rounded-md text-sm"
+            className="w-full sm:w-auto px-4 py-2 bg-teal-600 rounded-md text-sm"
           >
             Create
           </button>
         </form>
-        {create.error && <p className="text-red-400 text-sm mt-2">{create.error.message}</p>}
+        {create.error && <p className="text-red-400 text-sm mt-2 break-words">{create.error.message}</p>}
       </section>
     </div>
   );
