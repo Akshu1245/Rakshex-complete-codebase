@@ -21,36 +21,33 @@ for (const viewport of [
   { name: "phone-430", width: 430, height: 900 },
   { name: "tablet-820", width: 820, height: 1180 },
 ]) {
-  test.describe(`responsive public UI: ${viewport.name}`, () => {
+  test.describe(`Smoke responsive public UI: ${viewport.name}`, () => {
     test.use({ viewport: { width: viewport.width, height: viewport.height } });
 
-    for (const route of publicRoutes) {
-      test(`${route} stays inside viewport`, async ({ page }) => {
-        await dismissBrowserNotices(page);
+    test("public surfaces stay inside the viewport and navigation remains usable", async ({ page }) => {
+      test.setTimeout(120_000);
+      await dismissBrowserNotices(page);
+
+      for (const route of publicRoutes) {
         await page.goto(route, { waitUntil: "domcontentloaded" });
         await expect(page.locator("body")).toBeVisible();
         await expectNoHorizontalPageOverflow(page);
-      });
-    }
-
-    test("public mobile navigation is usable", async ({ page }) => {
-      await dismissBrowserNotices(page);
-      await page.goto("/", { waitUntil: "domcontentloaded" });
-
-      if (viewport.width < 1024) {
-        const menuButton = page.getByRole("button", { name: /open navigation menu/i });
-        await expect(menuButton).toBeVisible();
-        await expect(menuButton).toHaveCSS("min-height", /4[04]px|2\.5rem/);
-        await menuButton.click();
-        await expect(page.getByRole("navigation").getByRole("link", { name: "Product" })).toBeVisible();
       }
 
+      await page.goto("/", { waitUntil: "domcontentloaded" });
+      const menuButton = page.getByRole("button", { name: /open navigation menu/i });
+      await expect(menuButton).toBeVisible();
+      const menuBox = await menuButton.boundingBox();
+      expect(menuBox?.height ?? 0).toBeGreaterThanOrEqual(40);
+      expect(menuBox?.width ?? 0).toBeGreaterThanOrEqual(40);
+      await menuButton.click();
+      await expect(page.getByRole("navigation").getByRole("link", { name: "Product" })).toBeVisible();
       await expectNoHorizontalPageOverflow(page);
     });
   });
 }
 
-test.describe("responsive authenticated product UI", () => {
+test.describe("Smoke responsive authenticated product UI", () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
   test("workspace and scanner remain usable on a phone", async ({ page }) => {
@@ -78,10 +75,8 @@ test.describe("responsive authenticated product UI", () => {
     await expect(page.getByText(/live scan terminal/i)).toBeVisible({ timeout: 20_000 });
     await expectNoHorizontalPageOverflow(page);
 
-    const config = page.locator("aside.w-80");
-    const terminal = page.locator("aside.w-96");
-    const configBox = await config.boundingBox();
-    const terminalBox = await terminal.boundingBox();
+    const configBox = await page.locator("aside.w-80").boundingBox();
+    const terminalBox = await page.locator("aside.w-96").boundingBox();
     expect(configBox?.width ?? 0).toBeLessThanOrEqual(392);
     expect(terminalBox?.width ?? 0).toBeLessThanOrEqual(392);
   });
