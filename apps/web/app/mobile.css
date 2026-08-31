@@ -175,6 +175,76 @@ table {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
+
+  /* Scanning is a three-column desktop workbench. On phones it becomes a
+   * vertical workflow: configuration → findings → terminal → patch queue.
+   * The long escaped selector intentionally scopes these overrides to this
+   * distinctive full-height scanning shell instead of altering every flex UI.
+   */
+  .h-\[calc\(100vh-4rem\)\] {
+    height: auto !important;
+    min-height: calc(100dvh - 4rem) !important;
+    overflow: visible !important;
+  }
+
+  .h-\[calc\(100vh-4rem\)\] > .flex-grow.flex.overflow-hidden {
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: visible !important;
+  }
+
+  .h-\[calc\(100vh-4rem\)\] > .flex-grow.flex.overflow-hidden > aside.w-80,
+  .h-\[calc\(100vh-4rem\)\] > .flex-grow.flex.overflow-hidden > aside.w-96 {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: none !important;
+  }
+
+  .h-\[calc\(100vh-4rem\)\] > .flex-grow.flex.overflow-hidden > aside.w-80 {
+    border-right-width: 0 !important;
+    border-bottom-width: 1px !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .h-\[calc\(100vh-4rem\)\] > .flex-grow.flex.overflow-hidden > section.flex-1 {
+    padding: 1rem !important;
+    overflow: visible !important;
+  }
+
+  .h-\[calc\(100vh-4rem\)\] > .flex-grow.flex.overflow-hidden > aside.w-96 {
+    min-height: 22rem;
+    border-left-width: 0 !important;
+    border-top-width: 1px !important;
+  }
+
+  .h-\[calc\(100vh-4rem\)\] footer.h-24 {
+    height: auto !important;
+    min-height: 0 !important;
+    flex-wrap: wrap !important;
+    gap: 0.75rem !important;
+    padding: 1rem !important;
+  }
+
+  .h-\[calc\(100vh-4rem\)\] footer.h-24 > .h-10.w-px {
+    display: none !important;
+  }
+
+  .h-\[calc\(100vh-4rem\)\] footer.h-24 > .flex-1 {
+    order: 3;
+    width: 100%;
+    flex-basis: 100%;
+  }
+
+  .h-\[calc\(100vh-4rem\)\] footer.h-24 > a.flex-shrink-0 {
+    margin-left: auto;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  .h-\[calc\(100vh-4rem\)\] .min-w-\[280px\] {
+    min-width: min(280px, calc(100vw - 2.5rem)) !important;
+  }
 }
 
 @media (min-width: 768px) and (max-width: 1024px) {
@@ -185,6 +255,15 @@ table {
 
   .gap-8 {
     gap: 1.5rem !important;
+  }
+
+  /* Keep the scanner useful on portrait tablets by reducing fixed side rails. */
+  .h-\[calc\(100vh-4rem\)\] > .flex-grow.flex.overflow-hidden > aside.w-80 {
+    width: 15rem !important;
+  }
+
+  .h-\[calc\(100vh-4rem\)\] > .flex-grow.flex.overflow-hidden > aside.w-96 {
+    width: 18rem !important;
   }
 }
 
