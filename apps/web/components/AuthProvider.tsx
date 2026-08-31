@@ -4,20 +4,6 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { trpc } from "@/lib/trpc";
 
-// Auth state is sourced from the Node tRPC backend via `auth.me`.
-// The session is held in an HttpOnly JWT cookie set by the server's
-// `auth.login` / `auth.signup` mutations, so the client no longer
-// touches localStorage. This replaces the legacy Python `/auth/login`
-// + localStorage.token flow.
-//
-// Google/GitHub sign-in goes through NextAuth instead, which issues its
-// own, separate session cookie that `auth.me` doesn't recognize. Without
-// a bridge, a successful social sign-in redirects straight back to
-// /login (NextAuth says "authenticated", the app's own session check
-// says "no user"). `auth.oauthSync` reads NextAuth's cookie server-side,
-// verifies it, and establishes a real app session from it — this effect
-// triggers that exchange once per NextAuth session.
-
 interface User {
   id?: number | string;
   email?: string;
@@ -58,8 +44,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     staleTime: 60_000,
   });
   const logoutMutation = trpc.auth.logout.useMutation();
-  const oauthSyncMutation = trpc.auth.oauthSync.useMutation();
   const syncedForSession = useRef<string | null>(null);
+  const syncInFlight = useRef(false);
 
   const refresh = useCallback(() => {
     meQuery.refetch();
@@ -68,26 +54,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (nextAuthStatus !== "authenticated" || !nextAuthSession) return;
     if (meQuery.isPending || meQuery.data) return;
+
     const sessionKey = nextAuthSession.user?.email ?? "session";
-    if (syncedForSession.current === sessionKey || oauthSyncMutation.isPending) return;
+    if (syncedForSession.current === sessionKey || syncInFlight.current) return;
 
-    // Social sign-in creates a NextAuth session but does not pass through
-    // auth.login/auth.signup, so the app's double-submit CSRF cookie may not
-    // exist yet. Bootstrap the same cryptographically-random browser token
-    // before oauthSync so the tRPC client can mirror it in x-csrf-token.
     ensureCsrfCookie();
-
     syncedForSession.current = sessionKey;
-    oauthSyncMutation.mutate(undefined, {
-      onSuccess: () => meQuery.refetch(),
-      onError: () => {
-        // Leave syncedForSession set — don't hammer the endpoint on a
-        // real failure (e.g. NEXTAUTH_SECRET misconfigured server-side).
-      },
-    });
-    // oauthSyncMutation is intentionally omitted from deps: it's a new
-    // object each render, and including it would re-run this on every
-    // mutation state change instead of only when the session changes.
+    syncInFlight.current = true;
+
+    void fetch("/api/auth/bridge", {
+      method: "POST",
+      credentials: "include",
+      cache: "no-store",
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`Social session bridge failed (${response.status})`);
+        }
+        await meQuery.refetch();
+      })
+      .catch(() => {
+        // Permit one retry on a later render/network recovery instead of
+        // leaving the authenticated NextAuth user permanently stuck.
+        syncedForSession.current = null;
+      })
+      .finally(() => {
+        syncInFlight.current = false;
+      });
   }, [nextAuthStatus, nextAuthSession, meQuery.isPending, meQuery.data]);
 
   const logout = useCallback(async () => {
@@ -103,15 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value: AuthContextType = {
     user: (meQuery.data as User | null | undefined) ?? null,
-    // AuthGuard redirects to /login when !loading && !user.
-    // isPending covers the first fetch, but is false during a
-    // refetch-after-error (status=error, isFetching=true, data=undefined).
-    // CI traces on 016d7aa show dashboard/error.js then a bounce to
-    // /login while cookies were valid and payment.getCurrentPlan still
-    // had trial data. Treat "no user yet and a fetch is in flight" as
-    // loading so the guard waits for auth.me instead of unmounting
-    // the Agent Firewall form mid-fill.
-    loading: !meQuery.data && (meQuery.isPending || meQuery.isFetching),
+    loading: !meQuery.data && (meQuery.isPending || meQuery.isFetching || syncInFlight.current),
     logout,
     refresh,
   };
