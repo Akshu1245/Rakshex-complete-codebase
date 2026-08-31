@@ -50,8 +50,8 @@ for (const viewport of [
 test.describe("Smoke responsive authenticated product UI", () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
-  test("workspace and scanner remain usable on a phone", async ({ page }) => {
-    test.setTimeout(180_000);
+  test("core product surfaces remain usable on a phone", async ({ page }) => {
+    test.setTimeout(240_000);
     await dismissBrowserNotices(page);
 
     const user = uniqueTestUser("mobile");
@@ -79,5 +79,12 @@ test.describe("Smoke responsive authenticated product UI", () => {
     const terminalBox = await page.locator("aside.w-96").boundingBox();
     expect(configBox?.width ?? 0).toBeLessThanOrEqual(392);
     expect(terminalBox?.width ?? 0).toBeLessThanOrEqual(392);
+
+    for (const route of ["/analytics", "/token-analytics", "/findings", "/report", "/team", "/agent-firewall", "/control-plane"]) {
+      await page.goto(route, { waitUntil: "domcontentloaded" });
+      await expect(page).toHaveURL((url) => url.pathname === route);
+      await expect(page.locator("body")).toBeVisible();
+      await expectNoHorizontalPageOverflow(page);
+    }
   });
 });
