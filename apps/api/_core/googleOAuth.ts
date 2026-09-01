@@ -22,6 +22,7 @@ import {
   deriveCodeChallenge,
   generateCodeVerifier,
   generateOAuthState,
+  normalizeRedirectAfter,
   storeOAuthPending,
 } from "../services/oauthPkce";
 import { generateAccessToken, generateRefreshToken, hashRefreshToken } from "./tokens";
@@ -57,7 +58,7 @@ export function registerGoogleOAuthRoutes(app: Express) {
     const state = generateOAuthState();
     const codeVerifier = generateCodeVerifier();
     const codeChallenge = deriveCodeChallenge(codeVerifier);
-    const redirectAfter = typeof req.query.redirect === "string" ? req.query.redirect : undefined;
+    const redirectAfter = normalizeRedirectAfter(req.query.redirect);
 
     await storeOAuthPending(state, {
       provider: "google",
