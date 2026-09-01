@@ -27,6 +27,8 @@ const routes = [
   "/compare/snyk",
   "/incidents",
   "/blog",
+  "/blog/google-cloud-api-key-18000-bill-2026",
+  "/blog/claude-code-approval-fatigue-action-policy-2026",
   "/blog/cloudflare-ai-spend-limits-2026",
   "/blog/google-cloud-mcp-agent-identity-2026",
   "/blog/microsoft-mcp-control-plane-2026",
