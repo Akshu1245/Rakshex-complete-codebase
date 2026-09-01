@@ -13,6 +13,7 @@ import {
   deriveCodeChallenge,
   generateCodeVerifier,
   generateOAuthState,
+  normalizeRedirectAfter,
   storeOAuthPending,
 } from "../services/oauthPkce";
 import {
@@ -45,7 +46,7 @@ export function registerGitHubOAuthRoutes(app: Express) {
     const state = generateOAuthState();
     const codeVerifier = generateCodeVerifier();
     const codeChallenge = deriveCodeChallenge(codeVerifier);
-    const redirectAfter = typeof req.query.redirect === "string" ? req.query.redirect : undefined;
+    const redirectAfter = normalizeRedirectAfter(req.query.redirect);
 
     await storeOAuthPending(state, {
       provider: "github",
@@ -175,7 +176,6 @@ export function registerGitHubOAuthRoutes(app: Express) {
         return;
       }
 
-      // Dual-token session
       const refreshToken = generateRefreshToken();
       const refreshTokenHash = hashRefreshToken(refreshToken);
       const expiresAt = new Date(Date.now() + REFRESH_TOKEN_MAX_AGE_MS);
@@ -200,7 +200,6 @@ export function registerGitHubOAuthRoutes(app: Express) {
         path: "/api/trpc/auth.refreshToken",
       });
 
-      // Legacy cookie for middleware compatibility
       const sessionToken = await sdk.createSessionToken(openId, {
         name,
         expiresInMs: ONE_YEAR_MS,
