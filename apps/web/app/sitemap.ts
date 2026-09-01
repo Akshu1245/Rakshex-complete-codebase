@@ -25,6 +25,7 @@ const routes = [
   "/compare/langsmith",
   "/compare/datadog",
   "/compare/snyk",
+  "/incidents",
   "/blog",
   "/blog/cloudflare-ai-spend-limits-2026",
   "/blog/google-cloud-mcp-agent-identity-2026",
@@ -54,7 +55,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return routes.map((route) => ({
     url: `${SITE_URL}${route}`,
     lastModified: new Date().toISOString(),
-    changeFrequency: route === "" ? "weekly" : route === "/blog" || route.startsWith("/blog/") ? "daily" : "monthly",
-    priority: route === "" ? 1.0 : route === "/blog" ? 0.85 : 0.7,
+    changeFrequency:
+      route === "" || route === "/incidents" || route === "/blog" || route.startsWith("/blog/")
+        ? "daily"
+        : "monthly",
+    priority: route === "" ? 1.0 : route === "/incidents" ? 0.9 : route === "/blog" ? 0.85 : 0.7,
   }));
 }
