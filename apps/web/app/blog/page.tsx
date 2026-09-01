@@ -42,18 +42,51 @@ const posts = [
   },
 ];
 
+const audienceMenus = [
+  "Solo Developer",
+  "Developer Teams",
+  "Companies & Startups",
+  "Enterprise / Big MNC",
+];
+
 export default function BlogIndex() {
   return (
     <main className="min-h-screen bg-transparent text-white pt-28 pb-20 px-6 xl:px-8">
       <div className="max-w-6xl mx-auto">
-        <div className="max-w-3xl mb-12">
-          <p className="text-[#14B8A6] text-sm font-medium mb-3">RaksHex Blog</p>
+        <div className="max-w-4xl mb-10">
+          <p className="text-[#14B8A6] text-sm font-medium mb-3">RaksHex Research & Analysis</p>
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-5">
-            What breaks when AI stops answering and starts acting.
+            The long-form layer behind RaksHex Incident Intelligence.
           </h1>
           <p className="text-[#9CA3AF] text-lg leading-relaxed">
-            We track consequential AI-agent incidents, API cost controls, MCP security, credential risks and runtime governance. Every article links to its sources and separates what the market proved from what RaksHex can prove today.
+            The incident database is the evidence layer. This blog is where we unpack the architecture, economics and security lessons behind those records without turning every event into a product pitch.
           </p>
+          <div className="flex flex-wrap gap-3 mt-6">
+            <Link
+              href="/incidents"
+              className="rounded-lg bg-[#14B8A6] px-5 py-3 text-sm font-semibold text-white hover:bg-[#0D9488] transition-colors"
+            >
+              Open Incident Intelligence →
+            </Link>
+            <Link
+              href="/demo"
+              className="rounded-lg border border-[#1A1F2E] px-5 py-3 text-sm font-semibold text-white hover:border-[#14B8A6]/50 transition-colors"
+            >
+              Open Agent Firewall demo
+            </Link>
+          </div>
+        </div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-10">
+          {audienceMenus.map((audience) => (
+            <Link
+              key={audience}
+              href="/incidents"
+              className="rounded-xl border border-[#1A1F2E] bg-black/35 p-4 text-sm text-slate-300 hover:border-[#14B8A6]/40 transition-colors"
+            >
+              {audience}
+            </Link>
+          ))}
         </div>
 
         <div className="grid lg:grid-cols-[1fr_300px] gap-10 items-start">
@@ -84,6 +117,13 @@ export default function BlogIndex() {
           </section>
 
           <aside className="space-y-4 lg:sticky lg:top-28">
+            <div className="rounded-2xl border border-[#14B8A6]/25 bg-[#14B8A6]/5 p-6">
+              <h2 className="font-semibold text-white mb-2">Flagship: Incident Intelligence</h2>
+              <p className="text-sm text-slate-400 leading-6 mb-4">
+                Structured records by audience, severity, root cause, missing control and RaksHex impact: Preventable, Reducible, Detectable or Outside current scope.
+              </p>
+              <Link href="/incidents" className="text-sm text-[#5eead4] hover:underline">Browse incidents →</Link>
+            </div>
             <div className="rounded-2xl border border-[#1A1F2E] bg-black/40 p-6">
               <h2 className="font-semibold text-white mb-3">Editorial rule</h2>
               <p className="text-sm text-slate-400 leading-6">
@@ -106,13 +146,6 @@ export default function BlogIndex() {
                   <span key={topic} className="rounded-full border border-slate-800 px-2.5 py-1.5 text-slate-400">{topic}</span>
                 ))}
               </div>
-            </div>
-            <div className="rounded-2xl border border-[#14B8A6]/25 bg-[#14B8A6]/5 p-6">
-              <h2 className="font-semibold text-white mb-2">What RaksHex is building</h2>
-              <p className="text-sm text-slate-400 leading-6 mb-4">
-                Pre-execution authorization for consequential agent actions: identity, delegated authority, policy, credential mediation and an Action Ledger.
-              </p>
-              <Link href="/demo" className="text-sm text-[#5eead4] hover:underline">Open the Agent Firewall demo →</Link>
             </div>
           </aside>
         </div>
