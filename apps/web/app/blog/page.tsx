@@ -9,6 +9,14 @@ export const metadata = {
 
 const posts = [
   {
+    href: "/blog/india-upi-agentic-payments-delegated-spend-2026",
+    date: "2 Sep 2026",
+    category: "Delegated authority",
+    title: "India is preparing agentic UPI payments. Delegated spend needs policy before execution.",
+    summary:
+      "Reuters reports that India is preparing a UPI framework for AI agents with delegated funds, spending limits, identity checks and liability rules. The deeper issue is action-level authorization over money.",
+  },
+  {
     href: "/blog/google-cloud-api-key-18000-bill-2026",
     date: "1 Sep 2026",
     category: "Credentials & cost",
