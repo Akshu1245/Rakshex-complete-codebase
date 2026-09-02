@@ -48,7 +48,9 @@ export async function migrate(databaseUrl?: string): Promise<string[]> {
   const url = databaseUrl ?? process.env.DATABASE_URL;
   if (!url) throw new Error("DATABASE_URL is required for migrations");
   if (!url.startsWith("postgres")) {
-    throw new Error("DATABASE_URL must be a PostgreSQL connection string (got non-postgres scheme)");
+    throw new Error(
+      "DATABASE_URL must be a PostgreSQL connection string (got non-postgres scheme)",
+    );
   }
 
   const useSsl =

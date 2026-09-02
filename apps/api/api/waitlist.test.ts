@@ -40,7 +40,9 @@ describe("waitlist router", () => {
       verificationToken: "token-token-token-token-token-token",
     });
     const caller = createCaller();
-    await expect(caller.join({ email: "pilot@gmail.com", agentStage: "production" })).resolves.toEqual({
+    await expect(
+      caller.join({ email: "pilot@gmail.com", agentStage: "production" }),
+    ).resolves.toEqual({
       ok: true,
       pendingVerification: true,
     });
@@ -48,7 +50,11 @@ describe("waitlist router", () => {
   });
 
   it("does not send mail for honeypot-suppressed submissions", async () => {
-    mocks.register.mockResolvedValue({ accepted: true, normalizedEmail: "bot@example.com", suppressedAsBot: true });
+    mocks.register.mockResolvedValue({
+      accepted: true,
+      normalizedEmail: "bot@example.com",
+      suppressedAsBot: true,
+    });
     const caller = createCaller();
     await caller.join({ email: "bot@example.com", website: "spam" });
     expect(mocks.sendVerify).not.toHaveBeenCalled();

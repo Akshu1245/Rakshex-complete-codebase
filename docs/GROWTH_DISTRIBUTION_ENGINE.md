@@ -1,12 +1,15 @@
 # RaksHex Growth Distribution Engine
 
 ## Goal
+
 Drive qualified AI-agent builders and engineering/security teams into the verified waitlist without copy-pasting the same promotional post everywhere.
 
 ## Publishing layer
+
 Use Postiz as the scheduling/publishing layer when social accounts are connected. One source idea should be adapted per platform rather than duplicated verbatim.
 
 Supported priority surfaces for RaksHex:
+
 - X: technical build notes, short demos, incident-to-lesson posts.
 - LinkedIn: founder/engineering narratives and architecture posts.
 - Dev.to / Hashnode: expanded technical articles from `/blog`.
@@ -15,10 +18,12 @@ Supported priority surfaces for RaksHex:
 - WordPress: mirror long-form research notes only when canonical URLs remain on rakshex.in.
 
 ## Attribution contract
+
 Every distributed link must carry:
 `utm_source`, `utm_medium`, `utm_campaign`, and optionally `utm_content`.
 
 Examples:
+
 - `https://www.rakshex.in/waitlist?utm_source=x&utm_medium=social&utm_campaign=agent-authority-01`
 - `https://www.rakshex.in/waitlist?utm_source=linkedin&utm_medium=social&utm_campaign=mcp-governance-01`
 - `https://www.rakshex.in/waitlist?utm_source=reddit&utm_medium=community&utm_campaign=ai-agents-project-display`
@@ -26,6 +31,7 @@ Examples:
 Referral links add `ref=<member-code>` and are credited only after the referred email verifies.
 
 ## Content pillars
+
 1. Incident -> engineering lesson -> optional RaksHex relevance.
 2. Threat-model note (excessive agency, tool misuse, credential scope, unbounded consumption).
 3. Tiny demo: one forbidden action blocked before execution.
@@ -34,6 +40,7 @@ Referral links add `ref=<member-code>` and are credited only after the referred 
 6. Question/poll: discover real pain and terminology.
 
 ## Promotion rules
+
 - Do not auto-post into communities that prohibit promotion or require prior participation.
 - Never fabricate customers, savings, benchmarks, certifications, or security guarantees.
 - Never buy or manufacture waitlist accounts/referrals.
@@ -41,6 +48,7 @@ Referral links add `ref=<member-code>` and are credited only after the referred 
 - Optimize for verified ICP and pilot intent, not raw signup count.
 
 ## Weekly operating loop
+
 - Mon: authorization/security lesson.
 - Tue: MCP/tool governance checklist or demo.
 - Wed: build-in-public update.
@@ -49,7 +57,9 @@ Referral links add `ref=<member-code>` and are credited only after the referred 
 - Weekend: summarize the strongest blog/research note and review channel conversion.
 
 ## Founder dashboard decisions
+
 After enough volume, rank channels by:
+
 1. verified signup rate;
 2. production-agent share;
 3. qualification score >= 65;

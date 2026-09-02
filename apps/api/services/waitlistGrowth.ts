@@ -175,10 +175,18 @@ async function ensureSchema(): Promise<void> {
         updated_at TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `);
-    await db.execute(sql`CREATE INDEX IF NOT EXISTS waitlist_growth_created_idx ON waitlist_growth(created_at DESC)`);
-    await db.execute(sql`CREATE INDEX IF NOT EXISTS waitlist_growth_verified_idx ON waitlist_growth(verified)`);
-    await db.execute(sql`CREATE INDEX IF NOT EXISTS waitlist_growth_source_idx ON waitlist_growth(source)`);
-    await db.execute(sql`CREATE INDEX IF NOT EXISTS waitlist_growth_ip_idx ON waitlist_growth(signup_ip_hash, created_at DESC)`);
+    await db.execute(
+      sql`CREATE INDEX IF NOT EXISTS waitlist_growth_created_idx ON waitlist_growth(created_at DESC)`,
+    );
+    await db.execute(
+      sql`CREATE INDEX IF NOT EXISTS waitlist_growth_verified_idx ON waitlist_growth(verified)`,
+    );
+    await db.execute(
+      sql`CREATE INDEX IF NOT EXISTS waitlist_growth_source_idx ON waitlist_growth(source)`,
+    );
+    await db.execute(
+      sql`CREATE INDEX IF NOT EXISTS waitlist_growth_ip_idx ON waitlist_growth(signup_ip_hash, created_at DESC)`,
+    );
   })();
   return schemaPromise;
 }
@@ -213,12 +221,14 @@ export async function registerWaitlistSignup(input: SignupArgs): Promise<{
   }
 
   if (ipHash) {
-    const recent = rowsOf<{ count: number }>(await db.execute(sql`
+    const recent = rowsOf<{ count: number }>(
+      await db.execute(sql`
       SELECT COUNT(*)::int AS count
       FROM waitlist_growth
       WHERE signup_ip_hash = ${ipHash}
         AND created_at > NOW() - (${RATE_LIMIT_WINDOW_MINUTES} * INTERVAL '1 minute')
-    `));
+    `),
+    );
     if (Number(recent[0]?.count ?? 0) >= RATE_LIMIT_MAX) {
       const err = new Error("RATE_LIMITED");
       err.name = "RateLimitError";
@@ -226,12 +236,14 @@ export async function registerWaitlistSignup(input: SignupArgs): Promise<{
     }
   }
 
-  const existing = rowsOf<{ id: number; verified: boolean }>(await db.execute(sql`
+  const existing = rowsOf<{ id: number; verified: boolean }>(
+    await db.execute(sql`
     SELECT id, verified
     FROM waitlist_growth
     WHERE email = ${email}
     LIMIT 1
-  `));
+  `),
+  );
 
   const verifyToken = newVerifyToken();
   const verifyTokenHash = sha256(verifyToken);
@@ -275,9 +287,11 @@ export async function registerWaitlistSignup(input: SignupArgs): Promise<{
 
   let referralCode = newReferralCode();
   for (let attempt = 0; attempt < 3; attempt += 1) {
-    const collision = rowsOf<Record<string, unknown>>(await db.execute(sql`
+    const collision = rowsOf<Record<string, unknown>>(
+      await db.execute(sql`
       SELECT 1 FROM waitlist_growth WHERE referral_code = ${referralCode} LIMIT 1
-    `));
+    `),
+    );
     if (collision.length === 0) break;
     referralCode = newReferralCode();
   }
@@ -334,27 +348,34 @@ export async function verifyWaitlistEmail(token: string): Promise<{
       referred_by_code: string | null;
       referral_count: number;
       verify_expires_at: Date | null;
-    }>(await tx.execute(sql`
+    }>(
+      await tx.execute(sql`
       SELECT id, email, verified, referral_code, referred_by_code, referral_count, verify_expires_at
       FROM waitlist_growth
       WHERE verify_token_hash = ${tokenHash}
       LIMIT 1
-    `));
+    `),
+    );
 
     const row = rows[0];
     if (!row) throw new Error("INVALID_TOKEN");
-    if (!row.verified && (!row.verify_expires_at || new Date(row.verify_expires_at).getTime() < Date.now())) {
+    if (
+      !row.verified &&
+      (!row.verify_expires_at || new Date(row.verify_expires_at).getTime() < Date.now())
+    ) {
       throw new Error("EXPIRED_TOKEN");
     }
 
     let alreadyVerified = row.verified;
     if (!row.verified) {
-      const updated = rowsOf<{ id: number }>(await tx.execute(sql`
+      const updated = rowsOf<{ id: number }>(
+        await tx.execute(sql`
         UPDATE waitlist_growth
         SET verified = TRUE, verified_at = NOW(), verify_expires_at = NULL, status = 'verified', updated_at = NOW()
         WHERE id = ${row.id} AND verified = FALSE
         RETURNING id
-      `));
+      `),
+      );
 
       if (updated.length > 0 && row.referred_by_code) {
         await tx.execute(sql`
@@ -367,20 +388,24 @@ export async function verifyWaitlistEmail(token: string): Promise<{
       }
     }
 
-    const refreshed = rowsOf<{ referral_code: string; referral_count: number; created_at: Date }>(await tx.execute(sql`
+    const refreshed = rowsOf<{ referral_code: string; referral_count: number; created_at: Date }>(
+      await tx.execute(sql`
       SELECT referral_code, referral_count, created_at
       FROM waitlist_growth
       WHERE id = ${row.id}
       LIMIT 1
-    `));
+    `),
+    );
     const current = refreshed[0];
     if (!current) throw new Error("INVALID_TOKEN");
 
-    const positionRows = rowsOf<{ position: number }>(await tx.execute(sql`
+    const positionRows = rowsOf<{ position: number }>(
+      await tx.execute(sql`
       SELECT COUNT(*)::int AS position
       FROM waitlist_growth
       WHERE verified = TRUE AND created_at <= ${current.created_at}
-    `));
+    `),
+    );
 
     return {
       verified: true as const,
@@ -397,7 +422,8 @@ export async function listWaitlistGrowthEntries(): Promise<WaitlistAdminEntry[]>
   await ensureSchema();
   const db = await getDb();
   if (!db) return [];
-  const rows = rowsOf<Record<string, unknown>>(await db.execute(sql`
+  const rows = rowsOf<Record<string, unknown>>(
+    await db.execute(sql`
     SELECT
       id, email, evaluation_type, source, role, company, agent_stage, providers, frameworks,
       monthly_spend, pain, pilot_interest, design_partner, referral_code, referral_count,
@@ -405,7 +431,8 @@ export async function listWaitlistGrowthEntries(): Promise<WaitlistAdminEntry[]>
       utm_source, utm_medium, utm_campaign, utm_content, referrer, created_at
     FROM waitlist_growth
     ORDER BY created_at DESC, id DESC
-  `));
+  `),
+  );
 
   return rows.map((row) => ({
     id: Number(row.id),
@@ -442,6 +469,8 @@ export async function getWaitlistGrowthCount(): Promise<number> {
   await ensureSchema();
   const db = await getDb();
   if (!db) return 0;
-  const rows = rowsOf<{ count: number }>(await db.execute(sql`SELECT COUNT(*)::int AS count FROM waitlist_growth`));
+  const rows = rowsOf<{ count: number }>(
+    await db.execute(sql`SELECT COUNT(*)::int AS count FROM waitlist_growth`),
+  );
   return Number(rows[0]?.count ?? 0);
 }
