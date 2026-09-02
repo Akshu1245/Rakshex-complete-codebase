@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
+import { RaksHexIcon } from "@/components/common/RaksHexLogo";
 
 interface NavItem {
   label: string;
@@ -95,20 +96,12 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
           ${open ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
       >
         <div className="p-6 overflow-y-auto flex-1">
-          <Link href="/dashboard" className="flex items-center gap-3 mb-10 group">
-            <img
-              src="/icon-mark-128.png"
-              alt="RaksHex Mark"
-              className="w-9 h-9 rounded-lg border border-[#14B8A6]/30 shadow-[0_0_12px_rgba(20,184,166,0.25)] object-cover transition-all duration-300 group-hover:border-[#14B8A6]/60 group-hover:shadow-[0_0_20px_rgba(20,184,166,0.4)]"
-            />
-            <div>
-              <div className="font-headline-md text-headline-md font-bold tracking-tight text-white leading-none">
-                Raks<span className="text-[#14B8A6]">Hex</span>
-              </div>
-              <div className="text-[10px] uppercase tracking-[0.2em] text-[#14B8A6] font-semibold mt-1">
-                AI &amp; API security
-              </div>
-            </div>
+          <Link
+            href="/dashboard"
+            aria-label="RaksHex dashboard"
+            className="mb-10 inline-flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/[0.025] text-white transition-all duration-300 hover:border-white/20 hover:bg-white/[0.05]"
+          >
+            <RaksHexIcon size={38} className="h-9 w-9 text-white" />
           </Link>
 
           <nav className="flex flex-col gap-1">
