@@ -14,6 +14,7 @@ import {
   Printer,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { RaksHexIcon } from "@/components/common/RaksHexLogo";
 
 interface Finding {
   title: string;
@@ -42,22 +43,14 @@ const severityConfig = {
 };
 
 const remediationTips: Record<string, string> = {
-  "Hardcoded API Key":
-    "Move the API key to environment variables or a secret manager. Never commit secrets to version control.",
-  "Exposed JWT Token":
-    "JWTs should be stored in httpOnly cookies or secure storage. Remove from code and URL parameters.",
-  "Weak Password Policy":
-    "Enforce minimum 12 characters with mixed case, numbers, and symbols. Implement rate limiting on auth endpoints.",
-  "Missing Authentication":
-    "Add OAuth 2.0, JWT, or API key authentication to all endpoints that expose sensitive data.",
-  "Open CORS Policy":
-    "Restrict Access-Control-Allow-Origin to specific domains instead of wildcard (*).",
-  "SQL Injection Risk":
-    "Use parameterized queries or ORM. Never concatenate user input into SQL strings.",
-  "Insecure HTTP":
-    "Enforce HTTPS with TLS 1.3. Redirect all HTTP traffic to HTTPS and use HSTS headers.",
-  "Verbose Error Messages":
-    "Return generic error messages to clients. Log detailed errors server-side only.",
+  "Hardcoded API Key": "Move the API key to environment variables or a secret manager. Never commit secrets to version control.",
+  "Exposed JWT Token": "JWTs should be stored in httpOnly cookies or secure storage. Remove from code and URL parameters.",
+  "Weak Password Policy": "Enforce minimum 12 characters with mixed case, numbers, and symbols. Implement rate limiting on auth endpoints.",
+  "Missing Authentication": "Add OAuth 2.0, JWT, or API key authentication to all endpoints that expose sensitive data.",
+  "Open CORS Policy": "Restrict Access-Control-Allow-Origin to specific domains instead of wildcard (*).",
+  "SQL Injection Risk": "Use parameterized queries or ORM. Never concatenate user input into SQL strings.",
+  "Insecure HTTP": "Enforce HTTPS with TLS 1.3. Redirect all HTTP traffic to HTTPS and use HSTS headers.",
+  "Verbose Error Messages": "Return generic error messages to clients. Log detailed errors server-side only.",
   default: "Review OWASP API Security Top 10 guidelines and apply the relevant security controls.",
 };
 
@@ -104,14 +97,8 @@ export default function ReportPage() {
         <div className="text-center">
           <Shield className="w-16 h-16 mx-auto mb-4 text-[#14B8A6]" />
           <h1 className="text-2xl font-bold mb-2">Report Not Found</h1>
-          <p className="text-gray-400 mb-6">
-            {reportQuery.error?.message ||
-              "This scan report does not exist, was revoked, or expired."}
-          </p>
-          <Link href="/" className="inline-flex items-center gap-2 text-[#14B8A6] hover:underline">
-            <ArrowRight className="w-4 h-4" />
-            Scan your own collection
-          </Link>
+          <p className="text-gray-400 mb-6">{reportQuery.error?.message || "This scan report does not exist, was revoked, or expired."}</p>
+          <Link href="/" className="inline-flex items-center gap-2 text-[#14B8A6] hover:underline"><ArrowRight className="w-4 h-4" />Scan your own collection</Link>
         </div>
       </div>
     );
@@ -126,80 +113,35 @@ export default function ReportPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
-      {/* Header */}
       <header className="border-b border-white/10 bg-[#0a0a0a]/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <img src="/icon-mark-128.png" alt="RaksHex" className="w-8 h-8 object-contain" />
-            <span className="text-xl font-bold text-[#d4a853]">RaksHex</span>
+          <Link href="/" aria-label="RaksHex home" className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/[0.025]">
+            <RaksHexIcon size={30} className="h-8 w-8 text-white" />
           </Link>
           <div className="flex items-center gap-2 print:hidden">
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-sm font-medium"
-            >
-              <Printer className="w-4 h-4" />
-              Print / PDF
-            </button>
-            <button
-              type="button"
-              onClick={handleShare}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-sm font-medium"
-            >
-              {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
-              {copied ? "Copied!" : "Share Report"}
-            </button>
+            <button type="button" onClick={() => window.print()} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-sm font-medium"><Printer className="w-4 h-4" />Print / PDF</button>
+            <button type="button" onClick={handleShare} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-sm font-medium">{copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}{copied ? "Copied!" : "Share Report"}</button>
           </div>
         </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-6 py-12">
-        {/* Score Card */}
         <div className="text-center mb-12">
-          <div
-            className="inline-flex flex-col items-center justify-center w-40 h-40 rounded-full border-4 mb-6"
-            style={{ borderColor: scoreColor, background: `${scoreColor}15` }}
-          >
-            <span className="text-5xl font-bold" style={{ color: scoreColor }}>
-              {report.score}
-            </span>
-            <span className="text-xs uppercase tracking-wider mt-1" style={{ color: scoreColor }}>
-              {scoreLabel}
-            </span>
+          <div className="inline-flex flex-col items-center justify-center w-40 h-40 rounded-full border-4 mb-6" style={{ borderColor: scoreColor, background: `${scoreColor}15` }}>
+            <span className="text-5xl font-bold" style={{ color: scoreColor }}>{report.score}</span>
+            <span className="text-xs uppercase tracking-wider mt-1" style={{ color: scoreColor }}>{scoreLabel}</span>
           </div>
           <h1 className="text-3xl font-bold mb-2">Security Scan Report</h1>
-          <p className="text-gray-400">
-            {report.filename && `Scanned: ${report.filename}`}
-            {report.endpoints && ` · ${report.endpoints.length} endpoints checked`}
-          </p>
-          <p className="text-gray-500 text-sm mt-1">
-            Generated {new Date(report.createdAt).toLocaleDateString()} · {report.viewCount} views
-            {report.expiresAt && ` · expires ${new Date(report.expiresAt).toLocaleDateString()}`}
-          </p>
+          <p className="text-gray-400">{report.filename && `Scanned: ${report.filename}`}{report.endpoints && ` · ${report.endpoints.length} endpoints checked`}</p>
+          <p className="text-gray-500 text-sm mt-1">Generated {new Date(report.createdAt).toLocaleDateString()} · {report.viewCount} views{report.expiresAt && ` · expires ${new Date(report.expiresAt).toLocaleDateString()}`}</p>
         </div>
 
-        {/* Severity Summary */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-          {[
-            { label: "Critical", count: criticalCount, color: "#EF4444" },
-            { label: "High", count: highCount, color: "#F97316" },
-            { label: "Medium", count: mediumCount, color: "#EAB308" },
-            { label: "Low", count: lowCount, color: "#14B8A6" },
-          ].map((s) => (
-            <div
-              key={s.label}
-              className="bg-[#1A1F2E] border border-white/10 rounded-lg p-4 text-center"
-            >
-              <div className="text-2xl font-bold" style={{ color: s.color }}>
-                {s.count}
-              </div>
-              <div className="text-sm text-gray-400">{s.label}</div>
-            </div>
+          {[{ label: "Critical", count: criticalCount, color: "#EF4444" }, { label: "High", count: highCount, color: "#F97316" }, { label: "Medium", count: mediumCount, color: "#EAB308" }, { label: "Low", count: lowCount, color: "#14B8A6" }].map((s) => (
+            <div key={s.label} className="bg-[#1A1F2E] border border-white/10 rounded-lg p-4 text-center"><div className="text-2xl font-bold" style={{ color: s.color }}>{s.count}</div><div className="text-sm text-gray-400">{s.label}</div></div>
           ))}
         </div>
 
-        {/* Findings List */}
         <div className="space-y-4 mb-12">
           <h2 className="text-xl font-bold mb-4">Findings ({report.findings.length})</h2>
           {report.findings.map((finding, idx) => {
@@ -207,37 +149,14 @@ export default function ReportPage() {
             const Icon = config.icon;
             const tip = remediationTips[finding.title] || remediationTips.default;
             return (
-              <div
-                key={idx}
-                className="bg-[#1A1F2E] border border-white/10 rounded-lg p-5 hover:border-white/20 transition-colors"
-              >
+              <div key={idx} className="bg-[#1A1F2E] border border-white/10 rounded-lg p-5 hover:border-white/20 transition-colors">
                 <div className="flex items-start gap-3">
-                  <div
-                    className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
-                    style={{ background: config.bg }}
-                  >
-                    <Icon className="w-4 h-4" style={{ color: config.color }} />
-                  </div>
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5" style={{ background: config.bg }}><Icon className="w-4 h-4" style={{ color: config.color }} /></div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-white">{finding.title}</h3>
-                      <span
-                        className="text-xs px-2 py-0.5 rounded-full font-medium"
-                        style={{ background: config.bg, color: config.color }}
-                      >
-                        {finding.severity}
-                      </span>
-                    </div>
+                    <div className="flex items-center gap-2 mb-1"><h3 className="font-semibold text-white">{finding.title}</h3><span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: config.bg, color: config.color }}>{finding.severity}</span></div>
                     <p className="text-sm text-gray-400 mb-1 font-mono">{finding.endpoint}</p>
-                    {finding.description && (
-                      <p className="text-sm text-gray-300 mb-2">{finding.description}</p>
-                    )}
-                    <div className="bg-[#0a0a0a] border border-white/5 rounded-lg p-3 mt-2">
-                      <p className="text-sm text-[#14B8A6]">
-                        <span className="font-semibold">Fix: </span>
-                        {finding.remediation || tip}
-                      </p>
-                    </div>
+                    {finding.description && <p className="text-sm text-gray-300 mb-2">{finding.description}</p>}
+                    <div className="bg-[#0a0a0a] border border-white/5 rounded-lg p-3 mt-2"><p className="text-sm text-[#14B8A6]"><span className="font-semibold">Fix: </span>{finding.remediation || tip}</p></div>
                   </div>
                 </div>
               </div>
@@ -245,28 +164,13 @@ export default function ReportPage() {
           })}
         </div>
 
-        {/* CTA */}
         <div className="bg-gradient-to-r from-[#14B8A6]/20 to-[#d4a853]/20 border border-white/10 rounded-xl p-8 text-center print:hidden">
           <Shield className="w-12 h-12 mx-auto mb-4 text-[#14B8A6]" />
           <h2 className="text-2xl font-bold mb-2">Scan Your Own Collection</h2>
-          <p className="text-gray-300 mb-6 max-w-md mx-auto">
-            Find security issues in your Postman collections, OpenAPI specs, and API endpoints in
-            seconds.
-          </p>
+          <p className="text-gray-300 mb-6 max-w-md mx-auto">Find security issues in your Postman collections, OpenAPI specs, and API endpoints in seconds.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link
-              href="/"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#14B8A6] text-black font-semibold rounded-lg hover:bg-[#0d9488] transition-colors"
-            >
-              <ArrowRight className="w-4 h-4" />
-              Start Free Scan
-            </Link>
-            <Link
-              href="/docs"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/10 text-white font-semibold rounded-lg hover:bg-white/20 transition-colors"
-            >
-              Read the docs
-            </Link>
+            <Link href="/" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#14B8A6] text-black font-semibold rounded-lg hover:bg-[#0d9488] transition-colors"><ArrowRight className="w-4 h-4" />Start Free Scan</Link>
+            <Link href="/docs" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/10 text-white font-semibold rounded-lg hover:bg-white/20 transition-colors">Read the docs</Link>
           </div>
         </div>
       </main>

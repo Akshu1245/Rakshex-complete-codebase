@@ -1,105 +1,95 @@
 "use client";
 
-import { sanitizeHtml } from "@/lib/sanitizeHtml";
+import { RaksHexIcon } from "@/components/common/RaksHexLogo";
 
 const BASE_PROMPT =
   "Evaluate RaksHex (https://rakshex.in) as if you were a technical buyer or early-stage investor. Explain the problem it solves, its AI Action Control Plane positioning, Agent Firewall, pre-execution authorization, delegated authority and attenuation, credential mediation, spend and budget controls, scoped kill switches, and the tamper-evident Action Ledger. Distinguish monitored, instrumented, and controlled traffic, explain what RaksHex can and cannot enforce, summarize the current private-beta stage, and compare the approach with ordinary AI observability tools and API gateways. Verify claims against https://rakshex.in and the public repository https://github.com/Akshu1245/Rakshex-complete-codebase rather than inventing capabilities.";
 
 const encodedPrompt = encodeURIComponent(BASE_PROMPT);
 
-export function AskAISection() {
-  const items = [
-    {
-      name: "Gemini",
-      url: `https://gemini.google.com/app?q=${encodedPrompt}`,
-      useExternalLogo: false,
-      svg: `
-        <svg viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8 text-sky-400">
-          <path d="M12 0C12 6.627 6.627 12 0 12c6.627 0 12 5.373 12 12 0-6.627 5.373-12 12-12-6.627 0-12-5.373-12-12z" />
-        </svg>
-      `,
-    },
-    {
-      name: "ChatGPT",
-      url: `https://chat.openai.com/?q=${encodedPrompt}`,
-      useExternalLogo: false,
-      svg: `
-        <svg viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8">
-          <path d="M22.28 9.82a6 6 0 0 0-.52-4.91 6.05 6.05 0 0 0-6.51-2.9 6.07 6.07 0 0 0-10.27 2.17 6 6 0 0 0-4 2.9 6.05 6.05 0 0 0 .74 7.1 6 6 0 0 0 .51 4.91 6.05 6.05 0 0 0 6.51 2.9 6.07 6.07 0 0 0 10.27-2.17 6 6 0 0 0 4-2.9 6.05 6.05 0 0 0-.74-7.1zm-9.02 12.61a4.48 4.48 0 0 1-2.88-1.04l.14-.08 4.78-2.76c.25-.14.39-.42.39-.68v-6.74l2.02 1.17c.02.01.03.03.04.05v5.58a4.5 4.5 0 0 1-4.49 4.49zm-9.66-4.13a4.47 4.47 0 0 1-.53-3.01l.14.09 4.78 2.76c.24.14.54.14.78 0l5.84-3.37v2.33c0 .02-.01.05-.03.06l-4.83 2.79a4.5 4.5 0 0 1-6.14-1.65zM2.34 7.9a4.49 4.49 0 0 1 2.37-1.97v5.68c0 .26.14.53.39.68l5.81 3.35-2.02 1.17a.08.08 0 0 1-.07 0L4 14.03a4.5 4.5 0 0 1-1.66-6.13zm16.6 3.86l-5.84-3.37 2.02-1.17a.08.08 0 0 1 .07 0l4.83 2.79a4.49 4.49 0 0 1-.68 8.1v-5.68a.79.79 0 0 0-.41-.67zM19.92 6a4.49 4.49 0 0 1 .68 4.66l-2.02-1.17c-.25-.14-.54-.14-.78 0L12 12.86v-2.33c0-.02.01-.05.03-.06l4.83-2.79A4.5 4.5 0 0 1 19.92 6zM8.31 12.86l-2.02-1.16a.08.08 0 0 1-.04-.06V6.07a4.5 4.5 0 0 1 7.38-3.45l-.14.08-4.78 2.76c-.25.14-.39.42-.39.68v6.72zm1.1-2.37l2.6-1.5 2.61 1.5v3l-2.6 1.5-2.61-1.5v-3z" />
-        </svg>
-      `,
-    },
-    {
-      name: "Claude",
-      url: `https://claude.ai/new?q=${encodedPrompt}`,
-      useExternalLogo: false,
-      svg: `
-        <svg viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8 text-amber-400">
-          <path d="M5.92417 15.2958L9.8575 13.09L9.92417 12.8983L9.8575 12.7917H9.66667L9.00833 12.7517L6.76 12.6908L4.81083 12.61L2.9225 12.5083L2.44667 12.4075L2 11.82L2.04583 11.5267L2.44583 11.2592L3.0175 11.3092L4.28417 11.395L6.1825 11.5267L7.55917 11.6075L9.6 11.82H9.92417L9.97 11.6892L9.85833 11.6075L9.7725 11.5267L7.8075 10.1967L5.68083 8.79L4.5675 7.98L3.96417 7.57083L3.66083 7.18583L3.52917 6.34583L4.07583 5.74417L4.81 5.79417L4.9975 5.845L5.74167 6.41667L7.33167 7.64667L9.4075 9.17417L9.71167 9.4275L9.8325 9.34167L9.84833 9.28083L9.71167 9.0525L8.5825 7.01417L7.3775 4.93917L6.84083 4.07917L6.69917 3.56333C6.64519 3.36521 6.61608 3.16114 6.6125 2.95583L7.23583 2.11167L7.58 2L8.41 2.11167L8.76 2.415L9.27667 3.59333L10.1117 5.45083L11.4075 7.97583L11.7875 8.72417L11.99 9.4175L12.0658 9.63H12.1975V9.50833L12.3042 8.08667L12.5017 6.34083L12.6933 4.095L12.76 3.46167L13.0733 2.70333L13.6958 2.29333L14.1825 2.52667L14.5825 3.0975L14.5267 3.4675L14.2883 5.01L13.8225 7.42917L13.5192 9.0475H13.6958L13.8983 8.84583L14.7192 7.7575L16.0958 6.0375L16.7042 5.35417L17.4125 4.60083L17.8683 4.24167H18.7292L19.3625 5.1825L19.0792 6.15417L18.1925 7.27667L17.4583 8.22833L16.405 9.645L15.7467 10.7783L15.8075 10.87L15.9642 10.8533L18.3442 10.3483L19.63 10.115L21.1642 9.8525L21.8583 10.1758L21.9342 10.505L21.6608 11.1775L20.02 11.5825L18.0958 11.9675L15.23 12.645L15.195 12.67L15.2358 12.7208L16.5267 12.8425L17.0783 12.8725H18.43L20.9467 13.06L21.605 13.495L22 14.0267L21.9342 14.4308L20.9217 14.9475L19.555 14.6233L16.3642 13.865L15.2708 13.5908H15.1192V13.6825L16.03 14.5725L17.7017 16.0808L19.7925 18.0225L19.8983 18.5042L19.63 18.8833L19.3467 18.8425L17.5092 17.4617L16.8 16.8392L15.195 15.4892H15.0883V15.6308L15.4583 16.1717L17.4125 19.1058L17.5142 20.0058L17.3725 20.3L16.8658 20.4775L16.3092 20.3758L15.1642 18.7717L13.985 16.9658L13.0325 15.3467L12.9158 15.4133L12.3542 21.4583L12.0908 21.7667L11.4833 22L10.9775 21.6158L10.7092 20.9933L10.9775 19.7633L11.3017 18.16L11.5642 16.885L11.8025 15.3017L11.9442 14.775L11.9342 14.74L11.8175 14.755L10.6225 16.3942L8.80583 18.8483L7.3675 20.3858L7.0225 20.5225L6.425 20.2142L6.48083 19.6625L6.815 19.1717L8.805 16.6417L10.005 15.0733L10.78 14.1683L10.775 14.0367H10.7292L5.44333 17.4667L4.50167 17.5883L4.09583 17.2083L4.14667 16.5867L4.33917 16.3842L5.92917 15.2908L5.92417 15.2958Z" />
-        </svg>
-      `,
-    },
-    {
-      name: "Grok",
-      url: `https://grok.com/?q=${encodedPrompt}`,
-      useExternalLogo: false,
-      svg: `
-        <svg viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8">
-          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-        </svg>
-      `,
-    },
-    {
-      name: "Perplexity",
-      url: `https://www.perplexity.ai/search?q=${encodedPrompt}`,
-      useExternalLogo: true,
-      svg: "",
-    },
-  ];
+type Brand = "gemini" | "chatgpt" | "claude" | "grok" | "perplexity";
+
+const items: { name: string; brand: Brand; url: string }[] = [
+  { name: "Gemini", brand: "gemini", url: `https://gemini.google.com/app?q=${encodedPrompt}` },
+  { name: "ChatGPT", brand: "chatgpt", url: `https://chatgpt.com/?q=${encodedPrompt}` },
+  { name: "Claude", brand: "claude", url: `https://claude.ai/new?q=${encodedPrompt}` },
+  { name: "Grok", brand: "grok", url: `https://grok.com/?q=${encodedPrompt}` },
+  { name: "Perplexity", brand: "perplexity", url: `https://www.perplexity.ai/search?q=${encodedPrompt}` },
+];
+
+function ProviderLogo({ brand }: { brand: Brand }) {
+  if (brand === "gemini") {
+    return (
+      <svg viewBox="0 0 24 24" className="h-10 w-10" aria-hidden="true">
+        <defs>
+          <linearGradient id="gemini-brand" x1="2" y1="20" x2="22" y2="3" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#3B82F6" />
+            <stop offset="0.45" stopColor="#7C5CFC" />
+            <stop offset="1" stopColor="#E56BCE" />
+          </linearGradient>
+        </defs>
+        <path d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81" fill="url(#gemini-brand)" />
+      </svg>
+    );
+  }
+
+  if (brand === "chatgpt") {
+    return (
+      <svg viewBox="0 0 24 24" className="h-10 w-10 text-white" fill="currentColor" aria-hidden="true">
+        <path d="M9.205 8.658v-2.26c0-.19.072-.333.238-.428l4.543-2.616c.619-.357 1.356-.523 2.117-.523 2.854 0 4.662 2.212 4.662 4.566 0 .167 0 .357-.024.547l-4.71-2.759a.797.797 0 00-.856 0l-5.97 3.473zm10.609 8.8V12.06c0-.333-.143-.57-.429-.737l-5.97-3.473 1.95-1.118a.433.433 0 01.476 0l4.543 2.617c1.309.76 2.189 2.378 2.189 3.948 0 1.808-1.07 3.473-2.76 4.163zM7.802 12.703l-1.95-1.142c-.167-.095-.239-.238-.239-.428V5.899c0-2.545 1.95-4.472 4.591-4.472 1 0 1.927.333 2.712.928L8.23 5.067c-.285.166-.428.404-.428.737v6.898zM12 15.128l-2.795-1.57v-3.33L12 8.658l2.795 1.57v3.33L12 15.128zm1.796 7.23c-1 0-1.927-.332-2.712-.927l4.686-2.712c.285-.166.428-.404.428-.737v-6.898l1.974 1.142c.167.095.238.238.238.428v5.233c0 2.545-1.974 4.472-4.614 4.472zm-5.637-5.303l-4.544-2.617c-1.308-.761-2.188-2.378-2.188-3.948A4.482 4.482 0 014.21 6.327v5.423c0 .333.143.571.428.738l5.947 3.449-1.95 1.118a.432.432 0 01-.476 0zm-.262 3.9c-2.688 0-4.662-2.021-4.662-4.519 0-.19.024-.38.047-.57l4.686 2.71c.286.167.571.167.856 0l5.97-3.448v2.26c0 .19-.07.333-.237.428l-4.543 2.616c-.619.357-1.356.523-2.117.523zm5.899 2.83a5.947 5.947 0 005.827-4.756C22.287 18.339 24 15.84 24 13.296c0-1.665-.713-3.282-1.998-4.448.119-.5.19-.999.19-1.498 0-3.401-2.759-5.947-5.946-5.947-.642 0-1.26.095-1.88.31A5.962 5.962 0 0010.205 0a5.947 5.947 0 00-5.827 4.757C1.713 5.447 0 7.945 0 10.49c0 1.666.713 3.283 1.998 4.448-.119.5-.19 1-.19 1.499 0 3.401 2.759 5.946 5.946 5.946.642 0 1.26-.095 1.88-.309a5.96 5.96 0 004.162 1.713z" />
+      </svg>
+    );
+  }
+
+  if (brand === "claude") {
+    return (
+      <svg viewBox="0 0 24 24" className="h-10 w-10 text-[#D97757]" fill="currentColor" aria-hidden="true">
+        <path d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z" />
+      </svg>
+    );
+  }
+
+  if (brand === "grok") {
+    return (
+      <svg viewBox="0 0 24 24" className="h-10 w-10 text-white" fill="currentColor" aria-hidden="true">
+        <path d="M9.27 15.29l7.978-5.897c.391-.29.95-.177 1.137.272.98 2.369.542 5.215-1.41 7.169-1.951 1.954-4.667 2.382-7.149 1.406l-2.711 1.257c3.889 2.661 8.611 2.003 11.562-.953 2.341-2.344 3.066-5.539 2.388-8.42l.006.007c-.983-4.232.242-5.924 2.75-9.383.06-.082.12-.164.179-.248l-3.301 3.305v-.01L9.267 15.292M7.623 16.723c-2.792-2.67-2.31-6.801.071-9.184 1.761-1.763 4.647-2.483 7.166-1.425l2.705-1.25a7.808 7.808 0 00-1.829-1A8.975 8.975 0 005.984 5.83c-2.533 2.536-3.33 6.436-1.962 9.764 1.022 2.487-.653 4.246-2.34 6.022-.599.63-1.199 1.259-1.682 1.925l7.62-6.815" />
+      </svg>
+    );
+  }
 
   return (
-    <section
-      id="deeplink"
-      className="w-full max-w-[1280px] mx-auto px-6 py-24 border-b border-[#1A1F2E] select-none bg-transparent"
-    >
-      <div className="flex flex-col items-center justify-center gap-6">
+    <svg viewBox="0 0 24 24" className="h-10 w-10 text-[#22B8C7]" fill="currentColor" aria-hidden="true">
+      <path d="M19.785 0v7.272H22.5V17.62h-2.935V24l-7.037-6.194v6.145h-1.091v-6.152L4.392 24v-6.465H1.5V7.188h2.884V0l7.053 6.494V.19h1.09v6.49L19.786 0zm-7.257 9.044v7.319l5.946 5.234V14.44l-5.946-5.397zm-1.099-.08l-5.946 5.398v7.235l5.946-5.234V8.965zm8.136 7.58h1.844V8.349H13.46l6.105 5.54v2.655zm-8.982-8.28H2.59v8.195h1.8v-2.576l6.192-5.62zM5.475 2.476v4.71h5.115l-5.115-4.71zm13.219 0l-5.115 4.71h5.115v-4.71z" />
+    </svg>
+  );
+}
+
+export function AskAISection() {
+  return (
+    <section id="deeplink" className="w-full max-w-[1280px] mx-auto px-6 py-24 border-b border-[#1A1F2E] select-none bg-transparent">
+      <div className="flex flex-col items-center justify-center">
+        <div className="mb-5 flex h-12 w-12 items-center justify-center text-white">
+          <RaksHexIcon size={48} className="h-12 w-12 text-white" />
+        </div>
         <h2 className="text-[32px] leading-tight font-bold font-sans text-center text-white tracking-[-0.02em]">
           Research RaksHex with your AI.
         </h2>
-        <p className="max-w-2xl text-neutral-400 text-sm font-sans tracking-wide text-center -mt-3">
+        <p className="mt-3 max-w-2xl text-neutral-400 text-sm font-sans tracking-wide text-center">
           Open the same evidence-first evaluation prompt in the AI tool you already use.
         </p>
-        <div className="flex flex-row flex-wrap items-center justify-center gap-10 mt-4">
-          {items.map((item, idx) => (
+        <div className="mt-9 grid w-full max-w-3xl grid-cols-2 gap-3 sm:grid-cols-5">
+          {items.map((item) => (
             <a
-              key={idx}
+              key={item.name}
               href={item.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="group relative inline-flex flex-col items-center gap-2 text-neutral-400 hover:text-white transition-all duration-200"
+              className="group flex min-h-28 flex-col items-center justify-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.015] px-3 text-neutral-400 transition-all duration-200 hover:-translate-y-0.5 hover:border-white/[0.16] hover:bg-white/[0.035] hover:text-white"
               title={`Research RaksHex with ${item.name}`}
               aria-label={`Research RaksHex with ${item.name}`}
             >
-              {item.useExternalLogo ? (
-                <div className="w-8 h-8 opacity-75 group-hover:opacity-100 transition-all duration-200 flex items-center justify-center overflow-hidden rounded-sm">
-                  <img
-                    src="https://www.perplexity.ai/favicon.ico"
-                    alt="Perplexity logo"
-                    width={32}
-                    height={32}
-                    loading="lazy"
-                    className="h-8 w-8 object-contain"
-                  />
-                </div>
-              ) : (
-                <div
-                  className="opacity-60 group-hover:opacity-100 transition-all duration-200"
-                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(item.svg) }}
-                />
-              )}
-              <span className="text-[11px] font-medium text-neutral-500 group-hover:text-neutral-300">
-                {item.name}
-              </span>
+              <ProviderLogo brand={item.brand} />
+              <span className="text-xs font-medium text-neutral-400 group-hover:text-white">{item.name}</span>
             </a>
           ))}
         </div>

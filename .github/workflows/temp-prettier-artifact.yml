@@ -1,0 +1,46 @@
+name: Temporary growth formatting commit
+
+on:
+  push:
+    branches:
+      - release/waitlist-growth-2026-09-02
+
+permissions:
+  contents: write
+
+jobs:
+  format-growth-files:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: release/waitlist-growth-2026-09-02
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Format release files
+        run: >-
+          pnpm exec prettier --write
+          packages/database/src/migrate.ts
+          apps/api/api/waitlist.test.ts
+          apps/api/api/waitlist.ts
+          apps/api/services/waitlistGrowth.ts
+          docs/GROWTH_DISTRIBUTION_ENGINE.md
+      - name: Commit formatted files to release branch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add packages/database/src/migrate.ts apps/api/api/waitlist.test.ts apps/api/api/waitlist.ts apps/api/services/waitlistGrowth.ts docs/GROWTH_DISTRIBUTION_ENGINE.md
+          if git diff --cached --quiet; then
+            echo "No formatting changes to commit"
+          else
+            git commit -m "chore(release): apply prettier formatting"
+            git push origin HEAD:release/waitlist-growth-2026-09-02
+          fi
