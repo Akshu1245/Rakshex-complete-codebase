@@ -1,0 +1,43 @@
+name: Temporary growth formatting artifact
+
+on:
+  push:
+    branches:
+      - release/waitlist-growth-2026-09-02
+
+permissions:
+  contents: read
+
+jobs:
+  format-growth-files:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Format release files
+        run: >-
+          pnpm exec prettier --write
+          packages/database/src/migrate.ts
+          apps/api/api/waitlist.test.ts
+          apps/api/api/waitlist.ts
+          apps/api/services/waitlistGrowth.ts
+          docs/GROWTH_DISTRIBUTION_ENGINE.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: formatted-growth-files
+          path: |
+            packages/database/src/migrate.ts
+            apps/api/api/waitlist.test.ts
+            apps/api/api/waitlist.ts
+            apps/api/services/waitlistGrowth.ts
+            docs/GROWTH_DISTRIBUTION_ENGINE.md
+          if-no-files-found: error
+          retention-days: 1

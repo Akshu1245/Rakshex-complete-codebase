@@ -10,7 +10,9 @@ import { sendWaitlistVerificationEmail, sendWaitlistVerifiedEmail } from "../wai
 
 function requestIp(req: { ip?: string; headers?: Record<string, unknown> }): string | null {
   const forwarded = req.headers?.["x-forwarded-for"];
-  if (typeof forwarded === "string" && forwarded.trim()) return forwarded.split(",")[0]?.trim() ?? null;
+  if (typeof forwarded === "string" && forwarded.trim()) {
+    return forwarded.split(",")[0]?.trim() ?? null;
+  }
   return req.ip ?? null;
 }
 
@@ -45,11 +47,27 @@ export const waitlistRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       try {
-        const { plan, ...signupInput } = input;
-        const evaluationType = input.evaluationType ?? plan ?? "Private beta";
+        const evaluationType = input.evaluationType ?? input.plan ?? "Private beta";
         const result = await registerWaitlistSignup({
-          ...signupInput,
+          email: input.email,
           evaluationType,
+          role: input.role,
+          company: input.company,
+          agentStage: input.agentStage,
+          providers: input.providers,
+          frameworks: input.frameworks,
+          monthlySpend: input.monthlySpend,
+          pain: input.pain,
+          pilotInterest: input.pilotInterest,
+          designPartner: input.designPartner,
+          source: input.source,
+          utmSource: input.utmSource,
+          utmMedium: input.utmMedium,
+          utmCampaign: input.utmCampaign,
+          utmContent: input.utmContent,
+          referrer: input.referrer,
+          referredByCode: input.referredByCode,
+          formStartedAt: input.formStartedAt,
           honeypot: input.website,
           ip: requestIp(ctx.req as { ip?: string; headers?: Record<string, unknown> }),
           userAgent:
@@ -59,7 +77,8 @@ export const waitlistRouter = router({
         });
 
         if (result.verificationToken && !result.suppressedAsBot) {
-          const appUrl = process.env.FRONTEND_URL || process.env.APP_URL || "https://www.rakshex.in";
+          const appUrl =
+            process.env.FRONTEND_URL || process.env.APP_URL || "https://www.rakshex.in";
           const verifyUrl = `${appUrl.replace(/\/$/, "")}/waitlist/verify?token=${encodeURIComponent(result.verificationToken)}`;
           await sendWaitlistVerificationEmail({
             toEmail: result.normalizedEmail,
@@ -117,11 +136,15 @@ export const waitlistRouter = router({
         if (message === "EXPIRED_TOKEN") {
           throw new TRPCError({
             code: "BAD_REQUEST",
-            message: "This verification link has expired. Submit the waitlist form again for a fresh link.",
+            message:
+              "This verification link has expired. Submit the waitlist form again for a fresh link.",
           });
         }
         if (message === "INVALID_TOKEN") {
-          throw new TRPCError({ code: "BAD_REQUEST", message: "This verification link is invalid." });
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "This verification link is invalid.",
+          });
         }
         console.error("Waitlist verification failed", error);
         throw new TRPCError({
