@@ -48,6 +48,7 @@ import { redis } from "./cache";
 import { getDb } from "../db";
 import { registerOpenAiGatewayRoutes } from "../services/gateway/openAiProxy";
 import { registerAnthropicGatewayRoutes } from "../services/gateway/anthropicProxy";
+import { registerElevenLabsGatewayRoutes } from "../services/gateway/elevenLabsProxy";
 import { incrementHttpRequest, observeHttpRequestDuration } from "./metrics";
 
 // ============================================================================
@@ -423,6 +424,7 @@ async function startServer() {
   // request is evaluated fail-closed before centrally managed provider access.
   registerOpenAiGatewayRoutes(app);
   registerAnthropicGatewayRoutes(app);
+  registerElevenLabsGatewayRoutes(app);
 
   // ── Health / readiness (mounted early; never behind SPA catch-all) ─────────
   async function runDependencyHealth(): Promise<{

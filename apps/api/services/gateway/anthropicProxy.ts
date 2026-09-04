@@ -31,6 +31,7 @@ import {
 } from "./gatewayAttribution";
 import { appendActionReceipt, type ActionReceiptEventType } from "../receipts/actionReceipts";
 import { settlementCostAfterProviderAttempt } from "./openAiGatewayCore";
+import { normalizeGatewayUsage, usageEnvelopeMetadata } from "./gatewayUsageNormalization";
 
 const UPSTREAM_TIMEOUT_MS = 120_000;
 const MAX_UPSTREAM_ERROR_BYTES = 8_192;
@@ -268,6 +269,16 @@ async function persistResult(input: {
         featureTags: input.tags?.featureTags,
         customerTags: input.tags?.customerTags,
         latencyMs: endedAt - input.startedAt,
+        ...usageEnvelopeMetadata(
+          normalizeGatewayUsage({
+            provider: "anthropic",
+            model: input.model,
+            costUsd: settlement.costUsd,
+            inputTokens: prompt,
+            outputTokens: completion,
+            confidence: usage ? "exact" : "estimated",
+          }),
+        ),
       },
     },
   ]);
@@ -536,6 +547,7 @@ export function registerAnthropicGatewayRoutes(app: Express): void {
         workspaceId: auth.workspaceId,
         identityId,
         estimatedCostUsd: estimate.estimatedCostUsd,
+        requestId,
       });
       if ("reason" in reservationResult) {
         await persistResult({
@@ -575,6 +587,12 @@ export function registerAnthropicGatewayRoutes(app: Express): void {
         res.setHeader(
           "x-rakshex-budget-remaining-usd",
           String(reservationResult.warning.remainingUsd),
+        );
+      }
+      if (budgetReservation?.poolPlan?.borrowedUsd) {
+        res.setHeader(
+          "x-rakshex-pool-borrowed-usd",
+          String(budgetReservation.poolPlan.borrowedUsd),
         );
       }
     } catch (err) {

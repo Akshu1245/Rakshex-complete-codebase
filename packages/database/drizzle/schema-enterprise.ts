@@ -72,6 +72,7 @@ export const controlPlaneProviderEnum = pgEnum("control_plane_provider", [
   "lm_studio",
   "openai_compatible",
   "openrouter",
+  "elevenlabs",
 ]);
 export const controlPlaneCredentialStatusEnum = pgEnum("control_plane_credential_status", [
   "active",

@@ -31,6 +31,7 @@ import {
   type GatewayAttributionTags,
 } from "./gatewayAttribution";
 import { appendActionReceipt, type ActionReceiptEventType } from "../receipts/actionReceipts";
+import { normalizeGatewayUsage, usageEnvelopeMetadata } from "./gatewayUsageNormalization";
 
 const MAX_UPSTREAM_ERROR_BYTES = 8_192;
 const MAX_STREAM_AUDIT_BYTES = 2 * 1024 * 1024;
@@ -478,6 +479,16 @@ async function persistGatewayResult(input: {
         featureTags: input.tags?.featureTags,
         customerTags: input.tags?.customerTags,
         latencyMs: endedAt - input.startedAt,
+        ...usageEnvelopeMetadata(
+          normalizeGatewayUsage({
+            provider: input.provider,
+            model: input.model,
+            costUsd: settlement.costUsd,
+            inputTokens: prompt,
+            outputTokens: output,
+            confidence: usage ? "exact" : "estimated",
+          }),
+        ),
       },
     },
   ]);
@@ -881,6 +892,7 @@ export async function handleOpenAiGatewayRequest(
       workspaceId: auth.workspaceId,
       identityId: enforcementIdentityId,
       estimatedCostUsd: estimate.estimatedCostUsd,
+      requestId,
     });
     if ("reason" in reservationResult) {
       await persistGatewayResult({
@@ -925,6 +937,12 @@ export async function handleOpenAiGatewayRequest(
       res.setHeader(
         "x-rakshex-budget-remaining-usd",
         String(reservationResult.warning.remainingUsd),
+      );
+    }
+    if (reservationResult.reservation?.poolPlan?.borrowedUsd) {
+      res.setHeader(
+        "x-rakshex-pool-borrowed-usd",
+        String(reservationResult.reservation.poolPlan.borrowedUsd),
       );
     }
   } catch (err) {

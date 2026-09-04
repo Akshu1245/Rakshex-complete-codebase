@@ -130,6 +130,15 @@ export const GOVERNANCE_CAPABILITIES: Record<GovernanceProvider, GovernanceCapab
     implementationStatus: "monitor_only",
     note: `OpenRouter chat completions are gateway-governed; settlement prefers OpenRouter's per-request cost report. Seat/usage sync is not live. ${GATEWAY_NOTE}`,
   },
+  elevenlabs: {
+    seatSync: false,
+    usageSync: false,
+    providerNativeLimit: false,
+    gatewayHardLimit: true,
+    personalAccountSupported: false,
+    implementationStatus: "monitor_only",
+    note: `ElevenLabs text-to-speech is gateway-governed when routed through RakshEx; billing uses character accounting. ${GATEWAY_NOTE}`,
+  },
 };
 
 export function getGovernanceCapabilities(provider: GovernanceProvider): GovernanceCapabilities {

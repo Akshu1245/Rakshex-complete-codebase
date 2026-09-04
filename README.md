@@ -24,7 +24,7 @@ The repository also contains API/secret scanning, team AI governance, gateway bu
 | Delegated authority / attenuation       | Available in `@rakshex/action-control`                                                                                                  |
 | Credential mediation                    | Available for the enforced broker path                                                                                                  |
 | Action Ledger                           | Available; tamper-evident/hash-chained records                                                                                          |
-| Enforcement gateway providers           | OpenAI, Azure OpenAI, OpenRouter, and Anthropic for RaksHex-routed traffic; see `docs/GATEWAY_PROVIDERS.md`                             |
+| Enforcement gateway providers           | OpenAI, Azure OpenAI, OpenRouter, Anthropic, and ElevenLabs TTS; adaptive team pool when enabled — see `docs/GATEWAY_PROVIDERS.md`      |
 | Gateway budgets and kill switches       | Available; enforcement applies to RaksHex-routed traffic                                                                                |
 | Scanner core / collection import        | Available                                                                                                                               |
 | GitHub scanning path                    | Available when the GitHub App is configured                                                                                             |

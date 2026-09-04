@@ -12,7 +12,8 @@ export type ControlPlaneProvider =
   | "vllm"
   | "lm_studio"
   | "openai_compatible"
-  | "openrouter";
+  | "openrouter"
+  | "elevenlabs";
 
 export interface ProviderCapabilities {
   connect: boolean;
@@ -75,6 +76,14 @@ export const PROVIDERS: readonly ProviderDefinition[] = [
     capabilities: { ...api, discoverUsage: false },
     dataNotes:
       "Gateway-routed calls settle against OpenRouter's own per-request cost report; provider-side usage discovery is not synced.",
+  },
+  {
+    id: "elevenlabs",
+    name: "ElevenLabs",
+    category: "api",
+    capabilities: { ...api, thinkingTokens: false, discoverUsage: false },
+    dataNotes:
+      "Gateway-routed text-to-speech calls settle using provider character accounting; voice usage is measured in characters/credits, not tokens.",
   },
   {
     id: "bedrock",

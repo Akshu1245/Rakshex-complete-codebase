@@ -3,7 +3,7 @@ import * as db from "../../db";
 import { priceModelUsage, type PriceableProvider } from "../billing/modelPriceRegistry";
 
 /** Providers the gateway can settle attribution for. */
-export type GatewaySettlementProvider = PriceableProvider | "openai_compatible";
+export type GatewaySettlementProvider = PriceableProvider | "openai_compatible" | "elevenlabs";
 
 const REGISTRY_PRICEABLE: ReadonlySet<string> = new Set([
   "openai",

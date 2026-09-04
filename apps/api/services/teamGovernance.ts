@@ -2,6 +2,7 @@
  * Team AI governance service — identities, usage, budgets, seats, sync, kill switches.
  * Never stores raw prompts or plaintext provider credentials.
  */
+import crypto from "crypto";
 import { and, desc, eq, gte, isNull, lte, sql, sum } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import * as db from "../db";
@@ -31,6 +32,14 @@ import {
   type NormalizedSeat,
   type NormalizedUsageEvent,
 } from "./teamGovernance/types";
+import {
+  adaptivePolicyFromPool,
+  budgetIdFromSourceId,
+  buildCapacitySources,
+  parseTeamPoolConfig,
+  planAdaptiveCapacity,
+} from "./teamGovernance/teamPoolBudgeting";
+import type { CapacitySourceType } from "./teamGovernance/adaptiveBudgeting";
 import { publishScopedKillSwitch, readMergedKillSwitchState } from "./gateway/killSwitchCache";
 import { toNumber } from "../utils/decimal";
 
@@ -508,6 +517,7 @@ export async function upsertBudget(input: {
   warningPct?: number;
   hardLimit?: boolean;
   enforcementMode: "gateway" | "provider_native" | "monitor_only";
+  metadata?: Record<string, unknown>;
 }) {
   if (input.hardLimit && input.enforcementMode === "monitor_only") {
     throw new TRPCError({
@@ -552,6 +562,7 @@ export async function upsertBudget(input: {
         warningPct: input.warningPct ?? 80,
         hardLimit: input.hardLimit ?? false,
         enforcementMode: input.enforcementMode,
+        ...(input.metadata !== undefined ? { metadata: input.metadata } : {}),
         currentSpendUsd: String(spend),
         periodStart: since,
         updatedAt: new Date(),
@@ -569,6 +580,7 @@ export async function upsertBudget(input: {
         warningPct: input.warningPct ?? 80,
         hardLimit: input.hardLimit ?? false,
         enforcementMode: input.enforcementMode,
+        metadata: input.metadata,
         currentSpendUsd: String(spend),
         periodStart: since,
       })
@@ -1216,11 +1228,26 @@ export async function evaluateGatewayGovernance(opts: {
   };
 }
 
+export interface GatewayBudgetReservationSlice {
+  budgetId: number;
+  reservedUsd: number;
+  sourceType?: CapacitySourceType;
+  ownerIdentityId?: number;
+}
+
 export interface GatewayBudgetReservation {
+  /** Primary budget row (first slice). Kept for backward-compatible settlement paths. */
   budgetId: number;
   workspaceId: number;
   identityId: number | null;
   reservedUsd: number;
+  /** One row per budget touched when adaptive team pooling borrows capacity. */
+  slices: GatewayBudgetReservationSlice[];
+  /** Present when reservation used adaptive pool borrowing. */
+  poolPlan?: {
+    borrowedUsd: number;
+    reasons: string[];
+  };
 }
 
 /** Soft-threshold state observed at reservation time (WARN tier). */
@@ -1233,13 +1260,19 @@ export interface GatewayBudgetWarning {
 
 /**
  * Atomically reserve estimated spend against the applicable hard gateway
- * budget. The conditional UPDATE is the authorization decision: concurrent
- * requests cannot all observe the same remaining budget and overspend it.
+ * budget. When adaptive team pooling is enabled on the workspace budget,
+ * capacity is planned across personal, team-shared, member-shareable, and
+ * emergency sources before conditional UPDATEs run inside one transaction.
  */
 export async function reserveGatewayBudget(opts: {
   workspaceId: number;
   identityId?: number;
   estimatedCostUsd: number;
+  /** Optional correlation id for pool audit evidence. */
+  requestId?: string;
+  priority?: "experimental" | "normal" | "customer" | "critical";
+  allowBorrow?: boolean;
+  allowEmergency?: boolean;
 }): Promise<
   | { allowed: true; reservation: GatewayBudgetReservation | null; warning?: GatewayBudgetWarning }
   | { allowed: false; reason: string }
@@ -1255,11 +1288,121 @@ export async function reserveGatewayBudget(opts: {
     .select()
     .from(teamAiBudgets)
     .where(eq(teamAiBudgets.workspaceId, opts.workspaceId));
+
+  const workspaceBudget = budgets.find((budget) => budget.identityId == null);
+  const poolConfig = parseTeamPoolConfig(workspaceBudget);
+  const usePool = poolConfig.enabled && opts.identityId != null;
+
+  if (usePool) {
+    const sources = buildCapacitySources(budgets, opts.identityId, poolConfig);
+    const plan = planAdaptiveCapacity(
+      {
+        requestId: opts.requestId ?? crypto.randomUUID(),
+        amountUsd: amount,
+        priority: opts.priority ?? "normal",
+        identityId: opts.identityId,
+        allowBorrow: opts.allowBorrow ?? true,
+        allowEmergency: opts.allowEmergency ?? true,
+      },
+      sources,
+      adaptivePolicyFromPool(poolConfig),
+    );
+
+    if (!plan.allowed) {
+      const reason = plan.requiresApproval
+        ? `Adaptive pool borrow requires approval (${plan.borrowedUsd.toFixed(2)} USD planned)`
+        : plan.shortfallUsd > 0
+          ? `Adaptive team pool insufficient; shortfall ${plan.shortfallUsd.toFixed(2)} USD`
+          : plan.reasons.join("; ") || "Adaptive team pool blocked the request";
+      return { allowed: false, reason };
+    }
+
+    const sliceRows: GatewayBudgetReservationSlice[] = plan.slices.flatMap((slice) => {
+      const budgetId = budgetIdFromSourceId(slice.sourceId);
+      if (budgetId == null) return [];
+      return [
+        {
+          budgetId,
+          reservedUsd: slice.amountUsd,
+          sourceType: slice.sourceType,
+          ownerIdentityId: slice.ownerIdentityId,
+        },
+      ];
+    });
+
+    if (sliceRows.length === 0) {
+      return { allowed: false, reason: "Adaptive team pool produced no budget slices" };
+    }
+
+    try {
+      await database.transaction(async (tx) => {
+        for (const slice of sliceRows) {
+          const [reserved] = await tx
+            .update(teamAiBudgets)
+            .set({
+              currentSpendUsd: sql`${teamAiBudgets.currentSpendUsd} + ${slice.reservedUsd}`,
+              updatedAt: new Date(),
+            })
+            .where(
+              and(
+                eq(teamAiBudgets.id, slice.budgetId),
+                eq(teamAiBudgets.workspaceId, opts.workspaceId),
+                sql`${teamAiBudgets.currentSpendUsd} + ${slice.reservedUsd} <= ${teamAiBudgets.limitUsd}`,
+              ),
+            )
+            .returning({ id: teamAiBudgets.id, currentSpendUsd: teamAiBudgets.currentSpendUsd });
+          if (!reserved) {
+            throw new Error("POOL_RESERVATION_FAILED");
+          }
+        }
+      });
+    } catch {
+      return {
+        allowed: false,
+        reason: "Adaptive team pool reservation failed under concurrent load",
+      };
+    }
+
+    const primarySlice = sliceRows[0]!;
+    const primaryBudget = budgets.find((b) => b.id === primarySlice.budgetId) ?? workspaceBudget;
+    const limitUsd = primaryBudget ? toNumber(primaryBudget.limitUsd) : 0;
+    const spendAfterUsd = primaryBudget
+      ? toNumber(primaryBudget.currentSpendUsd) + primarySlice.reservedUsd
+      : 0;
+    const warningPct = primaryBudget?.warningPct ?? 80;
+    const usedPct = limitUsd > 0 ? (spendAfterUsd / limitUsd) * 100 : 100;
+    const warning: GatewayBudgetWarning | undefined =
+      usedPct >= warningPct
+        ? {
+            limitUsd,
+            warningPct,
+            usedPct: Math.round(usedPct * 100) / 100,
+            remainingUsd: Math.max(0, Math.round((limitUsd - spendAfterUsd) * 10_000) / 10_000),
+          }
+        : undefined;
+
+    return {
+      allowed: true,
+      reservation: {
+        budgetId: primarySlice.budgetId,
+        workspaceId: opts.workspaceId,
+        identityId: opts.identityId ?? null,
+        reservedUsd: amount,
+        slices: sliceRows,
+        poolPlan: {
+          borrowedUsd: plan.borrowedUsd,
+          reasons: plan.reasons,
+        },
+      },
+      ...(warning ? { warning } : {}),
+    };
+  }
+
   const identityBudget =
     opts.identityId == null
       ? undefined
       : budgets.find((budget) => budget.identityId === opts.identityId);
-  const applicable = identityBudget ?? budgets.find((budget) => budget.identityId == null);
+  const applicable = identityBudget ?? workspaceBudget;
   if (!applicable || !applicable.hardLimit || applicable.enforcementMode !== "gateway") {
     return { allowed: true, reservation: null };
   }
@@ -1306,6 +1449,7 @@ export async function reserveGatewayBudget(opts: {
       workspaceId: opts.workspaceId,
       identityId: applicable.identityId,
       reservedUsd: amount,
+      slices: [{ budgetId: applicable.id, reservedUsd: amount }],
     },
     ...(warning ? { warning } : {}),
   };
@@ -1325,19 +1469,31 @@ export async function settleGatewayBudget(
   if (!database) {
     throw new Error("Governance database unavailable — budget settlement failed");
   }
-  const delta = Math.max(0, actualCostUsd) - reservation.reservedUsd;
-  await database
-    .update(teamAiBudgets)
-    .set({
-      currentSpendUsd: sql`GREATEST(0, ${teamAiBudgets.currentSpendUsd} + ${delta})`,
-      updatedAt: new Date(),
-    })
-    .where(
-      and(
-        eq(teamAiBudgets.id, reservation.budgetId),
-        eq(teamAiBudgets.workspaceId, reservation.workspaceId),
-      ),
-    );
+
+  const slices =
+    reservation.slices.length > 0
+      ? reservation.slices
+      : [{ budgetId: reservation.budgetId, reservedUsd: reservation.reservedUsd }];
+
+  const totalReserved = slices.reduce((sum, slice) => sum + slice.reservedUsd, 0);
+  const deltaTotal = Math.max(0, actualCostUsd) - totalReserved;
+
+  for (const slice of slices) {
+    const sliceDelta =
+      totalReserved > 0 ? (deltaTotal * slice.reservedUsd) / totalReserved : deltaTotal;
+    await database
+      .update(teamAiBudgets)
+      .set({
+        currentSpendUsd: sql`GREATEST(0, ${teamAiBudgets.currentSpendUsd} + ${sliceDelta})`,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(teamAiBudgets.id, slice.budgetId),
+          eq(teamAiBudgets.workspaceId, reservation.workspaceId),
+        ),
+      );
+  }
 }
 
 export async function governanceSummary(workspaceId: number) {
