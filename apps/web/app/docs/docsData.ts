@@ -72,6 +72,8 @@ pnpm dlx @vscode/vsce package --out rakshex-vscode-local.vsix</code></pre>
       <p>Workspace, identity, project and agent scoped kill-switch state can be evaluated before a RaksHex-routed provider request. The gateway reconciles low-latency Redis state with durable PostgreSQL state so a cache miss must not silently clear an active durable switch.</p>
       <h2>Budgets</h2>
       <p>Hard <code>gateway</code> budgets apply to traffic routed through the RaksHex gateway. <code>monitor_only</code> budgets are visibility/alerting and must not be described as blocks. <code>provider_native</code> enforcement is attempted only for provider capabilities that genuinely support it.</p>
+      <h2>Dynamic team AI pool</h2>
+      <p>When enabled on the workspace gateway budget, identities can borrow unused capacity from teammates (personal → team shared → member shareable → emergency reserve). Borrowed amounts appear in <code>x-rakshex-pool-borrowed-usd</code> on allowed gateway responses.</p>
       <h2>Critical boundary</h2>
       <p>A RaksHex gateway kill switch cannot truthfully be described as disabling direct provider traffic that bypasses RaksHex. Provider-side revocation/limits require a supported, authorised provider-native control.</p>
       <p>Runtime authorization of consequential agent actions is the separate <a href="/docs/agent-firewall">Agent Firewall</a> path.</p>
@@ -210,7 +212,7 @@ GET /api/health/ready</code></pre>
       <h2>Application API</h2>
       <p>The main application API is tRPC. Current procedure names live in <code>apps/api/api/*.ts</code> and the application router types; use those types rather than a stale copied endpoint list.</p>
       <h2>Gateway compatibility</h2>
-      <p>The repository includes OpenAI-compatible chat-completions and Anthropic Messages gateway routes. Those routes are subject to RaksHex workspace authentication/governance and are not a general unauthenticated proxy.</p>
+      <p>The enforcement gateway supports OpenAI (default), Azure OpenAI (<code>x-rakshex-provider: azure_openai</code>), OpenRouter (<code>x-rakshex-provider: openrouter</code>), Anthropic Messages (<code>/v1/messages</code>), and ElevenLabs TTS (<code>/v1/text-to-speech/:voiceId</code>). Routes require RaksHex workspace authentication and apply kill switches, policy, budget reservation, credential mediation, and usage settlement. Arbitrary <code>openai_compatible</code> upstreams remain fail-closed.</p>
       <h2>Telemetry</h2>
       <p>AgentGuard uses the implemented telemetry ingest path described by the SDK/API source. This page intentionally does not claim old <code>/v1/telemetry</code> or <code>/v1/findings</code> REST routes unless the current server actually mounts them.</p>
     `,
