@@ -11,6 +11,12 @@ on:
     branches: [main, master]
   pull_request:
     branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: Commit SHA to update (defaults to branch HEAD)
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -29,7 +35,7 @@ jobs:
       - name: Wait for Vercel API deploy to finish, then mark skipped
         env:
           GH_TOKEN: ${{ github.token }}
-          SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          SHA: ${{ inputs.sha || github.event.pull_request.head.sha || github.sha }}
         run: |
           set -euo pipefail
           CONTEXT="$VERCEL_API_STATUS_CONTEXT"
