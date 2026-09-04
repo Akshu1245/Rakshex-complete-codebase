@@ -2,9 +2,9 @@
 /**
  * @rakshex/cli — local + CI scanner
  *
- * Commands: login | configure | scan | policy | report | doctor | rules | help
+ * Commands: login | configure | scan | secrets | policy | report | doctor | rules | help
  * Outputs:  terminal | json | sarif
- * Offline:  scan uses @rakshex/scanner-core (deterministic, no network)
+ * Offline:  scan / secrets use @rakshex/scanner-core (deterministic, no network)
  */
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync } from "node:fs";
 import { join, resolve, extname, basename } from "node:path";
@@ -18,6 +18,7 @@ import {
   getRiskLevel,
   type RuleFinding,
 } from "@rakshex/scanner-core";
+import { cmdSecrets } from "./secrets.js";
 
 const CONFIG_DIR = join(homedir(), ".rakshex");
 const CONFIG_PATH = join(CONFIG_DIR, "config.json");
@@ -78,6 +79,8 @@ Usage:
   rakshex login --api-key <key> [--api-url <url>]
   rakshex configure --fail-on Critical,High [--ignore-rules id1,id2]
   rakshex scan <file-or-dir> [--format terminal|json|sarif] [--changed-only] [--baseline] [--upload]
+  rakshex secrets <path> [--format terminal|json] [--fail-on Critical,High]
+  rakshex secrets rules
   rakshex policy check <file> [--format json]
   rakshex report <file> [--format sarif|json]
   rakshex doctor
@@ -90,7 +93,7 @@ never automatic just because a key is configured; it must be requested on
 every invocation that should transmit data. A failed upload never changes the
 scan's own exit code — offline scanning stays authoritative for CI gating.
 
-Exit codes (scan):
+Exit codes (scan / secrets):
   0  clean / below threshold
   1  findings at or above fail-on severity
   2  usage / parse error
@@ -101,14 +104,10 @@ function loadCollection(filePath: string): unknown {
   const text = readFileSync(filePath, "utf8");
   const ext = extname(filePath).toLowerCase();
   if (ext === ".yaml" || ext === ".yml") {
-    // Minimal YAML: require JSON-compatible docs or use scanner after crude conversion
-    // Prefer JSON for CI; for YAML use simple openapi key detection via JSON if possible
     try {
       return JSON.parse(text);
     } catch {
-      // Best-effort: wrap as openapi if looks like YAML openapi without full parser in CLI
       if (text.includes("openapi:") || text.includes("swagger:")) {
-        // Convert very simple openapi yaml is hard without dep — try dynamic import of yaml if present
         try {
           const yaml = require("yaml") as { parse: (s: string) => unknown };
           return yaml.parse(text);
@@ -135,7 +134,6 @@ function collectScanTargets(root: string, changedOnly: boolean): string[] {
       const st = statSync(p);
       if (st.isDirectory()) walk(p);
       else if (/\.(json|ya?ml)$/i.test(name)) {
-        // Heuristic: openapi/postman filenames or content later
         if (/openapi|swagger|postman|collection|api/i.test(name) || !changedOnly) {
           out.push(p);
         }
@@ -207,18 +205,6 @@ function printTerminal(findings: RuleFinding[], score: number, level: string): v
   }
 }
 
-/**
- * Report a scan's findings to the workspace dashboard via the existing
- * CI-scan REST endpoint (POST /api/github/scan — the same route the GitHub
- * Action integration uses, so this reuses a real, already-authenticated,
- * already-audited server path instead of inventing a parallel one).
- *
- * Deliberately opt-in per invocation (--upload), not automatic just because
- * a key is stored: this is a security tool, and an API spec can itself be
- * sensitive. A failed or skipped upload never changes the caller's exit
- * code — offline scanning is the source of truth for CI gating; uploading
- * is a best-effort side report on top of it.
- */
 async function maybeUploadScan(
   cfg: CliConfig,
   requested: boolean,
@@ -333,7 +319,6 @@ async function cmdScan(
   }
   if (uploads.length > 0) await Promise.all(uploads);
 
-  // Dedupe by fingerprint
   const byFp = new Map<string, RuleFinding>();
   for (const f of all) byFp.set(f.fingerprint, f);
   all = [...byFp.values()];
@@ -376,7 +361,6 @@ async function cmdScan(
 }
 
 function cmdPolicy(positional: string[], flags: Record<string, string | boolean>): number {
-  // Offline policy: treat scanner Critical/High as policy violations
   const target = positional[0] ?? positional[1];
   if (!target) {
     console.error("Usage: rakshex policy check <file>");
@@ -447,6 +431,8 @@ async function main(): Promise<number> {
       return cmdConfigure(flags);
     case "scan":
       return cmdScan(positional, flags);
+    case "secrets":
+      return cmdSecrets(positional, flags);
     case "policy":
       return cmdPolicy(positional, flags);
     case "report":
