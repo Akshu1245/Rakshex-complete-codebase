@@ -1,85 +1,78 @@
 # AGENTS.md
 
-## Cursor Cloud specific instructions
+## Role
+You build. The human describes the product in one paragraph. You select stack, UI kit, skills, and components. No per-widget questions.
 
-Rakshex is a pnpm + turbo monorepo (an AI-agent/API security platform). Node ≥20 and pnpm are preinstalled; `pnpm install` is run automatically on startup. The two runnable services for local dev are:
+## Always
+1. Read this file.
+2. Use Context7 before coding against a library.
+3. Use 21st or shadcn CLI before inventing a component.
+4. Use Playwright to verify a UI path you just created.
+5. Use find-skills when you lack a procedure.
 
-- **API** (`@rakshex/api`, Express + tRPC) on port **3000**
-- **Web** (`@rakshex/web`, Next.js dashboard) on port **3001**
+## Stack
+- Web app: Next.js App Router + TypeScript + Tailwind v4 + shadcn/ui
+- Dashboard chrome: shadcn-admin patterns (sidebar, topbar, table, drawer, settings)
+- Marketing motion: Magic UI / Aceternity-style via shadcn CLI or 21st search — never a second design system
+- App blocks: ReUI / Kibo / Origin / 21st catalog when a block already exists
+- Chat / agent UI: assistant-ui or CopilotKit (controlled generative UI = OUR components)
+- Python / multi-agent backends: FastAPI
+- SaaS auth + billing: Better Auth or Auth.js + Stripe or Polar from a known starter. Do not hand-roll auth.
+- VS Code extension: official VS Code contribution model + webview. Webview UI still uses the same tokens as the web app if a companion dashboard exists.
+- CLI: one command surface, JSON + human output.
 
-Postgres and Redis are provided by system packages (installed via apt, not Docker — the base image has no Docker). Standard scripts live in the root `package.json` and `README.md`/`GETTING_STARTED.md`; only the non-obvious setup/run caveats are captured below.
+Forbidden: MUI, Chakra, Ant, Bootstrap, random CSS frameworks, a second icon set, a second color system.
 
-### Starting infra (Postgres + Redis)
-
-These are not started automatically. Each session:
-
+Install UI with:
 ```bash
-sudo pg_ctlcluster 16 main start        # start Postgres 16
-redis-server --daemonize yes            # start Redis (creates ./dump.rdb; it is gitignored)
+npx shadcn@latest add <name>
+# or 21st search + install
 ```
+Never hand-roll Button, Input, Table, Dialog, Form, Sidebar, Tabs, Chart.
 
-The `rakshex` role/db and the `DATABASE_URL` below assume password `password`. If the DB is missing (fresh cluster), recreate it:
+## UI kit by idea
 
-```bash
-sudo -u postgres psql -c "CREATE ROLE rakshex LOGIN PASSWORD 'password' CREATEDB;"
-sudo -u postgres createdb -O rakshex rakshex
-```
+### A. Landing / waitlist / launch
+shadcn + Magic UI / Aceternity / 21st marketing blocks. nav, hero + one CTA, proof, 3-feature bento, pricing, FAQ, footer. Dark, sparse, high contrast. No dashboard shell on a marketing page.
 
-### Env files (important gotcha)
+### B. B2B SaaS dashboard (security, cost, compliance, admin)
+shadcn-admin + ReUI/Kibo/21st app blocks. sidebar app, KPI row, filterable table, detail drawer, settings, billing. Look: Linear / Vercel / Stripe. Dense and quiet. Trust > decoration.
 
-The API entrypoint does `import "dotenv/config"`, which loads `.env` **relative to the process CWD**. Because each app runs from its own package dir, the root `.env` is **not** read by the API. Provide per-app env files (all gitignored):
+### C. Conversational / WhatsApp / voice console
+assistant-ui or CopilotKit. transcript, tool-call cards, citations, approve/reject for side effects. Mobile-first empty states. English first; Kannada-ready copy structure.
 
-- `apps/api/.env` — must include at least:
-  ```
-  NODE_ENV=development
-  PORT=3000
-  JWT_SECRET=local-dev-jwt-secret-min-32-characters-long-000
-  DATABASE_URL=postgresql://rakshex:password@localhost:5432/rakshex
-  REDIS_URL=redis://localhost:6379
-  FRONTEND_URL=http://localhost:3001
-  CORS_ORIGINS=http://localhost:3001,http://localhost:3000
-  ```
-- `apps/web/.env.local`:
-  ```
-  NEXT_PUBLIC_TS_API_URL=http://localhost:3000
-  NEXT_PUBLIC_SITE_URL=http://localhost:3001
-  ```
+### D. VS Code extension + optional companion CLI / web
+Extension: package.json contributes, commands, views, webview or TreeView. Webview: same shadcn tokens as the SaaS dashboard if both exist. Marketing site for the extension uses kit A only. Never wrap a fake Next.js dashboard inside the webview.
 
-### Migrations & seed
+### E. India ops tools (GST, clinic, school, RTO, forms)
+shadcn forms + tables + stepper + printable/PDF output. Large tap targets, obvious primary button, bilingual-ready strings.
 
-`pnpm db:migrate` / `pnpm db:seed` do **not** load `.env` — pass `DATABASE_URL` explicitly:
+## RaksHex / DevPulse
+Product: AI cybersecurity SaaS + VS Code extension.
+Jobs: real-time secrets/token/password detection in code, Postman, repos; OWASP/compliance scanning; LLM API cost intelligence.
+Surfaces that may exist together:
+1. VS Code extension (kit D) — scan current file / workspace, inline diagnostics, panel of findings
+2. CLI `npx rakshex scan` — CI and local
+3. SaaS dashboard (kit B) — org, repos, findings inbox, policy, cost of LLM calls, billing
+4. Marketing site (kit A) — rakshex.in style launch page only
 
-```bash
-DATABASE_URL="postgresql://rakshex:password@localhost:5432/rakshex" pnpm db:migrate
-DATABASE_URL="postgresql://rakshex:password@localhost:5432/rakshex" pnpm db:seed
-```
+First vertical slice unless specified otherwise:
+Extension or CLI that scans a folder for high-confidence secrets and prints / shows a findings list.
+Dashboard and billing come AFTER that slice works.
 
-### Running the dev servers
+Visual: kit B. Security product. No neon hacker aesthetic, no particle heroes.
 
-Run the two apps separately (do **not** rely on `pnpm dev`/turbo alone: both apps default to port 3000 and collide; Next also mis-parses `-- -p`). Use the `PORT` env var for the web app:
+## How you research
+1. Context7 / ctx7 docs for that library + current version.
+2. Component exists?: 21st search → shadcn registry → ReUI.
+3. Repo/API/issue behavior: Firecrawl or GitHub search. Read README and last relevant issue/PR.
+4. UI you just built: Playwright — open it, click the primary path, fix what broke.
+5. Missing workflow: find-skills, install one skill, follow it.
 
-```bash
-pnpm --filter @rakshex/api dev              # API on :3000
-PORT=3001 pnpm --filter @rakshex/web dev    # Web on :3001
-```
+Do not invent APIs from memory when Context7 is available.
 
-Health check: `curl http://localhost:3000/api/health` should report `status: "ok"` with
-`checks.database` and `checks.redis` both `ok` once infrastructure and environment variables are in place.
+## Definition of done
+One user path works end-to-end with real kit UI, current docs, and no placeholder buttons.
 
-### Lint / test / build
-
-Commands are defined in the root `package.json` (`pnpm lint`, `pnpm typecheck`,
-`pnpm test`, `pnpm build`). The 2026-07-30 release passes all four gates.
-
-### Runtime verification
-
-- Workspace creation uses PostgreSQL `returning()` and creates the owner membership.
-- Legacy queued scans and public BullMQ scans use distinct queue names and payloads.
-- `/api/import/*` is registered by the API and proxied by the web application.
-- Collection credential scanning inspects URLs, bodies, variables, scripts, and
-  authorization headers while redacting matched values.
-- Access tokens are short-lived by design; refresh/session behavior must be verified
-  in the connected buyer journey.
-- Production still requires the separately deployed worker, PostgreSQL, Redis, SMTP,
-  exact web/API origins, provider credentials, and monitoring described in
-  `docs/operations/PRODUCTION_DEPLOYMENT_RUNBOOK.md`.
+## Stop rule
+After a working slice, name the next 3 files. Do not expand scope.
