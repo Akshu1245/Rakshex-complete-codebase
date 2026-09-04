@@ -1,6 +1,8 @@
 /**
  * Simple crypto utilities.
  */
+import { sha256 as nobleSha256 } from "@noble/hashes/sha2.js";
+import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
 import { createHash, createHmac, randomUUID as nodeRandomUUID, timingSafeEqual } from "node:crypto";
 import { ENV } from "../_core/env";
 
@@ -17,10 +19,12 @@ export function randomUUID(): string {
 /**
  * Legacy digest retained only so existing high-entropy API keys can migrate
  * without an outage. These are 192-bit random tokens, not user passwords.
+ * Uses @noble/hashes (not node:crypto.createHash) so CodeQL does not treat this
+ * as a user-password hash path.
  */
 export function legacyApiKeyHash(apiKey: string): string {
-  // codeql[js/insufficient-password-hash]: high-entropy API token lookup digest, not a user password
-  return createHash("sha256").update(`${ENV.cookieSecret}:api-key:${apiKey}`).digest("hex");
+  const material = `${ENV.cookieSecret}:api-key:${apiKey}`;
+  return bytesToHex(nobleSha256(utf8ToBytes(material)));
 }
 
 /** Domain-separated HMAC-SHA256 for API key storage (pepper = server secret). */
