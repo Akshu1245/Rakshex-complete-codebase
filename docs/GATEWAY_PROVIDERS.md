@@ -20,7 +20,7 @@ the gateway is not blocked by these controls.
 | OpenAI       | default / `x-rakshex-provider: openai` | `/v1/chat/completions`, `/v1/responses` | Verified token usage priced by the versioned registry                                                                 |
 | Azure OpenAI | `x-rakshex-provider: azure_openai`     | `/v1/chat/completions`, `/v1/responses` | Registry or conservative estimate; `metadata.resourceEndpoint` must be a Microsoft-operated HTTPS host                |
 | OpenRouter   | `x-rakshex-provider: openrouter`       | `/v1/chat/completions` only             | OpenRouter `usage.cost` (auto-requested) as provider-reconciled cost                                                  |
-| Anthropic    | `/v1/messages`                         | `/v1/messages`                          | Registry, thinking-token table fallback, or estimate                                                                  |
+| Anthropic    | `/v1/messages`                         | `/v1/messages` (JSON + SSE streaming)   | Registry, thinking-token table fallback, or estimate                                                                  |
 | ElevenLabs   | `/v1/text-to-speech/:voiceId`          | TTS                                     | Character accounting via `x-character-count` header; voice envelope uses `credit` units (characters), not fake tokens |
 
 Arbitrary `openai_compatible` upstreams remain **fail-closed**.
@@ -80,7 +80,6 @@ USD remains the cross-provider budget control unit.
 
 ## Not supported yet (honest states)
 
-- Anthropic streaming through the gateway.
 - OpenRouter `/v1/responses`.
 - Provider-native hard limits beyond the capability catalog.
 - Customer validation / paid pilots (operational, not code).

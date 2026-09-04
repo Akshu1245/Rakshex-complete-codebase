@@ -35,6 +35,7 @@ import { normalizeGatewayUsage, usageEnvelopeMetadata } from "./gatewayUsageNorm
 
 const UPSTREAM_TIMEOUT_MS = 120_000;
 const MAX_UPSTREAM_ERROR_BYTES = 8_192;
+const MAX_STREAM_AUDIT_BYTES = 2 * 1024 * 1024;
 
 const messagesSchema = z
   .object({
@@ -88,6 +89,63 @@ function estimatePreflight(body: MessagesBody) {
   const estimatedTokens = inputTokens + outputTokens;
   const estimatedCostUsd = (estimatedTokens / 1_000_000) * 15;
   return { estimatedTokens, estimatedCostUsd };
+}
+
+function appendAuditTail(current: string, chunk: string): string {
+  const combined = current + chunk;
+  return combined.length <= MAX_STREAM_AUDIT_BYTES
+    ? combined
+    : combined.slice(combined.length - MAX_STREAM_AUDIT_BYTES);
+}
+
+function extractAnthropicStreamingUsage(raw: string):
+  | {
+      prompt_tokens: number;
+      completion_tokens: number;
+      total_tokens: number;
+      cached_input_tokens?: number;
+    }
+  | undefined {
+  let inputTokens = 0;
+  let outputTokens = 0;
+  let cachedInput = 0;
+  for (const line of raw.split(/\r?\n/)) {
+    if (!line.startsWith("data:")) continue;
+    const data = line.slice(5).trim();
+    if (!data) continue;
+    try {
+      const parsed = JSON.parse(data) as Record<string, unknown>;
+      if (parsed.type === "message_start") {
+        const message = parsed.message;
+        if (message && typeof message === "object") {
+          const usage = (message as Record<string, unknown>).usage;
+          if (usage && typeof usage === "object") {
+            const record = usage as Record<string, unknown>;
+            inputTokens = Math.max(0, Number(record.input_tokens ?? 0));
+            cachedInput = Math.max(0, Number(record.cache_read_input_tokens ?? 0));
+          }
+        }
+      }
+      if (parsed.type === "message_delta") {
+        const usage = parsed.usage;
+        if (usage && typeof usage === "object") {
+          outputTokens = Math.max(
+            outputTokens,
+            Number((usage as Record<string, unknown>).output_tokens ?? 0),
+          );
+        }
+      }
+    } catch {
+      // Ignore incomplete/non-JSON provider event lines.
+    }
+  }
+  if (inputTokens === 0 && outputTokens === 0) return undefined;
+  return {
+    prompt_tokens: inputTokens,
+    completion_tokens: outputTokens,
+    total_tokens: inputTokens + outputTokens,
+    ...(cachedInput > 0 ? { cached_input_tokens: cachedInput } : {}),
+  };
 }
 
 function extractAnthropicUsage(payload: unknown):
@@ -366,23 +424,6 @@ export function registerAnthropicGatewayRoutes(app: Express): void {
       return;
     }
     const body = parsed.data;
-    if (body.stream) {
-      if (
-        !(await appendReceiptOrBlock("deny", {
-          reason: "streaming_not_supported",
-          model: body.model,
-        }))
-      ) {
-        return;
-      }
-      anthropicError(
-        res,
-        400,
-        "invalid_request_error",
-        "Streaming Anthropic responses are not enabled on this gateway yet; omit stream or set stream=false",
-      );
-      return;
-    }
 
     const requestedIdentityId = positiveIntegerHeader(req, "x-rakshex-identity-id");
     if (
@@ -672,6 +713,8 @@ export function registerAnthropicGatewayRoutes(app: Express): void {
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
+    const onClientClose = () => controller.abort();
+    req.on("close", onClientClose);
     let providerFetchStarted = false;
     let providerCompleted = false;
     let completedCost = 0;
@@ -728,8 +771,68 @@ export function registerAnthropicGatewayRoutes(app: Express): void {
         return;
       }
 
-      const payload = await upstream.json();
-      const usage = extractAnthropicUsage(payload);
+      if (!body.stream) {
+        const payload = await upstream.json();
+        const usage = extractAnthropicUsage(payload);
+        providerCompleted = true;
+        const cost = await persistResult({
+          auth,
+          requestId,
+          providerAccountId: connection.accountId,
+          model: body.model,
+          identityId,
+          projectId,
+          agentId,
+          tags,
+          decision: "allowed",
+          usage,
+          estimatedCostUsd: estimate.estimatedCostUsd,
+          startedAt,
+        });
+        completedCost = cost;
+        await settleGatewayBudget(budgetReservation, cost);
+        budgetReservation = null;
+        if (
+          !(await appendReceiptOrBlock("settle", {
+            provider: "anthropic",
+            providerAccountId: connection.accountId,
+            model: body.model,
+            identityId,
+            projectId,
+            agentId,
+            inputTokens: usage?.prompt_tokens ?? 0,
+            outputTokens: usage?.completion_tokens ?? 0,
+            cachedInputTokens: usage?.cached_input_tokens ?? 0,
+            estimatedCostUsd: estimate.estimatedCostUsd,
+            settledCostUsd: cost,
+            outcome: "completed",
+          }))
+        ) {
+          return;
+        }
+        res.status(200).json(payload);
+        return;
+      }
+
+      if (!upstream.body) throw new Error("Upstream stream body is missing");
+      res.status(200);
+      res.setHeader("Content-Type", upstream.headers.get("content-type") ?? "text/event-stream");
+      res.setHeader("Connection", "keep-alive");
+      res.setHeader("X-Accel-Buffering", "no");
+      res.flushHeaders();
+
+      const reader = upstream.body.getReader();
+      const decoder = new TextDecoder();
+      let auditBuffer = "";
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        res.write(Buffer.from(value));
+        auditBuffer = appendAuditTail(auditBuffer, decoder.decode(value, { stream: true }));
+      }
+      auditBuffer = appendAuditTail(auditBuffer, decoder.decode());
+
+      const usage = extractAnthropicStreamingUsage(auditBuffer);
       providerCompleted = true;
       const cost = await persistResult({
         auth,
@@ -766,7 +869,7 @@ export function registerAnthropicGatewayRoutes(app: Express): void {
       ) {
         return;
       }
-      res.status(200).json(payload);
+      res.end();
     } catch (err) {
       const aborted = controller.signal.aborted;
       logger.error({ err, requestId }, "[AnthropicGateway] Upstream request failed");
@@ -834,6 +937,7 @@ export function registerAnthropicGatewayRoutes(app: Express): void {
       }
     } finally {
       clearTimeout(timeout);
+      req.removeListener("close", onClientClose);
     }
   });
 
@@ -842,3 +946,9 @@ export function registerAnthropicGatewayRoutes(app: Express): void {
     "[Gateway] Anthropic Messages enforcement route registered",
   );
 }
+
+export const __test = {
+  extractAnthropicStreamingUsage,
+  appendAuditTail,
+  estimatePreflight,
+};

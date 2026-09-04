@@ -47,21 +47,32 @@ vi.mock("../vault", () => ({
   decryptSecret: () => "sk-ant-test",
 }));
 
-import { registerAnthropicGatewayRoutes } from "./anthropicProxy";
+vi.mock("../../middleware/policyEnforcement", () => ({
+  buildPreflightEventContext: vi.fn(() => ({})),
+  enforcePolicies: vi.fn(),
+}));
+
+import { registerAnthropicGatewayRoutes, __test } from "./anthropicProxy";
 
 function createResponse() {
+  const chunks: Buffer[] = [];
   const res: {
     statusCode: number;
     payload: unknown;
+    chunks: Buffer[];
     status: (code: number) => typeof res;
     json: (body: unknown) => typeof res;
     setHeader: () => typeof res;
     type: () => typeof res;
     send: (body: unknown) => typeof res;
+    write: (chunk: Buffer) => boolean;
+    flushHeaders: () => void;
+    end: () => void;
     headersSent: boolean;
   } = {
     statusCode: 200,
     payload: undefined,
+    chunks,
     headersSent: false,
     status(code: number) {
       this.statusCode = code;
@@ -82,6 +93,14 @@ function createResponse() {
       this.payload = body;
       this.headersSent = true;
       return this;
+    },
+    write(chunk: Buffer) {
+      chunks.push(chunk);
+      return true;
+    },
+    flushHeaders() {},
+    end() {
+      this.headersSent = true;
     },
   };
   return res;
@@ -104,9 +123,8 @@ function createRequest(auth?: string, headers: Record<string, string> = {}) {
       max_tokens: 128,
       messages: [{ role: "user", content: "hello" }],
     },
-    on() {
-      return undefined;
-    },
+    on: vi.fn(),
+    removeListener: vi.fn(),
   };
 }
 
@@ -366,9 +384,33 @@ describe("Anthropic Messages gateway", () => {
     upstreamFetch.mockRestore();
   });
 
-  it("rejects stream=true until streaming support ships", async () => {
+  it("streams Anthropic SSE responses and settles usage from message events", async () => {
     const handler = routeHandler();
     const res = createResponse();
+    const sseBody = [
+      "event: message_start",
+      'data: {"type":"message_start","message":{"usage":{"input_tokens":12,"output_tokens":1,"cache_read_input_tokens":2}}}',
+      "",
+      "event: content_block_delta",
+      'data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Hi"}}',
+      "",
+      "event: message_delta",
+      'data: {"type":"message_delta","usage":{"output_tokens":6}}',
+      "",
+      "event: message_stop",
+      'data: {"type":"message_stop"}',
+      "",
+    ].join("\n");
+    const upstreamFetch = vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      headers: new Headers({ "content-type": "text/event-stream" }),
+      body: new ReadableStream({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode(sseBody));
+          controller.close();
+        },
+      }),
+    } as never);
     mocks.validateWorkspaceApiKey.mockResolvedValue({
       keyId: "ak_1",
       workspaceId: 42,
@@ -378,12 +420,46 @@ describe("Anthropic Messages gateway", () => {
       identityId: null,
       agentId: null,
     });
+    mocks.evaluateGatewayGovernance.mockResolvedValue({
+      allowed: true,
+      killActive: false,
+      budgetBlocked: false,
+      budgetReason: null,
+    });
+    mocks.persistSettledAttribution.mockResolvedValue({ costUsd: 0.0031 });
     const req = createRequest("Bearer rk_live_test");
     (req.body as { stream?: boolean }).stream = true;
 
     await handler(req, res);
 
-    expect(res.statusCode).toBe(400);
-    expect(mocks.evaluateGatewayGovernance).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(200);
+    expect(res.chunks.join("")).toContain("message_delta");
+    expect(mocks.persistSettledAttribution).toHaveBeenCalledWith(
+      expect.objectContaining({
+        inputTokens: 12,
+        outputTokens: 6,
+        cachedInputTokens: 2,
+        usageVerified: true,
+      }),
+    );
+    expect(mocks.settleGatewayBudget).toHaveBeenCalled();
+    upstreamFetch.mockRestore();
+  });
+
+  it("extracts Anthropic streaming usage from SSE audit tail", () => {
+    const raw = [
+      "event: message_start",
+      'data: {"type":"message_start","message":{"usage":{"input_tokens":8,"cache_read_input_tokens":1}}}',
+      "",
+      "event: message_delta",
+      'data: {"type":"message_delta","usage":{"output_tokens":4}}',
+      "",
+    ].join("\n");
+    expect(__test.extractAnthropicStreamingUsage(raw)).toEqual({
+      prompt_tokens: 8,
+      completion_tokens: 4,
+      total_tokens: 12,
+      cached_input_tokens: 1,
+    });
   });
 });
