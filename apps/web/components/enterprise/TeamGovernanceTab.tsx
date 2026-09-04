@@ -39,6 +39,10 @@ export function TeamGovernanceTab() {
   const [approvalThresholdUsd, setApprovalThresholdUsd] = useState("20");
   const [enforcementMode, setEnforcementMode] = useState<"gateway" | "monitor_only">("gateway");
   const [orgName, setOrgName] = useState("");
+  const [identityBudgetId, setIdentityBudgetId] = useState("");
+  const [identityBudgetLimit, setIdentityBudgetLimit] = useState("50");
+  const [identityShareable, setIdentityShareable] = useState(true);
+  const [identityProtectedUsd, setIdentityProtectedUsd] = useState("0");
 
   const summary = trpc.teamGovernance.summary.useQuery({ workspaceId });
   const entitlements = trpc.teamGovernance.entitlements.useQuery({ workspaceId });
@@ -71,6 +75,20 @@ export function TeamGovernanceTab() {
       setApprovalThresholdUsd(String(pool.approvalThresholdUsd));
     }
   }, [workspaceBudget]);
+
+  useEffect(() => {
+    if (!identityBudgetId) return;
+    const identityId = Number(identityBudgetId);
+    const budget = budgets.data?.find((b) => b.identityId === identityId);
+    if (!budget) return;
+    setIdentityBudgetLimit(String(budget.limitUsd));
+    const meta =
+      budget.metadata && typeof budget.metadata === "object"
+        ? (budget.metadata as Record<string, unknown>)
+        : {};
+    setIdentityShareable(meta.shareable !== false);
+    setIdentityProtectedUsd(String(typeof meta.protectedUsd === "number" ? meta.protectedUsd : 0));
+  }, [identityBudgetId, budgets.data]);
   const setKillSwitch = trpc.teamGovernance.setKillSwitch.useMutation({
     onSuccess: () => killSwitches.refetch(),
   });
@@ -304,6 +322,88 @@ export function TeamGovernanceTab() {
               </label>
             </div>
           )}
+        </div>
+        <div className="rounded-lg border border-white/10 bg-black/20 p-4 space-y-3">
+          <h3 className="text-sm font-medium text-white">Per-employee gateway budget</h3>
+          <p className="text-xs text-gray-500">
+            Personal gateway limits participate in the team pool when marked shareable. Protected
+            capacity cannot be borrowed by teammates.
+          </p>
+          <div className="flex flex-wrap gap-3 items-end">
+            <label className="text-xs text-gray-400">
+              Employee
+              <select
+                value={identityBudgetId}
+                onChange={(e) => setIdentityBudgetId(e.target.value)}
+                className="mt-1 block min-w-[12rem] px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white"
+              >
+                <option value="">Select identity…</option>
+                {(identities.data ?? []).map((identity) => (
+                  <option key={identity.id} value={String(identity.id)}>
+                    {identity.displayName ?? identity.externalUserId} (#{identity.id})
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-xs text-gray-400">
+              Monthly limit (USD)
+              <input
+                type="number"
+                min={1}
+                value={identityBudgetLimit}
+                onChange={(e) => setIdentityBudgetLimit(e.target.value)}
+                className="mt-1 block w-28 px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white"
+              />
+            </label>
+            <label className="text-xs text-gray-400">
+              Protected (USD)
+              <input
+                type="number"
+                min={0}
+                value={identityProtectedUsd}
+                onChange={(e) => setIdentityProtectedUsd(e.target.value)}
+                className="mt-1 block w-28 px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white"
+              />
+            </label>
+            <label className="flex items-center gap-2 text-xs text-gray-300 pb-2">
+              <input
+                type="checkbox"
+                checked={identityShareable}
+                onChange={(e) => setIdentityShareable(e.target.checked)}
+                className="rounded border-white/20"
+              />
+              Shareable in pool
+            </label>
+            <button
+              type="button"
+              disabled={setBudget.isPending || !identityBudgetId}
+              onClick={() => {
+                const identityId = Number(identityBudgetId);
+                const limitUsd = Number(identityBudgetLimit);
+                if (
+                  !Number.isInteger(identityId) ||
+                  identityId <= 0 ||
+                  !Number.isFinite(limitUsd)
+                ) {
+                  return;
+                }
+                setBudget.mutate({
+                  workspaceId,
+                  identityId,
+                  limitUsd,
+                  hardLimit: true,
+                  enforcementMode: "gateway",
+                  metadata: {
+                    shareable: identityShareable,
+                    protectedUsd: Number(identityProtectedUsd) || 0,
+                  },
+                });
+              }}
+              className="px-4 py-2 rounded-lg border border-[#14b8a6]/40 text-[#14b8a6] text-sm disabled:opacity-50"
+            >
+              {setBudget.isPending ? "Saving…" : "Save employee budget"}
+            </button>
+          </div>
         </div>
         <DataTable<{
           id: number;
