@@ -1223,6 +1223,14 @@ export interface GatewayBudgetReservation {
   reservedUsd: number;
 }
 
+/** Soft-threshold state observed at reservation time (WARN tier). */
+export interface GatewayBudgetWarning {
+  limitUsd: number;
+  warningPct: number;
+  usedPct: number;
+  remainingUsd: number;
+}
+
 /**
  * Atomically reserve estimated spend against the applicable hard gateway
  * budget. The conditional UPDATE is the authorization decision: concurrent
@@ -1233,7 +1241,7 @@ export async function reserveGatewayBudget(opts: {
   identityId?: number;
   estimatedCostUsd: number;
 }): Promise<
-  | { allowed: true; reservation: GatewayBudgetReservation | null }
+  | { allowed: true; reservation: GatewayBudgetReservation | null; warning?: GatewayBudgetWarning }
   | { allowed: false; reason: string }
 > {
   const database = await db.getDb();
@@ -1268,7 +1276,7 @@ export async function reserveGatewayBudget(opts: {
         sql`${teamAiBudgets.currentSpendUsd} + ${amount} <= ${teamAiBudgets.limitUsd}`,
       ),
     )
-    .returning({ id: teamAiBudgets.id });
+    .returning({ id: teamAiBudgets.id, currentSpendUsd: teamAiBudgets.currentSpendUsd });
 
   if (!reserved) {
     return {
@@ -1276,6 +1284,21 @@ export async function reserveGatewayBudget(opts: {
       reason: "identity/workspace gateway budget would be exceeded",
     };
   }
+
+  const limitUsd = toNumber(applicable.limitUsd);
+  const spendAfterUsd = toNumber(reserved.currentSpendUsd);
+  const warningPct = applicable.warningPct ?? 80;
+  const usedPct = limitUsd > 0 ? (spendAfterUsd / limitUsd) * 100 : 100;
+  const warning: GatewayBudgetWarning | undefined =
+    usedPct >= warningPct
+      ? {
+          limitUsd,
+          warningPct,
+          usedPct: Math.round(usedPct * 100) / 100,
+          remainingUsd: Math.max(0, Math.round((limitUsd - spendAfterUsd) * 10_000) / 10_000),
+        }
+      : undefined;
+
   return {
     allowed: true,
     reservation: {
@@ -1284,6 +1307,7 @@ export async function reserveGatewayBudget(opts: {
       identityId: applicable.identityId,
       reservedUsd: amount,
     },
+    ...(warning ? { warning } : {}),
   };
 }
 

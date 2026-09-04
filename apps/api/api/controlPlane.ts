@@ -38,6 +38,7 @@ const providerIds = [
   "vllm",
   "lm_studio",
   "openai_compatible",
+  "openrouter",
 ] as const;
 const providerSchema = z.enum(providerIds);
 const workspaceInput = z.object({ workspaceId: z.number().int().positive() });

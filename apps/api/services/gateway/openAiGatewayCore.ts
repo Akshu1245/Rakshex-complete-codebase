@@ -38,7 +38,8 @@ const UPSTREAM_TIMEOUT_MS = 120_000;
 const DEFAULT_PREFLIGHT_OUTPUT_TOKENS = 4_096;
 const PREFLIGHT_FALLBACK_USD_PER_MILLION_TOKENS = 15;
 
-export type SupportedGatewayProvider = "openai" | "openai_compatible";
+export type SupportedGatewayProvider =
+  "openai" | "azure_openai" | "openrouter" | "openai_compatible";
 export type OpenAiGatewayEndpoint = "chat/completions" | "responses";
 
 interface UpstreamConnection {
@@ -46,6 +47,8 @@ interface UpstreamConnection {
   url: string;
   apiKey: string;
   accountId: number;
+  /** Azure OpenAI authenticates with an `api-key` header instead of Bearer. */
+  authStyle: "bearer" | "api-key";
 }
 
 export interface GatewayUsage {
@@ -54,6 +57,11 @@ export interface GatewayUsage {
   total_tokens: number;
   reasoning_tokens?: number;
   cached_input_tokens?: number;
+  /**
+   * Cost the provider itself reported for this request in USD (OpenRouter
+   * emits `usage.cost`). Only trusted for providers known to report it.
+   */
+  provider_reported_cost_usd?: number;
 }
 
 export interface NormalizedOpenAiGatewayRequest {
@@ -170,15 +178,50 @@ function stripTrailingSlashes(value: string): string {
   return value.slice(0, end);
 }
 
+/**
+ * Azure OpenAI resource endpoints are pinned to Microsoft-operated domains so
+ * a poisoned provider-account row can never redirect a credentialed call to
+ * an arbitrary origin.
+ */
+export function isAllowedAzureOpenAiHost(hostname: string): boolean {
+  const host = hostname.toLowerCase();
+  return (
+    host.endsWith(".openai.azure.com") ||
+    host.endsWith(".services.ai.azure.com") ||
+    host.endsWith(".cognitiveservices.azure.com")
+  );
+}
+
 export function normalizeUpstreamUrl(
   provider: SupportedGatewayProvider,
   metadata: unknown,
   endpoint: OpenAiGatewayEndpoint = "chat/completions",
 ): string {
   if (provider === "openai") return `https://api.openai.com/v1/${endpoint}`;
+  // OpenRouter is a fixed public origin like OpenAI; account metadata cannot
+  // redirect it.
+  if (provider === "openrouter") return `https://openrouter.ai/api/v1/${endpoint}`;
 
   const record =
     metadata && typeof metadata === "object" ? (metadata as Record<string, unknown>) : {};
+
+  if (provider === "azure_openai") {
+    const configured =
+      typeof record.resourceEndpoint === "string" ? record.resourceEndpoint.trim() : "";
+    if (!configured) {
+      throw new Error("Azure OpenAI provider account is missing metadata.resourceEndpoint");
+    }
+    const parsed = new URL(configured);
+    if (parsed.protocol !== "https:" || !isAllowedAzureOpenAiHost(parsed.hostname) || parsed.port) {
+      throw new Error(
+        "Azure OpenAI resource endpoint must be an HTTPS *.openai.azure.com, *.services.ai.azure.com, or *.cognitiveservices.azure.com origin",
+      );
+    }
+    // Azure v1 API: {resource}/openai/v1/{endpoint}, model = deployment name
+    // in the request body, no api-version required.
+    return `${parsed.origin}/openai/v1/${endpoint}`;
+  }
+
   const configured = typeof record.baseUrl === "string" ? record.baseUrl.trim() : "";
   if (!configured) {
     throw new Error("OpenAI-compatible provider account is missing metadata.baseUrl");
@@ -209,8 +252,10 @@ async function loadUpstreamConnection(
   endpoint: OpenAiGatewayEndpoint,
   requestedAccountId?: number,
 ): Promise<UpstreamConnection> {
-  if (provider !== "openai") {
-    throw new Error("Custom OpenAI-compatible upstreams are disabled in the OpenAI P0 gateway");
+  // Custom OpenAI-compatible upstreams stay fail-closed: only providers with
+  // pinned or domain-validated origins are allowed to receive credentials.
+  if (provider !== "openai" && provider !== "azure_openai" && provider !== "openrouter") {
+    throw new Error("Custom OpenAI-compatible upstreams are disabled in this gateway");
   }
   const database = await db.getDb();
   if (!database) throw new Error("Database unavailable");
@@ -261,9 +306,10 @@ async function loadUpstreamConnection(
 
   return {
     provider,
-    url: `https://api.openai.com/v1/${endpoint}`,
+    url: normalizeUpstreamUrl(provider, account.metadata, endpoint),
     apiKey,
     accountId: account.id,
+    authStyle: provider === "azure_openai" ? "api-key" : "bearer",
   };
 }
 
@@ -301,6 +347,9 @@ export function extractUsage(payload: unknown): GatewayUsage | undefined {
       0,
   );
   const cached = Number(promptDetails?.cached_tokens ?? inputDetails?.cached_tokens ?? 0);
+  // OpenRouter reports the exact request cost in USD as usage.cost when usage
+  // accounting is requested. Callers decide per provider whether to trust it.
+  const providerCost = Number(record.cost ?? Number.NaN);
 
   return {
     prompt_tokens: Math.max(0, prompt),
@@ -308,6 +357,9 @@ export function extractUsage(payload: unknown): GatewayUsage | undefined {
     total_tokens: Math.max(0, total),
     ...(Number.isFinite(reasoning) && reasoning > 0 ? { reasoning_tokens: reasoning } : {}),
     ...(Number.isFinite(cached) && cached > 0 ? { cached_input_tokens: cached } : {}),
+    ...(Number.isFinite(providerCost) && providerCost >= 0
+      ? { provider_reported_cost_usd: providerCost }
+      : {}),
   };
 }
 
@@ -376,6 +428,10 @@ async function persistGatewayResult(input: {
   const prompt = usage?.prompt_tokens ?? 0;
   const output = usage?.completion_tokens ?? 0;
   const cached = usage?.cached_input_tokens ?? 0;
+  // Provider-reported cost is only trusted from providers known to return it
+  // (OpenRouter's usage accounting). OpenAI/Azure settle via the registry.
+  const providerReportedCostUsd =
+    input.provider === "openrouter" ? usage?.provider_reported_cost_usd : undefined;
   const settlement = await persistSettledAttribution({
     requestId: input.requestId,
     workspaceId: input.auth.workspaceId,
@@ -390,6 +446,7 @@ async function persistGatewayResult(input: {
     cachedInputTokens: cached,
     usageVerified: usage != null,
     estimatedCostUsd: input.estimatedCostUsd,
+    providerReportedCostUsd,
     occurredAt: new Date(input.startedAt),
     tags: input.tags ?? {},
     endpoint: input.endpoint,
@@ -429,9 +486,38 @@ async function persistGatewayResult(input: {
 
 function providerFromRequest(req: Request): SupportedGatewayProvider | null {
   const provider = (req.header("x-rakshex-provider") ?? "openai").toLowerCase();
-  // P0 permits only OpenAI's fixed origin. Custom compatible upstreams stay
-  // fail-closed until the transport can pin and revalidate a vetted origin.
-  return provider === "openai" ? "openai" : null;
+  // Only providers with pinned origins (OpenAI, OpenRouter) or Microsoft
+  // domain-validated resource endpoints (Azure OpenAI) are enforceable.
+  // Arbitrary OpenAI-compatible upstreams stay fail-closed until the
+  // transport can pin and revalidate a vetted origin.
+  if (provider === "openai" || provider === "azure_openai" || provider === "openrouter") {
+    return provider;
+  }
+  return null;
+}
+
+/** OpenRouter implements Chat Completions only; Azure v1 and OpenAI support both. */
+export function providerSupportsEndpoint(
+  provider: SupportedGatewayProvider,
+  endpoint: OpenAiGatewayEndpoint,
+): boolean {
+  if (provider === "openrouter") return endpoint === "chat/completions";
+  return true;
+}
+
+/**
+ * OpenRouter only includes usage accounting (token counts + exact USD cost)
+ * when the request opts in. Enforced settlement requires it.
+ */
+export function upstreamBodyForProvider(
+  provider: SupportedGatewayProvider,
+  endpoint: OpenAiGatewayEndpoint,
+  body: Record<string, unknown>,
+): Record<string, unknown> {
+  if (provider !== "openrouter" || endpoint !== "chat/completions") return body;
+  const existingUsage =
+    body.usage && typeof body.usage === "object" ? (body.usage as Record<string, unknown>) : {};
+  return { ...body, usage: { ...existingUsage, include: true } };
 }
 
 function appendAuditTail(current: string, chunk: string): string {
@@ -542,7 +628,27 @@ export async function handleOpenAiGatewayRequest(
       res,
       400,
       "unsupported_provider",
-      "Only the OpenAI provider is supported in this P0 gateway",
+      "Supported gateway providers are openai, azure_openai, and openrouter",
+    );
+    return;
+  }
+
+  if (!providerSupportsEndpoint(provider, request.endpoint)) {
+    if (
+      !(await appendReceiptOrBlock("deny", {
+        provider,
+        endpoint: request.endpoint,
+        model: request.model,
+        reason: "unsupported_provider_endpoint",
+      }))
+    ) {
+      return;
+    }
+    openAiError(
+      res,
+      400,
+      "unsupported_provider_endpoint",
+      `The ${provider} provider does not support the ${request.endpoint} endpoint`,
     );
     return;
   }
@@ -811,6 +917,16 @@ export async function handleOpenAiGatewayRequest(
       return;
     }
     budgetReservation = reservationResult.reservation;
+    if (reservationResult.warning) {
+      // WARN tier: the request proceeds, but the caller learns the applicable
+      // hard budget has crossed its soft threshold before the block point.
+      res.setHeader("x-rakshex-budget-warning", "soft-threshold-exceeded");
+      res.setHeader("x-rakshex-budget-used-pct", String(reservationResult.warning.usedPct));
+      res.setHeader(
+        "x-rakshex-budget-remaining-usd",
+        String(reservationResult.warning.remainingUsd),
+      );
+    }
   } catch (err) {
     logger.error(
       { err, requestId, workspaceId: auth.workspaceId },
@@ -936,12 +1052,16 @@ export async function handleOpenAiGatewayRequest(
     const upstream = await fetch(connection.url, {
       method: "POST",
       headers: {
-        authorization: `Bearer ${connection.apiKey}`,
+        ...(connection.authStyle === "api-key"
+          ? { "api-key": connection.apiKey }
+          : { authorization: `Bearer ${connection.apiKey}` }),
         "content-type": "application/json",
         "user-agent": "Rakshex-Gateway/1.0",
         "x-request-id": requestId,
       },
-      body: JSON.stringify(request.upstreamBody),
+      body: JSON.stringify(
+        upstreamBodyForProvider(provider, request.endpoint, request.upstreamBody),
+      ),
       signal: controller.signal,
       // Never let a credential-bearing request follow a redirect.
       redirect: "manual",

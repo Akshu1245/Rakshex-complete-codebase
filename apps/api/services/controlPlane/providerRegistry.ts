@@ -11,7 +11,8 @@ export type ControlPlaneProvider =
   | "ollama"
   | "vllm"
   | "lm_studio"
-  | "openai_compatible";
+  | "openai_compatible"
+  | "openrouter";
 
 export interface ProviderCapabilities {
   connect: boolean;
@@ -66,6 +67,14 @@ export const PROVIDERS: readonly ProviderDefinition[] = [
     category: "cloud",
     capabilities: { ...api, revokeCredential: true },
     dataNotes: "Usage requires Azure tenant permissions.",
+  },
+  {
+    id: "openrouter",
+    name: "OpenRouter",
+    category: "api",
+    capabilities: { ...api, discoverUsage: false },
+    dataNotes:
+      "Gateway-routed calls settle against OpenRouter's own per-request cost report; provider-side usage discovery is not synced.",
   },
   {
     id: "bedrock",

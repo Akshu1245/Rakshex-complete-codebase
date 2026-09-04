@@ -24,6 +24,7 @@ register(createMonitorOnlyAdapter("ollama"));
 register(createMonitorOnlyAdapter("vllm"));
 register(createMonitorOnlyAdapter("lm_studio"));
 register(createMonitorOnlyAdapter("openai_compatible"));
+register(createMonitorOnlyAdapter("openrouter"));
 
 export function getGovernanceAdapter(provider: string): TeamGovernanceAdapter | null {
   return adapters.get(provider) ?? null;
