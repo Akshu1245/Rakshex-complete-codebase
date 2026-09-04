@@ -1,6 +1,16 @@
 import { gatewayCallAttribution } from "@rakshex/database";
 import * as db from "../../db";
-import { priceModelUsage } from "../billing/modelPriceRegistry";
+import { priceModelUsage, type PriceableProvider } from "../billing/modelPriceRegistry";
+
+/** Providers the gateway can settle attribution for. */
+export type GatewaySettlementProvider = PriceableProvider | "openai_compatible" | "elevenlabs";
+
+const REGISTRY_PRICEABLE: ReadonlySet<string> = new Set([
+  "openai",
+  "anthropic",
+  "azure_openai",
+  "openrouter",
+]);
 
 export interface GatewayAttributionTags {
   featureTags?: Record<string, string>;
@@ -39,21 +49,39 @@ export async function persistSettledAttribution(input: {
   agentId?: string;
   identityId?: number;
   providerAccountId: number;
-  provider: "openai" | "openai_compatible";
+  provider: GatewaySettlementProvider;
   model: string;
   inputTokens: number;
   outputTokens: number;
   cachedInputTokens: number;
   usageVerified: boolean;
   estimatedCostUsd: number;
+  /**
+   * Cost the provider itself reported for this exact request (e.g. OpenRouter
+   * returns `usage.cost` in USD). When present it is the settlement truth and
+   * is also persisted as provider_reconciled_cost_usd.
+   */
+  providerReportedCostUsd?: number;
+  /**
+   * Deterministic non-registry price (e.g. the Anthropic thinking-token
+   * table). Used only when the registry has no version for this model.
+   */
+  fallbackCostUsd?: number;
   occurredAt: Date;
   tags: GatewayAttributionTags;
   endpoint: string;
 }): Promise<{ costUsd: number; priceVersionId?: number; priceSourceUrl?: string }> {
+  const providerReported =
+    input.providerReportedCostUsd != null &&
+    Number.isFinite(input.providerReportedCostUsd) &&
+    input.providerReportedCostUsd >= 0
+      ? input.providerReportedCostUsd
+      : undefined;
+
   const priced =
-    input.provider === "openai" && input.usageVerified
+    input.usageVerified && REGISTRY_PRICEABLE.has(input.provider)
       ? await priceModelUsage({
-          provider: "openai",
+          provider: input.provider as PriceableProvider,
           model: input.model,
           occurredAt: input.occurredAt,
           usage: {
@@ -63,7 +91,21 @@ export async function persistSettledAttribution(input: {
           },
         })
       : null;
-  const costUsd = priced?.costUsd ?? input.estimatedCostUsd;
+
+  const tableFallback =
+    input.usageVerified && input.fallbackCostUsd != null && Number.isFinite(input.fallbackCostUsd)
+      ? Math.max(0, input.fallbackCostUsd)
+      : undefined;
+
+  const costUsd = providerReported ?? priced?.costUsd ?? tableFallback ?? input.estimatedCostUsd;
+  const pricingConfidence =
+    providerReported != null
+      ? "provider_reported"
+      : priced
+        ? "registry"
+        : tableFallback != null
+          ? "table_fallback"
+          : "estimated_fallback";
 
   const database = await db.getDb();
   if (!database) throw new Error("Database unavailable");
@@ -83,6 +125,7 @@ export async function persistSettledAttribution(input: {
       cachedInputTokens: input.cachedInputTokens,
       estimatedCostUsd: String(input.estimatedCostUsd),
       settledCostUsd: String(costUsd),
+      providerReconciledCostUsd: providerReported != null ? String(providerReported) : undefined,
       priceVersionId: priced?.price.id,
       priceSourceUrl: priced?.price.sourceUrl,
       featureTags: input.tags.featureTags,
@@ -90,7 +133,7 @@ export async function persistSettledAttribution(input: {
       occurredAt: input.occurredAt,
       metadata: {
         endpoint: input.endpoint,
-        pricingConfidence: priced ? "registry" : "estimated_fallback",
+        pricingConfidence,
       },
     })
     .onConflictDoNothing();

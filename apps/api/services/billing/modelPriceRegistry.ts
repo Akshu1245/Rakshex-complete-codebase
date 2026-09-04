@@ -2,6 +2,9 @@ import { and, desc, eq, lte } from "drizzle-orm";
 import { modelPriceVersions, type ModelPriceVersion } from "@rakshex/database/schema-pricing";
 import * as db from "../../db";
 
+/** Providers whose settled usage can be priced from the versioned registry. */
+export type PriceableProvider = "openai" | "anthropic" | "azure_openai" | "openrouter";
+
 export interface PriceableUsage {
   inputTokens: number;
   outputTokens: number;
@@ -58,7 +61,7 @@ function toRate(row: ModelPriceVersion): PriceRate {
 }
 
 export async function lookupModelPrice(input: {
-  provider: "openai" | "anthropic";
+  provider: PriceableProvider;
   model: string;
   occurredAt: Date;
 }): Promise<PriceRate | null> {
@@ -80,7 +83,7 @@ export async function lookupModelPrice(input: {
 }
 
 export async function priceModelUsage(input: {
-  provider: "openai" | "anthropic";
+  provider: PriceableProvider;
   model: string;
   occurredAt: Date;
   usage: PriceableUsage;

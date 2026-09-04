@@ -128,7 +128,7 @@ export interface GatewayChatCompletionRequest {
 }
 
 export interface GatewayChatCompletionOptions {
-  provider?: "openai" | "openai_compatible";
+  provider?: "openai" | "azure_openai" | "openrouter" | "openai_compatible" | "elevenlabs";
   providerAccountId?: number;
   identityId?: number;
   projectId?: string;

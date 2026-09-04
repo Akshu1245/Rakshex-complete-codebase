@@ -18,8 +18,8 @@ export function randomUUID(): string {
  * Legacy digest retained only so existing high-entropy API keys can migrate
  * without an outage. These are 192-bit random tokens, not user passwords.
  */
-function legacyApiKeyHash(apiKey: string): string {
-  // codeql[js/insufficient-password-hash]
+export function legacyApiKeyHash(apiKey: string): string {
+  // codeql[js/insufficient-password-hash]: high-entropy API token lookup digest, not a user password
   return createHash("sha256").update(`${ENV.cookieSecret}:api-key:${apiKey}`).digest("hex");
 }
 
@@ -33,19 +33,18 @@ export function hashApiKey(apiKey: string): string {
 }
 
 /**
- * Primary hash first, followed by the pre-HMAC digest for seamless,
- * authenticate-then-upgrade migration.
+ * Primary hash for new lookups. Legacy digest is queried separately on miss so
+ * gateway auth paths do not eagerly compute the legacy SHA-256 fallback.
  */
 export function apiKeyHashCandidates(apiKey: string): string[] {
-  const primary = hashApiKey(apiKey);
-  const legacy = legacyApiKeyHash(apiKey);
-  return primary === legacy ? [primary] : [primary, legacy];
+  return [hashApiKey(apiKey)];
 }
 
 /** Constant-time comparison for stored API key hashes. */
 export function verifyApiKeyHash(apiKey: string, storedHash: string): boolean {
   const expected = Buffer.from(storedHash, "utf8");
-  return apiKeyHashCandidates(apiKey).some((candidate) => {
+  const candidates = [hashApiKey(apiKey), legacyApiKeyHash(apiKey)];
+  return candidates.some((candidate) => {
     const computed = Buffer.from(candidate, "utf8");
     return computed.length === expected.length && timingSafeEqual(computed, expected);
   });
