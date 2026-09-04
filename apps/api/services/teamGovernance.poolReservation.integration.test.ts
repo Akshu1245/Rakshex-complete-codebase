@@ -4,6 +4,7 @@
  */
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import pg from "pg";
+import { randomBytes } from "node:crypto";
 import { migrate } from "@rakshex/database";
 
 const DATABASE_URL =
@@ -24,6 +25,35 @@ async function canConnect(): Promise<boolean> {
       /* ignore */
     }
   }
+}
+
+async function ensureTestWorkspace(client: pg.Client): Promise<number> {
+  const slug = "pool-itest-ws";
+  const existing = await client.query<{ id: number }>(
+    `SELECT id FROM workspaces WHERE slug = $1 LIMIT 1`,
+    [slug],
+  );
+  if (existing.rows[0]?.id) return existing.rows[0].id;
+
+  const openId = `pool_itest_${randomBytes(6).toString("hex")}`;
+  const user = await client.query<{ id: number }>(
+    `INSERT INTO users ("openId", name, email, role, plan, "createdAt", "updatedAt")
+     VALUES ($1, 'Pool Integration', 'pool@example.local', 'user', 'free', now(), now())
+     RETURNING id`,
+    [openId],
+  );
+  const ownerUserId = user.rows[0]?.id;
+  if (!ownerUserId) throw new Error("failed to create pool integration test user");
+
+  const workspace = await client.query<{ id: number }>(
+    `INSERT INTO workspaces (slug, name, "ownerUserId", "isPersonal", "createdAt", "updatedAt")
+     VALUES ($1, 'Pool Integration Test', $2, false, now(), now())
+     RETURNING id`,
+    [slug, ownerUserId],
+  );
+  const workspaceId = workspace.rows[0]?.id;
+  if (!workspaceId) throw new Error("failed to create pool integration test workspace");
+  return workspaceId;
 }
 
 const available = await canConnect();
@@ -47,12 +77,7 @@ describe.skipIf(!available)("reserveGatewayBudget pool integration", () => {
     client = new pg.Client({ connectionString: DATABASE_URL });
     await client.connect();
 
-    const { rows: ws } = await client.query<{ id: number }>(
-      `SELECT id FROM workspaces WHERE slug = 'local-dev' LIMIT 1`,
-    );
-    workspaceId = ws[0]?.id ?? 0;
-    if (!workspaceId)
-      throw new Error("seed workspace local-dev is required for pool integration tests");
+    workspaceId = await ensureTestWorkspace(client);
 
     await client.query(`DELETE FROM team_ai_budgets WHERE workspace_id = $1`, [workspaceId]);
 

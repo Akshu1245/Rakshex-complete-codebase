@@ -36,6 +36,7 @@ import {
   adaptivePolicyFromPool,
   budgetIdFromSourceId,
   buildCapacitySources,
+  parseIdentityPoolConfig,
   parseTeamPoolConfig,
   planAdaptiveCapacity,
 } from "./teamGovernance/teamPoolBudgeting";
@@ -1233,6 +1234,8 @@ export interface GatewayBudgetReservationSlice {
   reservedUsd: number;
   sourceType?: CapacitySourceType;
   ownerIdentityId?: number;
+  /** When borrowing from member_shareable capacity, spend must remain above this floor. */
+  protectedFloorUsd?: number;
 }
 
 export interface GatewayBudgetReservation {
@@ -1320,12 +1323,18 @@ export async function reserveGatewayBudget(opts: {
     const sliceRows: GatewayBudgetReservationSlice[] = plan.slices.flatMap((slice) => {
       const budgetId = budgetIdFromSourceId(slice.sourceId);
       if (budgetId == null) return [];
+      const memberBudget = budgets.find((b) => b.id === budgetId);
+      const protectedFloorUsd =
+        slice.sourceType === "member_shareable" && memberBudget
+          ? parseIdentityPoolConfig(memberBudget).protectedUsd
+          : undefined;
       return [
         {
           budgetId,
           reservedUsd: slice.amountUsd,
           sourceType: slice.sourceType,
           ownerIdentityId: slice.ownerIdentityId,
+          protectedFloorUsd,
         },
       ];
     });
@@ -1337,6 +1346,10 @@ export async function reserveGatewayBudget(opts: {
     try {
       await database.transaction(async (tx) => {
         for (const slice of sliceRows) {
+          const spendCap =
+            slice.protectedFloorUsd != null && slice.protectedFloorUsd > 0
+              ? sql`${teamAiBudgets.limitUsd} - ${slice.protectedFloorUsd}`
+              : teamAiBudgets.limitUsd;
           const [reserved] = await tx
             .update(teamAiBudgets)
             .set({
@@ -1347,7 +1360,7 @@ export async function reserveGatewayBudget(opts: {
               and(
                 eq(teamAiBudgets.id, slice.budgetId),
                 eq(teamAiBudgets.workspaceId, opts.workspaceId),
-                sql`${teamAiBudgets.currentSpendUsd} + ${slice.reservedUsd} <= ${teamAiBudgets.limitUsd}`,
+                sql`${teamAiBudgets.currentSpendUsd} + ${slice.reservedUsd} <= ${spendCap}`,
               ),
             )
             .returning({ id: teamAiBudgets.id, currentSpendUsd: teamAiBudgets.currentSpendUsd });
