@@ -34,8 +34,12 @@ Do not renegotiate these in chat. Change only via PR that updates this file + AG
 - Shared design tokens with companion web app when both exist
 
 ## CLI
-- One command surface
+- One command surface (`rakshex`)
 - Human + JSON output modes
+- API/OpenAPI scan: `rakshex scan <file-or-dir>`
+- Secrets (high-confidence only): `rakshex secrets <path> [--format terminal|json] [--fail-on Critical,High]`
+- List secret rules: `rakshex secrets rules`
+- Fixture smoke: `apps/cli/fixtures/secrets-sample`
 
 ## Tooling / research
 - Context7 / ctx7 for library docs
