@@ -8,7 +8,7 @@ export const waitlistRouter = router({
   join: publicProcedure
     .input(
       z.object({
-        email: z.string().email(),
+        email: z.string().trim().email(),
         plan: z.string().optional(),
         source: z.string().optional(),
       }),
