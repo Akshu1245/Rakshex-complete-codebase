@@ -113,34 +113,19 @@ jobs:
               }'''
           replace_once("apps/api/db.ts", old_dup, new_dup)
 
-          old_pinger = '''    // ── Render Anti-Sleep Keep-Alive Pinger ──────────────────────────────────
-              // Pings self every 10 minutes to prevent Render free-tier containers
-              // from going to sleep after 15 minutes of inactivity.
-              const pingTarget = process.env.RENDER_EXTERNAL_URL
-                ? `${process.env.RENDER_EXTERNAL_URL.replace(/\\\/$/, "")}/api/health/live`
-                : "https://rakshex-backend.onrender.com/api/health/live";
-
-              logger.info({ pingTarget }, "[Render Keep-Alive] Anti-sleep pinger initialized (10m interval)");
-              const antiSleepTimer = setInterval(
-                async () => {
-                  try {
-                    const response = await fetch(pingTarget);
-                    logger.info(
-                      { status: response.status },
-                      "[Render Keep-Alive] Self-ping pulse sent successfully — host active",
-                    );
-                  } catch (err) {
-                    logger.warn(
-                      { error: err instanceof Error ? err.message : String(err) },
-                      "[Render Keep-Alive] Self-ping pulse ping warning",
-                    );
-                  }
-                },
-                10 * 60 * 1000,
-              );
-              antiSleepTimer.unref();
-          '''
-          replace_once("apps/api/_core/index.ts", old_pinger, "")
+          index_path = Path("apps/api/_core/index.ts")
+          index_text = index_path.read_text()
+          start_marker = "    // ── Render Anti-Sleep Keep-Alive Pinger"
+          end_marker = "    antiSleepTimer.unref();\n"
+          start = index_text.find(start_marker)
+          if start < 0:
+              raise SystemExit("apps/api/_core/index.ts: Render anti-sleep start marker not found")
+          end = index_text.find(end_marker, start)
+          if end < 0:
+              raise SystemExit("apps/api/_core/index.ts: Render anti-sleep end marker not found")
+          end += len(end_marker)
+          index_text = index_text[:start] + index_text[end:]
+          index_path.write_text(index_text)
 
           replace_once(
               "apps/api/_core/index.ts",
