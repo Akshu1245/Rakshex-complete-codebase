@@ -1230,7 +1230,6 @@ async function startServer() {
       startRedTeamScheduler(60_000);
       logger.info("[Server] Continuous red-team scheduler started");
     }
-
   });
 
   server.on("error", (err: NodeJS.ErrnoException) => {
