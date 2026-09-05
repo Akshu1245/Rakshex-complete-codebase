@@ -1202,7 +1202,7 @@ async function startServer() {
 
   // ── Start listening ────────────────────────────────────────────────────────
   const preferredPort = parseInt(process.env.PORT || "3000", 10);
-  // In production, bind exactly PORT so container HEALTHCHECK / Render probes
+  // In production, bind exactly PORT so container and platform health probes
   // never miss the process. Port scanning is a local-dev convenience only.
   const port = ENV.isProduction ? preferredPort : await findAvailablePort(preferredPort);
 
@@ -1230,33 +1230,6 @@ async function startServer() {
       startRedTeamScheduler(60_000);
       logger.info("[Server] Continuous red-team scheduler started");
     }
-
-    // ── Render Anti-Sleep Keep-Alive Pinger ──────────────────────────────────
-    // Pings self every 10 minutes to prevent Render free-tier containers
-    // from going to sleep after 15 minutes of inactivity.
-    const pingTarget = process.env.RENDER_EXTERNAL_URL
-      ? `${process.env.RENDER_EXTERNAL_URL.replace(/\/$/, "")}/api/health/live`
-      : "https://rakshex-backend.onrender.com/api/health/live";
-
-    logger.info({ pingTarget }, "[Render Keep-Alive] Anti-sleep pinger initialized (10m interval)");
-    const antiSleepTimer = setInterval(
-      async () => {
-        try {
-          const response = await fetch(pingTarget);
-          logger.info(
-            { status: response.status },
-            "[Render Keep-Alive] Self-ping pulse sent successfully — host active",
-          );
-        } catch (err) {
-          logger.warn(
-            { error: err instanceof Error ? err.message : String(err) },
-            "[Render Keep-Alive] Self-ping pulse ping warning",
-          );
-        }
-      },
-      10 * 60 * 1000,
-    );
-    antiSleepTimer.unref();
   });
 
   server.on("error", (err: NodeJS.ErrnoException) => {

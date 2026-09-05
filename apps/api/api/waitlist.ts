@@ -8,32 +8,56 @@ export const waitlistRouter = router({
   join: publicProcedure
     .input(
       z.object({
-        email: z.string().email(),
+        email: z.string().trim().email(),
         plan: z.string().optional(),
         source: z.string().optional(),
       }),
     )
     .mutation(async ({ input }) => {
+      const email = input.email.trim().toLowerCase();
       const plan = input.plan ?? "Free";
       const source = input.source ?? "landing_page";
-      const result = await db.addWaitlistEmail(input.email, plan, source);
+      const database = await db.getDb();
 
-      if (!result.success) {
+      if (!database) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Unable to record your request. Please try again shortly.",
         });
       }
 
-      if (result.success && !result.alreadyExists) {
-        // Send automated confirmation email to user & internal notification to Akshay
+      const { waitlist } = await import("@rakshex/database");
+      let alreadyExists = false;
+
+      try {
+        await database.insert(waitlist).values({ email, plan, source });
+      } catch (err: unknown) {
+        // PostgreSQL unique_violation: the address is already on the waitlist.
+        // Treat duplicate joins as an idempotent success rather than surfacing
+        // the historical MySQL ER_DUP_ENTRY behavior as a 500.
+        if ((err as { code?: string } | null)?.code === "23505") {
+          alreadyExists = true;
+        } else {
+          console.error("Error recording waitlist request:", err);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Unable to record your request. Please try again shortly.",
+          });
+        }
+      }
+
+      if (!alreadyExists) {
+        // Send automated confirmation email to user & internal notification to Akshay.
+        // Email is optional during private beta, so a mail failure must not undo
+        // a successfully persisted waitlist request.
         try {
-          await sendWaitlistConfirmationEmail(input.email, plan);
+          await sendWaitlistConfirmationEmail(email, plan);
         } catch (err) {
           console.error("Error sending waitlist confirmation/notification emails:", err);
         }
       }
-      return { ...result, email: input.email.trim().toLowerCase() };
+
+      return { success: true, alreadyExists, email };
     }),
 
   count: publicProcedure.query(async () => {

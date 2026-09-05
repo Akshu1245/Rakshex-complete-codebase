@@ -37,11 +37,12 @@ const GET_USER_INFO_WITH_JWT_PATH = `/webdev.v1.WebDevAuthPublicService/GetUserI
 
 class OAuthService {
   constructor(private client: ReturnType<typeof axios.create>) {
-    logger.info({ baseURL: ENV.oAuthServerUrl }, "[OAuth] Initialized");
-    if (!ENV.oAuthServerUrl) {
-      logger.error(
-        "[OAuth] ERROR: OAUTH_SERVER_URL is not configured! Set OAUTH_SERVER_URL environment variable.",
-      );
+    if (ENV.oAuthServerUrl && ENV.appId) {
+      logger.info({ baseURL: ENV.oAuthServerUrl }, "[OAuth] Legacy external OAuth initialized");
+    } else {
+      // Legacy OAuth is deliberately optional during private beta. Missing
+      // configuration is a disabled capability, not a production error.
+      logger.info("[OAuth] Legacy external OAuth client disabled (not configured)");
     }
   }
 
@@ -232,6 +233,10 @@ class SDKServer {
   }
 
   async getUserInfoWithJwt(jwtToken: string): Promise<GetUserInfoWithJwtResponse> {
+    if (!ENV.oAuthServerUrl || !ENV.appId) {
+      throw ForbiddenError("Legacy OAuth provider is not configured");
+    }
+
     const payload: GetUserInfoWithJwtRequest = {
       jwtToken,
       projectId: ENV.appId,
@@ -322,10 +327,15 @@ class SDKServer {
     const signedInAt = new Date();
     let user = await db.getUserByOpenId(sessionUserId);
 
-    // If user not in DB, sync from OAuth server automatically
+    // If user is not in the DB, legacy OAuth can sync it only when the
+    // legacy provider is explicitly configured. Otherwise fail closed and
+    // never attempt an outbound request against an empty base URL.
     if (!user) {
       if (!sessionCookie) {
         throw ForbiddenError("Invalid session");
+      }
+      if (!ENV.oAuthServerUrl || !ENV.appId) {
+        throw ForbiddenError("User not found");
       }
       try {
         const userInfo = await this.getUserInfoWithJwt(sessionCookie);
