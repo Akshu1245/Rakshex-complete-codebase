@@ -120,6 +120,31 @@ const nextConfig = {
         permanent: true,
       },
       {
+        source: "/roi-calculator",
+        destination: "/pricing",
+        permanent: true,
+      },
+      {
+        source: "/roi-calculator/:path*",
+        destination: "/pricing",
+        permanent: true,
+      },
+      {
+        source: "/blog/helicone-alternative",
+        destination: "/compare/helicone",
+        permanent: true,
+      },
+      {
+        source: "/blog/lakera-alternative",
+        destination: "/compare/lakera",
+        permanent: true,
+      },
+      {
+        source: "/blog/portkey-alternative",
+        destination: "/compare/portkey",
+        permanent: true,
+      },
+      {
         source: "/security.txt",
         destination: "/.well-known/security.txt",
         permanent: true,
