@@ -7,8 +7,8 @@ const VSCODE_URL =
 const GITHUB_URL = "https://github.com/Akshu1245/Rakshex-complete-codebase";
 const INSTAGRAM_URL = "https://www.instagram.com/rakshex.in?igsi=YWlzcDg2ODcybmpz";
 const REDDIT_URL = "https://www.reddit.com/u/RaksHex_in/s/8zzCSUdomW";
-const CONTACT_EMAIL = "rakshex@gmail.com";
-const FOUNDER_EMAIL = "akshaykammar31@gmail.com";
+const CONTACT_EMAIL = "akshay@rakshex.in";
+const FOUNDER_EMAIL = "akshay@rakshex.in";
 
 export function Footer() {
   return (
