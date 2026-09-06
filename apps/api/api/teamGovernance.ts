@@ -109,6 +109,7 @@ export const teamGovernanceRouter = router({
         enforcementMode: z
           .enum(["gateway", "provider_native", "monitor_only"])
           .default("monitor_only"),
+        metadata: z.record(z.unknown()).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -120,6 +121,7 @@ export const teamGovernanceRouter = router({
         warningPct: input.warningPct,
         hardLimit: input.hardLimit,
         enforcementMode: input.enforcementMode,
+        metadata: input.metadata,
       });
     }),
 

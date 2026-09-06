@@ -193,6 +193,7 @@ describe("reserveGatewayBudget", () => {
         workspaceId: 2,
         identityId: null,
         reservedUsd: 1.5,
+        slices: [{ budgetId: 9, reservedUsd: 1.5 }],
       },
     });
     expect(mock.update).toHaveBeenCalledTimes(1);
@@ -212,5 +213,82 @@ describe("reserveGatewayBudget", () => {
       allowed: false,
       reason: "identity/workspace gateway budget would be exceeded",
     });
+  });
+
+  it("reserves across adaptive team pool slices when pool is enabled", async () => {
+    const budgets = [
+      {
+        id: 10,
+        workspaceId: 2,
+        identityId: null,
+        limitUsd: "100",
+        currentSpendUsd: "100",
+        hardLimit: true,
+        enforcementMode: "gateway",
+        warningPct: 80,
+        metadata: {
+          pool: {
+            enabled: true,
+            mode: "shareable",
+            maxBorrowUsd: 50,
+            approvalThresholdUsd: 40,
+            emergencyMinPriority: "critical",
+            emergencyReserveUsd: 0,
+          },
+        },
+      },
+      {
+        id: 11,
+        workspaceId: 2,
+        identityId: 7,
+        limitUsd: "5",
+        currentSpendUsd: "5",
+        hardLimit: true,
+        enforcementMode: "gateway",
+        warningPct: 80,
+        metadata: { shareable: true, protectedUsd: 0 },
+      },
+      {
+        id: 12,
+        workspaceId: 2,
+        identityId: 8,
+        limitUsd: "30",
+        currentSpendUsd: "5",
+        hardLimit: true,
+        enforcementMode: "gateway",
+        warningPct: 80,
+        metadata: { shareable: true, protectedUsd: 0 },
+      },
+    ];
+
+    const returning = vi.fn().mockResolvedValue([{ id: 12, currentSpendUsd: "6.5" }]);
+    const where = vi.fn(() => ({ returning }));
+    const set = vi.fn(() => ({ where }));
+    const update = vi.fn(() => ({ set }));
+
+    const database = {
+      select: () => ({
+        from: () => ({ where: () => Promise.resolve(budgets) }),
+      }),
+      update,
+      transaction: vi.fn(async (fn: (tx: typeof database) => Promise<void>) => {
+        await fn(database);
+      }),
+    };
+
+    getDb.mockResolvedValue(database);
+
+    const result = await reserveGatewayBudget({
+      workspaceId: 2,
+      identityId: 7,
+      estimatedCostUsd: 1.5,
+    });
+
+    expect(result.allowed).toBe(true);
+    if (!result.allowed) throw new Error("expected allowed reservation");
+    expect(result.reservation?.slices).toHaveLength(1);
+    expect(result.reservation?.poolPlan?.borrowedUsd).toBe(1.5);
+    expect(database.transaction).toHaveBeenCalledTimes(1);
+    expect(update).toHaveBeenCalledTimes(1);
   });
 });

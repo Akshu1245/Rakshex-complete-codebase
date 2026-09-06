@@ -5,7 +5,12 @@
 import crypto from "crypto";
 import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { apiKeys } from "@rakshex/database";
-import { apiKeyHashCandidates, hashApiKey, apiKeyPrefix as shortPrefix } from "../utils/crypto";
+import {
+  apiKeyHashCandidates,
+  hashApiKey,
+  legacyApiKeyHash,
+  apiKeyPrefix as shortPrefix,
+} from "../utils/crypto";
 import { getDb } from "../db";
 
 function secureId(prefix: string): string {
@@ -210,11 +215,18 @@ export async function validateWorkspaceApiKey(
 
   const keyHashCandidates = apiKeyHashCandidates(rawKey);
   const currentKeyHash = keyHashCandidates[0]!;
-  const rows = await db
+  let rows = await db
     .select()
     .from(apiKeys)
     .where(inArray(apiKeys.keyHash, keyHashCandidates))
     .limit(1);
+  if (!rows[0]) {
+    rows = await db
+      .select()
+      .from(apiKeys)
+      .where(eq(apiKeys.keyHash, legacyApiKeyHash(rawKey)))
+      .limit(1);
+  }
   const row = rows[0];
   if (!row) return null;
 

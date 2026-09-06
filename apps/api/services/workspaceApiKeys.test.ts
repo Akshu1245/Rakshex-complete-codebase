@@ -14,7 +14,12 @@ import {
   generateRawApiKey,
   validateWorkspaceApiKey,
 } from "./workspaceApiKeys";
-import { apiKeyHashCandidates, hashApiKey, verifyApiKeyHash } from "../utils/crypto";
+import {
+  apiKeyHashCandidates,
+  hashApiKey,
+  legacyApiKeyHash,
+  verifyApiKeyHash,
+} from "../utils/crypto";
 
 describe("API key helpers", () => {
   beforeEach(() => {
@@ -37,11 +42,12 @@ describe("API key helpers", () => {
 
   it("accepts legacy API key digests for rolling migration", () => {
     const raw = generateRawApiKey("test");
-    const [primary, legacy] = apiKeyHashCandidates(raw);
+    const [primary] = apiKeyHashCandidates(raw);
+    const legacy = legacyApiKeyHash(raw);
     expect(primary).toBe(hashApiKey(raw));
     expect(primary).not.toBe(legacy);
     expect(verifyApiKeyHash(raw, primary!)).toBe(true);
-    expect(verifyApiKeyHash(raw, legacy!)).toBe(true);
+    expect(verifyApiKeyHash(raw, legacy)).toBe(true);
     expect(verifyApiKeyHash(`${raw}-wrong`, primary!)).toBe(false);
   });
 

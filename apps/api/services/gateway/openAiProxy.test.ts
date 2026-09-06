@@ -140,6 +140,87 @@ describe("OpenAI-compatible enforcement gateway helpers", () => {
     );
   });
 
+  it("pins OpenRouter to its public origin regardless of account metadata", () => {
+    expect(
+      __test.normalizeUpstreamUrl("openrouter", { baseUrl: "https://attacker.example.com" }),
+    ).toBe("https://openrouter.ai/api/v1/chat/completions");
+  });
+
+  it("builds Azure OpenAI v1 URLs only for Microsoft-operated resource endpoints", () => {
+    expect(
+      __test.normalizeUpstreamUrl("azure_openai", {
+        resourceEndpoint: "https://myresource.openai.azure.com",
+      }),
+    ).toBe("https://myresource.openai.azure.com/openai/v1/chat/completions");
+    expect(
+      __test.normalizeUpstreamUrl(
+        "azure_openai",
+        { resourceEndpoint: "https://myresource.services.ai.azure.com/" },
+        "responses",
+      ),
+    ).toBe("https://myresource.services.ai.azure.com/openai/v1/responses");
+
+    expect(() =>
+      __test.normalizeUpstreamUrl("azure_openai", {
+        resourceEndpoint: "https://evil.example.com",
+      }),
+    ).toThrow(/Azure OpenAI resource endpoint/);
+    expect(() =>
+      __test.normalizeUpstreamUrl("azure_openai", {
+        resourceEndpoint: "http://myresource.openai.azure.com",
+      }),
+    ).toThrow(/Azure OpenAI resource endpoint/);
+    expect(() =>
+      __test.normalizeUpstreamUrl("azure_openai", {
+        resourceEndpoint: "https://evil.example.com/#.openai.azure.com",
+      }),
+    ).toThrow(/Azure OpenAI resource endpoint/);
+    expect(() => __test.normalizeUpstreamUrl("azure_openai", {})).toThrow(
+      /missing metadata.resourceEndpoint/,
+    );
+  });
+
+  it("validates Azure hostnames as suffixes, not substrings", () => {
+    expect(__test.isAllowedAzureOpenAiHost("myres.openai.azure.com")).toBe(true);
+    expect(__test.isAllowedAzureOpenAiHost("myres.cognitiveservices.azure.com")).toBe(true);
+    expect(__test.isAllowedAzureOpenAiHost("openai.azure.com.evil.example")).toBe(false);
+    expect(__test.isAllowedAzureOpenAiHost("fakeopenai.azure.com")).toBe(false);
+  });
+
+  it("restricts OpenRouter to Chat Completions", () => {
+    expect(__test.providerSupportsEndpoint("openrouter", "chat/completions")).toBe(true);
+    expect(__test.providerSupportsEndpoint("openrouter", "responses")).toBe(false);
+    expect(__test.providerSupportsEndpoint("azure_openai", "responses")).toBe(true);
+    expect(__test.providerSupportsEndpoint("openai", "responses")).toBe(true);
+  });
+
+  it("opts OpenRouter requests into usage accounting without touching other providers", () => {
+    expect(
+      __test.upstreamBodyForProvider("openrouter", "chat/completions", { model: "m" }),
+    ).toEqual({ model: "m", usage: { include: true } });
+    expect(__test.upstreamBodyForProvider("openai", "chat/completions", { model: "m" })).toEqual({
+      model: "m",
+    });
+  });
+
+  it("captures provider-reported cost from usage accounting", () => {
+    expect(
+      __test.extractUsage({
+        usage: { prompt_tokens: 5, completion_tokens: 3, total_tokens: 8, cost: 0.00042 },
+      }),
+    ).toEqual({
+      prompt_tokens: 5,
+      completion_tokens: 3,
+      total_tokens: 8,
+      provider_reported_cost_usd: 0.00042,
+    });
+    expect(
+      __test.extractUsage({
+        usage: { prompt_tokens: 5, completion_tokens: 3, total_tokens: 8, cost: -1 },
+      }),
+    ).toEqual({ prompt_tokens: 5, completion_tokens: 3, total_tokens: 8 });
+  });
+
   it("strips trailing slashes from compatible base URLs in linear time", () => {
     expect(
       __test.normalizeUpstreamUrl("openai_compatible", {

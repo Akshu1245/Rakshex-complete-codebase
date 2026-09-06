@@ -1,11 +1,26 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useEnterpriseWorkspace } from "./WorkspaceContext";
 import { MetricCard } from "./MetricCard";
 import { DataTable } from "./DataTable";
 import { StatusBadge } from "./StatusBadge";
+
+type PoolMetadata = {
+  enabled?: boolean;
+  mode?: "shareable" | "pooled" | "locked";
+  maxBorrowUsd?: number;
+  approvalThresholdUsd?: number;
+  emergencyReserveUsd?: number;
+};
+
+function readPoolMetadata(metadata: unknown): PoolMetadata {
+  if (!metadata || typeof metadata !== "object") return {};
+  const pool = (metadata as Record<string, unknown>).pool;
+  if (!pool || typeof pool !== "object") return {};
+  return pool as PoolMetadata;
+}
 
 type IdentityRow = {
   id: number;
@@ -18,7 +33,16 @@ type IdentityRow = {
 export function TeamGovernanceTab() {
   const { workspaceId } = useEnterpriseWorkspace();
   const [budgetLimit, setBudgetLimit] = useState("500");
+  const [poolEnabled, setPoolEnabled] = useState(false);
+  const [maxBorrowUsd, setMaxBorrowUsd] = useState("25");
+  const [emergencyReserveUsd, setEmergencyReserveUsd] = useState("0");
+  const [approvalThresholdUsd, setApprovalThresholdUsd] = useState("20");
+  const [enforcementMode, setEnforcementMode] = useState<"gateway" | "monitor_only">("gateway");
   const [orgName, setOrgName] = useState("");
+  const [identityBudgetId, setIdentityBudgetId] = useState("");
+  const [identityBudgetLimit, setIdentityBudgetLimit] = useState("50");
+  const [identityShareable, setIdentityShareable] = useState(true);
+  const [identityProtectedUsd, setIdentityProtectedUsd] = useState("0");
 
   const summary = trpc.teamGovernance.summary.useQuery({ workspaceId });
   const entitlements = trpc.teamGovernance.entitlements.useQuery({ workspaceId });
@@ -32,6 +56,39 @@ export function TeamGovernanceTab() {
   const setBudget = trpc.teamGovernance.setBudget.useMutation({
     onSuccess: () => budgets.refetch(),
   });
+
+  const workspaceBudget = budgets.data?.find((b) => b.identityId == null);
+
+  useEffect(() => {
+    if (!workspaceBudget) return;
+    setBudgetLimit(String(workspaceBudget.limitUsd));
+    setEnforcementMode(
+      workspaceBudget.enforcementMode === "monitor_only" ? "monitor_only" : "gateway",
+    );
+    const pool = readPoolMetadata(workspaceBudget.metadata);
+    setPoolEnabled(pool.enabled === true);
+    if (typeof pool.maxBorrowUsd === "number") setMaxBorrowUsd(String(pool.maxBorrowUsd));
+    if (typeof pool.emergencyReserveUsd === "number") {
+      setEmergencyReserveUsd(String(pool.emergencyReserveUsd));
+    }
+    if (typeof pool.approvalThresholdUsd === "number") {
+      setApprovalThresholdUsd(String(pool.approvalThresholdUsd));
+    }
+  }, [workspaceBudget]);
+
+  useEffect(() => {
+    if (!identityBudgetId) return;
+    const identityId = Number(identityBudgetId);
+    const budget = budgets.data?.find((b) => b.identityId === identityId);
+    if (!budget) return;
+    setIdentityBudgetLimit(String(budget.limitUsd));
+    const meta =
+      budget.metadata && typeof budget.metadata === "object"
+        ? (budget.metadata as Record<string, unknown>)
+        : {};
+    setIdentityShareable(meta.shareable !== false);
+    setIdentityProtectedUsd(String(typeof meta.protectedUsd === "number" ? meta.protectedUsd : 0));
+  }, [identityBudgetId, budgets.data]);
   const setKillSwitch = trpc.teamGovernance.setKillSwitch.useMutation({
     onSuccess: () => killSwitches.refetch(),
   });
@@ -172,22 +229,190 @@ export function TeamGovernanceTab() {
               className="mt-1 block w-32 px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white"
             />
           </label>
+          <label className="text-sm text-gray-400">
+            Enforcement
+            <select
+              value={enforcementMode}
+              onChange={(e) => setEnforcementMode(e.target.value as "gateway" | "monitor_only")}
+              className="mt-1 block px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white"
+            >
+              <option value="gateway">Gateway hard limit</option>
+              <option value="monitor_only">Monitor only (alerts)</option>
+            </select>
+          </label>
           <button
             type="button"
-            onClick={() =>
+            disabled={setBudget.isPending}
+            onClick={() => {
+              const limitUsd = Number(budgetLimit);
+              const pool = poolEnabled
+                ? {
+                    enabled: true,
+                    mode: "shareable" as const,
+                    maxBorrowUsd: Number(maxBorrowUsd) || 25,
+                    approvalThresholdUsd: Number(approvalThresholdUsd) || 20,
+                    emergencyMinPriority: "critical" as const,
+                    emergencyReserveUsd: Number(emergencyReserveUsd) || 0,
+                  }
+                : { enabled: false };
               setBudget.mutate({
                 workspaceId,
-                limitUsd: Number(budgetLimit),
-                hardLimit: false,
-                enforcementMode: "monitor_only",
-              })
-            }
-            className="px-4 py-2 rounded-lg border border-[#14b8a6]/40 text-[#14b8a6] text-sm"
+                limitUsd,
+                hardLimit: enforcementMode === "gateway",
+                enforcementMode,
+                metadata: { pool },
+              });
+            }}
+            className="px-4 py-2 rounded-lg border border-[#14b8a6]/40 text-[#14b8a6] text-sm disabled:opacity-50"
           >
-            Save workspace budget
+            {setBudget.isPending ? "Saving…" : "Save workspace budget"}
           </button>
         </div>
-        <DataTable<{ id: number; scope: string; limitUsd: string; spent: string; mode: string }>
+        <div className="rounded-lg border border-white/10 bg-black/20 p-4 space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-medium text-white">Dynamic team AI pool</h3>
+              <p className="text-xs text-gray-500 mt-1">
+                Lets identities borrow unused gateway budget from teammates when their personal
+                limit is exhausted. Requires gateway hard limits.
+              </p>
+            </div>
+            <label className="flex items-center gap-2 text-sm text-gray-300">
+              <input
+                type="checkbox"
+                checked={poolEnabled}
+                onChange={(e) => setPoolEnabled(e.target.checked)}
+                disabled={enforcementMode !== "gateway"}
+                className="rounded border-white/20"
+              />
+              Enabled
+            </label>
+          </div>
+          {poolEnabled && enforcementMode === "gateway" && (
+            <div className="flex flex-wrap gap-3">
+              <label className="text-xs text-gray-400">
+                Max borrow (USD)
+                <input
+                  type="number"
+                  min={0}
+                  value={maxBorrowUsd}
+                  onChange={(e) => setMaxBorrowUsd(e.target.value)}
+                  className="mt-1 block w-28 px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white"
+                />
+              </label>
+              <label className="text-xs text-gray-400">
+                Approval threshold (USD)
+                <input
+                  type="number"
+                  min={0}
+                  value={approvalThresholdUsd}
+                  onChange={(e) => setApprovalThresholdUsd(e.target.value)}
+                  className="mt-1 block w-28 px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white"
+                />
+              </label>
+              <label className="text-xs text-gray-400">
+                Emergency reserve (USD)
+                <input
+                  type="number"
+                  min={0}
+                  value={emergencyReserveUsd}
+                  onChange={(e) => setEmergencyReserveUsd(e.target.value)}
+                  className="mt-1 block w-28 px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white"
+                />
+              </label>
+            </div>
+          )}
+        </div>
+        <div className="rounded-lg border border-white/10 bg-black/20 p-4 space-y-3">
+          <h3 className="text-sm font-medium text-white">Per-employee gateway budget</h3>
+          <p className="text-xs text-gray-500">
+            Personal gateway limits participate in the team pool when marked shareable. Protected
+            capacity cannot be borrowed by teammates.
+          </p>
+          <div className="flex flex-wrap gap-3 items-end">
+            <label className="text-xs text-gray-400">
+              Employee
+              <select
+                value={identityBudgetId}
+                onChange={(e) => setIdentityBudgetId(e.target.value)}
+                className="mt-1 block min-w-[12rem] px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white"
+              >
+                <option value="">Select identity…</option>
+                {(identities.data ?? []).map((identity) => (
+                  <option key={identity.id} value={String(identity.id)}>
+                    {identity.displayName ?? identity.externalUserId} (#{identity.id})
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-xs text-gray-400">
+              Monthly limit (USD)
+              <input
+                type="number"
+                min={1}
+                value={identityBudgetLimit}
+                onChange={(e) => setIdentityBudgetLimit(e.target.value)}
+                className="mt-1 block w-28 px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white"
+              />
+            </label>
+            <label className="text-xs text-gray-400">
+              Protected (USD)
+              <input
+                type="number"
+                min={0}
+                value={identityProtectedUsd}
+                onChange={(e) => setIdentityProtectedUsd(e.target.value)}
+                className="mt-1 block w-28 px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white"
+              />
+            </label>
+            <label className="flex items-center gap-2 text-xs text-gray-300 pb-2">
+              <input
+                type="checkbox"
+                checked={identityShareable}
+                onChange={(e) => setIdentityShareable(e.target.checked)}
+                className="rounded border-white/20"
+              />
+              Shareable in pool
+            </label>
+            <button
+              type="button"
+              disabled={setBudget.isPending || !identityBudgetId}
+              onClick={() => {
+                const identityId = Number(identityBudgetId);
+                const limitUsd = Number(identityBudgetLimit);
+                if (
+                  !Number.isInteger(identityId) ||
+                  identityId <= 0 ||
+                  !Number.isFinite(limitUsd)
+                ) {
+                  return;
+                }
+                setBudget.mutate({
+                  workspaceId,
+                  identityId,
+                  limitUsd,
+                  hardLimit: true,
+                  enforcementMode: "gateway",
+                  metadata: {
+                    shareable: identityShareable,
+                    protectedUsd: Number(identityProtectedUsd) || 0,
+                  },
+                });
+              }}
+              className="px-4 py-2 rounded-lg border border-[#14b8a6]/40 text-[#14b8a6] text-sm disabled:opacity-50"
+            >
+              {setBudget.isPending ? "Saving…" : "Save employee budget"}
+            </button>
+          </div>
+        </div>
+        <DataTable<{
+          id: number;
+          scope: string;
+          limitUsd: string;
+          spent: string;
+          mode: string;
+          pool: string;
+        }>
           columns={[
             {
               key: "scope",
@@ -209,14 +434,35 @@ export function TeamGovernanceTab() {
               header: "Enforcement",
               render: (row) => <span className="text-gray-500 text-xs">{row.mode}</span>,
             },
+            {
+              key: "pool",
+              header: "Pool",
+              render: (row) => <span className="text-gray-500 text-xs">{row.pool}</span>,
+            },
           ]}
-          data={(budgets.data ?? []).map((b) => ({
-            id: b.id,
-            scope: b.identityId ? `Employee #${b.identityId}` : "Workspace",
-            limitUsd: `$${b.limitUsd}`,
-            spent: `$${b.currentSpendUsd}`,
-            mode: String(b.hardLimitHonest ?? b.enforcementMode),
-          }))}
+          data={(budgets.data ?? []).map((b) => {
+            const pool = readPoolMetadata(b.metadata);
+            const meta =
+              b.metadata && typeof b.metadata === "object"
+                ? (b.metadata as Record<string, unknown>)
+                : {};
+            const poolLabel =
+              b.identityId == null
+                ? pool.enabled
+                  ? `Borrow up to $${pool.maxBorrowUsd ?? 25}`
+                  : "Off"
+                : meta.shareable === false
+                  ? "Protected"
+                  : "Shareable";
+            return {
+              id: b.id,
+              scope: b.identityId ? `Employee #${b.identityId}` : "Workspace",
+              limitUsd: `$${b.limitUsd}`,
+              spent: `$${b.currentSpendUsd}`,
+              mode: String(b.hardLimitHonest ?? b.enforcementMode),
+              pool: poolLabel,
+            };
+          })}
           emptyTitle="No budgets"
           emptyDescription="Set a workspace or per-employee budget."
         />
