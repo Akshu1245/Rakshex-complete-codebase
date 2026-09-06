@@ -18,4 +18,4 @@ Self-serve cancellation, renewal, payment-failure, and refund terms do not apply
 
 ## Consumer rights and contact
 
-Nothing here limits a mandatory right under applicable consumer law. Contact rakshex@gmail.com with the workspace, the reason, and the requested remedy. Do not email card, bank, provider-key, or password values.
+Nothing here limits a mandatory right under applicable consumer law. Contact support@rakshex.in with the workspace, the reason, and the requested remedy. Do not email card, bank, provider-key, or password values.
