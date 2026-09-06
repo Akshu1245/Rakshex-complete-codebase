@@ -28,3 +28,10 @@ export {
   listRuleIds,
   listRules,
 } from "./rules/registry.js";
+export {
+  scanTextForSecrets,
+  scanPathForSecrets,
+  listSecretRuleIds,
+  type SecretFinding,
+  type SecretSeverity,
+} from "./secrets.js";

@@ -2,9 +2,9 @@
 /**
  * @rakshex/cli — local + CI scanner
  *
- * Commands: login | configure | scan | policy | report | doctor | rules | help
+ * Commands: login | configure | scan | secrets | policy | report | doctor | rules | help
  * Outputs:  terminal | json | sarif
- * Offline:  scan uses @rakshex/scanner-core (deterministic, no network)
+ * Offline:  scan / secrets use @rakshex/scanner-core (deterministic, no network)
  */
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync } from "node:fs";
 import { join, resolve, extname, basename } from "node:path";
@@ -18,6 +18,7 @@ import {
   getRiskLevel,
   type RuleFinding,
 } from "@rakshex/scanner-core";
+import { cmdSecrets } from "./secrets.js";
 
 const CONFIG_DIR = join(homedir(), ".rakshex");
 const CONFIG_PATH = join(CONFIG_DIR, "config.json");
@@ -78,6 +79,8 @@ Usage:
   rakshex login --api-key <key> [--api-url <url>]
   rakshex configure --fail-on Critical,High [--ignore-rules id1,id2]
   rakshex scan <file-or-dir> [--format terminal|json|sarif] [--changed-only] [--baseline] [--upload]
+  rakshex secrets <path> [--format terminal|json] [--fail-on Critical,High]
+  rakshex secrets rules
   rakshex policy check <file> [--format json]
   rakshex report <file> [--format sarif|json]
   rakshex doctor
@@ -90,7 +93,7 @@ never automatic just because a key is configured; it must be requested on
 every invocation that should transmit data. A failed upload never changes the
 scan's own exit code — offline scanning stays authoritative for CI gating.
 
-Exit codes (scan):
+Exit codes (scan / secrets):
   0  clean / below threshold
   1  findings at or above fail-on severity
   2  usage / parse error
@@ -447,6 +450,8 @@ async function main(): Promise<number> {
       return cmdConfigure(flags);
     case "scan":
       return cmdScan(positional, flags);
+    case "secrets":
+      return cmdSecrets(positional, flags);
     case "policy":
       return cmdPolicy(positional, flags);
     case "report":

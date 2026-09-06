@@ -1,0 +1,27 @@
+---
+description: Locked stack and UI kit law for all agents in this repo
+alwaysApply: true
+---
+
+Read AGENTS.md. Obey it. Do not ask the human to pick UI.
+
+## Stack
+Next.js App Router + TypeScript + Tailwind v4 + shadcn/ui.
+Dashboard: shadcn-admin patterns. Marketing motion via Magic UI / Aceternity / 21st only — never a second design system.
+Auth: Better Auth or Auth.js. Billing: Stripe or Polar. No hand-rolled auth.
+Python multi-agent: FastAPI. CLI: one command surface with human + JSON output.
+VS Code: official contribution model + webview sharing web tokens.
+
+Forbidden: MUI, Chakra, Ant, Bootstrap, second icon/color system, hand-rolled Button/Input/Table/Dialog/Form/Sidebar/Tabs/Chart.
+
+Install UI with `npx shadcn@latest add <name>` or 21st search + install.
+
+## Research
+Context7 before unfamiliar libraries. 21st/shadcn before inventing components. Playwright after UI changes. find-skills when missing a procedure.
+
+## RaksHex default first slice
+Secrets scan CLI/extension findings list before dashboard/billing.
+Visual kit B: Linear/Vercel/Stripe quiet. No neon hacker aesthetic.
+
+## Stop rule
+One working user path, then name the next three files. Do not expand scope.
