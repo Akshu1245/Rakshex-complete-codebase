@@ -131,17 +131,22 @@ const nextConfig = {
       },
       {
         source: "/blog/helicone-alternative",
-        destination: "/compare/helicone",
+        destination: "/blog",
         permanent: true,
       },
       {
         source: "/blog/lakera-alternative",
-        destination: "/compare/lakera",
+        destination: "/blog",
         permanent: true,
       },
       {
         source: "/blog/portkey-alternative",
-        destination: "/compare/portkey",
+        destination: "/blog",
+        permanent: true,
+      },
+      {
+        source: "/blog/snyk-alternative",
+        destination: "/blog",
         permanent: true,
       },
       {

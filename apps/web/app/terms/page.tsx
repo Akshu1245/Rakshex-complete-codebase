@@ -74,7 +74,7 @@ export default function Terms() {
             <p className="mt-3">
               These terms are governed by the laws of India and disputes are subject to the courts
               at Bengaluru, Karnataka, subject to mandatory consumer rights. For legal, service, or
-              support contact, email hello@rakshex.in.
+              support contact, email akshay@rakshex.in.
             </p>
           </section>
         </div>

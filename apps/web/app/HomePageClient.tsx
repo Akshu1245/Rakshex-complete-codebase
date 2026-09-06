@@ -80,7 +80,7 @@ export default function RootHomePage() {
                 GitHub repository
               </a>
               <a
-                href="mailto:akshaykammar31@gmail.com"
+                href="mailto:akshay@rakshex.in"
                 className="rounded-md border border-white/10 px-4 py-2.5 font-semibold text-white no-underline hover:border-[#14B8A6]/50"
               >
                 Founder email
