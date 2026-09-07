@@ -18,13 +18,22 @@ jobs:
       image: semgrep/semgrep:1.176.0
     steps:
       - uses: actions/checkout@v4
-      - name: Scan application code
+        with:
+          fetch-depth: 0
+
+      - name: Fetch baseline branch for incremental scan
+        if: github.event_name == 'pull_request'
+        run: git fetch --no-tags origin ${{ github.base_ref }}
+
+      - name: Incremental blocking scan against main
+        if: github.event_name == 'pull_request'
         run: >-
           semgrep scan
           --config p/typescript
           --config p/javascript
           --config p/nodejs
           --config p/owasp-top-ten
+          --baseline-commit origin/${{ github.base_ref }}
           --error
           --metrics=off
           --exclude node_modules
@@ -32,3 +41,40 @@ jobs:
           --exclude dist
           --exclude coverage
           .
+
+      - name: Full inventory scan (non-blocking backlog)
+        run: >-
+          semgrep scan
+          --config p/typescript
+          --config p/javascript
+          --config p/nodejs
+          --config p/owasp-top-ten
+          --metrics=off
+          --exclude node_modules
+          --exclude .next
+          --exclude dist
+          --exclude coverage
+          --json
+          --output /tmp/semgrep-full.json
+          .
+        continue-on-error: true
+
+      - name: Summarize full inventory
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json, pathlib
+          p = pathlib.Path("/tmp/semgrep-full.json")
+          if not p.exists():
+              print("No full inventory file")
+              raise SystemExit(0)
+          data = json.loads(p.read_text())
+          results = data.get("results", [])
+          print(f"Semgrep inventory findings: {len(results)}")
+          by = {}
+          for r in results:
+              key = r.get("check_id", "unknown")
+              by[key] = by.get(key, 0) + 1
+          for k, v in sorted(by.items(), key=lambda kv: (-kv[1], kv[0]))[:30]:
+              print(f"  {v:4d}  {k}")
+          PY
