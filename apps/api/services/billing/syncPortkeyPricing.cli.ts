@@ -26,7 +26,9 @@ async function main() {
 
   console.table(result);
   if (!apply) {
-    console.log("Dry-run only. Re-run with --apply to append changed rates to model_price_versions.");
+    console.log(
+      "Dry-run only. Re-run with --apply to append changed rates to model_price_versions.",
+    );
   }
 }
 

@@ -80,9 +80,7 @@ export function parsePortkeyPricing(
       model,
       inputPerMillion: centsPerTokenToUsdPerMillion(input),
       outputPerMillion: centsPerTokenToUsdPerMillion(output),
-      ...(cached == null
-        ? {}
-        : { cachedInputPerMillion: centsPerTokenToUsdPerMillion(cached) }),
+      ...(cached == null ? {} : { cachedInputPerMillion: centsPerTokenToUsdPerMillion(cached) }),
       sourceUrl,
     });
   }

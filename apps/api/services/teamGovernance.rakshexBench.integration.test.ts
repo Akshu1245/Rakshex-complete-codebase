@@ -116,34 +116,30 @@ describe.skipIf(!available)("RaksHexBench: atomic gateway budget", () => {
   ] as const;
 
   for (const level of levels) {
-    it(
-      `never overspends under ${level.concurrent} concurrent reservations`,
-      async () => {
-        await resetWorkspaceBudget(level.limitUsd);
+    it(`never overspends under ${level.concurrent} concurrent reservations`, async () => {
+      await resetWorkspaceBudget(level.limitUsd);
 
-        const results = await Promise.all(
-          Array.from({ length: level.concurrent }, () =>
-            reserveGatewayBudget({
-              workspaceId,
-              estimatedCostUsd: level.amountUsd,
-            }),
-          ),
-        );
+      const results = await Promise.all(
+        Array.from({ length: level.concurrent }, () =>
+          reserveGatewayBudget({
+            workspaceId,
+            estimatedCostUsd: level.amountUsd,
+          }),
+        ),
+      );
 
-        const allowed = results.filter(
-          (result): result is Extract<typeof result, { allowed: true }> => result.allowed,
-        );
-        const blocked = results.filter((result) => !result.allowed);
+      const allowed = results.filter(
+        (result): result is Extract<typeof result, { allowed: true }> => result.allowed,
+      );
+      const blocked = results.filter((result) => !result.allowed);
 
-        expect(allowed).toHaveLength(level.expectedAllowed);
-        expect(blocked).toHaveLength(level.concurrent - level.expectedAllowed);
-        expect(await currentSpend()).toBeCloseTo(level.limitUsd, 6);
+      expect(allowed).toHaveLength(level.expectedAllowed);
+      expect(blocked).toHaveLength(level.concurrent - level.expectedAllowed);
+      expect(await currentSpend()).toBeCloseTo(level.limitUsd, 6);
 
-        await Promise.all(allowed.map((result) => settleGatewayBudget(result.reservation, 0)));
-        expect(await currentSpend()).toBeCloseTo(0, 6);
-      },
-      120_000,
-    );
+      await Promise.all(allowed.map((result) => settleGatewayBudget(result.reservation, 0)));
+      expect(await currentSpend()).toBeCloseTo(0, 6);
+    }, 120_000);
   }
 
   it("reconciles reserved estimate down to actual provider cost", async () => {
