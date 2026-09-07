@@ -1,0 +1,32 @@
+services:
+  postgres-chaos-target:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: rakshex
+      POSTGRES_PASSWORD: rakshex
+      POSTGRES_DB: rakshex_chaos
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rakshex -d rakshex_chaos"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  redis-chaos-target:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  toxiproxy:
+    image: ghcr.io/shopify/toxiproxy:2.12.0
+    depends_on:
+      postgres-chaos-target:
+        condition: service_healthy
+      redis-chaos-target:
+        condition: service_healthy
+    ports:
+      - "8474:8474"
+      - "15432:15432"
+      - "16379:16379"

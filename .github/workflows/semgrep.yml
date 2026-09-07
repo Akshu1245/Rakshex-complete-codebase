@@ -1,0 +1,81 @@
+name: Semgrep SAST
+
+on:
+  pull_request:
+    branches: [main, master]
+  push:
+    branches: [main, master, "akshu1245/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  semgrep:
+    name: Semgrep CE
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep:1.176.0
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Trust workspace for git operations in container
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git config --global --add safe.directory /__w/Rakshex-complete-codebase/Rakshex-complete-codebase
+
+      - name: Incremental blocking scan against PR base
+        if: github.event_name == 'pull_request'
+        run: >-
+          semgrep scan
+          --config p/typescript
+          --config p/javascript
+          --config p/nodejs
+          --config p/owasp-top-ten
+          --baseline-commit ${{ github.event.pull_request.base.sha }}
+          --error
+          --metrics=off
+          --exclude node_modules
+          --exclude .next
+          --exclude dist
+          --exclude coverage
+          .
+
+      - name: Full inventory scan (non-blocking backlog)
+        run: >-
+          semgrep scan
+          --config p/typescript
+          --config p/javascript
+          --config p/nodejs
+          --config p/owasp-top-ten
+          --metrics=off
+          --exclude node_modules
+          --exclude .next
+          --exclude dist
+          --exclude coverage
+          --json
+          --output /tmp/semgrep-full.json
+          .
+        continue-on-error: true
+
+      - name: Summarize full inventory
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json, pathlib
+          p = pathlib.Path("/tmp/semgrep-full.json")
+          if not p.exists():
+              print("No full inventory file")
+              raise SystemExit(0)
+          data = json.loads(p.read_text())
+          results = data.get("results", [])
+          print(f"Semgrep inventory findings: {len(results)}")
+          by = {}
+          for r in results:
+              key = r.get("check_id", "unknown")
+              by[key] = by.get(key, 0) + 1
+          for k, v in sorted(by.items(), key=lambda kv: (-kv[1], kv[0]))[:30]:
+              print(f"  {v:4d}  {k}")
+          PY
