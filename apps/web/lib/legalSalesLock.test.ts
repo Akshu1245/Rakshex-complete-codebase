@@ -58,12 +58,12 @@ describe("private-beta sales lock on public legal surfaces", () => {
     );
     expect(terms).toMatch(/waitlist/);
     expect(terms).toMatch(/invite/);
-    expect(terms).toMatch(/rakshex@gmail\.com/);
+    expect(terms).toMatch(/akshay@rakshex\.in/);
     expect(terms).toMatch(/Bengaluru/);
     expect(terms).toMatch(/laws of India/);
     expect(refund).toMatch(/waitlist/);
     expect(refund).toMatch(/invite or an executed Order Form/);
-    expect(refund).toMatch(/rakshex@gmail\.com/);
+    expect(refund).toMatch(/support@rakshex\.in/);
     expect(refund).not.toMatch(/Subscriptions renew for the same period until cancelled/);
   });
 
