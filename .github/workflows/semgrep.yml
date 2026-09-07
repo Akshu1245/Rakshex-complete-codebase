@@ -21,11 +21,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Fetch baseline branch for incremental scan
-        if: github.event_name == 'pull_request'
-        run: git fetch --no-tags origin ${{ github.base_ref }}
+      - name: Trust workspace for git operations in container
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git config --global --add safe.directory /__w/Rakshex-complete-codebase/Rakshex-complete-codebase
 
-      - name: Incremental blocking scan against main
+      - name: Incremental blocking scan against PR base
         if: github.event_name == 'pull_request'
         run: >-
           semgrep scan
@@ -33,7 +34,7 @@ jobs:
           --config p/javascript
           --config p/nodejs
           --config p/owasp-top-ten
-          --baseline-commit origin/${{ github.base_ref }}
+          --baseline-commit ${{ github.event.pull_request.base.sha }}
           --error
           --metrics=off
           --exclude node_modules
