@@ -4,6 +4,7 @@ FROM node:24-alpine AS base
 RUN corepack enable pnpm
 ENV HUSKY=0
 
+# Full dependency graph is used only to validate/build the monorepo.
 FROM base AS deps
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
@@ -21,6 +22,18 @@ COPY --from=deps /app/github-action ./github-action
 COPY . .
 RUN pnpm run build
 
+# Create a separate production-only dependency tree for the API and the
+# workspace packages it actually depends on. This intentionally excludes web,
+# test runners (Vitest/Playwright), Vite and other development tooling from the
+# shipped API/worker image. The full builder above still validates all packages.
+FROM base AS prod-deps
+WORKDIR /app
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY apps ./apps
+COPY packages ./packages
+COPY github-action/package.json ./github-action/package.json
+RUN pnpm --filter @rakshex/api... install --prod --frozen-lockfile --ignore-scripts
+
 FROM node:24-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
@@ -31,16 +44,16 @@ RUN apk upgrade --no-cache libcrypto3 libssl3 \
   && addgroup -g 1001 -S nodejs \
   && adduser -S -u 1001 -G nodejs -h /app -s /sbin/nologin nodejs
 
-# Runtime uses node + tsx only — drop image-bundled npm to reduce runtime attack surface.
-RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx || true
+# Runtime uses node + the API's production tsx dependency only. Drop image-bundled
+# npm to reduce attack surface; corepack remains available for Railway predeploys.
+RUN corepack enable pnpm \
+  && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx || true
 
-COPY --from=builder --chown=nodejs:nodejs /app/package.json ./
-COPY --from=builder --chown=nodejs:nodejs /app/pnpm-workspace.yaml ./
-COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nodejs:nodejs /app/packages ./packages
-COPY --from=builder --chown=nodejs:nodejs /app/apps ./apps
-# Prefer monorepo package emit; keep drizzle migrations for runtime migrate jobs
-COPY --from=builder --chown=nodejs:nodejs /app/packages/database/drizzle ./packages/database/drizzle
+COPY --from=prod-deps --chown=nodejs:nodejs /app/package.json ./
+COPY --from=prod-deps --chown=nodejs:nodejs /app/pnpm-workspace.yaml ./
+COPY --from=prod-deps --chown=nodejs:nodejs /app/node_modules ./node_modules
+COPY --from=prod-deps --chown=nodejs:nodejs /app/packages ./packages
+COPY --from=prod-deps --chown=nodejs:nodejs /app/apps/api ./apps/api
 
 USER nodejs
 EXPOSE 3000
@@ -49,8 +62,7 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
 # Use the package-local tsx binary. In a pnpm workspace, tsx is installed under
-# apps/api/node_modules because @rakshex/api declares it directly; resolving the
-# bare "tsx" package from /app is not reliable in the production image.
+# apps/api/node_modules because @rakshex/api declares it as a production dependency.
 CMD ["./apps/api/node_modules/.bin/tsx", "apps/api/_core/index.ts"]
 
 FROM runner AS worker
