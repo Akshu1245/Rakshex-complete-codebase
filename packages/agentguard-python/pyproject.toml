@@ -8,13 +8,12 @@ version = "0.2.0"
 description = "Rakshex runtime SDK for Python — AgentGuard telemetry/privacy and the Agent Firewall client"
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "MIT" }
+license = "MIT"
 authors = [{ name = "Rakshex" }]
 keywords = ["agentguard", "agent-firewall", "llm", "telemetry", "governance", "authorization"]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",
-  "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
@@ -22,11 +21,15 @@ classifiers = [
 ]
 dependencies = []
 
+license-files = ["LICENSE"]
+
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
 
 [project.urls]
-Homepage = "https://github.com/Akshu1245/Rakshex-complete-codebase"
+Homepage = "https://github.com/akshu1245/rakshex-complete-codebase"
+Repository = "https://github.com/akshu1245/rakshex-complete-codebase.git"
+"Bug Reports" = "https://github.com/akshu1245/rakshex-complete-codebase/issues"
 Documentation = "https://www.rakshex.in/docs"
 
 [tool.setuptools.packages.find]

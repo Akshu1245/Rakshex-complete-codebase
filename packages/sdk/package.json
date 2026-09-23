@@ -17,10 +17,22 @@
       "import": "./dist/providers/index.js"
     }
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/akshu1245/rakshex-complete-codebase.git",
+    "directory": "packages/sdk"
+  },
+  "homepage": "https://github.com/akshu1245/rakshex-complete-codebase/tree/main/packages/sdk#readme",
+  "bugs": {
+    "url": "https://github.com/akshu1245/rakshex-complete-codebase/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "files": [
     "dist",
-    "README.md",
-    "examples"
+    "README.md"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",

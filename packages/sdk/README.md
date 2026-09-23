@@ -5,11 +5,13 @@ The Rakshex runtime SDK. Ships two clients:
 - **AgentGuardClient** — capture LLM usage metadata, enforce privacy modes, and ship telemetry safely. Documented below.
 - **AgentFirewallClient** — authorize an autonomous agent action before it runs, optionally have Rakshex broker the provider call itself, and record the outcome. See [Agent Firewall client](#agent-firewall-client) below, and `docs/SDK.md` / `CLAUDE.md` for why both live in one package (renamed from `@rakshex/agentguard-sdk` on 2026-08-09).
 
+> **Beta:** v0.1.0 is publish-ready but not yet uploaded to npm. Install from a published release with the commands below once it ships; until then, consume it from this repo (`packages/sdk`) via your monorepo workspace or `npm pack`.
+
 ## Install
 
 ```bash
-pnpm add @rakshex/sdk
-# or: npm install @rakshex/sdk
+npm install @rakshex/sdk
+# or: pnpm add @rakshex/sdk
 ```
 
 ## AgentGuard client
