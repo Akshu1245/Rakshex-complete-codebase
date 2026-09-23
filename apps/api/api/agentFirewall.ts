@@ -516,75 +516,85 @@ export const agentFirewallRouter = router({
         frozen: agent.status !== "active",
       });
 
-      const [previous] = await database
-        .select({ recordHash: actionLedger.recordHash })
-        .from(actionLedger)
-        .where(eq(actionLedger.workspaceId, input.workspaceId))
-        .orderBy(desc(actionLedger.occurredAt))
-        .limit(1);
-      const ledgerId = id("act");
-      const approvalId = result.decision === "APPROVAL_REQUIRED" ? id("apr") : undefined;
-      const traceId = input.traceId ?? id("trace");
-      const record = {
-        id: ledgerId,
-        workspaceId: input.workspaceId,
-        projectId: input.projectId,
-        agentId: input.agentId,
-        principalUserId: authority?.principalUserId ?? agent.ownerUserId,
-        authorityId: authority?.id,
-        traceId,
-        idempotencyKey: input.idempotencyKey,
-        mode: agent.mode,
-        semanticAction: action.name,
-        actionVersion: action.version,
-        domain: action.domain,
-        effect: action.effect,
-        parametersRedacted: action.parameters,
-        resource: action.resource,
-        environment: action.environment,
-        rawReference: action.raw as unknown as Record<string, unknown>,
-        policyVersion: result.policyVersion,
-        decision: result.decision,
-        effectiveDecision: result.effectiveDecision,
-        reasons: result.reasons,
-        amountMinor: action.amountMinor == null ? undefined : String(action.amountMinor),
-        currency: action.currency,
-        approvalId,
-        previousHash: previous?.recordHash,
-      };
-      const recordHash = sha256(`${previous?.recordHash ?? "GENESIS"}\n${canonical(record)}`);
-      await database.insert(actionLedger).values({ ...record, recordHash });
-      if (approvalId) {
-        await database.insert(actionApprovals).values({
-          id: approvalId,
+      // -- Chain-append unit ------------------------------------------------
+      // Read-previous -> insert -> approval insert (+ authority use-count)
+      // must serialize per workspace: without the lock, two concurrent
+      // evaluates can read the same previousHash and fork the hash chain.
+      // The advisory lock is transaction-scoped (released automatically
+      // at commit/rollback) and keyed by the integer workspace id - the
+      // same pattern as apps/api/services/receipts/actionReceipts.ts.
+      return database.transaction(async (tx) => {
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(${input.workspaceId}::bigint)`);
+        const [previous] = await tx
+          .select({ recordHash: actionLedger.recordHash })
+          .from(actionLedger)
+          .where(eq(actionLedger.workspaceId, input.workspaceId))
+          .orderBy(desc(actionLedger.occurredAt))
+          .limit(1);
+        const ledgerId = id("act");
+        const approvalId = result.decision === "APPROVAL_REQUIRED" ? id("apr") : undefined;
+        const traceId = input.traceId ?? id("trace");
+        const record = {
+          id: ledgerId,
           workspaceId: input.workspaceId,
-          ledgerId,
-          requestedByAgentId: input.agentId,
+          projectId: input.projectId,
+          agentId: input.agentId,
+          principalUserId: authority?.principalUserId ?? agent.ownerUserId,
+          authorityId: authority?.id,
+          traceId,
+          idempotencyKey: input.idempotencyKey,
+          mode: agent.mode,
           semanticAction: action.name,
+          actionVersion: action.version,
+          domain: action.domain,
+          effect: action.effect,
+          parametersRedacted: action.parameters,
           resource: action.resource,
+          environment: action.environment,
+          rawReference: action.raw as unknown as Record<string, unknown>,
+          policyVersion: result.policyVersion,
+          decision: result.decision,
+          effectiveDecision: result.effectiveDecision,
+          reasons: result.reasons,
           amountMinor: action.amountMinor == null ? undefined : String(action.amountMinor),
           currency: action.currency,
-          expiresAt: new Date(Date.now() + 15 * 60 * 1000),
-        });
-      }
-      if (authority && agent.mode === "enforce" && result.effectiveDecision === "ALLOW") {
-        await database
-          .update(delegatedAuthorities)
-          .set({
-            useCount: sql`${delegatedAuthorities.useCount} + 1`,
-            amountUsedMinor: sql`${delegatedAuthorities.amountUsedMinor} + ${action.amountMinor ?? 0}`,
-          })
-          .where(eq(delegatedAuthorities.id, authority.id));
-      }
-      return {
-        ledgerId,
-        traceId,
-        approvalId,
-        mode: agent.mode,
-        normalizedAction: action,
-        ...result,
-        replayed: false,
-      };
+          approvalId,
+          previousHash: previous?.recordHash,
+        };
+        const recordHash = sha256(`${previous?.recordHash ?? "GENESIS"}\n${canonical(record)}`);
+        await tx.insert(actionLedger).values({ ...record, recordHash });
+        if (approvalId) {
+          await tx.insert(actionApprovals).values({
+            id: approvalId,
+            workspaceId: input.workspaceId,
+            ledgerId,
+            requestedByAgentId: input.agentId,
+            semanticAction: action.name,
+            resource: action.resource,
+            amountMinor: action.amountMinor == null ? undefined : String(action.amountMinor),
+            currency: action.currency,
+            expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+          });
+        }
+        if (authority && agent.mode === "enforce" && result.effectiveDecision === "ALLOW") {
+          await tx
+            .update(delegatedAuthorities)
+            .set({
+              useCount: sql`${delegatedAuthorities.useCount} + 1`,
+              amountUsedMinor: sql`${delegatedAuthorities.amountUsedMinor} + ${action.amountMinor ?? 0}`,
+            })
+            .where(eq(delegatedAuthorities.id, authority.id));
+        }
+        return {
+          ledgerId,
+          traceId,
+          approvalId,
+          mode: agent.mode,
+          normalizedAction: action,
+          ...result,
+          replayed: false,
+        };
+      });
     }),
 
   ledger: router({
