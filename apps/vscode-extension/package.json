@@ -1,7 +1,7 @@
 {
   "name": "rakshex-vscode",
   "displayName": "Rakshex",
-  "description": "Find leaked keys, hidden API costs, and security risks without leaving VS Code.",
+  "description": "Agent control plane for AI apps: scan configs for secrets and risks, dry-run prompts through gateway policy, and govern actions from VS Code.",
   "version": "0.2.1",
   "publisher": "rakshex",
   "license": "MIT",
