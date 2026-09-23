@@ -1,8 +1,15 @@
 ﻿# Rakshex Launch Thread (copy-paste ready for X)
 
+> **CORRECTION (2026-09-23):** this draft (Jul 2026) sells the pre-pivot
+> DevPulse product (cost dashboards, "LLM spend as a security problem") and
+> never mentions the Agent Firewall (`@rakshex/action-control` — delegated
+> authority, Action Ledger, credential mediation), which is real, tested code
+> shipped since. Do not publish this thread as-is; the Scanner section is
+> code-true, the cost story is superseded.
+
 1/ Rakshex is live.
 
-Drop any Postman collection (or OpenAPI) → we instantly find your exposed API keys, broken auth, injection risks, and LLM cost bombs.
+Drop any Postman collection (or OpenAPI) → we instantly find your exposed API keys, broken auth, injection risks, and unapproved agent actions.
 
 Zero signup. 3 seconds. No bullshit.
 
@@ -20,11 +27,9 @@ We make that moment happen in the browser, in VS Code, and in every PR.
 
 Once it's in the workflow, it stays.
 
-4/ We are not another Snyk.
+4/ We are not another scanner.
 
-We are the only tool that treats LLM spend as a first-class security + reliability problem (runaway agents, prompt injection cost attacks, shadow model usage).
-
-- traditional API security.
+We are the control plane that authorizes AI agent actions before they execute — server-side policy, fail-closed credential mediation, and a tamper-evident ledger for every decision.
 
 5/ MVP is shipping now.
 

@@ -18,8 +18,8 @@ export default function EnterpriseSolutionPage() {
       desc: "Enterprise audits require mapping agent actions to security frameworks like SOC 2 and ISO 27001. RaksHex's hash-chained Action Ledger gives you a centralized, tamper-evident evidence trail to support those audits.",
     },
     {
-      title: "LLM Costs & Token Leakage",
-      desc: "Runaway reasoning loops and duplicate prompts by internal teams create massive, unchecked developer bills. RaksHex sets granular budget limits.",
+      title: "Runaway Agent Usage",
+      desc: "Recursive agents and duplicate prompts create unchecked provider bills and operational risk. RaksHex sets granular budget limits and a kill switch on routed traffic so runaway workloads are contained.",
     },
   ];
 

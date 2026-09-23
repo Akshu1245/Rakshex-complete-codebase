@@ -18,8 +18,8 @@ export default function FintechSolutionPage() {
       desc: "Autonomous financial agents can be manipulated via prompt injection to attempt unauthorized transfers or refunds. RaksHex authorizes each semantic action (e.g. financial.refund) against scoped, delegated authority before it's allowed to execute.",
     },
     {
-      title: "LLM Cost Attribution at Scale",
-      desc: "High-volume transactional LLM calls create massive cloud spend. RaksHex tracks cost attribution per feature, model, and user session.",
+      title: "Runaway Agent Spend at Scale",
+      desc: "High-volume transactional LLM calls create massive cloud spend. RaksHex usage attribution feeds budget policies and kill-switch guardrails that contain runaway workloads.",
     },
   ];
 
@@ -46,7 +46,7 @@ export default function FintechSolutionPage() {
     },
     {
       company: "Example: High-volume agent workflow",
-      title: "Optimizing High-Volume Trading LLM Costs",
+      title: "Containing High-Volume Trading Agent Costs",
       challenge:
         "A recursive or misconfigured agent can generate unexpected provider spend and latency.",
       solution:

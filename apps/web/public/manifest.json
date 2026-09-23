@@ -1,7 +1,7 @@
 {
-  "name": "RaksHex — API Security & LLM Cost Intelligence",
+  "name": "RaksHex \u2014 Agent Firewall & API Security",
   "short_name": "RaksHex",
-  "description": "API Security & LLM Cost Intelligence. OWASP scanning, prompt injection blocking, and LLM cost attribution.",
+  "description": "Agent Firewall & API Security. Authorize agent actions, block prompt injection, and record decisions in a tamper-evident ledger.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",
@@ -21,7 +21,11 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["developer", "security", "productivity"],
+  "categories": [
+    "developer",
+    "security",
+    "productivity"
+  ],
   "screenshots": [
     {
       "src": "/screenshots/dashboard.png",

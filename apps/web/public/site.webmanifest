@@ -1,7 +1,7 @@
 {
   "name": "RaksHex",
   "short_name": "RaksHex",
-  "description": "AI Runtime Governance Platform — API Security & LLM Cost Intelligence",
+  "description": "AI Runtime Governance Platform \u2014 Agent Firewall & API Security",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0d1f1a",

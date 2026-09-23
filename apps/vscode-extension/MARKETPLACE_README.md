@@ -1,6 +1,9 @@
-# Rakshex — AI Runtime Protection
+# Rakshex — Agent Firewall for AI Agents
 
-> Find security issues, hidden costs, and compliance risks in your AI agents and APIs before they hit production.
+> Authorize consequential agent actions before they execute. Rakshex scans your
+> AI agent configurations and API collections for leaked secrets and
+> prompt-injection surfaces — and enforces server-side policy decisions on every
+> action your agents take.
 
 [![Version](https://img.shields.io/visual-studio-marketplace/v/rakshex.rakshex-vscode)](https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex-vscode)
 [![Installs](https://img.shields.io/visual-studio-marketplace/i/rakshex.rakshex-vscode)](https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex-vscode)
@@ -13,10 +16,14 @@
 Rakshex scans your AI agent configurations, API collections, and LLM integrations directly inside VS Code to find:
 
 - **Leaked API keys** in environment files and collections
-- **Hidden token costs** from unoptimized LLM calls
+- **Prompt-injection surfaces** in agent configs and API inputs
 - **Security misconfigurations** in agent frameworks (LangChain, CrewAI, AutoGen)
 - **Compliance gaps** in AI-generated code
 - **Shadow APIs** — endpoints your agents call that you forgot about
+
+And for every consequential action your agents attempt, the Rakshex control plane
+evaluates policy server-side (`ALLOW | DENY | APPROVAL_REQUIRED`), mediates
+credentials fail-closed, and records the decision in a hash-chained Action Ledger.
 
 **Your source code never leaves your machine.** We scan metadata and configurations, not your proprietary code.
 
@@ -51,14 +58,15 @@ Scan any API collection or AI agent configuration file with one click. Find leak
 
 ### AgentGuard
 
-Configure agent guardrails in the Rakshex dashboard. The extension surfaces related findings and cost signals; live kill-switch state is managed server-side, not invented in the IDE.
+Configure agent guardrails in the Rakshex dashboard. The extension surfaces related findings and policy signals; live kill-switch and firewall-decision state is managed server-side, not invented in the IDE.
 
-### 💰 Cost Intelligence
+### 🛡️ Budget & Runaway Guardrails
 
-- Track LLM spend per project
-- Identify expensive agent loops
-- Flag unoptimized prompt patterns
-- Forecast monthly API costs
+RaksHex-routed gateway traffic supports budget policies and a kill switch so a runaway agent is contained:
+
+- Per-project usage budgets with alerting
+- Kill switch that blocks calls when budget or policy thresholds trip
+- Token-usage attribution that feeds budget policies (not a spend-optimization product)
 
 ### 🧠 AI Security Copilot
 
@@ -66,12 +74,12 @@ Ask natural language questions about your security posture:
 
 - "What are my highest-risk findings?"
 - "How do I fix this leaked API key?"
-- "Which agents cost the most?"
+- "Which actions were denied this week?"
 
 ### 📊 Security Dashboard
 
 - Severity-ranked findings (Critical / High / Medium / Low)
-- Weekly cost summaries
+- Recent firewall decisions and approvals
 - Scan history and trends
 - Team sharing (Pro plan)
 
@@ -83,6 +91,16 @@ One-click fixes for common issues:
 - Add rate limiting headers
 - Sanitize PII in prompts
 - Encrypt sensitive parameters
+
+---
+
+## Honesty note
+
+We are in private beta and pre-revenue. We do not publish invented customer
+logos, quotations, or comparative scores — what you see here describes the code
+that ships in this repo.
+
+---
 
 ---
 
@@ -118,16 +136,6 @@ One-click fixes for common issues:
 | **Enterprise** | Custom | Large orgs, dedicated support, SLA               |
 
 [Start free →](https://rakshex.in/signup)
-
----
-
-## What Developers Say
-
-> "Found a leaked OpenAI key in a collection I'd shared with the team. Rakshex caught it in 10 seconds."
-> — _Senior Engineer, Series B startup_
-
-> "The cost tracking alone saved us $400 in the first month. We had an agent in an infinite loop burning tokens."
-> — _Tech Lead, AI-native company_
 
 ---
 

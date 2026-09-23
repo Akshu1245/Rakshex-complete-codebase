@@ -1,12 +1,12 @@
 # Rakshex GitHub Action
 
-🔒 Scan API endpoints for OWASP vulnerabilities and LLM cost anomalies on every pull request.
+🔒 Scan API endpoints for OWASP vulnerabilities, leaked secrets, and prompt-injection surfaces on every pull request.
 
 ## Features
 
 - **Automatic Framework Detection** — Express, FastAPI, Flask, Django, NestJS, Go, Rust
 - **OWASP Top 10 Scanning** — BOLA, Broken Authentication, Injection, etc.
-- **LLM Cost Anomaly Detection** — Catch runaway reasoning token spend before merge
+- **Prompt-Injection Surface Detection** — Flag prompt-injection attack surface in API inputs and agent configs before merge
 - **Shadow API Discovery** — Find endpoints not in your API inventory
 - **Beautiful PR Comments** — Clean, actionable findings with severity badges
 - **CI/CD Fail Conditions** — Block merge on Critical or High findings

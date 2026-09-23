@@ -106,7 +106,7 @@ export default function LandingPage() {
           >
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-sm mb-6">
               <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
-              Public Beta — Now Live
+              Private Beta
             </div>
             <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6">
               <span className="bg-gradient-to-r from-indigo-400 via-violet-400 to-fuchsia-400 bg-clip-text text-transparent">
@@ -116,9 +116,10 @@ export default function LandingPage() {
               for AI agents
             </h1>
             <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-              A developer-native platform that sits between your code and LLM providers, detecting
-              infinite loops, hidden reasoning costs, and API vulnerabilities before they hit
-              production.
+              A developer-native control plane that sits between your agents and their tools,
+              authorizing consequential actions, blocking prompt-injection and runaway
+              agents, and recording every decision in a tamper-evident ledger — before
+              anything hits production.
             </p>
 
             {/* Email capture */}

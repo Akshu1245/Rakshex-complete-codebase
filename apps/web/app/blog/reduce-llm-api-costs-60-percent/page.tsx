@@ -113,6 +113,14 @@ export default function BlogReduceCosts() {
           </div>
         </header>
 
+        <div className="mb-8 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+          <strong>Editorial note (Sep 2026):</strong> this post predates RaksHex's
+          pivot to the Agent Firewall — an AI agent Action Control Plane that
+          authorizes actions before they execute. The cost-optimization advice
+          below is kept for reference, but our product no longer positions
+          itself as an LLM cost tool.
+        </div>
+
         <div className="prose prose-invert max-w-none text-slate-300 leading-relaxed space-y-6">
           <p className="text-lg text-slate-200">
             When teams launch AI features, their initial cloud bills are often shockingly high. In
