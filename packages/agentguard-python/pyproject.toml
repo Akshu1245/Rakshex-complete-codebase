@@ -3,7 +3,7 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "rakshex-agentguard"
+name = "rakshex"
 version = "0.2.0"
 description = "Rakshex runtime SDK for Python — AgentGuard telemetry/privacy and the Agent Firewall client"
 readme = "README.md"

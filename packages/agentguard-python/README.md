@@ -1,16 +1,16 @@
-# rakshex-agentguard (Python)
+# rakshex (Python)
 
 Python SDK source for Rakshex. It contains two clients:
 
 - **AgentGuardClient** — metadata-first LLM telemetry with privacy modes and fail-open telemetry delivery.
 - **AgentFirewallClient** — authorize an autonomous action before it runs, optionally broker the provider call through Rakshex, and record the outcome.
 
-> **Beta:** v0.2.0 is publish-ready but not yet uploaded to PyPI — the `rakshex-agentguard` name is verified unclaimed on PyPI, so the first public release will use it. Install with pip below once it ships; until then, use the source checkout that follows.
+> **Beta:** v0.2.0 is publish-ready but not yet uploaded to PyPI — the `rakshex` name is verified unclaimed on PyPI, so the first public release will use it. Install with pip below once it ships; until then, use the source checkout that follows.
 
 ## Install
 
 ```bash
-pip install rakshex-agentguard
+pip install rakshex
 ```
 
 ## Install from this repository (pre-publish)

@@ -1,6 +1,6 @@
 """Rakshex Python SDK — AgentGuard telemetry and Agent Firewall clients.
 
-The source distribution is named ``rakshex-agentguard``. Publishing status
+The source distribution is named ``rakshex``. Publishing status
 and installation instructions are documented in the package README.
 """
 
@@ -48,5 +48,5 @@ __all__ = [
     "SDK_VERSION",
 ]
 
-SDK_NAME = "rakshex-agentguard"
+SDK_NAME = "rakshex"
 SDK_VERSION = "0.2.0"
