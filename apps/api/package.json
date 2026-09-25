@@ -32,7 +32,6 @@
     "@rakshex/siem-export": "workspace:*",
     "@rakshex/mcp-security": "workspace:*",
     "@rakshex/policy-engine": "workspace:*",
-    "@rakshex/pricing-engine": "workspace:*",
     "@rakshex/scanner-core": "workspace:*",
     "@rakshex/shared-types": "workspace:*",
     "@sentry/node": "^7.100.0",

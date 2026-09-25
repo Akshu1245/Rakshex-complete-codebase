@@ -8,7 +8,6 @@ import { CopilotGovernanceTab } from "./CopilotGovernanceTab";
 import { TeamGovernanceTab } from "./TeamGovernanceTab";
 import { AzureConnectionsTab } from "./AzureConnectionsTab";
 import { AgentGuardTab } from "./AgentGuardTab";
-import { ComplianceTab } from "./ComplianceTab";
 import { OnboardingWizard } from "./OnboardingWizard";
 
 const tabs = [
@@ -19,7 +18,6 @@ const tabs = [
   { id: "copilot", label: "Copilot Governance", icon: "smart_toy" },
   { id: "azure", label: "Azure Connections", icon: "cloud" },
   { id: "agentguard", label: "AgentGuard", icon: "security" },
-  { id: "compliance", label: "Compliance", icon: "verified" },
 ];
 
 function DashboardInner() {
@@ -43,8 +41,6 @@ function DashboardInner() {
         return <AzureConnectionsTab />;
       case "agentguard":
         return <AgentGuardTab />;
-      case "compliance":
-        return <ComplianceTab />;
       default:
         return <OverviewTab />;
     }

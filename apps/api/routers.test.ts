@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { appRouter } from "./routers";
+import * as db from "./db";
 import { COOKIE_NAME } from "@rakshex/shared-types/const";
 import type { TrpcContext } from "./_core/context";
 import { generateCsrfToken } from "./utils/security";
@@ -916,20 +917,6 @@ describe("onboarding", () => {
 });
 
 // ============================================================================
-// TOKEN ANALYTICS TESTS
-// ============================================================================
-
-describe("tokenAnalytics", () => {
-  it("gets analytics for authenticated user", async () => {
-    const { ctx } = createAuthContext({ id: 500 });
-    const caller = appRouter.createCaller(ctx);
-    const result = await caller.tokenAnalytics.getAnalytics({ days: 30 });
-    expect(result.byModel).toBeDefined();
-    expect(result.totalCost).toBeGreaterThanOrEqual(0);
-  });
-});
-
-// ============================================================================
 // DASHBOARD TESTS
 // ============================================================================
 
@@ -949,31 +936,6 @@ describe("dashboard", () => {
     const result = await caller.dashboard.getRecentScans();
     expect(result.scans).toBeDefined();
     expect(Array.isArray(result.scans)).toBe(true);
-  });
-});
-
-// ============================================================================
-// COMPLIANCE TESTS
-// ============================================================================
-
-describe("compliance", () => {
-  it("throws when generating a report for a non-owned collection", async () => {
-    const { ctx } = createAuthContext({ id: 700, role: "editor" });
-    const caller = appRouter.createCaller(ctx);
-    await expect(
-      caller.compliance.generateReport({
-        collectionId: "nonexistent",
-        reportType: "pci_dss",
-      }),
-    ).rejects.toThrow("Collection not found or access denied");
-  });
-
-  it("throws when exporting a non-existent report", async () => {
-    const { ctx } = createAuthContext({ id: 700 });
-    const caller = appRouter.createCaller(ctx);
-    await expect(caller.compliance.exportReport({ reportId: "nonexistent" })).rejects.toThrow(
-      "Report not found or access denied",
-    );
   });
 });
 
@@ -1059,15 +1021,8 @@ describe("kill switch auto-trigger", () => {
     // Set a budget
     await caller.killSwitch.setBudget({ budgetLimitUSD: 1 });
 
-    // Record usage that exceeds budget
-    const result = await caller.tokenAnalytics.recordUsage({
-      model: "gpt-4",
-      promptTokens: 10000,
-      completionTokens: 5000,
-      thinkingTokens: 0,
-      costUSD: 2.0,
-    });
-    expect(result.success).toBe(true);
+    // Record usage that exceeds budget (direct db call; tokenAnalytics router removed)
+    await db.recordTokenUsage(1100, "gpt-4", 10000, 5000, 0, 2.0);
 
     const settings = await caller.killSwitch.getSettings();
     expect(settings.isActive).toBe(true);

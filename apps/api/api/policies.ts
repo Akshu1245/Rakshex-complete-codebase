@@ -1,11 +1,12 @@
 /**
  * Tenant policy router — author / list / validate / apply YAML policies.
  *
- * The router is intentionally thin: business logic lives in
- * `services/policyDsl` (parser + compiler) and `services/policyTemplates`
- * (built-in templates). Persistence is via the `tenant_policies` table
- * which stores both the YAML source and the compiled JSON form so the
- * gateway can apply policies without re-parsing on every request.
+ * The router is intentionally thin: parsing + compilation live in the single
+ * canonical engine `@rakshex/policy-engine` (the old tenant YAML DSL in
+ * `services/policyDsl` was deleted — cut #5, duplicate policy language).
+ * Persistence is via the `tenant_policies` table which stores both the YAML
+ * source and the compiled JSON form so the gateway can apply policies
+ * without re-parsing on every request.
  */
 
 import { z } from "zod";
@@ -14,8 +15,35 @@ import * as db from "../db";
 import { sql } from "drizzle-orm";
 import { ValidationError } from "../_core/errors";
 import { protectedProcedure, router } from "../_core/trpc";
-import { PolicyValidationException, compilePolicy, parsePolicy } from "../services/policyDsl";
+import {
+  compilePolicy,
+  parsePolicy,
+  PolicyParseError,
+  type CompiledPolicy,
+} from "@rakshex/policy-engine";
 import { POLICY_TEMPLATES, getPolicyTemplate } from "../services/policyTemplates";
+
+/**
+ * `CompiledPolicy` carries `Set`s for fast lookups — project them to plain
+ * JSON before persisting / returning so the stored form stays serializable.
+ */
+function toJsonSafeCompiled(compiled: CompiledPolicy): Record<string, unknown> {
+  return {
+    document: compiled.document,
+    allowedModels: compiled.allowedModels ? [...compiled.allowedModels] : null,
+    deniedModels: [...compiled.deniedModels],
+    deniedTools: [...compiled.deniedTools],
+    approvalTools: [...compiled.approvalTools],
+    allowedTools: compiled.allowedTools ? [...compiled.allowedTools] : null,
+    denyToolsByDefault: compiled.denyToolsByDefault,
+    blockLabels: [...compiled.blockLabels],
+    redactLabels: [...compiled.redactLabels],
+  };
+}
+
+function toValidationErrors(err: PolicyParseError): Array<{ path: string; message: string }> {
+  return err.details.map((message) => ({ path: "", message }));
+}
 
 const yamlInput = z
   .string()
@@ -50,11 +78,11 @@ export const policiesRouter = router({
   validate: protectedProcedure.input(z.object({ yaml: yamlInput })).mutation(({ input }) => {
     try {
       const policy = parsePolicy(input.yaml);
-      const compiled = compilePolicy(policy);
+      const compiled = toJsonSafeCompiled(compilePolicy(policy));
       return { ok: true as const, compiled };
     } catch (err) {
-      if (err instanceof PolicyValidationException) {
-        return { ok: false as const, errors: err.errors };
+      if (err instanceof PolicyParseError) {
+        return { ok: false as const, errors: toValidationErrors(err) };
       }
       throw err;
     }
@@ -102,21 +130,23 @@ export const policiesRouter = router({
       try {
         parsed = parsePolicy(input.yaml);
       } catch (err) {
-        if (err instanceof PolicyValidationException) {
+        if (err instanceof PolicyParseError) {
           throw new ValidationError(
-            `policy invalid: ${err.errors.map((e) => `${e.path}: ${e.message}`).join("; ")}`,
+            `policy invalid: ${toValidationErrors(err)
+              .map((e) => e.message)
+              .join("; ")}`,
           );
         }
         throw err;
       }
-      const compiled = compilePolicy(parsed);
+      const compiled = toJsonSafeCompiled(compilePolicy(parsed));
       const id = await db.createTenantPolicy({
         userId: ctx.user.id,
-        name: parsed.name,
+        name: parsed.name ?? "Untitled policy",
         yaml: input.yaml,
         compiled,
         enabled: true,
-        appliesTo: parsed.appliesTo[0] ?? "all",
+        appliesTo: "all",
       });
       return { id, compiled };
     }),
@@ -136,19 +166,21 @@ export const policiesRouter = router({
       try {
         parsed = parsePolicy(input.yaml);
       } catch (err) {
-        if (err instanceof PolicyValidationException) {
+        if (err instanceof PolicyParseError) {
           throw new ValidationError(
-            `policy invalid: ${err.errors.map((e) => `${e.path}: ${e.message}`).join("; ")}`,
+            `policy invalid: ${toValidationErrors(err)
+              .map((e) => e.message)
+              .join("; ")}`,
           );
         }
         throw err;
       }
-      const compiled = compilePolicy(parsed);
+      const compiled = toJsonSafeCompiled(compilePolicy(parsed));
       await db.updateTenantPolicy(ctx.user.id, input.id, {
-        name: parsed.name,
+        name: parsed.name ?? "Untitled policy",
         yaml: input.yaml,
         compiled,
-        appliesTo: parsed.appliesTo[0] ?? "all",
+        appliesTo: "all",
       });
       return { ok: true, compiled };
     }),

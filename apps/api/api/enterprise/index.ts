@@ -8,7 +8,6 @@ import {
   enterpriseKeyRotationRouter,
 } from "./security";
 import { enterpriseCopilotRouter } from "./copilot";
-import { enterpriseComplianceRouter } from "./compliance";
 
 export const enterpriseRouter = router({
   azure: enterpriseAzureRouter,
@@ -18,5 +17,4 @@ export const enterpriseRouter = router({
   agentGuard: enterpriseAgentGuardRouter,
   keyRotation: enterpriseKeyRotationRouter,
   copilot: enterpriseCopilotRouter,
-  compliance: enterpriseComplianceRouter,
 });

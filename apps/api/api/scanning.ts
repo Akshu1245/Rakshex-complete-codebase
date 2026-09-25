@@ -12,7 +12,7 @@ import { getPlanLimits } from "../payments";
 import { scansPerDayLimitError, shadowAPIGatedError } from "../utils/planLimits";
 import { summarizeFindings } from "../utils/findingSummarizer";
 import { createNotification } from "./notifications";
-import { INJECTION_PAYLOADS, groupPayloadsByCategory } from "../utils/promptInjectionPayloads";
+import { INJECTION_PAYLOADS, groupPayloadsByCategory } from "../eval/fixtures/promptInjectionPayloads";
 import { toNumber } from "../utils/decimal";
 import { requireCollectionAccess, requireFindingAccess } from "../services/tenantAccess";
 

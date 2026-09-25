@@ -1,14 +1,16 @@
 import type { ScanRule } from "../types.js";
-import { debugHeadersRule } from "./api/debug-headers.js";
-import { idorIndicatorRule } from "./api/idor-indicator.js";
-import { insecureHttpRule } from "./api/insecure-http.js";
-import { missingAuthRule } from "./api/missing-auth.js";
-import { missingCorrelationRule } from "./api/missing-correlation.js";
-import { sensitiveQueryRule } from "./api/sensitive-query.js";
-import { ssrfIndicatorRule } from "./api/ssrf-indicator.js";
-import { excessiveAgencyRule } from "./ai/excessive-agency.js";
-import { insecurePluginOutputRule } from "./ai/insecure-plugin-output.js";
-import { promptInjectionSurfaceRule } from "./ai/prompt-injection-surface.js";
+import {
+  debugHeadersRule,
+  idorIndicatorRule,
+  insecureHttpRule,
+  missingAuthRule,
+  missingCorrelationRule,
+  sensitiveQueryRule,
+  ssrfIndicatorRule,
+  excessiveAgencyRule,
+  insecurePluginOutputRule,
+  promptInjectionSurfaceRule,
+} from "./rules.js";
 
 /** Default deterministic API security rule pack. */
 export const DEFAULT_API_RULES: ScanRule[] = [

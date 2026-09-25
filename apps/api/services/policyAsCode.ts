@@ -1,6 +1,7 @@
 /**
  * Bridge: server uses @rakshex/policy-engine for rebuild-plan policy-as-code.
- * Existing YAML gateway DSL remains in policyDsl.ts (tenant gateway compile).
+ * The old tenant YAML DSL (policyDsl.ts) was deleted — cut #5, duplicate
+ * policy language. Tenant YAML now parses through @rakshex/policy-engine.
  */
 
 export {

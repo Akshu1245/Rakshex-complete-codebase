@@ -39,9 +39,7 @@ import { decodeNextAuthToken } from "./services/nextAuthJwt";
 import { collectionsRouter } from "./api/collections";
 import { scanningRouter } from "./api/scanning";
 import { shadowAPIRouter } from "./api/shadowAPI";
-import { tokenAnalyticsRouter } from "./api/tokenAnalytics";
 import { killSwitchRouter } from "./api/killSwitch";
-import { complianceRouter } from "./api/compliance";
 import { teamRouter } from "./api/team";
 import { onboardingRouter } from "./api/onboarding";
 import { dashboardRouter } from "./api/dashboard";
@@ -54,7 +52,6 @@ import { mcpGovernanceRouter } from "./api/mcpGovernance";
 import { runtimeGovernanceRouter } from "./api/runtimeGovernance";
 import { riskScoreRouter } from "./api/riskScore";
 import { shadowAiDetectionRouter } from "./api/shadowAiDetection";
-import { socTwoRouter } from "./api/socTwo";
 import { policiesRouter, policyRulesRouter } from "./api/policies";
 import { alertsRouter } from "./api/alerts";
 import { approvalsRouter } from "./api/approvals";
@@ -65,11 +62,9 @@ import { workspacesRouter } from "./api/workspaces";
 import { apiKeysRouter } from "./api/apiKeys";
 import { projectsRouter } from "./api/projects";
 import { findingsRouter } from "./api/findings";
-import { researchRouter } from "./api/research";
 import { telemetryRouter } from "./api/telemetry";
 import { analyticsRouter } from "./api/analytics";
 import { auditRouter } from "./api/audit";
-import { costRouter } from "./api/cost";
 import { fixRouter } from "./api/fix";
 import { githubRouter } from "./api/github";
 import { agentGuardRouter } from "./api/agentGuard";
@@ -84,7 +79,6 @@ import { enterpriseRouter } from "./api/enterprise";
 import { controlPlaneRouter } from "./api/controlPlane";
 import { agentFirewallRouter } from "./api/agentFirewall";
 import { teamGovernanceRouter } from "./api/teamGovernance";
-import { providerBillingRouter } from "./api/providerBilling";
 import { actionReceiptsRouter } from "./api/actionReceipts";
 import { ensurePersonalWorkspace } from "./services/workspaceContext";
 import { logger } from "./_core/logger";
@@ -833,9 +827,7 @@ export const appRouter = router({
   scanning: scanningRouter,
   findings: findingsRouter,
   shadowAPI: shadowAPIRouter,
-  tokenAnalytics: tokenAnalyticsRouter,
   killSwitch: killSwitchRouter,
-  compliance: complianceRouter,
   team: teamRouter,
   onboarding: onboardingRouter,
   dashboard: dashboardRouter,
@@ -846,7 +838,6 @@ export const appRouter = router({
   webhooks: webhooksRouter,
   mcpGovernance: mcpGovernanceRouter,
   runtimeGovernance: runtimeGovernanceRouter,
-  socTwo: socTwoRouter,
   policies: policiesRouter,
   policyRules: policyRulesRouter,
   alerts: alertsRouter,
@@ -858,11 +849,9 @@ export const appRouter = router({
   apiKeys: apiKeysRouter,
   projects: projectsRouter,
   shadowAiDetection: shadowAiDetectionRouter,
-  research: researchRouter,
   telemetry: telemetryRouter,
   analytics: analyticsRouter,
   audit: auditRouter,
-  cost: costRouter,
   fix: fixRouter,
   github: githubRouter,
   agentGuard: agentGuardRouter,
@@ -877,7 +866,6 @@ export const appRouter = router({
   // ─── Rakshex Enterprise ──────────────────────────────────────────────
   enterprise: enterpriseRouter,
   controlPlane: controlPlaneRouter,
-  providerBilling: providerBillingRouter,
   actionReceipts: actionReceiptsRouter,
 
   // ─── Agent Firewall (runtime authorization control plane) ────────────

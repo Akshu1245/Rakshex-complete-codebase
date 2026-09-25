@@ -1,6 +1,10 @@
 /**
- * Prompt-injection payload library.
+ * EVAL FIXTURE — prompt-injection payload library.
  *
+ * Static catalogue of well-known prompt-injection / jailbreak patterns.
+ * Used by the static scanner (`utils/promptInjectionScan.ts`) for baseline
+ * detection and by eval/scan endpoints. Payloads are signatures, never
+ * executed against third-party targets.
  * Static catalogue of well-known prompt-injection / jailbreak patterns that
  * Rakshex checks for when scanning an LLM-backed API endpoint **and** which
  * the inline gateway (`gateway/src/policies/promptInjection.ts`) blocks at
