@@ -1,0 +1,37 @@
+# RaksHex Web (Next.js) — Cloudflare Workers
+# ADDITIVE PORT: the Vercel target (vercel.json) stays intact. This file is only
+# used by `opennextjs-cloudflare build` / `wrangler dev|deploy`. Nothing here
+# deploys until boss creates a Cloudflare account and fills every REPLACE_ME
+# placeholder below (values shown are format-valid dummies so `wrangler dev`
+# boots locally).
+#
+# Build:  RAKSHEX_API_ORIGIN=https://<api-worker>.workers.dev pnpm build:cf
+#         (opennextjs-cloudflare build -> next build -> .open-next/worker.js)
+# Local:  pnpm preview:cf   (builds, then `wrangler dev` on .open-next/worker.js)
+# Deploy: pnpm deploy:cf    (builds, then uploads; needs `wrangler login`)
+#
+# Backend origin: rewrites (/api/trpc/* etc.) are baked at build time from
+# RAKSHEX_API_ORIGIN (preferred) or RAKSHEX_BACKEND_URL — see next.config.js.
+# Set it in the shell when building; never rely on the Railway fallback here.
+name = "rakshex-web"
+main = ".open-next/worker.js"
+compatibility_date = "2026-09-25"
+compatibility_flags = ["nodejs_compat"] # next-auth + node:async_hooks need node:* APIs
+
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
+[vars]
+ENVIRONMENT = "production"
+# REPLACE_ME: public origin of the Agent Firewall API worker
+# (e.g. https://rakshex-firewall.<subdomain>.workers.dev). Route handlers also
+# read this at runtime via process.env (populated by the OpenNext worker init).
+RAKSHEX_API_ORIGIN = "https://REPLACE_ME.workers.dev"
+# REPLACE_ME: public site URL served by this worker (build-time NEXT_PUBLIC_*)
+NEXT_PUBLIC_SITE_URL = "https://REPLACE_ME.workers.dev"
+
+# Secrets (set via `wrangler secret put`, NEVER in this file):
+#   GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET   — next-auth Google provider
+#   GITHUB_ID / GITHUB_SECRET                  — next-auth GitHub provider
+#   NEXTAUTH_SECRET                            — next-auth JWT signing

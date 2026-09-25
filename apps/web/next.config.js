@@ -3,22 +3,65 @@ try {
   if (typeof globalThis !== "undefined" && !globalThis.AsyncLocalStorage) {
     globalThis.AsyncLocalStorage = AsyncLocalStorage;
   }
-} catch (e) {}
+} catch (e) {
+  // ignore — AsyncLocalStorage polyfill is best-effort
+}
 
 const path = require("path");
 
 /** @type {import('next').NextConfig} */
 const RAILWAY_PRODUCTION_API_URL = "https://api-production-0a2b.up.railway.app";
-const TS_BACKEND_URL =
+// Cloudflare Workers builds run with CF_WORKERS_BUILD=1 (see package.json
+// build:cf, via cross-env for Windows compat). In that mode the Railway
+// fallback below is disabled and the build fails fast when no API origin is
+// configured — a Workers build must never bake in the Railway URL.
+const IS_CF_BUILD = process.env.CF_WORKERS_BUILD === "1";
+const CONFIGURED_API_ORIGIN = (
   process.env.RAKSHEX_BACKEND_URL ||
-  (process.env.NODE_ENV === "production"
-    ? RAILWAY_PRODUCTION_API_URL
-    : process.env.NEXT_PUBLIC_TS_API_URL ||
-      process.env.NEXT_PUBLIC_API_URL ||
-      "http://localhost:3000");
+  process.env.RAKSHEX_API_URL ||
+  process.env.RAKSHEX_API_ORIGIN ||
+  ""
+).trim();
+function resolveBackendUrl() {
+  if (CONFIGURED_API_ORIGIN) return CONFIGURED_API_ORIGIN.replace(/\/+$/, "");
+  if (IS_CF_BUILD) {
+    throw new Error(
+      "[cloudflare] RAKSHEX_BACKEND_URL (or RAKSHEX_API_ORIGIN) must be set when " +
+        "building for Cloudflare Workers — refusing to bake the Railway fallback " +
+        "into the Workers build. Example: RAKSHEX_API_ORIGIN=https://rakshex-firewall.<subdomain>.workers.dev pnpm build:cf",
+    );
+  }
+  if (process.env.NODE_ENV === "production") return RAILWAY_PRODUCTION_API_URL;
+  return (
+    process.env.NEXT_PUBLIC_TS_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"
+  );
+}
+const TS_BACKEND_URL = resolveBackendUrl();
+
+// CSP connect-src is derived from the resolved backend origin so the Workers
+// build never whitelists Railway/Render hosts. (Vercel keeps the legacy
+// api.rakshex.in entry; Cloudflare drops it.)
+function cspConnectSrc() {
+  const src = ["'self'", "wss:", "https://*.sentry.io", "https://script.google.com"];
+  // TS_BACKEND_URL is validated to be an http(s) origin string above; a
+  // regex keeps this working under the repo's eslint env (no URL global).
+  const m = /^https?:\/\/[^/]+/.exec(TS_BACKEND_URL);
+  if (m) {
+    src.push(m[0]);
+    const wsOrigin = m[0].replace(/^http/, "ws");
+    if (!src.includes(wsOrigin)) src.push(wsOrigin);
+  }
+  if (!IS_CF_BUILD) src.push("https://api.rakshex.in");
+  return src.join(" ");
+}
 
 const nextConfig = {
   serverExternalPackages: ["async_hooks"],
+  // Build-time flag so server code can drop legacy backend fallbacks from the
+  // Workers bundle entirely (Next inlines `env` values at build time).
+  env: {
+    RAKSHEX_CF_BUILD: IS_CF_BUILD ? "1" : "",
+  },
   // This project sits inside a larger local workspace that has its own lock
   // file. Pin tracing here so production builds never walk the parent tree.
   outputFileTracingRoot: path.join(__dirname, "../.."),
@@ -64,7 +107,9 @@ const nextConfig = {
           {
             key: "Content-Security-Policy",
             value:
-              "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' wss: https://api.rakshex.in https://api-production-0a2b.up.railway.app wss://api-production-0a2b.up.railway.app https://*.sentry.io https://script.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;",
+              "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src " +
+              cspConnectSrc() +
+              "; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;",
           },
         ],
       },
@@ -168,9 +213,10 @@ const nextConfig = {
   },
   async rewrites() {
     return [
-      // All API traffic goes to the Node tRPC backend on Railway. The legacy
-      // Python/Vercel backend has been retired; production intentionally uses
-      // the known Railway origin unless RAKSHEX_BACKEND_URL explicitly overrides it.
+      // All API traffic goes to the TS backend. Origin resolution (top of this
+      // file): RAKSHEX_BACKEND_URL / RAKSHEX_API_ORIGIN win when set; the
+      // Cloudflare build fails fast without one; Vercel production falls back
+      // to the known Railway origin. The legacy Python/Vercel backend is retired.
       {
         source: "/api/oauth/:path*",
         destination: `${TS_BACKEND_URL}/api/oauth/:path*`,

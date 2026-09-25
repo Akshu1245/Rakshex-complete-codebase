@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "allowImportingTsExtensions": false,
+    "lib": ["ES2022", "WebWorker"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "paths": {
+      "@rakshex/action-control": ["../../../packages/action-control/src/index.ts"],
+      "@rakshex/policy-engine": ["../../../packages/policy-engine/src/index.ts"],
+      "@rakshex/shared-types": ["../../../packages/shared-types/src/index.ts"],
+      "@rakshex/spend-meter": ["../../../packages/spend-meter/src/index.ts"]
+    },
+    "strict": true,
+    "target": "ES2022",
+    "types": ["@cloudflare/workers-types", "node"]
+  },
+  "extends": "../../../tsconfig.base.json",
+  "include": ["src/**/*.ts", "test/**/*.ts"]
+}

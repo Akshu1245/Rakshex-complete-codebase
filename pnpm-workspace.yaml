@@ -9,6 +9,7 @@ allowBuilds:
   msgpackr-extract: true
   protobufjs: true
   unrs-resolver: true
+  workerd: true # wrangler's local runtime (Cloudflare web port); same trust class as esbuild
 
 overrides:
   qs: "6.15.2"

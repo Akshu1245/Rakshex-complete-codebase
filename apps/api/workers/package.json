@@ -1,0 +1,24 @@
+{
+  "dependencies": {
+    "drizzle-orm": "0.44.2",
+    "hono": "4.7.11"
+  },
+  "description": "RaksHex Agent Firewall API — Cloudflare Workers port (additive; Express app stays intact)",
+  "devDependencies": {
+    "@cloudflare/workers-types": "4.20250922.0",
+    "@sentry/cloudflare": "10.12.0",
+    "typescript": "5.7.3",
+    "vitest": "3.2.4",
+    "wrangler": "4.33.1"
+  },
+  "name": "@rakshex/api-workers",
+  "private": true,
+  "scripts": {
+    "db:migrate:local": "wrangler d1 migrations apply rakshex-firewall --local",
+    "dev": "wrangler dev",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "type": "module",
+  "version": "0.1.0"
+}

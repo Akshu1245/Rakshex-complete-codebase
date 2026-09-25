@@ -1,11 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND_URL =
+// Backend origin: explicit env wins on every platform. The Workers deployment
+// sets RAKSHEX_API_ORIGIN via wrangler.toml [vars] (see apps/web/wrangler.toml).
+// RAKSHEX_CF_BUILD is inlined at build time (next.config.js `env`): in the
+// Workers bundle the legacy Railway fallback is compiled out entirely, so a
+// misconfigured Workers deployment fails closed instead of proxying to Railway.
+const BACKEND_URL = (
   process.env.RAKSHEX_BACKEND_URL ||
+  process.env.RAKSHEX_API_ORIGIN ||
   process.env.NEXT_PUBLIC_TS_API_URL ||
-  "https://api-production-0a2b.up.railway.app";
+  (process.env.RAKSHEX_CF_BUILD ? "" : "https://api-production-0a2b.up.railway.app")
+).replace(/\/+$/, "");
 
 export async function POST(request: NextRequest) {
+  if (!BACKEND_URL) {
+    return NextResponse.json(
+      { error: "Backend origin not configured (set RAKSHEX_API_ORIGIN)" },
+      { status: 500 },
+    );
+  }
   const cookieHeader = request.headers.get("cookie") ?? "";
   const csrfToken = request.cookies.get("csrf-token")?.value;
 

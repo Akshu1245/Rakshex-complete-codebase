@@ -1,0 +1,11 @@
+# Local `wrangler dev` / `preview:cf` variables. Copy to .dev.vars (gitignored).
+# Production values live in wrangler.toml [vars] / `wrangler secret put`.
+# The backend origin is ALSO needed at build time (rewrites are baked in):
+#   RAKSHEX_API_ORIGIN=https://<api-worker>.workers.dev pnpm build:cf
+RAKSHEX_API_ORIGIN="https://rakshex-firewall.<subdomain>.workers.dev"
+NEXT_PUBLIC_SITE_URL="http://localhost:8787"
+GOOGLE_CLIENT_ID=""
+GOOGLE_CLIENT_SECRET=""
+GITHUB_ID=""
+GITHUB_SECRET=""
+NEXTAUTH_SECRET=""
