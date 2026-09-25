@@ -1,0 +1,1 @@
+{"devDependencies":{"typescript":"^5.7.0","vitest":"^3.0.0"},"exports":{".":"./src/index.ts"},"main":"./src/index.ts","name":"@rakshex/spend-meter","private":true,"scripts":{"build":"tsc --noEmit -p tsconfig.json","lint":"echo lint deferred to root","test":"vitest run","typecheck":"tsc --noEmit -p tsconfig.json"},"type":"module","types":"./src/index.ts","version":"0.1.0"}

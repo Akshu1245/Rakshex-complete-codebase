@@ -60,6 +60,15 @@ function getRuleFieldValue(ctx: EvaluationContext, field: string): unknown {
     case "costUsd":
     case "cost_usd":
       return ctx.costUsdSoFar ?? 0;
+    case "estimatedCostUsd":
+    case "estimated_cost_usd":
+      return ctx.estimatedCostUsd ?? 0;
+    case "projectedCostUsd":
+    case "projected_cost_usd":
+      // Realized + worst-case estimate: the same "used + estimated" math the
+      // action-control gate enforces as a hard DENY (Team B parity). Rule
+      // authors write e.g. projectedCostUsd gt 10 -> deny.
+      return (ctx.costUsdSoFar ?? 0) + (ctx.estimatedCostUsd ?? 0);
     case "inputTokens":
     case "input_tokens":
       return ctx.inputTokens ?? 0;

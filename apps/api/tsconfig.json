@@ -24,6 +24,7 @@
       "@rakshex/sdk": ["../../packages/sdk/src/index.ts"],
       "@rakshex/pricing-engine": ["../../packages/pricing-engine/src/index.ts"],
       "@rakshex/action-control": ["../../packages/action-control/src/index.ts"],
+      "@rakshex/spend-meter": ["../../packages/spend-meter/src/index.ts"],
       "@rakshex/siem-export": ["../../packages/siem-export/src/index.ts"],
       "@rakshex/mcp-security": ["../../packages/mcp-security/src/index.ts"]
     }

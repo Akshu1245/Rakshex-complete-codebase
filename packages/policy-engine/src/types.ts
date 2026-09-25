@@ -113,6 +113,13 @@ export interface EvaluationContext {
   step?: number;
   retryCount?: number;
   costUsdSoFar?: number;
+  /**
+   * Worst-case cost of the action under evaluation, USD major units.
+   * Pair with `costUsdSoFar` via the `projectedCostUsd` rule field
+   * (soFar + estimated) for ceiling-style rules. Must be a bound
+   * (input*inRate + maxTokens*outRate), never a prediction.
+   */
+  estimatedCostUsd?: number;
   elapsedSeconds?: number;
   /** Prompt/response text, for `prompt_contains` keyword/regex conditions. */
   prompt?: string;
