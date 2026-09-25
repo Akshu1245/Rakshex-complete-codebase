@@ -21,7 +21,8 @@ export type BillableUnit =
   | "minutes";
 
 export interface BillableEvent {
-  workspaceId: string;
+  // Matches usage_events.workspace_id (integer) in schema-foundation.ts.
+  workspaceId: number;
   eventType: BillableUnit;
   quantity: number;
   costUsd?: number;
@@ -44,7 +45,7 @@ export async function recordBillableEvent(event: BillableEvent): Promise<string>
     eventType: event.eventType,
     quantity: String(Math.max(0, Math.floor(event.quantity))),
     unit: event.eventType,
-    cost: event.costUsd != null ? String(event.costUsd) : null,
+    costUsd: event.costUsd != null ? String(event.costUsd) : null,
     metadata: event.metadata ?? null,
     occurredAt: event.occurredAt ?? new Date(),
   });
@@ -53,7 +54,7 @@ export async function recordBillableEvent(event: BillableEvent): Promise<string>
 
 /** Sum of quantity for a workspace + event type inside [periodStart, periodEnd]. */
 export async function sumPeriodUsage(input: {
-  workspaceId: string;
+  workspaceId: number;
   eventType: BillableUnit;
   periodStart: Date;
   periodEnd: Date;
@@ -84,7 +85,7 @@ export async function sumPeriodUsage(input: {
  * reports usage, it does not price it.
  */
 export async function checkPlanQuota(input: {
-  workspaceId: string;
+  workspaceId: number;
   planId: PlanId;
   eventType: BillableUnit;
   periodStart: Date;

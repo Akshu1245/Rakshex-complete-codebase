@@ -26,7 +26,7 @@ describe("metering", () => {
 
   it("records a billable event as a usage_events row", async () => {
     const id = await recordBillableEvent({
-      workspaceId: "ws-1",
+      workspaceId: 7,
       eventType: "tokens",
       quantity: 150,
       costUsd: 0.0042,
@@ -34,11 +34,11 @@ describe("metering", () => {
     expect(typeof id).toBe("string");
     expect(mocks.insert).toHaveBeenCalledTimes(1);
     const payload = mocks.values.mock.calls[0][0];
-    expect(payload.workspaceId).toBe("ws-1");
+    expect(payload.workspaceId).toBe(7);
     expect(payload.eventType).toBe("tokens");
     expect(payload.quantity).toBe("150");
     expect(payload.unit).toBe("tokens");
-    expect(payload.cost).toBe("0.0042");
+    expect(payload.costUsd).toBe("0.0042");
     expect(payload.metadata).toBeNull();
   });
 
@@ -49,7 +49,7 @@ describe("metering", () => {
       { quantity: "25" },
     ]);
     const usage = await sumPeriodUsage({
-      workspaceId: "ws-1",
+      workspaceId: 7,
       eventType: "api_calls",
       periodStart: new Date("2026-09-01"),
       periodEnd: new Date("2026-10-01"),
@@ -60,7 +60,7 @@ describe("metering", () => {
   it("flags quota breach with overage priced from the plan catalog", async () => {
     mocks.rows.mockResolvedValueOnce([{ quantity: "11500" }, { quantity: "500" }]);
     const quota = await checkPlanQuota({
-      workspaceId: "ws-1",
+      workspaceId: 7,
       planId: "pro", // limit 10_000, overage 1¢/unit
       eventType: "api_calls",
       periodStart: new Date("2026-09-01"),
@@ -76,7 +76,7 @@ describe("metering", () => {
   it("allows usage under the limit with zero overage", async () => {
     mocks.rows.mockResolvedValueOnce([{ quantity: "50" }]);
     const quota = await checkPlanQuota({
-      workspaceId: "ws-1",
+      workspaceId: 7,
       planId: "free",
       eventType: "api_calls",
       periodStart: new Date("2026-09-01"),
