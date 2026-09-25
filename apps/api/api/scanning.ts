@@ -7,7 +7,7 @@ import * as db from "../db";
 import { scanQueue } from "../queues";
 import type { ScanJobData } from "../queues/workers/scanWorker";
 import { wsManager } from "../websocket";
-import { invalidateUserCache, redis } from "../_core/cache";
+import { redis } from "../_core/cache";
 import { getPlanLimits } from "../payments";
 import { scansPerDayLimitError, shadowAPIGatedError } from "../utils/planLimits";
 import { summarizeFindings } from "../utils/findingSummarizer";
@@ -155,7 +155,7 @@ export const scanningRouter = router({
         scanId: z.string(),
       }),
     )
-    .query(async ({ input, ctx }) => {
+    .query(async ({ input }) => {
       const job = await scanQueue.getJob(input.scanId);
       if (!job) {
         throw new TRPCError({
