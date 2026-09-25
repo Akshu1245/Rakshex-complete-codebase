@@ -13,7 +13,7 @@ import {
   controlPlaneResources,
   providerAccounts,
 } from "@rakshex/database/schema-enterprise";
-import { encryptSecret, getVault } from "../services/vault";
+import { encryptSecret, getVault, maskKey, rotateCredential } from "../services/vault";
 import { assertWorkspacePermission } from "../services/workspaceContext";
 import { PROVIDERS, type ControlPlaneProvider } from "../services/controlPlane/providerRegistry";
 import { sha256 } from "../utils/crypto";
@@ -125,7 +125,9 @@ export const controlPlaneRouter = router({
           environment: controlPlaneCredentials.environment,
           fingerprint: controlPlaneCredentials.fingerprint,
           keyPrefix: controlPlaneCredentials.keyPrefix,
+          owner: controlPlaneCredentials.owner,
           status: controlPlaneCredentials.status,
+          graceExpiresAt: controlPlaneCredentials.graceExpiresAt,
           expiresAt: controlPlaneCredentials.expiresAt,
           lastUsedAt: controlPlaneCredentials.lastUsedAt,
           createdAt: controlPlaneCredentials.createdAt,
@@ -143,6 +145,7 @@ export const controlPlaneRouter = router({
           credentialType: z.string().min(1).max(64),
           environment: z.string().min(1).max(32).default("production"),
           secret: z.string().min(8).max(4096),
+          owner: z.string().min(1).max(255).optional(),
           expiresAt: z.string().datetime().optional(),
         }),
       )
@@ -164,7 +167,8 @@ export const controlPlaneRouter = router({
             environment: input.environment,
             encryptedValue: encryptSecret(input.secret, tenant),
             fingerprint,
-            keyPrefix: input.secret.slice(0, Math.min(12, input.secret.length)),
+            keyPrefix: maskKey(input.secret),
+            owner: input.owner,
             expiresAt: input.expiresAt ? new Date(input.expiresAt) : undefined,
             createdBy: ctx.user.id,
           })
@@ -173,6 +177,7 @@ export const controlPlaneRouter = router({
           workspaceId: input.workspaceId,
           provider: input.provider,
           credentialId: credential?.id,
+          owner: input.owner ?? null,
         });
         return { id: credential?.id, secret: input.secret, shownOnce: true };
       }),
@@ -198,6 +203,100 @@ export const controlPlaneRouter = router({
           credentialId: input.id,
         });
         return { success: true };
+      }),
+    /**
+     * One-click rotation: mints a new server-side secret, re-encrypts, and
+     * keeps the previous secret valid for a 15-minute grace window
+     * (`ROTATION_GRACE_MS` in services/vault.ts) before it is rejected.
+     * The new secret is returned once — the client must show it immediately
+     * and never store it. Every rotation is written to the audit log.
+     */
+    rotate: editorProcedure
+      .input(
+        workspaceInput.extend({
+          id: z.number().int().positive(),
+          owner: z.string().min(1).max(255).optional(),
+        }),
+      )
+      .mutation(async ({ input, ctx }) => {
+        await writeAccess(input.workspaceId, ctx.user.id);
+        const database = await db.getDb();
+        if (!database) noDb();
+        const store = {
+          getCredential: async (id: number, workspaceId: number) => {
+            const [row] = await database!
+              .select({
+                id: controlPlaneCredentials.id,
+                workspaceId: controlPlaneCredentials.workspaceId,
+                name: controlPlaneCredentials.name,
+                encryptedValue: controlPlaneCredentials.encryptedValue,
+                fingerprint: controlPlaneCredentials.fingerprint,
+                keyPrefix: controlPlaneCredentials.keyPrefix,
+                status: controlPlaneCredentials.status,
+                owner: controlPlaneCredentials.owner,
+                previousEncryptedValue: controlPlaneCredentials.previousEncryptedValue,
+                previousFingerprint: controlPlaneCredentials.previousFingerprint,
+                graceExpiresAt: controlPlaneCredentials.graceExpiresAt,
+              })
+              .from(controlPlaneCredentials)
+              .where(
+                and(
+                  eq(controlPlaneCredentials.id, id),
+                  eq(controlPlaneCredentials.workspaceId, workspaceId),
+                ),
+              )
+              .limit(1);
+            return row ?? null;
+          },
+          updateCredential: async (
+            id: number,
+            workspaceId: number,
+            patch: {
+              encryptedValue: string;
+              fingerprint: string;
+              keyPrefix: string;
+              owner?: string | null;
+              previousEncryptedValue: string | null;
+              previousFingerprint: string | null;
+              graceExpiresAt: Date | null;
+            },
+          ) => {
+            await database!
+              .update(controlPlaneCredentials)
+              .set(patch)
+              .where(
+                and(
+                  eq(controlPlaneCredentials.id, id),
+                  eq(controlPlaneCredentials.workspaceId, workspaceId),
+                ),
+              );
+          },
+          audit: async (userId: number, action: string, details: Record<string, unknown>) => {
+            await db.createAuditLogEntry(userId, action, details);
+          },
+        };
+        try {
+          const result = await rotateCredential(store, {
+            id: input.id,
+            workspaceId: input.workspaceId,
+            actorUserId: ctx.user.id,
+            owner: input.owner,
+          });
+          // shownOnce: the raw secret is returned a single time and is never
+          // persisted, logged, or returned again by any list API.
+          return { ...result, shownOnce: true };
+        } catch (err) {
+          if (err instanceof Error && err.message === "Credential not found") {
+            throw new TRPCError({ code: "NOT_FOUND", message: "Credential not found" });
+          }
+          if (err instanceof Error && err.message === "Cannot rotate a non-active credential") {
+            throw new TRPCError({
+              code: "PRECONDITION_FAILED",
+              message: "Cannot rotate a non-active credential",
+            });
+          }
+          throw err;
+        }
       }),
   }),
 

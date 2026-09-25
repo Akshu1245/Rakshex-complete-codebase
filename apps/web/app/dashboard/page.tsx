@@ -6,6 +6,7 @@ import { io, Socket } from "socket.io-client";
 import { trpc } from "@/lib/trpc";
 import PlanUtilizationBanner from "../../components/PlanUtilizationBanner";
 import AiGovernanceSummary from "../../components/AiGovernanceSummary";
+import SpendVsCeiling from "../../components/SpendVsCeiling";
 
 function getSocketUrl(): string {
   if (typeof window === "undefined") return "";
@@ -217,6 +218,8 @@ export default function Dashboard() {
         <PlanUtilizationBanner />
 
         <AiGovernanceSummary />
+
+        <SpendVsCeiling />
 
         {/* Empty state for no telemetry */}
         {overview && overview.todayRequests === 0 && displayLogs.length === 0 && !loading && (
