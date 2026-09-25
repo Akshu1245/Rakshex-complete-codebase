@@ -17,7 +17,11 @@ import { decryptSecret } from "../vault";
 
 const OPENAI_COSTS_URL = "https://api.openai.com/v1/organization/costs";
 const OPENAI_COMPLETIONS_USAGE_URL = "https://api.openai.com/v1/organization/usage/completions";
-const DRIFT_LIMIT = 0.01;
+// Exported (additive) for the multi-provider reconciliation worker (B4):
+// DRIFT_LIMIT is the shared drift-alert threshold; sourceId is the shared
+// idempotency-key builder so every provider writes providerBillingRows the
+// same way.
+export const DRIFT_LIMIT = 0.01;
 
 const nullableString = z.string().nullable().optional();
 
@@ -108,7 +112,7 @@ function boundedProviderKeyRef(value: string | null | undefined): string {
   return Buffer.from(value, "utf8").toString("base64url").slice(0, 48);
 }
 
-function sourceId(
+export function sourceId(
   kind: "cost" | "usage",
   values: readonly unknown[],
   providerKeyRef?: string | null,

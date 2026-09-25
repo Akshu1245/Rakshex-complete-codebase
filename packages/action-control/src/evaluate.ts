@@ -1,5 +1,17 @@
 import { actionAllowed } from "./authority";
-import type { Decision, EvaluationInput, EvaluationResult } from "./types";
+import type {
+  Decision,
+  EvaluationInput,
+  EvaluationResult,
+  SpendScopeName,
+  SpendUsdByScope,
+} from "./types";
+
+const SPEND_SCOPES: SpendScopeName[] = ["agent", "key", "user"];
+
+function usd(value: number): string {
+  return `$${value.toFixed(2)}`;
+}
 
 function matches(pattern: string, value: string): boolean {
   return (
@@ -82,6 +94,37 @@ export function evaluateAction(input: EvaluationInput): EvaluationResult {
     if (input.policy.dangerousSequences.some((sequence) => hasSequence(history, sequence))) {
       decision = "APPROVAL_REQUIRED";
       reasons.push("Action completes a configured high-risk sequence");
+    }
+  }
+
+  // -- Real-time spend ceilings (Team B, enforcement parity) ----------------
+  // Hard DENY, not PAUSE: a ceiling is a budget contract, not a rate limit.
+  // Fail-closed: if a ceiling is configured for a scope but spend so far is
+  // unknown (null or missing), the gate cannot bound the action and must DENY
+  // rather than allow blind. The estimate must be a worst-case bound
+  // (maxTokens * output rate + input * input rate); actuals always come in
+  // at or below it, so `used + worstCase > ceiling` is a safe rejection.
+  if (decision === "ALLOW") {
+    const ceilings: SpendUsdByScope = input.policy?.spendCeilingsUsd ?? {};
+    for (const scope of SPEND_SCOPES) {
+      const ceiling = ceilings[scope];
+      if (ceiling == null) continue;
+      const soFar = input.cumulative?.spendSoFarUsd?.[scope];
+      if (soFar == null) {
+        decision = "DENY";
+        reasons.push(
+          `Spend state unknown: ceiling configured for ${scope} but spend so far is unknown`,
+        );
+        break;
+      }
+      const estimated = input.estimatedCostUsd ?? 0;
+      if (soFar + estimated > ceiling) {
+        decision = "DENY";
+        reasons.push(
+          `Spend ceiling exceeded: ${usd(soFar)} used + ${usd(estimated)} estimated > ${usd(ceiling)} ceiling (${scope})`,
+        );
+        break;
+      }
     }
   }
 

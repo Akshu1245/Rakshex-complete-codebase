@@ -47,8 +47,15 @@ export default function ControlPlanePage() {
   const importSubscription = trpc.controlPlane.subscriptions.import.useMutation({
     onSuccess: () => subscriptionsQuery.refetch(),
   });
+  const rotateCredential = trpc.controlPlane.credentials.rotate.useMutation({
+    onSuccess: (result) => {
+      setOneTimeSecret(result.rawSecret);
+      credentialsQuery.refetch();
+    },
+  });
   const [provider, setProvider] = useState("openai");
   const [secret, setSecret] = useState("");
+  const [owner, setOwner] = useState("");
   const [oneTimeSecret, setOneTimeSecret] = useState<string | null>(null);
   const [accountName, setAccountName] = useState("");
   const [subscriptionPlan, setSubscriptionPlan] = useState("");
@@ -143,11 +150,13 @@ export default function ControlPlanePage() {
                     credentialType: "api_key",
                     environment: "production",
                     secret,
+                    owner: owner.trim() ? owner.trim() : undefined,
                   },
                   {
                     onSuccess: (result) => {
                       setOneTimeSecret(result.secret);
                       setSecret("");
+                      setOwner("");
                     },
                   },
                 );
@@ -179,6 +188,16 @@ export default function ControlPlanePage() {
                   required
                   className="mt-1 w-full rounded border border-gray-600 bg-gray-900 px-3 py-2"
                   placeholder="Paste only with authorization"
+                />
+              </label>
+              <label className="block text-sm text-gray-300">
+                Owner (name or email)
+                <input
+                  value={owner}
+                  onChange={(event) => setOwner(event.target.value)}
+                  maxLength={255}
+                  className="mt-1 w-full rounded border border-gray-600 bg-gray-900 px-3 py-2"
+                  placeholder="who owns this credential"
                 />
               </label>
               <button
@@ -441,6 +460,70 @@ export default function ControlPlanePage() {
                 Kill switch
               </a>
             </div>
+          </div>
+        </section>
+
+        <section className="rounded-lg border border-gray-700 bg-gray-800 p-6">
+          <h2 className="text-xl font-semibold">Stored credentials</h2>
+          <p className="mt-1 text-sm text-gray-400">
+            Only masked key previews are ever rendered here. The full secret is shown exactly
+            once — at creation or rotation — and never again.
+          </p>
+          <div className="mt-5 divide-y divide-gray-700">
+            {(credentialsQuery.data ?? []).map((cred) => {
+              const graceActive =
+                cred.graceExpiresAt && new Date(cred.graceExpiresAt).getTime() > Date.now();
+              return (
+                <div
+                  key={cred.id}
+                  className="flex flex-wrap items-center justify-between gap-3 py-3"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">
+                      {cred.name}{" "}
+                      <span className="text-xs text-gray-500">
+                        · {cred.provider} · {cred.credentialType}
+                      </span>
+                    </p>
+                    <p className="mt-1 font-mono text-xs text-gray-400">
+                      {cred.keyPrefix ?? "•••••"}
+                      <span className="ml-2 font-sans text-xs text-gray-500">
+                        owner: {cred.owner ?? "unassigned"}
+                      </span>
+                      <span className="ml-2 font-sans text-xs text-gray-500">
+                        status: {cred.status}
+                      </span>
+                    </p>
+                    {graceActive && (
+                      <p className="mt-1 text-xs text-amber-300">
+                        Previous key valid until{" "}
+                        {new Date(cred.graceExpiresAt as string).toLocaleTimeString()} (rotation
+                        grace window)
+                      </p>
+                    )}
+                  </div>
+                  {cred.status === "active" && (
+                    <button
+                      type="button"
+                      disabled={rotateCredential.isPending}
+                      onClick={() =>
+                        rotateCredential.mutate({ workspaceId, id: cred.id })
+                      }
+                      aria-label={`Rotate credential ${cred.name}`}
+                      className="rounded border border-teal-500/60 px-3 py-1.5 text-sm font-medium text-teal-300 hover:bg-teal-500/10 disabled:opacity-50"
+                    >
+                      {rotateCredential.isPending ? "Rotating..." : "Rotate"}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+            {credentialsQuery.data && credentialsQuery.data.length === 0 && (
+              <p className="py-4 text-sm text-gray-500">No credentials stored yet.</p>
+            )}
+            {rotateCredential.error && (
+              <p className="py-2 text-sm text-red-400">{rotateCredential.error.message}</p>
+            )}
           </div>
         </section>
 

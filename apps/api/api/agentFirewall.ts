@@ -10,6 +10,7 @@ import {
   validateAttenuation,
   type AuthorityScope,
   type ControlPolicy,
+  type SpendUsdByScope,
 } from "@rakshex/action-control";
 import {
   actionApprovals,
@@ -33,6 +34,10 @@ import {
 import { decryptSecret, encryptSecret, isVaultConfigured } from "../services/vault";
 import { logSecurityEvent } from "../services/securityEvents";
 import { exportLedgerToSiem } from "../services/ledgerSiemExport";
+import { appendActionReceipt } from "../services/receipts/actionReceipts";
+import { sumOutstandingUsd } from "../services/spend/reservation";
+import { sumLedgerSpendUsd } from "../services/spend/ledger";
+import { logger } from "../_core/logger";
 
 type ApiKeyAuthContext = { workspaceId: number; scopes: string[] };
 
@@ -68,6 +73,11 @@ const scopeSchema = z.object({
   maxDelegationDepth: z.number().int().min(0).max(10).optional(),
   purpose: z.string().max(500).optional(),
 });
+const spendScopeSchema = z.object({
+  agent: z.number().nonnegative().optional(),
+  key: z.number().nonnegative().optional(),
+  user: z.number().nonnegative().optional(),
+});
 const policySchema = z.object({
   version: z.string().min(1).max(128),
   denyActions: z.array(z.string().max(128)).max(100).optional(),
@@ -79,6 +89,9 @@ const policySchema = z.object({
     .max(25)
     .optional(),
   unknownWriteDecision: z.enum(["DENY", "APPROVAL_REQUIRED"]).optional(),
+  // Real-time spend ceilings, USD major units. Enforced as a hard DENY by
+  // evaluateAction (Team B, enforcement parity).
+  spendCeilingsUsd: spendScopeSchema.optional(),
 });
 
 const DEFAULT_POLICY: ControlPolicy = {
@@ -404,6 +417,12 @@ export const agentFirewallRouter = router({
         environment: z.string().max(32).optional(),
         amountMinor: z.number().int().nonnegative().optional(),
         currency: z.string().length(3).optional(),
+        // Spend-ceiling gate inputs (optional; Team B, enforcement parity).
+        // estimatedCostUsd must be a worst-case bound (maxTokens * output
+        // rate + input * input rate) — never a prediction.
+        estimatedCostUsd: z.number().nonnegative().optional(),
+        spendCeilingsUsd: spendScopeSchema.optional(),
+        spendSignalLabel: z.enum(["exact", "observed", "estimated", "not_available"]).optional(),
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -507,13 +526,53 @@ export const agentFirewallRouter = router({
           .reverse()
           .map((row) => row.semanticAction),
       };
+      // -- Spend-ceiling gate (Team B, enforcement parity) -----------------
+      // A per-request ceiling overrides the agent policy config. Live usage
+      // is realized ledger spend + outstanding (not yet settled) worst-case
+      // reservations, so the gate sees what is actually at risk, not just
+      // what already landed. The lookups are skipped entirely when no
+      // ceiling is configured so the common path keeps its current cost.
+      // Key scope is not resolvable at evaluate time (the broker knows the
+      // fingerprint, the firewall sees the agent): a key-scope ceiling with
+      // unresolvable spend state is fail-closed DENY by gate design.
+      const policy = policyFromRow(agent.policyConfig);
+      const spendCeilingsUsd: SpendUsdByScope | undefined =
+        input.spendCeilingsUsd ?? policy.spendCeilingsUsd;
+      if (spendCeilingsUsd) policy.spendCeilingsUsd = spendCeilingsUsd;
+      let spendSoFarUsd: SpendUsdByScope | undefined;
+      if (spendCeilingsUsd?.agent != null || spendCeilingsUsd?.user != null) {
+        const agentSpend =
+          (await sumLedgerSpendUsd(database, {
+            workspaceId: input.workspaceId,
+            scopeKind: "agent",
+            scopeId: input.agentId,
+          })) +
+          (await sumOutstandingUsd(database, {
+            workspaceId: input.workspaceId,
+            scopeKind: "agent",
+            scopeId: input.agentId,
+          }));
+        const userSpend =
+          (await sumLedgerSpendUsd(database, {
+            workspaceId: input.workspaceId,
+            scopeKind: "user",
+            scopeId: String(ctx.user.id),
+          })) +
+          (await sumOutstandingUsd(database, {
+            workspaceId: input.workspaceId,
+            scopeKind: "user",
+            scopeId: String(ctx.user.id),
+          }));
+        spendSoFarUsd = { agent: agentSpend, user: userSpend };
+      }
       const result = evaluateAction({
         mode: agent.mode,
         action,
         authority: authority ? scopeFromRow(authority.scope) : null,
-        cumulative,
-        policy: policyFromRow(agent.policyConfig),
+        cumulative: { ...cumulative, spendSoFarUsd },
+        policy,
         frozen: agent.status !== "active",
+        estimatedCostUsd: input.estimatedCostUsd,
       });
 
       // -- Chain-append unit ------------------------------------------------
@@ -523,7 +582,7 @@ export const agentFirewallRouter = router({
       // The advisory lock is transaction-scoped (released automatically
       // at commit/rollback) and keyed by the integer workspace id - the
       // same pattern as apps/api/services/receipts/actionReceipts.ts.
-      return database.transaction(async (tx) => {
+      const outcome = await database.transaction(async (tx) => {
         await tx.execute(sql`SELECT pg_advisory_xact_lock(${input.workspaceId}::bigint)`);
         const [previous] = await tx
           .select({ recordHash: actionLedger.recordHash })
@@ -595,6 +654,43 @@ export const agentFirewallRouter = router({
           replayed: false,
         };
       });
+
+      // Signed DENY receipt for spend-ceiling blocks (Team B, enforcement
+      // parity). The evaluate path previously emitted no signed receipts at
+      // all — the actionLedger row above is tamper-evident, but this adds the
+      // Ed25519-signed receipt entry (same chain the gateway proxies use),
+      // carrying the ceiling, the used and estimated amounts, and the
+      // signal label. Only enforced DENYs emit; shadow-mode decisions do not.
+      if (
+        outcome.effectiveDecision === "DENY" &&
+        outcome.reasons.some((reason) => reason.startsWith("Spend ceiling"))
+      ) {
+        try {
+          await appendActionReceipt({
+            workspaceId: input.workspaceId,
+            requestId: outcome.traceId,
+            eventType: "deny",
+            occurredAt: new Date(),
+            payload: {
+              decision: outcome.decision,
+              ledgerId: outcome.ledgerId,
+              agentId: input.agentId,
+              reasons: outcome.reasons,
+              spendCeilingsUsd,
+              spendSoFarUsd,
+              estimatedCostUsd: input.estimatedCostUsd ?? null,
+              signalLabel: input.spendSignalLabel ?? "not_available",
+            },
+          });
+        } catch (err) {
+          // The DENY stands regardless: a receipt failure must never flip a block.
+          logger.error(
+            { err, workspaceId: input.workspaceId, ledgerId: outcome.ledgerId },
+            "spend ceiling DENY receipt append failed",
+          );
+        }
+      }
+      return outcome;
     }),
 
   ledger: router({

@@ -456,7 +456,14 @@ export const controlPlaneCredentials = pgTable(
     encryptedValue: text("encrypted_value").notNull(),
     fingerprint: varchar("fingerprint", { length: 128 }).notNull(),
     keyPrefix: varchar("key_prefix", { length: 32 }),
+    /** Human owner of the credential (name or email). Set at creation/rotation. */
+    owner: varchar("owner", { length: 255 }),
     status: controlPlaneCredentialStatusEnum("status").default("active").notNull(),
+    /** Previous secret kept valid during a rotation grace window (AES-256-GCM blob). */
+    previousEncryptedValue: text("previous_encrypted_value"),
+    previousFingerprint: varchar("previous_fingerprint", { length: 128 }),
+    /** When the previous secret stops being accepted. NULL = no grace window active. */
+    graceExpiresAt: timestamp("grace_expires_at"),
     expiresAt: timestamp("expires_at"),
     lastUsedAt: timestamp("last_used_at"),
     createdBy: integer("created_by").notNull(),

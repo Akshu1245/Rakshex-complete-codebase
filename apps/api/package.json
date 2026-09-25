@@ -34,6 +34,7 @@
     "@rakshex/policy-engine": "workspace:*",
     "@rakshex/scanner-core": "workspace:*",
     "@rakshex/shared-types": "workspace:*",
+    "@rakshex/spend-meter": "workspace:*",
     "@sentry/node": "^7.100.0",
     "@sentry/opentelemetry": "^10.53.1",
     "@trpc/server": "^11.18.0",

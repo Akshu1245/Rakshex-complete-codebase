@@ -57,6 +57,8 @@ import { providerBillingRouter } from "./api/providerBilling";
 import { alertsRouter } from "./api/alerts";
 import { approvalsRouter } from "./api/approvals";
 import { dataExportRouter } from "./api/dataExport";
+import { receiptsRouter } from "./api/receipts";
+import { spendRouter } from "./api/spend";
 import { apiDocsRouter, setAppRouterForDocs } from "./api/apiDocs";
 import { ssoRouter } from "./api/sso";
 import { workspacesRouter } from "./api/workspaces";
@@ -845,6 +847,8 @@ export const appRouter = router({
   alerts: alertsRouter,
   approvals: approvalsRouter,
   dataExport: dataExportRouter,
+  receipts: receiptsRouter,
+  spend: spendRouter,
   apiDocs: apiDocsRouter,
   sso: ssoRouter,
   workspaces: workspacesRouter,

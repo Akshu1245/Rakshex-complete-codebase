@@ -9,6 +9,7 @@ export * from "../drizzle/schema-billing";
 export * from "../drizzle/schema-pricing";
 export * from "../drizzle/schema-attribution";
 export * from "../drizzle/schema-receipts";
+export * from "../drizzle/schema-spend";
 export * from "../drizzle/schema-governance";
 export * from "../drizzle/relations";
 export * from "../drizzle/relations-enterprise";

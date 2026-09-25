@@ -180,6 +180,42 @@ rules:
   });
 });
 
+describe("spend parity fields (Team B)", () => {
+  // Parity with @rakshex/action-control's hard ceiling DENY: policy authors
+  // get the same "used + worst-case estimated" math via rules.
+  const YAML_WITH_SPEND_RULE = `
+version: 1
+name: spend-ceiling-example
+rules:
+  - ruleId: deny-over-ceiling
+    priority: 1
+    action: deny
+    conditions:
+      operator: AND
+      rules:
+        - field: projectedCostUsd
+          op: gt
+          value: 10
+`;
+  const doc = parsePolicy(YAML_WITH_SPEND_RULE);
+
+  it("denies when used + estimated exceeds the ceiling", () => {
+    const decision = evaluatePolicy(doc, { costUsdSoFar: 9.5, estimatedCostUsd: 1 });
+    expect(decision.action).toBe("deny");
+    expect(decision.matchedRules).toEqual(["deny-over-ceiling"]);
+  });
+
+  it("allows when used + estimated stays under the ceiling", () => {
+    const decision = evaluatePolicy(doc, { costUsdSoFar: 9, estimatedCostUsd: 1 });
+    expect(decision.action).not.toBe("deny");
+  });
+
+  it("treats missing estimates as zero, not unknown", () => {
+    const decision = evaluatePolicy(doc, { costUsdSoFar: 0.01 });
+    expect(decision.action).not.toBe("deny");
+  });
+});
+
 describe("policy lifecycle", () => {
   it("rejects invalid policies", () => {
     const bad = validatePolicyYaml("version: 99\n");

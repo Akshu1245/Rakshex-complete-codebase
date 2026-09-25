@@ -7,8 +7,8 @@
  *  - dryRun — evaluate a rule against operator-supplied metric values; no
  *    persistence and no fan-out, used by the dashboard's "test fire" button
  *  - testDelivery — send a single synthetic alert through the configured
- *    channels so users can verify their Discord/PagerDuty wiring without
- *    waiting for a real condition to fire
+ *    channels so users can verify their email/Slack/Teams/webhook wiring
+ *    without waiting for a real condition to fire
  */
 
 import { z } from "zod";
@@ -49,10 +49,20 @@ const conditionSchema = z.object({
   threshold: z.number().finite(),
 });
 
+const slackChannelSchema = z.object({
+  webhookUrl: z.string().url().startsWith("https://").optional(),
+  channelId: z.string().min(1).max(64).optional(),
+});
+
+const teamsChannelSchema = z.object({
+  webhookUrl: z.string().url().startsWith("https://").optional(),
+});
+
 const channelsSchema = z.object({
   webhookEndpointIds: z.array(z.number().int().positive()).optional(),
-  discordWebhookUrl: z.string().url().optional(),
-  pagerdutyRoutingKey: z.string().min(16).max(64).optional(),
+  emailTo: z.array(z.string().email()).max(20).optional(),
+  slack: slackChannelSchema.optional(),
+  teams: teamsChannelSchema.optional(),
 });
 
 const ruleInputSchema = z.object({
@@ -253,6 +263,7 @@ export const alertsRouter = router({
         matched: verdict.matched,
         snapshots: verdict.snapshots,
         channels: rule.channels,
+        signalLabel: "not_available", // synthetic test fire — not measured data
       });
       return { ok: true as const, outcomes };
     }),

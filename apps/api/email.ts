@@ -109,6 +109,43 @@ function resolveTransportOrFail(context: string): ReturnType<typeof createTransp
   return null;
 }
 
+export interface AlertEmailOptions {
+  toEmail: string;
+  subject: string;
+  /** Plain-text body. */
+  text: string;
+  /** Optional HTML body; falls back to escaped text. */
+  html?: string;
+}
+
+/**
+ * Generic transactional alert email over the existing SMTP transport.
+ * Used by the alert dispatcher — keeps one email path for the whole app.
+ */
+export async function sendAlertEmail(opts: AlertEmailOptions): Promise<void> {
+  const config = resolveTransportOrFail("alert");
+  if (!config) {
+    logger.info(`[Email] SMTP not configured. Would have sent alert to: ${opts.toEmail}`);
+    logger.info(`[Email] Subject: ${opts.subject}`);
+    return;
+  }
+  const html =
+    opts.html ??
+    `<pre style="font-family:monospace;white-space:pre-wrap;">${escapeHtml(opts.text)}</pre>`;
+  await config.transport.sendMail({
+    from: `"Rakshex Alerts" <${config.from}>`,
+    to: opts.toEmail,
+    subject: opts.subject,
+    text: opts.text,
+    html,
+  });
+  logger.info(`[Email] Alert sent to ${opts.toEmail}`);
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
 export async function sendTeamInviteEmail(
   opts: TeamInviteEmailOptions & { token?: string },
 ): Promise<void> {

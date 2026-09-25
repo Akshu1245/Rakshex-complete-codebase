@@ -855,6 +855,10 @@ async function startServer() {
   const { registerQuickScanRoute } = await import("../api/quickScan");
   registerQuickScanRoute(app);
 
+  // ── Signed approval callbacks (HMAC bearer links from Slack/Teams/email) ──
+  const { registerApprovalCallbackRoutes } = await import("../api/approvalCallbacks");
+  registerApprovalCallbackRoutes(app);
+
   // ── Razorpay Payment Checkout routes ───────────────────────────────────────
   const { registerRazorpayRoutes } = await import("./razorpay");
   registerRazorpayRoutes(app);
