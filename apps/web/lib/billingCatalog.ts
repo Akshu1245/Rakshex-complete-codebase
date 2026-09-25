@@ -50,7 +50,6 @@ export const EVALUATION_PLANS: readonly EvaluationPlan[] = [
       "PII redaction at the gateway",
       "85+ prompt-injection payload red-team library",
       "Spec-drift / shadow API detection",
-      "Token analytics + per-model cost forecasting",
       "Up to 5 team members",
       "Email support, 1-business-day SLA",
     ],

@@ -19,7 +19,6 @@ export const PUBLIC_PATH_PREFIXES = [
   "/landing",
   "/overview",
   "/benchmark",
-  "/research",
   "/playbooks",
   "/api-docs",
   "/demo",

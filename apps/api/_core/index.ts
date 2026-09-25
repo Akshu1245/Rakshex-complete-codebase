@@ -35,7 +35,6 @@ import { sdk } from "./sdk";
 import { wsManager } from "../websocket";
 import { handleGitHubPush, handleGitHubPullRequest, verifyGitHubWebhook } from "../github";
 import { scheduleWeeklyDigest } from "../jobs/weeklyDigest";
-import { startRedTeamScheduler } from "../services/redTeamScheduler";
 import { registerJobWorkers } from "../services/jobs";
 import { initJobQueue } from "../services/jobQueue";
 import {
@@ -852,10 +851,6 @@ async function startServer() {
     logger.warn({ err }, "[Providers] Optional provider registration failed");
   });
 
-  // ── Competitor Import routes ───────────────────────────────────────────────
-  const { registerImportRoutes } = await import("../api/import");
-  registerImportRoutes(app);
-
   // ── Public quick-scan lead magnet (no auth, rate-limited, SSRF-guarded) ─────
   const { registerQuickScanRoute } = await import("../api/quickScan");
   registerQuickScanRoute(app);
@@ -1226,10 +1221,6 @@ async function startServer() {
     registerJobWorkers();
     startSecurityEventsFlusher();
     scheduleWeeklyDigest();
-    if (process.env.RAKSHEX_REDTEAM_SCHEDULER !== "disabled") {
-      startRedTeamScheduler(60_000);
-      logger.info("[Server] Continuous red-team scheduler started");
-    }
 
     // ── Render Anti-Sleep Keep-Alive Pinger ──────────────────────────────────
     // Pings self every 10 minutes to prevent Render free-tier containers

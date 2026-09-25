@@ -246,16 +246,10 @@ export const vscodeExtensionRouter = router({
     .input(
       z.object({ question: z.string().min(1).max(2000), context: z.string().max(500).optional() }),
     )
-    .mutation(async ({ input, ctx }) => {
-      // Try to use the copilot service if available
-      try {
-        const { answerForTenant } = await import("../services/copilot");
-        const answer = await answerForTenant(ctx.user.id, input.question);
-        return { response: answer.text };
-      } catch {
-        // Fallback if copilot service is unavailable
-        return { response: generateCopilotFallback(input.question) };
-      }
+    .mutation(async ({ input }) => {
+      // Security Copilot service was removed (cut #2); the VS Code endpoint
+      // now always serves the built-in fallback guidance.
+      return { response: generateCopilotFallback(input.question) };
     }),
 
   /**

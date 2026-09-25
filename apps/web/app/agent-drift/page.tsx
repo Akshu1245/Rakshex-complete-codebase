@@ -1,7 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 import { trpc } from "@/lib/trpc";
-import { AlertTriangle, CheckCircle, Activity, Brain, ArrowRight } from "lucide-react";
+import { AlertTriangle, CheckCircle, Activity, Brain } from "lucide-react";
 
 interface DriftEvent {
   id: string;
@@ -219,12 +219,6 @@ export default function AgentDriftPage() {
                 </div>
               </div>
               <div className="mt-5 pt-4 border-t border-[#2D3E50] space-y-2">
-                <a
-                  href="/analytics"
-                  className="w-full py-2 rounded-lg bg-[#06D6A0]/10 border border-[#06D6A0]/20 text-[#06D6A0] text-sm font-semibold hover:bg-[#06D6A0]/20 transition-all flex items-center justify-center gap-2"
-                >
-                  <ArrowRight className="w-4 h-4" /> View cost forecast
-                </a>
                 <a
                   href="/kill-switch"
                   className="w-full py-2 rounded-lg bg-[#EF4444]/10 border border-[#EF4444]/20 text-[#EF4444] text-sm font-semibold hover:bg-[#EF4444]/20 transition-all flex items-center justify-center gap-2"

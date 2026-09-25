@@ -5,10 +5,7 @@
  *   - Gateway audit feed (allowed / blocked / errored requests)
  *   - Token-budget configuration + state
  *   - Shadow AI events + allowlist management
- *   - Continuous red-team runs + history
  *   - Auto-fix suggestions (open / applied / dismissed)
- *   - Security Copilot conversations
- *   - Cost forecast + anomaly detection
  *
  * Every procedure is `protectedProcedure` and scopes by `ctx.user.id` so
  * data never crosses tenants.
@@ -17,10 +14,7 @@ import { z } from "zod";
 import crypto from "crypto";
 import { router, protectedProcedure } from "../_core/trpc";
 import * as db from "../db";
-import { runRedTeam } from "../services/redTeamRunner";
 import { generateAndPersistAutofix } from "../services/autofix";
-import { sendCopilotMessage, startConversation } from "../services/copilot";
-import { forecastForUser, forecastPerModel, computeSoftCapWarnings } from "../services/forecasting";
 
 const SeverityEnum = z.enum(["info", "low", "medium", "high", "critical"]);
 const AutofixTypeEnum = z.enum([
@@ -98,55 +92,6 @@ export const runtimeGovernanceRouter = router({
       return { ok: true };
     }),
 
-  // ── Red-team ──────────────────────────────────────────────────────────
-  redteamRuns: protectedProcedure
-    .input(z.object({ limit: z.number().min(1).max(200).default(50) }))
-    .query(async ({ ctx, input }) => {
-      return { runs: await db.listRedteamRuns(ctx.user.id, input.limit) };
-    }),
-
-  redteamRun: protectedProcedure
-    .input(z.object({ runId: z.string().min(1).max(64) }))
-    .query(async ({ ctx, input }) => {
-      const run = await db.getRedteamRun(input.runId);
-      if (!run || run.userId !== ctx.user.id) {
-        return { run: null, findings: [] };
-      }
-      const findings = await db.listRedteamFindings(input.runId);
-      return { run, findings };
-    }),
-
-  startRedteam: protectedProcedure
-    .input(
-      z.object({
-        target: z.string().url(),
-        apiKey: z.string().min(8).max(256).optional(),
-        sample: z.number().int().positive().max(200).optional(),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      const summary = await runRedTeam({
-        userId: ctx.user.id,
-        target: input.target,
-        ...(input.apiKey ? { apiKey: input.apiKey } : {}),
-        ...(input.sample ? { sample: input.sample } : {}),
-        triggeredBy: "manual",
-      });
-      return summary;
-    }),
-
-  scheduleRedteam: protectedProcedure
-    .input(
-      z.object({
-        target: z.string().url(),
-        cron: z.string().min(9).max(64),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      await db.setRedteamSchedule(ctx.user.id, input.target, input.cron, true);
-      return { ok: true };
-    }),
-
   // ── Auto-fix ──────────────────────────────────────────────────────────
   listAutofix: protectedProcedure
     .input(
@@ -188,76 +133,5 @@ export const runtimeGovernanceRouter = router({
       return { ok: true };
     }),
 
-  // ── Security Copilot ─────────────────────────────────────────────────
-  copilotConversations: protectedProcedure.query(async ({ ctx }) => {
-    return { conversations: await db.listCopilotConversations(ctx.user.id) };
-  }),
-
-  copilotMessages: protectedProcedure
-    .input(z.object({ conversationId: z.string().min(1).max(64) }))
-    .query(async ({ input }) => {
-      return { messages: await db.listCopilotMessages(input.conversationId) };
-    }),
-
-  copilotAsk: protectedProcedure
-    .input(
-      z.object({
-        conversationId: z.string().min(1).max(64).optional(),
-        title: z.string().max(192).optional(),
-        query: z.string().min(1).max(2000),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      const conversationId = input.conversationId ?? crypto.randomUUID();
-      if (!input.conversationId) {
-        await startConversation(
-          ctx.user.id,
-          conversationId,
-          input.title ?? input.query.slice(0, 64),
-        );
-      }
-      const answer = await sendCopilotMessage(ctx.user.id, conversationId, input.query);
-      return { conversationId, answer };
-    }),
-
   // ── Auto-fix PR ──────────────────────────────────────────────────────
-  // ── Forecast + anomaly detection ─────────────────────────────────────
-  forecast: protectedProcedure
-    .input(
-      z.object({
-        days: z.number().int().min(7).max(180).default(30),
-        horizon: z.number().int().min(1).max(60).default(14),
-      }),
-    )
-    .query(async ({ ctx, input }) => {
-      return forecastForUser(ctx.user.id, input.days, input.horizon);
-    }),
-
-  forecastPerModel: protectedProcedure
-    .input(
-      z.object({
-        days: z.number().int().min(7).max(180).default(30),
-        horizon: z.number().int().min(1).max(60).default(14),
-      }),
-    )
-    .query(async ({ ctx, input }) => {
-      return forecastPerModel(ctx.user.id, input.days, input.horizon);
-    }),
-
-  softCapWarnings: protectedProcedure
-    .input(
-      z.object({
-        capUsd: z.number().min(0).default(1000),
-        currentSpendUsd: z.number().min(0).default(0),
-      }),
-    )
-    .query(async ({ ctx, input }) => {
-      const forecast = await forecastForUser(ctx.user.id, 30, 14);
-      const warnings = computeSoftCapWarnings(
-        forecast.forecast,
-        { _total: input.capUsd },
-        input.currentSpendUsd,
-      );
-      return { warnings, forecast };
-    }),
 });

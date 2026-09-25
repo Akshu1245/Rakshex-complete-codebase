@@ -22,7 +22,6 @@
       "@rakshex/config": ["../../packages/config/src/index.ts"],
       "@rakshex/shared-types": ["../../packages/shared-types/src/index.ts"],
       "@rakshex/sdk": ["../../packages/sdk/src/index.ts"],
-      "@rakshex/pricing-engine": ["../../packages/pricing-engine/src/index.ts"],
       "@rakshex/action-control": ["../../packages/action-control/src/index.ts"],
       "@rakshex/siem-export": ["../../packages/siem-export/src/index.ts"],
       "@rakshex/mcp-security": ["../../packages/mcp-security/src/index.ts"]

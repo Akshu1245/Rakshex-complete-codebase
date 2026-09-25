@@ -14,7 +14,7 @@ import {
   INJECTION_PAYLOADS,
   looksLikeLLMEndpoint,
   type InjectionPayload,
-} from "./promptInjectionPayloads";
+} from "../eval/fixtures/promptInjectionPayloads";
 import { safeGetPath } from "./scanning";
 import { ScanBudget } from "./scanBudget";
 

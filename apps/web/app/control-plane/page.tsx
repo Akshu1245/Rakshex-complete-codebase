@@ -429,12 +429,6 @@ export default function ControlPlanePage() {
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
               <a
-                href="/token-analytics"
-                className="rounded border border-teal-500/60 px-3 py-2 text-sm font-medium text-teal-300 hover:bg-teal-500/10"
-              >
-                Usage and budgets
-              </a>
-              <a
                 href="/notifications"
                 className="rounded border border-gray-600 px-3 py-2 text-sm font-medium text-gray-200 hover:border-gray-400"
               >

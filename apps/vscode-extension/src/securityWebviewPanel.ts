@@ -4,7 +4,6 @@
  * A self-contained VS Code WebviewPanel that shows:
  *   - Dashboard overview with severity breakdown & risk score gauge
  *   - Sortable, filterable findings table with status actions
- *   - Compliance summary (OWASP Top 10, PCI DSS)
  *   - Real-time auto-refresh every 30s
  *
  * No external scripts — inline CSS only so the panel works in Restricted Mode.
@@ -17,13 +16,11 @@ import type {
   DashboardData,
   Finding,
   FindingStatus,
-  LatestComplianceScores,
 } from "./api";
 
 type PanelState = {
   dashboard: DashboardData | null;
   findings: Finding[];
-  compliance: LatestComplianceScores | null;
   error: string | null;
   errorCategory: "network" | "auth" | "unknown" | null;
   lastUpdated: string | null;
@@ -143,7 +140,6 @@ export class SecurityWebviewPanel {
         this.panel.webview.html = this._getHtmlForWebview(this.panel.webview, {
           dashboard: null,
           findings: [],
-          compliance: null,
           error: null,
           errorCategory: null,
           lastUpdated: null,
@@ -155,15 +151,13 @@ export class SecurityWebviewPanel {
       }
 
       try {
-        const [dashboard, findings, compliance] = await Promise.all([
+        const [dashboard, findings] = await Promise.all([
           this.api.getDashboardData(),
           this.api.getRecentFindings(50),
-          this.api.getLatestComplianceScores().catch(() => ({ owasp: null, pci: null })),
         ]);
         const state: PanelState = {
           dashboard,
           findings,
-          compliance,
           error: null,
           errorCategory: null,
           lastUpdated: new Date().toLocaleTimeString(),
@@ -183,7 +177,6 @@ export class SecurityWebviewPanel {
         const state: PanelState = {
           dashboard: null,
           findings: [],
-          compliance: null,
           error: message,
           errorCategory: category,
           lastUpdated: null,
@@ -218,7 +211,7 @@ export class SecurityWebviewPanel {
       `img-src ${webview.cspSource} data:`,
     ].join("; ");
 
-    const { dashboard, findings, error, errorCategory, lastUpdated, compliance } = state;
+    const { dashboard, findings, error, errorCategory, lastUpdated } = state;
 
     const severityCounts = {
       Critical: findings.filter((f) => f.severity === "Critical").length,
@@ -240,41 +233,6 @@ export class SecurityWebviewPanel {
     const maxRisk = totalFindings > 0 ? totalFindings * 10 : 1;
     const riskScore = Math.min(100, Math.round((rawRisk / maxRisk) * 100));
     const riskColor = riskScore >= 70 ? "#ef4444" : riskScore >= 40 ? "#f97316" : "#22c55e";
-
-    const owasp = compliance?.owasp ?? null;
-    const pci = compliance?.pci ?? null;
-    const formatReportDate = (iso: string) => {
-      try {
-        return new Date(iso).toLocaleDateString();
-      } catch {
-        return iso;
-      }
-    };
-    const complianceCard = (title: string, snap: { score: number; createdAt: string } | null) => {
-      if (!snap) {
-        return `<div class="compliance-card">
-            <div class="compliance-header">
-              <h3>${title}</h3>
-              <span class="compliance-pct pct-muted">—</span>
-            </div>
-            <p class="compliance-hint">No compliance report yet</p>
-            <p class="compliance-cta">Run a compliance report in the Rakshex web dashboard to see real ${escapeHtml(title)} scores here.</p>
-          </div>`;
-      }
-      const score = Math.round(snap.score);
-      const pctClass = score >= 80 ? "pct-good" : score >= 50 ? "pct-warn" : "pct-bad";
-      const fillClass = score >= 80 ? "fill-good" : score >= 50 ? "fill-warn" : "fill-bad";
-      return `<div class="compliance-card">
-            <div class="compliance-header">
-              <h3>${title}</h3>
-              <span class="compliance-pct ${pctClass}">${score}%</span>
-            </div>
-            <div class="progress-bar">
-              <div class="progress-fill ${fillClass}" style="width:${score}%"></div>
-            </div>
-            <p class="compliance-hint">From compliance report · ${escapeHtml(formatReportDate(snap.createdAt))}</p>
-          </div>`;
-    };
 
     const errorIcon = errorCategory === "auth" ? "🔑" : errorCategory === "network" ? "🌐" : "⚠";
     const errorTitle =
@@ -440,15 +398,6 @@ export class SecurityWebviewPanel {
                 </table>
               </div>`
         }
-      </section>
-
-      <!-- COMPLIANCE SUMMARY -->
-      <section class="compliance-section">
-        <h2>Compliance Summary</h2>
-        <div class="compliance-grid">
-          ${complianceCard("OWASP Top 10", owasp)}
-          ${complianceCard("PCI DSS", pci)}
-        </div>
       </section>
     `;
 
@@ -695,40 +644,6 @@ export class SecurityWebviewPanel {
     }
     .refresh-badge.visible { opacity: 1; }
 
-    /* Compliance Section */
-    .compliance-section {
-      margin-bottom: 24px;
-    }
-    .compliance-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 12px;
-    }
-    .compliance-card {
-      background: var(--vscode-editorWidget-background, #252526);
-      border: 1px solid var(--vscode-panel-border, #3c3c3c);
-      border-radius: 6px; padding: 16px;
-    }
-    .compliance-header {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 10px;
-    }
-    .compliance-pct { font-size: 18px; font-weight: 700; }
-    .pct-good { color: #22c55e; }
-    .pct-warn { color: #eab308; }
-    .pct-bad { color: #ef4444; }
-    .pct-muted { color: var(--vscode-descriptionForeground, #8b8b8b); }
-    .compliance-cta { font-size: 11px; color: var(--vscode-descriptionForeground, #8b8b8b); margin-top: 4px; }
-    .progress-bar {
-      height: 6px; border-radius: 3px;
-      background: var(--vscode-panel-border, #3c3c3c);
-      overflow: hidden; margin-bottom: 8px;
-    }
-    .progress-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
-    .fill-good { background: #22c55e; }
-    .fill-warn { background: #eab308; }
-    .fill-bad { background: #ef4444; }
-    .compliance-hint { font-size: 11px; color: var(--vscode-descriptionForeground, #8b8b8b); }
-
     code {
       background: var(--vscode-textCodeBlock-background, #1e1e1e);
       padding: 1px 4px; border-radius: 3px; font-size: 12px;
@@ -881,33 +796,6 @@ export class SecurityWebviewPanel {
           btn.textContent = label + " (" + count + ")";
         });
 
-        // Update compliance from real reports only (never invent scores)
-        var compliance = state.compliance || { owasp: null, pci: null };
-        var grid = document.querySelector(".compliance-grid");
-        if (grid) {
-          function formatReportDate(iso) {
-            try { return new Date(iso).toLocaleDateString(); } catch (e) { return iso || ""; }
-          }
-          function renderCard(title, snap) {
-            if (!snap) {
-              return '<div class="compliance-card">' +
-                '<div class="compliance-header"><h3>' + escapeHtml(title) + '</h3>' +
-                '<span class="compliance-pct pct-muted">—</span></div>' +
-                '<p class="compliance-hint">No compliance report yet</p>' +
-                '<p class="compliance-cta">Run a compliance report in the Rakshex web dashboard to see real ' +
-                escapeHtml(title) + ' scores here.</p></div>';
-            }
-            var score = Math.round(Number(snap.score) || 0);
-            var pctClass = score >= 80 ? "pct-good" : score >= 50 ? "pct-warn" : "pct-bad";
-            var fillClass = score >= 80 ? "fill-good" : score >= 50 ? "fill-warn" : "fill-bad";
-            return '<div class="compliance-card">' +
-              '<div class="compliance-header"><h3>' + escapeHtml(title) + '</h3>' +
-              '<span class="compliance-pct ' + pctClass + '">' + score + '%</span></div>' +
-              '<div class="progress-bar"><div class="progress-fill ' + fillClass + '" style="width:' + score + '%"></div></div>' +
-              '<p class="compliance-hint">From compliance report · ' + escapeHtml(formatReportDate(snap.createdAt)) + '</p></div>';
-          }
-          grid.innerHTML = renderCard("OWASP Top 10", compliance.owasp) + renderCard("PCI DSS", compliance.pci);
-        }
       }
 
       function bindRefreshBtn() {

@@ -3,8 +3,9 @@
  *
  * These ship in-product so a tenant can pick a baseline (Strict / Balanced /
  * Permissive / India-PII / Demo-Loose) and customize from there. Each template
- * is a fully-valid policy file — `parsePolicy(template)` succeeds without
- * edits, and `compilePolicy()` produces sane runtime behavior.
+ * is a fully-valid `@rakshex/policy-engine` v1 policy file — `parsePolicy`
+ * succeeds without edits, and `compilePolicy()` produces sane runtime
+ * behavior.
  */
 
 export interface PolicyTemplate {
@@ -19,100 +20,102 @@ export const POLICY_TEMPLATES: PolicyTemplate[] = [
     id: "strict",
     name: "Strict (Production / Regulated)",
     description:
-      "Block-by-default posture for regulated environments. Aggressive PII redaction, low injection threshold, hard token caps, kill-switch armed.",
+      "Block-by-default posture for regulated environments. Aggressive PII redaction, high injection scores denied, hard cost cap, tools denied unless allowed.",
     yaml: `name: "Strict Production"
 version: 1
-applies_to: ["all"]
 description: "Block-by-default policy for SOC2/PCI/HIPAA-aligned tenants."
+agent:
+  max_steps: 25
+  max_retries: 2
+  max_cost_usd: 100
+  timeout_seconds: 300
+tools:
+  deny_by_default: true
+data:
+  redact: [email, phone, ssn, credit_card, aadhaar, pan, ifsc, passport_in]
+  action: mask
 rules:
-  - id: pii_redaction
-    enabled: true
-    redact: [EMAIL, PHONE, SSN, CREDIT_CARD, AADHAAR, PAN, IFSC, PASSPORT_IN]
-    action: mask
-  - id: prompt_injection
-    enabled: true
-    threshold: 50
-    on_detection: block
-  - id: token_budget
-    enabled: true
-    daily_tokens: 250000
-    monthly_usd: 100
-    on_breach: block
-  - id: kill_switch
-    enabled: true
-    cost_anomaly_multiplier: 3
-    error_rate_threshold: 0.25
-  - id: tool_approval
-    enabled: true
-    allowlist: []
-    require_approval: []
-    deny_by_default: true
+  - ruleId: deny-high-injection
+    name: "Deny high prompt-injection scores"
+    priority: 10
+    conditions:
+      operator: AND
+      rules:
+        - field: threat_level
+          op: in
+          value: [high, critical]
+    action: deny
 `,
   },
   {
     id: "balanced",
     name: "Balanced (Default)",
     description:
-      "Reasonable defaults for most production workloads — PII masking, mid-threshold injection block, soft caps with warnings.",
+      "Reasonable defaults for most production workloads — PII masking, high injection scores blocked, medium warned, generous cost cap.",
     yaml: `name: "Balanced Default"
 version: 1
-applies_to: ["all"]
 description: "Recommended starting policy. Block egregious behavior, warn on the rest."
+agent:
+  max_steps: 50
+  max_retries: 3
+  max_cost_usd: 500
+  timeout_seconds: 600
+tools:
+  deny_by_default: false
+data:
+  redact: [email, phone, ssn, credit_card]
+  action: mask
 rules:
-  - id: pii_redaction
-    enabled: true
-    redact: [EMAIL, PHONE, SSN, CREDIT_CARD]
-    action: mask
-  - id: prompt_injection
-    enabled: true
-    threshold: 70
-    on_detection: block
-  - id: token_budget
-    enabled: true
-    daily_tokens: 1000000
-    monthly_usd: 500
-    on_breach: warn
-  - id: kill_switch
-    enabled: true
-    cost_anomaly_multiplier: 5
-    error_rate_threshold: 0.5
-  - id: tool_approval
-    enabled: false
-    allowlist: []
-    require_approval: []
-    deny_by_default: false
+  - ruleId: deny-high-injection
+    name: "Deny high prompt-injection scores"
+    priority: 10
+    conditions:
+      operator: AND
+      rules:
+        - field: threat_level
+          op: in
+          value: [high, critical]
+    action: deny
+  - ruleId: warn-medium-injection
+    name: "Warn on medium prompt-injection scores"
+    priority: 20
+    conditions:
+      operator: AND
+      rules:
+        - field: threat_level
+          op: eq
+          value: medium
+    action: warn
 `,
   },
   {
     id: "permissive",
     name: "Permissive (Internal / Dev)",
     description:
-      "Loose policy for internal tools and development tenants. Warn-only, no kill-switch trip, generous budgets.",
+      "Loose policy for internal tools and development tenants. Warn-only, generous budgets.",
     yaml: `name: "Permissive Dev"
 version: 1
-applies_to: ["dev", "qa"]
 description: "Used for non-customer-facing tenants. Logs everything, blocks little."
+agent:
+  max_steps: 200
+  max_retries: 5
+  max_cost_usd: 2500
+  timeout_seconds: 1800
+tools:
+  deny_by_default: false
+data:
+  redact: []
 rules:
-  - id: pii_redaction
-    enabled: false
-    redact: []
-    action: mask
-  - id: prompt_injection
-    enabled: true
-    threshold: 90
-    on_detection: warn
-  - id: token_budget
-    enabled: true
-    daily_tokens: 5000000
-    monthly_usd: 2500
-    on_breach: warn
-  - id: kill_switch
-    enabled: false
-  - id: tool_approval
-    enabled: false
-    allowlist: []
-    require_approval: []
-    deny_by_default: false
+  - ruleId: warn-high-injection
+    name: "Warn on high prompt-injection scores"
+    priority: 10
+    conditions:
+      operator: AND
+      rules:
+        - field: threat_level
+          op: in
+          value: [high, critical]
+    action: warn
 `,
   },
   {
@@ -122,65 +125,59 @@ rules:
       "Targets Indian PII patterns specifically — required for fintech / KYC workloads operating under DPDP Act.",
     yaml: `name: "India PII Strict"
 version: 1
-applies_to: ["all"]
 description: "Aadhaar / PAN / IFSC / Indian-passport masking for DPDP-covered workloads."
+agent:
+  max_steps: 25
+  max_retries: 2
+  max_cost_usd: 200
+  timeout_seconds: 300
+tools:
+  deny_by_default: true
+data:
+  redact: [aadhaar, pan, ifsc, passport_in, phone, email]
+  action: mask
 rules:
-  - id: pii_redaction
-    enabled: true
-    redact: [AADHAAR, PAN, IFSC, PASSPORT_IN, PHONE, EMAIL]
-    action: mask
-  - id: prompt_injection
-    enabled: true
-    threshold: 60
-    on_detection: block
-  - id: token_budget
-    enabled: true
-    daily_tokens: 500000
-    monthly_usd: 200
-    on_breach: block
-  - id: kill_switch
-    enabled: true
-    cost_anomaly_multiplier: 4
-    error_rate_threshold: 0.3
-  - id: tool_approval
-    enabled: true
-    allowlist: []
-    require_approval: []
-    deny_by_default: true
+  - ruleId: deny-high-injection
+    name: "Deny high prompt-injection scores"
+    priority: 10
+    conditions:
+      operator: AND
+      rules:
+        - field: threat_level
+          op: in
+          value: [high, critical]
+    action: deny
 `,
   },
   {
     id: "demo-loose",
     name: "Demo / Trial",
     description:
-      "For sandbox accounts. Minimal blocks, very small daily token budget so accounts can't accidentally rack up provider bills.",
+      "For sandbox accounts. Minimal blocks, very small cost cap so accounts can't accidentally rack up provider bills.",
     yaml: `name: "Demo Trial"
 version: 1
-applies_to: ["trial"]
-description: "Tight token budget, loose policy — designed for sandbox demos."
+description: "Tight cost cap, loose policy — designed for sandbox demos."
+agent:
+  max_steps: 30
+  max_retries: 2
+  max_cost_usd: 5
+  timeout_seconds: 300
+tools:
+  deny_by_default: false
+data:
+  redact: [email]
+  action: mask
 rules:
-  - id: pii_redaction
-    enabled: true
-    redact: [EMAIL]
-    action: mask
-  - id: prompt_injection
-    enabled: true
-    threshold: 80
-    on_detection: warn
-  - id: token_budget
-    enabled: true
-    daily_tokens: 50000
-    monthly_usd: 5
-    on_breach: block
-  - id: kill_switch
-    enabled: true
-    cost_anomaly_multiplier: 2
-    error_rate_threshold: 0.5
-  - id: tool_approval
-    enabled: false
-    allowlist: []
-    require_approval: []
-    deny_by_default: false
+  - ruleId: warn-high-injection
+    name: "Warn on high prompt-injection scores"
+    priority: 10
+    conditions:
+      operator: AND
+      rules:
+        - field: threat_level
+          op: in
+          value: [high, critical]
+    action: warn
 `,
   },
 ];

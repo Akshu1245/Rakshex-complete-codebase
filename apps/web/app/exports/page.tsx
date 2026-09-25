@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { trpc } from "@/lib/trpc";
 
 const FORMATS = ["json", "csv", "ndjson", "pdf"] as const;
@@ -52,9 +51,6 @@ export default function DataExportsPage() {
               Export gateway audit, scans, and related records for buyer due diligence.
             </p>
           </div>
-          <Link href="/compliance" className="text-blue-400 hover:text-blue-300 text-sm">
-            Compliance →
-          </Link>
         </div>
 
         {isLoading ? (
