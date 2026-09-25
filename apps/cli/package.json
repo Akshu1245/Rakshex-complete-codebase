@@ -1,26 +1,55 @@
 {
   "name": "@rakshex/cli",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
   "bin": {
-    "rakshex": "./src/index.ts"
+    "rakshex": "./dist/index.js"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json --noEmit",
+    "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "echo \"@rakshex/cli: ok\"",
     "test": "vitest run",
-    "dev": "node --import tsx src/index.ts"
+    "dev": "node --import tsx src/index.ts",
+    "prepublishOnly": "pnpm run build && pnpm test"
   },
   "dependencies": {
     "@rakshex/config": "workspace:*",
     "@rakshex/scanner-core": "workspace:*",
-    "yaml": "^2.4.0"
+    "yaml": "^2.4.0",
+    "@rakshex/policy-engine": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
-  }
+  },
+  "description": "RaksHex CLI \u2014 one-command workspace setup (rakshex init), local stack (rakshex local), 60-second firewall demo (rakshex demo), plus local scanner",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/akshu1245/rakshex-complete-codebase.git",
+    "directory": "apps/cli"
+  },
+  "homepage": "https://github.com/akshu1245/rakshex-complete-codebase/tree/main/apps/cli#readme",
+  "bugs": {
+    "url": "https://github.com/akshu1245/rakshex-complete-codebase/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "keywords": [
+    "rakshex",
+    "agent-firewall",
+    "ai-agents",
+    "policy",
+    "cli"
+  ]
 }

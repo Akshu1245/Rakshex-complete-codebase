@@ -19,6 +19,9 @@ import {
   type RuleFinding,
 } from "@rakshex/scanner-core";
 import { cmdSecrets } from "./secrets.js";
+import { cmdInit } from "./init.js";
+import { cmdLocal } from "./local.js";
+import { cmdDemo, cmdVerify } from "./demo.js";
 
 const CONFIG_DIR = join(homedir(), ".rakshex");
 const CONFIG_PATH = join(CONFIG_DIR, "config.json");
@@ -76,6 +79,10 @@ function printHelp(): void {
   console.log(`Config: ${JSON.stringify(getPublicConfig())}`);
   console.log(`
 Usage:
+  rakshex init [--json]
+  rakshex local [up|down] [--build] [--reset]
+  rakshex demo
+  rakshex verify <bundle.json>
   rakshex login --api-key <key> [--api-url <url>]
   rakshex configure --fail-on Critical,High [--ignore-rules id1,id2]
   rakshex scan <file-or-dir> [--format terminal|json|sarif] [--changed-only] [--baseline] [--upload]
@@ -443,6 +450,14 @@ async function main(): Promise<number> {
   const { cmd, flags, positional } = parseArgs(process.argv.slice(2));
 
   switch (cmd) {
+    case "init":
+      return cmdInit(flags);
+    case "local":
+      return cmdLocal(positional, flags);
+    case "demo":
+      return cmdDemo(flags);
+    case "verify":
+      return cmdVerify(positional);
     case "login":
       return cmdLogin(flags);
     case "configure":
