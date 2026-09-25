@@ -1364,7 +1364,7 @@ export const alertEvents = pgTable(
     summary: varchar("summary", { length: 512 }).notNull(),
     matched: json("matched").notNull(),
     snapshots: json("snapshots").notNull(),
-    /** "discord" | "pagerduty" | "webhook" */
+    /** "email" | "webhook" | "slack" | "teams" */
     channel: varchar("channel", { length: 32 }).notNull(),
     delivered: boolean("delivered").notNull().default(false),
     statusCode: integer("statusCode"),

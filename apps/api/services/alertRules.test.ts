@@ -19,7 +19,7 @@ function makeRule(overrides: Partial<AlertRule> = {}): AlertRule {
     window: "24h",
     cooldownMinutes: 30,
     severity: "high",
-    channels: { discordWebhookUrl: "https://discord.com/api/webhooks/123/abc" },
+    channels: { emailTo: ["ops@example.com"] },
     createdAt: new Date("2026-01-01T00:00:00Z"),
     updatedAt: new Date("2026-01-01T00:00:00Z"),
     lastFiredAt: null,
@@ -149,7 +149,7 @@ describe("validateRule", () => {
       window: "24h",
       cooldownMinutes: 30,
       severity: "high",
-      channels: { pagerdutyRoutingKey: "abc1234567890123456789012345678901" },
+      channels: { slack: { channelId: "C123" } },
     });
     expect(errs).toEqual([]);
   });
@@ -162,7 +162,7 @@ describe("validateRule", () => {
       window: "24h",
       cooldownMinutes: 30,
       severity: "high",
-      channels: { discordWebhookUrl: "https://discord.com/api/webhooks/x/y" },
+      channels: { emailTo: ["ops@example.com"] },
     });
     expect(errs.some((e) => e.includes("name is required"))).toBe(true);
   });
@@ -188,12 +188,12 @@ describe("validateRule", () => {
       window: "24h",
       cooldownMinutes: 30,
       severity: "high",
-      channels: { discordWebhookUrl: "https://discord.com/api/webhooks/x/y" },
+      channels: { emailTo: ["ops@example.com"] },
     });
     expect(errs.some((e) => e.includes("at least one condition"))).toBe(true);
   });
 
-  it("rejects an invalid Discord webhook URL", () => {
+  it("rejects an invalid Slack webhook URL", () => {
     const errs = validateRule({
       name: "x",
       enabled: true,
@@ -201,9 +201,22 @@ describe("validateRule", () => {
       window: "24h",
       cooldownMinutes: 30,
       severity: "high",
-      channels: { discordWebhookUrl: "https://example.com/hook" },
+      channels: { slack: { webhookUrl: "http://example.com/hook" } },
     });
-    expect(errs.some((e) => e.includes("discordWebhookUrl"))).toBe(true);
+    expect(errs.some((e) => e.includes("channels.slack.webhookUrl"))).toBe(true);
+  });
+
+  it("rejects an invalid email address", () => {
+    const errs = validateRule({
+      name: "x",
+      enabled: true,
+      conditions: [{ metric: "cost_usd", operator: "gt", threshold: 10 }],
+      window: "24h",
+      cooldownMinutes: 30,
+      severity: "high",
+      channels: { emailTo: ["not-an-email"] },
+    });
+    expect(errs.some((e) => e.includes("channels.emailTo"))).toBe(true);
   });
 
   it("rejects out-of-range cooldownMinutes", () => {
@@ -214,7 +227,7 @@ describe("validateRule", () => {
       window: "24h",
       cooldownMinutes: 5000,
       severity: "high",
-      channels: { discordWebhookUrl: "https://discord.com/api/webhooks/x/y" },
+      channels: { emailTo: ["ops@example.com"] },
     });
     expect(errs.some((e) => e.includes("cooldownMinutes"))).toBe(true);
   });

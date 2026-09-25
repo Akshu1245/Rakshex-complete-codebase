@@ -67,6 +67,12 @@ const EnvSchema = z.object({
   SLACK_WEBHOOK_URL: z
     .union([z.literal(""), z.string().url("SLACK_WEBHOOK_URL must be a URL")])
     .default(""),
+  // Bot token for Slack chat.postMessage (interactive channel targeting).
+  // Optional — without it, Slack alerts use the incoming-webhook fallback.
+  SLACK_BOT_TOKEN: z.string().default(""),
+  TEAMS_WEBHOOK_URL: z
+    .union([z.literal(""), z.string().url("TEAMS_WEBHOOK_URL must be a URL")])
+    .default(""),
 
   // Error monitoring.
   SENTRY_DSN: z.union([z.literal(""), z.string().url("SENTRY_DSN must be a URL")]).default(""),
@@ -192,6 +198,8 @@ export const ENV = {
   appUrl: parsed.APP_URL,
 
   slackWebhookUrl: parsed.SLACK_WEBHOOK_URL,
+  slackBotToken: parsed.SLACK_BOT_TOKEN,
+  teamsWebhookUrl: parsed.TEAMS_WEBHOOK_URL,
   sentryDsn: parsed.SENTRY_DSN,
 
   razorpayKeyId: parsed.RAZORPAY_KEY_ID,

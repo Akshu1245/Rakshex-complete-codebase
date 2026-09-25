@@ -9,7 +9,7 @@
  * is intentionally narrow: a rule is a conjunction (`AND`) of conditions on
  * the same time window — multi-window rules need separate AlertRule rows.
  *
- * The actual delivery (Discord, PagerDuty, generic webhook) is decoupled —
+ * The actual delivery (email, Slack, Teams, generic webhook) is decoupled —
  * `evaluateAndDispatch` calls into integration services after deciding
  * whether to fire.
  */
@@ -34,13 +34,31 @@ export interface AlertCondition {
   threshold: number;
 }
 
+export interface SlackRuleChannel {
+  /** Incoming-webhook URL (https-only). Falls back to SLACK_WEBHOOK_URL. */
+  webhookUrl?: string;
+  /** Channel ID for bot mode — requires SLACK_BOT_TOKEN. */
+  channelId?: string;
+}
+
+export interface TeamsRuleChannel {
+  /** Incoming-webhook URL (https-only). Falls back to TEAMS_WEBHOOK_URL. */
+  webhookUrl?: string;
+}
+
+/**
+ * Exactly three delivery channels: email (SMTP), generic webhook, and
+ * Slack / Teams. The pre-collapse chat + incident channels were removed
+ * 2026-09-25 (Team B alert collapse) — Slack/Teams cover the chat surface
+ * and the generic webhook covers incident-management-style receivers.
+ */
 export interface AlertChannelConfig {
   /** Generic outbound webhook (existing webhookEndpoints row id). */
   webhookEndpointIds?: number[];
-  /** Discord webhook URL (validated, https-only). */
-  discordWebhookUrl?: string;
-  /** PagerDuty Events API v2 routing key. */
-  pagerdutyRoutingKey?: string;
+  /** SMTP recipients for the alert email. */
+  emailTo?: string[];
+  slack?: SlackRuleChannel;
+  teams?: TeamsRuleChannel;
 }
 
 export interface AlertRule {
@@ -202,23 +220,33 @@ export function validateRule(
       errors.push(`condition[${i}].threshold must be a finite number`);
     }
   }
-  if (rule.channels.discordWebhookUrl) {
-    if (
-      !/^https:\/\/(discord\.com|discordapp\.com)\/api\/webhooks\//.test(
-        rule.channels.discordWebhookUrl,
-      )
-    ) {
-      errors.push("channels.discordWebhookUrl must be a discord.com /api/webhooks/ URL");
-    }
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  for (const to of rule.channels.emailTo ?? []) {
+    if (!emailRe.test(to)) errors.push(`channels.emailTo contains invalid address: ${to}`);
+  }
+  if (rule.channels.slack?.webhookUrl && !isHttps(rule.channels.slack.webhookUrl)) {
+    errors.push("channels.slack.webhookUrl must be an https URL");
+  }
+  if (rule.channels.teams?.webhookUrl && !isHttps(rule.channels.teams.webhookUrl)) {
+    errors.push("channels.teams.webhookUrl must be an https URL");
   }
   if (
     !rule.channels.webhookEndpointIds?.length &&
-    !rule.channels.discordWebhookUrl &&
-    !rule.channels.pagerdutyRoutingKey
+    !rule.channels.emailTo?.length &&
+    !rule.channels.slack &&
+    !rule.channels.teams
   ) {
     errors.push("at least one channel must be configured");
   }
   return errors;
+}
+
+function isHttps(u: string): boolean {
+  try {
+    return new URL(u).protocol === "https:";
+  } catch {
+    return false;
+  }
 }
 
 /**
