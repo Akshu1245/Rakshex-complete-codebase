@@ -4,6 +4,10 @@ import {
   estimateAnthropicThinkingTokens,
   estimateThinkingTokensFromLatency,
   extractThinkingTokensFromResponse,
+  detectReasoningTokens,
+  reasoningConfidenceFor,
+  isReasoningAnomaly,
+  buildReasoningSpendLineItem,
 } from "./thinkingTokens";
 
 describe("thinking token extraction", () => {
@@ -59,5 +63,79 @@ describe("latency-based thinking estimation", () => {
     expect(estimateThinkingTokensFromLatency({ latencyMs: 0, visibleCompletionTokens: 10 })).toBe(
       0,
     );
+  });
+});
+
+describe("reasoning detection cascade (DevPulse salvage)", () => {
+  it("prefers the direct provider field", () => {
+    const r = detectReasoningTokens({
+      model: "o3",
+      reportedReasoningTokens: 1200,
+      totalTokens: 2000,
+      inputTokens: 500,
+      outputTokens: 300,
+    });
+    expect(r).toEqual({ tokens: 1200, method: "direct" });
+    expect(reasoningConfidenceFor("direct")).toBe("exact");
+  });
+
+  it("falls back to differential total-input-output", () => {
+    const r = detectReasoningTokens({
+      model: "o3",
+      totalTokens: 2000,
+      inputTokens: 500,
+      outputTokens: 300,
+    });
+    expect(r).toEqual({ tokens: 1200, method: "differential" });
+    expect(reasoningConfidenceFor("differential")).toBe("estimated");
+  });
+
+  it("returns none when the numbers reconcile", () => {
+    const r = detectReasoningTokens({
+      model: "gpt-4o",
+      totalTokens: 800,
+      inputTokens: 500,
+      outputTokens: 300,
+    });
+    expect(r).toEqual({ tokens: 0, method: "none" });
+    expect(reasoningConfidenceFor("none")).toBe("unknown");
+  });
+
+  it("flags runaway reasoning above 3x output", () => {
+    expect(isReasoningAnomaly(901, 300)).toBe(true);
+    expect(isReasoningAnomaly(900, 300)).toBe(false);
+    expect(isReasoningAnomaly(50, 0)).toBe(true);
+  });
+
+  it("builds a priced line item marked as a breakout, not new spend", () => {
+    const item = buildReasoningSpendLineItem({
+      model: "o3",
+      reportedReasoningTokens: 1000,
+      outputTokens: 500,
+      outputPerMillionUsd: 40,
+    });
+    expect(item).not.toBeNull();
+    expect(item!.kind).toBe("reasoning_spend");
+    expect(item!.costUsd).toBeCloseTo(0.04, 6);
+    expect(item!.confidence).toBe("exact");
+    expect(item!.overheadMultiplier).toBeCloseTo(2, 6);
+    expect(item!.isAnomaly).toBe(false);
+    expect(item!.breakoutOfOutputTokens).toBe(true);
+  });
+
+  it("leaves costUsd null when no price is available", () => {
+    const item = buildReasoningSpendLineItem({
+      model: "o3",
+      reportedReasoningTokens: 1000,
+      outputTokens: 500,
+    });
+    expect(item!.costUsd).toBeNull();
+    expect(item!.overheadMultiplier).toBeNull();
+  });
+
+  it("returns null when no reasoning detected", () => {
+    expect(
+      buildReasoningSpendLineItem({ model: "gpt-4o", outputTokens: 300 }),
+    ).toBeNull();
   });
 });

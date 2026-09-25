@@ -432,3 +432,144 @@ function detectProvider(model: string): ThinkingTokenBreakdown["provider"] {
 function roundUSD(amount: number): number {
   return Math.round(amount * 10000) / 10000;
 }
+
+// ── Detection cascade + receipt line items (DevPulse Patent NHCE/DEV/2026/002) ─
+// Salvaged 2026-09-25 (Team D): the extractors above answer "how many"; the
+// cascade below answers "how do we know" — direct provider field (exact),
+// differential total−input−output (estimated), latency signature (estimated).
+// The line item is the unit that lands on usage envelopes and signed receipts.
+
+export type ReasoningDetectionMethod =
+  | "direct" // provider-reported reasoning_tokens field — exact
+  | "differential" // total − input − output residual — estimated
+  | "timing_estimate" // latency signature heuristic — estimated
+  | "none";
+
+export type ReasoningConfidence = "exact" | "estimated" | "unknown";
+
+export function reasoningConfidenceFor(
+  method: ReasoningDetectionMethod,
+): ReasoningConfidence {
+  if (method === "direct") return "exact";
+  if (method === "differential" || method === "timing_estimate") return "estimated";
+  return "unknown";
+}
+
+/**
+ * Differential detection: when the provider reports total/input/output but no
+ * explicit reasoning field, a positive residual is hidden thinking tokens.
+ * Returns 0 when the numbers reconcile (or are absent).
+ */
+export function differentialReasoningTokens(input: {
+  totalTokens?: number;
+  inputTokens?: number;
+  outputTokens?: number;
+}): number {
+  const total = Math.max(0, Math.floor(input.totalTokens ?? 0));
+  const prompt = Math.max(0, Math.floor(input.inputTokens ?? 0));
+  const output = Math.max(0, Math.floor(input.outputTokens ?? 0));
+  if (total <= 0 || prompt <= 0 || output <= 0) return 0;
+  return Math.max(0, total - prompt - output);
+}
+
+/**
+ * Full cascade: direct field → differential → timing estimate → none.
+ * Mirrors the DevPulse extraction order; the repo's provider-specific
+ * extractors remain the preferred "direct" source for raw responses.
+ */
+export function detectReasoningTokens(input: {
+  model: string;
+  reportedReasoningTokens?: number;
+  totalTokens?: number;
+  inputTokens?: number;
+  outputTokens?: number;
+  latencyMs?: number;
+}): { tokens: number; method: ReasoningDetectionMethod } {
+  const reported = Math.max(0, Math.floor(input.reportedReasoningTokens ?? 0));
+  if (reported > 0) return { tokens: reported, method: "direct" };
+
+  const differential = differentialReasoningTokens(input);
+  if (differential > 0) return { tokens: differential, method: "differential" };
+
+  const output = Math.max(0, Math.floor(input.outputTokens ?? 0));
+  const latencyMs = Math.max(0, input.latencyMs ?? 0);
+  if (latencyMs > 0 && output > 0) {
+    const estimated = estimateThinkingTokensFromLatency({
+      latencyMs,
+      visibleCompletionTokens: output,
+    });
+    if (estimated > 0) return { tokens: estimated, method: "timing_estimate" };
+  }
+  return { tokens: 0, method: "none" };
+}
+
+/**
+ * Runaway-reasoning flag: thinking tokens above 3× visible output on a single
+ * call is anomalous (DevPulse kill-switch threshold). Feed into the runaway
+ * detector's thinking-anomaly trip.
+ */
+export function isReasoningAnomaly(reasoningTokens: number, outputTokens: number): boolean {
+  if (outputTokens <= 0) return reasoningTokens > 0;
+  return reasoningTokens > outputTokens * 3;
+}
+
+export interface ReasoningSpendLineItem {
+  kind: "reasoning_spend";
+  model: string;
+  reasoningTokens: number;
+  /** USD cost of the reasoning tokens, or null when no price was available. */
+  costUsd: number | null;
+  detectionMethod: ReasoningDetectionMethod;
+  confidence: ReasoningConfidence;
+  /** reasoning cost ÷ visible-output cost, or null when output cost is 0. */
+  overheadMultiplier: number | null;
+  isAnomaly: boolean;
+  /**
+   * Honesty note: reasoning tokens are already inside the provider's
+   * completion/output count — this line item is a breakout, not new spend.
+   */
+  breakoutOfOutputTokens: true;
+}
+
+/**
+ * Build the canonical reasoning-spend line item for usage envelopes and
+ * signed receipt payloads. Returns null when no reasoning tokens detected.
+ * Reasoning prices at the output rate (true for every major provider).
+ */
+export function buildReasoningSpendLineItem(input: {
+  model: string;
+  reportedReasoningTokens?: number;
+  totalTokens?: number;
+  inputTokens?: number;
+  outputTokens?: number;
+  latencyMs?: number;
+  /** Output price per 1M tokens in USD; null/undefined → costUsd null. */
+  outputPerMillionUsd?: number | null;
+}): ReasoningSpendLineItem | null {
+  const { tokens, method } = detectReasoningTokens(input);
+  if (tokens <= 0) return null;
+  const output = Math.max(0, Math.floor(input.outputTokens ?? 0));
+  const rate = input.outputPerMillionUsd;
+  const costUsd =
+    rate != null && Number.isFinite(rate) && rate >= 0
+      ? Math.round(((tokens / 1_000_000) * rate) * 1_000_000) / 1_000_000
+      : null;
+  const outputCostUsd =
+    rate != null && Number.isFinite(rate) && rate > 0 && output > 0
+      ? (output / 1_000_000) * rate
+      : 0;
+  return {
+    kind: "reasoning_spend",
+    model: input.model,
+    reasoningTokens: tokens,
+    costUsd,
+    detectionMethod: method,
+    confidence: reasoningConfidenceFor(method),
+    overheadMultiplier:
+      costUsd != null && outputCostUsd > 0
+        ? Math.round((costUsd / outputCostUsd) * 100) / 100
+        : null,
+    isAnomaly: isReasoningAnomaly(tokens, output),
+    breakoutOfOutputTokens: true,
+  };
+}

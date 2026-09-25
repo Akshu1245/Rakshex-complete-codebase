@@ -14,6 +14,10 @@ export interface GatewayNormalizedUsageInput {
   requestCount?: number;
   inputTokens?: number;
   outputTokens?: number;
+  /** Hidden thinking/reasoning token breakout (already inside outputTokens). */
+  reasoningTokens?: number;
+  reasoningCostUsd?: number;
+  reasoningConfidence?: "exact" | "estimated" | "imported" | "unknown";
   /** Voice providers: characters billed (ElevenLabs). */
   characters?: number;
   audioSeconds?: number;
@@ -43,6 +47,9 @@ export function normalizeGatewayUsage(input: GatewayNormalizedUsageInput): Provi
     requestCount: input.requestCount ?? 1,
     inputTokens: input.inputTokens,
     outputTokens: input.outputTokens,
+    reasoningTokens: input.reasoningTokens,
+    reasoningCostUsd: input.reasoningCostUsd,
+    reasoningConfidence: input.reasoningConfidence,
     credits: input.characters,
     audioSeconds: input.audioSeconds,
     confidence: input.confidence ?? "exact",

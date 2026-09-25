@@ -3,6 +3,7 @@ export type UsageUnit =
   | "request"
   | "input_token"
   | "output_token"
+  | "reasoning_token"
   | "credit"
   | "image"
   | "audio_second"
@@ -56,6 +57,14 @@ export function buildUsageEnvelope(input: {
   gpuSeconds?: number;
   bytes?: number;
   completions?: number;
+  /**
+   * Hidden thinking/reasoning token breakout (DevPulse Patent NHCE/DEV/2026/002,
+   * salvaged Team D 2026-09-25). Already inside outputTokens — this measurement
+   * is a breakout, not additional spend; only unit==="usd" feeds totals.
+   */
+  reasoningTokens?: number;
+  reasoningCostUsd?: number;
+  reasoningConfidence?: UsageMeasurement["confidence"];
   confidence?: UsageMeasurement["confidence"];
 }): ProviderUsageEnvelope {
   const confidence = input.confidence ?? "exact";
@@ -70,6 +79,18 @@ export function buildUsageEnvelope(input: {
   push("request", input.requestCount);
   push("input_token", input.inputTokens);
   push("output_token", input.outputTokens);
+
+  const reasoningTokens = finiteNonNegative(input.reasoningTokens);
+  if (reasoningTokens != null && reasoningTokens > 0) {
+    const reasoningCost = finiteNonNegative(input.reasoningCostUsd);
+    measurements.push({
+      domain: input.domain,
+      unit: "reasoning_token",
+      quantity: reasoningTokens,
+      ...(reasoningCost != null && reasoningCost > 0 ? { costUsd: reasoningCost } : {}),
+      confidence: input.reasoningConfidence ?? "estimated",
+    });
+  }
   push("credit", input.credits);
   push("image", input.images);
   push("audio_second", input.audioSeconds);

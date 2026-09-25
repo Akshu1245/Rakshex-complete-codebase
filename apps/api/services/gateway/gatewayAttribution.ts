@@ -70,7 +70,17 @@ export async function persistSettledAttribution(input: {
   occurredAt: Date;
   tags: GatewayAttributionTags;
   endpoint: string;
-}): Promise<{ costUsd: number; priceVersionId?: number; priceSourceUrl?: string }> {
+  /**
+   * Provider-reported hidden thinking/reasoning tokens (already inside
+   * outputTokens). Priced at the output rate of the fetched price version.
+   */
+  reasoningTokens?: number;
+}): Promise<{
+  costUsd: number;
+  priceVersionId?: number;
+  priceSourceUrl?: string;
+  reasoningCostUsd?: number;
+}> {
   const providerReported =
     input.providerReportedCostUsd != null &&
     Number.isFinite(input.providerReportedCostUsd) &&
@@ -142,5 +152,18 @@ export async function persistSettledAttribution(input: {
     costUsd,
     priceVersionId: priced?.price.id,
     priceSourceUrl: priced?.price.sourceUrl,
+    // Reasoning bills at the output rate (true for every major provider);
+    // priced only when the registry supplied a rate for this call.
+    ...(input.reasoningTokens != null &&
+    input.reasoningTokens > 0 &&
+    priced?.price.outputPerMillion != null
+      ? {
+          reasoningCostUsd:
+            Math.round(
+              ((input.reasoningTokens / 1_000_000) * priced.price.outputPerMillion) *
+                1_000_000,
+            ) / 1_000_000,
+        }
+      : {}),
   };
 }
