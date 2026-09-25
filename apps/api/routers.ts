@@ -53,6 +53,7 @@ import { runtimeGovernanceRouter } from "./api/runtimeGovernance";
 import { riskScoreRouter } from "./api/riskScore";
 import { shadowAiDetectionRouter } from "./api/shadowAiDetection";
 import { policiesRouter, policyRulesRouter } from "./api/policies";
+import { providerBillingRouter } from "./api/providerBilling";
 import { alertsRouter } from "./api/alerts";
 import { approvalsRouter } from "./api/approvals";
 import { dataExportRouter } from "./api/dataExport";
@@ -840,6 +841,7 @@ export const appRouter = router({
   runtimeGovernance: runtimeGovernanceRouter,
   policies: policiesRouter,
   policyRules: policyRulesRouter,
+  providerBilling: providerBillingRouter,
   alerts: alertsRouter,
   approvals: approvalsRouter,
   dataExport: dataExportRouter,
