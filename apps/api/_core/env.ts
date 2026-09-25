@@ -81,6 +81,9 @@ const EnvSchema = z.object({
   RAZORPAY_KEY_ID: z.string().default(""),
   RAZORPAY_KEY_SECRET: z.string().default(""),
   RAZORPAY_WEBHOOK_SECRET: z.string().default(""),
+  // Paddle (global merchant-of-record): used for non-INR checkout.
+  PADDLE_API_KEY: z.string().default(""),
+  PADDLE_WEBHOOK_SECRET: z.string().default(""),
 
   // Frontend URL participates in OAuth callbacks and the CORS allowlist. Require an
   // explicit production origin so self-hosters cannot accidentally boot with our domain.
@@ -205,6 +208,8 @@ export const ENV = {
   razorpayKeyId: parsed.RAZORPAY_KEY_ID,
   razorpayKeySecret: parsed.RAZORPAY_KEY_SECRET,
   razorpayWebhookSecret: parsed.RAZORPAY_WEBHOOK_SECRET,
+  paddleApiKey: parsed.PADDLE_API_KEY,
+  paddleWebhookSecret: parsed.PADDLE_WEBHOOK_SECRET,
 
   frontendUrl: parsed.FRONTEND_URL,
   corsOrigins: parsed.CORS_ORIGINS,
@@ -276,6 +281,10 @@ export function validateEnv(): {
     if (!ENV.razorpayKeySecret) warnings.push("RAZORPAY_KEY_SECRET is not set — Razorpay disabled");
     if (!ENV.razorpayWebhookSecret) {
       warnings.push("RAZORPAY_WEBHOOK_SECRET is not set — Razorpay webhooks disabled");
+    }
+    if (!ENV.paddleApiKey) warnings.push("PADDLE_API_KEY is not set — Paddle disabled");
+    if (!ENV.paddleWebhookSecret) {
+      warnings.push("PADDLE_WEBHOOK_SECRET is not set — Paddle webhooks disabled");
     }
     if (!ENV.sentryDsn) warnings.push("SENTRY_DSN is not set — error monitoring disabled");
   }

@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "dist",
+    "rootDir": "src",
+    // Clear the monorepo tsconfig paths so the build resolves workspace deps
+    // through node_modules -> their published dist (not their src). Otherwise
+    // tsc compiles their sources and dist mirrors the whole repo tree.
+    "paths": {},
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true
+  },
+  "exclude": ["src/**/*.test.ts", "fixtures/**/*"]
+}

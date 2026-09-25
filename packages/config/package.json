@@ -1,20 +1,37 @@
 {
   "name": "@rakshex/config",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./dist/index.js"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "echo \"@rakshex/config: ok\"",
     "test": "echo \"@rakshex/config: no unit tests yet\"",
-    "build": "tsc -p tsconfig.json --noEmit"
+    "build": "tsc -p tsconfig.build.json"
   },
   "devDependencies": {
     "typescript": "^5.7.0"
-  }
+  },
+  "description": "RaksHex shared runtime configuration (public, non-secret defaults)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/akshu1245/rakshex-complete-codebase.git",
+    "directory": "packages/config"
+  },
+  "homepage": "https://github.com/akshu1245/rakshex-complete-codebase/tree/main/packages/config#readme",
+  "bugs": {
+    "url": "https://github.com/akshu1245/rakshex-complete-codebase/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "files": [
+    "dist"
+  ]
 }

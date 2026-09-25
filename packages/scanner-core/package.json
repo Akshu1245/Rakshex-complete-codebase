@@ -1,16 +1,15 @@
 {
   "name": "@rakshex/scanner-core",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./dist/index.js"
   },
   "scripts": {
     "test:watch": "vitest",
-    "build": "tsc --noEmit -p tsconfig.json",
+    "build": "tsc -p tsconfig.build.json",
     "lint": "echo lint deferred to root",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
@@ -19,5 +18,23 @@
   "devDependencies": {
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
-  }
+  },
+  "description": "RaksHex deterministic scanner rule engine (secrets + prompt-injection surface)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/akshu1245/rakshex-complete-codebase.git",
+    "directory": "packages/scanner-core"
+  },
+  "homepage": "https://github.com/akshu1245/rakshex-complete-codebase/tree/main/packages/scanner-core#readme",
+  "bugs": {
+    "url": "https://github.com/akshu1245/rakshex-complete-codebase/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "files": [
+    "dist"
+  ]
 }
