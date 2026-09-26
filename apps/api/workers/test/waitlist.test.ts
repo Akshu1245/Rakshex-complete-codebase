@@ -1,0 +1,149 @@
+/**
+ * Waitlist route: input validation, welcome-email copy honesty, and the
+ * POST handler (D1 insert via mocked store, MailChannels via stubbed fetch).
+ */
+import { afterEach, describe, expect, it, vi } from "vitest";
+import type { Env } from "../src/env";
+import { app, buildWelcomeEmail, validateWaitlistInput } from "../src/routes/waitlist";
+
+// Vitest allows `mock`-prefixed variables inside hoisted mock factories.
+let mockReturningRows: { id: number }[] = [{ id: 1 }];
+
+vi.mock("../src/db", () => ({
+  createDb: () => ({
+    insert: () => ({
+      values: () => ({
+        onConflictDoNothing: () => ({
+          returning: async () => mockReturningRows,
+        }),
+      }),
+    }),
+  }),
+}));
+
+const baseEnv = { MAILCHANNELS_FROM: "welcome@rakshex.in", DB: {} } as Env;
+
+let ipCounter = 0;
+function uniqueIp(): string {
+  ipCounter += 1;
+  return `10.0.0.${ipCounter}`;
+}
+
+async function postJoin(body: unknown, ip = uniqueIp(), env: Env = baseEnv) {
+  return app.request(
+    "/",
+    {
+      method: "POST",
+      headers: { "content-type": "application/json", "cf-connecting-ip": ip },
+      body: JSON.stringify(body),
+    },
+    env,
+  );
+}
+
+function stubMailFetch(ok = true) {
+  const fetchMock = vi
+    .fn()
+    .mockImplementation(() =>
+      ok
+        ? Promise.resolve(new Response("{}", { status: 200 }))
+        : Promise.reject(new Error("network down")),
+    );
+  vi.stubGlobal("fetch", fetchMock);
+  return fetchMock;
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  mockReturningRows = [{ id: 1 }];
+});
+
+describe("validateWaitlistInput", () => {
+  it("accepts a valid email and plan, normalizing the email", () => {
+    const result = validateWaitlistInput({ email: "Boss@Example.COM ", plan: "Pro" });
+    expect(result).toEqual({ ok: true, input: { email: "boss@example.com", plan: "Pro" } });
+  });
+
+  it("rejects invalid emails", () => {
+    for (const body of [
+      { email: "not-an-email", plan: "Free" },
+      { email: "", plan: "Free" },
+      { plan: "Free" },
+      null,
+      "just a string",
+    ]) {
+      expect(validateWaitlistInput(body).ok).toBe(false);
+    }
+  });
+
+  it("rejects unknown plans", () => {
+    const result = validateWaitlistInput({ email: "a@b.com", plan: "Unlimited" });
+    expect(result.ok).toBe(false);
+  });
+});
+
+describe("buildWelcomeEmail", () => {
+  it("welcomes to the family with honest, claim-free copy", () => {
+    const { subject, text, html } = buildWelcomeEmail();
+    expect(subject).toBe("Welcome to the RaksHex family");
+    expect(text).toContain("private-beta waitlist");
+    expect(text).toContain("no self-serve checkout");
+    expect(text).toContain("https://rakshex-web.rakshex.workers.dev/demo");
+    // No invented traction, certifications, or metrics.
+    for (const forbidden of ["SOC 2 certified", "ISO 27001", "trusted by", "10,000+"]) {
+      expect(text).not.toContain(forbidden);
+      expect(html).not.toContain(forbidden);
+    }
+    expect(html).toContain("Welcome to the RaksHex family");
+  });
+});
+
+describe("POST /v1/waitlist", () => {
+  it("stores the signup and sends the welcome email", async () => {
+    const fetchMock = stubMailFetch(true);
+    const res = await postJoin({ email: "new@example.com", plan: "Free" });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(body).toMatchObject({ ok: true, alreadyExists: false, emailSent: true });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("https://api.mailchannels.net/tx/v1/send");
+  });
+
+  it("reports alreadyExists and skips the welcome email on duplicates", async () => {
+    mockReturningRows = []; // onConflictDoNothing -> no row returned
+    const fetchMock = stubMailFetch(true);
+    const res = await postJoin({ email: "dup@example.com", plan: "Pro" });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(body).toMatchObject({ ok: true, alreadyExists: true, emailSent: false });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 for invalid input without touching mail", async () => {
+    const fetchMock = stubMailFetch(true);
+    const res = await postJoin({ email: "bad", plan: "Free" });
+    expect(res.status).toBe(400);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("still records the signup when mail sending fails (emailSent: false)", async () => {
+    const fetchMock = stubMailFetch(false);
+    const res = await postJoin({ email: "mailfail@example.com", plan: "Enterprise" });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(body).toMatchObject({ ok: true, alreadyExists: false, emailSent: false });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("rate-limits abusive clients", async () => {
+    stubMailFetch(true);
+    const ip = uniqueIp();
+    let lastStatus = 200;
+    for (let i = 0; i < 12; i++) {
+      const res = await postJoin({ email: `rl${i}@example.com`, plan: "Free" }, ip);
+      lastStatus = res.status;
+    }
+    expect(lastStatus).toBe(429);
+  });
+});

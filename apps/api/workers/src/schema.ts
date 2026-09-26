@@ -108,3 +108,12 @@ export const rateLimitEvents = sqliteTable("rate_limit_events", {
   windowStart: integer("window_start").notNull(),
   count: integer("count").notNull().default(0),
 });
+
+/** Private-beta waitlist signups (POST /v1/waitlist). Email is unique. */
+export const waitlist = sqliteTable("waitlist", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  email: text("email").notNull().unique(),
+  plan: text("plan").notNull().default("Free"),
+  source: text("source").notNull().default("web"),
+  createdAt: integer("created_at").notNull(),
+});
