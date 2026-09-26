@@ -17,6 +17,9 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 /** Must match EVALUATION_OPTIONS values in apps/web/app/waitlist/page.tsx. */
 const PLANS = ["Free", "Pro", "Enterprise"] as const;
 
+/** Replies to the welcome email ("just reply to this email") land here. */
+const WELCOME_REPLY_TO = "akshay@rakshex.in";
+
 export interface ValidWaitlistInput {
   email: string;
   plan: (typeof PLANS)[number];
@@ -148,7 +151,7 @@ app.post("/", async (c) => {
   if (!alreadyExists) {
     try {
       const welcome = buildWelcomeEmail();
-      await sendMail(c.env, { to: email, ...welcome });
+      await sendMail(c.env, { to: email, replyTo: WELCOME_REPLY_TO, ...welcome });
       emailSent = true;
     } catch {
       emailSent = false;

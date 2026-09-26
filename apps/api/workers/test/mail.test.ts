@@ -55,4 +55,18 @@ describe("mail adapter", () => {
       /MailChannels send failed \(401\)/,
     );
   });
+
+  it("includes reply_to when provided, omits it otherwise", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response("{}", { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await sendMail(baseEnv, { to: "a@b.com", subject: "x", text: "y", replyTo: "founder@x.com" });
+    const withReply = JSON.parse((fetchMock.mock.calls[0]![1] as RequestInit).body as string);
+    expect(withReply.reply_to).toEqual({ email: "founder@x.com" });
+
+    fetchMock.mockClear();
+    await sendMail(baseEnv, { to: "a@b.com", subject: "x", text: "y" });
+    const withoutReply = JSON.parse((fetchMock.mock.calls[0]![1] as RequestInit).body as string);
+    expect(withoutReply).not.toHaveProperty("reply_to");
+  });
 });

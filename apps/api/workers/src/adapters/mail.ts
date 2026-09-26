@@ -12,6 +12,8 @@ export interface SendMailInput {
   subject: string;
   text: string;
   html?: string;
+  /** Optional Reply-To address (e.g. founder inbox for "reply to this email" copy). */
+  replyTo?: string;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -35,6 +37,7 @@ export async function sendMail(
     body: JSON.stringify({
       personalizations: [{ to: [{ email: input.to }] }],
       from: { email: from, name: "RaksHex" },
+      ...(input.replyTo ? { reply_to: { email: input.replyTo } } : {}),
       subject: input.subject,
       content: [
         { type: "text/plain", value: input.text },
