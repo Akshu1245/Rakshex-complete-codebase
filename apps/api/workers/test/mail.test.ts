@@ -26,7 +26,7 @@ describe("mail adapter", () => {
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe("https://api.mailchannels.net/tx/v1/send");
     const body = JSON.parse(init.body as string);
-    expect(body.from.email).toBe("alerts@rakshex.in");
+    expect(body.from.email).toBe("welcome@rakshex.in");
     expect(body.personalizations[0].to[0].email).toBe("boss@example.com");
     expect(body.subject).toBe("Digest");
   });
