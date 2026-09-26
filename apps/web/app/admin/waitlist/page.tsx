@@ -50,9 +50,9 @@ export default function AdminWaitlistPage() {
       createdAt: string;
     }>;
   }>("/api/admin?kind=waitlist");
-  // Waitlist management has no /v1 equivalent on the Workers deployment —
-  // /api/admin answers 501 not_connected, so the honest state renders
-  // instead of an empty table that implies zero signups.
+  // /api/admin?kind=waitlist proxies the firewall worker's GET /v1/waitlist
+  // (CEO key, server-side). Other admin datasets still answer 501
+  // not_connected and render the honest empty state below.
 
   const loading = waitlistQuery.isLoading;
   const error = waitlistQuery.error?.message || null;

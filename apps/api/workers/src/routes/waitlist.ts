@@ -6,6 +6,7 @@
  * reports `emailSent` honestly so nothing is ever pretended sent.
  */
 import { Hono } from "hono";
+import { desc } from "drizzle-orm";
 import { createDb } from "../db";
 import { waitlist } from "../schema";
 import { sendMail } from "../adapters/mail";
@@ -159,4 +160,63 @@ app.post("/", async (c) => {
   }
 
   return c.json({ ok: true, alreadyExists, emailSent, email, plan });
+});
+
+/**
+ * Constant-time string comparison. Length mismatch returns false early —
+ * key length is not treated as secret for a single high-entropy admin key.
+ */
+export function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return diff === 0;
+}
+
+/**
+ * CEO admin gate for the waitlist listing. A single key in ADMIN_API_KEY
+ * (set via `wrangler secret put`) — no DB lookup, no roles to misconfigure.
+ * Fail-closed: 500 when unset, 401 on missing/wrong key.
+ */
+function requireAdminKey(env: Env, req: Request): Response | null {
+  const configured = env.ADMIN_API_KEY?.trim();
+  if (!configured) {
+    return Response.json({ ok: false, error: "Admin access is not configured" }, { status: 500 });
+  }
+  const header = req.headers.get("Authorization") ?? "";
+  const raw = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
+  if (!raw || !timingSafeEqual(raw, configured)) {
+    return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+  }
+  return null;
+}
+
+// GET / — admin-only waitlist listing. Powers the admin dashboard's
+// waitlist viewer; never exposed without the CEO key.
+app.get("/", async (c) => {
+  const denied = requireAdminKey(c.env, c.req.raw);
+  if (denied) return denied;
+  const db = createDb(c.env);
+  const rows = await db
+    .select({
+      id: waitlist.id,
+      email: waitlist.email,
+      plan: waitlist.plan,
+      source: waitlist.source,
+      createdAt: waitlist.createdAt,
+    })
+    .from(waitlist)
+    .orderBy(desc(waitlist.createdAt));
+  return c.json({
+    entries: rows.map((r) => ({
+      id: r.id,
+      email: r.email,
+      plan: r.plan,
+      source: r.source,
+      createdAt: new Date(r.createdAt).toISOString(),
+    })),
+    total: rows.length,
+  });
 });

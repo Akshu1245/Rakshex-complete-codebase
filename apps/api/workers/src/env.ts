@@ -12,6 +12,7 @@ export interface Env {
   RECEIPT_SIGNING_KEY_ID: string; // e.g. "rakshex-receipts-2026-09"
   API_KEY_PEPPER: string; // HMAC pepper for workers-provisioned API keys
   MAILCHANNELS_FROM?: string; // e.g. "welcome@rakshex.in" — unset = mail fail-closed
+  ADMIN_API_KEY?: string; // CEO key for GET /v1/waitlist — unset = admin listing fail-closed
   SENTRY_DSN?: string;
   ENVIRONMENT?: string;
 }

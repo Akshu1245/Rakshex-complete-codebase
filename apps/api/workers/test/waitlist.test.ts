@@ -4,10 +4,22 @@
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Env } from "../src/env";
-import { app, buildWelcomeEmail, validateWaitlistInput } from "../src/routes/waitlist";
+import {
+  app,
+  buildWelcomeEmail,
+  timingSafeEqual,
+  validateWaitlistInput,
+} from "../src/routes/waitlist";
 
 // Vitest allows `mock`-prefixed variables inside hoisted mock factories.
 let mockReturningRows: { id: number }[] = [{ id: 1 }];
+let mockSelectRows: Array<{
+  id: number;
+  email: string;
+  plan: string;
+  source: string;
+  createdAt: number;
+}> = [];
 
 vi.mock("../src/db", () => ({
   createDb: () => ({
@@ -16,6 +28,11 @@ vi.mock("../src/db", () => ({
         onConflictDoNothing: () => ({
           returning: async () => mockReturningRows,
         }),
+      }),
+    }),
+    select: () => ({
+      from: () => ({
+        orderBy: async () => mockSelectRows,
       }),
     }),
   }),
@@ -56,6 +73,7 @@ function stubMailFetch(ok = true) {
 afterEach(() => {
   vi.unstubAllGlobals();
   mockReturningRows = [{ id: 1 }];
+  mockSelectRows = [];
 });
 
 describe("validateWaitlistInput", () => {
@@ -145,5 +163,63 @@ describe("POST /v1/waitlist", () => {
       lastStatus = res.status;
     }
     expect(lastStatus).toBe(429);
+  });
+});
+
+describe("GET /v1/waitlist (CEO admin)", () => {
+  const adminEnv = { ...baseEnv, ADMIN_API_KEY: "ceo-secret-key" } as Env;
+
+  function getList(headers: Record<string, string> = {}, env: Env = adminEnv) {
+    return app.request("/", { method: "GET", headers }, env);
+  }
+
+  it("fails closed with 500 when ADMIN_API_KEY is unset", async () => {
+    const res = await getList({ Authorization: "Bearer anything" }, baseEnv);
+    expect(res.status).toBe(500);
+  });
+
+  it("returns 401 without a bearer key", async () => {
+    const res = await getList();
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 401 for a wrong key", async () => {
+    const res = await getList({ Authorization: "Bearer wrong-key" });
+    expect(res.status).toBe(401);
+  });
+
+  it("lists signups for the CEO key", async () => {
+    mockSelectRows = [
+      { id: 2, email: "b@example.com", plan: "Pro", source: "web", createdAt: 1_700_000_000_000 },
+      { id: 1, email: "a@example.com", plan: "Free", source: "web", createdAt: 1_699_000_000_000 },
+    ];
+    const res = await getList({ Authorization: "Bearer ceo-secret-key" });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { entries: Array<Record<string, unknown>>; total: number };
+    expect(body.total).toBe(2);
+    expect(body.entries[0]!).toMatchObject({
+      id: 2,
+      email: "b@example.com",
+      plan: "Pro",
+      source: "web",
+    });
+    // createdAt is serialized as ISO for the dashboard.
+    expect(typeof body.entries[0]!.createdAt).toBe("string");
+  });
+
+  it("returns an empty list when nobody signed up", async () => {
+    mockSelectRows = [];
+    const res = await getList({ Authorization: "Bearer ceo-secret-key" });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ entries: [], total: 0 });
+  });
+});
+
+describe("timingSafeEqual", () => {
+  it("accepts equal keys and rejects the rest", () => {
+    expect(timingSafeEqual("ceo-secret-key", "ceo-secret-key")).toBe(true);
+    expect(timingSafeEqual("ceo-secret-key", "ceo-secret-keZ")).toBe(false);
+    expect(timingSafeEqual("ceo-secret-key", "ceo-secret-key!")).toBe(false);
+    expect(timingSafeEqual("", "")).toBe(true);
   });
 });
