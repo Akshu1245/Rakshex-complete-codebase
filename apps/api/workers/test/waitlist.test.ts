@@ -86,15 +86,15 @@ describe("buildWelcomeEmail", () => {
   it("welcomes to the family with honest, claim-free copy", () => {
     const { subject, text, html } = buildWelcomeEmail();
     expect(subject).toBe("Welcome to the RaksHex family");
-    expect(text).toContain("private-beta waitlist");
-    expect(text).toContain("no self-serve checkout");
-    expect(text).toContain("https://rakshex-web.rakshex.workers.dev/demo");
+    expect(text).toContain("Thanks for joining the RaksHex waitlist.");
+    expect(text).toContain("I read every response");
+    expect(text).toContain("rakshex.in");
     // No invented traction, certifications, or metrics.
     for (const forbidden of ["SOC 2 certified", "ISO 27001", "trusted by", "10,000+"]) {
       expect(text).not.toContain(forbidden);
       expect(html).not.toContain(forbidden);
     }
-    expect(html).toContain("Welcome to the RaksHex family");
+    expect(html).toContain("Thanks for joining the RaksHex waitlist.");
   });
 });
 
