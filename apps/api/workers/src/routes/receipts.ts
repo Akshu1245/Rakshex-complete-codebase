@@ -18,8 +18,13 @@ import {
   type TrustedReceiptKeys,
 } from "../receipts";
 import { captureError } from "../adapters/sentry";
+import { authenticate, authenticateKey } from "./evaluate";
 
 export const app = new Hono<{ Bindings: Env }>();
+
+/** DoS guard: verification is CPU-heavy (Ed25519 per entry), so cap the work. */
+const VERIFY_MAX_BODY_BYTES = 5_000_000;
+const VERIFY_MAX_BUNDLE_ENTRIES = 1_000;
 
 function rowToExport(row: typeof actionReceiptLedger.$inferSelect): ReceiptEntryExport {
   let payload: Record<string, unknown> = {};
@@ -49,14 +54,29 @@ function rowToExport(row: typeof actionReceiptLedger.$inferSelect): ReceiptEntry
 
 app.post("/verify", async (c) => {
   const env = c.env;
+  let raw: string;
+  try {
+    raw = await c.req.text();
+  } catch {
+    return Response.json({ error: "Invalid request body" }, { status: 400 });
+  }
+  if (raw.length > VERIFY_MAX_BODY_BYTES) {
+    return Response.json({ error: "Bundle too large" }, { status: 413 });
+  }
   let body: { entry?: ReceiptEntryExport; bundle?: ReceiptBundle; trustedKeys: TrustedReceiptKeys };
   try {
-    body = (await c.req.json()) as typeof body;
+    body = JSON.parse(raw) as typeof body;
   } catch {
     return Response.json({ error: "Invalid JSON body" }, { status: 400 });
   }
   if (!body.trustedKeys || typeof body.trustedKeys !== "object") {
     return Response.json({ error: "trustedKeys is required" }, { status: 400 });
+  }
+  if (body.bundle?.entries && body.bundle.entries.length > VERIFY_MAX_BUNDLE_ENTRIES) {
+    return Response.json(
+      { error: `Bundle exceeds ${VERIFY_MAX_BUNDLE_ENTRIES} entries` },
+      { status: 413 },
+    );
   }
   try {
     if (body.bundle) {
@@ -74,7 +94,8 @@ app.post("/verify", async (c) => {
   }
 });
 
-/** GET /v1/receipts/export?workspaceId=1[&requestId=...] — signed bundle (JSON). */
+/** GET /v1/receipts/export?workspaceId=1[&requestId=...] — signed bundle (JSON).
+ *  Authenticated: the bearer key must belong to the requested workspace. */
 app.get("/export", async (c) => {
   const env = c.env;
   const db = createDb(env);
@@ -83,6 +104,8 @@ app.get("/export", async (c) => {
   if (!Number.isInteger(workspaceId) || workspaceId <= 0) {
     return Response.json({ error: "workspaceId is required" }, { status: 400 });
   }
+  const auth = await authenticate(db, env, c.req.raw, workspaceId);
+  if (!auth.ok) return auth.response;
   try {
     const rows = await db
       .select()
@@ -115,7 +138,10 @@ app.get("/export", async (c) => {
 });
 
 app.get("/:id", async (c) => {
-  const db = createDb(c.env);
+  const env = c.env;
+  const db = createDb(env);
+  const ka = await authenticateKey(db, env, c.req.raw);
+  if (!ka.ok) return ka.response;
   const id = Number(c.req.param("id"));
   if (!Number.isInteger(id) || id <= 0) {
     return Response.json({ error: "Invalid receipt id" }, { status: 400 });
@@ -125,6 +151,9 @@ app.get("/:id", async (c) => {
     .from(actionReceiptLedger)
     .where(eq(actionReceiptLedger.id, id))
     .limit(1);
-  if (!row) return Response.json({ error: "Receipt not found" }, { status: 404 });
+  // 404 on workspace mismatch too — no cross-tenant existence oracle.
+  if (!row || row.workspaceId !== ka.key.workspaceId) {
+    return Response.json({ error: "Receipt not found" }, { status: 404 });
+  }
   return Response.json({ receipt: rowToExport(row) });
 });

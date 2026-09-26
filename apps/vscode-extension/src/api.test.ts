@@ -9,10 +9,10 @@ vi.mock("vscode", () => ({
   },
 }));
 
-import { RakshexApi, getConfiguredBaseUrl } from "./api";
+import { LIVE_API_ORIGIN, RakshexApi, getConfiguredBaseUrl } from "./api";
 
 const ok = (data: unknown) =>
-  new Response(JSON.stringify({ result: { data: { json: data } } }), {
+  new Response(JSON.stringify(data), {
     status: 200,
     headers: { "content-type": "application/json" },
   });
@@ -22,74 +22,100 @@ describe("Rakshex VS Code API transport", () => {
     vi.restoreAllMocks();
   });
 
-  it("uses the production API by default", () => {
-    expect(getConfiguredBaseUrl()).toBe("https://api.rakshex.in");
+  it("uses the live Workers API origin by default", () => {
+    expect(getConfiguredBaseUrl()).toBe(LIVE_API_ORIGIN);
+    expect(LIVE_API_ORIGIN).toBe("https://rakshex-firewall.rakshex.workers.dev");
   });
 
-  it("calls the deployed /api/trpc route and decodes superjson", async () => {
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      ok({
-        collections: 2,
-        recentScans: 1,
-        totalFindings: 4,
-        openFindings: 3,
-        weeklyCost: 1.25,
-        lastScanAt: null,
-      }),
-    );
-    const api = new RakshexApi(
-      () => "https://api.rakshex.in",
-      () => "rk_live_test",
-    );
-
-    const result = await api.getDashboardData();
-
-    expect(result.openFindings).toBe(3);
-    expect(fetchMock.mock.calls[0]?.[0]).toBe(
-      "https://api.rakshex.in/api/trpc/vscodeExtension.getDashboardData",
-    );
-  });
-
-  it("encodes query inputs using the tRPC v11 superjson envelope", async () => {
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(ok([]));
-    const api = new RakshexApi(
-      () => "https://api.rakshex.in/api",
-      () => "rk_live_test",
-    );
-
-    await api.getRecentFindings(7);
-
-    const requestUrl = new URL(String(fetchMock.mock.calls[0]?.[0]));
-    expect(requestUrl.pathname).toBe("/api/trpc/vscodeExtension.getRecentFindings");
-    expect(JSON.parse(requestUrl.searchParams.get("input") ?? "")).toEqual({
-      json: { limit: 7 },
-    });
-  });
-
-  it("encodes mutations and sends the API key without duplicating /api", async () => {
+  it("checks health at /v1/health", async () => {
     const fetchMock = vi
       .spyOn(globalThis, "fetch")
-      .mockResolvedValue(ok({ valid: true, user: null }));
+      .mockResolvedValue(ok({ ok: true, service: "rakshex-firewall-workers" }));
     const api = new RakshexApi(
-      () => "https://api.rakshex.in/api",
-      () => undefined,
+      () => LIVE_API_ORIGIN,
+      () => "rk_live_test",
     );
 
-    await api.validateApiKey("rk_live_example");
+    const result = await api.checkHealth();
+
+    expect(result.ok).toBe(true);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(`${LIVE_API_ORIGIN}/v1/health`);
+  });
+
+  it("evaluates actions at POST /v1/evaluate with a Bearer key", async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(ok({ decision: "DENY", wouldBlock: true, reason: "no authority" }));
+    const api = new RakshexApi(
+      () => LIVE_API_ORIGIN,
+      () => "rk_live_test",
+    );
+
+    const result = await api.evaluateAction({
+      workspaceId: 1,
+      requestId: "req-1",
+      mode: "shadow",
+      action: {
+        name: "llm.prompt",
+        domain: "unknown",
+        effect: "unknown",
+        raw: { provider: "vscode-extension", operation: "gateway-test" },
+      },
+    });
 
     const [url, init] = fetchMock.mock.calls[0] ?? [];
-    expect(url).toBe("https://api.rakshex.in/api/trpc/vscodeExtension.validateApiKey");
-    expect(JSON.parse(String(init?.body))).toEqual({
-      json: { apiKey: "rk_live_example" },
-    });
-    expect((init?.headers as Record<string, string>)["x-api-key"]).toBe("rk_live_example");
+    expect(url).toBe(`${LIVE_API_ORIGIN}/v1/evaluate`);
+    expect(init?.method).toBe("POST");
+    expect((init?.headers as Record<string, string>).Authorization).toBe("Bearer rk_live_test");
+    const body = JSON.parse(String(init?.body));
+    expect(body.workspaceId).toBe(1);
+    expect(body.mode).toBe("shadow");
+    expect(result.decision).toBe("DENY");
   });
 
   it("builds the real health endpoint", () => {
     const api = new RakshexApi(
-      () => "https://api.rakshex.in",
+      () => LIVE_API_ORIGIN,
       () => undefined,
     );
-    expect(api.getHealthUrl()).toBe("https://api.rakshex.in/api/health");
+    expect(api.getHealthUrl()).toBe(`${LIVE_API_ORIGIN}/v1/health`);
+  });
+
+  it("throws a clear not-available error for server features the hosted API lacks", async () => {
+    const api = new RakshexApi(
+      () => LIVE_API_ORIGIN,
+      () => "rk_live_test",
+    );
+    await expect(api.getDashboardData()).rejects.toThrow(/not available on the hosted API yet/);
+    await expect(api.generateApiKey()).rejects.toThrow(/not available on the hosted API yet/);
+    await expect(api.copilotAsk("hi")).rejects.toThrow(/not available on the hosted API yet/);
+  });
+
+  it("scans imported collections locally without any network call", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch");
+    const api = new RakshexApi(
+      () => LIVE_API_ORIGIN,
+      () => "rk_live_test",
+    );
+
+    const result = await api.importCollection("demo", "postman", {
+      info: { name: "demo" },
+      item: [
+        {
+          name: "login",
+          request: {
+            method: "POST",
+            url: "http://example.com/login",
+            header: [],
+            body: { raw: JSON.stringify({ api_key: "sk-abcdefgh12345678" }) },
+          },
+        },
+      ],
+    });
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(result.name).toBe("demo");
+    expect(result.credentialFindings?.length).toBeGreaterThan(0);
+    expect(result.credentialFindings?.some((f) => f.ruleId === "plaintext-http")).toBe(true);
   });
 });

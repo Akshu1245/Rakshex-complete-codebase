@@ -1,19 +1,43 @@
 "use client";
 import { useState } from "react";
-import { trpc } from "@/lib/trpc";
+import { useApi, useApiMutation } from "@/lib/api";
 import { StatusBadge } from "./StatusBadge";
 import { DataTable } from "./DataTable";
-import { MetricCard } from "./MetricCard";
 import { PageLoading, ErrorState, EmptyState } from "./States";
 import { useEnterpriseWorkspace } from "./WorkspaceContext";
 
+interface AgentGuardPolicy {
+  id: number;
+  name: string;
+  action: string;
+  triggers?: Array<{ event: string; severity: string }>;
+  isEnabled: boolean;
+}
+
+interface AgentGuardEvent {
+  trigger: string;
+  action: string;
+  targetKeyName?: string | null;
+  result?: string | null;
+  severity: string;
+  executedAt: string;
+  reason?: string;
+}
+
 export function AgentGuardTab() {
   const { workspaceId } = useEnterpriseWorkspace();
-  const utils = trpc.useUtils();
-  const policies = trpc.enterprise.agentGuard.listPolicies.useQuery({ workspaceId });
-  const events = trpc.enterprise.agentGuard.listEvents.useQuery({ workspaceId });
-  const createPolicy = trpc.enterprise.agentGuard.createPolicy.useMutation();
-  const togglePolicy = trpc.enterprise.agentGuard.togglePolicy.useMutation();
+  const enabled = workspaceId > 0;
+  const policies = useApi<AgentGuardPolicy[]>(
+    enabled ? `/api/enterprise?kind=agentGuardPolicies&workspaceId=${workspaceId}` : null,
+  );
+  const events = useApi<AgentGuardEvent[]>(
+    enabled ? `/api/enterprise?kind=agentGuardEvents&workspaceId=${workspaceId}` : null,
+  );
+  const createPolicy = useApiMutation<Record<string, unknown>, unknown>("/api/enterprise", "POST");
+  const togglePolicy = useApiMutation<{ id: number; enabled: boolean }, unknown>(
+    "/api/enterprise",
+    "PATCH",
+  );
 
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
@@ -24,6 +48,14 @@ export function AgentGuardTab() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   if (policies.isLoading) return <PageLoading />;
+  if (policies.notConnected)
+    return (
+      <EmptyState
+        icon="security"
+        title="AgentGuard isn't connected yet"
+        description="AgentGuard policies and events live on the backend, which isn't connected on this deployment. Nothing here is fabricated — connect the backend to enable it."
+      />
+    );
   if (policies.error)
     return <ErrorState message={policies.error.message} onRetry={() => policies.refetch()} />;
 
@@ -45,7 +77,7 @@ export function AgentGuardTab() {
         action: "alert_only",
         triggers: [{ event: "leak_detected", severity: "high" }],
       });
-      utils.enterprise.agentGuard.listPolicies.invalidate();
+      policies.refetch();
     } catch (e) {
       setErrorMsg(e instanceof Error ? e.message : "Failed to create policy");
     }
@@ -53,28 +85,28 @@ export function AgentGuardTab() {
 
   const handleToggle = async (id: number, enabled: boolean) => {
     await togglePolicy.mutateAsync({ id, enabled });
-    utils.enterprise.agentGuard.listPolicies.invalidate();
+    policies.refetch();
   };
 
   const policyColumns = [
     {
       key: "name",
       header: "Name",
-      render: (p: (typeof policies.data)[0]) => (
+      render: (p: AgentGuardPolicy) => (
         <span className="text-white text-xs font-medium">{p.name}</span>
       ),
     },
     {
       key: "action",
       header: "Action",
-      render: (p: (typeof policies.data)[0]) => <StatusBadge status={p.action} />,
+      render: (p: AgentGuardPolicy) => <StatusBadge status={p.action} />,
       sortable: true,
     },
     {
       key: "triggers",
       header: "Triggers",
-      render: (p: (typeof policies.data)[0]) => {
-        const t = p.triggers as Array<{ event: string; severity: string }> | undefined;
+      render: (p: AgentGuardPolicy) => {
+        const t = p.triggers;
         return (
           <div className="flex gap-1 flex-wrap">
             {t?.map((tr, i) => (
@@ -89,15 +121,13 @@ export function AgentGuardTab() {
     {
       key: "isEnabled",
       header: "Status",
-      render: (p: (typeof policies.data)[0]) => (
-        <StatusBadge status={p.isEnabled ? "active" : "disabled"} />
-      ),
+      render: (p: AgentGuardPolicy) => <StatusBadge status={p.isEnabled ? "active" : "disabled"} />,
       sortable: true,
     },
     {
       key: "actions",
       header: "",
-      render: (p: (typeof policies.data)[0]) => (
+      render: (p: AgentGuardPolicy) => (
         <button
           onClick={() => handleToggle(p.id, !p.isEnabled)}
           className={`px-3 py-1 text-xs rounded-lg border transition-all ${p.isEnabled ? "bg-red-500/10 border-red-500/20 text-red-300 hover:bg-red-500/20" : "bg-emerald-500/10 border-emerald-500/20 text-emerald-300 hover:bg-emerald-500/20"}`}
@@ -113,40 +143,40 @@ export function AgentGuardTab() {
     {
       key: "trigger",
       header: "Trigger",
-      render: (e: (typeof events.data)[0]) => <StatusBadge status={e.trigger} />,
+      render: (e: AgentGuardEvent) => <StatusBadge status={e.trigger} />,
     },
     {
       key: "action",
       header: "Action",
-      render: (e: (typeof events.data)[0]) => <StatusBadge status={e.action} />,
+      render: (e: AgentGuardEvent) => <StatusBadge status={e.action} />,
     },
     {
       key: "targetKeyName",
       header: "Target",
-      render: (e: (typeof events.data)[0]) => (
+      render: (e: AgentGuardEvent) => (
         <span className="text-gray-300 text-xs">{e.targetKeyName ?? "—"}</span>
       ),
     },
     {
       key: "result",
       header: "Result",
-      render: (e: (typeof events.data)[0]) => (
+      render: (e: AgentGuardEvent) => (
         <StatusBadge status={e.result ?? "pending"} pulse={!e.result} />
       ),
     },
     {
       key: "severity",
       header: "Severity",
-      render: (e: (typeof events.data)[0]) => <StatusBadge status={e.severity} />,
+      render: (e: AgentGuardEvent) => <StatusBadge status={e.severity} />,
     },
     {
       key: "executedAt",
       header: "Time",
-      render: (e: (typeof events.data)[0]) => (
+      render: (e: AgentGuardEvent) => (
         <span className="text-gray-500 text-xs">{new Date(e.executedAt).toLocaleString()}</span>
       ),
       sortable: true,
-      sortValue: (e: (typeof events.data)[0]) => new Date(e.executedAt).getTime(),
+      sortValue: (e: AgentGuardEvent) => new Date(e.executedAt).getTime(),
     },
   ];
 

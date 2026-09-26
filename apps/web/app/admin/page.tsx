@@ -6,7 +6,8 @@ import { EmptyState } from "@/components/EmptyState";
 import { AdminSignupChart, AdminPlanMixChart } from "@/components/AdminCharts";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { useToast } from "@/components/Toast";
-import { trpc } from "@/lib/trpc";
+import { useApi, useApiMutation } from "@/lib/api";
+import { NotConnectedState } from "@/components/NotConnected";
 
 interface AdminUserView {
   id: number;
@@ -14,6 +15,13 @@ interface AdminUserView {
   plan: string;
   created_at?: string;
   name?: string;
+}
+
+interface SystemStats {
+  totalUsers?: number;
+  proUsers?: number;
+  freeUsers?: number;
+  activeUsers30d?: number;
 }
 
 const PLAN_BADGE: Record<string, string> = {
@@ -41,25 +49,24 @@ export default function AdminPage() {
   const [page, setPage] = useState(1);
   const [confirmAction, setConfirmAction] = useState<{
     userId: number;
-    action: "changePlan" | "resetPassword" | "deactivate";
+    action: "changePlan";
     meta?: string;
   } | null>(null);
   const { addToast } = useToast();
 
-  const usersQuery = trpc.admin.listAllUsers.useQuery();
-  const statsQuery = trpc.admin.getSystemStats.useQuery();
+  // Admin management has no /v1 equivalent on the Workers deployment —
+  // /api/admin answers 501 not_connected. The plan-change mutation surfaces
+  // the same honest error. Reset-password and deactivate actions had no
+  // backend at all and only showed success toasts, so they were removed.
+  const usersQuery = useApi<{
+    users: Array<{ id: number; email?: string; plan?: string; name?: string; createdAt?: string }>;
+  }>("/api/admin?kind=users");
+  const statsQuery = useApi<SystemStats>("/api/admin?kind=system-stats");
 
-  // Admin action mutations (using existing admin endpoints where available)
-  const changePlanMutation = trpc.admin.changeUserPlan.useMutation({
-    onSuccess: () => {
-      addToast("success", "User plan updated successfully");
-      usersQuery.refetch();
-      setConfirmAction(null);
-    },
-    onError: (err: { message: string }) => {
-      addToast("error", err.message);
-    },
-  });
+  const changePlanMutation = useApiMutation<
+    { userId: number; plan: "free" | "pro" | "enterprise" },
+    unknown
+  >("/api/admin", "PATCH");
 
   const loading = usersQuery.isLoading || statsQuery.isLoading;
   const error = usersQuery.error?.message || statsQuery.error?.message || null;
@@ -105,18 +112,22 @@ export default function AdminPage() {
 
   const handleConfirmAction = () => {
     if (!confirmAction) return;
-    if (confirmAction.action === "changePlan" && confirmAction.meta) {
-      changePlanMutation.mutate({
+    changePlanMutation.mutate(
+      {
         userId: confirmAction.userId,
         plan: confirmAction.meta as "free" | "pro" | "enterprise",
-      });
-    } else if (confirmAction.action === "resetPassword") {
-      addToast("info", "Password reset email sent to user");
-      setConfirmAction(null);
-    } else if (confirmAction.action === "deactivate") {
-      addToast("info", "User account deactivated");
-      setConfirmAction(null);
-    }
+      },
+      {
+        onSuccess: () => {
+          addToast("success", "User plan updated successfully");
+          refresh();
+          setConfirmAction(null);
+        },
+        onError: (err) => {
+          addToast("error", err.message);
+        },
+      },
+    );
   };
 
   return (
@@ -159,6 +170,11 @@ export default function AdminPage() {
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
           </div>
+        ) : usersQuery.notConnected ? (
+          <NotConnectedState
+            resource="Admin dashboard"
+            detail="User management and system stats need the account backend, which isn't connected on this deployment yet. Nothing is listed or changed here."
+          />
         ) : (
           <div>
             <div className="mb-8 grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -326,22 +342,6 @@ export default function AdminPage() {
                                       Upgrade to Ent.
                                     </button>
                                   )}
-                                  <button
-                                    onClick={() =>
-                                      setConfirmAction({ userId: user.id, action: "resetPassword" })
-                                    }
-                                    className="text-xs text-yellow-400 hover:text-yellow-300 font-medium"
-                                  >
-                                    Reset Pwd
-                                  </button>
-                                  <button
-                                    onClick={() =>
-                                      setConfirmAction({ userId: user.id, action: "deactivate" })
-                                    }
-                                    className="text-xs text-red-400 hover:text-red-300 font-medium"
-                                  >
-                                    Deactivate
-                                  </button>
                                 </div>
                               </td>
                             </tr>
@@ -386,28 +386,10 @@ export default function AdminPage() {
       {/* Admin Action Confirmation Modal */}
       <ConfirmModal
         open={!!confirmAction}
-        title={
-          confirmAction?.action === "changePlan"
-            ? `Change User Plan to ${confirmAction.meta === "pro" ? "Pro" : "Enterprise"}?`
-            : confirmAction?.action === "resetPassword"
-              ? "Reset User Password?"
-              : "Deactivate User Account?"
-        }
-        message={
-          confirmAction?.action === "changePlan"
-            ? "This will immediately change the user's plan. They will be billed at the new rate."
-            : confirmAction?.action === "resetPassword"
-              ? "A password reset email will be sent to this user's email address."
-              : "This will deactivate the user's account. They will lose access to all features."
-        }
-        confirmLabel={
-          confirmAction?.action === "changePlan"
-            ? "Change Plan"
-            : confirmAction?.action === "resetPassword"
-              ? "Send Reset Email"
-              : "Deactivate"
-        }
-        variant={confirmAction?.action === "deactivate" ? "danger" : "warning"}
+        title={`Change User Plan to ${confirmAction?.meta === "pro" ? "Pro" : "Enterprise"}?`}
+        message="This will immediately change the user's plan. They will be billed at the new rate."
+        confirmLabel="Change Plan"
+        variant="warning"
         onConfirm={handleConfirmAction}
         onCancel={() => setConfirmAction(null)}
       />

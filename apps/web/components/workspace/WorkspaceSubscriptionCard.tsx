@@ -1,16 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { trpc } from "@/lib/trpc";
-
-declare global {
-  interface Window {
-    Razorpay?: new (options: Record<string, unknown>) => {
-      open: () => void;
-      on: (event: string, callback: (payload: unknown) => void) => void;
-    };
-  }
-}
+import { useApi, useApiMutation } from "@/lib/api";
+import { NotConnectedState } from "@/components/NotConnected";
 
 function formatMinor(amountMinor: number, currency: string): string {
   return new Intl.NumberFormat("en-IN", {
@@ -31,11 +23,34 @@ async function ensureRazorpay(): Promise<void> {
   });
 }
 
+interface PlanOption {
+  plan: string;
+  name: string;
+  amountMinor: number;
+  currency: string;
+  includedSeats: number;
+}
+
+interface WorkspaceSubscription {
+  plan: string;
+  status: string;
+  amountMinor: number;
+  currency: string;
+  seatCount: number;
+}
+
+interface SubscriptionData {
+  availablePlans: PlanOption[];
+  subscription?: WorkspaceSubscription;
+  reservedSeats?: number;
+}
+
 export function WorkspaceSubscriptionCard({ workspaceId }: { workspaceId: number }) {
-  const utils = trpc.useUtils();
-  const query = trpc.payment.getWorkspaceSubscription.useQuery(
-    { workspaceId },
-    { enabled: workspaceId > 0 },
+  // Billing has no /v1 equivalent on the Workers deployment —
+  // /api/billing answers 501 not_connected. Mutations surface an honest
+  // error instead of pretending to change a subscription.
+  const query = useApi<SubscriptionData>(
+    workspaceId > 0 ? `/api/billing?workspaceId=${workspaceId}&kind=workspace-subscription` : null,
   );
   const plans = query.data?.availablePlans ?? [];
   const subscription = query.data?.subscription;
@@ -53,51 +68,67 @@ export function WorkspaceSubscriptionCard({ workspaceId }: { workspaceId: number
     }
   }, [query.data?.reservedSeats, selectedPlan, subscription]);
 
-  const create = trpc.payment.createWorkspaceSubscription.useMutation({
-    onSuccess: async (result) => {
-      try {
-        await ensureRazorpay();
-        if (!window.Razorpay) throw new Error("Razorpay checkout is unavailable");
-        const checkout = new window.Razorpay({
-          key: result.keyId,
-          subscription_id: result.subscriptionId,
-          name: "RaksHex",
-          description: `${result.plan === "enterprise" ? "Business" : "Pro"} team subscription`,
-          handler: () => {
-            setMessage(
-              "Payment received. Activation will update after the signed webhook arrives.",
+  const create = useApiMutation<
+    { workspaceId: number; plan: string; seatCount: number },
+    { keyId: string; subscriptionId: string; plan: string }
+  >("/api/billing", "POST");
+
+  const runCreate = () => {
+    setMessage(null);
+    create.mutate(
+      { workspaceId, plan, seatCount },
+      {
+        onSuccess: async (result) => {
+          try {
+            await ensureRazorpay();
+            if (!window.Razorpay) throw new Error("Razorpay checkout is unavailable");
+            const checkout = new window.Razorpay({
+              key: result.keyId,
+              subscription_id: result.subscriptionId,
+              name: "RaksHex",
+              description: `${result.plan === "enterprise" ? "Business" : "Pro"} team subscription`,
+              handler: () => {
+                setMessage(
+                  "Payment received. Activation will update after the signed webhook arrives.",
+                );
+                query.refetch();
+              },
+              theme: { color: "#14B8A6" },
+            });
+            checkout.on("payment.failed", () =>
+              setMessage("Payment failed. No plan was activated."),
             );
-            void utils.payment.getWorkspaceSubscription.invalidate({ workspaceId });
-          },
-          theme: { color: "#14B8A6" },
-        });
-        checkout.on("payment.failed", () => setMessage("Payment failed. No plan was activated."));
-        checkout.open();
-      } catch (error) {
-        setMessage(error instanceof Error ? error.message : "Could not open checkout");
-      }
-    },
-    onError: (error) => setMessage(error.message),
-  });
+            checkout.open();
+          } catch (error) {
+            setMessage(error instanceof Error ? error.message : "Could not open checkout");
+          }
+        },
+        onError: (error) => setMessage(error.message),
+      },
+    );
+  };
 
-  const updateSeats = trpc.payment.updateWorkspaceSeats.useMutation({
-    onSuccess: () => {
-      setMessage("Seat allocation updated.");
-      void query.refetch();
-    },
-    onError: (error) => setMessage(error.message),
-  });
+  const updateSeats = useApiMutation<{ workspaceId: number; seatCount: number }, unknown>(
+    "/api/billing",
+    "PATCH",
+  );
 
-  const cancel = trpc.payment.cancelWorkspaceSubscription.useMutation({
-    onSuccess: () => {
-      setMessage("Cancellation recorded.");
-      void query.refetch();
-    },
-    onError: (error) => setMessage(error.message),
-  });
+  const cancel = useApiMutation<{ workspaceId: number; immediately: boolean }, unknown>(
+    "/api/billing",
+    "DELETE",
+  );
 
   if (query.isLoading) {
     return <p className="text-sm text-neutral-500">Loading team subscription…</p>;
+  }
+
+  if (query.notConnected) {
+    return (
+      <NotConnectedState
+        resource="Team subscription"
+        detail="Reading or changing the workspace subscription needs the billing backend, which isn't connected on this deployment yet."
+      />
+    );
   }
 
   if (query.error) {
@@ -157,7 +188,18 @@ export function WorkspaceSubscriptionCard({ workspaceId }: { workspaceId: number
             <button
               type="button"
               disabled={updateSeats.isPending}
-              onClick={() => updateSeats.mutate({ workspaceId, seatCount })}
+              onClick={() =>
+                updateSeats.mutate(
+                  { workspaceId, seatCount },
+                  {
+                    onSuccess: () => {
+                      setMessage("Seat allocation updated.");
+                      query.refetch();
+                    },
+                    onError: (error) => setMessage(error.message),
+                  },
+                )
+              }
               className="rounded-md bg-teal-600 px-4 py-2 text-sm disabled:opacity-50"
             >
               Update seats
@@ -165,7 +207,18 @@ export function WorkspaceSubscriptionCard({ workspaceId }: { workspaceId: number
             <button
               type="button"
               disabled={cancel.isPending || subscription.status === "cancelled"}
-              onClick={() => cancel.mutate({ workspaceId, immediately: false })}
+              onClick={() =>
+                cancel.mutate(
+                  { workspaceId, immediately: false },
+                  {
+                    onSuccess: () => {
+                      setMessage("Cancellation recorded.");
+                      query.refetch();
+                    },
+                    onError: (error) => setMessage(error.message),
+                  },
+                )
+              }
               className="rounded-md border border-red-700 px-4 py-2 text-sm text-red-300 disabled:opacity-50"
             >
               Cancel at period end
@@ -179,7 +232,7 @@ export function WorkspaceSubscriptionCard({ workspaceId }: { workspaceId: number
               <button
                 type="button"
                 key={item.plan}
-                onClick={() => setPlan(item.plan)}
+                onClick={() => setPlan(item.plan as "pro" | "enterprise")}
                 className={`rounded-md border p-4 text-left ${
                   plan === item.plan ? "border-teal-500 bg-teal-950/20" : "border-neutral-700"
                 }`}
@@ -209,7 +262,7 @@ export function WorkspaceSubscriptionCard({ workspaceId }: { workspaceId: number
             <button
               type="button"
               disabled={create.isPending || seatCount < reservedSeats || seatCount > maxSeats}
-              onClick={() => create.mutate({ workspaceId, plan, seatCount })}
+              onClick={runCreate}
               className="rounded-md bg-teal-600 px-4 py-2 text-sm disabled:opacity-50"
             >
               Subscribe workspace

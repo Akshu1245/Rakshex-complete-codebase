@@ -3,15 +3,32 @@ import { useState } from "react";
 import Link from "next/link";
 import { EmptyState } from "@/components/EmptyState";
 import { ConfirmModal } from "@/components/ConfirmModal";
-import { trpc } from "@/lib/trpc";
+import { NotConnectedState } from "@/components/NotConnected";
+import { useApi, useApiMutation } from "@/lib/api";
+
+interface KillSwitchSettings {
+  isActive: boolean;
+  budgetLimitUSD: number;
+  currentSpendUSD: number;
+}
+
+interface KillSwitchEvent {
+  id: string;
+  eventType: string;
+  createdAt: string;
+  reason?: string | null;
+}
 
 export default function KillSwitchPage() {
-  const utils = trpc.useUtils();
-  const settingsQuery = trpc.killSwitch.getSettings.useQuery();
-  const auditQuery = trpc.killSwitch.getAuditTrail.useQuery();
+  // The kill switch has no /v1 equivalent on the Workers deployment —
+  // /api/kill-switch answers 501 not_connected. Mutations surface an honest
+  // error instead of pretending to change switch state.
+  const settingsQuery = useApi<KillSwitchSettings>("/api/kill-switch?kind=settings");
+  const auditQuery = useApi<{ events: KillSwitchEvent[] }>("/api/kill-switch?kind=audit");
   const settings = settingsQuery.data;
   const events = auditQuery.data?.events ?? [];
   const loading = settingsQuery.isLoading || auditQuery.isLoading;
+  const notConnected = settingsQuery.notConnected || auditQuery.notConnected;
 
   const [budgetInput, setBudgetInput] = useState("");
   const [triggerReason, setTriggerReason] = useState("");
@@ -20,31 +37,13 @@ export default function KillSwitchPage() {
   const [showTriggerConfirm, setShowTriggerConfirm] = useState(false);
 
   const refresh = () => {
-    utils.killSwitch.getSettings.invalidate();
-    utils.killSwitch.getAuditTrail.invalidate();
+    settingsQuery.refetch();
+    auditQuery.refetch();
   };
 
-  const setBudget = trpc.killSwitch.setBudget.useMutation({
-    onSuccess: () => {
-      setBudgetInput("");
-      refresh();
-    },
-    onError: (err: { message: string }) => setError(err.message),
-  });
-  const triggerMutation = trpc.killSwitch.trigger.useMutation({
-    onSuccess: () => {
-      setTriggerReason("");
-      refresh();
-    },
-    onError: (err: { message: string }) => setError(err.message),
-  });
-  const resetMutation = trpc.killSwitch.reset.useMutation({
-    onSuccess: () => {
-      setResetReason("");
-      refresh();
-    },
-    onError: (err: { message: string }) => setError(err.message),
-  });
+  const setBudget = useApiMutation<{ budgetLimitUSD: number }, unknown>("/api/kill-switch", "POST");
+  const triggerMutation = useApiMutation<{ reason: string }, unknown>("/api/kill-switch", "POST");
+  const resetMutation = useApiMutation<{ reason: string }, unknown>("/api/kill-switch", "POST");
 
   const handleSetBudget = () => {
     const value = parseFloat(budgetInput);
@@ -53,7 +52,16 @@ export default function KillSwitchPage() {
       return;
     }
     setError(null);
-    setBudget.mutate({ budgetLimitUSD: value });
+    setBudget.mutate(
+      { budgetLimitUSD: value },
+      {
+        onSuccess: () => {
+          setBudgetInput("");
+          refresh();
+        },
+        onError: (err) => setError(err.message),
+      },
+    );
   };
 
   const handleTriggerConfirm = () => {
@@ -62,14 +70,32 @@ export default function KillSwitchPage() {
       return;
     }
     setError(null);
-    triggerMutation.mutate({ reason: triggerReason });
+    triggerMutation.mutate(
+      { reason: triggerReason },
+      {
+        onSuccess: () => {
+          setTriggerReason("");
+          refresh();
+        },
+        onError: (err) => setError(err.message),
+      },
+    );
     setShowTriggerConfirm(false);
   };
 
   const handleReset = () => {
     if (!resetReason.trim()) return;
     setError(null);
-    resetMutation.mutate({ reason: resetReason });
+    resetMutation.mutate(
+      { reason: resetReason },
+      {
+        onSuccess: () => {
+          setResetReason("");
+          refresh();
+        },
+        onError: (err) => setError(err.message),
+      },
+    );
   };
 
   return (
@@ -91,7 +117,12 @@ export default function KillSwitchPage() {
           </div>
         )}
 
-        {loading ? (
+        {notConnected ? (
+          <NotConnectedState
+            resource="Kill switch"
+            detail="Reading or changing kill-switch state needs the backend control plane, which isn't connected on this deployment yet. Nothing is armed or disarmed here."
+          />
+        ) : loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
           </div>

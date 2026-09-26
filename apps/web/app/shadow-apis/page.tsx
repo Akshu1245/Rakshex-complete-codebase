@@ -1,58 +1,37 @@
 "use client";
 import { useState } from "react";
-import { trpc } from "@/lib/trpc";
+import { useApi } from "@/lib/api";
 import { EmptyState } from "@/components/EmptyState";
+import { NotConnectedState } from "@/components/NotConnected";
+
+interface ShadowApiRow {
+  id: string;
+  endpoint: string;
+  method?: string;
+  riskLevel?: string;
+  isDocumented?: boolean;
+  reason?: string;
+}
 
 export default function ShadowAPIsPage() {
-  const utils = trpc.useUtils();
   const [selectedCollection, setSelectedCollection] = useState("");
-  const [error, setError] = useState<string | null>(null);
 
-  const collectionsQuery = trpc.collections.list.useQuery();
+  // Collections and shadow-API detection have no /v1 equivalent on the
+  // Workers deployment — both proxy routes answer 501 not_connected, so the
+  // UI renders honest empty states. Scan and mark-documented actions don't
+  // exist on this deployment, so no such controls are rendered.
+  const collectionsQuery = useApi<{ collections: Array<{ id: string; name: string }> }>(
+    "/api/collections",
+  );
   const collections = collectionsQuery.data?.collections ?? [];
 
-  const shadowQuery = trpc.shadowAPI.listShadowAPIs.useQuery(
-    { collectionId: selectedCollection },
-    { enabled: !!selectedCollection },
+  const shadowQuery = useApi<{ shadowAPIs: ShadowApiRow[] }>(
+    selectedCollection ? `/api/shadow-apis?collectionId=${selectedCollection}` : null,
   );
   const shadowAPIs = shadowQuery.data?.shadowAPIs ?? [];
 
-  const scanMutation = trpc.shadowAPI.scanShadowAPIs.useMutation({
-    onSuccess: () => {
-      if (selectedCollection) {
-        utils.shadowAPI.listShadowAPIs.invalidate({
-          collectionId: selectedCollection,
-        });
-      }
-    },
-    onError: (err: { message: string }) => setError(err.message),
-  });
-
-  const markMutation = trpc.shadowAPI.markAsDocumented.useMutation({
-    onSuccess: () => {
-      if (selectedCollection) {
-        utils.shadowAPI.listShadowAPIs.invalidate({
-          collectionId: selectedCollection,
-        });
-      }
-    },
-    onError: (err: { message: string }) => setError(err.message),
-  });
-
   const handleCollectionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedCollection(e.target.value);
-    setError(null);
-  };
-
-  const handleScan = () => {
-    if (!selectedCollection) return;
-    setError(null);
-    scanMutation.mutate({ collectionId: selectedCollection });
-  };
-
-  const markAsDocumented = (apiId: string) => {
-    setError(null);
-    markMutation.mutate({ shadowApiId: apiId });
   };
 
   const loading = !!selectedCollection && shadowQuery.isLoading;
@@ -87,21 +66,6 @@ export default function ShadowAPIsPage() {
               Shadow API Detection
             </h2>
           </div>
-          <button
-            onClick={handleScan}
-            disabled={!selectedCollection || scanMutation.isPending}
-            className="px-6 py-2 bg-primary text-on-primary font-bold hover:shadow-[0_0_15px_rgba(207,188,255,0.4)] transition-all flex items-center gap-2 disabled:opacity-50"
-            style={{
-              fontFamily: "'JetBrains Mono', monospace",
-              fontSize: "11px",
-              letterSpacing: "0.1em",
-            }}
-          >
-            <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>
-              radar
-            </span>
-            {scanMutation.isPending ? "SCANNING…" : "SCAN NOW"}
-          </button>
         </div>
 
         {/* Critical Alert */}
@@ -136,106 +100,94 @@ export default function ShadowAPIsPage() {
                 </p>
               </div>
             </div>
-            <button
-              className="px-6 py-2 bg-error text-on-error font-bold uppercase"
-              style={{
-                fontFamily: "'JetBrains Mono', monospace",
-                fontSize: "10px",
-                letterSpacing: "0.1em",
-              }}
-            >
-              SECURE ENDPOINTS
-            </button>
-          </div>
-        )}
-
-        {error && (
-          <div
-            className="mb-6 p-4 border-l-4 border-error bg-error/10 text-error"
-            style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "13px" }}
-          >
-            {error}
           </div>
         )}
 
         {/* Collection selector */}
         <div className="mb-8 glass-card p-6 rounded-xl">
-          <div className="flex flex-col sm:flex-row gap-4 items-end">
-            <div className="flex-1">
-              <label
-                className="text-on-surface-variant block mb-2"
-                style={{
-                  fontFamily: "'JetBrains Mono', monospace",
-                  fontSize: "11px",
-                  letterSpacing: "0.1em",
-                }}
-              >
-                SELECT COLLECTION
-              </label>
-              <select
-                value={selectedCollection}
-                onChange={handleCollectionChange}
-                className="w-full px-4 py-2.5 bg-surface-container-highest/50 border border-outline-variant/30 text-on-surface focus:ring-1 focus:ring-primary focus:border-primary focus:outline-none transition-all"
-                style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "13px" }}
-              >
-                <option value="">-- SELECT COLLECTION --</option>
-                {collections.map((col) => (
-                  <option key={col.id} value={col.id}>
-                    {col.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {selectedCollection && (
-              <div className="flex gap-3 text-center">
-                <div className="px-4 py-2 bg-surface-container rounded border border-outline-variant/20">
-                  <p
-                    className="text-on-surface-variant"
-                    style={{
-                      fontFamily: "'JetBrains Mono', monospace",
-                      fontSize: "9px",
-                      letterSpacing: "0.1em",
-                    }}
-                  >
-                    TOTAL
-                  </p>
-                  <p className="text-on-surface font-bold" style={{ fontSize: "20px" }}>
-                    {shadowAPIs.length}
-                  </p>
-                </div>
-                <div className="px-4 py-2 bg-error/10 rounded border border-error/20">
-                  <p
-                    className="text-error"
-                    style={{
-                      fontFamily: "'JetBrains Mono', monospace",
-                      fontSize: "9px",
-                      letterSpacing: "0.1em",
-                    }}
-                  >
-                    CRITICAL
-                  </p>
-                  <p className="text-error font-bold" style={{ fontSize: "20px" }}>
-                    {criticalCount}
-                  </p>
-                </div>
-                <div className="px-4 py-2 bg-primary/10 rounded border border-primary/20">
-                  <p
-                    className="text-primary"
-                    style={{
-                      fontFamily: "'JetBrains Mono', monospace",
-                      fontSize: "9px",
-                      letterSpacing: "0.1em",
-                    }}
-                  >
-                    DOCUMENTED
-                  </p>
-                  <p className="text-primary font-bold" style={{ fontSize: "20px" }}>
-                    {shadowAPIs.filter((a) => a.isDocumented).length}
-                  </p>
-                </div>
+          {collectionsQuery.notConnected ? (
+            <NotConnectedState
+              resource="Collections and shadow API detection"
+              detail="Listing collections and scanning for shadow APIs needs the collections API, which isn't connected on this deployment yet."
+            />
+          ) : (
+            <div className="flex flex-col sm:flex-row gap-4 items-end">
+              <div className="flex-1">
+                <label
+                  className="text-on-surface-variant block mb-2"
+                  style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: "11px",
+                    letterSpacing: "0.1em",
+                  }}
+                >
+                  SELECT COLLECTION
+                </label>
+                <select
+                  value={selectedCollection}
+                  onChange={handleCollectionChange}
+                  className="w-full px-4 py-2.5 bg-surface-container-highest/50 border border-outline-variant/30 text-on-surface focus:ring-1 focus:ring-primary focus:border-primary focus:outline-none transition-all"
+                  style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "13px" }}
+                >
+                  <option value="">-- SELECT COLLECTION --</option>
+                  {collections.map((col) => (
+                    <option key={col.id} value={col.id}>
+                      {col.name}
+                    </option>
+                  ))}
+                </select>
               </div>
-            )}
-          </div>
+              {selectedCollection && (
+                <div className="flex gap-3 text-center">
+                  <div className="px-4 py-2 bg-surface-container rounded border border-outline-variant/20">
+                    <p
+                      className="text-on-surface-variant"
+                      style={{
+                        fontFamily: "'JetBrains Mono', monospace",
+                        fontSize: "9px",
+                        letterSpacing: "0.1em",
+                      }}
+                    >
+                      TOTAL
+                    </p>
+                    <p className="text-on-surface font-bold" style={{ fontSize: "20px" }}>
+                      {shadowAPIs.length}
+                    </p>
+                  </div>
+                  <div className="px-4 py-2 bg-error/10 rounded border border-error/20">
+                    <p
+                      className="text-error"
+                      style={{
+                        fontFamily: "'JetBrains Mono', monospace",
+                        fontSize: "9px",
+                        letterSpacing: "0.1em",
+                      }}
+                    >
+                      CRITICAL
+                    </p>
+                    <p className="text-error font-bold" style={{ fontSize: "20px" }}>
+                      {criticalCount}
+                    </p>
+                  </div>
+                  <div className="px-4 py-2 bg-primary/10 rounded border border-primary/20">
+                    <p
+                      className="text-primary"
+                      style={{
+                        fontFamily: "'JetBrains Mono', monospace",
+                        fontSize: "9px",
+                        letterSpacing: "0.1em",
+                      }}
+                    >
+                      DOCUMENTED
+                    </p>
+                    <p className="text-primary font-bold" style={{ fontSize: "20px" }}>
+                      {shadowAPIs.filter((a) => a.isDocumented).length}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Endpoints Table */}
@@ -260,7 +212,7 @@ export default function ShadowAPIsPage() {
                 className="text-primary"
                 style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "10px" }}
               >
-                LIVE NODE SCAN
+                NOT CONNECTED
               </span>
             </div>
           </div>
@@ -364,18 +316,9 @@ export default function ShadowAPIsPage() {
                       </td>
                       <td className="px-6 py-4">
                         {!api.isDocumented ? (
-                          <button
-                            onClick={() => markAsDocumented(api.id)}
-                            disabled={markMutation.isPending}
-                            className="px-3 py-1.5 bg-primary-container/20 text-primary border border-primary/30 hover:bg-primary-container/40 transition-colors disabled:opacity-50 font-bold"
-                            style={{
-                              fontFamily: "'JetBrains Mono', monospace",
-                              fontSize: "10px",
-                              letterSpacing: "0.05em",
-                            }}
-                          >
-                            MARK DOCUMENTED
-                          </button>
+                          <span className="text-on-surface-variant" style={{ fontSize: "11px" }}>
+                            Not connected
+                          </span>
                         ) : (
                           <span className="text-on-surface-variant" style={{ fontSize: "11px" }}>
                             ✓ Documented

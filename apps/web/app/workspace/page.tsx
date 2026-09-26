@@ -2,28 +2,39 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { trpc } from "@/lib/trpc";
+import { useApi, useApiMutation } from "@/lib/api";
 import { useWorkspace } from "@/hooks/useWorkspace";
+import { NotConnectedState } from "@/components/NotConnected";
 import { WorkspaceSubscriptionCard } from "@/components/workspace/WorkspaceSubscriptionCard";
 
-export default function WorkspacePage() {
-  const list = trpc.workspaces.listMine.useQuery();
-  const { workspace, workspaceId, workspaces, switchWorkspace } = useWorkspace();
-  const [name, setName] = useState("");
-  const create = trpc.workspaces.create.useMutation({
-    onSuccess: () => {
-      setName("");
-      list.refetch();
-    },
-  });
+interface MemberRow {
+  userId: number;
+  role: string;
+  name?: string | null;
+  email?: string;
+}
 
-  const members = trpc.workspaces.listMembers.useQuery(
-    { workspaceId },
-    { enabled: workspaceId > 0 },
+interface PermissionsShape {
+  role?: string;
+  permissions: {
+    billing: { read: boolean };
+  };
+}
+
+export default function WorkspacePage() {
+  // Workspaces/team have no /v1 equivalent on the Workers deployment —
+  // /api/workspaces and /api/team answer 501 not_connected. Mutations
+  // surface an honest error instead of pretending to create workspaces.
+  const { workspace, workspaceId, workspaces, switchWorkspace, isLoading, notConnected, refetch } =
+    useWorkspace();
+  const [name, setName] = useState("");
+  const create = useApiMutation<{ name: string }, unknown>("/api/workspaces", "POST");
+
+  const members = useApi<MemberRow[]>(
+    workspaceId > 0 ? `/api/team?workspaceId=${workspaceId}&kind=members` : null,
   );
-  const perms = trpc.workspaces.myPermissions.useQuery(
-    { workspaceId },
-    { enabled: workspaceId > 0 },
+  const perms = useApi<PermissionsShape>(
+    workspaceId > 0 ? `/api/team?workspaceId=${workspaceId}&kind=permissions` : null,
   );
 
   return (
@@ -46,9 +57,16 @@ export default function WorkspacePage() {
         </div>
       </div>
 
-      {list.isLoading && <p className="text-neutral-500">Loading…</p>}
+      {isLoading && <p className="text-neutral-500">Loading…</p>}
 
-      {workspace && (
+      {notConnected && (
+        <NotConnectedState
+          resource="Workspaces"
+          detail="Listing workspaces, members and permissions needs the workspaces backend, which isn't connected on this deployment yet. Nothing is created or listed here."
+        />
+      )}
+
+      {!notConnected && workspace && (
         <div className="space-y-6">
           <section className="border border-neutral-800 rounded-lg p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -76,17 +94,15 @@ export default function WorkspacePage() {
           <section className="border border-neutral-800 rounded-lg p-6">
             <h2 className="font-medium mb-4">Members</h2>
             <ul className="space-y-2">
-              {(members.data ?? []).map(
-                (m: { userId: number; role: string; name?: string | null; email?: string }) => (
-                  <li
-                    key={m.userId}
-                    className="flex justify-between text-sm border-b border-neutral-900 py-2"
-                  >
-                    <span>{m.name || m.email || `User #${m.userId}`}</span>
-                    <span className="text-neutral-400">{m.role}</span>
-                  </li>
-                ),
-              )}
+              {(members.data ?? []).map((m) => (
+                <li
+                  key={m.userId}
+                  className="flex justify-between text-sm border-b border-neutral-900 py-2"
+                >
+                  <span>{m.name || m.email || `User #${m.userId}`}</span>
+                  <span className="text-neutral-400">{m.role}</span>
+                </li>
+              ))}
             </ul>
           </section>
 
@@ -98,32 +114,42 @@ export default function WorkspacePage() {
         </div>
       )}
 
-      <section className="border border-neutral-800 rounded-lg p-6 mt-6">
-        <h2 className="font-medium mb-4">Create workspace</h2>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            create.mutate({ name });
-          }}
-          className="flex gap-2"
-        >
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Workspace name"
-            className="flex-1 px-3 py-2 bg-neutral-900 border border-neutral-700 rounded-md text-sm"
-            required
-          />
-          <button
-            type="submit"
-            disabled={create.isPending}
-            className="px-4 py-2 bg-teal-600 rounded-md text-sm"
+      {!notConnected && (
+        <section className="border border-neutral-800 rounded-lg p-6 mt-6">
+          <h2 className="font-medium mb-4">Create workspace</h2>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              create.mutate(
+                { name },
+                {
+                  onSuccess: () => {
+                    setName("");
+                    refetch();
+                  },
+                },
+              );
+            }}
+            className="flex gap-2"
           >
-            Create
-          </button>
-        </form>
-        {create.error && <p className="text-red-400 text-sm mt-2">{create.error.message}</p>}
-      </section>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Workspace name"
+              className="flex-1 px-3 py-2 bg-neutral-900 border border-neutral-700 rounded-md text-sm"
+              required
+            />
+            <button
+              type="submit"
+              disabled={create.isPending}
+              className="px-4 py-2 bg-teal-600 rounded-md text-sm"
+            >
+              Create
+            </button>
+          </form>
+          {create.error && <p className="text-red-400 text-sm mt-2">{create.error.message}</p>}
+        </section>
+      )}
     </div>
   );
 }

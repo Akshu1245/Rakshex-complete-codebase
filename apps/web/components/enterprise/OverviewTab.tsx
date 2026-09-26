@@ -1,23 +1,73 @@
 "use client";
-import { trpc } from "@/lib/trpc";
+import { useApi } from "@/lib/api";
 import { MetricCard } from "./MetricCard";
 import { StatusBadge } from "./StatusBadge";
-import { LoadingSkeleton, ErrorState } from "./States";
+import { LoadingSkeleton, ErrorState, EmptyState } from "./States";
 import { useEnterpriseWorkspace } from "./WorkspaceContext";
+
+interface DiscoveryRun {
+  id: string;
+  status: string;
+  keysFound: number;
+  startedAt: string;
+}
+
+interface KeyStats {
+  total: number;
+  active: number;
+  expired: number;
+  revoked: number;
+}
+
+interface IsoSummary {
+  overallScore?: number;
+  compliant?: number;
+}
+
+interface CopilotMetrics {
+  totalSeats?: number;
+  activeSeats?: number;
+  totalUsageUsd?: number;
+}
 
 export function OverviewTab() {
   const { workspaceId } = useEnterpriseWorkspace();
+  const enabled = workspaceId > 0;
 
-  const keyStats = trpc.enterprise.discovery.getKeyStats.useQuery({ workspaceId });
-  const runs = trpc.enterprise.discovery.listRuns.useQuery({ workspaceId });
-  const risks = trpc.enterprise.overprivileged.list.useQuery({ workspaceId });
-  const shadow = trpc.enterprise.shadowKeys.list.useQuery({ workspaceId });
-  const events = trpc.enterprise.agentGuard.listEvents.useQuery({ workspaceId });
-  const copilot = trpc.enterprise.copilot.getMetrics.useQuery({ workspaceId });
-  const iso = trpc.enterprise.compliance.getIso27001Summary.useQuery({ workspaceId });
+  const keyStats = useApi<KeyStats>(
+    enabled ? `/api/enterprise?kind=keyStats&workspaceId=${workspaceId}` : null,
+  );
+  const runs = useApi<DiscoveryRun[]>(
+    enabled ? `/api/enterprise?kind=discoveryRuns&workspaceId=${workspaceId}` : null,
+  );
+  const risks = useApi<unknown[]>(
+    enabled ? `/api/enterprise?kind=overprivileged&workspaceId=${workspaceId}` : null,
+  );
+  const shadow = useApi<unknown[]>(
+    enabled ? `/api/enterprise?kind=shadowKeys&workspaceId=${workspaceId}` : null,
+  );
+  const events = useApi<unknown[]>(
+    enabled ? `/api/enterprise?kind=agentGuardEvents&workspaceId=${workspaceId}` : null,
+  );
+  const copilot = useApi<CopilotMetrics>(
+    enabled ? `/api/enterprise?kind=copilotMetrics&workspaceId=${workspaceId}` : null,
+  );
+  const iso = useApi<IsoSummary>(
+    enabled ? `/api/enterprise?kind=iso27001&workspaceId=${workspaceId}` : null,
+  );
 
   const loading = keyStats.isLoading || runs.isLoading;
   const error = keyStats.error || runs.error;
+  const notConnected = keyStats.notConnected || runs.notConnected;
+
+  if (notConnected)
+    return (
+      <EmptyState
+        icon="dashboard"
+        title="Enterprise overview isn't connected yet"
+        description="Key inventory, discovery runs, risk findings, Copilot, and compliance data all live on the backend, which isn't connected on this deployment. The zeros and scores you would see here are absent rather than fabricated."
+      />
+    );
 
   if (error)
     return (
@@ -126,7 +176,7 @@ export function OverviewTab() {
             className="text-gray-500 hover:text-[#14b8a6] transition-colors"
           >
             <span
-              className={`material-symbols-outlined text-lg ${runs.isRefetching ? "animate-spin" : ""}`}
+              className={`material-symbols-outlined text-lg ${runs.isLoading ? "animate-spin" : ""}`}
             >
               refresh
             </span>

@@ -14,8 +14,9 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import { trpc } from "@/lib/trpc";
+import { useApi } from "@/lib/api";
 import { EmptyState } from "@/components/EmptyState";
+import { NotConnectedState } from "@/components/NotConnected";
 
 const RANGE_OPTIONS = ["7d", "30d", "90d"] as const;
 type Range = (typeof RANGE_OPTIONS)[number];
@@ -30,14 +31,34 @@ function rangeToDates(range: Range): { startDate: string; endDate: string } {
   return { startDate: start.toISOString(), endDate: end.toISOString() };
 }
 
+interface AnalyticsSummaryRow {
+  key: string;
+  requestCount: number;
+  totalCost: number;
+  avgLatencyP95: number;
+  errorRate: number;
+  totalTokens: number;
+}
+
+interface ModelMixRow {
+  model?: string;
+  provider?: string;
+  requests: number;
+}
+
 export default function MetricsPage() {
   const [range, setRange] = useState<Range>("7d");
   const { startDate, endDate } = useMemo(() => rangeToDates(range), [range]);
 
-  const summaryQuery = trpc.analytics.summary.useQuery({ startDate, endDate, groupBy: "day" });
-  const modelMixQuery = trpc.analytics.modelMix.useQuery({ startDate, endDate });
+  const summaryQuery = useApi<AnalyticsSummaryRow[]>(
+    `/api/analytics?kind=summary&startDate=${startDate}&endDate=${endDate}&groupBy=day`,
+  );
+  const modelMixQuery = useApi<ModelMixRow[]>(
+    `/api/analytics?kind=modelMix&startDate=${startDate}&endDate=${endDate}`,
+  );
 
   const loading = summaryQuery.isLoading || modelMixQuery.isLoading;
+  const notConnected = summaryQuery.notConnected || modelMixQuery.notConnected;
 
   // Time-series rows sorted ascending by day key (YYYY-MM-DD).
   const series = useMemo(() => {
@@ -142,6 +163,11 @@ export default function MetricsPage() {
             />
           ))}
         </div>
+      ) : notConnected ? (
+        <NotConnectedState
+          resource="Platform metrics"
+          detail="Telemetry ingestion isn't connected on this deployment yet, so no metrics are shown — nothing here is fabricated."
+        />
       ) : !hasData ? (
         <EmptyState
           icon="📊"

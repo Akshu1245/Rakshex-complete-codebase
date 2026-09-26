@@ -3,47 +3,65 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { trpc } from "@/lib/trpc";
+import { useApi, useApiMutation } from "@/lib/api";
 import { EmptyState } from "@/components/EmptyState";
 import { useToast } from "@/components/Toast";
 
+interface FindingItem {
+  scanId?: string;
+}
+
+interface ReportItem {
+  id: string;
+  score: number;
+  findingCount: number;
+  createdAt: string;
+  revokedAt?: string | null;
+  expiresAt?: string | null;
+}
+
 export default function ReportListPage() {
   const router = useRouter();
-  const utils = trpc.useUtils();
   const { addToast } = useToast();
   const [openId, setOpenId] = useState("");
   const [expiresInDays, setExpiresInDays] = useState(30);
 
-  const findingsQuery = trpc.findings.list.useQuery({ limit: 100 });
-  const reportsQuery = trpc.reports.listMine.useQuery();
-  const createReport = trpc.reports.create.useMutation({
-    onSuccess: (data) => {
-      void utils.reports.listMine.invalidate();
-      addToast("success", "Report generated");
-      router.push(`/report/${data.reportId}`);
-    },
-    onError: (err) => addToast("error", err.message),
-  });
-  const revokeReport = trpc.reports.revoke.useMutation({
-    onSuccess: () => {
-      void utils.reports.listMine.invalidate();
-      addToast("success", "Report revoked");
-    },
-    onError: (err) => addToast("error", err.message),
-  });
+  const findingsQuery = useApi<{ findings: FindingItem[] }>("/api/findings?limit=100");
+  const reportsQuery = useApi<ReportItem[]>("/api/reports");
+  const createReport = useApiMutation<
+    { scanId: string; expiresInDays: number },
+    { reportId: string }
+  >("/api/reports", "POST");
+  const revokeReport = useApiMutation<{ id: string }, unknown>("/api/reports", "DELETE");
+
+  const handleGenerateSuccess = (data: { reportId: string }) => {
+    reportsQuery.refetch();
+    addToast("success", "Report generated");
+    router.push(`/report/${data.reportId}`);
+  };
+  const handleGenerateError = (err: { message: string }) => addToast("error", err.message);
+  const handleRevokeSuccess = () => {
+    reportsQuery.refetch();
+    addToast("success", "Report revoked");
+  };
+  const handleRevokeError = (err: { message: string }) => addToast("error", err.message);
 
   const findings = findingsQuery.data?.findings ?? [];
   const latestScanId = findings[0]?.scanId;
+  const reportsNotConnected = findingsQuery.notConnected || reportsQuery.notConnected;
 
   const handleGenerate = () => {
     if (!latestScanId) {
       addToast("error", "No findings to include — run a scan first");
       return;
     }
-    createReport.mutate({
-      scanId: latestScanId,
-      expiresInDays,
-    });
+    createReport.mutate(
+      {
+        scanId: latestScanId,
+        expiresInDays,
+      },
+      { onSuccess: handleGenerateSuccess, onError: handleGenerateError },
+    );
   };
 
   return (
@@ -131,7 +149,12 @@ export default function ReportListPage() {
 
       <div className="bg-black/50 border border-gray-700 rounded-lg p-6">
         <h2 className="text-lg font-semibold mb-3">Your generated reports</h2>
-        {reportsQuery.isLoading ? (
+        {reportsNotConnected ? (
+          <p className="text-sm text-gray-400">
+            Reports aren&apos;t connected on this deployment yet — nothing is listed and generation
+            will fail until the backend is connected.
+          </p>
+        ) : reportsQuery.isLoading ? (
           <p className="text-sm text-gray-400">Loading reports…</p>
         ) : !reportsQuery.data?.length ? (
           <EmptyState
@@ -166,7 +189,10 @@ export default function ReportListPage() {
                       disabled={revokeReport.isPending}
                       onClick={() => {
                         if (confirm("Revoke this shareable report link?")) {
-                          revokeReport.mutate({ id: r.id });
+                          revokeReport.mutate(
+                            { id: r.id },
+                            { onSuccess: handleRevokeSuccess, onError: handleRevokeError },
+                          );
                         }
                       }}
                     >

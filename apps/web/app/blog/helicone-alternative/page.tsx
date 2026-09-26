@@ -85,7 +85,11 @@ export default function BlogHeliconeAlternative() {
                   ["Shadow API discovery", "❌", "✅"],
                   ["Credential leak scanning", "❌", "✅"],
                   ["Kill switch / budget cap", "⚠️ Alert only", "✅ Hard stop"],
-                  ["Compliance evidence export", "❌", "✅ Mapping and evidence, not a certification"],
+                  [
+                    "Compliance evidence export",
+                    "❌",
+                    "✅ Mapping and evidence, not a certification",
+                  ],
                   ["Self-hosted option", "❌", "✅ Docker"],
                 ].map(([cap, hel, dev]) => (
                   <tr key={cap}>
@@ -106,7 +110,7 @@ export default function BlogHeliconeAlternative() {
           </p>
           <ol className="list-decimal list-inside space-y-2">
             <li>Export your Helicone logs via API</li>
-            <li>Import into RaksHex (5-minute guided process)</li>
+            <li>Import into RaksHex with the guided import flow</li>
             <li>Run your first security scan on existing collections</li>
             <li>Enable the kill switch with a monthly budget</li>
             <li>Redirect traffic through RaksHex SDK or gateway</li>
@@ -114,9 +118,9 @@ export default function BlogHeliconeAlternative() {
 
           <h2 className="text-2xl font-bold text-white mt-8">Pricing Reality Check</h2>
           <p>
-            Helicone is free up to 10K requests/month, then $0.001 per request. RaksHex Pro is
-            $99/month flat for unlimited scans and unlimited requests. If you process more than
-            ~100K requests/month, RaksHex is cheaper. If you need security, there is no comparison.
+            Helicone is free up to 10K requests/month, then $0.001 per request. RaksHex is in
+            private beta — paid access is by invite or Order Form only, with evaluation pricing
+            shown for planning. If you need security, there is no comparison.
           </p>
 
           <h2 className="text-2xl font-bold text-white mt-8">The Verdict</h2>

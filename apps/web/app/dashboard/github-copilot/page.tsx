@@ -1,25 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { trpc } from "@/lib/trpc";
+import { useApi } from "@/lib/api";
 
 export default function CopilotGovernancePage() {
-  const { data: metrics, isLoading } = trpc.github.getCopilotMetrics.useQuery({
-    org: "rakshex-org",
-  });
+  // Copilot metrics have no /v1 equivalent on the Workers deployment —
+  // /api/github answers 501 not_connected, which renders the same honest
+  // "no verified data" state as an empty-but-connected backend.
+  const {
+    data: metrics,
+    isLoading,
+    notConnected,
+  } = useApi<{
+    status?: string;
+    wastedCostUsd: number;
+    assignedSeats: number;
+    activeUsers30d: number;
+    seatUtilization: number;
+    monthlyCostUsd: number;
+    acceptanceRate: number;
+    burners: any[];
+    recommendations: any[];
+    languageStats: any[];
+  }>(`/api/github?kind=copilot-metrics&org=rakshex-org`);
 
-  if (isLoading || !metrics) {
-    return (
-      <div className="p-8 text-white min-h-screen bg-[#090D16] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-          <p className="text-gray-400 text-sm font-mono">Loading Copilot Telemetry...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (metrics.status === "unavailable") {
+  if (notConnected || (!isLoading && metrics?.status === "unavailable")) {
     return (
       <div className="min-h-screen bg-[#090D16] p-8 text-white">
         <div className="mx-auto flex min-h-[60vh] max-w-2xl flex-col justify-center">
@@ -28,8 +33,9 @@ export default function CopilotGovernancePage() {
           </p>
           <h1 className="mt-3 text-3xl font-bold">No verified Copilot data yet</h1>
           <p className="mt-3 max-w-xl text-sm leading-6 text-gray-400">
-            Connect a GitHub organization and run a permitted Copilot sync. RaksHex only displays
-            usage, seats, and costs returned by GitHub or explicitly imported by your workspace.
+            {notConnected
+              ? "Copilot telemetry isn't connected on this deployment — the backend API for it hasn't been wired up, so there's nothing to show. No demo data is displayed."
+              : "Connect a GitHub organization and run a permitted Copilot sync. RaksHex only displays usage, seats, and costs returned by GitHub or explicitly imported by your workspace."}
           </p>
           <Link
             href="/enterprise"
@@ -37,6 +43,17 @@ export default function CopilotGovernancePage() {
           >
             Configure Copilot sync
           </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading || !metrics) {
+    return (
+      <div className="p-8 text-white min-h-screen bg-[#090D16] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+          <p className="text-gray-400 text-sm font-mono">Loading Copilot Telemetry...</p>
         </div>
       </div>
     );
@@ -79,9 +96,6 @@ export default function CopilotGovernancePage() {
                 </p>
               </div>
             </div>
-            <button className="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-200 text-xs rounded transition-all">
-              Optimize Now
-            </button>
           </div>
         )}
 
@@ -260,9 +274,10 @@ export default function CopilotGovernancePage() {
                       <p className="text-xs text-gray-400 mt-1 leading-relaxed">{r.description}</p>
                     </div>
                     {r.type === "reclaim_seat" && (
-                      <button className="w-full py-1.5 bg-primary text-on-primary hover:brightness-110 active:scale-[0.98] font-bold text-xs rounded transition-all">
-                        Remove Seats via GitHub API
-                      </button>
+                      <p className="text-xs text-gray-500">
+                        Seat removal needs the GitHub integration API, which isn&apos;t connected on
+                        this deployment yet.
+                      </p>
                     )}
                   </div>
                 ))}

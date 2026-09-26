@@ -225,14 +225,9 @@ const nextConfig = {
         source: "/api/trpc/:path*",
         destination: `${TS_BACKEND_URL}/api/trpc/:path*`,
       },
-      {
-        source: "/api/health",
-        destination: `${TS_BACKEND_URL}/api/health`,
-      },
-      {
-        source: "/api/health/ready",
-        destination: `${TS_BACKEND_URL}/api/health/ready`,
-      },
+      // NOTE: /api/health is served by app/api/health/route.ts (native proxy
+      // to the Workers API /v1/health). External-URL rewrites are not honored
+      // by the Cloudflare adapter, so no /api/* -> API-origin rewrites here.
       {
         source: "/api/create-order",
         destination: `${TS_BACKEND_URL}/api/create-order`,

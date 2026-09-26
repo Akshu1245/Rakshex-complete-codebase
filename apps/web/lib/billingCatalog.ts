@@ -1,11 +1,15 @@
 /**
- * Fallback copy of the server billing catalog (`PLAN_CONFIG` /
- * `payment.getPlans`). Amounts and feature bullets must stay identical to
- * that procedure — this is not a second price list.
+ * Static catalog copy of the plan definitions (mirrors the former
+ * `payment.getPlans` server procedure). Amounts match that catalog; feature
+ * bullets were reworded from the pre-pivot scanner framing to the current
+ * Agent Firewall story (the scanner is a layer inside the control plane,
+ * never the lead).
  *
- * Production same-origin GET `/api/trpc/payment.getPlans` already returns
- * this catalog. `/pricing` prefers that GET; this module is used only when
- * the GET fails or has not arrived yet, so first paint is not "Loading plans…".
+ * Rendered as catalog information only, never as live account state: the
+ * billing backend is not connected on this deployment, so plan state,
+ * invoices, and checkout answer 501 `not_connected` from `/api/billing`.
+ * `/pricing` and `/billing` render this copy with that label; first paint is
+ * never "Loading plans…".
  */
 export type EvaluationPlanId = "free" | "pro" | "enterprise";
 
@@ -29,9 +33,9 @@ export const EVALUATION_PLANS: readonly EvaluationPlan[] = [
     currency: "INR",
     interval: "monthly",
     features: [
-      "Up to 5 API endpoints scanned",
+      "Up to 5 agent actions evaluated per day",
       "100 LLM calls/day routed via the gateway",
-      "OWASP Top 10 audit (read-only)",
+      "Prompt-injection surface scan on your API surface",
       "Community support",
     ],
   },
@@ -44,12 +48,12 @@ export const EVALUATION_PLANS: readonly EvaluationPlan[] = [
     interval: "monthly",
     popular: true,
     features: [
-      "Up to 10,000 LLM calls/day routed via the gateway",
-      "Unlimited API collections + Postman/OpenAPI scans",
+      "Up to 10,000 agent actions evaluated per day",
+      "Unlimited API collections + Postman/OpenAPI import",
       "Inline kill-switch + budget caps",
       "PII redaction at the gateway",
-      "85+ prompt-injection payload red-team library",
-      "Spec-drift / shadow API detection",
+      "Prompt-injection red-team payload library",
+      "Shadow API detection",
       "Up to 5 team members",
       "Email support, 1-business-day SLA",
     ],
@@ -62,7 +66,7 @@ export const EVALUATION_PLANS: readonly EvaluationPlan[] = [
     currency: "INR",
     interval: "monthly",
     features: [
-      "Up to 250,000 LLM calls/day routed via the gateway",
+      "Up to 250,000 agent actions evaluated per day",
       "Everything in Pro",
       "MCP governance: tool-call audit + permission graph",
       "Scheduled AI red-team runs",

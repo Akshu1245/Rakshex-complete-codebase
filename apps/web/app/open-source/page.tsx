@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { trpc } from "@/lib/trpc";
+import { useApiMutation } from "@/lib/api";
 import { useToast } from "@/components/Toast";
 
 export default function OpenSourcePage() {
@@ -10,26 +10,32 @@ export default function OpenSourcePage() {
   const [error, setError] = useState<string | null>(null);
   const { addToast } = useToast();
 
-  const joinMutation = trpc.waitlist.join.useMutation({
-    onSuccess: () => {
-      setSuccess(true);
-      setError(null);
-      addToast("success", "Successfully joined the open-source waitlist!");
-    },
-    onError: (err) => {
-      setError(err.message || "Failed to join waitlist. Please try again.");
-      addToast("error", err.message || "Subscription failed");
-    },
-  });
+  const joinMutation = useApiMutation<{ email: string; plan: string; source: string }, unknown>(
+    "/api/waitlist",
+    "POST",
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
-    joinMutation.mutate({
-      email,
-      plan: "Free",
-      source: "open_source_waitlist",
-    });
+    joinMutation.mutate(
+      {
+        email,
+        plan: "Free",
+        source: "open_source_waitlist",
+      },
+      {
+        onSuccess: () => {
+          setSuccess(true);
+          setError(null);
+          addToast("success", "Successfully joined the open-source waitlist!");
+        },
+        onError: (err) => {
+          setError(err.message || "Failed to join waitlist. Please try again.");
+          addToast("error", err.message || "Subscription failed");
+        },
+      },
+    );
   };
 
   const attributions = [
@@ -76,8 +82,8 @@ export default function OpenSourcePage() {
             Open Source Strategy
           </h1>
           <p className="text-slate-400 max-w-2xl mx-auto text-lg mt-3">
-            Inspect the public source, follow the release evidence, file issues, and evaluate exactly
-            what the current RaksHex code implements.
+            Inspect the public source, follow the release evidence, file issues, and evaluate
+            exactly what the current RaksHex code implements.
           </p>
         </header>
 
@@ -95,7 +101,8 @@ export default function OpenSourcePage() {
           <div className="flex-shrink-0 w-full md:w-80">
             {success ? (
               <div className="bg-emerald-950/20 border border-emerald-500/30 text-emerald-300 p-4 rounded-xl text-center text-sm font-medium">
-                ✓ You&apos;re on the list. We&apos;ll notify you when there is a real release to share.
+                ✓ You&apos;re on the list. We&apos;ll notify you when there is a real release to
+                share.
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-3">

@@ -1,17 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { trpc } from "@/lib/trpc";
+import { useApi } from "@/lib/api";
 
 /**
- * Header bell with a live unread badge. Polls the notifications router every
- * 30s and links to the full feed at /notifications.
+ * Header bell with a live unread badge. Polls the notifications proxy route
+ * and links to the full feed at /notifications. On this deployment the
+ * notifications backend isn't connected, so no badge is shown — a missing
+ * badge means no data, not zero unread.
  */
 export function NotificationBell() {
-  const { data } = trpc.notifications.unreadCount.useQuery(undefined, {
-    refetchInterval: 30000,
-    retry: false,
-  });
+  const { data } = useApi<{ count: number }>("/api/notifications?kind=unreadCount");
   const count = data?.count ?? 0;
 
   return (

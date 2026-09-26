@@ -8,7 +8,7 @@
  */
 import { Hono } from "hono";
 import { desc, eq } from "drizzle-orm";
-import { evaluateAction } from "@rakshex/action-control";
+import { evaluateAction, normalizeSemanticAction } from "@rakshex/action-control";
 import type {
   AuthorityScope,
   ControlPolicy,
@@ -46,6 +46,8 @@ export interface EvaluateBody {
   mode?: "enforce" | "shadow";
   action: {
     name: string;
+    // The fields below are untrusted caller hints only: name/domain/effect/
+    // known are re-derived server-side from `raw` via normalizeSemanticAction.
     domain: SemanticAction["domain"];
     effect: SemanticAction["effect"];
     parameters?: Record<string, unknown>;
@@ -59,12 +61,45 @@ export interface EvaluateBody {
   authority?: AuthorityScope | null;
   estimatedCostUsd?: number;
   agentId?: string;
+  /** Ignored on the spend path: the key-scope spend identity is auth.keyId. */
   keyId?: string;
   userId?: string;
 }
 
 function bad(message: string, status = 400): Response {
   return Response.json({ error: message }, { status });
+}
+
+/**
+ * Server-side structural validation of a caller-supplied authority scope.
+ * This is shape validation only — the Workers slice has no delegated-
+ * authority store, so callers must not self-certify wider fields; malformed
+ * scopes are rejected fail-closed. (Full DB binding to stored delegations
+ * is a follow-up; see the F-5 audit note.)
+ */
+function isValidAuthorityScope(value: unknown): value is AuthorityScope {
+  if (typeof value !== "object" || value === null) return false;
+  const scope = value as Record<string, unknown>;
+  if (
+    !Array.isArray(scope.actions) ||
+    scope.actions.length === 0 ||
+    !scope.actions.every((a) => typeof a === "string" && a.length > 0)
+  ) {
+    return false;
+  }
+  for (const key of ["resources", "environments"] as const) {
+    const v = scope[key];
+    if (v !== undefined && (!Array.isArray(v) || !v.every((x) => typeof x === "string")))
+      return false;
+  }
+  for (const key of ["maxAmountMinor", "maxCount", "maxDelegationDepth"] as const) {
+    const v = scope[key];
+    if (v !== undefined && (!Number.isInteger(v) || (v as number) < 0)) return false;
+  }
+  for (const key of ["currency", "purpose", "validFrom", "expiresAt"] as const) {
+    if (scope[key] !== undefined && typeof scope[key] !== "string") return false;
+  }
+  return true;
 }
 
 async function hmacHex(key: string, message: string): Promise<string> {
@@ -79,13 +114,21 @@ async function hmacHex(key: string, message: string): Promise<string> {
   return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-/** Bearer API-key auth. Workers-slice scheme: HMAC-SHA256(API_KEY_PEPPER, raw key). */
-async function authenticate(
+export interface AuthenticatedKey {
+  keyId: string;
+  workspaceId: number;
+}
+
+/**
+ * Bearer API-key auth. Workers-slice scheme: HMAC-SHA256(API_KEY_PEPPER, raw key).
+ * Validates the key itself (existence, revocation, expiry) WITHOUT binding it to
+ * a workspace — every caller MUST predicate reads on the returned workspaceId.
+ */
+export async function authenticateKey(
   db: WorkersDb,
   env: Env,
   req: Request,
-  workspaceId: number,
-): Promise<{ ok: true; keyId: string } | { ok: false; response: Response }> {
+): Promise<{ ok: true; key: AuthenticatedKey } | { ok: false; response: Response }> {
   const header = req.headers.get("Authorization") ?? "";
   const raw = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
   if (!raw) return { ok: false, response: bad("Missing bearer API key", 401) };
@@ -95,15 +138,25 @@ async function authenticate(
   const keyHash = await hmacHex(env.API_KEY_PEPPER, raw);
   const [key] = await db.select().from(apiKeys).where(eq(apiKeys.keyHash, keyHash)).limit(1);
   const now = Date.now();
-  if (
-    !key ||
-    key.workspaceId !== workspaceId ||
-    key.revokedAt != null ||
-    (key.expiresAt != null && key.expiresAt <= now)
-  ) {
+  if (!key || key.revokedAt != null || (key.expiresAt != null && key.expiresAt <= now)) {
     return { ok: false, response: bad("Invalid API key", 401) };
   }
-  return { ok: true, keyId: key.id };
+  return { ok: true, key: { keyId: key.id, workspaceId: key.workspaceId } };
+}
+
+/** authenticateKey + workspace binding: the key must belong to workspaceId. */
+export async function authenticate(
+  db: WorkersDb,
+  env: Env,
+  req: Request,
+  workspaceId: number,
+): Promise<{ ok: true; keyId: string } | { ok: false; response: Response }> {
+  const ka = await authenticateKey(db, env, req);
+  if (!ka.ok) return ka;
+  if (ka.key.workspaceId !== workspaceId) {
+    return { ok: false, response: bad("Invalid API key", 401) };
+  }
+  return { ok: true, keyId: ka.key.keyId };
 }
 
 export interface ScopeSpendRow {
@@ -267,14 +320,36 @@ app.post("/", async (c) => {
   } catch {
     return bad("Invalid JSON body");
   }
+  // Authenticate before validating: unauthenticated callers get 401, never
+  // validation feedback about the request schema.
+  const auth = await authenticate(db, env, c.req.raw, body.workspaceId);
+  if (!auth.ok) return auth.response;
+
   if (!Number.isInteger(body.workspaceId) || body.workspaceId <= 0)
     return bad("workspaceId is required");
   if (!body.requestId || typeof body.requestId !== "string") return bad("requestId is required");
   if (!body.action?.name || !body.action?.raw?.provider)
     return bad("action.name and action.raw.provider are required");
 
-  const auth = await authenticate(db, env, c.req.raw, body.workspaceId);
-  if (!auth.ok) return auth.response;
+  // F-1: security-decision numerics are validated at the route boundary.
+  // estimatedCostUsd feeds the hard-DENY spend-ceiling gate; amountMinor
+  // feeds the approval threshold, daily limit, and delegation-cap gates.
+  if (
+    body.estimatedCostUsd !== undefined &&
+    (!Number.isFinite(body.estimatedCostUsd) || body.estimatedCostUsd < 0)
+  )
+    return bad("estimatedCostUsd must be a finite, non-negative number");
+  if (
+    body.action.amountMinor !== undefined &&
+    (!Number.isInteger(body.action.amountMinor) || body.action.amountMinor < 0)
+  )
+    return bad("action.amountMinor must be a non-negative integer");
+
+  // F-5: authority is validated server-side; a malformed scope is rejected
+  // rather than trusted. (A missing authority still flows into evaluateAction,
+  // which DENYs it — that decision semantic is unchanged.)
+  if (body.authority != null && !isValidAuthorityScope(body.authority))
+    return bad("authority is malformed");
 
   const rl = await checkRateLimit(db, `eval:${auth.keyId}`, 120, 60_000);
   if (!rl.allowed) {
@@ -292,33 +367,39 @@ app.post("/", async (c) => {
     const policyRec = await loadPolicy(db, body.workspaceId);
 
     // Spend state for every scope that has a ceiling configured.
+    // F-4: the `key`-scope spend identity is the AUTHENTICATED key
+    // (auth.keyId) — never the caller-supplied body.keyId, which is ignored
+    // on the spend path so a fresh fake id cannot zero out the spend sum.
     const ceilings = policyRec.policy.spendCeilingsUsd ?? {};
     const rows: ScopeSpendRow[] = [];
     for (const scope of SPEND_SCOPES) {
       if (ceilings[scope] == null) continue;
-      const id = scope === "agent" ? body.agentId : scope === "key" ? body.keyId : body.userId;
+      const id = scope === "agent" ? body.agentId : scope === "key" ? auth.keyId : body.userId;
       if (id == null) continue; // buildSpendSoFar turns this into null → fail-closed DENY
       rows.push({ scope, total: await sumScopeSpend(db, body.workspaceId, scope, id) });
     }
     const spendSoFarUsd = buildSpendSoFar(ceilings, rows, {
       agentId: body.agentId,
-      keyId: body.keyId,
+      keyId: auth.keyId,
       userId: body.userId,
     });
 
-    const action: SemanticAction = {
-      name: body.action.name,
-      version: "0.1",
-      domain: body.action.domain ?? "unknown",
-      effect: body.action.effect ?? "unknown",
+    // F-5: name/domain/effect/known are derived server-side from the raw
+    // action reference via the package classifier. Body-supplied name,
+    // domain, effect, and known are untrusted hints and are not consulted —
+    // a caller cannot self-certify `known:true` / `effect:"read"` to skip
+    // the unknown-write restrictive path.
+    const action: SemanticAction = normalizeSemanticAction({
+      provider: body.action.raw.provider,
+      operation: body.action.raw.operation,
+      toolName: body.action.raw.toolName,
+      requestId: body.action.raw.requestId,
       parameters: body.action.parameters ?? {},
       resource: body.action.resource,
       environment: body.action.environment,
       amountMinor: body.action.amountMinor,
       currency: body.action.currency,
-      raw: body.action.raw,
-      known: body.action.known ?? false,
-    };
+    });
     const evaluationInput: EvaluationInput = {
       mode: body.mode ?? policyRec.mode,
       action,

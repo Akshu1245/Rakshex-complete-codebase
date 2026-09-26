@@ -2,29 +2,30 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { trpc } from "@/lib/trpc";
+import { useApi, useApiMutation } from "@/lib/api";
 import { EmptyState } from "@/components/EmptyState";
 import { useToast } from "@/components/Toast";
+import { NotConnectedState } from "@/components/NotConnected";
+
+interface FeatureFlag {
+  key: string;
+  description?: string | null;
+  enabled: boolean;
+  rolloutPercentage: number;
+}
 
 export default function FeatureFlagsAdminPage() {
-  const utils = trpc.useUtils();
   const { addToast } = useToast();
-  const flagsQuery = trpc.featureFlags.listAll.useQuery();
+  // Feature flags have no /v1 equivalent on the Workers deployment —
+  // /api/admin answers 501 not_connected. Mutations surface the honest
+  // error instead of pretending to toggle flags.
+  const flagsQuery = useApi<FeatureFlag[]>("/api/admin?kind=feature-flags");
 
-  const upsert = trpc.featureFlags.upsert.useMutation({
-    onSuccess: () => {
-      utils.featureFlags.listAll.invalidate();
-      addToast("success", "Flag saved");
-      setNewKey("");
-      setNewDesc("");
-      setNewPct(0);
-    },
-    onError: (e) => addToast("error", e.message),
-  });
-  const toggle = trpc.featureFlags.toggle.useMutation({
-    onSuccess: () => utils.featureFlags.listAll.invalidate(),
-    onError: (e) => addToast("error", e.message),
-  });
+  const upsert = useApiMutation<
+    { key: string; description: string; enabled: boolean; rolloutPercentage: number },
+    unknown
+  >("/api/admin", "POST");
+  const toggle = useApiMutation<{ key: string; enabled: boolean }, unknown>("/api/admin", "PATCH");
 
   const [newKey, setNewKey] = useState("");
   const [newDesc, setNewDesc] = useState("");
@@ -78,12 +79,24 @@ export default function FeatureFlagsAdminPage() {
             </label>
             <button
               onClick={() =>
-                upsert.mutate({
-                  key: newKey.trim(),
-                  description: newDesc.trim(),
-                  enabled: true,
-                  rolloutPercentage: newPct,
-                })
+                upsert.mutate(
+                  {
+                    key: newKey.trim(),
+                    description: newDesc.trim(),
+                    enabled: true,
+                    rolloutPercentage: newPct,
+                  },
+                  {
+                    onSuccess: () => {
+                      flagsQuery.refetch();
+                      addToast("success", "Flag saved");
+                      setNewKey("");
+                      setNewDesc("");
+                      setNewPct(0);
+                    },
+                    onError: (e) => addToast("error", e.message),
+                  },
+                )
               }
               disabled={!newKey.trim() || upsert.isPending}
               className="px-4 py-2 rounded-lg bg-[#06D6A0] text-[#0A0E1A] text-sm font-semibold disabled:opacity-40"
@@ -105,7 +118,14 @@ export default function FeatureFlagsAdminPage() {
           </div>
         )}
 
-        {!flagsQuery.isLoading && flags.length === 0 && (
+        {flagsQuery.notConnected && (
+          <NotConnectedState
+            resource="Feature flags"
+            detail="Managing feature flags needs the account backend, which isn't connected on this deployment yet. Nothing is created or toggled here."
+          />
+        )}
+
+        {!flagsQuery.isLoading && !flagsQuery.notConnected && flags.length === 0 && (
           <EmptyState
             icon="🚩"
             title="No feature flags yet"
@@ -113,7 +133,7 @@ export default function FeatureFlagsAdminPage() {
           />
         )}
 
-        {!flagsQuery.isLoading && flags.length > 0 && (
+        {!flagsQuery.isLoading && !flagsQuery.notConnected && flags.length > 0 && (
           <div className="space-y-3">
             {flags.map((f) => (
               <div
@@ -126,7 +146,15 @@ export default function FeatureFlagsAdminPage() {
                   <p className="text-gray-500 text-xs mt-1">Rollout: {f.rolloutPercentage}%</p>
                 </div>
                 <button
-                  onClick={() => toggle.mutate({ key: f.key, enabled: !f.enabled })}
+                  onClick={() =>
+                    toggle.mutate(
+                      { key: f.key, enabled: !f.enabled },
+                      {
+                        onSuccess: () => flagsQuery.refetch(),
+                        onError: (e) => addToast("error", e.message),
+                      },
+                    )
+                  }
                   className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
                     f.enabled
                       ? "bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/30"

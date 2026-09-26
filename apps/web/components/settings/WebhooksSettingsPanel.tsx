@@ -1,60 +1,97 @@
 "use client";
 
 import { useState } from "react";
-import { trpc } from "@/lib/trpc";
+import { useApi, useApiMutation } from "@/lib/api";
 import { useToast } from "@/components/Toast";
 import { EmptyState } from "@/components/EmptyState";
+import { NotConnectedState } from "@/components/NotConnected";
+import { useWorkspace } from "@/hooks/useWorkspace";
 
 const inputClass =
   "w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm";
 
+interface WebhookEndpoint {
+  id: string;
+  url: string;
+  secretMasked?: string;
+  isActive: boolean;
+  lastStatus?: string | null;
+  events?: string[];
+}
+
+interface WebhookEventInfo {
+  name: string;
+  description?: string;
+}
+
+type WebhookEventName =
+  | "scan.complete"
+  | "scan.started"
+  | "finding.discovered"
+  | "quota.warning"
+  | "kill_switch.triggered"
+  | "subscription.updated";
+
 export function WebhooksSettingsPanel() {
   const { addToast } = useToast();
-  const utils = trpc.useUtils();
-  const workspaces = trpc.workspaces.listMine.useQuery();
+  // Webhooks have no /v1 equivalent on the Workers deployment —
+  // /api/settings answers 501 not_connected. Mutations surface an honest
+  // error instead of pretending to register webhooks.
+  const { workspaceId, workspaces } = useWorkspace();
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<number>(0);
-  const workspaceId = selectedWorkspaceId || workspaces.data?.[0]?.id || 0;
-  const listQuery = trpc.webhooks.list.useQuery({ workspaceId }, { enabled: workspaceId > 0 });
-  const eventsQuery = trpc.webhooks.listSupportedEvents.useQuery();
+  const effectiveWorkspaceId = selectedWorkspaceId || workspaceId;
+  const listQuery = useApi<WebhookEndpoint[]>(
+    effectiveWorkspaceId > 0
+      ? `/api/settings?kind=webhooks&workspaceId=${effectiveWorkspaceId}`
+      : null,
+  );
+  const eventsQuery = useApi<{ events: WebhookEventInfo[] }>("/api/settings?kind=webhook-events");
   const [url, setUrl] = useState("");
   const [selectedEvents, setSelectedEvents] = useState<string[]>(["scan.complete"]);
   const [lastSecret, setLastSecret] = useState<string | null>(null);
 
-  const register = trpc.webhooks.register.useMutation({
-    onSuccess: (data) => {
-      utils.webhooks.list.invalidate();
-      setUrl("");
-      setLastSecret(data.secret);
-      addToast("success", "Webhook registered — copy the secret now");
-    },
-    onError: (err) => addToast("error", err.message),
-  });
+  const register = useApiMutation<
+    { workspaceId: number; url: string; events: WebhookEventName[] },
+    { secret: string }
+  >("/api/settings", "POST");
+  const setActive = useApiMutation<{ workspaceId: number; id: string; isActive: boolean }, unknown>(
+    "/api/settings",
+    "PATCH",
+  );
+  const test = useApiMutation<{ workspaceId: number; id: string }, { delivered: number }>(
+    "/api/settings",
+    "POST",
+  );
+  const remove = useApiMutation<{ workspaceId: number; id: string }, unknown>(
+    "/api/settings",
+    "DELETE",
+  );
 
-  const setActive = trpc.webhooks.setActive.useMutation({
-    onSuccess: () => {
-      utils.webhooks.list.invalidate();
-      addToast("success", "Webhook updated");
-    },
-    onError: (err) => addToast("error", err.message),
-  });
+  const refresh = () => listQuery.refetch();
 
-  const test = trpc.webhooks.test.useMutation({
-    onSuccess: (data) => {
-      addToast(
-        "success",
-        `Test sent (${data.delivered} delivery attempt${data.delivered === 1 ? "" : "s"})`,
-      );
-    },
-    onError: (err) => addToast("error", err.message),
-  });
-
-  const remove = trpc.webhooks.delete.useMutation({
-    onSuccess: () => {
-      utils.webhooks.list.invalidate();
-      addToast("success", "Webhook deleted");
-    },
-    onError: (err) => addToast("error", err.message),
-  });
+  const handleRegister = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedEvents.length === 0) {
+      addToast("error", "Select at least one event");
+      return;
+    }
+    register.mutate(
+      {
+        workspaceId: effectiveWorkspaceId,
+        url,
+        events: selectedEvents as WebhookEventName[],
+      },
+      {
+        onSuccess: (data) => {
+          refresh();
+          setUrl("");
+          setLastSecret(data.secret);
+          addToast("success", "Webhook registered — copy the secret now");
+        },
+        onError: (err) => addToast("error", err.message),
+      },
+    );
+  };
 
   const events = eventsQuery.data?.events ?? [];
   const endpoints = listQuery.data ?? [];
@@ -88,37 +125,16 @@ export function WebhooksSettingsPanel() {
         </div>
       )}
 
-      <form
-        className="space-y-4 p-4 border border-gray-600 rounded-md"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (selectedEvents.length === 0) {
-            addToast("error", "Select at least one event");
-            return;
-          }
-          register.mutate({
-            workspaceId,
-            url,
-            events: selectedEvents as (
-              | "scan.complete"
-              | "scan.started"
-              | "finding.discovered"
-              | "quota.warning"
-              | "kill_switch.triggered"
-              | "subscription.updated"
-            )[],
-          });
-        }}
-      >
-        {workspaces.data && workspaces.data.length > 1 && (
+      <form className="space-y-4 p-4 border border-gray-600 rounded-md" onSubmit={handleRegister}>
+        {workspaces.length > 1 && (
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">Workspace</label>
             <select
               className={inputClass}
-              value={workspaceId}
+              value={effectiveWorkspaceId}
               onChange={(event) => setSelectedWorkspaceId(Number(event.target.value))}
             >
-              {workspaces.data.map((workspace) => (
+              {workspaces.map((workspace) => (
                 <option key={workspace.id} value={workspace.id}>
                   {workspace.name}
                 </option>
@@ -161,7 +177,7 @@ export function WebhooksSettingsPanel() {
         </div>
         <button
           type="submit"
-          disabled={register.isPending || !workspaceId}
+          disabled={register.isPending || !effectiveWorkspaceId}
           className="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 text-sm"
         >
           {register.isPending ? "Registering…" : "Register webhook"}
@@ -170,6 +186,11 @@ export function WebhooksSettingsPanel() {
 
       {listQuery.isLoading ? (
         <p className="text-sm text-gray-400">Loading webhooks…</p>
+      ) : listQuery.notConnected ? (
+        <NotConnectedState
+          resource="Webhooks"
+          detail="Registering webhooks needs the account backend, which isn't connected on this deployment yet. No callbacks are registered here."
+        />
       ) : endpoints.length === 0 ? (
         <EmptyState
           compact
@@ -204,7 +225,19 @@ export function WebhooksSettingsPanel() {
                     type="button"
                     className="text-sm px-3 py-1.5 rounded-md border border-gray-500 text-gray-200 hover:bg-gray-600"
                     disabled={test.isPending}
-                    onClick={() => test.mutate({ workspaceId, id: ep.id })}
+                    onClick={() =>
+                      test.mutate(
+                        { workspaceId: effectiveWorkspaceId, id: ep.id },
+                        {
+                          onSuccess: (data) =>
+                            addToast(
+                              "success",
+                              `Test sent (${data.delivered} delivery attempt${data.delivered === 1 ? "" : "s"})`,
+                            ),
+                          onError: (err) => addToast("error", err.message),
+                        },
+                      )
+                    }
                   >
                     Test
                   </button>
@@ -213,7 +246,16 @@ export function WebhooksSettingsPanel() {
                     className="text-sm px-3 py-1.5 rounded-md border border-gray-500 text-gray-200 hover:bg-gray-600"
                     disabled={setActive.isPending}
                     onClick={() =>
-                      setActive.mutate({ workspaceId, id: ep.id, isActive: !ep.isActive })
+                      setActive.mutate(
+                        { workspaceId: effectiveWorkspaceId, id: ep.id, isActive: !ep.isActive },
+                        {
+                          onSuccess: () => {
+                            refresh();
+                            addToast("success", "Webhook updated");
+                          },
+                          onError: (err) => addToast("error", err.message),
+                        },
+                      )
                     }
                   >
                     {ep.isActive ? "Pause" : "Resume"}
@@ -224,7 +266,16 @@ export function WebhooksSettingsPanel() {
                     disabled={remove.isPending}
                     onClick={() => {
                       if (confirm("Delete this webhook?")) {
-                        remove.mutate({ workspaceId, id: ep.id });
+                        remove.mutate(
+                          { workspaceId: effectiveWorkspaceId, id: ep.id },
+                          {
+                            onSuccess: () => {
+                              refresh();
+                              addToast("success", "Webhook deleted");
+                            },
+                            onError: (err) => addToast("error", err.message),
+                          },
+                        );
                       }
                     }}
                   >

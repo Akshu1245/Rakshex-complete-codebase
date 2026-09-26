@@ -5,9 +5,10 @@ import Link from "next/link";
 import { EmptyState } from "@/components/EmptyState";
 import { getCsrfTokenFromCookie } from "@/lib/providers";
 
-type ImportSource = "helicone" | "portkey" | "lakera" | "langsmith" | "universal_json";
+type ImportSource = "postman" | "helicone" | "portkey" | "lakera" | "langsmith" | "universal_json";
 
 const SOURCES: { value: ImportSource; label: string; description: string }[] = [
+  { value: "postman", label: "Postman", description: "Postman Collection v2.1 (file or JSON)" },
   { value: "helicone", label: "Helicone", description: "AI observability platform" },
   { value: "portkey", label: "Portkey", description: "LLM gateway and router" },
   { value: "lakera", label: "Lakera Guard", description: "AI security platform" },
@@ -32,6 +33,20 @@ export default function ImportPage() {
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
+
+  const handleFile = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      const text = await file.text();
+      setData(text);
+      setFileName(file.name);
+      setPreview(null);
+      setError(null);
+    } catch {
+      setError("Could not read that file.");
+    }
+  };
 
   useEffect(() => {
     const s = searchParams.get("source") as ImportSource | null;
@@ -121,6 +136,7 @@ export default function ImportPage() {
                   setSource(s.value);
                   setPreview(null);
                   setError(null);
+                  setFileName(null);
                 }}
                 className={`w-full text-left p-3 rounded-lg transition-colors ${
                   source === s.value
@@ -137,6 +153,21 @@ export default function ImportPage() {
 
         <div className="bg-black/50/50 border border-gray-700 rounded-lg p-6">
           <h2 className="text-lg font-semibold text-white mb-4">2. Paste Data</h2>
+          <label className="block mb-3 text-sm text-gray-400">
+            <span className="inline-block px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg cursor-pointer transition-colors">
+              {fileName ? `📄 ${fileName}` : "Upload collection file (.json)"}
+            </span>
+            <input
+              type="file"
+              accept=".json,application/json"
+              className="hidden"
+              disabled={!source}
+              onChange={(e) => {
+                void handleFile(e.target.files?.[0]);
+                e.target.value = "";
+              }}
+            />
+          </label>
           <textarea
             value={data}
             onChange={(e) => setData(e.target.value)}

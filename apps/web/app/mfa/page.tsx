@@ -3,7 +3,7 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { trpc } from "@/lib/trpc";
+import { useApiMutation } from "@/lib/api";
 
 function MfaForm() {
   const router = useRouter();
@@ -13,13 +13,31 @@ function MfaForm() {
   const [useRecovery, setUseRecovery] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const verify = trpc.auth.verify2FALogin.useMutation({
-    onSuccess: () => {
-      router.push("/dashboard");
-      router.refresh();
-    },
-    onError: (err) => setError(err.message),
-  });
+  // MFA verification has no /v1 equivalent on the Workers deployment —
+  // /api/auth answers 501 not_connected, and the error renders honestly.
+  const verify = useApiMutation<
+    { userId: string; code: string; useRecoveryCode: boolean },
+    unknown
+  >("/api/auth", "POST");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    verify.mutate(
+      {
+        userId,
+        code: code.trim(),
+        useRecoveryCode: useRecovery,
+      },
+      {
+        onSuccess: () => {
+          router.push("/dashboard");
+          router.refresh();
+        },
+        onError: (err) => setError(err.message),
+      },
+    );
+  };
 
   if (!userId) {
     return (
@@ -50,18 +68,7 @@ function MfaForm() {
           </div>
         )}
 
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            setError(null);
-            verify.mutate({
-              userId,
-              code: code.trim(),
-              useRecoveryCode: useRecovery,
-            });
-          }}
-          className="space-y-4"
-        >
+        <form onSubmit={handleSubmit} className="space-y-4">
           <input
             value={code}
             onChange={(e) => setCode(e.target.value)}

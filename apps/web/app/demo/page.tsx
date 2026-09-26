@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { ReceiptBillSheet, ReceiptPrinter, type PrintedReceipt } from "@/components/ReceiptPrinter";
 import {
   ArrowRight,
   CheckCircle2,
@@ -33,10 +34,81 @@ function shortHash(seed: number, amount: number) {
   return `0x${value.slice(0, 8)}`;
 }
 
+/** Clearly-labeled local demo receipt — used only when the live firewall is unreachable. */
+function demoPrintedReceipt(
+  amount: number,
+  decision: Decision,
+  reason: string,
+  ledgerHash: string,
+  runId: number,
+): PrintedReceipt {
+  return {
+    id: `demo-${runId}`,
+    decision,
+    action: "financial.refund",
+    agent: "finance-support-prod",
+    permissionSlip: `refund ≤ $${AUTHORITY_LIMIT}`,
+    policy: reason,
+    amount: `$${amount}`,
+    limit: `$${AUTHORITY_LIMIT}`,
+    occurredAt: new Date().toISOString(),
+    workspaceId: "demo",
+    requestId: `demo-req-${runId}`,
+    previousHash: "demo-prev-000000",
+    entryHash: ledgerHash,
+    signingKeyId: "demo-key",
+    signingAlgorithm: "ed25519",
+    signature: "demo-signature-not-real",
+    verifyUrl: "/demo",
+    demo: true,
+    raw: { demo: true, decision, amount, reason, ledgerHash },
+  };
+}
+
+const strOf = (value: unknown, fallback = ""): string =>
+  typeof value === "string" ? value : fallback;
+
+/** Build the printable receipt from a genuine signed entry returned by /v1/receipts/:id. */
+function livePrintedReceipt(entry: Record<string, unknown>, amount: number): PrintedReceipt {
+  const payload = (entry.payload ?? {}) as Record<string, unknown>;
+  const reasons = Array.isArray(payload.reasons)
+    ? (payload.reasons as unknown[])
+        .map((r) => strOf(r))
+        .filter(Boolean)
+        .join(", ")
+    : "";
+  const id = typeof entry.id === "number" ? entry.id : strOf(entry.id, "?");
+  return {
+    id,
+    decision: strOf(entry.eventType) === "allow" ? "ALLOW" : "DENY",
+    action: strOf(payload.action, "financial.refund"),
+    agent: strOf(payload.agentId, "finance-support-prod"),
+    permissionSlip: `refund ≤ $${AUTHORITY_LIMIT}`,
+    policy: reasons || strOf(payload.policyVersion, "live-policy"),
+    amount: `$${amount}`,
+    limit: `$${AUTHORITY_LIMIT}`,
+    occurredAt: strOf(entry.occurredAt, new Date().toISOString()),
+    workspaceId:
+      typeof entry.workspaceId === "number" ? entry.workspaceId : strOf(entry.workspaceId, "?"),
+    requestId: strOf(entry.requestId),
+    previousHash: strOf(entry.previousHash),
+    entryHash: strOf(entry.entryHash),
+    signingKeyId: strOf(entry.signingKeyId),
+    signingAlgorithm: strOf(entry.signingAlgorithm, "ed25519"),
+    signature: strOf(entry.signature),
+    // Canonical public location of the signed proof on the API worker.
+    // (Same origin already baked into wrangler.toml as RAKSHEX_API_ORIGIN.)
+    verifyUrl: `https://rakshex-firewall.rakshex.workers.dev/v1/receipts/${id}`,
+    raw: entry,
+  };
+}
+
 export default function DemoPage() {
   const [amount, setAmount] = useState(400);
   const [runNumber, setRunNumber] = useState(1);
   const [hasEvaluated, setHasEvaluated] = useState(true);
+  const [liveReceipt, setLiveReceipt] = useState(false);
+  const [printing, setPrinting] = useState(false);
   const [history, setHistory] = useState<DemoRun[]>([
     {
       id: 0,
@@ -55,7 +127,23 @@ export default function DemoPage() {
 
   const currentHash = useMemo(() => shortHash(runNumber, amount), [amount, runNumber]);
 
-  const evaluate = () => {
+  const [printed, setPrinted] = useState<PrintedReceipt>(() =>
+    demoPrintedReceipt(400, "DENY", "delegated_authority_exceeded", "0x8f7a21c4", 0),
+  );
+
+  // Print mode: render only the structured bill, print it, then restore.
+  useEffect(() => {
+    if (!printing) return;
+    const timer = setTimeout(() => window.print(), 80);
+    const done = () => setPrinting(false);
+    window.addEventListener("afterprint", done);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("afterprint", done);
+    };
+  }, [printing]);
+
+  const evaluate = async () => {
     const next: DemoRun = {
       id: runNumber,
       amount,
@@ -67,12 +155,43 @@ export default function DemoPage() {
     setHistory((items) => [next, ...items].slice(0, 5));
     setRunNumber((value) => value + 1);
     setHasEvaluated(true);
+
+    // Try the live firewall first; fall back to clearly-labeled demo data.
+    try {
+      const res = await fetch("/api/demo/evaluate", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ amount }),
+      });
+      const data = (await res.json().catch(() => null)) as {
+        ok?: boolean;
+        live?: boolean;
+        receipt?: Record<string, unknown>;
+      } | null;
+      if (res.ok && data?.ok && data.live && data.receipt) {
+        setPrinted(livePrintedReceipt(data.receipt, amount));
+        setLiveReceipt(true);
+        return;
+      }
+    } catch {
+      // fall through to labeled demo data below
+    }
+    setPrinted(demoPrintedReceipt(amount, decision, reason, currentHash, runNumber));
+    setLiveReceipt(false);
   };
 
   const chooseAmount = (value: number) => {
     setAmount(value);
     setHasEvaluated(false);
   };
+
+  if (printing && printed) {
+    return (
+      <main className="min-h-screen bg-white p-6 text-black sm:p-10">
+        <ReceiptBillSheet receipt={printed} />
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen overflow-x-clip bg-transparent pb-24 pt-[118px] text-white">
@@ -84,7 +203,8 @@ export default function DemoPage() {
               Public Agent Firewall demo
             </div>
             <h1 className="mt-5 max-w-3xl text-4xl font-bold leading-[1.03] tracking-[-0.045em] text-white sm:text-5xl lg:text-6xl">
-              See the decision <span className="text-[#14B8A6]">before</span> the action becomes real.
+              See the decision <span className="text-[#14B8A6]">before</span> the action becomes
+              real.
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-7 text-neutral-400 sm:text-lg">
               A support agent is delegated permission to issue refunds up to ${AUTHORITY_LIMIT}.
@@ -119,7 +239,9 @@ export default function DemoPage() {
               </span>
             </div>
             <span className="w-fit rounded-full border border-white/10 px-2.5 py-1 font-mono text-[10px] text-neutral-500">
-              Simulated public evaluation · no external transaction
+              {liveReceipt
+                ? "Live signed receipt · rakshex-firewall"
+                : "Simulated public evaluation · no external transaction"}
             </span>
           </div>
 
@@ -136,7 +258,9 @@ export default function DemoPage() {
                     <p className="mt-1 text-sm font-semibold text-white">Order #8932</p>
                   </div>
                   <div className="shrink-0 text-right">
-                    <span className="block text-[10px] uppercase tracking-wide text-neutral-500">Amount</span>
+                    <span className="block text-[10px] uppercase tracking-wide text-neutral-500">
+                      Amount
+                    </span>
                     <span className="text-2xl font-bold text-white">${amount}</span>
                   </div>
                 </div>
@@ -192,7 +316,9 @@ export default function DemoPage() {
                   </div>
                   <div className="flex items-center justify-between gap-4">
                     <span className="text-neutral-500">Agent child scope</span>
-                    <span className="font-mono font-semibold text-[#14B8A6]">refund ≤ ${AUTHORITY_LIMIT}</span>
+                    <span className="font-mono font-semibold text-[#14B8A6]">
+                      refund ≤ ${AUTHORITY_LIMIT}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -226,7 +352,9 @@ export default function DemoPage() {
                     <div>
                       <RotateCcw className="mx-auto h-6 w-6 text-neutral-600" aria-hidden="true" />
                       <p className="mt-3 text-sm font-semibold text-neutral-300">Amount changed</p>
-                      <p className="mt-1 text-xs text-neutral-500">Evaluate again to produce a new decision.</p>
+                      <p className="mt-1 text-xs text-neutral-500">
+                        Evaluate again to produce a new decision.
+                      </p>
                     </div>
                   </div>
                 ) : (
@@ -245,18 +373,35 @@ export default function DemoPage() {
                       <p className="mt-3 font-mono text-[11px] text-neutral-400">{reason}</p>
                     </div>
                     <div className="rounded-lg border border-white/[0.08] bg-black/20 px-3 py-2 text-left sm:text-right">
-                      <span className="block text-[10px] uppercase tracking-wide text-neutral-500">Action ID</span>
-                      <span className="font-mono text-xs text-neutral-300">act_demo_{runNumber}</span>
+                      <span className="block text-[10px] uppercase tracking-wide text-neutral-500">
+                        Action ID
+                      </span>
+                      <span className="font-mono text-xs text-neutral-300">
+                        act_demo_{runNumber}
+                      </span>
                     </div>
                   </div>
                 )}
               </div>
 
+              {hasEvaluated && (
+                <div className="mt-8">
+                  <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-500">
+                    3 · Signed receipt
+                  </p>
+                  <div className="mt-4 flex justify-center">
+                    <ReceiptPrinter receipt={printed} onPrint={() => setPrinting(true)} />
+                  </div>
+                </div>
+              )}
+
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
                 <div className="rounded-xl border border-white/[0.08] bg-black/20 p-4">
                   <div className="flex items-center gap-2">
                     <KeyRound className="h-4 w-4 text-[#14B8A6]" aria-hidden="true" />
-                    <span className="text-xs font-semibold text-neutral-300">Credential broker</span>
+                    <span className="text-xs font-semibold text-neutral-300">
+                      Credential broker
+                    </span>
                   </div>
                   <p
                     className={`mt-3 text-lg font-bold ${
@@ -284,7 +429,9 @@ export default function DemoPage() {
                     <ShieldCheck className="h-4 w-4 text-[#14B8A6]" aria-hidden="true" />
                     <span className="text-xs font-semibold text-neutral-300">Action Ledger</span>
                   </div>
-                  <p className={`mt-3 font-mono text-lg font-bold ${hasEvaluated ? "text-white" : "text-neutral-600"}`}>
+                  <p
+                    className={`mt-3 font-mono text-lg font-bold ${hasEvaluated ? "text-white" : "text-neutral-600"}`}
+                  >
                     {hasEvaluated ? currentHash : "—"}
                   </p>
                   <p className="mt-2 text-xs leading-5 text-neutral-500">
@@ -356,7 +503,10 @@ export default function DemoPage() {
               body: "For brokered credentials, the denied caller does not receive the secret required to execute the action.",
             },
           ].map((item) => (
-            <div key={item.title} className="rounded-xl border border-white/[0.08] bg-[#090D14]/55 p-5">
+            <div
+              key={item.title}
+              className="rounded-xl border border-white/[0.08] bg-[#090D14]/55 p-5"
+            >
               <h2 className="text-base font-semibold text-white">{item.title}</h2>
               <p className="mt-2 text-sm leading-6 text-neutral-500">{item.body}</p>
             </div>
@@ -365,7 +515,9 @@ export default function DemoPage() {
 
         <div className="mt-10 flex flex-col items-start justify-between gap-6 rounded-xl border border-[#14B8A6]/20 bg-[#0B1414] p-6 sm:flex-row sm:items-center sm:p-8">
           <div>
-            <h2 className="text-2xl font-bold tracking-[-0.03em] text-white">Want to evaluate this against a real workflow?</h2>
+            <h2 className="text-2xl font-bold tracking-[-0.03em] text-white">
+              Want to evaluate this against a real workflow?
+            </h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-400">
               Private-beta pilots start with one agent, one consequential action, and a scoped
               rollout plan rather than a production-wide switch.

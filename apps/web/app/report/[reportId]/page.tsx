@@ -13,7 +13,7 @@ import {
   ArrowRight,
   Printer,
 } from "lucide-react";
-import { trpc } from "@/lib/trpc";
+import { useApi } from "@/lib/api";
 
 interface Finding {
   title: string;
@@ -77,11 +77,10 @@ export default function ReportPage() {
   const params = useParams();
   const reportId = params.reportId as string;
   const [copied, setCopied] = useState(false);
-  const reportQuery = trpc.reports.getById.useQuery(
-    { id: reportId },
-    { enabled: typeof reportId === "string" && reportId.length >= 16, retry: false },
+  const reportQuery = useApi<ReportData>(
+    typeof reportId === "string" && reportId.length >= 16 ? `/api/reports/${reportId}` : null,
   );
-  const report = reportQuery.data as ReportData | null | undefined;
+  const report = reportQuery.data;
 
   const handleShare = () => {
     const url = window.location.href;

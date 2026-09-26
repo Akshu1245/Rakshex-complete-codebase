@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { trpc } from "@/lib/trpc";
+import { useApi } from "@/lib/api";
 import {
   BookOpen,
   Search,
@@ -52,13 +52,80 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
+// Static REST reference for the Workers deployment. This is catalog copy of
+// the /v1 contract the architecture actually exposes — shown when the docs
+// backend (/api/api-docs) is not connected, instead of an empty page.
+interface WorkersEndpoint {
+  method: string;
+  path: string;
+  tag: string;
+  summary: string;
+  auth: boolean;
+}
+
+const WORKERS_V1: WorkersEndpoint[] = [
+  {
+    method: "get",
+    path: "/v1/health",
+    tag: "system",
+    summary: "Service health check",
+    auth: false,
+  },
+  {
+    method: "post",
+    path: "/v1/evaluate",
+    tag: "agent-firewall",
+    summary: "Evaluate a proposed action against policy before it executes",
+    auth: true,
+  },
+  {
+    method: "get",
+    path: "/v1/receipts/:id",
+    tag: "ledger",
+    summary: "Fetch a single signed action receipt",
+    auth: false,
+  },
+  {
+    method: "get",
+    path: "/v1/receipts/export",
+    tag: "ledger",
+    summary: "Export verifiable receipt bundles",
+    auth: false,
+  },
+  {
+    method: "post",
+    path: "/v1/receipts/verify",
+    tag: "ledger",
+    summary: "Verify a receipt bundle against the hash chain",
+    auth: false,
+  },
+  {
+    method: "get",
+    path: "/v1/stream/decisions",
+    tag: "streaming",
+    summary: "Live stream of firewall decisions (SSE)",
+    auth: false,
+  },
+];
+
+interface DocSummary {
+  totalProcedures?: number;
+  domains?: Array<{ tag: string; queries: number; mutations: number }>;
+}
+
+interface DocSpec {
+  paths?: Record<string, Record<string, any>>;
+  servers?: Array<{ url?: string }>;
+}
+
 export default function ApiDocsPage() {
   const [search, setSearch] = useState("");
   const [expandedTags, setExpandedTags] = useState<Set<string>>(new Set());
   const [showAuthOnly, setShowAuthOnly] = useState(false);
 
-  const summaryQuery = trpc.apiDocs.summary.useQuery();
-  const specQuery = trpc.apiDocs.spec.useQuery(undefined, { staleTime: 60_000 });
+  const summaryQuery = useApi<DocSummary>("/api/api-docs?kind=summary");
+  const specQuery = useApi<DocSpec>("/api/api-docs?kind=spec");
+  const notConnected = summaryQuery.notConnected || specQuery.notConnected;
 
   const summary = summaryQuery.data;
   const spec = specQuery.data;
@@ -79,9 +146,44 @@ export default function ApiDocsPage() {
       .sort((a, b) => b.ops.length - a.ops.length);
   }, [spec]);
 
+  const fallbackGrouped = useMemo(() => {
+    const byTag = new Map<string, { method: string; path: string; op: any }[]>();
+    for (const e of WORKERS_V1) {
+      const list = byTag.get(e.tag) ?? [];
+      list.push({
+        method: e.method,
+        path: e.path,
+        op: {
+          tags: [e.tag],
+          summary: e.summary,
+          operationId: `${e.method} ${e.path}`,
+          security: e.auth ? [{}] : [],
+        },
+      });
+      byTag.set(e.tag, list);
+    }
+    return Array.from(byTag.entries())
+      .map(([tag, ops]) => ({ tag, ops }))
+      .sort((a, b) => b.ops.length - a.ops.length);
+  }, []);
+
+  const groups = notConnected ? fallbackGrouped : grouped;
+  const fallbackDomains = useMemo(() => {
+    const counts = new Map<string, { queries: number; mutations: number }>();
+    for (const e of WORKERS_V1) {
+      const c = counts.get(e.tag) ?? { queries: 0, mutations: 0 };
+      if (e.method === "get") c.queries += 1;
+      else c.mutations += 1;
+      counts.set(e.tag, c);
+    }
+    return Array.from(counts.entries()).map(([tag, c]) => ({ tag, ...c }));
+  }, []);
+  const domains = notConnected ? fallbackDomains : (summary?.domains ?? []);
+  const totalEndpoints = notConnected ? WORKERS_V1.length : (summary?.totalProcedures ?? 0);
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return grouped
+    return groups
       .map(({ tag, ops }) => ({
         tag,
         ops: ops.filter(
@@ -94,7 +196,7 @@ export default function ApiDocsPage() {
         ),
       }))
       .filter((g) => g.ops.length > 0);
-  }, [grouped, search, showAuthOnly]);
+  }, [groups, search, showAuthOnly]);
 
   const toggleTag = (tag: string) => {
     setExpandedTags((prev) => {
@@ -128,8 +230,8 @@ export default function ApiDocsPage() {
             <div>
               <h1 className="font-headline-md text-headline-md text-white font-bold">API Docs</h1>
               <p className="text-xs text-on-surface-variant font-label-mono">
-                {summary?.totalProcedures ?? 0} procedures across {summary?.domains?.length ?? 0}{" "}
-                domains
+                {totalEndpoints} endpoints across {domains.length} domains
+                {notConnected ? " — Workers /v1 reference" : ""}
               </p>
             </div>
           </div>
@@ -172,7 +274,7 @@ export default function ApiDocsPage() {
 
         {/* Quick Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {summary?.domains?.slice(0, 4).map((d: any) => (
+          {domains.slice(0, 4).map((d) => (
             <div key={d.tag} className="glass-card p-4">
               <p className="text-[10px] font-label-mono text-on-surface-variant uppercase tracking-wider">
                 {d.tag}
@@ -268,15 +370,27 @@ export default function ApiDocsPage() {
         <div className="mt-12 p-6 glass-card border border-glass text-center">
           <Zap className="w-6 h-6 text-primary mx-auto mb-2" />
           <p className="text-sm text-white font-medium">Want to integrate programmatically?</p>
-          <p className="text-xs text-on-surface-variant mt-1 max-w-lg mx-auto">
-            Every procedure is JSON-over-HTTP. Queries (GET) take input as a URL-encoded JSON
-            parameter; mutations (POST) take JSON request bodies. Auth is via session cookie issued
-            by{" "}
-            <code className="px-1 py-0.5 bg-surface-container rounded text-primary font-mono text-xs">
-              /auth/login
-            </code>
-            .
-          </p>
+          {notConnected ? (
+            <p className="text-xs text-on-surface-variant mt-1 max-w-lg mx-auto">
+              This is a static reference for the Workers /v1 contract — the docs backend isn&apos;t
+              connected on this deployment.{" "}
+              <code className="px-1 py-0.5 bg-surface-container rounded text-primary font-mono text-xs">
+                /v1/evaluate
+              </code>{" "}
+              takes a Bearer API key; the Action Ledger endpoints are public so anyone can verify a
+              receipt bundle.
+            </p>
+          ) : (
+            <p className="text-xs text-on-surface-variant mt-1 max-w-lg mx-auto">
+              Every procedure is JSON-over-HTTP. Queries (GET) take input as a URL-encoded JSON
+              parameter; mutations (POST) take JSON request bodies. Auth is via session cookie
+              issued by{" "}
+              <code className="px-1 py-0.5 bg-surface-container rounded text-primary font-mono text-xs">
+                /auth/login
+              </code>
+              .
+            </p>
+          )}
         </div>
       </div>
     </div>

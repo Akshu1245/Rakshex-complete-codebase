@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { trpc } from "@/lib/trpc";
+import { useApi, useApiMutation } from "@/lib/api";
 import { format } from "date-fns";
 import { EmptyState } from "@/components/EmptyState";
+import { NotConnectedState } from "@/components/NotConnected";
 import { Loader2, CreditCard, Download, AlertCircle, Check, X, Crown, Zap } from "lucide-react";
+import { EVALUATION_PLANS } from "@/lib/billingCatalog";
+import type { RazorpaySuccessResponse, RazorpayFailureResponse } from "@/lib/razorpay";
 
 interface Invoice {
   id: string;
@@ -27,11 +30,29 @@ interface Plan {
   limits: Record<string, unknown>;
 }
 
+interface SubscriptionShape {
+  plan?: string;
+  status?: string;
+}
+
 export default function BillingPage() {
-  const utils = trpc.useUtils();
-  const planQuery = trpc.payment.getCurrentPlan.useQuery();
-  const invoicesQuery = trpc.payment.getInvoices.useQuery();
-  const plansQuery = trpc.payment.getPlans.useQuery();
+  // Billing state (current plan, invoices) has no /v1 equivalent on the
+  // Workers deployment — /api/billing answers 501 not_connected, so those
+  // sections render the honest state. The plan grid below is the static
+  // catalog copy, clearly labeled as catalog information — never as live
+  // account state. Razorpay only opens after a real successful backend
+  // response, never on an error.
+  const planQuery = useApi<SubscriptionShape>("/api/billing?kind=subscription");
+  const invoicesQuery = useApi<{ invoices: Invoice[] }>("/api/billing?kind=invoices");
+  const plans: Plan[] = EVALUATION_PLANS.map((p) => ({
+    id: p.id,
+    name: p.name,
+    amount: p.amount,
+    currency: p.currency,
+    interval: p.interval,
+    features: [...p.features],
+    limits: {},
+  }));
 
   const [error, setError] = useState<string | null>(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
@@ -40,29 +61,23 @@ export default function BillingPage() {
   const [paymentSuccess, setPaymentSuccess] = useState<boolean>(false);
 
   const subscription = planQuery.data ?? null;
-  const invoices: Invoice[] = (invoicesQuery.data?.invoices ?? []) as Invoice[];
-  const plans: Plan[] = (plansQuery.data ?? []) as Plan[];
-  const isLoading = planQuery.isLoading || invoicesQuery.isLoading || plansQuery.isLoading;
+  const invoices: Invoice[] = invoicesQuery.data?.invoices ?? [];
+  const notConnected = planQuery.notConnected || invoicesQuery.notConnected;
+  const isLoading = planQuery.isLoading || invoicesQuery.isLoading;
 
   const refreshAll = () => {
-    utils.payment.getCurrentPlan.invalidate();
-    utils.payment.getInvoices.invalidate();
+    planQuery.refetch();
+    invoicesQuery.refetch();
   };
 
-  const createSubscription = trpc.payment.createSubscription.useMutation({
-    onError: (err: { message: string }) => {
-      setError(err.message || "Failed to create subscription");
-    },
-  });
-  const cancelSubscription = trpc.payment.cancel.useMutation({
-    onSuccess: () => {
-      setShowCancelConfirm(false);
-      refreshAll();
-    },
-    onError: (err: { message: string }) => {
-      setError(err.message || "Failed to cancel subscription");
-    },
-  });
+  const createSubscription = useApiMutation<
+    { plan: "pro" | "enterprise" },
+    { keyId: string; subscriptionId: string }
+  >("/api/billing", "POST");
+  const cancelSubscription = useApiMutation<{ immediately: boolean }, unknown>(
+    "/api/billing",
+    "POST",
+  );
 
   const isProcessing = createSubscription.isPending || cancelSubscription.isPending;
 
@@ -93,21 +108,23 @@ export default function BillingPage() {
             color: "#06D6A0",
           },
         };
-        const rzp = new (
-          window as unknown as {
-            Razorpay: new (o: unknown) => { open: () => void };
-          }
-        ).Razorpay(options);
+        const rzp = new window.Razorpay!(options);
         rzp.open();
       };
       document.body.appendChild(script);
-    } catch {
-      // already surfaced via onError
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to create subscription");
     }
   };
 
-  const createOrderMutation = trpc.payment.createOrder.useMutation();
-  const verifyPaymentMutation = trpc.payment.verifyPayment.useMutation();
+  const createOrderMutation = useApiMutation<
+    { amount: number; currency: string; receipt: string },
+    { order_id?: string; amount: number; currency: string }
+  >("/api/billing", "POST");
+  const verifyPaymentMutation = useApiMutation<
+    { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string },
+    unknown
+  >("/api/billing", "POST");
 
   const handleOneTimePayment = async () => {
     setError(null);
@@ -143,10 +160,10 @@ export default function BillingPage() {
             amount: orderData.amount,
             currency: orderData.currency,
             name: "RaksHex Standard Checkout",
-            description: "One-time API Security Scan Credits",
+            description: "One-time Evaluation Credits",
             order_id: orderId,
             image: "/logo.png",
-            handler: async function (response: any) {
+            handler: async function (response: RazorpaySuccessResponse) {
               try {
                 setIsPayingOneTime(true);
                 await verifyPaymentMutation.mutateAsync({
@@ -156,8 +173,8 @@ export default function BillingPage() {
                 });
                 setPaymentSuccess(true);
                 refreshAll();
-              } catch (err: any) {
-                setError(err.message || "Failed to verify signature");
+              } catch (err: unknown) {
+                setError(err instanceof Error ? err.message : "Failed to verify signature");
               } finally {
                 setIsPayingOneTime(false);
               }
@@ -177,19 +194,19 @@ export default function BillingPage() {
             },
           };
 
-          const rzp = new (window as any).Razorpay(options);
-          rzp.on("payment.failed", function (response: any) {
+          const rzp = new window.Razorpay!(options);
+          rzp.on("payment.failed", function (response: RazorpayFailureResponse) {
             setError(response.error.description || "Payment failed");
             setIsPayingOneTime(false);
           });
           rzp.open();
-        } catch (err: any) {
-          setError(err.message || "Failed to initialize Razorpay checkout");
+        } catch (err: unknown) {
+          setError(err instanceof Error ? err.message : "Failed to initialize Razorpay checkout");
           setIsPayingOneTime(false);
         }
       };
 
-      const hasRazorpay = !!(window as any).Razorpay;
+      const hasRazorpay = !!window.Razorpay;
 
       if (hasRazorpay) {
         openRazorpayModal();
@@ -207,15 +224,26 @@ export default function BillingPage() {
         setIsPayingOneTime(false);
       };
       document.body.appendChild(script);
-    } catch (err: any) {
-      setError(err.message || "An unexpected error occurred during checkout");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "An unexpected error occurred during checkout");
       setIsPayingOneTime(false);
     }
   };
 
   const handleCancel = (immediately: boolean) => {
     setError(null);
-    cancelSubscription.mutate({ immediately });
+    cancelSubscription.mutate(
+      { immediately },
+      {
+        onSuccess: () => {
+          setShowCancelConfirm(false);
+          refreshAll();
+        },
+        onError: (err) => {
+          setError(err.message || "Failed to cancel subscription");
+        },
+      },
+    );
   };
 
   const getStatusColor = (status: string) => {
@@ -268,245 +296,268 @@ export default function BillingPage() {
         )}
 
         {/* Current Plan Card */}
-        <div className="bg-black/50 border border-[#2D3E50] rounded-lg p-6">
-          <h2 className="text-lg font-semibold mb-4">Current Plan</h2>
+        {notConnected ? (
+          <NotConnectedState
+            resource="Billing & subscription"
+            detail="Your current plan, invoices, and checkout need the billing backend, which isn't connected on this deployment yet. Nothing is billed or charged here."
+          />
+        ) : (
+          <>
+            <div className="bg-black/50 border border-[#2D3E50] rounded-lg p-6">
+              <h2 className="text-lg font-semibold mb-4">Current Plan</h2>
 
-          <div className="flex items-center justify-between">
-            <div className="space-y-2">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl font-bold capitalize">
-                  {currentPlan?.name || subscription?.plan || "Free"}
-                </span>
-                <span
-                  className={`px-3 py-1 rounded-full text-sm border ${getStatusColor(
-                    subscription?.status || "none",
-                  )}`}
-                >
-                  {subscription?.status === "active" && isPaidPlan
-                    ? "Active"
-                    : subscription?.status || "None"}
-                </span>
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl font-bold capitalize">
+                      {currentPlan?.name || subscription?.plan || "Free"}
+                    </span>
+                    <span
+                      className={`px-3 py-1 rounded-full text-sm border ${getStatusColor(
+                        subscription?.status || "none",
+                      )}`}
+                    >
+                      {subscription?.status === "active" && isPaidPlan
+                        ? "Active"
+                        : subscription?.status || "None"}
+                    </span>
+                  </div>
+                </div>
+
+                {isPaidPlan && (
+                  <button
+                    onClick={() => setShowCancelConfirm(true)}
+                    className="px-4 py-2 bg-[#EF4444]/10 hover:bg-[#EF4444]/20 text-[#EF4444] border border-[#EF4444]/30 rounded-lg transition-colors"
+                  >
+                    Cancel Subscription
+                  </button>
+                )}
               </div>
             </div>
+          </>
+        )}
 
-            {isPaidPlan && (
-              <button
-                onClick={() => setShowCancelConfirm(true)}
-                className="px-4 py-2 bg-[#EF4444]/10 hover:bg-[#EF4444]/20 text-[#EF4444] border border-[#EF4444]/30 rounded-lg transition-colors"
-              >
-                Cancel Subscription
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Available Plans */}
-        <div className="grid gap-4 md:grid-cols-3">
-          {plans.map((plan) => (
-            <div
-              key={plan.id}
-              className={`bg-black/50 border rounded-lg p-6 ${
-                subscription?.plan === plan.id
-                  ? "border-[#06D6A0] ring-1 ring-[#06D6A0]"
-                  : "border-[#2D3E50]"
-              }`}
-            >
-              <div className="flex items-center gap-2 mb-4">
-                {plan.id === "pro" && <Zap className="w-5 h-5 text-[#06D6A0]" />}
-                {plan.id === "enterprise" && <Crown className="w-5 h-5 text-[#FDB022]" />}
-                <h3 className="font-semibold">{plan.name}</h3>
-              </div>
-
-              <div className="mb-4">
-                <span className="text-3xl font-bold">
-                  {new Intl.NumberFormat("en-IN", {
-                    style: "currency",
-                    currency: plan.currency,
-                  }).format(plan.amount / 100)}
-                </span>
-                <span className="text-gray-400">/{plan.interval}</span>
-              </div>
-
-              <ul className="space-y-2 mb-6">
-                {plan.features.slice(0, 4).map((feature, idx) => (
-                  <li key={idx} className="flex items-start gap-2 text-sm text-gray-300">
-                    <Check className="w-4 h-4 text-[#10B981] mt-0.5 shrink-0" />
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-
-              {subscription?.plan === plan.id ? (
-                <button
-                  disabled
-                  className="w-full py-2 bg-transparent text-gray-400 rounded-lg cursor-not-allowed border border-[#2D3E50]"
-                >
-                  Current Plan
-                </button>
-              ) : plan.id === "free" ? (
-                <button
-                  disabled={subscription?.plan === "free"}
-                  className="w-full py-2 bg-transparent text-gray-400 rounded-lg cursor-not-allowed border border-[#2D3E50]"
-                >
-                  {subscription?.plan === "free" ? "Current Plan" : "Downgrade"}
-                </button>
-              ) : (
-                <button
-                  onClick={() => handleUpgrade(plan.id)}
-                  disabled={isProcessing}
-                  className="w-full py-2 bg-gradient-to-r from-[#06D6A0] to-[#00F0FF] text-[#0A0E1A] font-semibold rounded-lg hover:opacity-90 transition-all disabled:opacity-50"
-                >
-                  {isProcessing ? (
-                    <Loader2 className="w-4 h-4 animate-spin mx-auto text-[#0A0E1A]" />
-                  ) : subscription?.plan === "free" ? (
-                    "Upgrade"
-                  ) : (
-                    "Switch Plan"
-                  )}
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* One-time Payment Checkout */}
-        <div className="bg-black/50 border border-[#2D3E50] rounded-lg p-6 space-y-4">
-          <div>
-            <h2 className="text-lg font-semibold">Buy Custom Scan Credits (One-time Payment)</h2>
-            <p className="text-gray-400 text-sm mt-1">
-              Need more API scans without upgrading your subscription? Buy extra credits instantly
-              using Razorpay Standard Checkout.
-            </p>
-          </div>
-
-          {paymentSuccess && (
-            <div className="flex items-center gap-2 p-4 bg-emerald-950/30 border border-emerald-500 rounded-lg text-emerald-400">
-              <Check className="w-5 h-5" />
-              Payment completed and verified successfully! Your credits are updated.
-            </div>
-          )}
-
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 max-w-md">
-            <div className="relative flex-1">
-              <span className="absolute left-3 top-2 text-gray-400 font-medium">₹</span>
-              <input
-                type="number"
-                min="1"
-                value={oneTimeAmount}
-                onChange={(e) => setOneTimeAmount(Math.max(1, parseInt(e.target.value) || 0))}
-                className="w-full pl-8 pr-3 py-2 bg-transparent border border-[#2D3E50] rounded-lg text-white focus:outline-none focus:border-[#14B8A6] focus:ring-1 focus:ring-[#14B8A6] placeholder-gray-600"
-                placeholder="Enter amount"
-                disabled={isPayingOneTime}
-              />
-            </div>
-            <button
-              onClick={handleOneTimePayment}
-              disabled={isPayingOneTime}
-              className="px-6 py-2 bg-gradient-to-r from-[#14B8A6] to-[#00F0FF] text-[#0A0E1A] font-semibold rounded-lg hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {isPayingOneTime ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin text-[#0A0E1A]" />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <CreditCard className="w-4 h-4 text-[#0A0E1A]" />
-                  Pay ₹{oneTimeAmount} Now
-                </>
-              )}
-            </button>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {[100, 500, 1000, 2500].map((amt) => (
-              <button
-                key={amt}
-                onClick={() => setOneTimeAmount(amt)}
-                className={`px-3 py-1 text-xs border rounded-lg transition-colors ${
-                  oneTimeAmount === amt
-                    ? "border-[#14B8A6] bg-[#14B8A6]/10 text-[#14B8A6]"
-                    : "border-[#2D3E50] hover:border-gray-500 text-gray-400"
+        {/* Available Plans — static catalog copy, labeled as catalog information */}
+        <div>
+          <p className="text-xs text-gray-500 mb-3">
+            Plan catalog (reference only — live plan state isn&apos;t connected on this deployment).
+          </p>
+          <div className="grid gap-4 md:grid-cols-3">
+            {plans.map((plan) => (
+              <div
+                key={plan.id}
+                className={`bg-black/50 border rounded-lg p-6 ${
+                  subscription?.plan === plan.id
+                    ? "border-[#06D6A0] ring-1 ring-[#06D6A0]"
+                    : "border-[#2D3E50]"
                 }`}
-                disabled={isPayingOneTime}
               >
-                ₹{amt}
-              </button>
+                <div className="flex items-center gap-2 mb-4">
+                  {plan.id === "pro" && <Zap className="w-5 h-5 text-[#06D6A0]" />}
+                  {plan.id === "enterprise" && <Crown className="w-5 h-5 text-[#FDB022]" />}
+                  <h3 className="font-semibold">{plan.name}</h3>
+                </div>
+
+                <div className="mb-4">
+                  <span className="text-3xl font-bold">
+                    {new Intl.NumberFormat("en-IN", {
+                      style: "currency",
+                      currency: plan.currency,
+                    }).format(plan.amount / 100)}
+                  </span>
+                  <span className="text-gray-400">/{plan.interval}</span>
+                </div>
+
+                <ul className="space-y-2 mb-6">
+                  {plan.features.slice(0, 4).map((feature, idx) => (
+                    <li key={idx} className="flex items-start gap-2 text-sm text-gray-300">
+                      <Check className="w-4 h-4 text-[#10B981] mt-0.5 shrink-0" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+
+                {subscription?.plan === plan.id ? (
+                  <button
+                    disabled
+                    className="w-full py-2 bg-transparent text-gray-400 rounded-lg cursor-not-allowed border border-[#2D3E50]"
+                  >
+                    Current Plan
+                  </button>
+                ) : plan.id === "free" ? (
+                  <button
+                    disabled={subscription?.plan === "free"}
+                    className="w-full py-2 bg-transparent text-gray-400 rounded-lg cursor-not-allowed border border-[#2D3E50]"
+                  >
+                    {subscription?.plan === "free" ? "Current Plan" : "Downgrade"}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleUpgrade(plan.id)}
+                    disabled={isProcessing}
+                    className="w-full py-2 bg-gradient-to-r from-[#06D6A0] to-[#00F0FF] text-[#0A0E1A] font-semibold rounded-lg hover:opacity-90 transition-all disabled:opacity-50"
+                  >
+                    {isProcessing ? (
+                      <Loader2 className="w-4 h-4 animate-spin mx-auto text-[#0A0E1A]" />
+                    ) : subscription?.plan === "free" ? (
+                      "Upgrade"
+                    ) : (
+                      "Switch Plan"
+                    )}
+                  </button>
+                )}
+              </div>
             ))}
           </div>
         </div>
 
-        {/* Invoice History */}
-        <div className="bg-black/50 border border-[#2D3E50] rounded-lg p-6">
-          <h2 className="text-lg font-semibold mb-4">Invoice History</h2>
+        {notConnected ? (
+          <NotConnectedState
+            resource="Payments & invoices"
+            detail="One-time payments and invoice history need the billing backend, which isn't connected on this deployment yet. Nothing is charged here."
+          />
+        ) : (
+          <>
+            {/* One-time Payment Checkout */}
+            <div className="bg-black/50 border border-[#2D3E50] rounded-lg p-6 space-y-4">
+              <div>
+                <h2 className="text-lg font-semibold">Buy Evaluation Credits (One-time Payment)</h2>
+                <p className="text-gray-400 text-sm mt-1">
+                  Need more evaluated actions without upgrading your subscription? Buy extra credits
+                  instantly using Razorpay Standard Checkout.
+                </p>
+              </div>
 
-          {invoices.length === 0 ? (
-            <EmptyState
-              compact
-              icon={<span>🧾</span>}
-              title="No invoices yet"
-              description="Once you subscribe to a paid plan your receipts and payment history will appear here."
-            />
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="text-left text-gray-400 text-sm border-b border-[#2D3E50]">
-                    <th className="pb-3">Date</th>
-                    <th className="pb-3">Description</th>
-                    <th className="pb-3">Amount</th>
-                    <th className="pb-3">Status</th>
-                    <th className="pb-3">Receipt</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {invoices.map((invoice) => (
-                    <tr
-                      key={invoice.id}
-                      className="border-b border-[#2D3E50]/50 hover:bg-[#06D6A0]/5 transition-colors"
-                    >
-                      <td className="py-4 text-sm">
-                        {format(new Date(invoice.createdAt), "MMM d, yyyy")}
-                      </td>
-                      <td className="py-4 text-sm">
-                        {invoice.description || "Subscription payment"}
-                      </td>
-                      <td className="py-4 text-sm">
-                        {formatAmount(invoice.amount, invoice.currency)}
-                      </td>
-                      <td className="py-4">
-                        <span
-                          className={`px-2 py-1 rounded text-xs border ${getStatusColor(
-                            invoice.status,
-                          )}`}
-                        >
-                          {invoice.status}
-                        </span>
-                      </td>
-                      <td className="py-4">
-                        {invoice.receipt ? (
-                          <a
-                            href={`https://dashboard.razorpay.com/receipts/${invoice.receipt}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-[#06D6A0] hover:text-[#00F0FF] text-sm"
-                          >
-                            <Download className="w-4 h-4" />
-                            Download
-                          </a>
-                        ) : (
-                          <span className="text-gray-500 text-sm">-</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              {paymentSuccess && (
+                <div className="flex items-center gap-2 p-4 bg-emerald-950/30 border border-emerald-500 rounded-lg text-emerald-400">
+                  <Check className="w-5 h-5" />
+                  Payment completed and verified successfully! Your credits are updated.
+                </div>
+              )}
+
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 max-w-md">
+                <div className="relative flex-1">
+                  <span className="absolute left-3 top-2 text-gray-400 font-medium">₹</span>
+                  <input
+                    type="number"
+                    min="1"
+                    value={oneTimeAmount}
+                    onChange={(e) => setOneTimeAmount(Math.max(1, parseInt(e.target.value) || 0))}
+                    className="w-full pl-8 pr-3 py-2 bg-transparent border border-[#2D3E50] rounded-lg text-white focus:outline-none focus:border-[#14B8A6] focus:ring-1 focus:ring-[#14B8A6] placeholder-gray-600"
+                    placeholder="Enter amount"
+                    disabled={isPayingOneTime}
+                  />
+                </div>
+                <button
+                  onClick={handleOneTimePayment}
+                  disabled={isPayingOneTime}
+                  className="px-6 py-2 bg-gradient-to-r from-[#14B8A6] to-[#00F0FF] text-[#0A0E1A] font-semibold rounded-lg hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isPayingOneTime ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-[#0A0E1A]" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="w-4 h-4 text-[#0A0E1A]" />
+                      Pay ₹{oneTimeAmount} Now
+                    </>
+                  )}
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {[100, 500, 1000, 2500].map((amt) => (
+                  <button
+                    key={amt}
+                    onClick={() => setOneTimeAmount(amt)}
+                    className={`px-3 py-1 text-xs border rounded-lg transition-colors ${
+                      oneTimeAmount === amt
+                        ? "border-[#14B8A6] bg-[#14B8A6]/10 text-[#14B8A6]"
+                        : "border-[#2D3E50] hover:border-gray-500 text-gray-400"
+                    }`}
+                    disabled={isPayingOneTime}
+                  >
+                    ₹{amt}
+                  </button>
+                ))}
+              </div>
             </div>
-          )}
-        </div>
+
+            {/* Invoice History */}
+            <div className="bg-black/50 border border-[#2D3E50] rounded-lg p-6">
+              <h2 className="text-lg font-semibold mb-4">Invoice History</h2>
+
+              {invoices.length === 0 ? (
+                <EmptyState
+                  compact
+                  icon={<span>🧾</span>}
+                  title="No invoices yet"
+                  description="Once you subscribe to a paid plan your receipts and payment history will appear here."
+                />
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="text-left text-gray-400 text-sm border-b border-[#2D3E50]">
+                        <th className="pb-3">Date</th>
+                        <th className="pb-3">Description</th>
+                        <th className="pb-3">Amount</th>
+                        <th className="pb-3">Status</th>
+                        <th className="pb-3">Receipt</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {invoices.map((invoice) => (
+                        <tr
+                          key={invoice.id}
+                          className="border-b border-[#2D3E50]/50 hover:bg-[#06D6A0]/5 transition-colors"
+                        >
+                          <td className="py-4 text-sm">
+                            {format(new Date(invoice.createdAt), "MMM d, yyyy")}
+                          </td>
+                          <td className="py-4 text-sm">
+                            {invoice.description || "Subscription payment"}
+                          </td>
+                          <td className="py-4 text-sm">
+                            {formatAmount(invoice.amount, invoice.currency)}
+                          </td>
+                          <td className="py-4">
+                            <span
+                              className={`px-2 py-1 rounded text-xs border ${getStatusColor(
+                                invoice.status,
+                              )}`}
+                            >
+                              {invoice.status}
+                            </span>
+                          </td>
+                          <td className="py-4">
+                            {invoice.receipt ? (
+                              <a
+                                href={`https://dashboard.razorpay.com/receipts/${invoice.receipt}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1 text-[#06D6A0] hover:text-[#00F0FF] text-sm"
+                              >
+                                <Download className="w-4 h-4" />
+                                Download
+                              </a>
+                            ) : (
+                              <span className="text-gray-500 text-sm">-</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </>
+        )}
 
         {/* Cancel Confirmation Modal */}
-        {showCancelConfirm && (
+        {showCancelConfirm && !notConnected && (
           <div
             className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50"
             onClick={(e) => {

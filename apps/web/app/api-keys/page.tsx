@@ -2,12 +2,27 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { trpc } from "@/lib/trpc";
+import { useApi, useApiMutation } from "@/lib/api";
+import { useWorkspace } from "@/hooks/useWorkspace";
+import { NotConnectedState } from "@/components/NotConnected";
+
+interface ApiKeyRow {
+  id: string;
+  name: string;
+  keyPreview: string;
+  revokedAt: string | null;
+  scopes: string[];
+  lastUsedAt: string | null;
+}
 
 export default function ApiKeysPage() {
-  const workspaces = trpc.workspaces.listMine.useQuery();
-  const workspaceId = workspaces.data?.[0]?.id ?? 0;
-  const list = trpc.apiKeys.list.useQuery({ workspaceId }, { enabled: workspaceId > 0 });
+  // API key management has no /v1 equivalent on the Workers deployment —
+  // /api/api-keys answers 501 not_connected, so mutations surface an honest
+  // error instead of pretending to mint keys.
+  const { workspaceId, notConnected: workspaceNotConnected } = useWorkspace();
+  const list = useApi<{ keys: ApiKeyRow[] }>(
+    workspaceId > 0 ? `/api/api-keys?workspaceId=${workspaceId}` : null,
+  );
   const [name, setName] = useState("LLM gateway key");
   const [purpose, setPurpose] = useState<"gateway" | "ci" | "admin">("gateway");
   const [rawOnce, setRawOnce] = useState<string | null>(null);
@@ -18,21 +33,20 @@ export default function ApiKeysPage() {
     admin: ["*"],
   } as const;
 
-  const create = trpc.apiKeys.create.useMutation({
-    onSuccess: (data) => {
-      setRawOnce(data.apiKey);
-      list.refetch();
-    },
-  });
-  const revoke = trpc.apiKeys.revoke.useMutation({
-    onSuccess: () => list.refetch(),
-  });
-  const rotate = trpc.apiKeys.rotate.useMutation({
-    onSuccess: (data) => {
-      setRawOnce(data.apiKey);
-      list.refetch();
-    },
-  });
+  const create = useApiMutation<
+    { workspaceId: number; name: string; scopes: string[]; environment: string },
+    { apiKey: string }
+  >("/api/api-keys", "POST");
+  const revoke = useApiMutation<{ workspaceId: number; keyId: string }, unknown>(
+    "/api/api-keys",
+    "DELETE",
+  );
+  const rotate = useApiMutation<{ workspaceId: number; keyId: string }, { apiKey: string }>(
+    "/api/api-keys",
+    "POST",
+  );
+
+  const notConnected = workspaceNotConnected || list.notConnected;
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white p-8 max-w-4xl mx-auto">
@@ -68,12 +82,20 @@ export default function ApiKeysPage() {
         onSubmit={(e) => {
           e.preventDefault();
           if (!workspaceId) return;
-          create.mutate({
-            workspaceId,
-            name,
-            scopes: [...scopesByPurpose[purpose]],
-            environment: "live",
-          });
+          create.mutate(
+            {
+              workspaceId,
+              name,
+              scopes: [...scopesByPurpose[purpose]],
+              environment: "live",
+            },
+            {
+              onSuccess: (data) => {
+                setRawOnce(data.apiKey);
+                list.refetch();
+              },
+            },
+          );
         }}
         className="grid grid-cols-1 sm:grid-cols-[1fr_220px_auto] gap-2 mb-3"
       >
@@ -108,18 +130,20 @@ export default function ApiKeysPage() {
             ? "Restricted to collection reads and security scan execution."
             : "Full-access keys are high risk. Prefer a purpose-specific key whenever possible."}
       </p>
-      {create.error && <p className="text-red-400 text-sm mb-4">{create.error.message}</p>}
+      {(create.error || rotate.error || revoke.error) && (
+        <p className="text-red-400 text-sm mb-4">
+          {(create.error ?? rotate.error ?? revoke.error)?.message}
+        </p>
+      )}
 
-      <div className="space-y-3">
-        {(list.data?.keys ?? []).map(
-          (k: {
-            id: string;
-            name: string;
-            keyPreview: string;
-            revokedAt: string | null;
-            scopes: string[];
-            lastUsedAt: string | null;
-          }) => (
+      {notConnected ? (
+        <NotConnectedState
+          resource="API keys"
+          detail="Listing, creating, rotating and revoking keys needs the API-keys backend, which isn't connected on this deployment yet. No keys are shown or minted here."
+        />
+      ) : (
+        <div className="space-y-3">
+          {(list.data?.keys ?? []).map((k) => (
             <div
               key={k.id}
               className="border border-neutral-800 rounded-lg p-4 flex flex-wrap items-center justify-between gap-3"
@@ -152,9 +176,9 @@ export default function ApiKeysPage() {
                 </div>
               )}
             </div>
-          ),
-        )}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

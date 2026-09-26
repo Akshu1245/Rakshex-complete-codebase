@@ -3,7 +3,7 @@ import { useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { EmptyState } from "@/components/EmptyState";
 import { ConfirmModal } from "@/components/ConfirmModal";
-import { trpc } from "@/lib/trpc";
+import { useApi, useApiMutation } from "@/lib/api";
 
 type CollectionFormat = "postman" | "openapi";
 
@@ -34,6 +34,31 @@ interface ImportResult {
   gatewayFindings?: GatewayFinding[];
 }
 
+interface CollectionItem {
+  id: string;
+  name: string;
+  description?: string | null;
+  format: string;
+  totalRequests: number;
+  createdAt: string;
+}
+
+interface CollectionsListResponse {
+  collections: CollectionItem[];
+}
+
+interface CreateCollectionArgs {
+  name: string;
+  format: CollectionFormat;
+  data: Record<string, unknown>;
+}
+
+interface CreateCollectionResult {
+  id: string;
+  credentialFindings?: CredentialFinding[];
+  gatewayFindings?: GatewayFinding[];
+}
+
 type ImportStage = "idle" | "parsing" | "scanning" | "persisting" | "done";
 
 const SEVERITY_COLORS: Record<string, string> = {
@@ -50,8 +75,8 @@ function formatBytes(bytes: number): string {
 }
 
 export default function CollectionsPage() {
-  const utils = trpc.useUtils();
-  const { data, isLoading: isListLoading } = trpc.collections.list.useQuery();
+  const listQuery = useApi<CollectionsListResponse>("/api/collections");
+  const { data, isLoading: isListLoading, notConnected } = listQuery;
   const collections = data?.collections ?? [];
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
@@ -71,7 +96,11 @@ export default function CollectionsPage() {
   const [credentialFindings, setCredentialFindings] = useState<CredentialFinding[]>([]);
   const [dragOver, setDragOver] = useState(false);
 
-  const createCollection = trpc.collections.create.useMutation();
+  const createCollection = useApiMutation<CreateCollectionArgs, CreateCollectionResult>(
+    "/api/collections",
+    "POST",
+  );
+  const deleteCollection = useApiMutation<{ id: string }, unknown>("/api/collections", "DELETE");
 
   const resetImport = () => {
     setBatchFiles([]);
@@ -157,20 +186,13 @@ export default function CollectionsPage() {
           const result = await createCollection.mutateAsync({
             name: p.name || `Imported ${batchFiles[i].name}`,
             format: p.format,
-            data: p.data as Record<string, any>,
+            data: p.data as Record<string, unknown>,
           });
 
-          const credFindings =
-            (
-              result as {
-                credentialFindings?: CredentialFinding[];
-                gatewayFindings?: GatewayFinding[];
-              }
-            ).credentialFindings ?? [];
-          const gwFindings =
-            (result as { gatewayFindings?: GatewayFinding[] }).gatewayFindings ?? [];
+          const credFindings = result.credentialFindings ?? [];
+          const gwFindings = result.gatewayFindings ?? [];
           results.push({
-            id: (result as { id: string }).id,
+            id: result.id,
             name: p.name || batchFiles[i].name,
             format: p.format,
             credentialFindings: credFindings,
@@ -193,7 +215,7 @@ export default function CollectionsPage() {
       setImportResults(results);
       setCredentialFindings(allFindings);
       setImportStage("done");
-      utils.collections.list.invalidate();
+      listQuery.refetch();
     } catch (err) {
       setError((err as Error).message);
       setImportStage("idle");
@@ -215,14 +237,13 @@ export default function CollectionsPage() {
     }
 
     createCollection.mutate(
-      { name: uploadName, format: uploadFormat, data: parsed as Record<string, any> },
+      { name: uploadName, format: uploadFormat, data: parsed as Record<string, unknown> },
       {
         onSuccess: (result) => {
-          const credFindings =
-            (result as { credentialFindings?: CredentialFinding[] }).credentialFindings ?? [];
+          const credFindings = result.credentialFindings ?? [];
           setImportResults([
             {
-              id: (result as { id: string }).id,
+              id: result.id,
               name: uploadName,
               format: uploadFormat,
               credentialFindings: credFindings,
@@ -230,9 +251,9 @@ export default function CollectionsPage() {
           ]);
           setCredentialFindings(credFindings);
           setImportStage("done");
-          utils.collections.list.invalidate();
+          listQuery.refetch();
         },
-        onError: (err: { message: string }) => {
+        onError: (err) => {
           setError(err.message);
           setImportStage("idle");
         },
@@ -266,14 +287,16 @@ export default function CollectionsPage() {
 
   const handleDeleteConfirm = () => {
     if (!deleteConfirm) return;
-    const del = trpc.collections.delete.useMutation({
-      onSuccess: () => {
-        utils.collections.list.invalidate();
-        setDeleteConfirm(null);
+    deleteCollection.mutate(
+      { id: deleteConfirm },
+      {
+        onSuccess: () => {
+          listQuery.refetch();
+          setDeleteConfirm(null);
+        },
+        onError: (err) => setError(err.message),
       },
-      onError: (err: { message: string }) => setError(err.message),
-    });
-    del.mutate({ id: deleteConfirm });
+    );
   };
 
   const stageLabels: Record<ImportStage, string> = {
@@ -667,6 +690,12 @@ export default function CollectionsPage() {
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#06D6A0]"></div>
             </div>
+          ) : notConnected ? (
+            <EmptyState
+              icon={<span>🔌</span>}
+              title="Collections not connected"
+              description="The collections backend isn't connected on this deployment yet, so nothing is listed — and nothing you import here can be saved."
+            />
           ) : collections.length === 0 ? (
             <EmptyState
               icon={<span>📚</span>}

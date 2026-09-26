@@ -1,8 +1,10 @@
 # RaksHex Agent Firewall API — Cloudflare Workers
-# ADDITIVE PORT: the Express app (apps/api) stays intact. Nothing here deploys
-# until boss creates a Cloudflare account and fills every REPLACE_ME placeholder
-# below (values shown are format-valid dummies so `wrangler dev` boots locally).
+# ADDITIVE PORT: the Express app (apps/api) stays intact.
+# Account: "Rakshex@gmail.com's Account" (b3225f198c6d2286afbb6f416c230f10).
+# All resource IDs below are real (verified 2026-09-25). Secrets are set via
+# `wrangler secret put`, NEVER in this file.
 name = "rakshex-firewall"
+account_id = "b3225f198c6d2286afbb6f416c230f10"
 main = "src/index.ts"
 compatibility_date = "2025-08-23"
 compatibility_flags = ["nodejs_compat"] # @sentry/cloudflare needs node:async_hooks
@@ -19,29 +21,24 @@ ENVIRONMENT = "production"
 [[d1_databases]]
 binding = "DB"
 database_name = "rakshex-firewall"
-# Paste the real D1 database_id from the Cloudflare dashboard
 database_id = "b5997465-c78e-4f91-8f25-a53975c9b971"
 migrations_dir = "drizzle"
 
 [[kv_namespaces]]
 binding = "KV_CONFIG"
-# Paste the real KV namespace id
 id = "579f6fea6c6142cbafe3d5ae04e10510"
 
 [[queues.producers]]
 binding = "EVAL_QUEUE"
-# REPLACE_ME: paste the real queue name
 queue = "rakshex-eval-jobs"
 
 [[queues.consumers]]
-# REPLACE_ME: paste the real queue name
 queue = "rakshex-eval-jobs"
 max_batch_size = 10
 max_retries = 3
 
 [[r2_buckets]]
 binding = "RECEIPT_BUCKET"
-# REPLACE_ME: paste the real R2 bucket name
 bucket_name = "rakshex-receipt-bundles"
 
 [triggers]

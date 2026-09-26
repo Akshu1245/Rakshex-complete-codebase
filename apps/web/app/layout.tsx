@@ -6,7 +6,7 @@ import { AuthProvider } from "../components/AuthProvider";
 import { CookieConsent } from "../components/CookieConsent";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { OfflineBanner } from "../components/OfflineBanner";
-import { TRPCProvider } from "@/lib/providers";
+import { AppProviders } from "@/lib/providers";
 import AppShell from "@/components/AppShell";
 import { ToastProvider } from "@/components/Toast";
 import { TrialBanner } from "@/app/components/TrialBanner";
@@ -61,7 +61,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className="dark">
       <body>
-        <TRPCProvider>
+        <AppProviders>
           <AuthProvider>
             <TrialBanner />
             <ToastProvider>
@@ -73,7 +73,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <CookieConsent />
             </ToastProvider>
           </AuthProvider>
-        </TRPCProvider>
+        </AppProviders>
       </body>
     </html>
   );

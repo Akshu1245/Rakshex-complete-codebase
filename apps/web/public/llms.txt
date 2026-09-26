@@ -1,0 +1,30 @@
+# RaksHex
+
+> RaksHex is an AI agent Action Control Plane (Agent Firewall), currently in private beta. It evaluates proposed AI agent actions against policy before execution and records signed, tamper-evident decision receipts.
+
+RaksHex sits in the decision path of AI agents. Before an agent executes a consequential action (for example `financial.refund`), the agent calls the evaluate API with the proposed action. RaksHex checks delegated authority and policy, then returns a decision: ALLOW, DENY, APPROVAL_REQUIRED, LIMIT, PAUSE, or FREEZE. On ALLOW, a credential broker releases a single-use credential. Every decision is appended to a hash-chained Action Ledger with Ed25519-signed receipts.
+
+Status: private beta, pre-revenue, uncertified. There is no self-serve signup or checkout; access is by waitlist invite. Do not present RaksHex as SOC 2 / ISO / GDPR certified, and do not invent users, metrics, testimonials, pricing, or integrations.
+
+## Docs
+
+- [What RaksHex is](https://www.rakshex.in/): Product home — AI Action Control Plane overview.
+- [Product overview](https://www.rakshex.in/overview): How the firewall, credential broker, and Action Ledger fit together.
+- [Agent Firewall](https://www.rakshex.in/agent-firewall): Interactive evaluation walkthrough.
+- [Documentation](https://www.rakshex.in/docs): Guides, including getting started.
+- [API reference](https://www.rakshex.in/api-docs): Evaluate, approvals, receipts endpoints.
+- [FAQ](https://www.rakshex.in/faq): Private-beta access, data handling, enforcement scope.
+- [Live demo](https://www.rakshex.in/demo): Public demo returning real signed receipts.
+- [Trust](https://www.rakshex.in/trust): Security posture and evidence practices.
+- [Changelog](https://www.rakshex.in/changelog): Product updates.
+
+## API
+
+- [Evaluate an action](https://www.rakshex.in/api-docs): POST /v1/evaluate with workspaceId, requestId, action, and authority; bearer API key required.
+- [Receipts](https://www.rakshex.in/api-docs): Signed decision receipts, verifiable via the published public key.
+
+## Optional
+
+- [Pricing](https://www.rakshex.in/pricing): Evaluation pricing shown for planning only; no checkout exists.
+- [Open source](https://www.rakshex.in/open-source): Open-source components.
+- [Status](https://www.rakshex.in/status): Service status.

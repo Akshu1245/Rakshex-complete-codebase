@@ -2,13 +2,17 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { trpc } from "@/lib/trpc";
+import { useApiMutation } from "@/lib/api";
 import { ArrowRight, CheckCircle2, ShieldCheck } from "lucide-react";
 
 const EVALUATION_OPTIONS = [
   { value: "Free", label: "Developer", detail: "Evaluate a personal or local agent workflow" },
   { value: "Pro", label: "Team pilot", detail: "Evaluate with an engineering or platform team" },
-  { value: "Enterprise", label: "Security review", detail: "Architecture, policy, or enterprise evaluation" },
+  {
+    value: "Enterprise",
+    label: "Security review",
+    detail: "Architecture, policy, or enterprise evaluation",
+  },
 ] as const;
 
 export default function WaitlistPage() {
@@ -16,14 +20,15 @@ export default function WaitlistPage() {
   const [plan, setPlan] = useState<(typeof EVALUATION_OPTIONS)[number]["value"]>("Pro");
   const [submitted, setSubmitted] = useState(false);
 
-  const joinWaitlist = trpc.waitlist.join.useMutation({
-    onSuccess: () => setSubmitted(true),
-  });
+  const joinWaitlist = useApiMutation<{ email: string; plan: string }, unknown>(
+    "/api/waitlist",
+    "POST",
+  );
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     if (!email.trim()) return;
-    joinWaitlist.mutate({ email: email.trim(), plan });
+    joinWaitlist.mutate({ email: email.trim(), plan }, { onSuccess: () => setSubmitted(true) });
   };
 
   return (
@@ -49,18 +54,30 @@ export default function WaitlistPage() {
                 "No requirement to connect production credentials just to request access",
                 "A pilot can begin with a simulated or non-production workflow",
               ].map((item) => (
-                <div key={item} className="flex items-start gap-2.5 text-sm leading-6 text-neutral-400">
-                  <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-[#14B8A6]" aria-hidden="true" />
+                <div
+                  key={item}
+                  className="flex items-start gap-2.5 text-sm leading-6 text-neutral-400"
+                >
+                  <CheckCircle2
+                    className="mt-1 h-4 w-4 shrink-0 text-[#14B8A6]"
+                    aria-hidden="true"
+                  />
                   {item}
                 </div>
               ))}
             </div>
 
             <div className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-xs">
-              <Link href="/demo" className="font-semibold text-[#14B8A6] no-underline hover:text-[#5ED8CA]">
+              <Link
+                href="/demo"
+                className="font-semibold text-[#14B8A6] no-underline hover:text-[#5ED8CA]"
+              >
                 Try the public demo →
               </Link>
-              <Link href="/trust" className="font-semibold text-neutral-400 no-underline hover:text-white">
+              <Link
+                href="/trust"
+                className="font-semibold text-neutral-400 no-underline hover:text-white"
+              >
                 Review Trust Center →
               </Link>
             </div>
@@ -79,7 +96,10 @@ export default function WaitlistPage() {
 
               <form onSubmit={handleSubmit} className="mt-7 space-y-6">
                 <div>
-                  <label htmlFor="beta-email" className="block text-sm font-semibold text-neutral-300">
+                  <label
+                    htmlFor="beta-email"
+                    className="block text-sm font-semibold text-neutral-300"
+                  >
                     Work email
                   </label>
                   <p className="mt-1 text-xs leading-5 text-neutral-600">
@@ -98,7 +118,9 @@ export default function WaitlistPage() {
                 </div>
 
                 <fieldset>
-                  <legend className="text-sm font-semibold text-neutral-300">Evaluation type</legend>
+                  <legend className="text-sm font-semibold text-neutral-300">
+                    Evaluation type
+                  </legend>
                   <div className="mt-3 space-y-2">
                     {EVALUATION_OPTIONS.map((option) => {
                       const active = plan === option.value;
@@ -114,10 +136,14 @@ export default function WaitlistPage() {
                               : "border-white/[0.08] bg-black/15 hover:border-white/15"
                           }`}
                         >
-                          <span className={`block text-sm font-semibold ${active ? "text-[#8FE3D8]" : "text-white"}`}>
+                          <span
+                            className={`block text-sm font-semibold ${active ? "text-[#8FE3D8]" : "text-white"}`}
+                          >
                             {option.label}
                           </span>
-                          <span className="mt-1 block text-xs leading-5 text-neutral-500">{option.detail}</span>
+                          <span className="mt-1 block text-xs leading-5 text-neutral-500">
+                            {option.detail}
+                          </span>
                         </button>
                       );
                     })}
@@ -138,25 +164,39 @@ export default function WaitlistPage() {
                   )}
                 </button>
 
-                {joinWaitlist.isError && (
-                  <div role="alert" className="rounded-lg border border-red-500/20 bg-red-500/[0.06] px-4 py-3 text-sm text-red-300">
-                    We could not submit the request. Please try again, or email akshay@rakshex.in.
+                {joinWaitlist.error && (
+                  <div
+                    role="alert"
+                    className="rounded-lg border border-red-500/20 bg-red-500/[0.06] px-4 py-3 text-sm text-red-300"
+                  >
+                    {joinWaitlist.error.notConnected
+                      ? "The waitlist backend isn't connected on this deployment yet — your request can't be saved right now. Email akshay@rakshex.in instead."
+                      : "We could not submit the request. Please try again, or email akshay@rakshex.in."}
                   </div>
                 )}
               </form>
 
               <p className="mt-5 text-xs leading-5 text-neutral-600">
                 By requesting access, you agree that RaksHex may contact you about the private beta.
-                See the <Link href="/privacy" className="text-neutral-400 underline underline-offset-2">Privacy Policy</Link>.
+                See the{" "}
+                <Link href="/privacy" className="text-neutral-400 underline underline-offset-2">
+                  Privacy Policy
+                </Link>
+                .
               </p>
             </div>
           ) : (
-            <div className="rounded-2xl border border-[#14B8A6]/25 bg-[#0B1414] p-7 shadow-[0_24px_80px_rgba(0,0,0,0.25)] sm:p-9" aria-live="polite">
+            <div
+              className="rounded-2xl border border-[#14B8A6]/25 bg-[#0B1414] p-7 shadow-[0_24px_80px_rgba(0,0,0,0.25)] sm:p-9"
+              aria-live="polite"
+            >
               <CheckCircle2 className="h-11 w-11 text-[#14B8A6]" aria-hidden="true" />
               <p className="mt-6 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-[#14B8A6]">
                 Request received
               </p>
-              <h2 className="mt-2 text-3xl font-bold tracking-[-0.03em] text-white">You are in the beta queue.</h2>
+              <h2 className="mt-2 text-3xl font-bold tracking-[-0.03em] text-white">
+                You are in the beta queue.
+              </h2>
               <p className="mt-4 text-sm leading-6 text-neutral-400">
                 We will use <strong className="font-semibold text-white">{email}</strong> to follow
                 up about a scoped evaluation. You do not need to connect production credentials now.

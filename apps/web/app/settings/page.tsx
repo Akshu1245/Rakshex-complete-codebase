@@ -13,7 +13,9 @@ import {
   Siren,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { trpc } from "@/lib/trpc";
+import { useApi, useApiMutation } from "@/lib/api";
+import { NotConnectedState } from "@/components/NotConnected";
+import { useWorkspace } from "@/hooks/useWorkspace";
 import { useAuth } from "@/components/AuthProvider";
 import { useToast } from "@/components/Toast";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -29,17 +31,20 @@ type Tab =
 // ============================================================================
 function ProfileTab() {
   const { addToast } = useToast();
-  const { data: profile, refetch } = trpc.settings.getProfile.useQuery();
-  const updateProfile = trpc.settings.updateProfile.useMutation({
-    onSuccess: () => {
-      refetch();
-      setMessage({ type: "success", text: "Profile updated successfully" });
-      addToast("success", "Profile updated successfully");
-    },
-    onError: (err: { message: string }) => {
-      setMessage({ type: "error", text: err.message });
-    },
-  });
+  // Account settings have no /v1 equivalent on the Workers deployment —
+  // /api/settings answers 501 not_connected. The update mutation surfaces
+  // an honest error instead of pretending to save.
+  const {
+    data: profile,
+    refetch,
+    notConnected,
+  } = useApi<{ name?: string; email?: string; plan?: string; role?: string }>(
+    "/api/settings?kind=profile",
+  );
+  const updateProfile = useApiMutation<{ name: string; email: string }, unknown>(
+    "/api/settings",
+    "PATCH",
+  );
 
   const [name, setName] = useState(profile?.name || "");
   const [email, setEmail] = useState(profile?.email || "");
@@ -58,7 +63,19 @@ function ProfileTab() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateProfile.mutate({ name, email });
+    updateProfile.mutate(
+      { name, email },
+      {
+        onSuccess: () => {
+          refetch();
+          setMessage({ type: "success", text: "Profile updated successfully" });
+          addToast("success", "Profile updated successfully");
+        },
+        onError: (err) => {
+          setMessage({ type: "error", text: err.message });
+        },
+      },
+    );
   };
 
   return (
@@ -67,6 +84,13 @@ function ProfileTab() {
         <h3 className="text-lg font-medium text-white">Profile Information</h3>
         <p className="text-sm text-gray-400 mt-1">Update your display name and email address</p>
       </div>
+
+      {notConnected && (
+        <NotConnectedState
+          resource="Profile settings"
+          detail="Reading or updating your profile needs the account backend, which isn't connected on this deployment yet. Nothing is saved here."
+        />
+      )}
 
       {message && (
         <div
@@ -138,26 +162,27 @@ function ProfileTab() {
 // SECURITY TAB
 // ============================================================================
 function SecurityTab() {
-  const { data: sessions, refetch: refetchSessions } = trpc.settings.getSessions.useQuery();
-  const revokeSession = trpc.settings.revokeSession.useMutation({
-    onSuccess: () => refetchSessions(),
-  });
-  const revokeAllSessions = trpc.settings.revokeAllSessions.useMutation({
-    onSuccess: () => refetchSessions(),
-  });
   const { addToast } = useToast();
-  const changePassword = trpc.settings.changePassword.useMutation({
-    onSuccess: () => {
-      setMessage({ type: "success", text: "Password changed successfully" });
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-      addToast("success", "Password changed successfully");
-    },
-    onError: (err: { message: string }) => {
-      setMessage({ type: "error", text: err.message });
-    },
-  });
+  interface SessionRow {
+    id?: string;
+    userAgent?: string | null;
+    ipAddress?: string | null;
+    lastActiveAt?: string | Date;
+  }
+  const {
+    data: sessions,
+    refetch: refetchSessions,
+    notConnected: sessionsNotConnected,
+  } = useApi<{ sessions: SessionRow[] }>("/api/settings?kind=sessions");
+  const revokeSession = useApiMutation<{ sessionId: string }, unknown>("/api/settings", "DELETE");
+  const revokeAllSessions = useApiMutation<Record<string, never>, unknown>(
+    "/api/settings",
+    "DELETE",
+  );
+  const changePassword = useApiMutation<{ currentPassword: string; newPassword: string }, unknown>(
+    "/api/auth",
+    "POST",
+  );
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -181,50 +206,21 @@ function SecurityTab() {
   const [disable2FAPassword, setDisable2FAPassword] = useState("");
 
   // Load 2FA status from backend — use useEffect to avoid calling setState during render
-  const { data: twoFAStatus } = trpc.settings.get2FAStatus.useQuery();
+  const { data: twoFAStatus } = useApi<{ enabled: boolean }>("/api/settings?kind=2fa-status");
   useEffect(() => {
     if (twoFAStatus !== undefined) {
       setTwoFAEnabled(twoFAStatus.enabled);
     }
   }, [twoFAStatus]);
 
-  const setup2FAMutation = trpc.settings.setup2FA.useMutation({
-    onSuccess: (data) => {
-      setTwoFASecret(data.secret);
-      setTwoFAOtpauthUri(data.otpauthUri);
-      setShow2FASetup(true);
-      setTwoFAMessage(null);
-    },
-    onError: (err: { message: string }) => {
-      setTwoFAMessage({ type: "error", text: err.message });
-    },
-  });
+  const setup2FAMutation = useApiMutation<
+    Record<string, never>,
+    { secret: string; otpauthUri: string }
+  >("/api/settings", "POST");
 
-  const enable2FAMutation = trpc.settings.enable2FA.useMutation({
-    onSuccess: () => {
-      setTwoFAEnabled(true);
-      setShow2FASetup(false);
-      setTwoFAVerifyCode("");
-      setTwoFAMessage({ type: "success", text: "2FA has been enabled successfully!" });
-    },
-    onError: (err: { message: string }) => {
-      setTwoFAMessage({ type: "error", text: err.message });
-    },
-  });
+  const enable2FAMutation = useApiMutation<{ code: string }, unknown>("/api/settings", "POST");
 
-  const disable2FAMutation = trpc.settings.disable2FA.useMutation({
-    onSuccess: () => {
-      setTwoFAEnabled(false);
-      setShowDisable2FA(false);
-      setDisable2FAPassword("");
-      setTwoFASecret("");
-      setTwoFAOtpauthUri("");
-      setTwoFAMessage({ type: "success", text: "2FA has been disabled" });
-    },
-    onError: (err: { message: string }) => {
-      setTwoFAMessage({ type: "error", text: err.message });
-    },
-  });
+  const disable2FAMutation = useApiMutation<{ password: string }, unknown>("/api/settings", "POST");
 
   const handlePasswordChange = (e: React.FormEvent) => {
     e.preventDefault();
@@ -239,16 +235,57 @@ function SecurityTab() {
       });
       return;
     }
-    changePassword.mutate({ currentPassword, newPassword });
+    changePassword.mutate(
+      { currentPassword, newPassword },
+      {
+        onSuccess: () => {
+          setMessage({ type: "success", text: "Password changed successfully" });
+          setCurrentPassword("");
+          setNewPassword("");
+          setConfirmPassword("");
+          addToast("success", "Password changed successfully");
+        },
+        onError: (err) => {
+          setMessage({ type: "error", text: err.message });
+        },
+      },
+    );
   };
 
   const handleEnable2FA = () => {
-    setup2FAMutation.mutate();
+    setTwoFAMessage(null);
+    setup2FAMutation.mutate(
+      {},
+      {
+        onSuccess: (data) => {
+          setTwoFASecret(data.secret);
+          setTwoFAOtpauthUri(data.otpauthUri);
+          setShow2FASetup(true);
+          setTwoFAMessage(null);
+        },
+        onError: (err) => {
+          setTwoFAMessage({ type: "error", text: err.message });
+        },
+      },
+    );
   };
 
   const handleVerify2FA = () => {
     if (twoFAVerifyCode.length === 6 && /^\d{6}$/.test(twoFAVerifyCode)) {
-      enable2FAMutation.mutate({ code: twoFAVerifyCode });
+      enable2FAMutation.mutate(
+        { code: twoFAVerifyCode },
+        {
+          onSuccess: () => {
+            setTwoFAEnabled(true);
+            setShow2FASetup(false);
+            setTwoFAVerifyCode("");
+            setTwoFAMessage({ type: "success", text: "2FA has been enabled successfully!" });
+          },
+          onError: (err) => {
+            setTwoFAMessage({ type: "error", text: err.message });
+          },
+        },
+      );
     } else {
       setTwoFAMessage({ type: "error", text: "Please enter a valid 6-digit verification code" });
     }
@@ -256,7 +293,22 @@ function SecurityTab() {
 
   const handleDisable2FA = () => {
     if (disable2FAPassword.length > 0) {
-      disable2FAMutation.mutate({ password: disable2FAPassword });
+      disable2FAMutation.mutate(
+        { password: disable2FAPassword },
+        {
+          onSuccess: () => {
+            setTwoFAEnabled(false);
+            setShowDisable2FA(false);
+            setDisable2FAPassword("");
+            setTwoFASecret("");
+            setTwoFAOtpauthUri("");
+            setTwoFAMessage({ type: "success", text: "2FA has been disabled" });
+          },
+          onError: (err) => {
+            setTwoFAMessage({ type: "error", text: err.message });
+          },
+        },
+      );
     }
   };
 
@@ -491,13 +543,20 @@ function SecurityTab() {
             <p className="text-sm text-gray-400 mt-1">Manage your active sessions across devices</p>
           </div>
           <button
-            onClick={() => revokeAllSessions.mutate()}
+            onClick={() => revokeAllSessions.mutate({}, { onSuccess: () => refetchSessions() })}
             disabled={revokeAllSessions.isPending}
             className="text-red-400 hover:text-red-300 text-sm font-medium"
           >
             {revokeAllSessions.isPending ? "Revoking..." : "Revoke All"}
           </button>
         </div>
+
+        {sessionsNotConnected && (
+          <NotConnectedState
+            resource="Sessions"
+            detail="Listing or revoking sessions needs the account backend, which isn't connected on this deployment yet."
+          />
+        )}
 
         <div className="mt-4 space-y-3">
           {sessions?.sessions.length === 0 ? (
@@ -528,7 +587,12 @@ function SecurityTab() {
                       </p>
                     </div>
                     <button
-                      onClick={() => revokeSession.mutate({ sessionId: session.id })}
+                      onClick={() =>
+                        revokeSession.mutate(
+                          { sessionId: session.id! },
+                          { onSuccess: () => refetchSessions() },
+                        )
+                      }
                       disabled={revokeSession.isPending}
                       className="text-red-400 hover:text-red-300 text-sm font-medium"
                     >
@@ -549,17 +613,19 @@ function SecurityTab() {
 // NOTIFICATIONS TAB
 // ============================================================================
 function NotificationsTab() {
-  const utils = trpc.useUtils();
-  const { data: prefs, isLoading } = trpc.settings.getEmailPreferences.useQuery();
-  const updatePrefs = trpc.settings.updateEmailPreferences.useMutation({
-    onSuccess: () => {
-      utils.settings.getEmailPreferences.invalidate();
-      setMessage({ type: "success", text: "Preferences saved" });
-    },
-    onError: (err: { message: string }) => {
-      setMessage({ type: "error", text: err.message });
-    },
-  });
+  type EmailPrefs = {
+    scanComplete: boolean;
+    budgetAlerts: boolean;
+    weeklyDigest: boolean;
+    teamActivity: boolean;
+    promotionalEmails: boolean;
+  };
+  const {
+    data: prefs,
+    isLoading,
+    notConnected,
+  } = useApi<EmailPrefs>("/api/settings?kind=email-preferences");
+  const updatePrefs = useApiMutation<Partial<EmailPrefs>, unknown>("/api/settings", "PATCH");
   const [message, setMessage] = useState<{
     type: "success" | "error";
     text: string;
@@ -569,7 +635,13 @@ function NotificationsTab() {
     key: "scanComplete" | "budgetAlerts" | "weeklyDigest" | "teamActivity" | "promotionalEmails",
     value: boolean,
   ) => {
-    updatePrefs.mutate({ [key]: value });
+    updatePrefs.mutate(
+      { [key]: value },
+      {
+        onSuccess: () => setMessage({ type: "success", text: "Preferences saved" }),
+        onError: (err) => setMessage({ type: "error", text: err.message }),
+      },
+    );
   };
 
   const rows: {
@@ -621,7 +693,12 @@ function NotificationsTab() {
         </div>
       )}
 
-      {isLoading || !prefs ? (
+      {notConnected ? (
+        <NotConnectedState
+          resource="Email preferences"
+          detail="Reading or changing email preferences needs the account backend, which isn't connected on this deployment yet."
+        />
+      ) : isLoading || !prefs ? (
         <p className="text-sm text-gray-400">Loading preferences…</p>
       ) : (
         <div className="space-y-3">
@@ -656,23 +733,31 @@ function NotificationsTab() {
 // AUDIT LOG TAB
 // ============================================================================
 function AuditTab() {
-  const { data: auditLog } = trpc.settings.getAuditLog.useQuery({ limit: 50 });
+  interface AuditLogRow {
+    id?: string;
+    action?: string;
+    ipAddress?: string | null;
+    createdAt?: string | Date;
+  }
+  const { data: auditLog, notConnected } = useApi<{ logs: AuditLogRow[] }>(
+    "/api/settings?kind=audit-log&limit=50",
+  );
 
   return (
     <div className="space-y-2">
       <h3 className="text-lg font-medium text-white">Activity</h3>
       <p className="text-sm text-gray-400">Recent security-related events on your account.</p>
-      <div className="mt-4 space-y-2">
-        {!auditLog?.logs || auditLog.logs.length === 0 ? (
-          <p className="text-sm text-gray-400">No recent activity</p>
-        ) : (
-          auditLog.logs.map(
-            (log: {
-              id?: string;
-              action?: string;
-              ipAddress?: string | null;
-              createdAt?: string | Date;
-            }) => {
+      {notConnected ? (
+        <NotConnectedState
+          resource="Account activity"
+          detail="Listing security events needs the account backend, which isn't connected on this deployment yet. Nothing is recorded or hidden here."
+        />
+      ) : (
+        <div className="mt-4 space-y-2">
+          {!auditLog?.logs || auditLog.logs.length === 0 ? (
+            <p className="text-sm text-gray-400">No recent activity</p>
+          ) : (
+            auditLog.logs.map((log) => {
               if (!log.id) return null;
               return (
                 <div
@@ -694,10 +779,10 @@ function AuditTab() {
                   </span>
                 </div>
               );
-            },
-          )
-        )}
-      </div>
+            })
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -717,27 +802,26 @@ function DangerZoneTab() {
   const { logout } = useAuth();
   const { addToast } = useToast();
 
-  const deleteAccount = trpc.settings.deleteAccount.useMutation({
-    onSuccess: () => {
-      logout();
-      router.push("/");
-    },
-  });
-
-  const workspacesQuery = trpc.workspaces.listMine.useQuery();
-  const deleteWorkspace = trpc.workspaces.delete.useMutation({
-    onSuccess: () => {
-      workspacesQuery.refetch();
-      setWorkspaceConfirm(null);
-      addToast("success", "Workspace deleted");
-    },
-    onError: (err: { message: string }) => addToast("error", err.message),
-  });
-
-  const { data: auditLog } = trpc.settings.getAuditLog.useQuery({ limit: 20 });
-  const deletableWorkspaces = (workspacesQuery.data ?? []).filter(
-    (w: { isPersonal?: boolean; role?: string }) => !w.isPersonal && w.role === "owner",
+  const deleteAccount = useApiMutation<{ confirmation: string; reason?: string }, unknown>(
+    "/api/settings",
+    "DELETE",
   );
+
+  const { workspaces, refetch: refetchWorkspaces } = useWorkspace();
+  const deleteWorkspace = useApiMutation<{ workspaceId: number }, unknown>(
+    "/api/workspaces",
+    "DELETE",
+  );
+
+  const { data: auditLog } = useApi<{
+    logs: Array<{
+      id?: string;
+      action?: string;
+      ipAddress?: string | null;
+      createdAt?: string | Date;
+    }>;
+  }>("/api/settings?kind=audit-log&limit=20");
+  const deletableWorkspaces = (workspaces ?? []).filter((w) => !w.isPersonal && w.role === "owner");
 
   return (
     <div className="space-y-8">
@@ -752,17 +836,17 @@ function DangerZoneTab() {
           <p className="text-sm text-gray-500 mt-3">No deletable workspaces.</p>
         ) : (
           <ul className="mt-3 space-y-2">
-            {deletableWorkspaces.map((w: { id: number; name: string; slug: string }) => (
+            {deletableWorkspaces.map((w) => (
               <li
                 key={w.id}
                 className="flex items-center justify-between p-3 bg-gray-700/50 rounded-md border border-gray-600"
               >
                 <span className="text-sm text-white">
-                  {w.name} <span className="text-gray-500">({w.slug})</span>
+                  {w.name} <span className="text-gray-500">({String(w.slug ?? "")})</span>
                 </span>
                 <button
                   type="button"
-                  onClick={() => setWorkspaceConfirm({ id: w.id, name: w.name })}
+                  onClick={() => setWorkspaceConfirm({ id: w.id, name: w.name ?? "workspace" })}
                   className="text-sm text-red-400 hover:text-red-300"
                 >
                   Delete
@@ -779,7 +863,19 @@ function DangerZoneTab() {
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => deleteWorkspace.mutate({ workspaceId: workspaceConfirm.id })}
+                onClick={() =>
+                  deleteWorkspace.mutate(
+                    { workspaceId: workspaceConfirm.id },
+                    {
+                      onSuccess: () => {
+                        refetchWorkspaces();
+                        setWorkspaceConfirm(null);
+                        addToast("success", "Workspace deleted");
+                      },
+                      onError: (err) => addToast("error", err.message),
+                    },
+                  )
+                }
                 disabled={deleteWorkspace.isPending}
                 className="px-3 py-1.5 bg-red-600 text-white rounded-md text-sm disabled:opacity-50"
               >
@@ -808,36 +904,29 @@ function DangerZoneTab() {
           {auditLog?.logs.length === 0 ? (
             <p className="text-sm text-gray-400">No recent activity</p>
           ) : (
-            auditLog?.logs.map(
-              (log: {
-                id?: string;
-                action?: string;
-                ipAddress?: string | null;
-                createdAt?: string | Date;
-              }) => {
-                if (!log.id) return null;
-                return (
-                  <div
-                    key={log.id}
-                    className="flex items-center justify-between p-3 bg-gray-700/50 rounded-md border border-gray-600 text-sm"
-                  >
-                    <div>
-                      <span className="font-medium text-white">
-                        {(log.action ?? "")
-                          .replace(/_/g, " ")
-                          .replace(/\b\w/g, (l: string) => l.toUpperCase())}
-                      </span>
-                      {log.ipAddress && (
-                        <span className="text-gray-400 ml-2">from {log.ipAddress}</span>
-                      )}
-                    </div>
-                    <span className="text-gray-400">
-                      {log.createdAt ? new Date(log.createdAt).toLocaleString() : ""}
+            auditLog?.logs.map((log) => {
+              if (!log.id) return null;
+              return (
+                <div
+                  key={log.id}
+                  className="flex items-center justify-between p-3 bg-gray-700/50 rounded-md border border-gray-600 text-sm"
+                >
+                  <div>
+                    <span className="font-medium text-white">
+                      {(log.action ?? "")
+                        .replace(/_/g, " ")
+                        .replace(/\b\w/g, (l: string) => l.toUpperCase())}
                     </span>
+                    {log.ipAddress && (
+                      <span className="text-gray-400 ml-2">from {log.ipAddress}</span>
+                    )}
                   </div>
-                );
-              },
-            )
+                  <span className="text-gray-400">
+                    {log.createdAt ? new Date(log.createdAt).toLocaleString() : ""}
+                  </span>
+                </div>
+              );
+            })
           )}
         </div>
       </div>
@@ -913,10 +1002,16 @@ function DangerZoneTab() {
               </button>
               <button
                 onClick={() =>
-                  deleteAccount.mutate({
-                    confirmation: confirmation as "DELETE MY ACCOUNT",
-                    reason,
-                  })
+                  deleteAccount.mutate(
+                    { confirmation, reason },
+                    {
+                      onSuccess: () => {
+                        logout();
+                        router.push("/");
+                      },
+                      onError: (err) => addToast("error", err.message),
+                    },
+                  )
                 }
                 disabled={confirmation !== "DELETE MY ACCOUNT" || deleteAccount.isPending}
                 className="flex-1 bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 disabled:opacity-50"

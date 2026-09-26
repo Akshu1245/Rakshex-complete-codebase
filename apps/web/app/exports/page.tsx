@@ -1,43 +1,92 @@
 "use client";
 
 import { useState } from "react";
-import { trpc } from "@/lib/trpc";
+import { useApi, useApiMutation } from "@/lib/api";
+import { NotConnectedState } from "@/components/NotConnected";
 
 const FORMATS = ["json", "csv", "ndjson", "pdf"] as const;
 type ExportFormat = (typeof FORMATS)[number];
 type ExportResource =
   "token_usage" | "scan_history" | "gateway_audit" | "alert_events" | "alert_rules" | "policies";
 
+interface ExportResourceInfo {
+  id: string;
+  title: string;
+}
+
+interface PrepareResult {
+  recordCount: number;
+  token: string;
+}
+
+interface InlineResult {
+  bodyBase64: string;
+  contentType: string;
+  filename: string;
+  recordCount: number;
+  sha256: string;
+}
+
 export default function DataExportsPage() {
-  const { data: resources, isLoading } = trpc.dataExport.listResources.useQuery();
+  // Data exports have no /v1 equivalent on the Workers deployment —
+  // /api/exports answers 501 not_connected. Mutations surface the honest
+  // error instead of pretending to export.
+  const {
+    data: resources,
+    isLoading,
+    notConnected,
+  } = useApi<ExportResourceInfo[]>("/api/exports?kind=resources");
   const [resource, setResource] = useState<ExportResource | "">("");
   const [format, setFormat] = useState<ExportFormat>("json");
   const [days, setDays] = useState(30);
   const [message, setMessage] = useState<string | null>(null);
 
-  const prepare = trpc.dataExport.prepare.useMutation({
-    onSuccess: (data) => {
-      setMessage(`Prepared ${data.recordCount} rows — downloading…`);
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || "";
-      window.location.href = `${apiBase}/api/internal/data-export/${data.token}`;
-    },
-    onError: (err) => setMessage(err.message),
-  });
+  const prepare = useApiMutation<
+    { resource: string; format: ExportFormat; days: number },
+    PrepareResult
+  >("/api/exports", "POST");
+  const inline = useApiMutation<
+    { resource: string; format: ExportFormat; days: number },
+    InlineResult
+  >("/api/exports", "POST");
 
-  const inline = trpc.dataExport.inline.useMutation({
-    onSuccess: (data) => {
-      const bytes = Uint8Array.from(atob(data.bodyBase64), (c) => c.charCodeAt(0));
-      const blob = new Blob([bytes], { type: data.contentType });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = data.filename;
-      a.click();
-      URL.revokeObjectURL(url);
-      setMessage(`Downloaded ${data.recordCount} rows (${data.sha256.slice(0, 12)}…)`);
-    },
-    onError: (err) => setMessage(err.message),
-  });
+  const runPrepare = () => {
+    if (!selected) return;
+    setMessage(null);
+    prepare.mutate(
+      { resource: selected, format, days },
+      {
+        onSuccess: (data) => {
+          setMessage(`Prepared ${data.recordCount} rows — downloading…`);
+          const apiBase = process.env.NEXT_PUBLIC_API_URL || "";
+          window.location.href = `${apiBase}/api/internal/data-export/${data.token}`;
+        },
+        onError: (err) => setMessage(err.message),
+      },
+    );
+  };
+
+  const runInline = () => {
+    if (!selected) return;
+    setMessage(null);
+    inline.mutate(
+      { resource: selected, format, days },
+      {
+        onSuccess: (data) => {
+          const bytes = Uint8Array.from(atob(data.bodyBase64), (c) => c.charCodeAt(0));
+          const blob = new Blob([bytes], { type: data.contentType });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = data.filename;
+          a.click();
+          URL.revokeObjectURL(url);
+          setMessage(`Downloaded ${data.recordCount} rows (${data.sha256.slice(0, 12)}…)`);
+        },
+        onError: (err) => setMessage(err.message),
+      },
+    );
+  };
 
   const selected = (resource || resources?.[0]?.id || "") as ExportResource;
 
@@ -55,6 +104,11 @@ export default function DataExportsPage() {
 
         {isLoading ? (
           <p className="text-gray-500">Loading resources…</p>
+        ) : notConnected ? (
+          <NotConnectedState
+            resource="Data exports"
+            detail="Listing resources and preparing exports needs the export backend, which isn't connected on this deployment yet. Nothing is exported here."
+          />
         ) : (
           <div className="space-y-6 p-6 rounded-lg border border-gray-700 bg-black/40">
             <label className="block text-sm">
@@ -103,7 +157,7 @@ export default function DataExportsPage() {
               <button
                 type="button"
                 disabled={!selected || inline.isPending}
-                onClick={() => inline.mutate({ resource: selected, format, days })}
+                onClick={runInline}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 rounded-lg text-sm font-medium"
               >
                 {inline.isPending ? "Exporting…" : "Inline download"}
@@ -111,7 +165,7 @@ export default function DataExportsPage() {
               <button
                 type="button"
                 disabled={!selected || prepare.isPending}
-                onClick={() => prepare.mutate({ resource: selected, format, days })}
+                onClick={runPrepare}
                 className="px-4 py-2 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 rounded-lg text-sm font-medium"
               >
                 {prepare.isPending ? "Preparing…" : "Prepare + stream"}

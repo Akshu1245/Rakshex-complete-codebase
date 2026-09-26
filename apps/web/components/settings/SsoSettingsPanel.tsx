@@ -1,19 +1,31 @@
 "use client";
 
 import { useState } from "react";
-import { trpc } from "@/lib/trpc";
+import { useApi, useApiMutation } from "@/lib/api";
 import { useToast } from "@/components/Toast";
 import { EmptyState } from "@/components/EmptyState";
+import { NotConnectedState } from "@/components/NotConnected";
 
 type ProviderKind = "oidc" | "saml";
+
+interface SsoProvider {
+  id: string;
+  name: string;
+  kind: string;
+  enabled: boolean;
+  emailDomain?: string | null;
+  defaultRole: string;
+}
 
 const inputClass =
   "w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm";
 
 export function SsoSettingsPanel() {
   const { addToast } = useToast();
-  const utils = trpc.useUtils();
-  const listQuery = trpc.sso.listProviders.useQuery();
+  // SSO has no /v1 equivalent on the Workers deployment —
+  // /api/settings answers 501 not_connected. Mutations surface an honest
+  // error instead of pretending to configure providers.
+  const listQuery = useApi<SsoProvider[]>("/api/settings?kind=sso-providers");
   const [showForm, setShowForm] = useState(false);
   const [kind, setKind] = useState<ProviderKind>("oidc");
   const [name, setName] = useState("");
@@ -32,31 +44,21 @@ export function SsoSettingsPanel() {
   const [callbackUrl, setCallbackUrl] = useState("");
   const [certificate, setCertificate] = useState("");
 
-  const createProvider = trpc.sso.createProvider.useMutation({
-    onSuccess: () => {
-      utils.sso.listProviders.invalidate();
-      setShowForm(false);
-      resetForm();
-      addToast("success", "SSO provider created (disabled until you enable it)");
-    },
-    onError: (err) => addToast("error", err.message),
-  });
+  interface CreateProviderArgs {
+    name: string;
+    kind: ProviderKind;
+    emailDomain?: string;
+    defaultRole: string;
+    config: Record<string, string>;
+  }
+  const createProvider = useApiMutation<CreateProviderArgs, unknown>("/api/settings", "POST");
+  const setEnabled = useApiMutation<{ id: string; enabled: boolean }, unknown>(
+    "/api/settings",
+    "PATCH",
+  );
+  const deleteProvider = useApiMutation<{ id: string }, unknown>("/api/settings", "DELETE");
 
-  const setEnabled = trpc.sso.setEnabled.useMutation({
-    onSuccess: () => {
-      utils.sso.listProviders.invalidate();
-      addToast("success", "SSO provider updated");
-    },
-    onError: (err) => addToast("error", err.message),
-  });
-
-  const deleteProvider = trpc.sso.deleteProvider.useMutation({
-    onSuccess: () => {
-      utils.sso.listProviders.invalidate();
-      addToast("success", "SSO provider removed");
-    },
-    onError: (err) => addToast("error", err.message),
-  });
+  const refresh = () => listQuery.refetch();
 
   const resetForm = () => {
     setName("");
@@ -74,29 +76,37 @@ export function SsoSettingsPanel() {
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
-    if (kind === "oidc") {
-      createProvider.mutate({
-        name,
-        kind: "oidc",
-        emailDomain: emailDomain || undefined,
-        defaultRole,
-        config: { issuer, clientId, clientSecret },
-      });
-    } else {
-      createProvider.mutate({
-        name,
-        kind: "saml",
-        emailDomain: emailDomain || undefined,
-        defaultRole,
-        config: {
-          entryPoint,
-          issuer: samlIssuer,
-          audience,
-          callbackUrl,
-          ...(certificate.trim() ? { certificate: certificate.trim() } : {}),
-        },
-      });
-    }
+    const args: CreateProviderArgs =
+      kind === "oidc"
+        ? {
+            name,
+            kind: "oidc",
+            emailDomain: emailDomain || undefined,
+            defaultRole,
+            config: { issuer, clientId, clientSecret },
+          }
+        : {
+            name,
+            kind: "saml",
+            emailDomain: emailDomain || undefined,
+            defaultRole,
+            config: {
+              entryPoint,
+              issuer: samlIssuer,
+              audience,
+              callbackUrl,
+              ...(certificate.trim() ? { certificate: certificate.trim() } : {}),
+            },
+          };
+    createProvider.mutate(args, {
+      onSuccess: () => {
+        refresh();
+        setShowForm(false);
+        resetForm();
+        addToast("success", "SSO provider created (disabled until you enable it)");
+      },
+      onError: (err) => addToast("error", err.message),
+    });
   };
 
   const providers = listQuery.data ?? [];
@@ -279,6 +289,11 @@ export function SsoSettingsPanel() {
 
       {listQuery.isLoading ? (
         <p className="text-sm text-gray-400">Loading providers…</p>
+      ) : listQuery.notConnected ? (
+        <NotConnectedState
+          resource="SSO providers"
+          detail="Configuring SSO providers needs the account backend, which isn't connected on this deployment yet. Nothing is configured here."
+        />
       ) : providers.length === 0 ? (
         <EmptyState
           compact
@@ -316,7 +331,18 @@ export function SsoSettingsPanel() {
                 <button
                   type="button"
                   disabled={setEnabled.isPending}
-                  onClick={() => setEnabled.mutate({ id: p.id, enabled: !p.enabled })}
+                  onClick={() =>
+                    setEnabled.mutate(
+                      { id: p.id, enabled: !p.enabled },
+                      {
+                        onSuccess: () => {
+                          refresh();
+                          addToast("success", "SSO provider updated");
+                        },
+                        onError: (err) => addToast("error", err.message),
+                      },
+                    )
+                  }
                   className="text-sm px-3 py-1.5 rounded-md border border-gray-500 text-gray-200 hover:bg-gray-600"
                 >
                   {p.enabled ? "Disable" : "Enable"}
@@ -326,7 +352,16 @@ export function SsoSettingsPanel() {
                   disabled={deleteProvider.isPending}
                   onClick={() => {
                     if (confirm(`Remove SSO provider "${p.name}"?`)) {
-                      deleteProvider.mutate({ id: p.id });
+                      deleteProvider.mutate(
+                        { id: p.id },
+                        {
+                          onSuccess: () => {
+                            refresh();
+                            addToast("success", "SSO provider removed");
+                          },
+                          onError: (err) => addToast("error", err.message),
+                        },
+                      );
                     }
                   }}
                   className="text-sm px-3 py-1.5 rounded-md text-red-400 hover:bg-red-900/30"

@@ -32,6 +32,34 @@ export function evaluateAction(input: EvaluationInput): EvaluationResult {
   let decision: Decision = "ALLOW";
   const policyVersion = input.policy?.version ?? "builtin:0.1";
 
+  // F-1 (defense in depth): security-decision numerics must be finite,
+  // non-negative values (amountMinor additionally an integer). Any caller
+  // that reaches this package with negative/NaN/Infinity/non-numeric values
+  // fails closed — the spend-ceiling, approval-threshold, daily-limit, and
+  // delegation-cap gates below are pure arithmetic and must never run on
+  // unvalidated numerics.
+  const amountMinor = input.action.amountMinor;
+  const estimated = input.estimatedCostUsd;
+  if (
+    (amountMinor !== undefined &&
+      amountMinor !== null &&
+      (!Number.isInteger(amountMinor) || amountMinor < 0)) ||
+    (estimated !== undefined &&
+      estimated !== null &&
+      (!Number.isFinite(estimated) || estimated < 0))
+  ) {
+    return {
+      decision: "DENY",
+      effectiveDecision: input.mode === "shadow" ? "ALLOW" : "DENY",
+      wouldBlock: true,
+      enforced: input.mode === "enforce",
+      reasons: [
+        "Invalid numeric input: amountMinor must be a non-negative integer and estimatedCostUsd a finite non-negative number",
+      ],
+      policyVersion,
+    };
+  }
+
   if (input.frozen) {
     decision = "FREEZE";
     reasons.push("Agent or workspace is frozen");

@@ -196,30 +196,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const welcomeProvider = new WelcomeViewProvider(
     context.extensionUri,
     async (apiKey: string) => {
-      let valid = false;
+      // The hosted API has no key-validation endpoint: verify connectivity,
+      // store the key locally. It is verified against the workspace on first use.
       try {
-        const result = await api.validateApiKey(apiKey);
-        valid = result.valid;
-        if (valid && result.user) {
-          void vscode.window.showInformationMessage(
-            `Connected as ${result.user.email ?? result.user.name ?? "user"} (${result.user.plan}).`,
-          );
-        }
+        await api.checkHealth();
       } catch (err) {
-        const msg =
-          err instanceof RakshexApiError
-            ? err.message
-            : err instanceof Error
-              ? err.message
-              : String(err);
-        void vscode.window.showErrorMessage(`Couldn't verify that API key — ${msg}`);
-        return;
-      }
-
-      if (!valid) {
-        void vscode.window.showErrorMessage(
-          "That API key didn't work. Generate a fresh one from your Rakshex dashboard.",
-        );
+        const msg = err instanceof Error ? err.message : String(err);
+        void vscode.window.showErrorMessage(`Couldn't reach the Rakshex API — ${msg}`);
         return;
       }
 
@@ -227,6 +210,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       cachedApiKey = apiKey;
       engagementTracker.recordOnboardingStep("signed_in");
       await applySignedInState(true);
+      void vscode.window.showInformationMessage(
+        "Rakshex: API key saved. It will be verified against your workspace on first use.",
+      );
     },
     handleQuickAction,
   );
@@ -253,30 +239,14 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       if (!entered) return;
       const key = entered.trim();
 
-      let valid = false;
+      // The hosted API has no key-validation endpoint, so we verify
+      // connectivity here and store the key locally. The key is truly
+      // verified against the workspace on first use.
       try {
-        const result = await api.validateApiKey(key);
-        valid = result.valid;
-        if (valid && result.user) {
-          void vscode.window.showInformationMessage(
-            `Signed in to Rakshex as ${result.user.email ?? result.user.name ?? "user"} (${result.user.plan}).`,
-          );
-        }
+        await api.checkHealth();
       } catch (err) {
-        const msg =
-          err instanceof RakshexApiError
-            ? err.message
-            : err instanceof Error
-              ? err.message
-              : String(err);
-        void vscode.window.showErrorMessage(`Couldn't verify that API key — ${msg}`);
-        return;
-      }
-
-      if (!valid) {
-        void vscode.window.showErrorMessage(
-          "That API key didn't work. Generate a fresh one from your Rakshex dashboard.",
-        );
+        const msg = err instanceof Error ? err.message : String(err);
+        void vscode.window.showErrorMessage(`Couldn't reach the Rakshex API — ${msg}`);
         return;
       }
 
@@ -284,6 +254,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       cachedApiKey = key;
       engagementTracker.recordOnboardingStep("signed_in");
       await applySignedInState(true);
+      void vscode.window.showInformationMessage(
+        "Rakshex: API key saved. It will be verified against your workspace on first use.",
+      );
     }),
 
     vscode.commands.registerCommand("rakshex.signOut", async () => {
@@ -676,10 +649,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       if (imported > 0) {
         engagementTracker.record("collection_imported");
         engagementTracker.recordOnboardingStep("imported");
-        let msg = `Imported ${imported} collection${imported !== 1 ? "s" : ""}.`;
+        let msg = `Scanned ${imported} collection${imported !== 1 ? "s" : ""} locally.`;
         if (findings > 0) {
           msg += ` ${findings} potential credential${findings !== 1 ? "s" : ""} found. Review them in the Findings panel.`;
         }
+        msg += " Server sync is not available on the hosted API yet.";
         void vscode.window.showInformationMessage(msg);
         await refresh(true);
       } else {
@@ -766,7 +740,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     }),
   );
 
-  await registerGatewayCommand(context, readApiKey);
+  await registerGatewayCommand(context, api, readApiKey);
   registerShadowApiCommand(context, {
     isTrusted: () => vscode.workspace.isTrusted,
     api,

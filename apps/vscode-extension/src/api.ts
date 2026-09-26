@@ -1,15 +1,20 @@
 /**
- * Thin fetch wrapper around the Rakshex tRPC `vscodeExtension.*` router.
+ * Thin fetch wrapper around the Rakshex Agent Firewall Workers API.
  *
- * tRPC v11 wire format:
- *   Query:    GET  /api/trpc/<path>?input={"json":<input>}
- *   Mutation: POST /api/trpc/<path>   body: {"json":<input>}
+ * Live REST endpoints (https://rakshex-firewall.rakshex.workers.dev):
+ *   GET  /v1/health                      — service health (no auth)
+ *   POST /v1/evaluate                    — policy decision (Bearer API key)
+ *   GET  /v1/receipts/:id                — one signed receipt entry
+ *   GET  /v1/receipts/export?workspaceId — signed receipt bundle
+ *   POST /v1/receipts/verify             — verify entry/bundle (body: { entry|bundle, trustedKeys })
  *
- * Responses are wrapped as `{ result: { data: <payload> } }` (tRPC serializes
- * through superjson on the server; for the shapes we consume here the JSON
- * round-trip matches the declared type without extra deserialization).
+ * Methods with no Workers equivalent throw a clear "not available on the
+ * hosted API yet" error — never a faked success. Callers surface err.message.
  */
 import * as vscode from "vscode";
+import { scanCollectionForCredentials } from "./localCollectionScan";
+
+export const LIVE_API_ORIGIN = "https://rakshex-firewall.rakshex.workers.dev";
 
 export type Severity = "Critical" | "High" | "Medium" | "Low";
 export type FindingStatus = "open" | "in-progress" | "resolved";
@@ -72,6 +77,26 @@ export interface ValidatedUser {
   plan: string;
 }
 
+export interface EvaluateActionInput {
+  workspaceId: number;
+  requestId: string;
+  mode?: "enforce" | "shadow";
+  action: {
+    name: string;
+    domain: "financial" | "code" | "database" | "mcp" | "unknown";
+    effect: "read" | "write" | "destructive" | "unknown";
+    parameters?: Record<string, unknown>;
+    raw: { provider: string; operation: string; toolName?: string };
+  };
+}
+
+export interface EvaluateDecision {
+  decision: string;
+  wouldBlock?: boolean;
+  reason?: string;
+  receiptId?: number;
+}
+
 export class RakshexApiError extends Error {
   constructor(
     message: string,
@@ -82,70 +107,109 @@ export class RakshexApiError extends Error {
   }
 }
 
+function notAvailable(feature: string): RakshexApiError {
+  return new RakshexApiError(
+    `Rakshex: ${feature} is not available on the hosted API yet. Local features still work.`,
+    501,
+  );
+}
+
 export class RakshexApi {
   constructor(
     private readonly getBaseUrl: () => string,
     private readonly getApiKey: () => string | undefined,
   ) {}
 
-  // --- public (no auth) --------------------------------------------------
+  // --- live endpoints ----------------------------------------------------
 
-  async validateApiKey(apiKey: string): Promise<{ valid: boolean; user: ValidatedUser | null }> {
-    return this.mutate<{ valid: boolean; user: ValidatedUser | null }>(
-      "vscodeExtension.validateApiKey",
-      { apiKey },
-      { apiKeyOverride: apiKey },
+  /** Connectivity check against the hosted API. Does not validate the key. */
+  async checkHealth(): Promise<{ ok: boolean; service: string; environment?: string }> {
+    return this.get<{ ok: boolean; service: string; environment?: string }>("/v1/health");
+  }
+
+  /** Policy decision for one semantic action. Auth: Bearer API key. */
+  async evaluateAction(input: EvaluateActionInput): Promise<EvaluateDecision> {
+    return this.post<EvaluateDecision>("/v1/evaluate", input);
+  }
+
+  /**
+   * Import a Postman or OpenAPI collection.
+   *
+   * Local-only: the hosted API has no collections endpoint, so the file is
+   * scanned on-device for exposed secrets and plaintext HTTP. Nothing is
+   * uploaded and nothing is persisted server-side.
+   */
+  async importCollection(
+    name: string,
+    format: "postman" | "openapi",
+    data: unknown,
+  ): Promise<{
+    id: string;
+    name: string;
+    credentialFindings?: Array<{
+      ruleId: string;
+      description: string;
+      severity: string;
+      path: string;
+      matchPreview: string;
+    }>;
+  }> {
+    const credentialFindings = scanCollectionForCredentials(data, format);
+    return { id: `local-${Date.now()}`, name, credentialFindings };
+  }
+
+  /**
+   * Find Postman collection files (*.postman_collection.json) in the
+   * open workspace. Returns matching URIs for quick import.
+   */
+  async findCollectionFiles(): Promise<vscode.Uri[]> {
+    return vscode.workspace.findFiles(
+      "**/*.postman_collection.json",
+      "**/{node_modules,.git,dist,build,out,.next}/**",
+      50,
     );
   }
 
-  // --- protected ---------------------------------------------------------
+  // --- not on the hosted API ----------------------------------------------
 
   async getDashboardData(): Promise<DashboardData> {
-    return this.query<DashboardData>("vscodeExtension.getDashboardData");
+    throw notAvailable("dashboard data");
   }
 
-  async getRecentFindings(limit = 20): Promise<Finding[]> {
-    return this.query<Finding[]>("vscodeExtension.getRecentFindings", {
-      limit,
-    });
+  async getRecentFindings(_limit = 20): Promise<Finding[]> {
+    throw notAvailable("server-side findings");
   }
 
   async listCollections(): Promise<Collection[]> {
-    // `collections.list` is the canonical list endpoint on the server.
-    return this.query<Collection[]>("collections.list");
+    throw notAvailable("server-side collections");
   }
 
-  async triggerScan(collectionId: string): Promise<{ scanId: string; status: string }> {
-    return this.mutate<{ scanId: string; status: string }>("vscodeExtension.triggerScan", {
-      collectionId,
-    });
+  async triggerScan(_collectionId: string): Promise<{ scanId: string; status: string }> {
+    throw notAvailable("server-side scans (use the local workspace scan instead)");
   }
 
   async updateFindingStatus(
-    findingId: string,
-    status: FindingStatus,
+    _findingId: string,
+    _status: FindingStatus,
   ): Promise<{ success: boolean }> {
-    return this.mutate<{ success: boolean }>("vscodeExtension.updateFindingStatus", {
-      findingId,
-      status,
-    });
+    throw notAvailable("server-side finding updates");
   }
 
+  /**
+   * Telemetry is not collected by the hosted API — intentionally a no-op.
+   * Kept so callers don't change; nothing is sent anywhere.
+   */
   async recordActivity(
-    type:
+    _type:
       | "heartbeat"
       | "file_change"
       | "session_start"
       | "session_end"
       | "feedback"
       | "uninstall_feedback",
-    data: Record<string, unknown> = {},
+    _data: Record<string, unknown> = {},
   ): Promise<void> {
-    await this.mutate("vscodeExtension.recordActivity", {
-      type,
-      data,
-      timestamp: new Date().toISOString(),
-    });
+    return;
   }
 
   /**
@@ -154,26 +218,26 @@ export class RakshexApi {
    * and avoid logging it.
    */
   async generateApiKey(): Promise<{ apiKey: string }> {
-    return this.mutate<{ apiKey: string }>("vscodeExtension.generateApiKey", undefined);
+    throw notAvailable("API key rotation");
   }
 
   /**
    * Ask the Rakshex Security Copilot a question. Returns the assistant's
    * response text. Falls back gracefully if the endpoint is unavailable.
    */
-  async copilotAsk(question: string, context: string = "general"): Promise<{ response: string }> {
-    return this.mutate<{ response: string }>("vscodeExtension.copilotAsk", { question, context });
+  async copilotAsk(_question: string, _context: string = "general"): Promise<{ response: string }> {
+    throw notAvailable("Security Copilot");
   }
 
-  async getControlPlaneSummary(workspaceId: number): Promise<ControlPlaneSummary> {
-    return this.query<ControlPlaneSummary>("controlPlane.summary", { workspaceId });
+  async getControlPlaneSummary(_workspaceId: number): Promise<ControlPlaneSummary> {
+    throw notAvailable("control-plane summary");
   }
 
-  async getControlPlaneUsage(workspaceId: number): Promise<ControlPlaneUsage> {
-    return this.query<ControlPlaneUsage>("controlPlane.usage.summary", { workspaceId });
+  async getControlPlaneUsage(_workspaceId: number): Promise<ControlPlaneUsage> {
+    throw notAvailable("control-plane usage");
   }
 
-  async getControlPlaneSubscriptions(workspaceId: number): Promise<
+  async getControlPlaneSubscriptions(_workspaceId: number): Promise<
     Array<{
       provider: string;
       plan: string;
@@ -182,7 +246,7 @@ export class RakshexApi {
       status: string;
     }>
   > {
-    return this.query("controlPlane.subscriptions.list", { workspaceId });
+    throw notAvailable("control-plane subscriptions");
   }
 
   // --- internals ---------------------------------------------------------
@@ -198,8 +262,7 @@ export class RakshexApi {
   }
 
   getHealthUrl(): string {
-    const base = this.getConfiguredApiUrl();
-    return `${base.endsWith("/api") ? base : `${base}/api`}/health`;
+    return `${this.getConfiguredApiUrl()}/v1/health`;
   }
 
   /**
@@ -245,68 +308,23 @@ export class RakshexApi {
     );
   }
 
-  private async query<T>(path: string, input?: unknown): Promise<T> {
-    const url = new URL(`${this.trpcBase()}/${path}`);
-    if (input !== undefined) {
-      url.searchParams.set("input", JSON.stringify({ json: input }));
-    }
-    const res = await this.resilientFetch(url.toString(), {
+  private async get<T>(path: string): Promise<T> {
+    const res = await this.resilientFetch(`${this.getConfiguredApiUrl()}${path}`, {
       method: "GET",
       headers: this.buildHeaders(),
     });
     return this.handleResponse<T>(res);
   }
 
-  /**
-   * Import a Postman or OpenAPI collection into Rakshex.
-   * Reads file from the workspace, sends it to the server for
-   * credential scanning + persistence.
-   */
-  async importCollection(
-    name: string,
-    format: "postman" | "openapi",
-    data: unknown,
-  ): Promise<{
-    id: string;
-    name: string;
-    credentialFindings?: Array<{
-      ruleId: string;
-      description: string;
-      severity: string;
-      path: string;
-      matchPreview: string;
-    }>;
-  }> {
-    return this.mutate("collections.create", { name, format, data });
-  }
-
-  /**
-   * Find Postman collection files (*.postman_collection.json) in the
-   * open workspace. Returns matching URIs for quick import.
-   */
-  async findCollectionFiles(): Promise<vscode.Uri[]> {
-    return vscode.workspace.findFiles(
-      "**/*.postman_collection.json",
-      "**/{node_modules,.git,dist,build,out,.next}/**",
-      50,
-    );
-  }
-
-  private async mutate<T>(
-    path: string,
-    input: unknown,
-    opts: { apiKeyOverride?: string } = {},
-  ): Promise<T> {
-    const url = `${this.trpcBase()}/${path}`;
-    const body = input === undefined ? {} : { json: input };
+  private async post<T>(path: string, body: unknown): Promise<T> {
     const res = await this.resilientFetch(
-      url,
+      `${this.getConfiguredApiUrl()}${path}`,
       {
         method: "POST",
-        headers: this.buildHeaders(opts.apiKeyOverride),
+        headers: this.buildHeaders(),
         body: JSON.stringify(body),
       },
-      { timeoutMs: 15_000 }, // mutations can take longer
+      { timeoutMs: 15_000 },
     );
     return this.handleResponse<T>(res);
   }
@@ -324,11 +342,6 @@ export class RakshexApi {
     return headers;
   }
 
-  private trpcBase(): string {
-    const base = this.getConfiguredApiUrl();
-    return `${base.endsWith("/api") ? base : `${base}/api`}/trpc`;
-  }
-
   private async handleResponse<T>(res: Response): Promise<T> {
     const rawText = await res.text();
     let parsed: unknown = undefined;
@@ -342,30 +355,26 @@ export class RakshexApi {
 
     if (!res.ok) {
       const errMsg =
-        (parsed as { error?: { message?: string; json?: { message?: string } } } | undefined)?.error
-          ?.json?.message ??
-        (parsed as { error?: { message?: string } } | undefined)?.error?.message ??
+        (parsed as { error?: string } | undefined)?.error ??
         (parsed as { message?: string } | undefined)?.message ??
         rawText ??
         res.statusText;
       throw new RakshexApiError(`Rakshex API ${res.status}: ${errMsg}`, res.status);
     }
 
-    const payload = parsed as
-      { result?: { data?: unknown } } | { result?: { data?: { json?: unknown } } } | undefined;
-
-    const data = payload?.result?.data;
-    // Server uses superjson; outputs we consume here are plain JSON in the
-    // common path, but accept the `{ json: ... }` shape as a fallback.
-    if (data && typeof data === "object" && "json" in (data as Record<string, unknown>)) {
-      return (data as { json: T }).json;
-    }
-    return data as T;
+    return parsed as T;
   }
 }
 
+/**
+ * Canonical API origin. `rakshex.apiOrigin` wins; the legacy `rakshex.apiUrl`
+ * setting is honored as a fallback for existing installs.
+ */
 export function getConfiguredBaseUrl(): string {
-  return vscode.workspace
-    .getConfiguration("rakshex")
-    .get<string>("apiUrl", "https://api.rakshex.in");
+  const cfg = vscode.workspace.getConfiguration("rakshex");
+  const origin = cfg.get<string>("apiOrigin", "").trim();
+  if (origin) return origin.replace(/\/+$/, "");
+  const legacy = cfg.get<string>("apiUrl", "").trim();
+  if (legacy) return legacy.replace(/\/+$/, "");
+  return LIVE_API_ORIGIN;
 }

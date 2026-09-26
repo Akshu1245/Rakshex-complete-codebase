@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Shield, Zap, Eye, Lock, TrendingDown, Globe, ChevronRight, Check } from "lucide-react";
-import { trpc } from "@/lib/trpc";
+import { useApiMutation } from "@/lib/api";
 import { Footer } from "@/components/layout/Footer";
 
 const PLANS = [
@@ -18,16 +18,22 @@ export default function LandingPage() {
   const [plan, setPlan] = useState("Free");
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
-  const joinWaitlist = trpc.waitlist.join.useMutation({
-    onSuccess: () => setSubmitted(true),
-    onError: (err) => setError(err.message),
-  });
+  const joinWaitlist = useApiMutation<{ email: string; plan: string; source: string }, unknown>(
+    "/api/waitlist",
+    "POST",
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     if (email.includes("@")) {
-      joinWaitlist.mutate({ email, plan, source: "landing_page" });
+      joinWaitlist.mutate(
+        { email, plan, source: "landing_page" },
+        {
+          onSuccess: () => setSubmitted(true),
+          onError: (err) => setError(err.message),
+        },
+      );
     }
   };
 
@@ -117,9 +123,8 @@ export default function LandingPage() {
             </h1>
             <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
               A developer-native control plane that sits between your agents and their tools,
-              authorizing consequential actions, blocking prompt-injection and runaway
-              agents, and recording every decision in a tamper-evident ledger — before
-              anything hits production.
+              authorizing consequential actions, blocking prompt-injection and runaway agents, and
+              recording every decision in a tamper-evident ledger — before anything hits production.
             </p>
 
             {/* Email capture */}

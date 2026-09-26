@@ -79,10 +79,14 @@ export default function BlogLakeraAlternative() {
                   ["API security scanning", "❌", "✅"],
                   ["Shadow API discovery", "❌", "✅"],
                   ["Credential leak scanning", "❌", "✅"],
-                  ["LLM cost monitoring", "❌", "✅"],
-                  ["Kill switch / budget cap", "❌", "✅"],
-                  ["Compliance evidence export", "❌", "✅ Mapping and evidence, not a certification"],
-                  ["Self-hosted", "❌ Enterprise only", "✅ All tiers"],
+                  ["LLM cost monitoring", "❌", "Routed traffic only"],
+                  ["Kill switch / budget cap", "❌", "Routed traffic only"],
+                  [
+                    "Compliance evidence export",
+                    "❌",
+                    "✅ Mapping and evidence, not a certification",
+                  ],
+                  ["Self-hosted", "❌ Enterprise only", "Docker Compose"],
                 ].map(([cap, lak, dev]) => (
                   <tr key={cap}>
                     <td className="p-3">{cap}</td>
@@ -96,10 +100,10 @@ export default function BlogLakeraAlternative() {
 
           <h2 className="text-2xl font-bold text-white mt-8">The Cost of Specialist Tools</h2>
           <p>
-            Lakera charges per request. RaksHex charges a flat monthly fee. If you process 1M
+            Lakera charges per request. RaksHex is in private beta — paid access is by invite or
+            Order Form only, with evaluation pricing shown for planning. If you process 1M
             requests/month at Lakera's rate (~$0.001/request), that is $1,000/month for prompt
-            injection defense alone. RaksHex Pro is $99/month for prompt injection + API security +
-            cost monitoring + compliance.
+            injection defense alone.
           </p>
 
           <h2 className="text-2xl font-bold text-white mt-8">When to Choose Lakera</h2>
@@ -113,7 +117,9 @@ export default function BlogLakeraAlternative() {
           <ul className="list-disc list-inside space-y-2">
             <li>You want prompt injection defense + API security in one platform</li>
             <li>You need cost governance and a real kill switch</li>
-            <li>You need an exportable, auditor-facing evidence trail (mapping, not a certification)</li>
+            <li>
+              You need an exportable, auditor-facing evidence trail (mapping, not a certification)
+            </li>
             <li>You prefer self-hosted deployment for data-handling control</li>
           </ul>
 

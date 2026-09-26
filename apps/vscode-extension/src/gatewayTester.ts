@@ -1,60 +1,60 @@
 /**
- * Inline test runner for the Rakshex gateway.
+ * Dry-runner for the Rakshex Agent Firewall policy.
  *
- * Lets a developer paste a prompt directly from VS Code and see whether it
- * would be blocked by the live gateway policy chain (PII redaction, prompt
- * injection, kill-switch, token budget, tool approval).
+ * Takes text from the editor and evaluates it as an `llm.prompt` semantic
+ * action against the live firewall policy in shadow mode: the policy chain
+ * runs and returns a decision, nothing executes, no tokens are charged.
  *
- * The command is disconnected from the model — it sends `dry_run=true`
- * which causes the gateway to short-circuit after the policy chain runs.
- * No tokens are charged.
+ * Honest boundary: this tests the *action policy* (allow/deny/approve),
+ * not prompt-content analysis. The firewall governs actions, not words.
  */
 import * as vscode from "vscode";
+import { RakshexApi } from "./api";
 
 interface PolicyVerdict {
   decision: "allowed" | "blocked";
   reason?: string;
   detail?: Record<string, unknown>;
-  redactedMessages?: Array<{ role: string; content: string }>;
 }
 
 export async function runGatewayTest(
-  gatewayUrl: string,
-  apiKey: string,
+  api: RakshexApi,
+  workspaceId: number,
   promptText: string,
 ): Promise<PolicyVerdict> {
-  const url = `${gatewayUrl.replace(/\/$/, "")}/v1/chat/completions`;
-  const resp = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-      "x-rakshex-dry-run": "true",
+  const requestId =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const result = await api.evaluateAction({
+    workspaceId,
+    requestId,
+    mode: "shadow",
+    action: {
+      name: "llm.prompt",
+      domain: "unknown",
+      effect: "unknown",
+      parameters: { prompt: promptText },
+      raw: { provider: "vscode-extension", operation: "gateway-test" },
     },
-    body: JSON.stringify({
-      model: "gpt-4o-mini",
-      messages: [{ role: "user", content: promptText }],
-      max_tokens: 1,
-    }),
   });
-  if (resp.status === 200) {
+  if (result.decision === "ALLOW") {
     return { decision: "allowed" };
-  }
-  let body: { error?: { code?: string; message?: string; detail?: Record<string, unknown> } };
-  try {
-    body = (await resp.json()) as typeof body;
-  } catch {
-    body = {};
   }
   return {
     decision: "blocked",
-    ...(body.error?.code ? { reason: body.error.code } : {}),
-    ...(body.error?.detail ? { detail: body.error.detail } : {}),
+    reason: result.reason ?? `policy decision: ${result.decision}`,
   };
+}
+
+function readWorkspaceId(): number {
+  const raw = vscode.workspace.getConfiguration("rakshex").get<number>("workspaceId", 0);
+  return Number.isInteger(raw) ? (raw as number) : 0;
 }
 
 export async function registerGatewayCommand(
   context: vscode.ExtensionContext,
+  api: RakshexApi,
   readApiKey: () => string | undefined,
 ): Promise<void> {
   context.subscriptions.push(
@@ -66,33 +66,44 @@ export async function registerGatewayCommand(
         );
         return;
       }
-      const cfg = vscode.workspace.getConfiguration("rakshex");
-      const gatewayUrl = cfg.get<string>("gatewayUrl") ?? "http://localhost:8081";
+      const workspaceId = readWorkspaceId();
+      if (!workspaceId || workspaceId <= 0) {
+        void vscode.window.showWarningMessage(
+          "Rakshex: set your workspace ID first (Settings → Rakshex: Workspace Id).",
+        );
+        return;
+      }
+      // Optional self-host override; empty = the configured API origin.
+      const gatewayOverride = vscode.workspace
+        .getConfiguration("rakshex")
+        .get<string>("gatewayUrl", "")
+        .trim();
+      const evalApi = gatewayOverride ? new RakshexApi(() => gatewayOverride, readApiKey) : api;
       const editor = vscode.window.activeTextEditor;
       const initial =
         editor && !editor.selection.isEmpty ? editor.document.getText(editor.selection) : "";
       const prompt = await vscode.window.showInputBox({
-        title: "Rakshex — test prompt through gateway",
+        title: "Rakshex — dry-run through firewall policy",
         prompt:
-          "Paste the prompt you want to validate. The gateway will run all policies and return the decision.",
+          "Paste the prompt to evaluate. Runs in shadow mode against the live policy — decision only, nothing executes.",
         value: initial,
         ignoreFocusOut: true,
       });
       if (!prompt) return;
       try {
-        const verdict = await runGatewayTest(gatewayUrl, apiKey, prompt);
+        const verdict = await runGatewayTest(evalApi, workspaceId, prompt);
         if (verdict.decision === "allowed") {
           void vscode.window.showInformationMessage(
-            "Rakshex: prompt would be allowed by all policies.",
+            "Rakshex: the firewall policy would ALLOW this action (shadow mode).",
           );
         } else {
           void vscode.window.showWarningMessage(
-            `Rakshex: prompt would be BLOCKED — ${verdict.reason ?? "policy violation"}`,
+            `Rakshex: the firewall policy would BLOCK this action — ${verdict.reason ?? "policy decision"}.`,
           );
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        void vscode.window.showErrorMessage(`Rakshex: gateway test failed — ${msg}`);
+        void vscode.window.showErrorMessage(`Rakshex: policy dry-run failed — ${msg}`);
       }
     }),
   );

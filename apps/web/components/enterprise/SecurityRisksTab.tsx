@@ -1,39 +1,79 @@
 "use client";
 import { useState } from "react";
-import { trpc } from "@/lib/trpc";
+import { useApi, useApiMutation } from "@/lib/api";
 import { DataTable } from "./DataTable";
 import { StatusBadge } from "./StatusBadge";
 import { MetricCard } from "./MetricCard";
 import { PageLoading, ErrorState, EmptyState } from "./States";
 import { useEnterpriseWorkspace } from "./WorkspaceContext";
 
+interface RiskItem {
+  id: number;
+  severity: string;
+  title: string;
+  description?: string | null;
+  category: string;
+  status: string;
+}
+
+interface ShadowKeyItem {
+  id: number;
+  provider: string;
+  keyPrefix: string;
+  discoveredIn?: string | null;
+  riskLevel: string;
+  isInVault: boolean;
+  status: string;
+  assigneeUserId?: number | null;
+  lastSeenAt: string;
+}
+
+interface WorkspaceMemberItem {
+  userId: number;
+  email?: string | null;
+}
+
 export function SecurityRisksTab() {
   const { workspaceId } = useEnterpriseWorkspace();
-  const utils = trpc.useUtils();
-  const risks = trpc.enterprise.overprivileged.list.useQuery({ workspaceId });
-  const shadow = trpc.enterprise.shadowKeys.list.useQuery({ workspaceId });
-  const members = trpc.workspaces.listMembers.useQuery({ workspaceId });
-  const analyze = trpc.enterprise.discovery.triggerRiskAnalysis.useMutation();
-  const acknowledge = trpc.enterprise.overprivileged.acknowledge.useMutation();
-  const updateShadow = trpc.enterprise.shadowKeys.update.useMutation({
-    onSuccess: () => utils.enterprise.shadowKeys.list.invalidate(),
-  });
+  const enabled = workspaceId > 0;
+  const risks = useApi<RiskItem[]>(
+    enabled ? `/api/enterprise?kind=overprivileged&workspaceId=${workspaceId}` : null,
+  );
+  const shadow = useApi<ShadowKeyItem[]>(
+    enabled ? `/api/enterprise?kind=shadowKeys&workspaceId=${workspaceId}` : null,
+  );
+  const members = useApi<WorkspaceMemberItem[]>(
+    enabled ? `/api/workspaces?kind=members&workspaceId=${workspaceId}` : null,
+  );
+  const analyze = useApiMutation<Record<string, unknown>, unknown>("/api/enterprise", "POST");
+  const acknowledge = useApiMutation<Record<string, unknown>, unknown>("/api/enterprise", "POST");
+  const updateShadow = useApiMutation<Record<string, unknown>, unknown>("/api/enterprise", "PATCH");
+  const doUpdateShadow = (args: Record<string, unknown>) =>
+    updateShadow.mutate(args, { onSuccess: () => shadow.refetch() });
 
   const [activeTab, setActiveTab] = useState<"overprivileged" | "shadow">("overprivileged");
 
   if (risks.isLoading) return <PageLoading />;
+  if (risks.notConnected)
+    return (
+      <EmptyState
+        icon="gpp_bad"
+        title="Security risks aren't connected yet"
+        description="Over-privileged and shadow key analysis live on the backend, which isn't connected on this deployment. Nothing here is fabricated — connect the backend to enable it."
+      />
+    );
   if (risks.error)
     return <ErrorState message={risks.error.message} onRetry={() => risks.refetch()} />;
 
   const handleAcknowledge = async (id: number) => {
     await acknowledge.mutateAsync({ workspaceId, id });
-    utils.enterprise.overprivileged.list.invalidate();
+    risks.refetch();
   };
 
   const handleAnalyze = async () => {
     await analyze.mutateAsync({ workspaceId });
-    utils.enterprise.overprivileged.list.invalidate();
-    utils.enterprise.shadowKeys.list.invalidate();
+    risks.refetch();
+    shadow.refetch();
   };
 
   const shadowStatus = (status: string) =>
@@ -44,13 +84,13 @@ export function SecurityRisksTab() {
     {
       key: "severity",
       header: "Severity",
-      render: (r: (typeof risks.data)[0]) => <StatusBadge status={r.severity} />,
+      render: (r: RiskItem) => <StatusBadge status={r.severity} />,
       sortable: true,
     },
     {
       key: "title",
       header: "Finding",
-      render: (r: (typeof risks.data)[0]) => (
+      render: (r: RiskItem) => (
         <div>
           <p className="text-white text-xs font-medium">{r.title}</p>
           <p className="text-gray-500 text-xs mt-0.5">{r.description?.slice(0, 80)}</p>
@@ -60,7 +100,7 @@ export function SecurityRisksTab() {
     {
       key: "category",
       header: "Category",
-      render: (r: (typeof risks.data)[0]) => (
+      render: (r: RiskItem) => (
         <span className="text-gray-400 text-xs">{r.category.replace(/_/g, " ")}</span>
       ),
       sortable: true,
@@ -68,13 +108,13 @@ export function SecurityRisksTab() {
     {
       key: "status",
       header: "Status",
-      render: (r: (typeof risks.data)[0]) => <StatusBadge status={r.status} />,
+      render: (r: RiskItem) => <StatusBadge status={r.status} />,
       sortable: true,
     },
     {
       key: "actions",
       header: "",
-      render: (r: (typeof risks.data)[0]) =>
+      render: (r: RiskItem) =>
         r.status === "open" ? (
           <button
             onClick={() => handleAcknowledge(r.id)}
@@ -91,33 +131,33 @@ export function SecurityRisksTab() {
     {
       key: "provider",
       header: "Provider",
-      render: (s: (typeof shadow.data)[0]) => <StatusBadge status={s.provider} />,
+      render: (s: ShadowKeyItem) => <StatusBadge status={s.provider} />,
       sortable: true,
     },
     {
       key: "keyPrefix",
       header: "Key",
-      render: (s: (typeof shadow.data)[0]) => (
+      render: (s: ShadowKeyItem) => (
         <span className="text-white font-mono text-xs">{s.keyPrefix}...</span>
       ),
     },
     {
       key: "discoveredIn",
       header: "Found In",
-      render: (s: (typeof shadow.data)[0]) => (
+      render: (s: ShadowKeyItem) => (
         <span className="text-gray-400 text-xs">{s.discoveredIn ?? "—"}</span>
       ),
     },
     {
       key: "riskLevel",
       header: "Risk",
-      render: (s: (typeof shadow.data)[0]) => <StatusBadge status={s.riskLevel} />,
+      render: (s: ShadowKeyItem) => <StatusBadge status={s.riskLevel} />,
       sortable: true,
     },
     {
       key: "isInVault",
       header: "In Vault",
-      render: (s: (typeof shadow.data)[0]) => (
+      render: (s: ShadowKeyItem) => (
         <span className={s.isInVault ? "text-emerald-400 text-xs" : "text-red-400 text-xs"}>
           {s.isInVault ? "Yes" : "No"}
         </span>
@@ -126,17 +166,17 @@ export function SecurityRisksTab() {
     {
       key: "status",
       header: "Status",
-      render: (s: (typeof shadow.data)[0]) => <StatusBadge status={s.status} />,
+      render: (s: ShadowKeyItem) => <StatusBadge status={s.status} />,
       sortable: true,
     },
     {
       key: "assigneeUserId",
       header: "Owner",
-      render: (s: (typeof shadow.data)[0]) => (
+      render: (s: ShadowKeyItem) => (
         <select
           value={s.assigneeUserId ?? ""}
           onChange={(event) =>
-            updateShadow.mutate({
+            doUpdateShadow({
               workspaceId,
               id: s.id,
               status: shadowStatus(s.status),
@@ -158,13 +198,13 @@ export function SecurityRisksTab() {
     {
       key: "actions",
       header: "Actions",
-      render: (s: (typeof shadow.data)[0]) => (
+      render: (s: ShadowKeyItem) => (
         <div className="flex gap-1">
           {s.status === "open" && (
             <button
               type="button"
               onClick={() =>
-                updateShadow.mutate({
+                doUpdateShadow({
                   workspaceId,
                   id: s.id,
                   status: "acknowledged",
@@ -179,7 +219,7 @@ export function SecurityRisksTab() {
             <button
               type="button"
               onClick={() =>
-                updateShadow.mutate({
+                doUpdateShadow({
                   workspaceId,
                   id: s.id,
                   status: "resolved",
@@ -195,7 +235,7 @@ export function SecurityRisksTab() {
             <button
               type="button"
               onClick={() =>
-                updateShadow.mutate({
+                doUpdateShadow({
                   workspaceId,
                   id: s.id,
                   status: "false_positive",
@@ -213,11 +253,11 @@ export function SecurityRisksTab() {
     {
       key: "lastSeenAt",
       header: "Last seen",
-      render: (s: (typeof shadow.data)[0]) => (
+      render: (s: ShadowKeyItem) => (
         <span className="text-gray-500 text-xs">{new Date(s.lastSeenAt).toLocaleDateString()}</span>
       ),
       sortable: true,
-      sortValue: (s: (typeof shadow.data)[0]) => new Date(s.lastSeenAt).getTime(),
+      sortValue: (s: ShadowKeyItem) => new Date(s.lastSeenAt).getTime(),
     },
   ];
 

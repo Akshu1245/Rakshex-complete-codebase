@@ -122,7 +122,7 @@ export class SettingsWebviewPanel {
 
   private async handleTestConnection(url: string): Promise<void> {
     const baseUrl = (url || this.api.getConfiguredApiUrl()).replace(/\/+$/, "");
-    const healthUrl = `${baseUrl.endsWith("/api") ? baseUrl : `${baseUrl}/api`}/health`;
+    const healthUrl = `${baseUrl}/v1/health`;
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 10_000);
@@ -165,34 +165,21 @@ export class SettingsWebviewPanel {
   private async refresh(): Promise<void> {
     const cfg = vscode.workspace.getConfiguration("rakshex");
     const settings = {
-      apiUrl: cfg.get<string>("apiUrl", "https://api.rakshex.in"),
-      gatewayUrl: cfg.get<string>("gatewayUrl", "http://localhost:8081"),
+      apiOrigin: cfg.get<string>("apiOrigin", ""),
+      apiUrl: cfg.get<string>("apiUrl", ""),
+      gatewayUrl: cfg.get<string>("gatewayUrl", ""),
       heartbeatIntervalSec: cfg.get<number>("heartbeatIntervalSec", 120),
       trackFileChanges: cfg.get<boolean>("trackFileChanges", true),
     };
 
-    let user: ValidatedUser | null = null;
-    let dashboard: DashboardData | null = null;
+    // The hosted API exposes no user/dashboard endpoints: sign-in state is
+    // derived from the locally stored key; connectivity via /v1/health.
     const apiKey = this.readApiKey();
-
-    if (apiKey) {
-      try {
-        const result = await this.api.validateApiKey(apiKey);
-        user = result.user;
-      } catch {
-        /* ignore */
-      }
-      try {
-        dashboard = await this.api.getDashboardData();
-      } catch {
-        /* ignore */
-      }
-    }
 
     this.panel.webview.html = this._getHtmlForWebview(this.panel.webview, {
       settings,
-      user,
-      dashboard,
+      user: null,
+      dashboard: null,
       signedIn: Boolean(apiKey),
     });
   }
@@ -210,6 +197,7 @@ export class SettingsWebviewPanel {
     webview: vscode.Webview,
     state: {
       settings: {
+        apiOrigin: string;
         apiUrl: string;
         gatewayUrl: string;
         heartbeatIntervalSec: number;
@@ -449,9 +437,9 @@ export class SettingsWebviewPanel {
   <div class="section">
     <div class="section-title">🔗 Connection</div>
     <div class="field">
-      <label class="field-label" for="apiUrl">API URL</label>
-      <input type="text" id="apiUrl" value="${escapeHtml(settings.apiUrl)}" />
-      <div class="field-hint">Base URL of the Rakshex backend.</div>
+      <label class="field-label" for="apiOrigin">API Origin</label>
+      <input type="text" id="apiOrigin" value="${escapeHtml(settings.apiOrigin)}" placeholder="https://rakshex-firewall.rakshex.workers.dev" />
+      <div class="field-hint">Base URL of the Rakshex Agent Firewall API (hosted).</div>
       <div class="test-connection-row">
         <button class="btn-test" id="test-connection-btn">\u26A1 Test Connection</button>
         <span class="connection-result" id="connection-result">
@@ -461,9 +449,14 @@ export class SettingsWebviewPanel {
       </div>
     </div>
     <div class="field">
-      <label class="field-label" for="gatewayUrl">Gateway URL</label>
+      <label class="field-label" for="apiUrl">API URL (legacy)</label>
+      <input type="text" id="apiUrl" value="${escapeHtml(settings.apiUrl)}" />
+      <div class="field-hint">Deprecated — use API Origin above. Kept as a fallback for old installs.</div>
+    </div>
+    <div class="field">
+      <label class="field-label" for="gatewayUrl">Gateway URL (override)</label>
       <input type="text" id="gatewayUrl" value="${escapeHtml(settings.gatewayUrl)}" />
-      <div class="field-hint">Base URL of the Rakshex inline LLM gateway.</div>
+      <div class="field-hint">Optional override for the policy dry-run endpoint. Empty = use API Origin.</div>
     </div>
   </div>
 
@@ -571,6 +564,14 @@ export class SettingsWebviewPanel {
         vscode.postMessage({ type: "updateSetting", key: key, value: value });
       }
 
+      // API Origin
+      var apiOriginInput = document.getElementById("apiOrigin");
+      if (apiOriginInput) {
+        apiOriginInput.addEventListener("change", function () {
+          updateSetting("apiOrigin", this.value);
+        });
+      }
+
       // API URL
       var apiUrlInput = document.getElementById("apiUrl");
       if (apiUrlInput) {
@@ -638,7 +639,7 @@ export class SettingsWebviewPanel {
       var connResultMsg = document.getElementById("connection-result-msg");
       if (testConnBtn) {
         testConnBtn.addEventListener("click", function () {
-          var url = apiUrlInput ? apiUrlInput.value.trim() : "";
+          var url = (apiOriginInput ? apiOriginInput.value.trim() : "") || (apiUrlInput ? apiUrlInput.value.trim() : "");
           if (!url) {
             if (connResult && connResultMsg) {
               connResult.className = "connection-result visible error";

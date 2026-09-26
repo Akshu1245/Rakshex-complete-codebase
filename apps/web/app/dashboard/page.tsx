@@ -3,7 +3,8 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { io, Socket } from "socket.io-client";
-import { trpc } from "@/lib/trpc";
+import { useApi } from "@/lib/api";
+import { NotConnectedState } from "@/components/NotConnected";
 import PlanUtilizationBanner from "../../components/PlanUtilizationBanner";
 import AiGovernanceSummary from "../../components/AiGovernanceSummary";
 import SpendVsCeiling from "../../components/SpendVsCeiling";
@@ -28,6 +29,26 @@ function getSocketUrl(): string {
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   return `${protocol}//${window.location.host}`;
 }
+
+interface DashboardOverview {
+  recentEvents: Array<{
+    id: string;
+    timestamp: string;
+    agent?: string;
+    cost: number;
+    anomaly: boolean;
+    model?: string;
+    status: string;
+  }>;
+  todayCost: number;
+  todayRequests: number;
+  todayErrors: number;
+  activeAgents: number;
+  hasAnomaly: boolean;
+  threatBars: number[];
+}
+
+type TimeRange = "1h" | "24h" | "7d";
 
 interface LiveLog {
   id: string;
@@ -62,15 +83,15 @@ export default function Dashboard() {
     setShowWelcomeModal(false);
   };
 
-  // Real tRPC data
-  const overviewQuery = trpc.analytics.overview.useQuery(undefined, {
-    refetchInterval: 15000,
-    retry: 2,
-  });
+  // Analytics has no /v1 equivalent on the Workers deployment — /api/analytics
+  // answers 501 not_connected, so the sections below render honest empty
+  // states. `range` is still wired as a real time-range query param (and
+  // drives the active filter UI), ready for when the backend lands.
+  const [range, setRange] = useState<TimeRange>("24h");
+  const overviewQuery = useApi<DashboardOverview>(`/api/analytics?kind=overview&range=${range}`);
 
-  const anomaliesQuery = trpc.analytics.anomalies.useQuery(
-    { threshold: 2 },
-    { refetchInterval: 30000, retry: 2 },
+  const anomaliesQuery = useApi<Array<{ id?: string }>>(
+    `/api/analytics?kind=anomalies&threshold=2&range=${range}`,
   );
 
   const overview = overviewQuery.data;
@@ -220,6 +241,13 @@ export default function Dashboard() {
         <AiGovernanceSummary />
 
         <SpendVsCeiling />
+
+        {overviewQuery.notConnected && (
+          <NotConnectedState
+            resource="Dashboard analytics"
+            detail="Spend, agent activity, threat telemetry and anomalies need the analytics API, which isn't connected on this deployment yet. The time-range filter above is wired and will apply once the backend lands."
+          />
+        )}
 
         {/* Empty state for no telemetry */}
         {overview && overview.todayRequests === 0 && displayLogs.length === 0 && !loading && (
@@ -372,16 +400,28 @@ export default function Dashboard() {
                   Live hourly monitoring across global gateways
                 </p>
               </div>
-              <div className="flex gap-2">
-                <button className="px-3 py-1 text-[10px] font-label-mono border border-glass rounded hover:bg-primary/10 transition-colors">
-                  1H
-                </button>
-                <button className="px-3 py-1 text-[10px] font-label-mono bg-primary/20 border border-primary/40 text-primary rounded transition-colors">
-                  24H
-                </button>
-                <button className="px-3 py-1 text-[10px] font-label-mono border border-glass rounded hover:bg-primary/10 transition-colors">
-                  7D
-                </button>
+              <div className="flex gap-2" role="group" aria-label="Time range">
+                {(
+                  [
+                    ["1h", "1H"],
+                    ["24h", "24H"],
+                    ["7d", "7D"],
+                  ] as Array<[TimeRange, string]>
+                ).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setRange(value)}
+                    aria-pressed={range === value}
+                    className={`px-3 py-1 text-[10px] font-label-mono border rounded transition-colors ${
+                      range === value
+                        ? "bg-primary/20 border-primary/40 text-primary"
+                        : "border-glass hover:bg-primary/10"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
             </div>
             {/* Real threat bars from telemetry */}

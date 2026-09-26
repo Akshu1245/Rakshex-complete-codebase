@@ -290,10 +290,10 @@ export default function ROICalculator() {
                 href="/demo"
                 className="w-full block text-center px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold text-base rounded-xl transition-all shadow-lg shadow-blue-500/20"
               >
-                Start Free Trial
+                Try the live demo
               </Link>
               <p className="text-[11px] text-slate-500 mt-2">
-                14-day full featured trial. Setup in 5 minutes.
+                RaksHex is in private beta. Run the public demo or join the waitlist.
               </p>
             </div>
           </div>

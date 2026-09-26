@@ -1,13 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { trpc } from "@/lib/trpc";
+import { useApi } from "@/lib/api";
 import Link from "next/link";
 import { X, Crown } from "lucide-react";
 
 export function TrialBanner() {
   const [dismissed, setDismissed] = useState(false);
-  const planQuery = trpc.payment.getCurrentPlan.useQuery();
+  // Trial state lives on the billing backend, which isn't connected on this
+  // deployment — no trial claim is shown without real data.
+  const planQuery = useApi<{ trial?: { isTrial: boolean; daysLeft: number } }>(
+    "/api/billing?kind=subscription",
+  );
 
   if (dismissed) return null;
 

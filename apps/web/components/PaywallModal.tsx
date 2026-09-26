@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { X, Zap, Crown, AlertCircle, Loader2, Check } from "lucide-react";
-import { trpc } from "@/lib/trpc";
+import { useApiMutation } from "@/lib/api";
+import { EVALUATION_PLANS } from "@/lib/billingCatalog";
 
 interface PaywallModalProps {
   isOpen: boolean;
@@ -44,47 +45,55 @@ export default function PaywallModal({
 }: PaywallModalProps) {
   const [error, setError] = useState<string | null>(null);
 
-  const plansQuery = trpc.payment.getPlans.useQuery(undefined, {
-    enabled: isOpen,
-  });
-  const plans = plansQuery.data ?? [];
+  // Static plan catalog, labeled as such. Subscription creation goes to
+  // /api/billing, which answers 501 not_connected on this deployment —
+  // Razorpay only opens after a real successful backend response.
+  const plans = EVALUATION_PLANS;
 
-  const createSubscription = trpc.payment.createSubscription.useMutation({
-    onSuccess: (subData) => {
-      const script = document.createElement("script");
-      script.src = "https://checkout.razorpay.com/v1/checkout.js";
-      script.async = true;
-      script.onload = () => {
-        const win = window as unknown as RazorpayWindow;
-        if (!win.Razorpay) {
-          setError("Razorpay checkout failed to load.");
-          return;
-        }
-        const options: RazorpayOptions = {
-          key: subData.keyId,
-          subscription_id: subData.subscriptionId,
-          name: "RaksHex",
-          description: "Subscription",
-          image: "/logo.png",
-          handler: () => {
-            onClose();
-            window.location.reload();
-          },
-          prefill: {},
-          theme: { color: "#06D6A0" },
-        };
-        const rzp = new win.Razorpay(options);
-        rzp.open();
+  const createSubscription = useApiMutation<
+    { plan: "pro" | "enterprise" },
+    { keyId: string; subscriptionId: string }
+  >("/api/billing", "POST");
+
+  const handleUpgradeSuccess = (subData: { keyId: string; subscriptionId: string }) => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.onload = () => {
+      const win = window as unknown as RazorpayWindow;
+      if (!win.Razorpay) {
+        setError("Razorpay checkout failed to load.");
+        return;
+      }
+      const options: RazorpayOptions = {
+        key: subData.keyId,
+        subscription_id: subData.subscriptionId,
+        name: "RaksHex",
+        description: "Subscription",
+        image: "/logo.png",
+        handler: () => {
+          onClose();
+          window.location.reload();
+        },
+        prefill: {},
+        theme: { color: "#06D6A0" },
       };
-      document.body.appendChild(script);
-    },
-    onError: (err: { message: string }) => setError(err.message || "Failed to create subscription"),
-  });
+      const rzp = new win.Razorpay(options);
+      rzp.open();
+    };
+    document.body.appendChild(script);
+  };
 
   const handleUpgrade = (planId: string) => {
     if (planId !== "pro" && planId !== "enterprise") return;
     setError(null);
-    createSubscription.mutate({ plan: planId });
+    createSubscription.mutate(
+      { plan: planId },
+      {
+        onSuccess: handleUpgradeSuccess,
+        onError: (err) => setError(err.message || "Failed to create subscription"),
+      },
+    );
   };
 
   const isLoading = createSubscription.isPending;

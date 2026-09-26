@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { trpc } from "@/lib/trpc";
+import { useApiMutation } from "@/lib/api";
 
 function VerifyEmailInner() {
   const searchParams = useSearchParams();
@@ -12,22 +12,27 @@ function VerifyEmailInner() {
   const [status, setStatus] = useState<"idle" | "ok" | "err">("idle");
   const [message, setMessage] = useState("");
 
-  const verify = trpc.auth.verifyEmail.useMutation({
-    onSuccess: () => {
-      setStatus("ok");
-      setMessage("Email verified successfully.");
-    },
-    onError: (err) => {
-      setStatus("err");
-      setMessage(err.message);
-    },
-  });
-
-  const request = trpc.auth.requestEmailVerification.useMutation();
+  // Email verification has no /v1 equivalent on the Workers deployment —
+  // /api/auth answers 501 not_connected, and the result renders honestly.
+  const verify = useApiMutation<{ token: string }, unknown>("/api/auth", "POST");
+  const request = useApiMutation<Record<string, never>, { devToken?: string }>("/api/auth", "POST");
+  const [devToken, setDevToken] = useState<string | null>(null);
 
   useEffect(() => {
     if (token) {
-      verify.mutate({ token });
+      verify.mutate(
+        { token },
+        {
+          onSuccess: () => {
+            setStatus("ok");
+            setMessage("Email verified successfully.");
+          },
+          onError: (err) => {
+            setStatus("err");
+            setMessage(err.message);
+          },
+        },
+      );
     }
   }, [token]);
 
@@ -43,15 +48,21 @@ function VerifyEmailInner() {
             </p>
             <button
               type="button"
-              onClick={() => request.mutate()}
+              onClick={() =>
+                request.mutate(
+                  {},
+                  {
+                    onSuccess: (result) =>
+                      setDevToken(result && "devToken" in result ? String(result.devToken) : null),
+                  },
+                )
+              }
               className="px-4 py-2 bg-teal-600 rounded-md text-sm"
             >
               {request.isPending ? "Sending…" : "Resend verification"}
             </button>
-            {request.data && "devToken" in request.data && request.data.devToken && (
-              <p className="mt-3 text-xs text-neutral-500 break-all">
-                Dev token: {String(request.data.devToken)}
-              </p>
+            {devToken && (
+              <p className="mt-3 text-xs text-neutral-500 break-all">Dev token: {devToken}</p>
             )}
           </>
         )}

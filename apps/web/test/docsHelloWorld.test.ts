@@ -64,11 +64,12 @@ describe("public docs hello-world", () => {
     expect(nextConfig).not.toMatch(/source:\s*"\/get-started"/);
   });
 
-  it("still proxies API health and tRPC to the Node backend", () => {
-    const nextConfig = read("next.config.js");
-    expect(nextConfig).toMatch(/async rewrites\(\)/);
-    expect(nextConfig).toMatch(/source:\s*"\/api\/health"/);
-    expect(nextConfig).toMatch(/source:\s*"\/api\/trpc\/:path\*"/);
+  it("proxies API health to the firewall worker (Cloudflare service binding)", () => {
+    // Cloudflare port: no next.config.js rewrites to a Node backend. The web
+    // worker reaches rakshex-firewall through the RAKSHEX_API service binding.
+    const healthRoute = read("app/api/health/route.ts");
+    expect(healthRoute).toMatch(/RAKSHEX_API/);
+    expect(healthRoute).toMatch(/\/v1\/health/);
   });
 });
 

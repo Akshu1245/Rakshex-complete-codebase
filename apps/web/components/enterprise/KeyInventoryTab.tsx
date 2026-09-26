@@ -1,20 +1,51 @@
 "use client";
 import { useState } from "react";
-import { trpc } from "@/lib/trpc";
+import { useApi } from "@/lib/api";
 import { DataTable } from "./DataTable";
 import { StatusBadge } from "./StatusBadge";
 import { MetricCard } from "./MetricCard";
-import { PageLoading, ErrorState } from "./States";
+import { PageLoading, ErrorState, EmptyState } from "./States";
 import { useEnterpriseWorkspace } from "./WorkspaceContext";
+
+interface KeyStats {
+  total: number;
+  active: number;
+  expired: number;
+  revoked: number;
+  byType?: Record<string, number>;
+}
+
+interface DiscoveredKey {
+  keyName: string;
+  resourceType: string;
+  resourceName?: string | null;
+  status: string;
+  expiresAt?: string | null;
+  isExpired?: boolean;
+  assignedTo?: string | null;
+}
 
 export function KeyInventoryTab() {
   const { workspaceId } = useEnterpriseWorkspace();
-  const keyStats = trpc.enterprise.discovery.getKeyStats.useQuery({ workspaceId });
-  const keyList = trpc.enterprise.discovery.listDiscoveredKeys.useQuery({ workspaceId });
+  const enabled = workspaceId > 0;
+  const keyStats = useApi<KeyStats>(
+    enabled ? `/api/enterprise?kind=keyStats&workspaceId=${workspaceId}` : null,
+  );
+  const keyList = useApi<DiscoveredKey[]>(
+    enabled ? `/api/enterprise?kind=discoveredKeys&workspaceId=${workspaceId}` : null,
+  );
   const [filterType, setFilterType] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
 
   if (keyStats.isLoading) return <PageLoading />;
+  if (keyStats.notConnected)
+    return (
+      <EmptyState
+        icon="vpn_key_off"
+        title="Key inventory isn't connected yet"
+        description="Key discovery lives on the backend, which isn't connected on this deployment. Nothing here is fabricated — connect the backend to enable it."
+      />
+    );
   if (keyStats.error)
     return <ErrorState message={keyStats.error.message} onRetry={() => keyStats.refetch()} />;
 
@@ -31,7 +62,7 @@ export function KeyInventoryTab() {
     {
       key: "keyName",
       header: "Name",
-      render: (k: (typeof keys)[0]) => (
+      render: (k: DiscoveredKey) => (
         <span className="text-white font-medium text-xs">{k.keyName}</span>
       ),
       sortable: true,
@@ -40,13 +71,13 @@ export function KeyInventoryTab() {
     {
       key: "resourceType",
       header: "Type",
-      render: (k: (typeof keys)[0]) => <StatusBadge status={k.resourceType} />,
+      render: (k: DiscoveredKey) => <StatusBadge status={k.resourceType} />,
       sortable: true,
     },
     {
       key: "resourceName",
       header: "Source",
-      render: (k: (typeof keys)[0]) => (
+      render: (k: DiscoveredKey) => (
         <span className="text-gray-400 text-xs">
           {k.resourceName?.replace("https://", "").slice(0, 40)}
         </span>
@@ -56,26 +87,24 @@ export function KeyInventoryTab() {
     {
       key: "status",
       header: "Status",
-      render: (k: (typeof keys)[0]) => (
-        <StatusBadge status={k.status} pulse={k.status === "active"} />
-      ),
+      render: (k: DiscoveredKey) => <StatusBadge status={k.status} pulse={k.status === "active"} />,
       sortable: true,
     },
     {
       key: "expiresAt",
       header: "Expires",
-      render: (k: (typeof keys)[0]) => (
+      render: (k: DiscoveredKey) => (
         <span className={`text-xs ${k.isExpired ? "text-red-400" : "text-gray-500"}`}>
           {k.expiresAt ? new Date(k.expiresAt).toLocaleDateString() : "—"}
         </span>
       ),
       sortable: true,
-      sortValue: (k: (typeof keys)[0]) => (k.expiresAt ? new Date(k.expiresAt).getTime() : 0),
+      sortValue: (k: DiscoveredKey) => (k.expiresAt ? new Date(k.expiresAt).getTime() : 0),
     },
     {
       key: "assignedTo",
       header: "Owner",
-      render: (k: (typeof keys)[0]) => (
+      render: (k: DiscoveredKey) => (
         <span className="text-gray-400 text-xs">{k.assignedTo ?? "—"}</span>
       ),
     },

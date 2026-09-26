@@ -1,24 +1,35 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { trpc } from "@/lib/trpc";
+import { useApi } from "@/lib/api";
 
 const ACTIVE_WORKSPACE_KEY = "rakshex.activeWorkspaceId";
+
+interface Workspace {
+  id: number;
+  name?: string;
+  slug?: string;
+  [key: string]: unknown;
+}
 
 /**
  * Hook that gets the user's current workspace.
  * Persists the user's explicit selection and safely falls back to the first
  * available workspace when a membership is removed.
- * Returns { workspaceId, workspace, isLoading, error, switchWorkspace }
+ * Returns { workspaceId, workspace, isLoading, error, notConnected, switchWorkspace }
+ *
+ * Data comes from the same-origin /api/workspaces proxy route. On the
+ * Workers deployment the workspaces backend is not connected yet, so
+ * `workspace` is null and `notConnected` is true — callers must render an
+ * honest empty state instead of inventing a workspace.
  */
 export function useWorkspace() {
   const {
     data: workspaces,
     isLoading,
     error,
-  } = trpc.workspaces.listMine.useQuery(undefined, {
-    retry: false,
-    staleTime: 30_000,
-  });
+    notConnected,
+    refetch,
+  } = useApi<Workspace[]>("/api/workspaces");
 
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
@@ -55,6 +66,8 @@ export function useWorkspace() {
     workspaces: workspaces ?? [],
     isLoading,
     error,
+    notConnected,
+    refetch,
     switchWorkspace,
   };
 }

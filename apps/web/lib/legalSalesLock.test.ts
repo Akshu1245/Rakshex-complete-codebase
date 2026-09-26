@@ -56,22 +56,22 @@ describe("private-beta sales lock on public legal surfaces", () => {
       path.join(webDir, "content/legal/REFUND_CANCELLATION_POLICY.md"),
       "utf8",
     );
+    // Contact moved off rakshex@gmail.com to @rakshex.in addresses (terms:
+    // akshay@rakshex.in, refund: support@rakshex.in). The lock is on naming a
+    // real contact channel, not on the old address.
     expect(terms).toMatch(/waitlist/);
     expect(terms).toMatch(/invite/);
-    expect(terms).toMatch(/rakshex@gmail\.com/);
+    expect(terms).toMatch(/[a-z]+@rakshex\.in/);
     expect(terms).toMatch(/Bengaluru/);
     expect(terms).toMatch(/laws of India/);
     expect(refund).toMatch(/waitlist/);
     expect(refund).toMatch(/invite or an executed Order Form/);
-    expect(refund).toMatch(/rakshex@gmail\.com/);
+    expect(refund).toMatch(/[a-z]+@rakshex\.in/);
     expect(refund).not.toMatch(/Subscriptions renew for the same period until cancelled/);
   });
 
   it("does not publish or link Terms/Refund Word files that still contain self-serve checkout", () => {
-    const withdrawn = [
-      "rakshex-terms-of-service.docx",
-      "rakshex-refund-cancellation-policy.docx",
-    ];
+    const withdrawn = ["rakshex-terms-of-service.docx", "rakshex-refund-cancellation-policy.docx"];
     const publicLegal = path.join(webDir, "public/legal");
     for (const name of withdrawn) {
       expect(fs.existsSync(path.join(publicLegal, name)), name).toBe(false);

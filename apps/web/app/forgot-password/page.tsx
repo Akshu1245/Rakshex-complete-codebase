@@ -2,15 +2,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { trpc } from "@/lib/trpc";
+import { useApiMutation } from "@/lib/api";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [done, setDone] = useState(false);
 
-  const forgot = trpc.auth.forgotPassword.useMutation({
-    onSuccess: () => setDone(true),
-  });
+  // Password reset has no /v1 equivalent on the Workers deployment —
+  // /api/auth answers 501 not_connected, and the error renders honestly.
+  const forgot = useApiMutation<{ email: string }, unknown>("/api/auth", "POST");
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white flex items-center justify-center p-8">
@@ -28,7 +28,13 @@ export default function ForgotPasswordPage() {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              forgot.mutate({ email: email.trim() });
+              forgot.mutate(
+                { email: email.trim() },
+                {
+                  onSuccess: () => setDone(true),
+                  onError: () => {},
+                },
+              );
             }}
             className="space-y-4"
           >

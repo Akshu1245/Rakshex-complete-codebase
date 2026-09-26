@@ -1,14 +1,40 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { trpc } from "@/lib/trpc";
+import { useApi } from "@/lib/api";
+import { NotConnectedState } from "@/components/NotConnected";
 import TokenSpendChart from "@/components/charts/TokenSpendChart";
 import ModelMixChart from "@/components/charts/ModelMixChart";
 import AgentLeaderboard from "@/components/charts/AgentLeaderboard";
 
 function fmtCost(n: number) {
   return n < 0.01 && n > 0 ? n.toFixed(4) : n.toFixed(2);
+}
+
+interface SummaryRow {
+  key: string;
+  requestCount: number;
+  totalCost: number;
+  totalTokens: number;
+  avgLatencyP50: number;
+  errorRate: number;
+}
+
+interface ModelMixRow {
+  provider: string;
+  model: string;
+  totalCost: number;
+}
+
+interface AgentRow {
+  agentId: string;
+  requests: number;
+  inputTokens: number;
+  outputTokens: number;
+  totalCost: number;
+  avgLatency: number;
+  errorRate: number;
 }
 
 export default function TelemetryDashboardPage() {
@@ -20,20 +46,35 @@ export default function TelemetryDashboardPage() {
     return [start.toISOString(), end.toISOString()];
   })();
 
-  const summaryQuery = trpc.analytics.summary.useQuery(
-    { startDate, endDate, groupBy: "day" },
-    { refetchInterval: 30_000 },
+  // Telemetry analytics has no /v1 equivalent on the Workers deployment —
+  // /api/analytics answers 501 not_connected, so honest empty states render
+  // instead of fabricated charts.
+  const summaryQuery = useApi<SummaryRow[]>(
+    `/api/analytics?kind=summary&startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}&groupBy=day`,
   );
 
-  const modelMixQuery = trpc.analytics.modelMix.useQuery(
-    { startDate, endDate },
-    { refetchInterval: 30_000 },
+  const modelMixQuery = useApi<ModelMixRow[]>(
+    `/api/analytics?kind=model-mix&startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`,
   );
 
-  const leaderboardQuery = trpc.analytics.agentLeaderboard.useQuery(
-    { startDate, endDate, limit: 10 },
-    { refetchInterval: 30_000 },
+  const leaderboardQuery = useApi<AgentRow[]>(
+    `/api/analytics?kind=leaderboard&startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}&limit=10`,
   );
+
+  const notConnected =
+    summaryQuery.notConnected || modelMixQuery.notConnected || leaderboardQuery.notConnected;
+
+  // Keep the 30s live refresh for when the backend is connected.
+  useEffect(() => {
+    if (notConnected) return;
+    const t = setInterval(() => {
+      summaryQuery.refetch();
+      modelMixQuery.refetch();
+      leaderboardQuery.refetch();
+    }, 30_000);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notConnected]);
 
   const summary = summaryQuery.data ?? [];
   const modelMix = modelMixQuery.data ?? [];
@@ -84,6 +125,11 @@ export default function TelemetryDashboardPage() {
           <div className="flex items-center justify-center py-32">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400" />
           </div>
+        ) : notConnected ? (
+          <NotConnectedState
+            resource="AI telemetry"
+            detail="Live agent monitoring and cost analytics need the telemetry backend, which isn't connected on this deployment yet. No metrics are shown or estimated here."
+          />
         ) : (
           <>
             {/* Stat cards */}

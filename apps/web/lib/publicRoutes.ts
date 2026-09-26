@@ -35,7 +35,6 @@ export const PUBLIC_PATH_PREFIXES = [
   "/partners",
   "/open-source",
   "/status",
-  "/incidents",
   "/contact",
   "/enterprise",
   "/security",

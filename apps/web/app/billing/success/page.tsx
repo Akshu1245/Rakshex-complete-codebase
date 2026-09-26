@@ -3,7 +3,8 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { CheckCircle, Loader2, CreditCard, ArrowRight } from "lucide-react";
-import { trpc } from "@/lib/trpc";
+import { useApi } from "@/lib/api";
+import { NotConnectedState } from "@/components/NotConnected";
 
 /**
  * Razorpay hosted-checkout success redirect target. Razorpay appends
@@ -14,17 +15,18 @@ import { trpc } from "@/lib/trpc";
  * confirmation that polls the user's plan until it reflects the upgrade.
  */
 export default function BillingSuccessPage() {
-  const planQuery = trpc.payment.getCurrentPlan.useQuery(undefined, {
-    refetchInterval: (data) => (data && (data as { plan?: string }).plan !== "free" ? false : 3000),
-  });
+  // Billing has no /v1 equivalent on the Workers deployment —
+  // /api/billing answers 501 not_connected.
+  const planQuery = useApi<{ plan?: string }>("/api/billing?kind=current-plan");
 
-  const current = planQuery.data as { plan?: string } | undefined;
+  const current = planQuery.data;
   const loading = planQuery.isLoading;
 
   useEffect(() => {
     if (current?.plan && current.plan !== "free") {
       planQuery.refetch();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current?.plan]);
 
   const upgraded = current?.plan && current.plan !== "free";
@@ -32,7 +34,20 @@ export default function BillingSuccessPage() {
   return (
     <div className="text-white flex items-center justify-center p-6">
       <div className="max-w-lg w-full rounded-xl border border-gray-800 bg-transparent shadow-lg p-8 text-center">
-        {upgraded ? (
+        {planQuery.notConnected ? (
+          <>
+            <div className="w-16 h-16 rounded-full bg-yellow-500/20 flex items-center justify-center mx-auto mb-4">
+              <CreditCard className="w-10 h-10 text-yellow-400" />
+            </div>
+            <h1 className="text-2xl font-bold">Payment status unavailable</h1>
+            <div className="mt-4 text-left">
+              <NotConnectedState
+                resource="Billing plan status"
+                detail="Confirming your upgraded plan needs the billing backend, which isn't connected on this deployment yet. If you just paid, keep your Razorpay receipt — activation is driven by the signed webhook."
+              />
+            </div>
+          </>
+        ) : upgraded ? (
           <>
             <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="w-10 h-10 text-green-400" />

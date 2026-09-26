@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { trpc } from "@/lib/trpc";
+import { useApi, useApiMutation } from "@/lib/api";
 
 type ScanType = "full" | "quick" | "shadow_api" | "prompt_injection";
 type ScanIntensity = "passive" | "active" | "brute";
@@ -40,25 +40,18 @@ export default function ScanningPage() {
   const [terminalInput, setTerminalInput] = useState("");
   const terminalEndRef = useRef<HTMLDivElement>(null);
 
-  const collectionsQuery = trpc.collections.list.useQuery();
+  // Scanning has no /v1 equivalent on the Workers deployment —
+  // /api/scanning answers 501 not_connected. The start/cancel mutations
+  // surface an honest error instead of pretending to run scans.
+  const collectionsQuery = useApi<{ collections: Array<{ id: string; name: string }> }>(
+    "/api/collections",
+  );
   const collections = collectionsQuery.data?.collections ?? [];
 
-  const startScan = trpc.scanning.startScan.useMutation({
-    onSuccess: (data) => {
-      setScanStatus(data.status);
-      if (data.status === "queued" && data.scanId) {
-        setQueuedScanId(data.scanId);
-      }
-      addTerminalLog(
-        "success",
-        `Scan request submitted successfully. Job ID: ${data.scanId || "N/A"}`,
-      );
-    },
-    onError: (err: { message: string }) => {
-      setError(err.message);
-      addTerminalLog("error", `Scan submission failed: ${err.message}`);
-    },
-  });
+  const startScan = useApiMutation<
+    { collectionId: string; scanType: ScanType },
+    { status: string; scanId?: string }
+  >("/api/scanning", "POST");
 
   const addTerminalLog = (type: TerminalLog["type"], msg: string) => {
     const timestamp = new Date().toLocaleTimeString();
@@ -66,14 +59,18 @@ export default function ScanningPage() {
   };
 
   // Real status polling — no simulated findings
-  const statusQuery = trpc.scanning.getScanStatus.useQuery(
-    { scanId: queuedScanId! },
-    {
-      enabled: Boolean(queuedScanId) && scanStatus === "queued",
-      refetchInterval: 2000,
-      retry: 1,
-    },
+  const statusQuery = useApi<{ state: string; progress?: number }>(
+    queuedScanId && scanStatus === "queued"
+      ? `/api/scanning?kind=status&scanId=${encodeURIComponent(queuedScanId)}`
+      : null,
   );
+
+  useEffect(() => {
+    if (!queuedScanId || scanStatus !== "queued" || statusQuery.notConnected) return;
+    const t = setInterval(() => statusQuery.refetch(), 2000);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queuedScanId, scanStatus, statusQuery.notConnected]);
 
   useEffect(() => {
     setTerminalLogs([
@@ -109,18 +106,29 @@ export default function ScanningPage() {
     }
   }, [statusQuery.data]);
 
-  const scansQuery = trpc.scanning.listScans.useQuery(
-    { collectionId: selectedCollection, page: 1, pageSize: 5 },
-    { enabled: Boolean(selectedCollection) },
+  const scansQuery = useApi<{ scans?: Array<{ id: string }> }>(
+    selectedCollection
+      ? `/api/scanning?kind=list&collectionId=${encodeURIComponent(selectedCollection)}&page=1&pageSize=5`
+      : null,
   );
 
   const latestScanId = scansQuery.data?.scans?.[0]?.id;
-  const scanDetail = trpc.scanning.getScan.useQuery(
-    { scanId: latestScanId! },
-    {
-      enabled: Boolean(latestScanId) && scanStatus === "completed",
-      retry: 1,
-    },
+  const scanDetail = useApi<{
+    riskScore?: number;
+    riskLevel?: string;
+    findings?: Array<{
+      id: string;
+      title: string;
+      description: string | null;
+      severity: string;
+      category: string | null;
+      remediation: string | null;
+      cweId: string | null;
+    }>;
+  }>(
+    latestScanId && scanStatus === "completed"
+      ? `/api/scanning?kind=get&scanId=${encodeURIComponent(latestScanId)}`
+      : null,
   );
 
   useEffect(() => {
@@ -159,16 +167,26 @@ export default function ScanningPage() {
       "info",
       `Starting ${scanType} scan for: ${collections.find((c) => c.id === selectedCollection)?.name ?? selectedCollection}`,
     );
-    startScan.mutate({ collectionId: selectedCollection, scanType });
+    startScan.mutate(
+      { collectionId: selectedCollection, scanType },
+      {
+        onSuccess: (data) => {
+          setScanStatus(data.status);
+          if (data.status === "queued" && data.scanId) {
+            setQueuedScanId(data.scanId);
+          }
+          addTerminalLog(
+            "success",
+            `Scan request submitted successfully. Job ID: ${data.scanId || "N/A"}`,
+          );
+        },
+        onError: (err) => {
+          setError(err.message);
+          addTerminalLog("error", `Scan submission failed: ${err.message}`);
+        },
+      },
+    );
   };
-
-  const cancelScan = trpc.scanning.cancelScan.useMutation({
-    onSuccess: () => {
-      addTerminalLog("warn", "Scan cancelled.");
-      setQueuedScanId(null);
-      setScanStatus(null);
-    },
-  });
 
   const handleTerminalSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -463,9 +481,10 @@ export default function ScanningPage() {
                     </button>
                   </div>
                 )}
-                {collectionsQuery.isError && (
+                {collectionsQuery.notConnected && (
                   <p className="text-sm text-amber-400">
-                    Could not load collections. Check that you are signed in.
+                    Collections aren&apos;t connected on this deployment yet — scanning needs a
+                    collection to run against.
                   </p>
                 )}
               </div>

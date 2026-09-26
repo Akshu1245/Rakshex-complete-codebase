@@ -3,7 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useState } from "react";
-import { trpc } from "@/lib/trpc";
+import { useApiMutation } from "@/lib/api";
 import { useAuth } from "@/components/AuthProvider";
 
 /**
@@ -18,12 +18,7 @@ export default function AcceptInvitePage() {
   const { user, loading: authLoading } = useAuth();
   const [accepted, setAccepted] = useState(false);
 
-  const acceptMutation = trpc.workspaces.acceptInvitation.useMutation({
-    onSuccess: () => {
-      setAccepted(true);
-      router.push("/dashboard");
-    },
-  });
+  const acceptMutation = useApiMutation<{ token: string }, unknown>("/api/workspaces", "POST");
 
   if (authLoading) {
     return (
@@ -71,7 +66,17 @@ export default function AcceptInvitePage() {
           <p className="text-sm text-green-400">Invite accepted — redirecting…</p>
         ) : (
           <button
-            onClick={() => acceptMutation.mutate({ token })}
+            onClick={() =>
+              acceptMutation.mutate(
+                { token },
+                {
+                  onSuccess: () => {
+                    setAccepted(true);
+                    router.push("/dashboard");
+                  },
+                },
+              )
+            }
             disabled={!token || acceptMutation.isPending}
             className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 rounded-lg font-medium"
           >

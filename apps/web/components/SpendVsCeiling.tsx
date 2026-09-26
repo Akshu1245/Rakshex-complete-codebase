@@ -1,6 +1,7 @@
 "use client";
 
-import { trpc } from "@/lib/trpc";
+import { useApi } from "@/lib/api";
+import { useWorkspace } from "@/hooks/useWorkspace";
 
 type Confidence = "Exact" | "Observed" | "Estimated" | "N/A";
 
@@ -36,16 +37,32 @@ function formatUsd(n: number): string {
 
 /**
  * Spend vs ceiling card for the Command Center dashboard.
- * Reads from `spend.summary` (documented contract in apps/api/api/spend.ts).
+ * Reads from `/api/billing?kind=spend` (same shape the backend would return).
  * Every figure carries an honesty chip: Exact / Observed / Estimated / N/A.
  * No ceiling set → the card says so instead of guessing one.
+ * No data → the card says so instead of showing fabricated zeros.
  */
+interface SpendRow {
+  id: string;
+  label: string;
+  spent: number;
+  ceiling?: number | null;
+  confidence: Confidence;
+  detail?: string;
+}
+
+interface SpendSummary {
+  windowDays?: number;
+  rows: SpendRow[];
+  totals: { spent: number; confidence: Confidence };
+  ceiling: { amount?: number | null; confidence: Confidence };
+  ledgerStatus?: string;
+}
+
 export default function SpendVsCeiling() {
-  const workspaces = trpc.workspaces.listMine.useQuery();
-  const workspaceId = workspaces.data?.[0]?.id ?? 0;
-  const summary = trpc.spend.summary.useQuery(
-    { workspaceId },
-    { enabled: workspaceId > 0, refetchInterval: 60000, retry: 1 },
+  const { workspaceId } = useWorkspace();
+  const summary = useApi<SpendSummary>(
+    workspaceId > 0 ? `/api/billing?kind=spend&workspaceId=${workspaceId}` : null,
   );
 
   const data = summary.data;
@@ -76,11 +93,11 @@ export default function SpendVsCeiling() {
           <button
             type="button"
             onClick={() => summary.refetch()}
-            disabled={summary.isFetching}
+            disabled={summary.isLoading}
             aria-label="Refresh spend figures"
             className="rounded-lg border border-glass px-3 py-1.5 text-xs font-bold text-on-surface hover:bg-surface-container-low focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50"
           >
-            {summary.isFetching ? "Refreshing…" : "Refresh"}
+            {summary.isLoading ? "Refreshing…" : "Refresh"}
           </button>
         </div>
       </div>
@@ -90,9 +107,15 @@ export default function SpendVsCeiling() {
           Loading spend figures…
         </p>
       )}
-      {summary.error && (
+      {summary.error && !summary.notConnected && (
         <p className="py-6 text-center text-sm text-status-error" role="alert">
           Could not load spend figures: {summary.error.message}
+        </p>
+      )}
+      {summary.notConnected && (
+        <p className="py-6 text-center text-sm text-on-surface-variant">
+          Spend figures aren&apos;t connected on this deployment yet — no numbers are shown or
+          estimated here.
         </p>
       )}
 
@@ -121,8 +144,8 @@ export default function SpendVsCeiling() {
 
           {data.rows.length === 0 ? (
             <p className="py-4 text-center text-sm text-on-surface-variant">
-              No spend recorded in this window. Figures appear once gateway or telemetry
-              ingestion runs.
+              No spend recorded in this window. Figures appear once gateway or telemetry ingestion
+              runs.
             </p>
           ) : (
             <ul className="space-y-4">
@@ -171,8 +194,8 @@ export default function SpendVsCeiling() {
 
           {data.ledgerStatus === "pending" && (
             <p className="mt-4 border-t border-glass pt-3 text-[11px] text-on-surface-variant">
-              Per-agent and per-key breakdown arrives with the spend ledger; model-level figures
-              are shown until then.
+              Per-agent and per-key breakdown arrives with the spend ledger; model-level figures are
+              shown until then.
             </p>
           )}
         </>

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { trpc } from "@/lib/trpc";
+import { useApiMutation } from "@/lib/api";
 import { PasswordField } from "@/components/PasswordField";
 import { AgentFirewallCanvas } from "@/components/AgentFirewallCanvas";
 
@@ -14,13 +14,12 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const signup = trpc.auth.signup.useMutation({
-    onSuccess: () => {
-      router.push("/verify-email?pending=1");
-      router.refresh();
-    },
-    onError: (err) => setError(err.message),
-  });
+  // Signup has no /v1 equivalent on the Workers deployment —
+  // /api/auth answers 501 not_connected, and the error renders honestly.
+  const signup = useApiMutation<{ name: string; email: string; password: string }, unknown>(
+    "/api/auth",
+    "POST",
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +28,16 @@ export default function RegisterPage() {
       setError("Password must be at least 8 characters");
       return;
     }
-    signup.mutate({ name: name.trim(), email: email.trim(), password });
+    signup.mutate(
+      { name: name.trim(), email: email.trim(), password },
+      {
+        onSuccess: () => {
+          router.push("/verify-email?pending=1");
+          router.refresh();
+        },
+        onError: (err) => setError(err.message),
+      },
+    );
   };
 
   return (

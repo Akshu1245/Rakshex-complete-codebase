@@ -5,7 +5,8 @@ import Link from "next/link";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { EmptyState } from "@/components/EmptyState";
 import { useWorkspace } from "@/hooks/useWorkspace";
-import { trpc } from "@/lib/trpc";
+import { useApi, useApiMutation } from "@/lib/api";
+import { NotConnectedState } from "@/components/NotConnected";
 
 type AssignableRole =
   "admin" | "security_lead" | "developer" | "analyst" | "viewer" | "billing_admin";
@@ -19,29 +20,57 @@ const ROLE_OPTIONS: Array<{ value: AssignableRole; label: string }> = [
   { value: "admin", label: "Admin" },
 ];
 
+interface MemberRow {
+  userId: number;
+  active: boolean;
+  name?: string | null;
+  email?: string | null;
+  role: string;
+}
+
+interface InvitationRow {
+  id: string;
+  email: string;
+  role: string;
+  expiresAt: string;
+}
+
+interface PermissionsShape {
+  permissions: {
+    members: { write: boolean; delete: boolean };
+    billing: { read: boolean };
+  };
+}
+
+interface SubscriptionShape {
+  reservedSeats?: number;
+  subscription?: { seatCount?: number; plan?: string };
+  availablePlans?: Array<{ plan?: string; includedSeats?: number }>;
+}
+
 export default function TeamPage() {
-  const utils = trpc.useUtils();
+  // Team management has no /v1 equivalent on the Workers deployment —
+  // /api/team answers 501 not_connected. Mutations surface an honest
+  // error instead of pretending to invite or change roles.
   const { workspaceId, workspace, workspaces, switchWorkspace, isLoading } = useWorkspace();
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<AssignableRole>("viewer");
   const [message, setMessage] = useState<string | null>(null);
   const [removeUserId, setRemoveUserId] = useState<number | null>(null);
 
-  const members = trpc.workspaces.listMembers.useQuery(
-    { workspaceId },
-    { enabled: workspaceId > 0 },
+  const members = useApi<MemberRow[]>(
+    workspaceId > 0 ? `/api/team?workspaceId=${workspaceId}&kind=members` : null,
   );
-  const invitations = trpc.workspaces.listInvitations.useQuery(
-    { workspaceId },
-    { enabled: workspaceId > 0 },
+  const invitations = useApi<InvitationRow[]>(
+    workspaceId > 0 ? `/api/team?workspaceId=${workspaceId}&kind=invitations` : null,
   );
-  const permissions = trpc.workspaces.myPermissions.useQuery(
-    { workspaceId },
-    { enabled: workspaceId > 0 },
+  const permissions = useApi<PermissionsShape>(
+    workspaceId > 0 ? `/api/team?workspaceId=${workspaceId}&kind=permissions` : null,
   );
-  const subscription = trpc.payment.getWorkspaceSubscription.useQuery(
-    { workspaceId },
-    { enabled: workspaceId > 0 && Boolean(permissions.data?.permissions.billing.read) },
+  const subscription = useApi<SubscriptionShape>(
+    workspaceId > 0 && Boolean(permissions.data?.permissions.billing.read)
+      ? `/api/billing?workspaceId=${workspaceId}&kind=workspace-subscription`
+      : null,
   );
 
   const canWrite = Boolean(permissions.data?.permissions.members.write);
@@ -49,50 +78,100 @@ export default function TeamPage() {
   const reservedSeats = subscription.data?.reservedSeats;
   const seatLimit =
     subscription.data?.subscription?.seatCount ??
-    subscription.data?.availablePlans.find(
+    subscription.data?.availablePlans?.find(
       (plan) => plan.plan === subscription.data?.subscription?.plan,
     )?.includedSeats;
 
-  const refresh = async () => {
-    await Promise.all([
-      utils.workspaces.listMembers.invalidate({ workspaceId }),
-      utils.workspaces.listInvitations.invalidate({ workspaceId }),
-      utils.payment.getWorkspaceSubscription.invalidate({ workspaceId }),
-    ]);
+  const refresh = () => {
+    members.refetch();
+    invitations.refetch();
+    subscription.refetch();
   };
 
-  const invite = trpc.workspaces.inviteMember.useMutation({
-    onSuccess: async () => {
-      setEmail("");
-      setMessage("Invitation sent.");
-      await refresh();
-    },
-    onError: (error) => setMessage(error.message),
-  });
-  const updateRole = trpc.workspaces.updateMemberRole.useMutation({
-    onSuccess: refresh,
-    onError: (error) => setMessage(error.message),
-  });
-  const remove = trpc.workspaces.removeMember.useMutation({
-    onSuccess: async () => {
-      setRemoveUserId(null);
-      await refresh();
-    },
-    onError: (error) => setMessage(error.message),
-  });
-  const resend = trpc.workspaces.resendInvitation.useMutation({
-    onSuccess: () => setMessage("Invitation resent."),
-    onError: (error) => setMessage(error.message),
-  });
-  const cancelInvite = trpc.workspaces.cancelInvitation.useMutation({
-    onSuccess: refresh,
-    onError: (error) => setMessage(error.message),
-  });
+  const invite = useApiMutation<{ workspaceId: number; email: string; role: string }, unknown>(
+    "/api/team",
+    "POST",
+  );
+  const updateRole = useApiMutation<{ workspaceId: number; userId: number; role: string }, unknown>(
+    "/api/team",
+    "PATCH",
+  );
+  const remove = useApiMutation<{ workspaceId: number; userId: number }, unknown>(
+    "/api/team",
+    "DELETE",
+  );
+  const resend = useApiMutation<{ workspaceId: number; invitationId: string }, unknown>(
+    "/api/team",
+    "POST",
+  );
+  const cancelInvite = useApiMutation<{ workspaceId: number; invitationId: string }, unknown>(
+    "/api/team",
+    "DELETE",
+  );
+
+  const runInvite = (e: React.FormEvent) => {
+    e.preventDefault();
+    setMessage(null);
+    invite.mutate(
+      { workspaceId, email: email.trim(), role },
+      {
+        onSuccess: () => {
+          setEmail("");
+          setMessage("Invitation sent.");
+          refresh();
+        },
+        onError: (error) => setMessage(error.message),
+      },
+    );
+  };
+
+  const runUpdateRole = (userId: number, nextRole: string) => {
+    setMessage(null);
+    updateRole.mutate(
+      { workspaceId, userId, role: nextRole },
+      { onSuccess: refresh, onError: (error) => setMessage(error.message) },
+    );
+  };
+
+  const runRemove = (userId: number) => {
+    setMessage(null);
+    remove.mutate(
+      { workspaceId, userId },
+      {
+        onSuccess: () => {
+          setRemoveUserId(null);
+          refresh();
+        },
+        onError: (error) => setMessage(error.message),
+      },
+    );
+  };
+
+  const runResend = (invitationId: string) => {
+    setMessage(null);
+    resend.mutate(
+      { workspaceId, invitationId },
+      {
+        onSuccess: () => setMessage("Invitation resent."),
+        onError: (error) => setMessage(error.message),
+      },
+    );
+  };
+
+  const runCancelInvite = (invitationId: string) => {
+    setMessage(null);
+    cancelInvite.mutate(
+      { workspaceId, invitationId },
+      { onSuccess: refresh, onError: (error) => setMessage(error.message) },
+    );
+  };
 
   const activeMembers = useMemo(
     () => (members.data ?? []).filter((member) => member.active),
     [members.data],
   );
+
+  const teamNotConnected = members.notConnected || permissions.notConnected;
 
   if (isLoading) {
     return <div className="p-8 text-neutral-400">Loading team…</div>;
@@ -153,17 +232,10 @@ export default function TeamPage() {
         </div>
       )}
 
-      {canWrite && (
+      {canWrite && !teamNotConnected && (
         <section className="rounded-lg border border-neutral-800 p-6">
           <h2 className="text-lg font-medium">Invite member</h2>
-          <form
-            className="mt-4 grid gap-3 md:grid-cols-[1fr_220px_auto]"
-            onSubmit={(event) => {
-              event.preventDefault();
-              setMessage(null);
-              invite.mutate({ workspaceId, email: email.trim(), role });
-            }}
-          >
+          <form className="mt-4 grid gap-3 md:grid-cols-[1fr_220px_auto]" onSubmit={runInvite}>
             <input
               type="email"
               value={email}
@@ -198,109 +270,114 @@ export default function TeamPage() {
         <p className="rounded-md border border-neutral-700 bg-neutral-900 p-3 text-sm">{message}</p>
       )}
 
-      <section className="rounded-lg border border-neutral-800 p-6">
-        <h2 className="text-lg font-medium">Active members</h2>
-        <div className="mt-4 divide-y divide-neutral-800">
-          {activeMembers.map((member) => (
-            <div
-              key={member.userId}
-              className="flex flex-wrap items-center justify-between gap-4 py-4"
-            >
-              <div>
-                <p>{member.name || member.email || `User #${member.userId}`}</p>
-                {member.name && <p className="text-sm text-neutral-500">{member.email}</p>}
-              </div>
-              <div className="flex items-center gap-3">
-                <select
-                  value={member.role}
-                  disabled={!canWrite || member.role === "owner" || updateRole.isPending}
-                  onChange={(event) =>
-                    updateRole.mutate({
-                      workspaceId,
-                      userId: member.userId,
-                      role: event.target.value as AssignableRole,
-                    })
-                  }
-                  className="rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm disabled:opacity-60"
-                >
-                  {member.role === "owner" && <option value="owner">Owner</option>}
-                  {ROLE_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                {canDelete && member.role !== "owner" && (
-                  <button
-                    type="button"
-                    onClick={() => setRemoveUserId(member.userId)}
-                    className="text-sm text-red-400 hover:underline"
-                  >
-                    Remove
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {(invitations.data?.length ?? 0) > 0 && (
-        <section className="rounded-lg border border-neutral-800 p-6">
-          <h2 className="text-lg font-medium">Pending invitations</h2>
-          <div className="mt-4 divide-y divide-neutral-800">
-            {invitations.data?.map((invitation) => (
-              <div
-                key={invitation.id}
-                className="flex flex-wrap items-center justify-between gap-4 py-4"
-              >
-                <div>
-                  <p>{invitation.email}</p>
-                  <p className="text-sm text-neutral-500">
-                    {invitation.role.replaceAll("_", " ")} · expires{" "}
-                    {new Date(invitation.expiresAt).toLocaleDateString()}
-                  </p>
-                </div>
-                <div className="flex gap-3 text-sm">
-                  {canWrite && (
-                    <button
-                      type="button"
-                      onClick={() => resend.mutate({ workspaceId, invitationId: invitation.id })}
-                      className="text-teal-400 hover:underline"
-                    >
-                      Resend
-                    </button>
-                  )}
-                  {canDelete && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        cancelInvite.mutate({ workspaceId, invitationId: invitation.id })
-                      }
-                      className="text-red-400 hover:underline"
-                    >
-                      Cancel
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+      {teamNotConnected && (
+        <NotConnectedState
+          resource="Team"
+          detail="Listing members and invitations needs the team backend, which isn't connected on this deployment yet. Nothing is invited, changed or removed here."
+        />
       )}
 
-      <ConfirmModal
-        open={removeUserId !== null}
-        title="Remove workspace member?"
-        message="Their workspace access will be revoked immediately. Audit history is retained."
-        confirmLabel="Remove member"
-        cancelLabel="Keep member"
-        variant="danger"
-        onConfirm={() => {
-          if (removeUserId !== null) remove.mutate({ workspaceId, userId: removeUserId });
-        }}
-        onCancel={() => setRemoveUserId(null)}
-      />
+      {!teamNotConnected && (
+        <>
+          <section className="rounded-lg border border-neutral-800 p-6">
+            <h2 className="text-lg font-medium">Active members</h2>
+            <div className="mt-4 divide-y divide-neutral-800">
+              {activeMembers.map((member) => (
+                <div
+                  key={member.userId}
+                  className="flex flex-wrap items-center justify-between gap-4 py-4"
+                >
+                  <div>
+                    <p>{member.name || member.email || `User #${member.userId}`}</p>
+                    {member.name && <p className="text-sm text-neutral-500">{member.email}</p>}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <select
+                      value={member.role}
+                      disabled={!canWrite || member.role === "owner" || updateRole.isPending}
+                      onChange={(event) =>
+                        runUpdateRole(member.userId, event.target.value as AssignableRole)
+                      }
+                      className="rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm disabled:opacity-60"
+                    >
+                      {member.role === "owner" && <option value="owner">Owner</option>}
+                      {ROLE_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                    {canDelete && member.role !== "owner" && (
+                      <button
+                        type="button"
+                        onClick={() => setRemoveUserId(member.userId)}
+                        className="text-sm text-red-400 hover:underline"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {(invitations.data?.length ?? 0) > 0 && (
+            <section className="rounded-lg border border-neutral-800 p-6">
+              <h2 className="text-lg font-medium">Pending invitations</h2>
+              <div className="mt-4 divide-y divide-neutral-800">
+                {invitations.data?.map((invitation) => (
+                  <div
+                    key={invitation.id}
+                    className="flex flex-wrap items-center justify-between gap-4 py-4"
+                  >
+                    <div>
+                      <p>{invitation.email}</p>
+                      <p className="text-sm text-neutral-500">
+                        {invitation.role.replaceAll("_", " ")} · expires{" "}
+                        {new Date(invitation.expiresAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="flex gap-3 text-sm">
+                      {canWrite && (
+                        <button
+                          type="button"
+                          onClick={() => runResend(invitation.id)}
+                          className="text-teal-400 hover:underline"
+                        >
+                          Resend
+                        </button>
+                      )}
+                      {canDelete && (
+                        <button
+                          type="button"
+                          onClick={() => runCancelInvite(invitation.id)}
+                          className="text-red-400 hover:underline"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <ConfirmModal
+            open={removeUserId !== null}
+            title="Remove workspace member?"
+            message="Their workspace access will be revoked immediately. Audit history is retained."
+            confirmLabel="Remove member"
+            cancelLabel="Keep member"
+            variant="danger"
+            onConfirm={() => {
+              if (removeUserId !== null) runRemove(removeUserId);
+            }}
+            onCancel={() => setRemoveUserId(null)}
+          />
+        </>
+      )}
     </main>
   );
 }

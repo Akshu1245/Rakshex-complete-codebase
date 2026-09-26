@@ -1,21 +1,39 @@
 "use client";
 import { useState } from "react";
-import { trpc } from "@/lib/trpc";
+import { useApi, useApiMutation } from "@/lib/api";
 import { MetricCard } from "./MetricCard";
 import { StatusBadge } from "./StatusBadge";
 import { DataTable } from "./DataTable";
 import { PageLoading, ErrorState, EmptyState } from "./States";
 import { useEnterpriseWorkspace } from "./WorkspaceContext";
 
+interface CopilotSeat {
+  login: string;
+  planType: string;
+  lastActivity?: string | null;
+}
+
+interface CopilotMetrics {
+  totalSeats?: number;
+  activeSeats?: number;
+  totalUsageUsd?: number;
+  lastSynced?: string | null;
+  seatDetails?: CopilotSeat[];
+}
+
 export function CopilotGovernanceTab() {
   const { workspaceId } = useEnterpriseWorkspace();
+  const enabled = workspaceId > 0;
   const {
     data: metrics,
     isLoading,
     error,
+    notConnected,
     refetch,
-  } = trpc.enterprise.copilot.getMetrics.useQuery({ workspaceId });
-  const sync = trpc.enterprise.copilot.sync.useMutation();
+  } = useApi<CopilotMetrics>(
+    enabled ? `/api/enterprise?kind=copilotMetrics&workspaceId=${workspaceId}` : null,
+  );
+  const sync = useApiMutation<Record<string, unknown>, unknown>("/api/enterprise", "POST");
   const [orgName, setOrgName] = useState("");
   const [syncMsg, setSyncMsg] = useState<string | null>(null);
 
@@ -32,6 +50,14 @@ export function CopilotGovernanceTab() {
   };
 
   if (isLoading) return <PageLoading />;
+  if (notConnected)
+    return (
+      <EmptyState
+        icon="smart_toy"
+        title="Copilot governance isn't connected yet"
+        description="Copilot seat and usage metrics live on the backend, which isn't connected on this deployment. Nothing here is fabricated — connect the backend to enable it."
+      />
+    );
   if (error) return <ErrorState message={error.message} onRetry={refetch} />;
 
   const seats = metrics?.seatDetails ?? [];
@@ -57,11 +83,6 @@ export function CopilotGovernanceTab() {
           </button>
         </div>
         {syncMsg && <p className="text-xs mt-2 text-gray-400">{syncMsg}</p>}
-        {!process.env.GITHUB_COPILOT_TOKEN && (
-          <p className="text-xs mt-2 text-yellow-400">
-            ⚠️ Set GITHUB_COPILOT_TOKEN env var for real data
-          </p>
-        )}
       </div>
 
       {/* Metrics cards */}
@@ -105,7 +126,7 @@ export function CopilotGovernanceTab() {
               {
                 key: "login",
                 header: "User",
-                render: (s: (typeof seats)[0]) => (
+                render: (s: CopilotSeat) => (
                   <span className="text-white text-xs font-medium">{s.login}</span>
                 ),
                 sortable: true,
@@ -113,19 +134,19 @@ export function CopilotGovernanceTab() {
               {
                 key: "planType",
                 header: "Plan",
-                render: (s: (typeof seats)[0]) => <StatusBadge status={s.planType} />,
+                render: (s: CopilotSeat) => <StatusBadge status={s.planType} />,
                 sortable: true,
               },
               {
                 key: "lastActivity",
                 header: "Last Activity",
-                render: (s: (typeof seats)[0]) => (
+                render: (s: CopilotSeat) => (
                   <span className="text-gray-500 text-xs">
                     {s.lastActivity ? new Date(s.lastActivity).toLocaleDateString() : "Never"}
                   </span>
                 ),
                 sortable: true,
-                sortValue: (s: (typeof seats)[0]) =>
+                sortValue: (s: CopilotSeat) =>
                   s.lastActivity ? new Date(s.lastActivity).getTime() : 0,
               },
             ]}

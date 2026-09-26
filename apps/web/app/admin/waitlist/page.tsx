@@ -3,7 +3,8 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { useToast } from "@/components/Toast";
-import { trpc } from "@/lib/trpc";
+import { useApi } from "@/lib/api";
+import { NotConnectedState } from "@/components/NotConnected";
 
 interface WaitlistEntry {
   id: number;
@@ -40,7 +41,18 @@ export default function AdminWaitlistPage() {
   const [page, setPage] = useState(1);
   const { addToast } = useToast();
 
-  const waitlistQuery = trpc.admin.listAllWaitlist.useQuery();
+  const waitlistQuery = useApi<{
+    entries: Array<{
+      id: number;
+      email?: string;
+      plan?: string;
+      source?: string;
+      createdAt: string;
+    }>;
+  }>("/api/admin?kind=waitlist");
+  // Waitlist management has no /v1 equivalent on the Workers deployment —
+  // /api/admin answers 501 not_connected, so the honest state renders
+  // instead of an empty table that implies zero signups.
 
   const loading = waitlistQuery.isLoading;
   const error = waitlistQuery.error?.message || null;
@@ -142,218 +154,230 @@ export default function AdminWaitlistPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-slate-900/60 border border-slate-800/80 rounded-xl p-6">
-            <p className="text-sm font-medium text-gray-400">Total Signups</p>
-            <p className="text-3xl font-semibold mt-2 text-blue-400">{entries.length}</p>
-          </div>
-          <div className="bg-slate-900/60 border border-slate-800/80 rounded-xl p-6">
-            <p className="text-sm font-medium text-gray-400">Pro Interest</p>
-            <p className="text-3xl font-semibold mt-2 text-indigo-400">
-              {entries.filter((e) => e.plan.toLowerCase() === "pro").length}
-            </p>
-          </div>
-          <div className="bg-slate-900/60 border border-slate-800/80 rounded-xl p-6">
-            <p className="text-sm font-medium text-gray-400">Enterprise Interest</p>
-            <p className="text-3xl font-semibold mt-2 text-purple-400">
-              {entries.filter((e) => e.plan.toLowerCase() === "enterprise").length}
-            </p>
-          </div>
-        </div>
-
-        <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-6 mb-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-            <div className="flex-1 max-w-md">
-              <input
-                type="text"
-                placeholder="Search by email or source..."
-                value={query}
-                onChange={(e) => {
-                  setQuery(e.target.value);
-                  setPage(1);
-                }}
-                className="w-full bg-slate-950/80 border border-slate-800 rounded-lg px-4 py-2 text-sm text-gray-200 focus:outline-none focus:border-blue-500 placeholder-gray-500"
-              />
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-400 whitespace-nowrap">Filter by Plan:</span>
-              <select
-                value={planFilter}
-                onChange={(e) => {
-                  setPlanFilter(e.target.value);
-                  setPage(1);
-                }}
-                className="bg-slate-950/80 border border-slate-800 text-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-              >
-                <option value="all">All Plans</option>
-                <option value="free">Free</option>
-                <option value="pro">Pro</option>
-                <option value="enterprise">Enterprise</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="overflow-x-auto rounded-lg border border-slate-850">
-            <table className="min-w-full divide-y divide-slate-800">
-              <thead className="bg-slate-900/80">
-                <tr>
-                  <th
-                    scope="col"
-                    className="px-6 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider"
-                  >
-                    Email Address
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider"
-                  >
-                    Interested Plan
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider"
-                  >
-                    Signup Date
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider"
-                  >
-                    Source Page
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60 bg-slate-950/20">
-                {loading ? (
-                  <tr>
-                    <td colSpan={4} className="px-6 py-10 text-center text-gray-500">
-                      <div className="flex items-center justify-center gap-2">
-                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></span>
-                        Loading waitlist entries...
-                      </div>
-                    </td>
-                  </tr>
-                ) : pagedEntries.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="px-6 py-10 text-center text-gray-500">
-                      No signups match your search/filters
-                    </td>
-                  </tr>
-                ) : (
-                  pagedEntries.map((e) => (
-                    <tr key={e.id} className="hover:bg-slate-900/30 transition-colors">
-                      <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-200">
-                        {e.email}
-                      </td>
-                      <td className="whitespace-nowrap px-6 py-4 text-sm">
-                        <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${PLAN_BADGE[e.plan] ?? PLAN_BADGE.Free}`}
-                        >
-                          {e.plan}
-                        </span>
-                      </td>
-                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-400">
-                        {formatDate(e.createdAt)}
-                      </td>
-                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-400">
-                        <code className="text-xs text-indigo-400 bg-indigo-950/20 px-2 py-0.5 rounded border border-indigo-900/30">
-                          {e.source}
-                        </code>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between border-t border-slate-800/80 px-4 py-3 mt-4">
-              <div className="flex flex-1 justify-between sm:hidden">
-                <button
-                  disabled={page === 1}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  className="relative inline-flex items-center rounded-md border border-slate-800 bg-slate-900 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-slate-800 disabled:opacity-50"
-                >
-                  Previous
-                </button>
-                <button
-                  disabled={page === totalPages}
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  className="relative ml-3 inline-flex items-center rounded-md border border-slate-800 bg-slate-900 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-slate-800 disabled:opacity-50"
-                >
-                  Next
-                </button>
+        {waitlistQuery.notConnected ? (
+          <NotConnectedState
+            resource="Waitlist signups"
+            detail="Waitlist management needs the account backend, which isn't connected on this deployment yet. No signup records are available here."
+          />
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <div className="bg-slate-900/60 border border-slate-800/80 rounded-xl p-6">
+                <p className="text-sm font-medium text-gray-400">Total Signups</p>
+                <p className="text-3xl font-semibold mt-2 text-blue-400">{entries.length}</p>
               </div>
-              <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm text-gray-400">
-                    Showing{" "}
-                    <span className="font-medium text-gray-200">{(page - 1) * PAGE_SIZE + 1}</span>{" "}
-                    to{" "}
-                    <span className="font-medium text-gray-200">
-                      {Math.min(filteredEntries.length, page * PAGE_SIZE)}
-                    </span>{" "}
-                    of <span className="font-medium text-gray-200">{filteredEntries.length}</span>{" "}
-                    results
-                  </p>
+              <div className="bg-slate-900/60 border border-slate-800/80 rounded-xl p-6">
+                <p className="text-sm font-medium text-gray-400">Pro Interest</p>
+                <p className="text-3xl font-semibold mt-2 text-indigo-400">
+                  {entries.filter((e) => e.plan.toLowerCase() === "pro").length}
+                </p>
+              </div>
+              <div className="bg-slate-900/60 border border-slate-800/80 rounded-xl p-6">
+                <p className="text-sm font-medium text-gray-400">Enterprise Interest</p>
+                <p className="text-3xl font-semibold mt-2 text-purple-400">
+                  {entries.filter((e) => e.plan.toLowerCase() === "enterprise").length}
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-6 mb-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                <div className="flex-1 max-w-md">
+                  <input
+                    type="text"
+                    placeholder="Search by email or source..."
+                    value={query}
+                    onChange={(e) => {
+                      setQuery(e.target.value);
+                      setPage(1);
+                    }}
+                    className="w-full bg-slate-950/80 border border-slate-800 rounded-lg px-4 py-2 text-sm text-gray-200 focus:outline-none focus:border-blue-500 placeholder-gray-500"
+                  />
                 </div>
-                <div>
-                  <nav
-                    className="isolate inline-flex -space-x-px rounded-md shadow-sm"
-                    aria-label="Pagination"
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-400 whitespace-nowrap">Filter by Plan:</span>
+                  <select
+                    value={planFilter}
+                    onChange={(e) => {
+                      setPlanFilter(e.target.value);
+                      setPage(1);
+                    }}
+                    className="bg-slate-950/80 border border-slate-800 text-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
                   >
-                    <button
-                      disabled={page === 1}
-                      onClick={() => setPage(1)}
-                      className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-slate-850 hover:bg-slate-900 focus:z-20 focus:outline-offset-0 disabled:opacity-30"
-                    >
-                      «
-                    </button>
+                    <option value="all">All Plans</option>
+                    <option value="free">Free</option>
+                    <option value="pro">Pro</option>
+                    <option value="enterprise">Enterprise</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto rounded-lg border border-slate-850">
+                <table className="min-w-full divide-y divide-slate-800">
+                  <thead className="bg-slate-900/80">
+                    <tr>
+                      <th
+                        scope="col"
+                        className="px-6 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider"
+                      >
+                        Email Address
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider"
+                      >
+                        Interested Plan
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider"
+                      >
+                        Signup Date
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider"
+                      >
+                        Source Page
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60 bg-slate-950/20">
+                    {loading ? (
+                      <tr>
+                        <td colSpan={4} className="px-6 py-10 text-center text-gray-500">
+                          <div className="flex items-center justify-center gap-2">
+                            <span className="h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></span>
+                            Loading waitlist entries...
+                          </div>
+                        </td>
+                      </tr>
+                    ) : pagedEntries.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="px-6 py-10 text-center text-gray-500">
+                          No signups match your search/filters
+                        </td>
+                      </tr>
+                    ) : (
+                      pagedEntries.map((e) => (
+                        <tr key={e.id} className="hover:bg-slate-900/30 transition-colors">
+                          <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-200">
+                            {e.email}
+                          </td>
+                          <td className="whitespace-nowrap px-6 py-4 text-sm">
+                            <span
+                              className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${PLAN_BADGE[e.plan] ?? PLAN_BADGE.Free}`}
+                            >
+                              {e.plan}
+                            </span>
+                          </td>
+                          <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-400">
+                            {formatDate(e.createdAt)}
+                          </td>
+                          <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-400">
+                            <code className="text-xs text-indigo-400 bg-indigo-950/20 px-2 py-0.5 rounded border border-indigo-900/30">
+                              {e.source}
+                            </code>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between border-t border-slate-800/80 px-4 py-3 mt-4">
+                  <div className="flex flex-1 justify-between sm:hidden">
                     <button
                       disabled={page === 1}
                       onClick={() => setPage((p) => Math.max(1, p - 1))}
-                      className="relative inline-flex items-center px-2 py-2 text-gray-400 ring-1 ring-inset ring-slate-850 hover:bg-slate-900 focus:z-20 focus:outline-offset-0 disabled:opacity-30"
+                      className="relative inline-flex items-center rounded-md border border-slate-800 bg-slate-900 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-slate-800 disabled:opacity-50"
                     >
-                      ‹
+                      Previous
                     </button>
-                    {Array.from({ length: totalPages }).map((_, idx) => {
-                      const pNum = idx + 1;
-                      const isCurrent = pNum === page;
-                      return (
-                        <button
-                          key={pNum}
-                          onClick={() => setPage(pNum)}
-                          className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold focus:z-20 focus:outline-offset-0 ${
-                            isCurrent
-                              ? "z-10 bg-blue-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-                              : "text-gray-400 ring-1 ring-inset ring-slate-850 hover:bg-slate-900"
-                          }`}
-                        >
-                          {pNum}
-                        </button>
-                      );
-                    })}
                     <button
                       disabled={page === totalPages}
                       onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                      className="relative inline-flex items-center px-2 py-2 text-gray-400 ring-1 ring-inset ring-slate-850 hover:bg-slate-900 focus:z-20 focus:outline-offset-0 disabled:opacity-30"
+                      className="relative ml-3 inline-flex items-center rounded-md border border-slate-800 bg-slate-900 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-slate-800 disabled:opacity-50"
                     >
-                      ›
+                      Next
                     </button>
-                    <button
-                      disabled={page === totalPages}
-                      onClick={() => setPage(totalPages)}
-                      className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-slate-850 hover:bg-slate-900 focus:z-20 focus:outline-offset-0 disabled:opacity-30"
-                    >
-                      »
-                    </button>
-                  </nav>
+                  </div>
+                  <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm text-gray-400">
+                        Showing{" "}
+                        <span className="font-medium text-gray-200">
+                          {(page - 1) * PAGE_SIZE + 1}
+                        </span>{" "}
+                        to{" "}
+                        <span className="font-medium text-gray-200">
+                          {Math.min(filteredEntries.length, page * PAGE_SIZE)}
+                        </span>{" "}
+                        of{" "}
+                        <span className="font-medium text-gray-200">{filteredEntries.length}</span>{" "}
+                        results
+                      </p>
+                    </div>
+                    <div>
+                      <nav
+                        className="isolate inline-flex -space-x-px rounded-md shadow-sm"
+                        aria-label="Pagination"
+                      >
+                        <button
+                          disabled={page === 1}
+                          onClick={() => setPage(1)}
+                          className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-slate-850 hover:bg-slate-900 focus:z-20 focus:outline-offset-0 disabled:opacity-30"
+                        >
+                          «
+                        </button>
+                        <button
+                          disabled={page === 1}
+                          onClick={() => setPage((p) => Math.max(1, p - 1))}
+                          className="relative inline-flex items-center px-2 py-2 text-gray-400 ring-1 ring-inset ring-slate-850 hover:bg-slate-900 focus:z-20 focus:outline-offset-0 disabled:opacity-30"
+                        >
+                          ‹
+                        </button>
+                        {Array.from({ length: totalPages }).map((_, idx) => {
+                          const pNum = idx + 1;
+                          const isCurrent = pNum === page;
+                          return (
+                            <button
+                              key={pNum}
+                              onClick={() => setPage(pNum)}
+                              className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold focus:z-20 focus:outline-offset-0 ${
+                                isCurrent
+                                  ? "z-10 bg-blue-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                                  : "text-gray-400 ring-1 ring-inset ring-slate-850 hover:bg-slate-900"
+                              }`}
+                            >
+                              {pNum}
+                            </button>
+                          );
+                        })}
+                        <button
+                          disabled={page === totalPages}
+                          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                          className="relative inline-flex items-center px-2 py-2 text-gray-400 ring-1 ring-inset ring-slate-850 hover:bg-slate-900 focus:z-20 focus:outline-offset-0 disabled:opacity-30"
+                        >
+                          ›
+                        </button>
+                        <button
+                          disabled={page === totalPages}
+                          onClick={() => setPage(totalPages)}
+                          className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-slate-850 hover:bg-slate-900 focus:z-20 focus:outline-offset-0 disabled:opacity-30"
+                        >
+                          »
+                        </button>
+                      </nav>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
-          )}
-        </div>
+          </>
+        )}
       </div>
     </div>
   );

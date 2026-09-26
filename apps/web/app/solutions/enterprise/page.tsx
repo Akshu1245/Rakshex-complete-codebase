@@ -3,7 +3,7 @@ import Link from "next/link";
 export const metadata = {
   title: "Enterprise-Grade AI Runtime Governance — RaksHex",
   description:
-    "RaksHex Enterprise offers single sign-on (SSO), 4-hour SLA agreements, dedicated Slack support channels, and custom rules for AI deployments at scale.",
+    "RaksHex Enterprise offers single sign-on (SSO) and custom rules for AI deployments at scale. Private beta — evaluation access by invite.",
   alternates: { canonical: "/solutions/enterprise" },
 };
 
@@ -29,8 +29,8 @@ export default function EnterpriseSolutionPage() {
       desc: "Integrate Okta, Google Workspace, Azure AD, or Microsoft Entra using SAML 2.0 or OIDC. Supports JIT provisioning and role-based access control (RBAC).",
     },
     {
-      title: "4-Hour SLA & Custom Support",
-      desc: "SLA response guarantees for critical production incidents. Access to a dedicated Slack channel with our security engineering team.",
+      title: "Direct Founder Support",
+      desc: "Work directly with the founding team during evaluation. Private beta — support over email, with a shared channel for pilot partners.",
     },
     {
       title: "Custom Prompt Rules & Guardrails",
@@ -38,7 +38,7 @@ export default function EnterpriseSolutionPage() {
     },
     {
       title: "Self-Hosted Cloud Options",
-      desc: "Deploy RaksHex on-premise or within your private AWS/Azure/GCP clouds using our Kubernetes Helm charts and Docker containers.",
+      desc: "Deploy RaksHex on-premise or within your private cloud using our Docker Compose files.",
     },
   ];
 

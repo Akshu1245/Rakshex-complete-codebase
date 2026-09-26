@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { AlertTriangle, TrendingUp, ArrowRight } from "lucide-react";
-import { trpc } from "@/lib/trpc";
+import { useApi } from "@/lib/api";
 
 type Window = {
   used: number;
@@ -12,28 +12,28 @@ type Window = {
   status: "ok" | "warning" | "critical";
 };
 
+interface PlanShape {
+  plan: "free" | "pro" | "enterprise";
+  status: string;
+  utilization?: {
+    collections: Window;
+    scansPerDay: Window;
+  };
+}
+
 /**
  * Renders a proactive warning banner when the user approaches a plan limit.
  * - `ok` (<70%): render nothing
  * - `warning` (70-89%): yellow banner with soft upsell
  * - `critical` (90-100%): red banner with hard upsell
  *
- * Uses the `utilization` field returned by `payments.getCurrentPlan` via tRPC.
+ * Uses the `utilization` field returned by `/api/billing?kind=subscription`.
+ * On this deployment the billing backend is not connected, so the banner
+ * renders nothing instead of fabricating usage numbers.
  */
 export default function PlanUtilizationBanner() {
-  const planQuery = trpc.payment.getCurrentPlan.useQuery(undefined, {
-    retry: false,
-  });
-  const current = planQuery.data as
-    | {
-        plan: "free" | "pro" | "enterprise";
-        status: string;
-        utilization?: {
-          collections: Window;
-          scansPerDay: Window;
-        };
-      }
-    | undefined;
+  const planQuery = useApi<PlanShape>("/api/billing?kind=subscription");
+  const current = planQuery.data;
 
   if (!current?.utilization) return null;
 

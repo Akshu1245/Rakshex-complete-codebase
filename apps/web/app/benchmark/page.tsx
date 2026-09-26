@@ -14,8 +14,9 @@ import {
   PolarAngleAxis,
 } from "recharts";
 import { Gauge, RefreshCw } from "lucide-react";
-import { trpc } from "@/lib/trpc";
 import { EmptyState } from "@/components/EmptyState";
+import { useApi } from "@/lib/api";
+import { NotConnectedState } from "@/components/NotConnected";
 
 const MODEL_COLORS = ["#06D6A0", "#00F0FF", "#FDB022", "#10B981", "#F59E0B", "#3B82F6", "#EF4444"];
 
@@ -36,7 +37,23 @@ export default function BenchmarkPage() {
     return { startDate: start.toISOString(), endDate: end.toISOString() };
   }, []);
 
-  const summaryQuery = trpc.analytics.summary.useQuery({ startDate, endDate, groupBy: "model" });
+  // Compare the user's real model usage over the last 30 days.
+  // Model telemetry has no /v1 equivalent on the Workers deployment —
+  // /api/analytics answers 501 not_connected, so an honest empty state
+  // renders instead of a fabricated comparison.
+  const summaryQuery = useApi<
+    Array<{
+      key: string;
+      requestCount: number;
+      errorRate: number;
+      avgLatencyP50: number;
+      avgLatencyP95: number;
+      totalTokens: number;
+      totalCost: number;
+    }>
+  >(
+    `/api/analytics?kind=summary&startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}&groupBy=model`,
+  );
 
   const allResults: ModelResult[] = useMemo(() => {
     const rows = summaryQuery.data ?? [];
@@ -110,6 +127,11 @@ export default function BenchmarkPage() {
 
       {loading ? (
         <div className="bg-black/50 rounded-xl border border-[#2D3E50] p-6 animate-pulse h-64" />
+      ) : summaryQuery.notConnected ? (
+        <NotConnectedState
+          resource="LLM benchmark"
+          detail="Comparing your models needs the telemetry backend, which isn't connected on this deployment yet. No model data is shown or ranked here."
+        />
       ) : !hasData ? (
         <EmptyState
           icon="📈"

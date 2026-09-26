@@ -3,7 +3,7 @@
 import { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { trpc } from "@/lib/trpc";
+import { useApiMutation } from "@/lib/api";
 import { PasswordField } from "@/components/PasswordField";
 
 function ResetPasswordForm() {
@@ -17,18 +17,12 @@ function ResetPasswordForm() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const resetPassword = trpc.auth.resetPassword.useMutation({
-    onSuccess: () => {
-      setSuccess(true);
-      setTimeout(() => {
-        router.push("/login");
-      }, 3000);
-    },
-    onError: (err) => {
-      setError(err.message);
-      setIsSubmitting(false);
-    },
-  });
+  // Password reset has no /v1 equivalent on the Workers deployment —
+  // /api/auth answers 501 not_connected, and the error renders honestly.
+  const resetPassword = useApiMutation<{ token: string; newPassword: string }, unknown>(
+    "/api/auth",
+    "POST",
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,7 +44,21 @@ function ResetPasswordForm() {
     }
 
     setIsSubmitting(true);
-    resetPassword.mutate({ token, newPassword });
+    resetPassword.mutate(
+      { token, newPassword },
+      {
+        onSuccess: () => {
+          setSuccess(true);
+          setTimeout(() => {
+            router.push("/login");
+          }, 3000);
+        },
+        onError: (err) => {
+          setError(err.message);
+          setIsSubmitting(false);
+        },
+      },
+    );
   };
 
   if (!token) {

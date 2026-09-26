@@ -54,13 +54,12 @@ describe("isPublicPath", () => {
     expect(isPublicPath("/api-keys")).toBe(false);
   });
 
-  it("treats /incidents as public flagship hub", () => {
-    expect(PUBLIC_PATH_PREFIXES).toContain("/incidents");
-    expect(isPublicPath("/incidents")).toBe(true);
+  it("treats /incidents as gated (requires auth)", () => {
+    expect(PUBLIC_PATH_PREFIXES).not.toContain("/incidents");
+    expect(isPublicPath("/incidents")).toBe(false);
   });
 
   it("does not keep /roi-calculator as a public prefix (redirects to /pricing)", () => {
     expect(PUBLIC_PATH_PREFIXES).not.toContain("/roi-calculator");
   });
-
 });

@@ -34,14 +34,6 @@ body {
   line-height: 1.6;
 }
 
-@keyframes drift {
-  0% {
-    background-position: 0 0;
-  }
-  100% {
-    background-position: 24px 24px;
-  }
-}
 
 h1,
 h2,
@@ -209,22 +201,6 @@ textarea:focus,
   border: 1px solid rgba(148, 142, 156, 0.12);
 }
 
-@keyframes scan-line {
-  0% {
-    top: 0%;
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  90% {
-    opacity: 1;
-  }
-  100% {
-    top: 100%;
-    opacity: 0;
-  }
-}
 
 .scan-animation {
   position: absolute;
@@ -274,15 +250,6 @@ textarea:focus,
   animation: status-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-@keyframes pulse-glow {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.02);
-  }
-}
 
 .pulse-glow {
   animation: pulse-glow 2s ease-in-out infinite;
@@ -304,11 +271,6 @@ textarea:focus,
   animation: pulse-active 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-@keyframes bezier-dash {
-  to {
-    stroke-dashoffset: 0;
-  }
-}
 
 .bezier-path {
   stroke-dasharray: 1000;
@@ -369,20 +331,6 @@ textarea:focus,
 .pulse-dot {
   animation: pulse-dot-anim 2s infinite;
 }
-@keyframes pulse-dot-anim {
-  0% {
-    transform: scale(0.95);
-    opacity: 0.7;
-  }
-  70% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(0.95);
-    opacity: 0.7;
-  }
-}
 .stream-fade-in {
   animation: fadeInStream 0.5s ease-out forwards;
 }
@@ -412,14 +360,6 @@ textarea:focus,
 }
 
 /* Scraped Animations */
-@keyframes logo-scroll-anim {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
-}
 
 .animate-logo-scroll {
   animation: logo-scroll-anim 35s linear infinite;
@@ -1204,15 +1144,6 @@ textarea:focus,
   animation: pulse-dot 2s ease-in-out infinite;
 }
 
-@keyframes pulse-dot {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
-}
 
 @media (max-width: 768px) {
   .footer {

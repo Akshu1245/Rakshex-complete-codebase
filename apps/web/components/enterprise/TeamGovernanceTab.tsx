@@ -1,11 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { trpc } from "@/lib/trpc";
+import { useApi, useApiMutation } from "@/lib/api";
 import { useEnterpriseWorkspace } from "./WorkspaceContext";
 import { MetricCard } from "./MetricCard";
 import { DataTable } from "./DataTable";
 import { StatusBadge } from "./StatusBadge";
+import { PageLoading, ErrorState, EmptyState } from "./States";
 
 type PoolMetadata = {
   enabled?: boolean;
@@ -30,8 +31,49 @@ type IdentityRow = {
   status: string;
 };
 
+type IdentityItem = {
+  id: number;
+  displayName?: string | null;
+  externalUserId?: string | null;
+  provider: string;
+  email?: string | null;
+  status: string;
+};
+
+type BudgetItem = {
+  id: number;
+  identityId?: number | null;
+  limitUsd: number;
+  currentSpendUsd: number;
+  enforcementMode: string;
+  hardLimitHonest?: string;
+  metadata?: unknown;
+};
+
+type KillSwitchItem = {
+  scopeType: string;
+  scopeId: string;
+  active: boolean;
+};
+
+type ConnectorItem = {
+  provider: string;
+  seatSync: boolean;
+  usageSync: boolean;
+  note: string;
+};
+
+type HealthProvider = {
+  accountId: number;
+  provider: string;
+  syncStatus: string;
+  stale: boolean;
+  lastSyncError?: string | null;
+};
+
 export function TeamGovernanceTab() {
   const { workspaceId } = useEnterpriseWorkspace();
+  const enabled = workspaceId > 0;
   const [budgetLimit, setBudgetLimit] = useState("500");
   const [poolEnabled, setPoolEnabled] = useState(false);
   const [maxBorrowUsd, setMaxBorrowUsd] = useState("25");
@@ -44,18 +86,52 @@ export function TeamGovernanceTab() {
   const [identityShareable, setIdentityShareable] = useState(true);
   const [identityProtectedUsd, setIdentityProtectedUsd] = useState("0");
 
-  const summary = trpc.teamGovernance.summary.useQuery({ workspaceId });
-  const entitlements = trpc.teamGovernance.entitlements.useQuery({ workspaceId });
-  const identities = trpc.teamGovernance.listIdentities.useQuery({ workspaceId });
-  const usage = trpc.teamGovernance.usageSummary.useQuery({ workspaceId });
-  const budgets = trpc.teamGovernance.listBudgets.useQuery({ workspaceId });
-  const killSwitches = trpc.teamGovernance.listKillSwitches.useQuery({ workspaceId });
-  const connectors = trpc.teamGovernance.listConnectors.useQuery({ workspaceId });
-  const health = trpc.teamGovernance.providerHealth.useQuery({ workspaceId });
+  const summary = useApi<{ identities?: number; monthlySpendUsd?: number }>(
+    enabled ? `/api/team?kind=summary&workspaceId=${workspaceId}` : null,
+  );
+  const entitlements = useApi<{ seats?: { used: number; limit: number } }>(
+    enabled ? `/api/team?kind=entitlements&workspaceId=${workspaceId}` : null,
+  );
+  const identities = useApi<IdentityItem[]>(
+    enabled ? `/api/team?kind=identities&workspaceId=${workspaceId}` : null,
+  );
+  const usage = useApi<unknown>(
+    enabled ? `/api/team?kind=usageSummary&workspaceId=${workspaceId}` : null,
+  );
+  const budgets = useApi<BudgetItem[]>(
+    enabled ? `/api/team?kind=budgets&workspaceId=${workspaceId}` : null,
+  );
+  const killSwitches = useApi<KillSwitchItem[]>(
+    enabled ? `/api/team?kind=killSwitches&workspaceId=${workspaceId}` : null,
+  );
+  const connectors = useApi<ConnectorItem[]>(
+    enabled ? `/api/team?kind=connectors&workspaceId=${workspaceId}` : null,
+  );
+  const health = useApi<{ providers?: HealthProvider[] }>(
+    enabled ? `/api/team?kind=providerHealth&workspaceId=${workspaceId}` : null,
+  );
 
-  const setBudget = trpc.teamGovernance.setBudget.useMutation({
-    onSuccess: () => budgets.refetch(),
-  });
+  const setBudget = useApiMutation<Record<string, unknown>, unknown>("/api/team", "POST");
+
+  const notConnected =
+    summary.notConnected ||
+    entitlements.notConnected ||
+    identities.notConnected ||
+    usage.notConnected ||
+    budgets.notConnected ||
+    killSwitches.notConnected ||
+    connectors.notConnected ||
+    health.notConnected;
+
+  const loading =
+    summary.isLoading ||
+    entitlements.isLoading ||
+    identities.isLoading ||
+    usage.isLoading ||
+    budgets.isLoading ||
+    killSwitches.isLoading ||
+    connectors.isLoading ||
+    health.isLoading;
 
   const workspaceBudget = budgets.data?.find((b) => b.identityId == null);
 
@@ -89,16 +165,8 @@ export function TeamGovernanceTab() {
     setIdentityShareable(meta.shareable !== false);
     setIdentityProtectedUsd(String(typeof meta.protectedUsd === "number" ? meta.protectedUsd : 0));
   }, [identityBudgetId, budgets.data]);
-  const setKillSwitch = trpc.teamGovernance.setKillSwitch.useMutation({
-    onSuccess: () => killSwitches.refetch(),
-  });
-  const syncProvider = trpc.teamGovernance.syncProvider.useMutation({
-    onSuccess: () => {
-      identities.refetch();
-      usage.refetch();
-      health.refetch();
-    },
-  });
+  const setKillSwitch = useApiMutation<Record<string, unknown>, unknown>("/api/team", "POST");
+  const syncProvider = useApiMutation<Record<string, unknown>, unknown>("/api/team", "POST");
 
   const toggleWorkspaceKill = useCallback(async () => {
     const active = !killSwitches.data?.some(
@@ -111,16 +179,52 @@ export function TeamGovernanceTab() {
       active,
       reason: active ? "Manual workspace kill switch" : "Kill switch cleared",
     });
-  }, [killSwitches.data, setKillSwitch, workspaceId]);
+    killSwitches.refetch();
+  }, [killSwitches.data, killSwitches, setKillSwitch, workspaceId]);
 
   const seats = entitlements.data?.seats;
   const identityRows: IdentityRow[] = (identities.data ?? []).map((i) => ({
     id: i.id,
-    displayName: i.displayName ?? i.externalUserId,
+    displayName: i.displayName ?? i.externalUserId ?? `Identity ${i.id}`,
     provider: i.provider,
     email: i.email ?? "—",
     status: i.status,
   }));
+
+  if (loading) return <PageLoading />;
+  if (notConnected)
+    return (
+      <EmptyState
+        icon="group"
+        title="Team governance isn't connected yet"
+        description="Seats, identities, budgets, kill switches, and provider health live on the backend, which isn't connected on this deployment. Nothing here is fabricated — connect the backend to enable it."
+      />
+    );
+  const firstError =
+    summary.error ||
+    entitlements.error ||
+    identities.error ||
+    usage.error ||
+    budgets.error ||
+    killSwitches.error ||
+    connectors.error ||
+    health.error;
+  if (firstError)
+    return (
+      <ErrorState
+        message={firstError.message}
+        onRetry={() => {
+          summary.refetch();
+          entitlements.refetch();
+          identities.refetch();
+          usage.refetch();
+          budgets.refetch();
+          killSwitches.refetch();
+          connectors.refetch();
+          health.refetch();
+        }}
+      />
+    );
 
   return (
     <div className="space-y-8">
@@ -170,11 +274,20 @@ export function TeamGovernanceTab() {
             <button
               type="button"
               onClick={() =>
-                syncProvider.mutate({
-                  workspaceId,
-                  provider: "github_copilot",
-                  orgName: orgName || undefined,
-                })
+                syncProvider.mutate(
+                  {
+                    workspaceId,
+                    provider: "github_copilot",
+                    orgName: orgName || undefined,
+                  },
+                  {
+                    onSuccess: () => {
+                      identities.refetch();
+                      usage.refetch();
+                      health.refetch();
+                    },
+                  },
+                )
               }
               disabled={syncProvider.isPending}
               className="px-4 py-2 rounded-lg bg-[#14b8a6] text-black text-sm font-medium disabled:opacity-50"
@@ -255,13 +368,16 @@ export function TeamGovernanceTab() {
                     emergencyReserveUsd: Number(emergencyReserveUsd) || 0,
                   }
                 : { enabled: false };
-              setBudget.mutate({
-                workspaceId,
-                limitUsd,
-                hardLimit: enforcementMode === "gateway",
-                enforcementMode,
-                metadata: { pool },
-              });
+              setBudget.mutate(
+                {
+                  workspaceId,
+                  limitUsd,
+                  hardLimit: enforcementMode === "gateway",
+                  enforcementMode,
+                  metadata: { pool },
+                },
+                { onSuccess: () => budgets.refetch() },
+              );
             }}
             className="px-4 py-2 rounded-lg border border-[#14b8a6]/40 text-[#14b8a6] text-sm disabled:opacity-50"
           >
@@ -387,17 +503,20 @@ export function TeamGovernanceTab() {
                 ) {
                   return;
                 }
-                setBudget.mutate({
-                  workspaceId,
-                  identityId,
-                  limitUsd,
-                  hardLimit: true,
-                  enforcementMode: "gateway",
-                  metadata: {
-                    shareable: identityShareable,
-                    protectedUsd: Number(identityProtectedUsd) || 0,
+                setBudget.mutate(
+                  {
+                    workspaceId,
+                    identityId,
+                    limitUsd,
+                    hardLimit: true,
+                    enforcementMode: "gateway",
+                    metadata: {
+                      shareable: identityShareable,
+                      protectedUsd: Number(identityProtectedUsd) || 0,
+                    },
                   },
-                });
+                  { onSuccess: () => budgets.refetch() },
+                );
               }}
               className="px-4 py-2 rounded-lg border border-[#14b8a6]/40 text-[#14b8a6] text-sm disabled:opacity-50"
             >
@@ -560,12 +679,21 @@ export function TeamGovernanceTab() {
                   type="button"
                   disabled={syncProvider.isPending}
                   onClick={() =>
-                    syncProvider.mutate({
-                      workspaceId,
-                      provider: row.provider,
-                      providerAccountId: row.id,
-                      orgName: row.provider === "github_copilot" && orgName ? orgName : undefined,
-                    })
+                    syncProvider.mutate(
+                      {
+                        workspaceId,
+                        provider: row.provider,
+                        providerAccountId: row.id,
+                        orgName: row.provider === "github_copilot" && orgName ? orgName : undefined,
+                      },
+                      {
+                        onSuccess: () => {
+                          identities.refetch();
+                          usage.refetch();
+                          health.refetch();
+                        },
+                      },
+                    )
                   }
                   className="text-xs px-3 py-1.5 rounded border border-white/10 text-[#14b8a6] disabled:opacity-50"
                 >

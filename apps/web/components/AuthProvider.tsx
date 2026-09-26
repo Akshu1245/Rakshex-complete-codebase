@@ -2,7 +2,7 @@
 import { createContext, useContext, useCallback, useEffect, useRef, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { trpc } from "@/lib/trpc";
+import { useApi, useApiMutation } from "@/lib/api";
 
 interface User {
   id?: number | string;
@@ -39,11 +39,8 @@ function ensureCsrfCookie(): void {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { data: nextAuthSession, status: nextAuthStatus } = useSession();
-  const meQuery = trpc.auth.me.useQuery(undefined, {
-    retry: false,
-    staleTime: 60_000,
-  });
-  const logoutMutation = trpc.auth.logout.useMutation();
+  const meQuery = useApi<User | null>("/api/auth?kind=me");
+  const logoutMutation = useApiMutation<Record<string, never>, unknown>("/api/auth", "POST");
   const syncedForSession = useRef<string | null>(null);
   const syncInFlight = useRef(false);
 
@@ -53,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (nextAuthStatus !== "authenticated" || !nextAuthSession) return;
-    if (meQuery.isPending || meQuery.data) return;
+    if (meQuery.isLoading || meQuery.data) return;
 
     const sessionKey = nextAuthSession.user?.email ?? "session";
     if (syncedForSession.current === sessionKey || syncInFlight.current) return;
@@ -81,11 +78,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => {
         syncInFlight.current = false;
       });
-  }, [nextAuthStatus, nextAuthSession, meQuery.isPending, meQuery.data]);
+  }, [nextAuthStatus, nextAuthSession, meQuery.isLoading, meQuery.data]);
 
   const logout = useCallback(async () => {
     try {
-      await logoutMutation.mutateAsync();
+      await logoutMutation.mutateAsync({});
     } catch {
       // Logout is best-effort; cookie expiry will eventually invalidate
       // the session even if the request fails.
@@ -95,8 +92,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [logoutMutation, meQuery, router]);
 
   const value: AuthContextType = {
-    user: (meQuery.data as User | null | undefined) ?? null,
-    loading: !meQuery.data && (meQuery.isPending || meQuery.isFetching || syncInFlight.current),
+    user: meQuery.data ?? null,
+    loading: !meQuery.data && (meQuery.isLoading || syncInFlight.current),
     logout,
     refresh,
   };

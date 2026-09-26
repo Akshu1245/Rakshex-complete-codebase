@@ -1,24 +1,45 @@
 "use client";
 import { useState } from "react";
-import { trpc } from "@/lib/trpc";
+import { useApi, useApiMutation } from "@/lib/api";
 import { StatusBadge } from "./StatusBadge";
 import { EmptyState, ErrorState, PageLoading } from "./States";
-import { MetricCard } from "./MetricCard";
 import { useEnterpriseWorkspace } from "./WorkspaceContext";
+
+interface AzureConnection {
+  id: number;
+  displayName?: string | null;
+  subscriptionId: string;
+  tenantId: string;
+  isActive: boolean;
+}
+
+interface AzureTestResult {
+  ok: boolean;
+  error?: string;
+}
 
 export function AzureConnectionsTab() {
   const { workspaceId } = useEnterpriseWorkspace();
-  const utils = trpc.useUtils();
+  const enabled = workspaceId > 0;
   const {
     data: connections,
     isLoading,
     error,
+    notConnected,
     refetch,
-  } = trpc.enterprise.azure.list.useQuery({ workspaceId });
-  const triggerDiscovery = trpc.enterprise.discovery.triggerFullDiscovery.useMutation();
-  const testConn = trpc.enterprise.azure.test.useMutation();
-  const createConn = trpc.enterprise.azure.create.useMutation();
-  const deleteConn = trpc.enterprise.azure.delete.useMutation();
+  } = useApi<AzureConnection[]>(
+    enabled ? `/api/enterprise?kind=azureConnections&workspaceId=${workspaceId}` : null,
+  );
+  const triggerDiscovery = useApiMutation<Record<string, unknown>, unknown>(
+    "/api/enterprise",
+    "POST",
+  );
+  const testConn = useApiMutation<Record<string, unknown>, AzureTestResult>(
+    "/api/enterprise",
+    "POST",
+  );
+  const createConn = useApiMutation<Record<string, unknown>, unknown>("/api/enterprise", "POST");
+  const deleteConn = useApiMutation<Record<string, unknown>, unknown>("/api/enterprise", "DELETE");
 
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
@@ -32,6 +53,14 @@ export function AzureConnectionsTab() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   if (isLoading) return <PageLoading />;
+  if (notConnected)
+    return (
+      <EmptyState
+        icon="cloud_off"
+        title="Azure discovery isn't connected yet"
+        description="Azure connection management lives on the backend, which isn't connected on this deployment. No connections are shown and none can be created here."
+      />
+    );
   if (error) return <ErrorState message={error.message} onRetry={refetch} />;
 
   const handleConnect = async () => {
@@ -53,7 +82,7 @@ export function AzureConnectionsTab() {
         clientId: "",
         clientSecret: "",
       });
-      utils.enterprise.azure.list.invalidate();
+      refetch();
     } catch (e) {
       setErrorMsg(e instanceof Error ? e.message : "Connection failed");
     }
@@ -61,13 +90,12 @@ export function AzureConnectionsTab() {
 
   const handleDelete = async (id: number) => {
     await deleteConn.mutateAsync({ workspaceId: workspaceId, id });
-    utils.enterprise.azure.list.invalidate();
+    refetch();
   };
 
   const handleRunDiscovery = async () => {
     await triggerDiscovery.mutateAsync({ workspaceId: workspaceId });
-    utils.enterprise.discovery.listRuns.invalidate();
-    utils.enterprise.discovery.getKeyStats.invalidate();
+    refetch();
   };
 
   return (

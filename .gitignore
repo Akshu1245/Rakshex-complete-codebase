@@ -214,6 +214,7 @@ apps/web/.dev.vars
 apps/web/.open-next
 # wrangler dev local state
 apps/web/.wrangler/
+apps/api/workers/.wrangler/
 # wrangler types output: wrangler 4.x inlines Workers runtime globals that
 # redeclare Response.json() as Promise<unknown> and break `tsc --noEmit`
 # (verified 2026-09-25). Regenerable via `pnpm cf-typegen`; keep uncommitted.

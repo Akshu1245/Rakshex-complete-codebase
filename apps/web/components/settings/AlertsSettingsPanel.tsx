@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { trpc } from "@/lib/trpc";
+import { useApi, useApiMutation } from "@/lib/api";
 import { useToast } from "@/components/Toast";
 import { EmptyState } from "@/components/EmptyState";
+import { NotConnectedState } from "@/components/NotConnected";
 
 const inputClass =
   "w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm";
@@ -16,11 +17,40 @@ type Metric =
   | "anomaly_score"
   | "latency_p95_ms";
 
+interface AlertRule {
+  id: string;
+  name: string;
+  severity: string;
+  enabled: boolean;
+  conditions: Array<{ metric: string; operator: string; threshold: number }>;
+  window: string;
+}
+
+interface AlertEvent {
+  id: string;
+  summary: string;
+  channel: string;
+  delivered: boolean;
+  firedAt: string;
+}
+
+interface CreateRuleArgs {
+  name: string;
+  enabled: boolean;
+  conditions: Array<{ metric: Metric; operator: "gte"; threshold: number }>;
+  window: string;
+  cooldownMinutes: number;
+  severity: string;
+  channels: { discordWebhookUrl: string };
+}
+
 export function AlertsSettingsPanel() {
   const { addToast } = useToast();
-  const utils = trpc.useUtils();
-  const rulesQuery = trpc.alerts.listRules.useQuery({ limit: 50 });
-  const eventsQuery = trpc.alerts.listEvents.useQuery({ limit: 20 });
+  // Alert rules have no /v1 equivalent on the Workers deployment —
+  // /api/settings answers 501 not_connected. Mutations surface an honest
+  // error instead of pretending to configure alerting.
+  const rulesQuery = useApi<{ items: AlertRule[] }>("/api/settings?kind=alert-rules&limit=50");
+  const eventsQuery = useApi<AlertEvent[]>("/api/settings?kind=alert-events&limit=20");
 
   const [name, setName] = useState("");
   const [metric, setMetric] = useState<Metric>("cost_usd");
@@ -29,42 +59,49 @@ export function AlertsSettingsPanel() {
   const [window, setWindow] = useState<"1h" | "24h" | "7d">("24h");
   const [severity, setSeverity] = useState<"low" | "medium" | "high" | "critical">("high");
 
-  const createRule = trpc.alerts.createRule.useMutation({
-    onSuccess: () => {
-      utils.alerts.listRules.invalidate();
-      setName("");
-      addToast("success", "Alert rule created");
-    },
-    onError: (err) => addToast("error", err.message),
-  });
+  const createRule = useApiMutation<CreateRuleArgs, unknown>("/api/settings", "POST");
+  const setEnabled = useApiMutation<{ id: string; enabled: boolean }, unknown>(
+    "/api/settings",
+    "PATCH",
+  );
+  const deleteRule = useApiMutation<{ id: string }, unknown>("/api/settings", "DELETE");
+  const testDelivery = useApiMutation<{ id: string }, { ok: boolean; reason?: string }>(
+    "/api/settings",
+    "POST",
+  );
 
-  const setEnabled = trpc.alerts.setEnabled.useMutation({
-    onSuccess: () => {
-      utils.alerts.listRules.invalidate();
-      addToast("success", "Alert rule updated");
-    },
-    onError: (err) => addToast("error", err.message),
-  });
-
-  const deleteRule = trpc.alerts.deleteRule.useMutation({
-    onSuccess: () => {
-      utils.alerts.listRules.invalidate();
-      addToast("success", "Alert rule deleted");
-    },
-    onError: (err) => addToast("error", err.message),
-  });
-
-  const testDelivery = trpc.alerts.testDelivery.useMutation({
-    onSuccess: (data) => {
-      if (data.ok) addToast("success", "Test alert dispatched");
-      else addToast("error", data.reason ?? "Test did not fire");
-      utils.alerts.listEvents.invalidate();
-    },
-    onError: (err) => addToast("error", err.message),
-  });
+  const refreshRules = () => rulesQuery.refetch();
+  const refreshEvents = () => eventsQuery.refetch();
 
   const rules = rulesQuery.data?.items ?? [];
   const events = eventsQuery.data ?? [];
+
+  const handleCreate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!discordUrl.trim()) {
+      addToast("error", "Discord webhook URL is required (or register a webhook first)");
+      return;
+    }
+    createRule.mutate(
+      {
+        name,
+        enabled: true,
+        conditions: [{ metric, operator: "gte", threshold }],
+        window,
+        cooldownMinutes: 60,
+        severity,
+        channels: { discordWebhookUrl: discordUrl.trim() },
+      },
+      {
+        onSuccess: () => {
+          refreshRules();
+          setName("");
+          addToast("success", "Alert rule created");
+        },
+        onError: (err) => addToast("error", err.message),
+      },
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -75,25 +112,7 @@ export function AlertsSettingsPanel() {
         </p>
       </div>
 
-      <form
-        className="space-y-4 p-4 border border-gray-600 rounded-md"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!discordUrl.trim()) {
-            addToast("error", "Discord webhook URL is required (or register a webhook first)");
-            return;
-          }
-          createRule.mutate({
-            name,
-            enabled: true,
-            conditions: [{ metric, operator: "gte", threshold }],
-            window,
-            cooldownMinutes: 60,
-            severity,
-            channels: { discordWebhookUrl: discordUrl.trim() },
-          });
-        }}
-      >
+      <form className="space-y-4 p-4 border border-gray-600 rounded-md" onSubmit={handleCreate}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">Rule name</label>
@@ -181,6 +200,11 @@ export function AlertsSettingsPanel() {
 
       {rulesQuery.isLoading ? (
         <p className="text-sm text-gray-400">Loading rules…</p>
+      ) : rulesQuery.notConnected ? (
+        <NotConnectedState
+          resource="Alert rules"
+          detail="Configuring alert rules needs the account backend, which isn't connected on this deployment yet. No rules are created or dispatched here."
+        />
       ) : rules.length === 0 ? (
         <EmptyState
           compact
@@ -221,7 +245,19 @@ export function AlertsSettingsPanel() {
                 <button
                   type="button"
                   disabled={testDelivery.isPending}
-                  onClick={() => testDelivery.mutate({ id: rule.id })}
+                  onClick={() =>
+                    testDelivery.mutate(
+                      { id: rule.id },
+                      {
+                        onSuccess: (data) => {
+                          if (data.ok) addToast("success", "Test alert dispatched");
+                          else addToast("error", data.reason ?? "Test did not fire");
+                          refreshEvents();
+                        },
+                        onError: (err) => addToast("error", err.message),
+                      },
+                    )
+                  }
                   className="text-sm px-3 py-1.5 rounded-md border border-gray-500 text-gray-200 hover:bg-gray-600"
                 >
                   Test
@@ -229,7 +265,18 @@ export function AlertsSettingsPanel() {
                 <button
                   type="button"
                   disabled={setEnabled.isPending}
-                  onClick={() => setEnabled.mutate({ id: rule.id, enabled: !rule.enabled })}
+                  onClick={() =>
+                    setEnabled.mutate(
+                      { id: rule.id, enabled: !rule.enabled },
+                      {
+                        onSuccess: () => {
+                          refreshRules();
+                          addToast("success", "Alert rule updated");
+                        },
+                        onError: (err) => addToast("error", err.message),
+                      },
+                    )
+                  }
                   className="text-sm px-3 py-1.5 rounded-md border border-gray-500 text-gray-200 hover:bg-gray-600"
                 >
                   {rule.enabled ? "Disable" : "Enable"}
@@ -239,7 +286,16 @@ export function AlertsSettingsPanel() {
                   disabled={deleteRule.isPending}
                   onClick={() => {
                     if (confirm(`Delete rule "${rule.name}"?`)) {
-                      deleteRule.mutate({ id: rule.id });
+                      deleteRule.mutate(
+                        { id: rule.id },
+                        {
+                          onSuccess: () => {
+                            refreshRules();
+                            addToast("success", "Alert rule deleted");
+                          },
+                          onError: (err) => addToast("error", err.message),
+                        },
+                      );
                     }
                   }}
                   className="text-sm px-3 py-1.5 rounded-md text-red-400 hover:bg-red-900/30"

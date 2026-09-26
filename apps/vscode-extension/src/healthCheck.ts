@@ -67,30 +67,13 @@ export class HealthCheckCommand {
       });
     }
 
-    // Check 3: Authentication
-    try {
-      const dashboard = await this.api.getDashboardData();
-      results.push({
-        name: "Authentication",
-        status: "pass",
-        message: `Signed in. ${dashboard.collections} collections, ${dashboard.openFindings} open findings.`,
-      });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (msg.includes("401") || msg.includes("403") || msg.includes("API key")) {
-        results.push({
-          name: "Authentication",
-          status: "warn",
-          message: "Not signed in. Run 'Rakshex: Sign in with API Key' to connect.",
-        });
-      } else {
-        results.push({
-          name: "Authentication",
-          status: "warn",
-          message: "Could not verify sign-in status.",
-        });
-      }
-    }
+    // Check 3: Authentication. The hosted API exposes no session endpoint,
+    // so sign-in state is local: key stored + API reachable = ready.
+    results.push({
+      name: "Authentication",
+      status: "warn",
+      message: "Sign-in status is stored locally — the hosted API verifies your key on first use.",
+    });
 
     // Check 4: privacy-safe activity events
     results.push({

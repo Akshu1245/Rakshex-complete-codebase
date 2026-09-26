@@ -1,20 +1,32 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { trpc } from "@/lib/trpc";
+import { useApi } from "@/lib/api";
 import { EmptyState } from "@/components/EmptyState";
+import { NotConnectedState } from "@/components/NotConnected";
 
 const PAGE_SIZE = 50;
+
+interface AuditEntry {
+  id: string;
+  action: string;
+  createdAt: string;
+  details?: unknown;
+  ipAddress?: string | null;
+}
 
 export default function AuditLogPage() {
   const [page, setPage] = useState(1);
   const [filter, setFilter] = useState("");
 
-  const auditQuery = trpc.audit.listEntries.useQuery({
-    limit: PAGE_SIZE,
-    offset: (page - 1) * PAGE_SIZE,
-    eventType: filter || undefined,
-  });
+  // The audit log has no /v1 equivalent on the Workers deployment —
+  // /api/audit-log answers 501 not_connected, so an honest empty state
+  // renders instead of an empty table.
+  const auditQuery = useApi<{ items: AuditEntry[]; total: number }>(
+    `/api/audit-log?limit=${PAGE_SIZE}&offset=${(page - 1) * PAGE_SIZE}${
+      filter ? `&eventType=${encodeURIComponent(filter)}` : ""
+    }`,
+  );
 
   const pagedLogs = auditQuery.data?.items ?? [];
   const total = auditQuery.data?.total ?? 0;
@@ -90,7 +102,12 @@ export default function AuditLogPage() {
           </select>
         </div>
 
-        {loading ? (
+        {auditQuery.notConnected ? (
+          <NotConnectedState
+            resource="Audit log"
+            detail="Audit events need the audit backend, which isn't connected on this deployment yet. No events are shown or hidden."
+          />
+        ) : loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
           </div>

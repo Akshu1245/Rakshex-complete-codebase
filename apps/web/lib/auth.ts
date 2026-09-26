@@ -3,6 +3,20 @@ import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import GitHubProvider from "next-auth/providers/github";
 
+/**
+ * Strict in-app relative path: starts with "/" but not "//" (protocol-
+ * relative), contains no backslashes (browser backslash-as-slash tricks),
+ * and carries no scheme. Anything else is not a safe relative redirect.
+ */
+function isSafeRelativeRedirect(url: string): boolean {
+  return (
+    url.startsWith("/") &&
+    !url.startsWith("//") &&
+    !url.includes("\\") &&
+    !/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(url)
+  );
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
@@ -20,9 +34,15 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async redirect({ url, baseUrl }) {
-      // After sign-in, redirect to dashboard
-      if (url.startsWith(baseUrl)) return url;
-      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      // next-auth default strength: absolute URLs must match the app origin
+      // exactly (parsed-origin comparison — a string-prefix match lets
+      // https://<origin>.evil.com and https://<origin>@evil.com through).
+      try {
+        if (new URL(url).origin === baseUrl) return url;
+      } catch {
+        // Not an absolute URL — fall through to the relative-path check.
+      }
+      if (isSafeRelativeRedirect(url)) return `${baseUrl}${url}`;
       return `${baseUrl}/dashboard`;
     },
     async session({ session, token }) {
@@ -31,7 +51,7 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
-    async jwt({ token, account, profile }) {
+    async jwt({ token, account, profile: _profile }) {
       if (account) {
         token.provider = account.provider;
       }

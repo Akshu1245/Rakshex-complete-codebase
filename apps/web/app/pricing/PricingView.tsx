@@ -1,8 +1,8 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { trpc } from "@/lib/trpc";
-import { parseGetPlansPayload, type CatalogPlan } from "@/lib/billingCatalog";
+import { useApiMutation } from "@/lib/api";
+import { type CatalogPlan } from "@/lib/billingCatalog";
 
 export function PricingView({ initialPlans }: { initialPlans: readonly CatalogPlan[] }) {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
@@ -10,30 +10,30 @@ export function PricingView({ initialPlans }: { initialPlans: readonly CatalogPl
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const plansQuery = trpc.payment.getPlans.useQuery(undefined, {
-    retry: false,
-    placeholderData: initialPlans,
-  });
-  const livePlans = parseGetPlansPayload(plansQuery.data) ?? plansQuery.data;
-  const plans: readonly CatalogPlan[] =
-    Array.isArray(livePlans) && livePlans.length > 0
-      ? (livePlans as CatalogPlan[])
-      : initialPlans;
+  // Static catalog copy only — never presented as live account state.
+  // Waitlist signup goes to /api/waitlist, which answers 501 not_connected
+  // on this deployment and surfaces the honest error.
+  const plans = initialPlans;
 
-  const joinMutation = trpc.waitlist.join.useMutation({
-    onSuccess: () => {
-      setSuccess(true);
-      setError(null);
-    },
-    onError: (err: { message?: string }) =>
-      setError(err.message || "Failed to join waitlist. Please try again."),
-  });
+  const joinMutation = useApiMutation<{ email: string; plan: string; source: string }, unknown>(
+    "/api/waitlist",
+    "POST",
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !selectedPlan) return;
     const capitalizedPlan = selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1);
-    joinMutation.mutate({ email, plan: capitalizedPlan, source: "pricing_page" });
+    joinMutation.mutate(
+      { email, plan: capitalizedPlan, source: "pricing_page" },
+      {
+        onSuccess: () => {
+          setSuccess(true);
+          setError(null);
+        },
+        onError: (err) => setError(err.message || "Failed to join waitlist. Please try again."),
+      },
+    );
   };
 
   const openWaitlist = (planId: string) => {
@@ -151,11 +151,7 @@ export function PricingView({ initialPlans }: { initialPlans: readonly CatalogPl
   );
 }
 
-function PlanCard(props: {
-  plan: CatalogPlan;
-  popular?: boolean;
-  footer: React.ReactNode;
-}) {
+function PlanCard(props: { plan: CatalogPlan; popular?: boolean; footer: React.ReactNode }) {
   const usd = (props.plan.usdAmount / 100).toLocaleString("en-US", { maximumFractionDigits: 0 });
   const inr = (props.plan.amount / 100).toLocaleString("en-IN");
   return (

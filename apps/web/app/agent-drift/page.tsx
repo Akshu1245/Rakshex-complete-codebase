@@ -1,6 +1,7 @@
 "use client";
-import { useMemo, useState } from "react";
-import { trpc } from "@/lib/trpc";
+import { useEffect, useMemo, useState } from "react";
+import { useApi } from "@/lib/api";
+import { NotConnectedState } from "@/components/NotConnected";
 import { AlertTriangle, CheckCircle, Activity, Brain } from "lucide-react";
 
 interface DriftEvent {
@@ -35,10 +36,19 @@ export default function AgentDriftPage() {
   const [isMonitoring, setIsMonitoring] = useState(true);
 
   // Real cost-drift detection from stored AI telemetry (7-day rolling baseline).
-  const anomaliesQuery = trpc.analytics.anomalies.useQuery(
-    { threshold: 2 },
-    { refetchInterval: isMonitoring ? 15000 : false },
-  );
+  // Telemetry analytics has no /v1 equivalent on the Workers deployment —
+  // /api/analytics answers 501 not_connected, so an honest empty state
+  // renders instead of fabricated drift events.
+  const anomaliesQuery = useApi<
+    Array<{ hour: string; magnitude: number; rollingAvg: number; cost: number }>
+  >("/api/analytics?kind=anomalies&threshold=2");
+
+  useEffect(() => {
+    if (!isMonitoring || anomaliesQuery.notConnected) return;
+    const t = setInterval(() => anomaliesQuery.refetch(), 15000);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMonitoring, anomaliesQuery.notConnected]);
 
   const events: DriftEvent[] = useMemo(() => {
     const rows = anomaliesQuery.data ?? [];
@@ -130,15 +140,23 @@ export default function AgentDriftPage() {
               ))}
             </div>
           )}
-          {!loading && filtered.length === 0 && (
-            <div className="text-center py-16 text-gray-500">
-              <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-500/50" />
-              <p className="font-medium">No drift events detected</p>
-              <p className="text-sm mt-1">
-                Your agents are within their cost baseline. Anomalies appear here as telemetry
-                accumulates.
-              </p>
-            </div>
+          {anomaliesQuery.notConnected ? (
+            <NotConnectedState
+              resource="Cost anomaly monitor"
+              detail="Detecting cost drift needs the telemetry backend, which isn't connected on this deployment yet. No anomalies are detected or hidden here."
+            />
+          ) : (
+            !loading &&
+            filtered.length === 0 && (
+              <div className="text-center py-16 text-gray-500">
+                <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-500/50" />
+                <p className="font-medium">No drift events detected</p>
+                <p className="text-sm mt-1">
+                  Your agents are within their cost baseline. Anomalies appear here as telemetry
+                  accumulates.
+                </p>
+              </div>
+            )
           )}
           {filtered.map((event) => (
             <button

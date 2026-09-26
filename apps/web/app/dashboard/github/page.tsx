@@ -2,10 +2,29 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { trpc } from "@/lib/trpc";
+import { useApi, useApiMutation } from "@/lib/api";
+import { NotConnectedState } from "@/components/NotConnected";
 
 /** Explicit local-only sandbox. Never enabled by NODE_ENV alone. */
 const SANDBOX_MODE = process.env.NEXT_PUBLIC_SANDBOX_MODE === "true";
+
+interface RepoInfo {
+  fullName?: string;
+  defaultBranch?: string;
+  private?: boolean;
+}
+
+function repoName(repo: RepoInfo | string): string {
+  return typeof repo === "string" ? repo : (repo.fullName ?? "Unnamed repository");
+}
+
+function repoBranch(repo: RepoInfo | string): string | undefined {
+  return typeof repo === "string" ? undefined : repo.defaultBranch;
+}
+
+function repoIsPrivate(repo: RepoInfo | string): boolean {
+  return typeof repo !== "string" && repo.private === true;
+}
 
 export default function GitHubIntegrationPage() {
   const [installationId, setInstallationId] = useState("");
@@ -14,14 +33,26 @@ export default function GitHubIntegrationPage() {
   const [prNumber, setPrNumber] = useState("");
   const [headSha, setHeadSha] = useState("");
 
-  const connectMutation = trpc.github.connectInstallation.useMutation();
-  const installUrlQuery = trpc.github.getInstallUrl.useQuery();
-  const listReposQuery = trpc.github.listRepos.useQuery(
-    { installationId: Number(installationId) || 0 },
-    { enabled: Number(installationId) > 0 },
+  // GitHub integration has no /v1 equivalent on the Workers deployment —
+  // /api/github answers 501 not_connected, so every query renders the honest
+  // state instead of fabricating installs, repos, or PR scan results.
+  const connectMutation = useApiMutation<
+    { installationId: number; accountLogin: string; accountType: string },
+    unknown
+  >("/api/github", "POST");
+  const installUrlQuery = useApi<{ installUrl?: string }>("/api/github?kind=install-url");
+  const id = Number(installationId) || 0;
+  const listReposQuery = useApi<{ repos?: Array<RepoInfo | string> }>(
+    id > 0 ? `/api/github?kind=repos&installationId=${id}` : null,
   );
+  const scanPrMutation = useApiMutation<
+    { installationId: number; repoFullName: string; prNumber: number; headSha?: string },
+    { jobId?: string }
+  >("/api/github", "POST");
 
   const installUrl = installUrlQuery.data?.installUrl;
+  const notConnected =
+    installUrlQuery.notConnected || (id > 0 ? listReposQuery.notConnected : false);
 
   const handleManualConnect = async () => {
     if (!installationId) return;
@@ -52,7 +83,7 @@ export default function GitHubIntegrationPage() {
       return;
     }
     try {
-      const result = await (trpc as any).github.scanPullRequest.mutate({
+      const result = await scanPrMutation.mutateAsync({
         installationId: id,
         repoFullName: repo,
         prNumber: pr,
@@ -81,6 +112,12 @@ export default function GitHubIntegrationPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-6">
+          {notConnected && (
+            <NotConnectedState
+              resource="GitHub integration"
+              detail="Connecting GitHub repositories needs the integration backend, which isn't connected on this deployment yet. No installs, repos, or PR scans are available here."
+            />
+          )}
           <div className="bg-black/50 p-6 rounded-lg border border-gray-700">
             <h2 className="text-xl font-semibold mb-4">Connect GitHub App</h2>
             <p className="text-gray-400 mb-4">
@@ -177,26 +214,26 @@ export default function GitHubIntegrationPage() {
               <p className="text-gray-400">Loading repos...</p>
             ) : listReposQuery.data?.repos?.length ? (
               <div className="space-y-2">
-                {listReposQuery.data.repos.map((repo: any, idx: number) => (
+                {listReposQuery.data.repos.map((repo: RepoInfo | string, idx: number) => (
                   <div
                     key={idx}
                     className="flex items-center justify-between p-3 bg-gray-800/70 rounded border border-gray-700"
                   >
                     <div>
-                      <span className="text-gray-100 font-mono">{repo.fullName || repo}</span>
-                      {repo.defaultBranch && (
-                        <span className="text-xs ml-2 text-gray-500">({repo.defaultBranch})</span>
+                      <span className="text-gray-100 font-mono">{repoName(repo)}</span>
+                      {repoBranch(repo) && (
+                        <span className="text-xs ml-2 text-gray-500">({repoBranch(repo)})</span>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
                       <span
-                        className={`text-xs px-2 py-1 rounded ${repo.private ? "bg-yellow-900/60 text-yellow-400" : "bg-green-900/60 text-green-400"}`}
+                        className={`text-xs px-2 py-1 rounded ${repoIsPrivate(repo) ? "bg-yellow-900/60 text-yellow-400" : "bg-green-900/60 text-green-400"}`}
                       >
-                        {repo.private ? "Private" : "Public"}
+                        {repoIsPrivate(repo) ? "Private" : "Public"}
                       </span>
                       <button
                         onClick={() => {
-                          setRepoFullName(repo.fullName || String(repo));
+                          setRepoFullName(repoName(repo));
                         }}
                         className="text-xs px-3 py-1 bg-blue-900/50 hover:bg-blue-800 rounded border border-blue-700"
                       >

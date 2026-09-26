@@ -50,11 +50,7 @@ const FEATURES = [
       },
       {
         title: "Autonomous Kill Switch",
-        desc: "Circuit breaker that blocks LLM calls when budget or policy thresholds trip. Response time depends on your deployment topology.",
-      },
-      {
-        title: "Thinking Token Attribution",
-        desc: "Separates reasoning/thinking tokens where providers expose them so cost reports stay accurate for o-series and similar models.",
+        desc: "Circuit breaker that blocks RaksHex-routed calls when budget or policy thresholds trip. It cannot control traffic that bypasses RaksHex. Response time depends on your deployment topology.",
       },
     ],
   },
