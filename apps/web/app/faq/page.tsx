@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Footer } from "@/components/layout/Footer";
 
 export const metadata = {
   title: "FAQ",
@@ -64,36 +65,62 @@ const FAQS = [
 
 export default function FAQPage() {
   return (
-    <div className="min-h-screen bg-transparent text-white py-24 px-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold mb-4 font-display text-blue-500">
-          Frequently Asked Questions
-        </h1>
-        <p className="text-gray-400 mb-12 font-mono text-sm">
-          Everything you need to know about RaksHex. Can't find your question?{" "}
-          <Link
-            href="mailto:support@rakshex.in"
-            className="text-blue-400 hover:text-blue-300 underline"
-          >
-            Email us
-          </Link>
-          .
-        </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {FAQS.map((faq, i) => (
-            <div
-              key={i}
-              className="bg-black/50 rounded-xl p-6 border border-gray-700/50 hover:border-blue-500/30 transition-all flex flex-col justify-between"
+    <>
+      <div className="min-h-screen bg-transparent text-white py-24 px-8">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-4xl font-bold mb-4 font-display text-blue-500">
+            Frequently Asked Questions
+          </h1>
+          <p className="text-gray-400 mb-12 font-mono text-sm">
+            Everything you need to know about RaksHex. Can't find your question?{" "}
+            <Link
+              href="mailto:support@rakshex.in"
+              className="text-blue-400 hover:text-blue-300 underline"
             >
-              <div>
-                <h2 className="font-bold text-lg mb-3 text-blue-400">{faq.q}</h2>
-                <p className="text-gray-300 text-sm leading-relaxed">{faq.a}</p>
+              Email us
+            </Link>
+            .
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {FAQS.map((faq, i) => (
+              <div
+                key={i}
+                className="bg-black/50 rounded-xl p-6 border border-gray-700/50 hover:border-blue-500/30 transition-all flex flex-col justify-between"
+              >
+                <div>
+                  <h2 className="font-bold text-lg mb-3 text-blue-400">{faq.q}</h2>
+                  <p className="text-gray-300 text-sm leading-relaxed">{faq.a}</p>
+                </div>
               </div>
+            ))}
+          </div>
+          <div className="mt-20 rounded-2xl border border-blue-500/20 bg-blue-500/[0.04] p-8 text-center sm:p-12">
+            <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+              Put one consequential AI action behind RaksHex.
+            </h2>
+            <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-gray-400">
+              Start with the public demo or request a scoped private-beta evaluation — no production
+              credentials required.
+            </p>
+            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <Link
+                href="/demo"
+                className="inline-flex min-h-12 items-center justify-center rounded-md bg-blue-600 px-6 text-sm font-semibold text-white no-underline hover:bg-blue-500"
+              >
+                Try the public demo
+              </Link>
+              <Link
+                href="/waitlist"
+                className="inline-flex min-h-12 items-center justify-center rounded-md border border-white/15 px-6 text-sm font-semibold text-white no-underline hover:border-blue-500/50"
+              >
+                Request beta access
+              </Link>
             </div>
-          ))}
+          </div>
         </div>
       </div>
-    </div>
+      <Footer />
+    </>
   );
 }

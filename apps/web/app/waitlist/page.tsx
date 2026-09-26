@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useApiMutation } from "@/lib/api";
+import { Footer } from "@/components/layout/Footer";
 import { ArrowRight, CheckCircle2, ShieldCheck } from "lucide-react";
 
 const EVALUATION_OPTIONS = [
@@ -219,6 +220,7 @@ export default function WaitlistPage() {
           )}
         </div>
       </div>
+      <Footer />
     </main>
   );
 }
