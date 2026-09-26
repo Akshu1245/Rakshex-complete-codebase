@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { sendMail } from "../src/adapters/mail";
 import type { Env } from "../src/env";
 
-const baseEnv = { MAILCHANNELS_FROM: "alerts@rakshex.in" } as Env;
+const baseEnv = { MAILCHANNELS_FROM: "welcome@rakshex.in" } as Env;
 
 afterEach(() => {
   vi.unstubAllGlobals();
