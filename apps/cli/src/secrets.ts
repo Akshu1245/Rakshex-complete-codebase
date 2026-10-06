@@ -3,16 +3,9 @@
  * Offline, deterministic. Exit 1 if Critical/High findings (default).
  */
 import { resolve } from "node:path";
-import {
-  scanPathForSecrets,
-  listSecretRuleIds,
-  type SecretFinding,
-} from "@rakshex/scanner-core";
+import { scanPathForSecrets, listSecretRuleIds, type SecretFinding } from "@rakshex/scanner-core";
 
-export function cmdSecrets(
-  positional: string[],
-  flags: Record<string, string | boolean>,
-): number {
+export function cmdSecrets(positional: string[], flags: Record<string, string | boolean>): number {
   if (flags.rules === true || positional[0] === "rules") {
     console.log(listSecretRuleIds().join("\n"));
     return 0;
