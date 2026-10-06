@@ -24,6 +24,8 @@ apps/vscode-extension/node_modules
 apps/vscode-extension/dist
 apps/vscode-extension/out
 apps/api/node_modules
+# CLI scan fixtures contain intentional fake secrets — not needed in API image
+apps/cli/fixtures
 packages/**/node_modules
 apps/web/public/**/*.docx
 apps/web/public/**/*.png
