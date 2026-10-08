@@ -30,7 +30,7 @@ jobs:
   mark-api-vercel-skipped:
     name: Mark API Vercel check skipped
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 15
     steps:
       - name: Wait for Vercel API deploy to finish, then mark skipped
         env:
@@ -39,7 +39,7 @@ jobs:
         run: |
           set -euo pipefail
           CONTEXT="$VERCEL_API_STATUS_CONTEXT"
-          DEADLINE=$(( $(date +%s) + 600 ))
+          DEADLINE=$(( $(date +%s) + 720 ))
 
           fetch_state() {
             gh api "repos/$GITHUB_REPOSITORY/commits/$SHA/status" \
@@ -59,35 +59,45 @@ jobs:
             echo "Marked $CONTEXT as skipped on $SHA"
           }
 
+          saw_vercel_failure=0
+
           while [ "$(date +%s)" -lt "$DEADLINE" ]; do
             state=$(fetch_state)
             desc=$(fetch_description)
 
-            if [ "$desc" = "$SKIP_DESCRIPTION" ]; then
-              echo "Already marked skipped."
+            if [ "$state" = "success" ] && [ "$desc" = "$SKIP_DESCRIPTION" ]; then
+              echo "Skip status is stable."
               exit 0
             fi
 
-            if [ "$state" = "failure" ]; then
-              mark_skipped
-              exit 0
-            fi
-
-            if [ "$state" = "success" ]; then
+            if [ "$state" = "success" ] && [ "$desc" != "$SKIP_DESCRIPTION" ]; then
               echo "Vercel API project reported success; leaving status unchanged."
               exit 0
             fi
 
-            echo "Vercel API status: ${state:-pending} — waiting..."
+            if [ "$state" = "failure" ]; then
+              saw_vercel_failure=1
+              mark_skipped
+              echo "Vercel re-posted failure after skip mark; will keep polling until stable."
+            elif [ "$saw_vercel_failure" = "1" ] && [ "$state" = "pending" ]; then
+              echo "Vercel API status pending after failure — waiting..."
+            else
+              echo "Vercel API status: ${state:-pending} — waiting..."
+            fi
+
             sleep 30
           done
 
-          # Final attempt after timeout (Vercel may have failed without us catching pending→failure)
           state=$(fetch_state)
-          if [ "$state" = "failure" ] || [ "$state" = "pending" ]; then
+          desc=$(fetch_description)
+          if [ "$state" = "failure" ] || { [ "$state" = "success" ] && [ "$desc" != "$SKIP_DESCRIPTION" ] && [ "$saw_vercel_failure" = "1" ]; }; then
             mark_skipped
             exit 0
           fi
 
-          echo "Timed out waiting for terminal Vercel API status (last state: $state)"
+          if [ "$state" = "success" ] && [ "$desc" = "$SKIP_DESCRIPTION" ]; then
+            exit 0
+          fi
+
+          echo "Timed out waiting for stable Vercel API skip status (last state: $state)"
           exit 1
