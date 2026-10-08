@@ -3,6 +3,7 @@
 # red GitHub commit status even though web/ui deploys succeed.
 #
 # Poll until Vercel finishes (failure), then overwrite with success/skipped.
+# Also listen for late Vercel failure statuses (can arrive after the poll job exits).
 # Long-term fix: disconnect or delete the API project in the Vercel dashboard.
 name: Vercel API skip status
 
@@ -11,6 +12,7 @@ on:
     branches: [main, master]
   pull_request:
     branches: [main, master]
+  status:
   workflow_dispatch:
     inputs:
       sha:
@@ -29,6 +31,7 @@ env:
 jobs:
   mark-api-vercel-skipped:
     name: Mark API Vercel check skipped
+    if: github.event_name != 'status'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -101,3 +104,24 @@ jobs:
 
           echo "Timed out waiting for stable Vercel API skip status (last state: $state)"
           exit 1
+
+  heal-late-vercel-api-failure:
+    name: Re-apply skip after late Vercel failure status
+    if: >-
+      github.event_name == 'status' &&
+      github.event.state == 'failure' &&
+      github.event.context == 'Vercel – rakshex-complete-codebase-api'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Mark API Vercel check skipped
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.event.commit.sha }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/statuses/$SHA" \
+            -f state=success \
+            -f context="$VERCEL_API_STATUS_CONTEXT" \
+            -f description="$SKIP_DESCRIPTION"
+          echo "Re-applied skip on $SHA after late Vercel failure status."
