@@ -6,7 +6,8 @@
  * Outputs:  terminal | json | sarif
  * Offline:  scan / secrets use @rakshex/scanner-core (deterministic, no network)
  */
-import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync, chmodSync } from "node:fs";
+import { parse as parseYaml } from "yaml";
 import { join, resolve, extname, basename } from "node:path";
 import { homedir } from "node:os";
 import { createHash } from "node:crypto";
@@ -44,8 +45,10 @@ function loadConfig(): CliConfig {
 }
 
 function saveConfig(cfg: CliConfig): void {
-  if (!existsSync(CONFIG_DIR)) mkdirSync(CONFIG_DIR, { recursive: true });
-  writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 2), "utf8");
+  if (!existsSync(CONFIG_DIR)) mkdirSync(CONFIG_DIR, { recursive: true, mode: 0o700 });
+  if (process.platform !== "win32") chmodSync(CONFIG_DIR, 0o700);
+  writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 2), { encoding: "utf8", mode: 0o600 });
+  if (process.platform !== "win32") chmodSync(CONFIG_PATH, 0o600);
 }
 
 function parseArgs(argv: string[]) {
@@ -104,27 +107,22 @@ function loadCollection(filePath: string): unknown {
   const text = readFileSync(filePath, "utf8");
   const ext = extname(filePath).toLowerCase();
   if (ext === ".yaml" || ext === ".yml") {
-    // Minimal YAML: require JSON-compatible docs or use scanner after crude conversion
-    // Prefer JSON for CI; for YAML use simple openapi key detection via JSON if possible
-    try {
-      return JSON.parse(text);
-    } catch {
-      // Best-effort: wrap as openapi if looks like YAML openapi without full parser in CLI
-      if (text.includes("openapi:") || text.includes("swagger:")) {
-        // Convert very simple openapi yaml is hard without dep — try dynamic import of yaml if present
-        try {
-          const yaml = require("yaml") as { parse: (s: string) => unknown };
-          return yaml.parse(text);
-        } catch {
-          throw new Error(
-            `YAML requires the 'yaml' package. Convert to JSON or install yaml in the CLI environment.`,
-          );
-        }
-      }
-      throw new Error(`Cannot parse ${filePath} as JSON/YAML`);
-    }
+    // yaml is an ESM dependency; `require()` is undefined in this module.
+    return validateScanDocument(parseYaml(text));
   }
-  return JSON.parse(text);
+  return validateScanDocument(JSON.parse(text));
+}
+
+// Reject unrelated JSON/YAML rather than reporting a false clean scan.
+function validateScanDocument(value: unknown): unknown {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("Expected an OpenAPI specification or Postman collection object");
+  }
+  const doc = value as Record<string, unknown>;
+  if (!Array.isArray(doc.item) && !(doc.paths && typeof doc.paths === "object" && !Array.isArray(doc.paths))) {
+    throw new Error("Input has neither Postman 'item' nor OpenAPI 'paths'");
+  }
+  return value;
 }
 
 function collectScanTargets(root: string, changedOnly: boolean): string[] {
@@ -229,7 +227,8 @@ async function maybeUploadScan(
   collection: unknown,
 ): Promise<void> {
   if (!requested) return;
-  if (!cfg.apiKey) {
+  const apiKey = process.env.RAKSHEX_API_KEY ?? cfg.apiKey;
+  if (!apiKey) {
     console.warn(
       "--upload requested but no API key configured. Run: rakshex login --api-key <key>",
     );
@@ -241,7 +240,7 @@ async function maybeUploadScan(
     const timeout = setTimeout(() => controller.abort(), 15_000);
     const res = await fetch(`${base}/api/github/scan`, {
       method: "POST",
-      headers: { "content-type": "application/json", "x-api-key": cfg.apiKey },
+      headers: { "content-type": "application/json", "x-api-key": apiKey },
       body: JSON.stringify({ collection }),
       signal: controller.signal,
     }).finally(() => clearTimeout(timeout));
@@ -269,7 +268,7 @@ function shouldFail(
 }
 
 function cmdLogin(flags: Record<string, string | boolean>): number {
-  const apiKey = String(flags["api-key"] ?? flags.apiKey ?? "");
+  const apiKey = String(flags["api-key"] ?? flags.apiKey ?? process.env.RAKSHEX_API_KEY ?? "");
   if (!apiKey || apiKey.length < 8) {
     console.error("Usage: rakshex login --api-key <key> [--api-url <url>]");
     return 2;
@@ -278,7 +277,7 @@ function cmdLogin(flags: Record<string, string | boolean>): number {
   cfg.apiKey = apiKey;
   if (flags["api-url"]) cfg.apiUrl = String(flags["api-url"]);
   saveConfig(cfg);
-  console.log("Logged in. API key stored in ~/.rakshex/config.json (mode 600 recommended).");
+  console.log("Logged in. API key stored in ~/.rakshex/config.json (restricted permissions on POSIX systems).");
   return 0;
 }
 
@@ -297,7 +296,7 @@ function cmdConfigure(flags: Record<string, string | boolean>): number {
       .filter(Boolean);
   }
   saveConfig(cfg);
-  console.log("Config updated:", JSON.stringify(cfg, null, 2));
+  console.log("Config updated:", JSON.stringify({ ...cfg, apiKey: cfg.apiKey ? "[REDACTED]" : undefined }, null, 2));
   return 0;
 }
 
@@ -311,6 +310,10 @@ async function cmdScan(
     return 2;
   }
   const format = (String(flags.format ?? "terminal") as OutputFormat) || "terminal";
+  if (!["terminal", "json", "sarif"].includes(format)) {
+    console.error("Invalid --format. Choose terminal, json or sarif.");
+    return 2;
+  }
   const cfg = loadConfig();
   const failOn = cfg.failOn ?? ["Critical", "High"];
   const ignore = new Set(cfg.ignoreRules ?? []);
@@ -318,6 +321,7 @@ async function cmdScan(
 
   let all: RuleFinding[] = [];
   const files = collectScanTargets(target, Boolean(flags["changed-only"]));
+  let parseFailures = 0;
   if (files.length === 0) {
     console.error("No scannable OpenAPI/Postman JSON/YAML files found.");
     return 2;
@@ -331,10 +335,15 @@ async function cmdScan(
       all.push(...result.findings.filter((f) => !ignore.has(f.ruleId)));
       if (upload) uploads.push(maybeUploadScan(cfg, upload, file, data));
     } catch (err) {
-      console.error(`Skip ${file}: ${(err as Error).message}`);
+      parseFailures += 1;
+      console.error(`Invalid scan input ${file}: ${(err as Error).message}`);
     }
   }
   if (uploads.length > 0) await Promise.all(uploads);
+  if (parseFailures > 0) {
+    console.error(`Scan aborted: ${parseFailures} input file(s) were invalid; no clean report generated.`);
+    return 2;
+  }
 
   // Dedupe by fingerprint
   const byFp = new Map<string, RuleFinding>();
@@ -415,7 +424,7 @@ function cmdReport(positional: string[], flags: Record<string, string | boolean>
 function cmdDoctor(): number {
   const issues: string[] = [];
   const cfg = loadConfig();
-  if (!cfg.apiKey) {
+  if (!(process.env.RAKSHEX_API_KEY ?? cfg.apiKey)) {
     issues.push(
       "No API key configured — offline scan still works; run 'rakshex login --api-key …' to enable 'scan --upload'",
     );
