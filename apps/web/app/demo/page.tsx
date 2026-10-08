@@ -81,7 +81,7 @@ export default function DemoPage() {
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-[#14B8A6]/25 bg-[#14B8A6]/[0.07] px-3 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.13em] text-[#8FE3D8]">
               <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
-              Public Agent Firewall demo
+              SIMULATED demo — no real action is executed
             </div>
             <h1 className="mt-5 max-w-3xl text-4xl font-bold leading-[1.03] tracking-[-0.045em] text-white sm:text-5xl lg:text-6xl">
               See the decision <span className="text-[#14B8A6]">before</span> the action becomes real.
@@ -95,7 +95,7 @@ export default function DemoPage() {
 
           <div className="rounded-xl border border-white/[0.08] bg-[#090D14]/70 p-5">
             <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-500">
-              What this page proves
+              What this local simulation illustrates
             </p>
             <div className="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
               {["Action-level decision", "Credential mediation", "Ledger evidence"].map((item) => (
@@ -256,7 +256,7 @@ export default function DemoPage() {
                 <div className="rounded-xl border border-white/[0.08] bg-black/20 p-4">
                   <div className="flex items-center gap-2">
                     <KeyRound className="h-4 w-4 text-[#14B8A6]" aria-hidden="true" />
-                    <span className="text-xs font-semibold text-neutral-300">Credential broker</span>
+                    <span className="text-xs font-semibold text-neutral-300">Simulated credential decision</span>
                   </div>
                   <p
                     className={`mt-3 text-lg font-bold ${
@@ -270,8 +270,8 @@ export default function DemoPage() {
                     {!hasEvaluated
                       ? "Awaiting decision"
                       : credentialReleased
-                        ? "Credential released"
-                        : "Credential not released"}
+                        ? "Simulated allow (no credential released)"
+                        : "Simulated deny (no credential released)"}
                   </p>
                   <p className="mt-2 text-xs leading-5 text-neutral-500">
                     In a brokered integration, the action receives the credential only after an
@@ -282,14 +282,14 @@ export default function DemoPage() {
                 <div className="rounded-xl border border-white/[0.08] bg-black/20 p-4">
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="h-4 w-4 text-[#14B8A6]" aria-hidden="true" />
-                    <span className="text-xs font-semibold text-neutral-300">Action Ledger</span>
+                    <span className="text-xs font-semibold text-neutral-300">Synthetic ledger identifier (not signed evidence)</span>
                   </div>
                   <p className={`mt-3 font-mono text-lg font-bold ${hasEvaluated ? "text-white" : "text-neutral-600"}`}>
                     {hasEvaluated ? currentHash : "—"}
                   </p>
                   <p className="mt-2 text-xs leading-5 text-neutral-500">
-                    Decision evidence includes action, delegated authority, result, reason, and
-                    ledger linkage.
+                    These generated values are illustrative only. No server-side ledger or
+                    cryptographic receipt is created on this page.
                   </p>
                 </div>
               </div>
@@ -299,7 +299,7 @@ export default function DemoPage() {
                   <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-500">
                     Recent demo decisions
                   </p>
-                  <span className="text-[10px] text-neutral-600">local simulation</span>
+                  <span className="text-[10px] text-neutral-600">Synthetic local values — not audit evidence</span>
                 </div>
                 <div className="mt-4 space-y-2">
                   {history.length === 0 ? (

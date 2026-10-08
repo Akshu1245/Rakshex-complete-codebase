@@ -144,6 +144,15 @@ export async function enforcePolicies(
         safeMessage: "This request requires approval before processing.",
       });
 
+    case "redact":
+      // A policy requesting redaction must never silently fall through to ALLOW.
+      // No safe transformed payload exists in this middleware's return contract.
+      logger.warn({ rule: decision.matchedRuleName, workspaceId }, "[Policy] Unimplemented redaction blocked");
+      throw new RuntimePolicyError("Policy redaction cannot be safely applied at this enforcement point", {
+        context: { workspaceId, ruleId: decision.matchedRuleId },
+        safeMessage: "Request blocked: policy redaction is not available for this operation.",
+      });
+
     case "alert_only":
       logger.warn(
         { rule: decision.matchedRuleName, workspaceId, model: event.model },
