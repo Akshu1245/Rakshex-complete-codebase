@@ -20,7 +20,9 @@ function fixture(name: string, body: string, args: string[] = []) {
   const run = spawnSync(process.execPath, ["--import", tsxModule, cli, "scan", file, ...args], {
     cwd: dirname(cli),
     env: { ...process.env, HOME: temp, USERPROFILE: temp, RAKSHEX_API_KEY: "" },
-    timeout: 30_000, maxBuffer: 1024 * 1024 * 5, encoding: "utf8",
+    timeout: 30_000,
+    maxBuffer: 1024 * 1024 * 5,
+    encoding: "utf8",
   });
   rmSync(temp, { recursive: true, force: true });
   return run;
@@ -28,23 +30,41 @@ function fixture(name: string, body: string, args: string[] = []) {
 
 describe("Phase 1 CLI executable contract", () => {
   it("returns 0 with valid authenticated GET and JSON response", () => {
-    const p = fixture("clean.json", JSON.stringify({ paths: { "/status": { get: { security: [{ bearer: [] }] } } } }), ["--format", "json"]);
-    expect(p.error).toBeUndefined(); expect(p.status).toBe(0);
+    const p = fixture(
+      "clean.json",
+      JSON.stringify({ paths: { "/status": { get: { security: [{ bearer: [] }] } } } }),
+      ["--format", "json"],
+    );
+    expect(p.error).toBeUndefined();
+    expect(p.status).toBe(0);
     expect(JSON.parse(p.stdout)).toMatchObject({ findings: [], score: 0 });
   });
   it("returns 1 with a finding and structured JSON", () => {
-    const p = fixture("unsafe.json", JSON.stringify({ paths: { "/write": { post: {} } } }), ["--format", "json"]);
+    const p = fixture("unsafe.json", JSON.stringify({ paths: { "/write": { post: {} } } }), [
+      "--format",
+      "json",
+    ]);
     expect(p.status).toBe(1);
-    expect(JSON.parse(p.stdout).findings).toEqual(expect.arrayContaining([expect.objectContaining({ ruleId: "api.missing_authentication" })]));
+    expect(JSON.parse(p.stdout).findings).toEqual(
+      expect.arrayContaining([expect.objectContaining({ ruleId: "api.missing_authentication" })]),
+    );
   });
   it("parses real YAML OpenAPI in ESM mode", () => {
-    const p = fixture("unsafe.yaml", "openapi: 3.0.3\npaths:\n  /write:\n    post: {}\n", ["--format", "json"]);
+    const p = fixture("unsafe.yaml", "openapi: 3.0.3\npaths:\n  /write:\n    post: {}\n", [
+      "--format",
+      "json",
+    ]);
     expect(p.status).toBe(1);
-    expect(JSON.parse(p.stdout).findings.some((f: { ruleId: string }) => f.ruleId === "api.missing_authentication")).toBe(true);
+    expect(
+      JSON.parse(p.stdout).findings.some(
+        (f: { ruleId: string }) => f.ruleId === "api.missing_authentication",
+      ),
+    ).toBe(true);
   });
   it("returns 2 for malformed JSON instead of a false green", () => {
     const p = fixture("broken.json", "{ unparseable", ["--format", "json"]);
-    expect(p.status).toBe(2); expect(p.stderr).toContain("Invalid scan input");
+    expect(p.status).toBe(2);
+    expect(p.stderr).toContain("Invalid scan input");
   });
   it("returns 2 for empty file", () => {
     expect(fixture("empty.json", "", ["--format", "json"]).status).toBe(2);
@@ -53,15 +73,25 @@ describe("Phase 1 CLI executable contract", () => {
     expect(fixture("good.json", "{}", ["--format", "unknown"]).status).toBe(2);
   });
   it("produces SARIF 2.1.0 and includes a rule identifier", () => {
-    const p = fixture("unsafe.json", JSON.stringify({ paths: { "/write": { post: {} } } }), ["--format", "sarif"]);
+    const p = fixture("unsafe.json", JSON.stringify({ paths: { "/write": { post: {} } } }), [
+      "--format",
+      "sarif",
+    ]);
     expect(p.status).toBe(1);
-    const report=JSON.parse(p.stdout);
+    const report = JSON.parse(p.stdout);
     expect(report.version).toBe("2.1.0");
     expect(report.runs[0].tool.driver.name).toBe("rakshex-cli");
-    expect(report.runs[0].results).toEqual(expect.arrayContaining([expect.objectContaining({ ruleId: "api.missing_authentication" })]));
+    expect(report.runs[0].results).toEqual(
+      expect.arrayContaining([expect.objectContaining({ ruleId: "api.missing_authentication" })]),
+    );
   });
   it("accepts large but valid JSON without hanging", () => {
-    const p=fixture("large.json",JSON.stringify({ metadata: "x".repeat(10 * 1024 * 1024), paths: { "/health": { get: {} } } }),["--format", "json"]);
-    expect(p.error).toBeUndefined(); expect(p.status).toBe(0);
+    const p = fixture(
+      "large.json",
+      JSON.stringify({ metadata: "x".repeat(10 * 1024 * 1024), paths: { "/health": { get: {} } } }),
+      ["--format", "json"],
+    );
+    expect(p.error).toBeUndefined();
+    expect(p.status).toBe(0);
   });
 });

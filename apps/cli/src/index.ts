@@ -6,7 +6,15 @@
  * Outputs:  terminal | json | sarif
  * Offline:  scan / secrets use @rakshex/scanner-core (deterministic, no network)
  */
-import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync, chmodSync } from "node:fs";
+import {
+  readFileSync,
+  writeFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  statSync,
+  chmodSync,
+} from "node:fs";
 import { parse as parseYaml } from "yaml";
 import { join, resolve, extname, basename } from "node:path";
 import { homedir } from "node:os";
@@ -119,7 +127,10 @@ function validateScanDocument(value: unknown): unknown {
     throw new Error("Expected an OpenAPI specification or Postman collection object");
   }
   const doc = value as Record<string, unknown>;
-  if (!Array.isArray(doc.item) && !(doc.paths && typeof doc.paths === "object" && !Array.isArray(doc.paths))) {
+  if (
+    !Array.isArray(doc.item) &&
+    !(doc.paths && typeof doc.paths === "object" && !Array.isArray(doc.paths))
+  ) {
     throw new Error("Input has neither Postman 'item' nor OpenAPI 'paths'");
   }
   return value;
@@ -277,7 +288,9 @@ function cmdLogin(flags: Record<string, string | boolean>): number {
   cfg.apiKey = apiKey;
   if (flags["api-url"]) cfg.apiUrl = String(flags["api-url"]);
   saveConfig(cfg);
-  console.log("Logged in. API key stored in ~/.rakshex/config.json (restricted permissions on POSIX systems).");
+  console.log(
+    "Logged in. API key stored in ~/.rakshex/config.json (restricted permissions on POSIX systems).",
+  );
   return 0;
 }
 
@@ -296,7 +309,10 @@ function cmdConfigure(flags: Record<string, string | boolean>): number {
       .filter(Boolean);
   }
   saveConfig(cfg);
-  console.log("Config updated:", JSON.stringify({ ...cfg, apiKey: cfg.apiKey ? "[REDACTED]" : undefined }, null, 2));
+  console.log(
+    "Config updated:",
+    JSON.stringify({ ...cfg, apiKey: cfg.apiKey ? "[REDACTED]" : undefined }, null, 2),
+  );
   return 0;
 }
 
@@ -341,7 +357,9 @@ async function cmdScan(
   }
   if (uploads.length > 0) await Promise.all(uploads);
   if (parseFailures > 0) {
-    console.error(`Scan aborted: ${parseFailures} input file(s) were invalid; no clean report generated.`);
+    console.error(
+      `Scan aborted: ${parseFailures} input file(s) were invalid; no clean report generated.`,
+    );
     return 2;
   }
 

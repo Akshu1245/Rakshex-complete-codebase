@@ -36,19 +36,28 @@ describe("Phase 1 policy redaction fail-closed behavior", () => {
   });
   it("rejects a redaction decision rather than silently allowing an unredacted request", async () => {
     vi.mocked(evaluatePolicy).mockReturnValue({
-      action: "redact", matchedRuleId: "test-redact", matchedRuleName: "Redact secrets", reason: "sensitive content",
+      action: "redact",
+      matchedRuleId: "test-redact",
+      matchedRuleName: "Redact secrets",
+      reason: "sensitive content",
     });
     await expect(enforcePolicies(event, "ws_123")).rejects.toThrow(/redaction/i);
   });
   it("preserves an explicit allow decision", async () => {
     vi.mocked(evaluatePolicy).mockReturnValue({
-      action: "allow", matchedRuleId: "allow-rule", matchedRuleName: "Allow", reason: "test",
+      action: "allow",
+      matchedRuleId: "allow-rule",
+      matchedRuleName: "Allow",
+      reason: "test",
     });
     await expect(enforcePolicies(event, "ws_123")).resolves.toMatchObject({ action: "allow" });
   });
   it("blocks explicit deny decisions", async () => {
     vi.mocked(evaluatePolicy).mockReturnValue({
-      action: "block", matchedRuleId: "block-rule", matchedRuleName: "Block", reason: "test",
+      action: "block",
+      matchedRuleId: "block-rule",
+      matchedRuleName: "Block",
+      reason: "test",
     });
     await expect(enforcePolicies(event, "ws_123")).rejects.toThrow(/blocked by policy/i);
   });

@@ -66,7 +66,10 @@ export const approvalsRouter = router({
         sql`UPDATE pending_approvals SET status = 'approved', resolved_at = NOW(), resolved_by = ${ctx.user.id}, resolution_note = ${input.note ?? ""} WHERE approval_id = ${input.approvalId} AND workspace_id = ${`ws_${ctx.user.id}`} AND status = 'pending' RETURNING approval_id`,
       );
       if (!Array.isArray(updated) || updated.length === 0) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Pending approval not found in your workspace" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Pending approval not found in your workspace",
+        });
       }
       await db.createAuditLogEntry(ctx.user.id, "approval_approved", {
         approvalId: input.approvalId,
@@ -100,7 +103,10 @@ export const approvalsRouter = router({
         RETURNING approval_id
       `);
       if (!Array.isArray(updated) || updated.length === 0) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Pending approval not found in your workspace" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Pending approval not found in your workspace",
+        });
       }
       await db.createAuditLogEntry(ctx.user.id, "approval_rejected", {
         approvalId: input.approvalId,
