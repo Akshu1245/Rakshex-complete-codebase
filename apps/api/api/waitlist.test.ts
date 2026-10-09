@@ -8,11 +8,19 @@ const mocks = vi.hoisted(() => ({
 vi.mock("../db", () => ({ addWaitlistEmail: mocks.addWaitlistEmail }));
 vi.mock("../email", () => ({ sendWaitlistConfirmationEmail: mocks.sendWaitlistConfirmationEmail }));
 
+import { generateCsrfToken } from "../utils/security";
 import { waitlistRouter } from "./waitlist";
 
 function createCaller() {
+  const csrf = generateCsrfToken();
   return waitlistRouter.createCaller({
-    req: { headers: { "x-api-key": "test" }, ip: "127.0.0.1" },
+    req: {
+      headers: {
+        cookie: `csrf-token=${csrf}`,
+        "x-csrf-token": csrf,
+      },
+      ip: "127.0.0.1",
+    },
     res: {},
   } as never);
 }

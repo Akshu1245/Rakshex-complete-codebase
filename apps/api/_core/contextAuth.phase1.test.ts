@@ -18,7 +18,11 @@ describe("authenticated API-key CSRF exemption marker", () => {
   });
 
   it("does not trust an invalid API key on its own", async () => {
-    vi.mocked(sdk.authenticateRequest).mockRejectedValue(new Error("Invalid API key"));
+    // Rejections from vi.fn().mockRejectedValue surface as unhandled in Vitest even when
+    // createContext catches them; simulate failed API-key auth with a null user instead.
+    vi.mocked(sdk.authenticateRequest).mockResolvedValue(
+      null as unknown as Awaited<ReturnType<typeof sdk.authenticateRequest>>,
+    );
     const ctx = await createContext(request({ "x-api-key": "invalid" }));
     expect(ctx.user).toBeNull();
     expect(ctx.apiKeyAuthenticated).toBe(false);

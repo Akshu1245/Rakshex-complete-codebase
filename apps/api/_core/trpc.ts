@@ -80,6 +80,7 @@ const CSRF_EXEMPT_PATHS = new Set([
   "auth.forgotPassword",
   "auth.resetPassword",
   "auth.me",
+  "waitlist.join",
   "payment.handleWebhook",
   "sso.resolveByEmailDomain",
 ]);
