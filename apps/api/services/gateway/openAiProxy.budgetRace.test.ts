@@ -216,15 +216,14 @@ describe("parallel hard-budget race", () => {
       });
     });
 
-    const req = request() as ReturnType<typeof request> & {
-      on: ReturnType<typeof vi.fn>;
-      removeListener: ReturnType<typeof vi.fn>;
+    const req = {
+      ...request(),
+      on: vi.fn((event: string, handler: () => void) => {
+        if (event === "close") closeHandler = handler;
+        return req;
+      }),
+      removeListener: vi.fn(),
     };
-    req.on = vi.fn((event: string, handler: () => void) => {
-      if (event === "close") closeHandler = handler;
-      return req;
-    });
-    req.removeListener = vi.fn();
 
     const pending = handler()(req, response());
     await vi.waitFor(() => expect(hangingFetch).toHaveBeenCalledTimes(1));
