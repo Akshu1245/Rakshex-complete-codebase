@@ -7,6 +7,7 @@ import { TRPCError } from "@trpc/server";
 import * as db from "../db";
 import { sql } from "drizzle-orm";
 import { logger } from "../_core/logger";
+import { affectedApprovalCount } from "./approvalUpdateResult";
 
 export const approvalsRouter = router({
   /**
@@ -65,7 +66,7 @@ export const approvalsRouter = router({
       const updated = await dbClient.execute(
         sql`UPDATE pending_approvals SET status = 'approved', resolved_at = NOW(), resolved_by = ${ctx.user.id}, resolution_note = ${input.note ?? ""} WHERE approval_id = ${input.approvalId} AND workspace_id = ${`ws_${ctx.user.id}`} AND status = 'pending' RETURNING approval_id`,
       );
-      if (!Array.isArray(updated) || updated.length === 0) {
+      if (affectedApprovalCount(updated) === 0) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Pending approval not found in your workspace",
@@ -102,7 +103,7 @@ export const approvalsRouter = router({
         WHERE approval_id = ${input.approvalId} AND workspace_id = ${`ws_${ctx.user.id}`} AND status = 'pending'
         RETURNING approval_id
       `);
-      if (!Array.isArray(updated) || updated.length === 0) {
+      if (affectedApprovalCount(updated) === 0) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Pending approval not found in your workspace",

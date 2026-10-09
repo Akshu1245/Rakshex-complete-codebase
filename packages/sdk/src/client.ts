@@ -15,7 +15,7 @@ import type {
 export const SDK_NAME = "@rakshex/sdk" as const;
 export const SDK_VERSION = "0.1.0" as const;
 
-const DEFAULT_GATEWAY = "https://api.rakshex.com";
+const DEFAULT_GATEWAY = "https://api.rakshex.in";
 
 export class AgentGuardClient {
   readonly options: Required<
