@@ -1,3 +1,4 @@
+import { URL } from "node:url";
 import type {
   AiAsset,
   InventorySnapshot,
