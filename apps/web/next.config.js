@@ -18,6 +18,8 @@ const TS_BACKEND_URL =
       "http://localhost:3000");
 
 const nextConfig = {
+  // Workspace TS sources use Node ESM ".js" import specifiers; webpack must map them to .ts.
+  transpilePackages: ["@rakshex/scanner-core"],
   serverExternalPackages: ["async_hooks"],
   // This project sits inside a larger local workspace that has its own lock
   // file. Pin tracing here so production builds never walk the parent tree.
@@ -207,6 +209,9 @@ const nextConfig = {
   },
   // Bundle splitting: extract vendor chunks and enable code splitting
   webpack: (config, { isServer }) => {
+    config.resolve.extensionAlias = {
+      ".js": [".ts", ".tsx", ".js"],
+    };
     config.module.rules.push({
       test: /\.md$/,
       type: "asset/source",
