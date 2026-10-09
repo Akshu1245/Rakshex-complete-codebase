@@ -28,10 +28,10 @@ export async function createContext(opts: CreateExpressContextOptions): Promise<
     // Header presence alone NEVER grants a CSRF exemption.
     apiKeyAuthenticated: Boolean(
       user &&
-        ((typeof opts.req.headers["x-api-key"] === "string" &&
-          opts.req.headers["x-api-key"].trim().length > 0) ||
-          (typeof opts.req.headers.authorization === "string" &&
-            /^Bearer\s+(?:rk_live_|rk_test_|dp_)/i.test(opts.req.headers.authorization))),
+      ((typeof opts.req.headers["x-api-key"] === "string" &&
+        opts.req.headers["x-api-key"].trim().length > 0) ||
+        (typeof opts.req.headers.authorization === "string" &&
+          /^Bearer\s+(?:rk_live_|rk_test_|dp_)/i.test(opts.req.headers.authorization))),
     ),
   };
 }

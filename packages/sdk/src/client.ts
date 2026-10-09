@@ -241,9 +241,7 @@ export class AgentGuardClient {
       signal: options.signal,
     });
     const payload = (await response.json().catch(() => null)) as
-      | T
-      | { error?: { message?: string; code?: string } }
-      | null;
+      T | { error?: { message?: string; code?: string } } | null;
     if (!response.ok) {
       const gatewayError =
         payload && typeof payload === "object" && "error" in payload ? payload.error : undefined;
