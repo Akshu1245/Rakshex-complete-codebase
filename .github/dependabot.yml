@@ -1,3 +1,7 @@
+# pnpm monorepo: Dependabot must run only from the repo root (pnpm-lock.yaml +
+# pnpm-workspace.yaml). Per-package directories fail with misconfigured_tooling
+# ("Updating workspaces from inside a workspace subdirectory is not supported").
+# Security pins (e.g. vitest 4.1.11) live in root package.json pnpm.overrides.
 version: 2
 updates:
   - package-ecosystem: "npm"
@@ -12,21 +16,3 @@ updates:
     commit-message:
       prefix: "chore"
       include: "scope"
-
-  - package-ecosystem: "npm"
-    directory: "/apps/web"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
-      - "frontend"
-
-  - package-ecosystem: "npm"
-    directory: "/apps/vscode-extension"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
-      - "vscode-extension"
