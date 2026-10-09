@@ -5,9 +5,8 @@ import { trpc } from "@/lib/trpc";
 import { Brain, Shield, Award, AlertTriangle, Target } from "lucide-react";
 
 /**
- * Judge-focused demo page.
- * Uses ONLY real backend engines. No fabricated results.
- * For real market + competition use.
+ * Backend-dependent demonstration: results appear only if the API responds.
+ * This is not evidence of production deployment, accuracy, or certification.
  */
 export default function JudgeDemoPage() {
   const [prompt, setPrompt] = useState("");
@@ -57,7 +56,7 @@ export default function JudgeDemoPage() {
       setResult({
         error: true,
         message:
-          "Could not reach the demo backend from here. The real engines (promptInjectionEngine + piiDetector) are the ones used in production.",
+          "The demo API is unavailable. No scan ran, so no result can be reported. Try a locally running backend or an authenticated beta deployment.",
       });
     } finally {
       setScanTime(Math.round(performance.now() - start));
@@ -67,7 +66,7 @@ export default function JudgeDemoPage() {
 
   function copyReport() {
     if (!result || result.error) return;
-    const text = `RaksHex Real Engine Scan
+    const text = `RaksHex Backend Demo Scan
 Prompt: ${prompt.substring(0, 120)}
 
 Injection: ${result.injection?.threatLevel} (${Math.round((result.injection?.confidence || 0) * 100)}%)
@@ -88,16 +87,15 @@ Time: ${scanTime}ms (real engines)`;
           <Award className="w-6 h-6 text-yellow-400" />
           <div>
             <div className="text-yellow-400 text-xs tracking-[3px] font-mono">
-              REAL ENGINES • NO FAKE DATA • FOR JUDGES &amp; REAL USERS
+              BACKEND-DEPENDENT DEMO • NO OFFLINE RESULTS
             </div>
-            <h1 className="text-5xl font-semibold tracking-[-2.5px]">RaksHex Live Security Demo</h1>
+            <h1 className="text-5xl font-semibold tracking-[-2.5px]">RaksHex Backend Scanner Demo</h1>
           </div>
         </div>
 
         <p className="text-lg text-zinc-400 max-w-2xl mb-8">
-          These results come from the actual production detection code in{" "}
-          <span className="font-mono text-sm">server/engines/</span>. 140+ jailbreak patterns + full
-          PII redaction for emails, cards, Indian IDs, keys.
+          This page requests a demo scan from a running backend. Results appear only when
+          the API responds; this does not verify live production protection or scanner accuracy.
         </p>
 
         {/* Examples */}
@@ -162,7 +160,7 @@ Time: ${scanTime}ms (real engines)`;
               <div className="flex justify-between items-end">
                 <div>
                   <div className="text-xs uppercase tracking-widest opacity-60">
-                    REAL RESULT FROM PRODUCTION ENGINES
+                    RESULT RETURNED BY DEMO API
                   </div>
                   <div className="text-5xl font-semibold tabular-nums tracking-[-2px]">
                     {result.riskScore}/100

@@ -110,10 +110,9 @@ const csrfMiddleware = t.middleware(async (opts) => {
     return next();
   }
 
-  // Skip CSRF for API-key-authenticated requests (the key itself is the
-  // secret — browsers can't set custom headers cross-origin without CORS).
-  const apiKey = ctx.req.headers["x-api-key"];
-  if (typeof apiKey === "string" && apiKey.length > 0) {
+  // A forged x-api-key header is not evidence of authentication.
+  // Only the authenticated SDK path can exempt a mutation from CSRF.
+  if (ctx.apiKeyAuthenticated === true) {
     return next();
   }
 

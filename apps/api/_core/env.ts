@@ -4,12 +4,16 @@
  * defaults: a production process must fail closed when they are absent.
  */
 import { z } from "zod";
+import { isSafeProductionSecret } from "./productionSecrets";
 
 const isProduction = process.env.NODE_ENV === "production";
 const DEV_JWT_SECRET = "dev-only-jwt-secret-min-32-chars-rakshex";
 
 const requiredString = (name: string) => z.string().min(1, `${name} is required in production`);
 const requiredUrl = (name: string) => z.string().url(`${name} must be a valid URL`);
+const realProductionSecret = (name: string) =>
+  z.string().min(32, `${name} must be at least 32 characters`)
+    .refine(isSafeProductionSecret, `${name} cannot be a known placeholder`);
 
 const EnvSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
@@ -17,14 +21,14 @@ const EnvSchema = z.object({
 
   // Auth / JWT — never fall back to a repository-known value in production.
   JWT_SECRET: isProduction
-    ? z.string().min(32, "JWT_SECRET must be at least 32 characters")
+    ? realProductionSecret("JWT_SECRET")
     : z.string().min(32, "JWT_SECRET must be at least 32 characters").default(DEV_JWT_SECRET),
   OWNER_OPEN_ID: z.string().default(""),
 
   // Credential vault root key. Vault operations also fail closed at their call sites;
   // validating here prevents a production API from booting without the root key.
   RAKSHEX_VAULT_KEY: isProduction
-    ? z.string().min(32, "RAKSHEX_VAULT_KEY must be at least 32 characters")
+    ? realProductionSecret("RAKSHEX_VAULT_KEY")
     : z.string().default(""),
 
   // Database / Redis — required for the production control plane.

@@ -50,6 +50,19 @@ function extractQueryKeys(req: PostmanRequest | undefined): string[] {
     .filter((k): k is string => typeof k === "string" && k.length > 0);
 }
 
+/**
+ * Redact URL userinfo, query VALUES and fragments before findings/report output.
+ * Query parameter NAMES remain available for static rules.
+ */
+export function redactUrlSecrets(rawUrl: string): string {
+  const noFragment = rawUrl.split("#", 1)[0] ?? "";
+  const noUserinfo = noFragment.replace(
+    /(https?:\/\/)[^\/?#@]*@/gi,
+    "$1[REDACTED]@",
+  );
+  return noUserinfo.replace(/([?&][^=?&#]+)=([^&#]*)/g, "$1=[REDACTED]");
+}
+
 export function safeGetPath(rawUrl: string): string {
   if (!rawUrl) return "/";
   try {
@@ -88,7 +101,8 @@ function flattenPostmanItems(items: PostmanItem[]): PostmanItem[] {
 function fromPostman(data: { item?: PostmanItem[] }): NormalizedEndpoint[] {
   const items = flattenPostmanItems(data.item ?? []);
   return items.map((item) => {
-    const url = extractUrl(item.request);
+    // Scanner findings must never include raw Postman URL credentials.
+    const url = redactUrlSecrets(extractUrl(item.request));
     const method = (item.request?.method || "GET").toUpperCase();
     return {
       url,
