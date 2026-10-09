@@ -12,7 +12,9 @@ const DEV_JWT_SECRET = "dev-only-jwt-secret-min-32-chars-rakshex";
 const requiredString = (name: string) => z.string().min(1, `${name} is required in production`);
 const requiredUrl = (name: string) => z.string().url(`${name} must be a valid URL`);
 const realProductionSecret = (name: string) =>
-  z.string().min(32, `${name} must be at least 32 characters`)
+  z
+    .string()
+    .min(32, `${name} must be at least 32 characters`)
     .refine(isSafeProductionSecret, `${name} cannot be a known placeholder`);
 
 const EnvSchema = z.object({

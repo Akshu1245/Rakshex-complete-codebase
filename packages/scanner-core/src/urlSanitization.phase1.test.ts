@@ -4,7 +4,9 @@ import { redactUrlSecrets } from "./normalize.js";
 
 describe("Postman URL privacy in deterministic reports", () => {
   it("removes credentials, query values and fragments", () => {
-    const sanitized = redactUrlSecrets("http://alice:pass-123@example.test/orders?token=secret-456&page=7#private-789");
+    const sanitized = redactUrlSecrets(
+      "http://alice:pass-123@example.test/orders?token=secret-456&page=7#private-789",
+    );
     expect(sanitized).not.toContain("pass-123");
     expect(sanitized).not.toContain("secret-456");
     expect(sanitized).not.toContain("private-789");
@@ -12,11 +14,15 @@ describe("Postman URL privacy in deterministic reports", () => {
   });
   it("keeps rule detection while keeping secret values out of findings", () => {
     const raw = {
-      item: [{ request: {
-        method: "GET",
-        url: "http://alice:secret-PASS@example.test/orders?password=secret-QUERY#secret-FRAGMENT",
-        header: [],
-      } }],
+      item: [
+        {
+          request: {
+            method: "GET",
+            url: "http://alice:secret-PASS@example.test/orders?password=secret-QUERY#secret-FRAGMENT",
+            header: [],
+          },
+        },
+      ],
     };
     const findings = runScan(raw).findings;
     const serialized = JSON.stringify(findings);

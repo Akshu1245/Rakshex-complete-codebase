@@ -89,13 +89,15 @@ Time: ${scanTime}ms (real engines)`;
             <div className="text-yellow-400 text-xs tracking-[3px] font-mono">
               BACKEND-DEPENDENT DEMO • NO OFFLINE RESULTS
             </div>
-            <h1 className="text-5xl font-semibold tracking-[-2.5px]">RaksHex Backend Scanner Demo</h1>
+            <h1 className="text-5xl font-semibold tracking-[-2.5px]">
+              RaksHex Backend Scanner Demo
+            </h1>
           </div>
         </div>
 
         <p className="text-lg text-zinc-400 max-w-2xl mb-8">
-          This page requests a demo scan from a running backend. Results appear only when
-          the API responds; this does not verify live production protection or scanner accuracy.
+          This page requests a demo scan from a running backend. Results appear only when the API
+          responds; this does not verify live production protection or scanner accuracy.
         </p>
 
         {/* Examples */}

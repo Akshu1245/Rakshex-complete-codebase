@@ -4,7 +4,7 @@
 
 ## Benchmark preparation
 
-1. Obtain fixed, documented versions of crAPI and VAmPI *with permission*, their available OpenAPI specs/Postman collections, and precise hashes of those input files.
+1. Obtain fixed, documented versions of crAPI and VAmPI _with permission_, their available OpenAPI specs/Postman collections, and precise hashes of those input files.
 2. Independently label each input `file / method / path / rule / expected evidence / in-scope?` without consulting RaksHex's output.
 3. For runtime-only vulnerabilities such as broken ownership checks requiring a live user request, label `out_of_scope_static`, not a false negative.
 4. Freeze the scorer, scanner version and input hashes before calculating the baseline.
@@ -15,9 +15,9 @@
 
 ## Required report
 
-| Dataset | Version & SHA256 | TP | FP | FN | TN | Precision | Recall | FPR | Out-of-scope runtime vulnerabilities |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|
-| crAPI | NOT RUN | — | — | — | — | — | — | — | — |
-| VAmPI | NOT RUN | — | — | — | — | — | — | — | — |
+| Dataset | Version & SHA256 |  TP |  FP |  FN |  TN | Precision | Recall | FPR | Out-of-scope runtime vulnerabilities |
+| ------- | ---------------- | --: | --: | --: | --: | --------: | -----: | --: | -----------------------------------: |
+| crAPI   | NOT RUN          |   — |   — |   — |   — |         — |      — |   — |                                    — |
+| VAmPI   | NOT RUN          |   — |   — |   — |   — |         — |      — |   — |                                    — |
 
 **Do not publish invented accuracy numbers or treat missing runtime exploitation as static misses.** Preserve full adjudication logs for reproduction and disclose any test targets that used generated documentation instead of original vulnerable service specs.

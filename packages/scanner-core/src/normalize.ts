@@ -56,10 +56,7 @@ function extractQueryKeys(req: PostmanRequest | undefined): string[] {
  */
 export function redactUrlSecrets(rawUrl: string): string {
   const noFragment = rawUrl.split("#", 1)[0] ?? "";
-  const noUserinfo = noFragment.replace(
-    /(https?:\/\/)[^\/?#@]*@/gi,
-    "$1[REDACTED]@",
-  );
+  const noUserinfo = noFragment.replace(/(https?:\/\/)[^\/?#@]*@/gi, "$1[REDACTED]@");
   return noUserinfo.replace(/([?&][^=?&#]+)=([^&#]*)/g, "$1=[REDACTED]");
 }
 

@@ -16,7 +16,9 @@ function context(headers: Record<string, string>, apiKeyAuthenticated = false): 
 
 describe("CSRF must not trust arbitrary API-key header presence", () => {
   it("rejects mutations with only an unverified x-api-key header", async () => {
-    const caller = testRouter.createCaller(context({ "x-api-key": "forged", cookie: "session=valid" }));
+    const caller = testRouter.createCaller(
+      context({ "x-api-key": "forged", cookie: "session=valid" }),
+    );
     await expect(caller.write()).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
   it("accepts authenticated SDK API-key requests without CSRF", async () => {
@@ -25,7 +27,9 @@ describe("CSRF must not trust arbitrary API-key header presence", () => {
   });
   it("continues accepting valid cookie-backed CSRF tokens", async () => {
     const csrf = generateCsrfToken();
-    const caller = testRouter.createCaller(context({ cookie: `csrf-token=${csrf}`, "x-csrf-token": csrf }));
+    const caller = testRouter.createCaller(
+      context({ cookie: `csrf-token=${csrf}`, "x-csrf-token": csrf }),
+    );
     await expect(caller.write()).resolves.toBe("ok");
   });
 });
