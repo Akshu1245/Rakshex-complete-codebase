@@ -1,0 +1,57 @@
+name: RaksHex Offline API Spec Scan (beta)
+description: Scan one checked-out OpenAPI/Postman file without RaksHex API credentials or upload
+inputs:
+  file:
+    description: Repo-relative path to a JSON/YAML OpenAPI or Postman collection
+    required: true
+  fail-on:
+    description: Lowest severity that fails CI (Critical, High, Medium, Low, none)
+    required: false
+    default: High
+outputs:
+  sarif-file:
+    description: Absolute path of the locally generated SARIF report
+    value: ${{ steps.scan.outputs.sarif-file }}
+runs:
+  using: composite
+  steps:
+    - name: Install pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        package_json_file: ${{ github.action_path }}/../../package.json
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "24"
+    - name: Install offline scanner workspace
+      shell: bash
+      env:
+        SCANNER_ROOT: ${{ github.action_path }}/../..
+      run: |
+        set -euo pipefail
+        cd "$SCANNER_ROOT"
+        pnpm --filter '@rakshex/cli...' install --frozen-lockfile --ignore-scripts
+    - name: Run local static scanner
+      id: scan
+      shell: bash
+      env:
+        SCANNER_ROOT: ${{ github.action_path }}/../..
+        FILE: ${{ inputs.file }}
+        FAIL_ON: ${{ inputs.fail-on }}
+      run: |
+        set -euo pipefail
+        if [[ "$FILE" == /* || "$FILE" == *..* || -z "$FILE" ]]; then
+          echo 'Provide a nonempty repository-relative file path (no ..).' >&2
+          exit 2
+        fi
+        target="$GITHUB_WORKSPACE/$FILE"
+        if [[ ! -f "$target" ]]; then
+          echo "Missing OpenAPI/Postman input: $FILE" >&2
+          exit 2
+        fi
+        report="$GITHUB_WORKSPACE/rakshex-results.sarif"
+        echo "sarif-file=$report" >> "$GITHUB_OUTPUT"
+        cd "$SCANNER_ROOT/apps/cli"
+        # No external RaksHex backend is contacted without --upload.
+        pnpm exec node --import tsx src/index.ts scan "$target" \
+          --format sarif --fail-on "$FAIL_ON" --out "$report" > /dev/null

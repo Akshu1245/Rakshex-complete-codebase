@@ -89,7 +89,7 @@ function printHelp(): void {
 Usage:
   rakshex login --api-key <key> [--api-url <url>]
   rakshex configure --fail-on Critical,High [--ignore-rules id1,id2]
-  rakshex scan <file-or-dir> [--format terminal|json|sarif] [--changed-only] [--baseline] [--upload]
+  rakshex scan <file-or-dir> [--format terminal|json|sarif] [--fail-on High] [--baseline] [--upload]
   rakshex secrets <path> [--format terminal|json] [--fail-on Critical,High]
   rakshex secrets rules
   rakshex policy check <file> [--format json]
@@ -136,7 +136,7 @@ function validateScanDocument(value: unknown): unknown {
   return value;
 }
 
-function collectScanTargets(root: string, changedOnly: boolean): string[] {
+function collectScanTargets(root: string): string[] {
   const abs = resolve(root);
   if (statSync(abs).isFile()) return [abs];
   const out: string[] = [];
@@ -146,11 +146,13 @@ function collectScanTargets(root: string, changedOnly: boolean): string[] {
       const p = join(dir, name);
       const st = statSync(p);
       if (st.isDirectory()) walk(p);
-      else if (/\.(json|ya?ml)$/i.test(name)) {
-        // Heuristic: openapi/postman filenames or content later
-        if (/openapi|swagger|postman|collection|api/i.test(name) || !changedOnly) {
-          out.push(p);
-        }
+      else if (
+        /\.(json|ya?ml)$/i.test(name) &&
+        /(?:^|[._-])(openapi|swagger|postman|collection)(?:[._-]|$)/i.test(name)
+      ) {
+        // Directory scans intentionally ignore unrelated package/config files.
+        // Users can scan a custom-named spec by supplying its exact file path.
+        out.push(p);
       }
     }
   };
@@ -331,12 +333,30 @@ async function cmdScan(
     return 2;
   }
   const cfg = loadConfig();
-  const failOn = cfg.failOn ?? ["Critical", "High"];
+  if (flags["changed-only"] !== undefined) {
+    console.error("--changed-only is not implemented. Scan a specific file or directory instead.");
+    return 2;
+  }
+  const override = flags["fail-on"];
+  if (
+    override !== undefined &&
+    (typeof override !== "string" ||
+      !["Critical", "High", "Medium", "Low", "none"].includes(override))
+  ) {
+    console.error("Invalid --fail-on. Choose Critical, High, Medium, Low or none.");
+    return 2;
+  }
+  const failOn =
+    override === "none"
+      ? []
+      : override
+        ? [override as "Critical" | "High" | "Medium" | "Low"]
+        : (cfg.failOn ?? ["Critical", "High"]);
   const ignore = new Set(cfg.ignoreRules ?? []);
   const upload = Boolean(flags.upload);
 
   let all: RuleFinding[] = [];
-  const files = collectScanTargets(target, Boolean(flags["changed-only"]));
+  const files = collectScanTargets(target);
   let parseFailures = 0;
   if (files.length === 0) {
     console.error("No scannable OpenAPI/Postman JSON/YAML files found.");
@@ -369,19 +389,36 @@ async function cmdScan(
   all = [...byFp.values()];
 
   if (flags.baseline) {
+    if (!existsSync(CONFIG_DIR)) mkdirSync(CONFIG_DIR, { recursive: true, mode: 0o700 });
     if (existsSync(BASELINE_PATH)) {
-      const base = JSON.parse(readFileSync(BASELINE_PATH, "utf8")) as { fingerprints: string[] };
-      const known = new Set(base.fingerprints);
+      const parsed = JSON.parse(readFileSync(BASELINE_PATH, "utf8")) as { fingerprints?: unknown };
+      if (
+        !Array.isArray(parsed.fingerprints) ||
+        !parsed.fingerprints.every((fp) => typeof fp === "string")
+      ) {
+        console.error("Invalid baseline: expected a fingerprints string array.");
+        return 2;
+      }
+      const known = new Set(parsed.fingerprints);
       all = all.filter((f) => !known.has(f.fingerprint));
+      // Comparing must never replace the approved baseline with a subset.
+    } else {
+      writeFileSync(
+        BASELINE_PATH,
+        JSON.stringify(
+          {
+            fingerprints: [...fingerprintSet(all)],
+            updatedAt: new Date().toISOString(),
+          },
+          null,
+          2,
+        ),
+        { encoding: "utf8", mode: 0o600 },
+      );
+      console.error(
+        `New baseline created at ${BASELINE_PATH}. Review and preserve it before CI use.`,
+      );
     }
-    writeFileSync(
-      BASELINE_PATH,
-      JSON.stringify(
-        { fingerprints: [...fingerprintSet(all)], updatedAt: new Date().toISOString() },
-        null,
-        2,
-      ),
-    );
   }
 
   const score = calculateRiskScore(all);
