@@ -1,127 +1,17 @@
-# The legacy Vercel project "rakshex-complete-codebase-api" is mislinked: the Express
-# API runs on Railway/Docker, not Vercel. That project fails every push and leaves a
-# red GitHub commit status even though web/ui deploys succeed.
-#
-# Poll until Vercel finishes (failure), then overwrite with success/skipped.
-# Also listen for late Vercel failure statuses (can arrive after the poll job exits).
-# Long-term fix: disconnect or delete the API project in the Vercel dashboard.
-name: Vercel API skip status
+# Disabled: the old workflow overwrote failed/pending Vercel deployment statuses
+# with success, hiding real failures. The legacy Vercel API project's Git
+# connection was disconnected on 2026-10-09, so it no longer reports statuses.
+# Never mutate an external check's result.
+name: Legacy Vercel API migration notice (disabled)
 
 on:
-  push:
-    branches: [main, master]
-  pull_request:
-    branches: [main, master]
-  status:
   workflow_dispatch:
-    inputs:
-      sha:
-        description: Commit SHA to update (defaults to branch HEAD)
-        required: false
-        type: string
 
 permissions:
   contents: read
-  statuses: write
-
-env:
-  VERCEL_API_STATUS_CONTEXT: Vercel – rakshex-complete-codebase-api
-  SKIP_DESCRIPTION: Skipped — API deploys on Railway (see docs/DEPLOY_RAILWAY_VERCEL.md)
 
 jobs:
-  mark-api-vercel-skipped:
-    name: Mark API Vercel check skipped
-    if: github.event_name != 'status'
+  notice:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
     steps:
-      - name: Wait for Vercel API deploy to finish, then mark skipped
-        env:
-          GH_TOKEN: ${{ github.token }}
-          SHA: ${{ inputs.sha || github.event.pull_request.head.sha || github.sha }}
-        run: |
-          set -euo pipefail
-          CONTEXT="$VERCEL_API_STATUS_CONTEXT"
-          DEADLINE=$(( $(date +%s) + 720 ))
-
-          fetch_state() {
-            gh api "repos/$GITHUB_REPOSITORY/commits/$SHA/status" \
-              --jq "first(.statuses[] | select(.context == \"$CONTEXT\") | .state) // \"missing\"" 2>/dev/null || echo "missing"
-          }
-
-          fetch_description() {
-            gh api "repos/$GITHUB_REPOSITORY/commits/$SHA/status" \
-              --jq "first(.statuses[] | select(.context == \"$CONTEXT\") | .description) // \"\"" 2>/dev/null || echo ""
-          }
-
-          mark_skipped() {
-            gh api "repos/$GITHUB_REPOSITORY/statuses/$SHA" \
-              -f state=success \
-              -f context="$CONTEXT" \
-              -f description="$SKIP_DESCRIPTION"
-            echo "Marked $CONTEXT as skipped on $SHA"
-          }
-
-          saw_vercel_failure=0
-
-          while [ "$(date +%s)" -lt "$DEADLINE" ]; do
-            state=$(fetch_state)
-            desc=$(fetch_description)
-
-            if [ "$state" = "success" ] && [ "$desc" = "$SKIP_DESCRIPTION" ]; then
-              echo "Skip status is stable."
-              exit 0
-            fi
-
-            if [ "$state" = "success" ] && [ "$desc" != "$SKIP_DESCRIPTION" ]; then
-              echo "Vercel API project reported success; leaving status unchanged."
-              exit 0
-            fi
-
-            if [ "$state" = "failure" ]; then
-              saw_vercel_failure=1
-              mark_skipped
-              echo "Vercel re-posted failure after skip mark; will keep polling until stable."
-            elif [ "$saw_vercel_failure" = "1" ] && [ "$state" = "pending" ]; then
-              echo "Vercel API status pending after failure — waiting..."
-            else
-              echo "Vercel API status: ${state:-pending} — waiting..."
-            fi
-
-            sleep 30
-          done
-
-          state=$(fetch_state)
-          desc=$(fetch_description)
-          if [ "$state" = "failure" ] || { [ "$state" = "success" ] && [ "$desc" != "$SKIP_DESCRIPTION" ] && [ "$saw_vercel_failure" = "1" ]; }; then
-            mark_skipped
-            exit 0
-          fi
-
-          if [ "$state" = "success" ] && [ "$desc" = "$SKIP_DESCRIPTION" ]; then
-            exit 0
-          fi
-
-          echo "Timed out waiting for stable Vercel API skip status (last state: $state)"
-          exit 1
-
-  heal-late-vercel-api-failure:
-    name: Re-apply skip after late Vercel failure status
-    if: >-
-      github.event_name == 'status' &&
-      github.event.state == 'failure' &&
-      github.event.context == 'Vercel – rakshex-complete-codebase-api'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Mark API Vercel check skipped
-        env:
-          GH_TOKEN: ${{ github.token }}
-          SHA: ${{ github.event.commit.sha }}
-        run: |
-          set -euo pipefail
-          gh api "repos/$GITHUB_REPOSITORY/statuses/$SHA" \
-            -f state=success \
-            -f context="$VERCEL_API_STATUS_CONTEXT" \
-            -f description="$SKIP_DESCRIPTION"
-          echo "Re-applied skip on $SHA after late Vercel failure status."
+      - run: echo "No status overrides. The legacy Vercel API project's Git connection is disconnected."
