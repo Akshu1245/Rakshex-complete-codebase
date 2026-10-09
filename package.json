@@ -52,7 +52,7 @@
     "turbo": "^2.3.0",
     "typescript": "^5.7.0",
     "typescript-eslint": "^8.60.0",
-    "vitest": "^3.0.0"
+    "vitest": "^4.1.11"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,json,md,yml,yaml}": [
@@ -90,7 +90,8 @@
       "proxy-addr": ">=2.0.8",
       "qs": ">=6.16.0",
       "sharp": ">=0.35.5",
-      "source-map-js": ">=1.2.2"
+      "source-map-js": ">=1.2.2",
+      "vitest": "4.1.11"
     }
   }
 }

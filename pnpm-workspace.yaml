@@ -51,3 +51,5 @@ overrides:
   "js-yaml@>=4.0.0 <4.3.1": "4.3.1"
   # GHSA-7p8r-x3mc-p8w7 — patched in 4.1.2; 4.1.1 was likewise one short.
   "fast-uri@>=3.0.0": "4.1.2"
+  # GHSA — vitest security advisories; pin patched 4.1.11+ across the monorepo.
+  vitest: "4.1.11"
