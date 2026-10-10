@@ -142,15 +142,16 @@ export async function getDb() {
   if (!process.env.DATABASE_URL) return null;
 
   if (!_dbInitPromise) {
+    let pool: Pool | null = null;
     _dbInitPromise = (async () => {
       try {
-        const pool = new Pool({
+        pool = new Pool({
           connectionString: process.env.DATABASE_URL,
           max: 20,
           idleTimeoutMillis: 30000,
           connectionTimeoutMillis: 5000,
         });
-        // Test the connection before caching
+        // Test the connection before caching.
         await pool.query("SELECT 1");
         _db = drizzle(pool);
         logger.info("[Database] Connection pool initialized");
@@ -158,9 +159,16 @@ export async function getDb() {
       } catch (error) {
         logger.warn({ err: error }, "[Database] Failed to connect");
         _db = null;
+        if (pool) {
+          await pool.end().catch(() => undefined);
+        }
         return null;
       }
-    })();
+    })().finally(() => {
+      // A failed first connection must not permanently poison the
+      // single-flight promise. Let the next request retry cleanly.
+      if (!_db) _dbInitPromise = null;
+    });
   }
 
   return _dbInitPromise;
@@ -4885,7 +4893,11 @@ export async function addWaitlistEmail(
     await db.insert(waitlist).values({ email, plan, source });
     return { success: true, alreadyExists: false };
   } catch (err: any) {
-    if (err?.code === "ER_DUP_ENTRY" || err?.message?.includes("Duplicate entry")) {
+    if (
+      err?.code === "23505" ||
+      err?.code === "ER_DUP_ENTRY" ||
+      err?.message?.includes("Duplicate entry")
+    ) {
       return { success: true, alreadyExists: true };
     }
     logger.error({ err }, "[Database] Failed to insert waitlist email");
