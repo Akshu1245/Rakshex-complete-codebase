@@ -1,7 +1,12 @@
 import fs from "fs";
+import path from "path";
 import { execSync } from "child_process";
+import { cleanupPartialNextShadow } from "./vercel-cleanup-partial-next.mjs";
+
+const repoRoot = path.resolve(import.meta.dirname, "..");
 
 console.log("==> Starting Rakshex Web Build...");
+cleanupPartialNextShadow(repoRoot);
 
 // Patch async-local-storage.js in Next.js before & after build to use node:async_hooks fallback
 function patchAsyncLocalStorage(filePath) {
@@ -35,19 +40,17 @@ execSync("pnpm --filter @rakshex/web build", { stdio: "inherit" });
 // Patch again after build
 targetPaths.forEach(patchAsyncLocalStorage);
 
-// Create stubs for Vercel adapter tracing
-const stubPaths = [
+// Stub for Vercel adapter tracing (repo root only — never under apps/web/node_modules/next)
+const stubPath = path.join(
+  repoRoot,
   "node_modules/next/dist/build/adapter/setup-node-env.external.js",
-  "apps/web/node_modules/next/dist/build/adapter/setup-node-env.external.js",
-];
+);
+try {
+  fs.mkdirSync(path.dirname(stubPath), { recursive: true });
+  fs.writeFileSync(stubPath, "module.exports = {};");
+} catch (err) {}
 
-for (const stubPath of stubPaths) {
-  try {
-    const dir = stubPath.substring(0, stubPath.lastIndexOf("/"));
-    fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(stubPath, "module.exports = {};");
-  } catch (err) {}
-}
+cleanupPartialNextShadow(repoRoot);
 
 // Sync built outputs to web/.next for Vercel multi-service monorepo tracer
 console.log("==> Syncing outputs to web/.next...");
