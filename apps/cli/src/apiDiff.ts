@@ -83,8 +83,8 @@ export function cmdApiDiff(positional: string[], flags: Record<string, string | 
       console.log("Detected " + result.changes.length + " supported breaking change(s).");
       for (const change of result.changes) {
         const kind = "kind" in change ? change.kind : change.id;
-        const method = "method" in change ? change.method : change.operation ?? "API";
-        const detail = "message" in change ? change.message : change.text ?? change.id;
+        const method = "method" in change ? change.method : (change.operation ?? "API");
+        const detail = "message" in change ? change.message : (change.text ?? change.id);
         console.log("  [" + kind + "] " + method + " " + change.path + ": " + detail);
       }
       console.log("Coverage: " + result.scope);

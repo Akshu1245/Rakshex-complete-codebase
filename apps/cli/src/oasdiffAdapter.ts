@@ -23,15 +23,17 @@ export interface OasdiffReport {
 }
 
 function normalizeChanges(value: unknown): OasdiffChange[] {
-  const candidate =
-    Array.isArray(value)
-      ? value
-      : value === null
-        ? []
-        : value && typeof value === "object" && Array.isArray((value as { breaking?: unknown }).breaking)
-          ? (value as { breaking: unknown[] }).breaking
-          : null;
-  if (!candidate) throw new Error("Unexpected oasdiff JSON output; no compatibility verdict issued.");
+  const candidate = Array.isArray(value)
+    ? value
+    : value === null
+      ? []
+      : value &&
+          typeof value === "object" &&
+          Array.isArray((value as { breaking?: unknown }).breaking)
+        ? (value as { breaking: unknown[] }).breaking
+        : null;
+  if (!candidate)
+    throw new Error("Unexpected oasdiff JSON output; no compatibility verdict issued.");
   return candidate.map((item) => {
     if (
       !item ||
