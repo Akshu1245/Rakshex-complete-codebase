@@ -191,7 +191,7 @@ export default function AgentDriftPage() {
                 </button>
               </div>
               <span
-                className={`text-xs font-bold px-2 py-1 rounded-full border capitalize ${DRIFT_COLORS[selectedEvent.severity]}`}
+                className={`text-xs font-bold px-2 py-1 rounded-full border capitalize ${SPIKE_COLORS[selectedEvent.severity]}`}
               >
                 {selectedEvent.severity} · {selectedEvent.driftType}
               </span>
