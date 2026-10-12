@@ -1,0 +1,43 @@
+name: Cloudflare bundle one-shot
+
+on:
+  push:
+    branches: [feat/cloudflare-migrate-runtime-20261012]
+    paths:
+      - ".github/workflows/cloudflare-bundle-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  build-staging-worker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/cloudflare-migrate-runtime-20261012
+          persist-credentials: true
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build standalone staging artifact from shared scanner package
+        run: |
+          pnpm dlx wrangler deploy --dry-run --config cloudflare/staging/wrangler.core.toml --outdir /tmp/rakshex-worker
+          find /tmp/rakshex-worker -maxdepth 1 -type f -print
+          BUNDLE="$(find /tmp/rakshex-worker -maxdepth 1 -type f -name '*.js' | head -1)"
+          test -n "$BUNDLE" && test -f "$BUNDLE"
+          test "$(wc -c < "$BUNDLE")" -lt 1048576
+          mkdir -p cloudflare/staging/dist
+          cp "$BUNDLE" cloudflare/staging/dist/core-worker.bundle.mjs
+      - name: Commit deterministic staging build artifact
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cloudflare/staging/dist/core-worker.bundle.mjs
+          if ! git diff --cached --quiet; then
+            git commit -m "build(cloudflare): bundle shared scanner core for Worker staging"
+            git push origin HEAD:refs/heads/feat/cloudflare-migrate-runtime-20261012
+          fi
