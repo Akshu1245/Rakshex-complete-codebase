@@ -84,10 +84,7 @@ function jsonSchema(body: Obj, where: string): Obj | null {
   return assertSimple(json.schema, where + ".content.application/json.schema");
 }
 
-function schemaProperties(
-  schema: Obj,
-  where: string,
-): { properties: Obj; required: Set<string> } {
+function schemaProperties(schema: Obj, where: string): { properties: Obj; required: Set<string> } {
   const properties =
     schema.properties === undefined ? {} : assertSimple(schema.properties, where + ".properties");
   for (const [key, value] of Object.entries(properties)) {
@@ -148,14 +145,24 @@ export function diffOpenApiContracts(
       const newParams = params(newPath, newOp, `after.paths.${path}.${method}`);
       for (const key of sorted([...newParams.keys()])) {
         if (newParams.get(key) && !oldParams.get(key)) {
-          add("required_parameter_added", method, path, "parameters." + key, `Newly required parameter: ${key}`);
+          add(
+            "required_parameter_added",
+            method,
+            path,
+            "parameters." + key,
+            `Newly required parameter: ${key}`,
+          );
         }
       }
 
       const oldBody =
-        oldOp.requestBody === undefined ? null : assertSimple(oldOp.requestBody, "before.requestBody");
+        oldOp.requestBody === undefined
+          ? null
+          : assertSimple(oldOp.requestBody, "before.requestBody");
       const newBody =
-        newOp.requestBody === undefined ? null : assertSimple(newOp.requestBody, "after.requestBody");
+        newOp.requestBody === undefined
+          ? null
+          : assertSimple(newOp.requestBody, "after.requestBody");
       if (newBody?.required === true && oldBody?.required !== true) {
         add("request_body_required", method, path, "requestBody", "Request body became required");
       }
