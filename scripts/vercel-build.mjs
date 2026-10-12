@@ -1,12 +1,17 @@
 import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
-import { cleanupPartialNextShadow } from "./vercel-cleanup-partial-next.mjs";
+import {
+  cleanupPartialNextShadow,
+  ensureAppsWebNextSymlink,
+  writeVercelAdapterStub,
+} from "./vercel-cleanup-partial-next.mjs";
 
 const repoRoot = path.resolve(import.meta.dirname, "..");
 
 console.log("==> Starting Rakshex Web Build...");
 cleanupPartialNextShadow(repoRoot);
+ensureAppsWebNextSymlink(repoRoot);
 
 // Patch async-local-storage.js in Next.js before & after build to use node:async_hooks fallback
 function patchAsyncLocalStorage(filePath) {
@@ -40,17 +45,7 @@ execSync("pnpm --filter @rakshex/web build", { stdio: "inherit" });
 // Patch again after build
 targetPaths.forEach(patchAsyncLocalStorage);
 
-// Stub for Vercel adapter tracing (repo root only — never under apps/web/node_modules/next)
-const stubPath = path.join(
-  repoRoot,
-  "node_modules/next/dist/build/adapter/setup-node-env.external.js",
-);
-try {
-  fs.mkdirSync(path.dirname(stubPath), { recursive: true });
-  fs.writeFileSync(stubPath, "module.exports = {};");
-} catch (err) {}
-
-cleanupPartialNextShadow(repoRoot);
+writeVercelAdapterStub(repoRoot);
 
 // Sync built outputs to web/.next for Vercel multi-service monorepo tracer
 console.log("==> Syncing outputs to web/.next...");
