@@ -73,3 +73,85 @@ test("invalid contracts do not enqueue jobs", async () => {
   assert.equal(response.status, 422);
   assert.equal(enqueues, 0);
 });
+
+test("authenticated queue job persists a deterministic completed result and retries are safe", async () => {
+  const rows = new Map();
+  const sent = [];
+  const fakeDb = {
+    prepare(sql) {
+      let bindings = [];
+      return {
+        bind(...values) {
+          bindings = values;
+          return this;
+        },
+        async first() {
+          if (sql.includes("sqlite_master")) return { name: "contract_diff_jobs" };
+          if (sql.includes("SELECT status FROM contract_diff_jobs")) {
+            return rows.get(bindings[0]) ?? null;
+          }
+          if (sql.includes("SELECT id, status, breaking")) {
+            return rows.get(bindings[0]) ?? null;
+          }
+          throw new Error("unexpected SELECT");
+        },
+        async run() {
+          if (sql.startsWith("INSERT")) {
+            rows.set(bindings[0], {
+              id: bindings[0],
+              input_sha256: bindings[1],
+              status: "queued",
+              breaking: null,
+              changes_json: null,
+              error_code: null,
+              created_at: "2026-10-12",
+              updated_at: "2026-10-12",
+            });
+          } else if (sql.startsWith("UPDATE") && sql.includes("'completed'")) {
+            const row = rows.get(bindings[2]);
+            if (row?.status === "queued") {
+              row.status = "completed";
+              row.breaking = bindings[0];
+              row.changes_json = bindings[1];
+            }
+          } else if (sql.startsWith("UPDATE") && sql.includes("'failed'")) {
+            const row = rows.get(bindings[0]);
+            row.status = "failed";
+          } else {
+            throw new Error("unexpected UPDATE");
+          }
+        },
+      };
+    },
+  };
+  const workingEnv = {
+    ...env,
+    DB: fakeDb,
+    JOBS: {
+      async send(message) { sent.push(message); },
+    },
+  };
+  const create = await core.fetch(request("/api/v1/contract-diff/jobs", "POST", specs), workingEnv);
+  assert.equal(create.status, 202);
+  const job = await create.json();
+  assert.equal(job.status, "queued");
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].id, job.job_id);
+  let acknowledgements = 0;
+  let retries = 0;
+  const message = {
+    body: sent[0],
+    ack() { acknowledgements++; },
+    retry() { retries++; },
+  };
+  await core.queue({ messages: [message] }, workingEnv);
+  await core.queue({ messages: [message] }, workingEnv);
+  assert.equal(acknowledgements, 2);
+  assert.equal(retries, 0);
+  const poll = await core.fetch(request("/api/v1/contract-diff/jobs/" + job.job_id), workingEnv);
+  assert.equal(poll.status, 200);
+  const result = await poll.json();
+  assert.equal(result.status, "completed");
+  assert.equal(result.breaking, true);
+  assert.equal(result.changes[0].kind, "operation_removed");
+});
