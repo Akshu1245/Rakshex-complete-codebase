@@ -223,10 +223,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build API image (non-root)
-        run: docker build -f Dockerfile --target api -t rakshex-api:ci .
-      - name: Build worker image
-        run: docker build -f Dockerfile --target worker -t rakshex-worker:ci .
       - name: Smoke-test pinned oasdiff against local referenced nested schemas
         run: |
           set -euo pipefail
@@ -238,11 +234,17 @@ jobs:
             /specs/old.yaml /specs/new.yaml > /tmp/oasdiff-ci.json
           code=$?
           set -e
+          echo "Pinned oasdiff exit status: $code"
+          cat /tmp/oasdiff-ci.json
           if [ "$code" -ne 1 ]; then
             echo "Expected documented breaking-change exit 1, got $code"
             exit 1
           fi
           grep -q "response-property-removed" /tmp/oasdiff-ci.json
+      - name: Build API image (non-root)
+        run: docker build -f Dockerfile --target api -t rakshex-api:ci .
+      - name: Build worker image
+        run: docker build -f Dockerfile --target worker -t rakshex-worker:ci .
       - name: Compose config validation
         run: docker compose -f docker-compose.yml config
       - name: Start infra stack
