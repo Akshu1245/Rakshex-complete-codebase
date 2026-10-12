@@ -32,7 +32,7 @@ jobs:
         with:
           node-version: "24"
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile --prod=false
       - name: Test Cloudflare routing and auth fail-closed behavior
         run: node --test scripts/cloudflare/web-staging-routes.test.mjs
       - name: Apply exact upstream manifest fix for Next.js 16.4

@@ -13,10 +13,30 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const packagePath = path.resolve(
-  here,
-  "../../apps/web/node_modules/@opennextjs/cloudflare/package.json",
+// pnpm may store workspace dev dependencies in the root virtual store rather
+// than linking them into apps/web/node_modules when a CI runner uses NODE_ENV.
+const repoRoot = path.resolve(here, "../..");
+const candidates = [
+  path.join(repoRoot, "apps/web/node_modules/@opennextjs/cloudflare"),
+  path.join(repoRoot, "node_modules/@opennextjs/cloudflare"),
+];
+const virtualStore = path.join(repoRoot, "node_modules/.pnpm");
+if (fs.existsSync(virtualStore)) {
+  for (const name of fs.readdirSync(virtualStore)) {
+    if (name.startsWith("@opennextjs+cloudflare@1.20.10")) {
+      candidates.push(
+        path.join(virtualStore, name, "node_modules/@opennextjs/cloudflare"),
+      );
+    }
+  }
+}
+const found = candidates.find((candidate) =>
+  fs.existsSync(path.join(candidate, "package.json")),
 );
+if (!found) {
+  throw new Error("OpenNext 1.20.10 not installed; run pnpm install --prod=false");
+}
+const packagePath = path.join(found, "package.json");
 const meta = JSON.parse(fs.readFileSync(packagePath, "utf8"));
 if (meta.version !== "1.20.10") {
   throw new Error(
