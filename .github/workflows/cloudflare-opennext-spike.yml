@@ -1,0 +1,63 @@
+name: Cloudflare OpenNext frontend build spike
+
+on:
+  push:
+    branches: [feat/cloudflare-opennext-frontend-spike-20261012]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  open-next-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Add adapter in ephemeral CI workspace only
+        run: pnpm --filter @rakshex/web add -D @opennextjs/cloudflare@latest wrangler@latest
+      - name: Generate isolated staging-only adapter configuration
+        run: |
+          cat > apps/web/open-next.config.ts <<'EOF'
+          import { defineCloudflareConfig } from "@opennextjs/cloudflare";
+          export default defineCloudflareConfig();
+          EOF
+          cat > apps/web/wrangler.toml <<'EOF'
+          name = "rakshex-web-opennext-staging"
+          main = ".open-next/worker.js"
+          compatibility_date = "2026-10-12"
+          compatibility_flags = ["nodejs_compat"]
+          workers_dev = true
+          [assets]
+          directory = ".open-next/assets"
+          binding = "ASSETS"
+          [observability]
+          enabled = true
+          EOF
+      - name: Try actual Next.js 16 to OpenNext Cloudflare build
+        shell: bash
+        working-directory: apps/web
+        env:
+          RAKSHEX_DEPLOY_TARGET: cloudflare
+          RAKSHEX_CLOUDFLARE_ENV: staging
+          RAKSHEX_BACKEND_URL: https://rakshex-core-staging.rakshex.workers.dev
+          NEXT_PUBLIC_TS_API_URL: https://rakshex-core-staging.rakshex.workers.dev
+          NEXT_PUBLIC_SITE_URL: https://rakshex-web-opennext-staging.rakshex.workers.dev
+          NEXTAUTH_URL: https://rakshex-web-opennext-staging.rakshex.workers.dev
+          NEXTAUTH_SECRET: ci-only-placeholder-secret-for-build-validation
+          NODE_ENV: production
+        run: |
+          set -o pipefail
+          pnpm exec opennextjs-cloudflare build 2>&1 | tee ../../cloudflare-opennext-build.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cloudflare-opennext-build-log
+          path: cloudflare-opennext-build.log
+          if-no-files-found: ignore
