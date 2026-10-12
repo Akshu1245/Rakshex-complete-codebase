@@ -4,11 +4,9 @@ This is a **source-dependency cleanup**, not a feature removal from the active A
 
 ## Code retired
 
-| File | Why it is safe to propose removal |
-| --- | --- |
-| `apps/api/services/agentOrchestrator.ts` | Internal 29-role keyword/LLM orchestration implementation, with no reachable imports or routes found in the connected repository's symbol/path searches. Its referenced `agents` directory was not found in the current checked-in root or apps directory. |
-| `apps/api/services/aiHealthScore.ts` | An additional 0–100 score engine; source searches found no callers of `calculateAIHealthScore` and no imports of this file. Existing security/cost views and `unifiedRiskScore` remain unchanged. |
-| `scripts/keep-alive-pinger.mjs` | Manual Render free-tier keepalive script; no active entrypoint or job reference found. The scheduled workflow is removed in the separate Quick Scan / legacy cleanup PR. |
+- `apps/api/services/agentOrchestrator.ts`: No reachable imports/routes found during source search for the 29-role keyword/LLM implementation. Its expected agent definitions folder was not found in the checked-in root or apps directory.
+- `apps/api/services/aiHealthScore.ts`: No callers of `calculateAIHealthScore` or file imports found. The existing security/cost views and `unifiedRiskScore` are untouched.
+- `scripts/keep-alive-pinger.mjs`: Unreferenced manual Render free-tier pinger. Its scheduled workflow is retired in a separate security/legacy cleanup PR.
 
 ## Explicitly retained
 
