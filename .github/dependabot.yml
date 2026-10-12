@@ -16,3 +16,6 @@ updates:
     commit-message:
       prefix: "chore"
       include: "scope"
+    ignore:
+      # GHSA-vfj7-8cjw-p6xm: no patched release on npm (3.0.3 is latest).
+      - dependency-name: "braces"
