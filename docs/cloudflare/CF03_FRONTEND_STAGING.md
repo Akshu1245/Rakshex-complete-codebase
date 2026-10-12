@@ -18,6 +18,7 @@ From the repository root:
 pnpm install --frozen-lockfile
 node --test scripts/cloudflare/web-staging-routes.test.mjs
 cd apps/web
+node ../../scripts/cloudflare/patch-opennext-preview-props.mjs
 RAKSHEX_DEPLOY_TARGET=cloudflare RAKSHEX_CLOUDFLARE_ENV=staging RAKSHEX_BACKEND_URL=https://rakshex-core-staging.rakshex.workers.dev pnpm exec opennextjs-cloudflare build
 pnpm exec wrangler deploy --config wrangler.toml --dry-run
 ```
@@ -35,3 +36,7 @@ Until the GitHub app is connected or a scoped deployment token is provided throu
 3. Port authoritative backend auth and verify Google/GitHub OAuth, session cookies, logout/revocation, tenant RBAC and CSRF before enabling login.
 4. Locate and restore the **real RaksHex PostgreSQL** source: currently linked Railway account belongs to DecisionTrace. Preserve signed Firewall evidence.
 5. Migrate and verify remaining API, database, billing and workers; then rehearsed domain/DNS rollback.
+
+## Next.js 16.4 / OpenNext 1.20.10 runtime workaround
+
+The initial local Worker smoke test failed with `Unexpected loadManifest(/.next/server/preview-props.json)`. OpenNext 1.20.10 omits the mandatory Next.js 16.4 `preview-props.json` from its inlined manifest glob. Upstream fix [opennextjs/opennextjs-cloudflare#1356](https://github.com/opennextjs/opennextjs-cloudflare/pull/1356) is not yet merged. The staging build invokes `scripts/cloudflare/patch-opennext-preview-props.mjs` before OpenNext building. The script only edits the exact pinned installed 1.20.10 adapter, requires exactly one matching glob and fails closed if files or versions differ. This is a temporary build-time workaround, **not proof of passing SSR runtime until HTTP smoke is green**. Remove it when a fixed released adapter is verified.

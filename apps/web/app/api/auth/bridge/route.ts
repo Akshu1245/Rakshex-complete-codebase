@@ -19,7 +19,12 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const BACKEND_URL = resolveBackendOrigin(process.env);
+  // Keep legacy deployment's explicit backend priority intact for rollback.
+  // Cloudflare builds always return 503 above, before any cookie is read.
+  const BACKEND_URL =
+    process.env.RAKSHEX_BACKEND_URL ||
+    process.env.NEXT_PUBLIC_TS_API_URL ||
+    resolveBackendOrigin(process.env);
   const cookieHeader = request.headers.get("cookie") ?? "";
   const csrfToken = request.cookies.get("csrf-token")?.value;
 

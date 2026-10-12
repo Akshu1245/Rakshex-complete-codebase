@@ -38,6 +38,7 @@ test("Cloudflare OAuth bridge refuses requests before reading cookies", () => {
   assert.ok(gate >= 0 && cookie > gate);
   assert.match(bridge, /status: 503/);
   assert.match(bridge, /cache-control/);
+  assert.match(bridge, /process\\.env\\.NEXT_PUBLIC_TS_API_URL/);
   assert.doesNotMatch(bridge, /railway\.app/);
 });
 
