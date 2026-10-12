@@ -36,7 +36,8 @@ jobs:
       - name: Test Cloudflare routing and auth fail-closed behavior
         run: node --test scripts/cloudflare/web-staging-routes.test.mjs
       - name: Apply exact upstream manifest fix for Next.js 16.4
-        run: node scripts/cloudflare/patch-opennext-preview-props.mjs\n      - name: Build full RaksHex site for Cloudflare Workers
+        run: node scripts/cloudflare/patch-opennext-preview-props.mjs
+      - name: Build full RaksHex site for Cloudflare Workers
         working-directory: apps/web
         run: pnpm exec opennextjs-cloudflare build
       - name: Validate actual Cloudflare Worker bundle (no deployment)
