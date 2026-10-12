@@ -3,26 +3,26 @@ import { useMemo, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { AlertTriangle, CheckCircle, Activity, Brain, ArrowRight } from "lucide-react";
 
-interface DriftEvent {
+interface CostSpikeEvent {
   id: string;
   timestamp: string;
   agentName: string;
   driftType: "behavior" | "cost" | "latency" | "output";
   severity: "low" | "medium" | "high" | "critical";
-  score: number;
+  magnitude: number;
   baseline: number;
   current: number;
   description: string;
 }
 
-const DRIFT_COLORS = {
+const SPIKE_COLORS = {
   low: "text-[#3B82F6] bg-[#3B82F6]/10 border-[#3B82F6]/20",
   medium: "text-[#FDB022] bg-[#FDB022]/10 border-[#FDB022]/20",
   high: "text-[#F59E0B] bg-[#F59E0B]/10 border-[#F59E0B]/20",
   critical: "text-[#EF4444] bg-[#EF4444]/10 border-[#EF4444]/20",
 };
 
-function severityForMagnitude(magnitude: number): DriftEvent["severity"] {
+function severityForMagnitude(magnitude: number): CostSpikeEvent["severity"] {
   if (magnitude >= 4) return "critical";
   if (magnitude >= 3) return "high";
   if (magnitude >= 2) return "medium";
@@ -40,7 +40,7 @@ export default function AgentDriftPage() {
     { refetchInterval: isMonitoring ? 15000 : false },
   );
 
-  const events: DriftEvent[] = useMemo(() => {
+  const events: CostSpikeEvent[] = useMemo(() => {
     const rows = anomaliesQuery.data ?? [];
     return rows.map((a) => ({
       id: a.hour,
@@ -48,7 +48,7 @@ export default function AgentDriftPage() {
       agentName: `Cost window ${a.hour.slice(5).replace("T", " ")}:00`,
       driftType: "cost" as const,
       severity: severityForMagnitude(a.magnitude),
-      score: Math.min(99, Math.round(a.magnitude * 20)),
+      magnitude: a.magnitude,
       baseline: a.rollingAvg,
       current: a.cost,
       description: `Spend hit $${a.cost.toFixed(2)} vs a 7-day baseline of $${a.rollingAvg.toFixed(2)} (${a.magnitude}× higher) — possible runaway loop, context bloat, or traffic spike.`,
@@ -62,7 +62,9 @@ export default function AgentDriftPage() {
   const selectedEvent = events.find((e) => e.id === selectedId) ?? null;
   const criticalCount = events.filter((e) => e.severity === "critical").length;
   const highCount = events.filter((e) => e.severity === "high").length;
-  const avgDriftScore = Math.round(events.reduce((a, e) => a + e.score, 0) / (events.length || 1));
+  const avgSpikeMagnitude = (
+    events.reduce((total, event) => total + event.magnitude, 0) / (events.length || 1)
+  ).toFixed(1);
   const loading = anomaliesQuery.isLoading;
 
   return (
@@ -84,7 +86,7 @@ export default function AgentDriftPage() {
           className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${isMonitoring ? "bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/30" : "bg-black/50 text-gray-400 border border-[#2D3E50]"}`}
         >
           <Activity className={`w-4 h-4 ${isMonitoring ? "animate-pulse" : ""}`} />
-          {isMonitoring ? "Monitoring Live" : "Paused"}
+          {isMonitoring ? "Auto-refresh on" : "Auto-refresh off"}
         </button>
       </div>
 
@@ -92,9 +94,9 @@ export default function AgentDriftPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
           { label: "Anomalies (14d)", value: events.length, color: "text-[#3B82F6]" },
-          { label: "Critical Drifts", value: criticalCount, color: "text-[#EF4444]" },
+          { label: "Critical Spend Spikes", value: criticalCount, color: "text-[#EF4444]" },
           { label: "High Severity", value: highCount, color: "text-[#F59E0B]" },
-          { label: "Avg Drift Score", value: `${avgDriftScore}%`, color: "text-[#00F0FF]" },
+          { label: "Avg Spike vs Baseline", value: `${avgSpikeMagnitude}×`, color: "text-[#00F0FF]" },
         ].map((stat) => (
           <div key={stat.label} className="bg-black/50 rounded-xl p-5 border border-[#2D3E50]">
             <p className="text-gray-400 text-xs uppercase tracking-wider mb-2">{stat.label}</p>
@@ -133,10 +135,9 @@ export default function AgentDriftPage() {
           {!loading && filtered.length === 0 && (
             <div className="text-center py-16 text-gray-500">
               <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-500/50" />
-              <p className="font-medium">No drift events detected</p>
+              <p className="font-medium">No cost spikes detected</p>
               <p className="text-sm mt-1">
-                Your agents are within their cost baseline. Anomalies appear here as telemetry
-                accumulates.
+                No spikes matched the current threshold in the available telemetry window.
               </p>
             </div>
           )}
@@ -150,7 +151,7 @@ export default function AgentDriftPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1.5">
                     <span
-                      className={`text-xs font-bold px-2 py-0.5 rounded-full border capitalize ${DRIFT_COLORS[event.severity]}`}
+                      className={`text-xs font-bold px-2 py-0.5 rounded-full border capitalize ${SPIKE_COLORS[event.severity]}`}
                     >
                       {event.severity}
                     </span>
@@ -166,10 +167,10 @@ export default function AgentDriftPage() {
                 </div>
                 <div className="text-right shrink-0">
                   <p className="text-2xl font-bold text-white">
-                    {event.score}
-                    <span className="text-xs text-gray-500">%</span>
+                    {event.magnitude.toFixed(1)}
+                    <span className="text-xs text-gray-500">×</span>
                   </p>
-                  <p className="text-xs text-gray-500">drift score</p>
+                  <p className="text-xs text-gray-500">vs baseline</p>
                 </div>
               </div>
             </button>
@@ -208,8 +209,8 @@ export default function AgentDriftPage() {
                   <span className="text-[#EF4444] font-mono">${selectedEvent.current}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-400">Drift Score</span>
-                  <span className="text-[#00F0FF] font-bold">{selectedEvent.score}%</span>
+                  <span className="text-gray-400">Spend vs Baseline</span>
+                  <span className="text-[#00F0FF] font-bold">{selectedEvent.magnitude.toFixed(1)}×</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-400">Detected</span>
