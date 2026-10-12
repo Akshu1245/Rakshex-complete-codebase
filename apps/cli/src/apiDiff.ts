@@ -6,6 +6,7 @@ import { readFileSync, statSync } from "node:fs";
 import { basename, extname, resolve } from "node:path";
 import { parse as parseYaml } from "yaml";
 import { diffOpenApiContracts } from "@rakshex/scanner-core";
+import { runOasdiff } from "./oasdiffAdapter.js";
 
 const MAX_SPEC_BYTES = 5 * 1024 * 1024;
 
@@ -29,10 +30,27 @@ function readOpenApiFile(filePath: string): unknown {
   }
 }
 
+function validateOpenApiDocument(input: unknown): void {
+  if (
+    !input ||
+    typeof input !== "object" ||
+    Array.isArray(input) ||
+    !("openapi" in input) ||
+    typeof input.openapi !== "string" ||
+    !/^3\.[01](?:\.|$)/.test(input.openapi) ||
+    !("paths" in input) ||
+    !input.paths ||
+    typeof input.paths !== "object" ||
+    Array.isArray(input.paths)
+  ) {
+    throw new Error("Expected an OpenAPI 3.0/3.1 document with a paths object.");
+  }
+}
+
 export function cmdApiDiff(positional: string[], flags: Record<string, string | boolean>): number {
   if (positional.length !== 3 || positional[0] !== "diff") {
     console.error(
-      "Usage: rakshex api diff <old.json|yaml> <new.json|yaml> [--format terminal|json]",
+      "Usage: rakshex api diff <old.json|yaml> <new.json|yaml> [--engine basic|oasdiff] [--format terminal|json]",
     );
     return 2;
   }
@@ -41,22 +59,33 @@ export function cmdApiDiff(positional: string[], flags: Record<string, string | 
     console.error("api diff: --format must be terminal or json");
     return 2;
   }
-  if (Object.keys(flags).some((key) => key !== "format")) {
+  const engine = flags.engine ?? "basic";
+  if (engine !== "basic" && engine !== "oasdiff") {
+    console.error("api diff: --engine must be basic or oasdiff");
+    return 2;
+  }
+  if (Object.keys(flags).some((key) => key !== "format" && key !== "engine")) {
     console.error("api diff: unsupported option");
     return 2;
   }
   try {
     const before = readOpenApiFile(positional[1]!);
     const after = readOpenApiFile(positional[2]!);
-    const result = diffOpenApiContracts(before, after);
+    validateOpenApiDocument(before);
+    validateOpenApiDocument(after);
+    const result =
+      engine === "oasdiff"
+        ? runOasdiff(resolve(positional[1]!), resolve(positional[2]!))
+        : diffOpenApiContracts(before, after);
     if (format === "json") {
       console.log(JSON.stringify(result, null, 2));
     } else {
       console.log("Detected " + result.changes.length + " supported breaking change(s).");
       for (const change of result.changes) {
-        console.log(
-          "  [" + change.kind + "] " + change.method + " " + change.path + ": " + change.message,
-        );
+        const kind = "kind" in change ? change.kind : change.id;
+        const method = "method" in change ? change.method : change.operation ?? "API";
+        const detail = "message" in change ? change.message : change.text ?? change.id;
+        console.log("  [" + kind + "] " + method + " " + change.path + ": " + detail);
       }
       console.log("Coverage: " + result.scope);
     }
