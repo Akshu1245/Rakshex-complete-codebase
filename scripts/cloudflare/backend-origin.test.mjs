@@ -3,7 +3,9 @@ import { createRequire } from "node:module";
 import { test } from "node:test";
 
 const require = createRequire(import.meta.url);
-const { resolveBackendOrigin, LEGACY_RAILWAY_ORIGIN } = require("../../apps/web/backend-origin.cjs");
+const { resolveBackendOrigin, LEGACY_RAILWAY_ORIGIN } = require(
+  "../../apps/web/backend-origin.cjs",
+);
 
 test("existing production routing is unchanged until cutover", () => {
   assert.equal(resolveBackendOrigin({ NODE_ENV: "production" }), LEGACY_RAILWAY_ORIGIN);
@@ -14,7 +16,10 @@ test("existing production routing is unchanged until cutover", () => {
 });
 
 test("Cloudflare staging requires a distinct explicit HTTPS backend", () => {
-  const staging = { RAKSHEX_DEPLOY_TARGET: "cloudflare", RAKSHEX_CLOUDFLARE_ENV: "staging" };
+  const staging = {
+    RAKSHEX_DEPLOY_TARGET: "cloudflare",
+    RAKSHEX_CLOUDFLARE_ENV: "staging",
+  };
   assert.equal(
     resolveBackendOrigin({
       ...staging,

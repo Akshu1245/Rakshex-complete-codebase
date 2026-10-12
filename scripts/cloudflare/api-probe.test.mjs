@@ -32,7 +32,12 @@ test("staging probe fails visibly if a binding is missing", async () => {
 });
 
 test("staging probe never advertises business API or authorizes actions", async () => {
-  for (const path of ["/api/health", "/api/trpc/agentFirewall.evaluate", "/api/scan", "/api/webhooks/github"]) {
+  for (const path of [
+    "/api/health",
+    "/api/trpc/agentFirewall.evaluate",
+    "/api/scan",
+    "/api/webhooks/github",
+  ]) {
     const response = await probe.fetch(
       new Request(`https://rakshex-api-staging.rakshex.workers.dev${path}`, {
         method: "POST",

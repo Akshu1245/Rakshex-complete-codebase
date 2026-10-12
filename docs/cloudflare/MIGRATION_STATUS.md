@@ -19,14 +19,21 @@
 
 The following empty resources were created within the connected RaksHex Cloudflare account. They deliberately **do not** point at existing Firewall production resources:
 
-| Resource | Staging name | Identifier |
-|---|---|---|
-| D1 | `rakshex-migration-staging` | `3e13ba92-e005-4220-a272-cb972a57bf9d` |
-| Queue | `rakshex-migration-staging-jobs` | `52094ebbbbf446a6a2d6dfb941763547` |
-| KV | `rakshex-migration-staging-config` | `c70babd55491444e96046824fde32224` |
-| R2 | `rakshex-migration-staging-objects` | resource name only |
+- **D1 database:** `rakshex-migration-staging` — `3e13ba92-e005-4220-a272-cb972a57bf9d`.
+- **Queue:** `rakshex-migration-staging-jobs` — `52094ebbbbf446a6a2d6dfb941763547`.
+- **KV:** `rakshex-migration-staging-config` — `c70babd55491444e96046824fde32224`.
+- **R2:** `rakshex-migration-staging-objects` (bucket name).
 
 No real customer data has been copied into these staging resources. No RaksHex production route or setting is changed by this infrastructure provisioning.
+
+## Actual isolated staging probe deployment
+
+- Cloudflare Worker: `rakshex-api-staging`, deployed October 12, 2026 using the reviewed branch probe source.
+- The deployment API reports 100% traffic assigned to this Worker version; the `workers.dev` subdomain is enabled.
+- Verified settings bind **only** the new staging resources above.
+- Intended probe URL: `https://rakshex-api-staging.rakshex.workers.dev/__health`.
+- A successful external HTTP response has **not** been independently observed: the external fetch tool could not access this URL. Treat HTTP health as **unverified** until an operator runs `curl`.
+- No customer API endpoints, database migration, frontend routing or production domain were deployed.
 
 ## Safety boundary introduced in this branch
 
@@ -38,9 +45,9 @@ No real customer data has been copied into these staging resources. No RaksHex p
 - `cloudflare/staging/wrangler.api.toml` binds only the staging resources.
 - `node --test scripts/cloudflare/*.test.mjs` exercises staging isolation, Railway fallback rejection and deliberate API unavailability.
 
-## How to deploy the isolated probe (not a production cutover)
+## Reproduce the isolated probe deployment (not a production cutover)
 
-After reviewing/merging this PR and obtaining Wrangler authorization for the RaksHex account:
+The isolated probe was already uploaded through the Cloudflare API. To reproduce it from GitHub using the operator's authorized Wrangler session:
 
 ```bash
 # From repository root, with an authenticated Wrangler session:
