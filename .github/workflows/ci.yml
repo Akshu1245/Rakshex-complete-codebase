@@ -227,6 +227,22 @@ jobs:
         run: docker build -f Dockerfile --target api -t rakshex-api:ci .
       - name: Build worker image
         run: docker build -f Dockerfile --target worker -t rakshex-worker:ci .
+      - name: Smoke-test pinned oasdiff against local referenced nested schemas
+        run: |
+          set -euo pipefail
+          set +e
+          docker run --rm \
+            -v "$PWD/apps/cli/fixtures/api-contracts:/specs:ro" \
+            tufin/oasdiff:v1.29.1 \
+            breaking --format json --fail-on WARN --allow-external-refs=false -- \
+            /specs/old.yaml /specs/new.yaml > /tmp/oasdiff-ci.json
+          code=$?
+          set -e
+          if [ "$code" -ne 1 ]; then
+            echo "Expected documented breaking-change exit 1, got $code"
+            exit 1
+          fi
+          grep -q "response-property-removed" /tmp/oasdiff-ci.json
       - name: Compose config validation
         run: docker compose -f docker-compose.yml config
       - name: Start infra stack
