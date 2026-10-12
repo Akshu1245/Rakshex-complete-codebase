@@ -24,15 +24,11 @@ const virtualStore = path.join(repoRoot, "node_modules/.pnpm");
 if (fs.existsSync(virtualStore)) {
   for (const name of fs.readdirSync(virtualStore)) {
     if (name.startsWith("@opennextjs+cloudflare@1.20.10")) {
-      candidates.push(
-        path.join(virtualStore, name, "node_modules/@opennextjs/cloudflare"),
-      );
+      candidates.push(path.join(virtualStore, name, "node_modules/@opennextjs/cloudflare"));
     }
   }
 }
-const found = candidates.find((candidate) =>
-  fs.existsSync(path.join(candidate, "package.json")),
-);
+const found = candidates.find((candidate) => fs.existsSync(path.join(candidate, "package.json")));
 if (!found) {
   throw new Error("OpenNext 1.20.10 not installed; run pnpm install --prod=false");
 }
