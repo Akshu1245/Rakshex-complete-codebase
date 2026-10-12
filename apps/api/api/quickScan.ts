@@ -2,23 +2,22 @@
  * Public, unauthenticated quick-scan lead magnet.
  *
  *   POST /api/public/quick-scan
- *   body: { spec: <Postman|OpenAPI JSON>, format? }  OR  { url: <spec url> }
+ *   body: { spec: <Postman|OpenAPI JSON> }
  *
  * Runs the deterministic scanner-core rules + credential detection on a pasted
- * API spec (or one fetched from a URL) with NO authentication, returns a capped
+ * API spec with NO authentication, returns a capped
  * set of findings, and prompts account creation for the full report. This is
  * the "instant scan / Oh Crap" acquisition moment described in the build guide.
  *
- * Safety: IP rate-limited, request-size capped, and SSRF-guarded when fetching
- * a spec URL. It never persists anything and never makes requests to the
- * scanned API itself (the scan is static analysis of the spec).
+ * Safety: IP rate-limited and request-size capped. Remote URL fetching is
+ * deliberately disabled on this unauthenticated endpoint: it could otherwise
+ * become an SSRF primitive. The scanner is static and never makes requests to
+ * targets described by the supplied document.
  */
 import type { Express, Request, Response } from "express";
 import rateLimit from "express-rate-limit";
 import express from "express";
 import { logger } from "../_core/logger";
-import { fetchWithTimeout } from "../utils/fetchWithTimeout";
-import { buildValidatedScanUrl, validateScanTarget } from "../utils/validateScanTarget";
 import {
   generateRealFindings,
   calculateRiskScore,
@@ -28,7 +27,6 @@ import {
 import { scanCollectionForCredentials } from "../services/collectionCredentialScan";
 
 const MAX_FINDINGS = 5;
-const MAX_SPEC_BYTES = 2 * 1024 * 1024; // 2MB
 
 const quickScanLimiter = rateLimit({
   windowMs: 24 * 60 * 60 * 1000, // 1 day
@@ -47,47 +45,29 @@ export function registerQuickScanRoute(app: Express): void {
     express.json({ limit: "2mb" }),
     async (req: Request, res: Response) => {
       try {
-        let spec: unknown = req.body?.spec;
-
-        // Optionally fetch the spec from a URL (SSRF-guarded).
-        if (!spec && typeof req.body?.url === "string") {
-          const check = await validateScanTarget(req.body.url);
-          if (
-            !check.ok ||
-            !check.hostname ||
-            (check.protocol !== "http:" && check.protocol !== "https:")
-          ) {
-            res.status(400).json({ error: `Blocked target: ${check.reason ?? "invalid"}` });
-            return;
-          }
-          const safeHref = buildValidatedScanUrl({
-            protocol: check.protocol,
-            hostname: check.hostname,
-            pathname: check.pathname,
-            search: check.search,
+        // Reject even a URL supplied alongside a document. Public clients must
+        // never cause this API process to fetch attacker-controlled locations.
+        if (req.body?.url !== undefined) {
+          res.status(400).json({
+            error: "Remote URL scanning is disabled. Paste or upload an OpenAPI/Postman document.",
           });
-          // Fetch only the rebuilt URL — never raw req.body.url.
-          const resp = await fetchWithTimeout(safeHref, { timeoutMs: 5000 });
-          if (!resp.ok) {
-            res.status(400).json({ error: `Could not fetch spec (HTTP ${resp.status})` });
-            return;
-          }
-          const text = await resp.text();
-          if (text.length > MAX_SPEC_BYTES) {
-            res.status(413).json({ error: "Spec too large for quick scan" });
-            return;
-          }
-          try {
-            spec = JSON.parse(text);
-          } catch {
-            res.status(400).json({ error: "Fetched spec is not valid JSON" });
-            return;
-          }
+          return;
         }
 
-        if (!spec || typeof spec !== "object") {
+        const spec: unknown = req.body?.spec;
+        if (!spec || typeof spec !== "object" || Array.isArray(spec)) {
           res.status(400).json({
-            error: "Provide a Postman/OpenAPI spec in `spec`, or a `url` to fetch one.",
+            error: "Provide an OpenAPI or Postman document object in `spec`.",
+          });
+          return;
+        }
+        const doc = spec as Record<string, unknown>;
+        if (
+          !Array.isArray(doc.item) &&
+          !(doc.paths && typeof doc.paths === "object" && !Array.isArray(doc.paths))
+        ) {
+          res.status(400).json({
+            error: "The document must contain OpenAPI `paths` or Postman `item`.",
           });
           return;
         }
