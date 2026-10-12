@@ -39,9 +39,7 @@ export function ensureAppsWebNextSymlink(repoRoot = process.cwd()) {
   fs.mkdirSync(path.dirname(linkPath), { recursive: true });
   const relativeTarget = path.relative(path.dirname(linkPath), hoistedNext);
   fs.symlinkSync(relativeTarget, linkPath, "dir");
-  console.log(
-    `[vercel-cleanup] Linked apps/web/node_modules/next -> ${relativeTarget}`,
-  );
+  console.log(`[vercel-cleanup] Linked apps/web/node_modules/next -> ${relativeTarget}`);
 }
 
 const ADAPTER_STUB = "module.exports = {};";
