@@ -13,6 +13,24 @@ console.log(result.scope); // Always display the scope limitation.
 
 The function is pure and needs **no** network, API key, LLM credit, GitHub access, database or queue.
 
+## Local CLI usage (beta)
+
+Within a checked-out repository workspace, run:
+
+```bash
+pnpm --filter @rakshex/cli dev api diff old-openapi.yaml new-openapi.json --format json
+```
+
+This uses the existing TypeScript CLI runner; **the CLI package is still private and not yet a published, compiled npm binary**. An eventual `npx rakshex` command needs its own packaging/release verification.
+
+The comparison reads only two local `.json`, `.yaml` or `.yml` OpenAPI 3.0/3.1 documents (maximum 5 MiB each), and never uploads them. `--format json` writes the report to standard output; the default terminal view lists detected changes and the partial-coverage warning.
+
+Exit codes: **0** = no _supported_ breaking changes detected (not guaranteed compatible); **1** = supported breaking changes detected; **2** = usage, invalid documents or unsupported schema feature. Neither outcome edits source files, calls a provider API or opens a pull request.
+
+For an end-to-end test, use `pnpm --filter @rakshex/cli test`. The detector does **not** resolve `$ref` graphs or provide comprehensive compatibility checking.
+
+**Safety for CI use:** Check both specs into a trusted workspace or use trusted local files. A clean comparison is a partial signal only; do not use exit code 0 as an automatic migration or deployment approval.
+
 ## Currently detected
 
 - Removed HTTP methods on previously supported paths
@@ -36,7 +54,7 @@ The report is deterministic, sorted by old path and HTTP method, with no auto-ed
 ## Next increments
 
 1. Evaluate maintained open-source `oasdiff` or `openapi-diff` for more comprehensive breaking-change coverage; compare license, runtime placement and rule compatibility before adding dependencies.
-2. Add sandboxed fixtures and a CLI command that accepts **two local** OpenAPI documents and exports JSON results. Fail clearly on unsupported schema features.
+2. **Implemented as a beta CLI subcommand:** compare two local OpenAPI documents, report JSON or terminal output, and fail explicitly on unsupported schema features. Next: add more comprehensive fixtures and broader OpenAPI compatibility checks.
 3. Once the detection signal is reliable, build vendor-watch ingestion and impacted customer call-site analysis.
 4. Produce isolated, test-validated, **approval-only** migration PRs. Route consequential repository actions through the existing RaksHex Agent Firewall/Action Ledger.
 
