@@ -5,8 +5,14 @@ import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
 const { resolveBackendOrigin } = require("../../apps/web/backend-origin.cjs");
-const bridge = fs.readFileSync(new URL("../../apps/web/app/api/auth/bridge/route.ts", import.meta.url), "utf8");
-const oauth = fs.readFileSync(new URL("../../apps/web/app/api/auth/[...nextauth]/route.ts", import.meta.url), "utf8");
+const bridge = fs.readFileSync(
+  new URL("../../apps/web/app/api/auth/bridge/route.ts", import.meta.url),
+  "utf8",
+);
+const oauth = fs.readFileSync(
+  new URL("../../apps/web/app/api/auth/[...nextauth]/route.ts", import.meta.url),
+  "utf8",
+);
 const cfg = fs.readFileSync(new URL("../../apps/web/wrangler.toml", import.meta.url), "utf8");
 
 test("staging Worker routes to Cloudflare and never Railway", () => {
@@ -16,7 +22,12 @@ test("staging Worker routes to Cloudflare and never Railway", () => {
     RAKSHEX_BACKEND_URL: "https://rakshex-core-staging.rakshex.workers.dev",
   };
   assert.equal(resolveBackendOrigin(env), env.RAKSHEX_BACKEND_URL);
-  assert.throws(() => resolveBackendOrigin({ ...env, RAKSHEX_BACKEND_URL: "https://api-production-0a2b.up.railway.app" }));
+  assert.throws(() =>
+    resolveBackendOrigin({
+      ...env,
+      RAKSHEX_BACKEND_URL: "https://api-production-0a2b.up.railway.app",
+    }),
+  );
   assert.match(cfg, /name = "rakshex-web-opennext-staging"/);
   assert.doesNotMatch(cfg, /rakshex-firewall|railway\.app|zone_id|\[\[routes\]\]/);
 });
