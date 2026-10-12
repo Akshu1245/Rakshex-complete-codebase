@@ -3,7 +3,7 @@ name: CF03 CVE lock refresh one-shot
 on:
   push:
     branches: [feat/cloudflare-full-web-staging-20261012]
-    paths: [".github/workflows/cf03-security-lock-once.yml"]
+    paths: [".github/workflows/cf03-security-lock-once.yml", "package.json"]
 
 permissions:
   contents: write

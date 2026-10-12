@@ -11,8 +11,6 @@ allowBuilds:
   unrs-resolver: true
 
 overrides:
-  # CVE-2025-64756: glob v10 command-injection fix (keep other majors unchanged)
-  "glob@>=10.0.0 <10.5.0": "10.5.0"
   qs: "6.15.2"
   ws: "8.21.0"
   postcss: "8.5.26"
