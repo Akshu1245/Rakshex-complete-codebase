@@ -50,3 +50,7 @@ pnpm --filter @rakshex/scanner-core typecheck
 ```
 
 The GitHub CI and security scan must pass on the exact PR head commit before merging. Local/CI results, when obtained, should be recorded separately; source existence alone is not proof of test success.
+
+## Merge policy
+
+This beta implementation must not run migration actions or declare an integration safe. Merge only after both the repository CI and independent Security scan complete successfully for the exact PR head SHA. Runtime and customer-facing workflows require separate integration testing.
