@@ -37,7 +37,7 @@ describe("rakshex api diff (real CLI process)", () => {
   it("detects a removed operation when comparing YAML to JSON", () => {
     const before = writeFixture(
       "old.yaml",
-      "openapi: 3.0.3\npaths:\n  /orders:\n    get:\n      responses:\n        \"200\":\n          description: OK\n",
+      'openapi: 3.0.3\npaths:\n  /orders:\n    get:\n      responses:\n        "200":\n          description: OK\n',
     );
     const after = writeFixture("new.json", JSON.stringify({ openapi: "3.0.3", paths: {} }));
     const result = invoke("diff", before, after, "--format", "json");

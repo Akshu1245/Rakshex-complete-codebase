@@ -12,6 +12,7 @@ console.log(result.scope); // Always display the scope limitation.
 ```
 
 The function is pure and needs **no** network, API key, LLM credit, GitHub access, database or queue.
+
 ## Local CLI usage (beta)
 
 Within a checked-out repository workspace, run:
@@ -24,10 +25,9 @@ This uses the existing TypeScript CLI runner; **the CLI package is still private
 
 The comparison reads only two local `.json`, `.yaml` or `.yml` OpenAPI 3.0/3.1 documents (maximum 5 MiB each), and never uploads them. `--format json` writes the report to standard output; the default terminal view lists detected changes and the partial-coverage warning.
 
-Exit codes: **0** = no *supported* breaking changes detected (not guaranteed compatible); **1** = supported breaking changes detected; **2** = usage, invalid documents or unsupported schema feature. Neither outcome edits source files, calls a provider API or opens a pull request.
+Exit codes: **0** = no _supported_ breaking changes detected (not guaranteed compatible); **1** = supported breaking changes detected; **2** = usage, invalid documents or unsupported schema feature. Neither outcome edits source files, calls a provider API or opens a pull request.
 
 For an end-to-end test, use `pnpm --filter @rakshex/cli test`. The detector does **not** resolve `$ref` graphs or provide comprehensive compatibility checking.
-
 
 ## Currently detected
 

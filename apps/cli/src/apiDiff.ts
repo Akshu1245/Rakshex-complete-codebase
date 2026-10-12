@@ -29,12 +29,11 @@ function readOpenApiFile(filePath: string): unknown {
   }
 }
 
-export function cmdApiDiff(
-  positional: string[],
-  flags: Record<string, string | boolean>,
-): number {
+export function cmdApiDiff(positional: string[], flags: Record<string, string | boolean>): number {
   if (positional.length !== 3 || positional[0] !== "diff") {
-    console.error("Usage: rakshex api diff <old.json|yaml> <new.json|yaml> [--format terminal|json]");
+    console.error(
+      "Usage: rakshex api diff <old.json|yaml> <new.json|yaml> [--format terminal|json]",
+    );
     return 2;
   }
   const format = flags.format ?? "terminal";
