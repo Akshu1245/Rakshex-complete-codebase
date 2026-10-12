@@ -110,6 +110,7 @@ jobs:
           JWT_SECRET: test-secret-ci-unit
           REDIS_URL: redis://127.0.0.1:6379
       - run: pnpm --filter @rakshex/cli test
+      - run: node --test scripts/vercel-should-build.test.mjs
 
   python-sdk:
     name: Python SDK (${{ matrix.python-version }})
