@@ -240,7 +240,8 @@ jobs:
             echo "Expected documented breaking-change exit 1, got $code"
             exit 1
           fi
-          grep -q "response-property-removed" /tmp/oasdiff-ci.json
+          grep -q '"id":"response-property-type-changed"' /tmp/oasdiff-ci.json
+          grep -q '"id":"response-optional-property-removed"' /tmp/oasdiff-ci.json
       - name: Build API image (non-root)
         run: docker build -f Dockerfile --target api -t rakshex-api:ci .
       - name: Build worker image
