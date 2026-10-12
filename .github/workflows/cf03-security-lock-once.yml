@@ -1,0 +1,40 @@
+name: CF03 CVE lock refresh one-shot
+
+on:
+  push:
+    branches: [feat/cloudflare-full-web-staging-20261012]
+    paths: [".github/workflows/cf03-security-lock-once.yml"]
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/cloudflare-full-web-staging-20261012
+          persist-credentials: true
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+      - name: Refresh lockfile for narrow glob CVE security override
+        run: pnpm install --lockfile-only --prod=false --no-frozen-lockfile
+      - name: Ensure no vulnerable glob snapshot remains
+        run: |
+          if grep -Eq '^  glob@10\.3\.3:' pnpm-lock.yaml; then
+            echo "Vulnerable glob 10.3.3 remains"; exit 1
+          fi
+      - name: Commit regenerated lockfile
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pnpm-lock.yaml
+          if ! git diff --cached --quiet; then
+            git commit -m "fix(lock): resolve glob CVE-2025-64756 to 10.5.0"
+            git push origin HEAD:refs/heads/feat/cloudflare-full-web-staging-20261012
+          fi
