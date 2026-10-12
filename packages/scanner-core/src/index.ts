@@ -35,3 +35,11 @@ export {
   type SecretFinding,
   type SecretSeverity,
 } from "./secrets.js";
+
+// YC #13 (beta): static, conservative OpenAPI contract differences.
+export {
+  diffOpenApiContracts,
+  type ContractChange,
+  type ContractChangeKind,
+  type ContractDiffResult,
+} from "./contractDiff.js";
