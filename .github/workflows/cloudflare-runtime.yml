@@ -1,0 +1,41 @@
+name: Cloudflare runtime staging checks
+
+on:
+  pull_request:
+    paths:
+      - "cloudflare/staging/**"
+      - "scripts/cloudflare/core-runtime.test.mjs"
+      - ".github/workflows/cloudflare-runtime.yml"
+      - "packages/scanner-core/src/contractDiff.ts"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  runtime:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Run staging runtime tests with the repository engine
+        run: node --experimental-strip-types --test scripts/cloudflare/core-runtime.test.mjs
+      - name: Compile a Cloudflare-compatible Worker bundle (no upload)
+        run: pnpm dlx wrangler deploy --dry-run --config cloudflare/staging/wrangler.core.toml --outdir /tmp/rakshex-core-bundle
+      - name: Validate the additive SQLite migration in memory
+        run: |
+          python3 - <<'PY'
+          import sqlite3
+          from pathlib import Path
+          sql = Path("cloudflare/staging/migrations/0001_contract_diff_jobs.sql").read_text()
+          con = sqlite3.connect(":memory:")
+          con.executescript(sql)
+          con.executescript(sql)
+          assert con.execute("select name from sqlite_master where type='table' and name='contract_diff_jobs'").fetchone()
+          print("Additive staging migration applies twice without dropping data")
+          PY
