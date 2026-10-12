@@ -4,7 +4,8 @@
  *
  * Commands: login | configure | scan | api diff | secrets | policy | report | doctor | rules | help
  * Outputs:  terminal | json | sarif
- * Offline:  scan / secrets / api diff use @rakshex/scanner-core (deterministic, no network)
+ * Offline:  scan / secrets / basic api diff use deterministic scanner-core
+ * Extended API diff: optional trusted oasdiff binary, local files only.
  */
 import {
   readFileSync,
@@ -91,7 +92,7 @@ Usage:
   rakshex login --api-key <key> [--api-url <url>]
   rakshex configure --fail-on Critical,High [--ignore-rules id1,id2]
   rakshex scan <file-or-dir> [--format terminal|json|sarif] [--fail-on High] [--baseline] [--upload]
-  rakshex api diff <old.json|yaml> <new.json|yaml> [--format terminal|json]
+  rakshex api diff <old.json|yaml> <new.json|yaml> [--engine basic|oasdiff] [--format terminal|json]
   rakshex secrets <path> [--format terminal|json] [--fail-on Critical,High]
   rakshex secrets rules
   rakshex policy check <file> [--format json]

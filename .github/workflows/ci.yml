@@ -224,6 +224,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Smoke-test pinned oasdiff against local referenced nested schemas
+        run: |
+          set -euo pipefail
+          set +e
+          docker run --rm \
+            -v "$PWD/apps/cli/fixtures/api-contracts:/specs:ro" \
+            tufin/oasdiff:v1.29.1 \
+            breaking --format json --fail-on WARN --allow-external-refs=false -- \
+            /specs/old.yaml /specs/new.yaml > /tmp/oasdiff-ci.json
+          code=$?
+          set -e
+          echo "Pinned oasdiff exit status: $code"
+          cat /tmp/oasdiff-ci.json
+          if [ "$code" -ne 1 ]; then
+            echo "Expected documented breaking-change exit 1, got $code"
+            exit 1
+          fi
+          grep -q '"id":"response-property-type-changed"' /tmp/oasdiff-ci.json
+          grep -q '"id":"response-optional-property-removed"' /tmp/oasdiff-ci.json
       - name: Build API image (non-root)
         run: docker build -f Dockerfile --target api -t rakshex-api:ci .
       - name: Build worker image

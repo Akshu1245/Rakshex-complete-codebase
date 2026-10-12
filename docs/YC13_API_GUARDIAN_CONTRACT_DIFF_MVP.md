@@ -31,6 +31,22 @@ For an end-to-end test, use `pnpm --filter @rakshex/cli test`. The detector does
 
 **Safety for CI use:** Check both specs into a trusted workspace or use trusted local files. A clean comparison is a partial signal only; do not use exit code 0 as an automatic migration or deployment approval.
 
+## Extended detection with oasdiff (optional, offline)
+
+For broader OpenAPI compatibility detection, RaksHex can invoke the maintained [oasdiff](https://github.com/oasdiff/oasdiff) command-line tool as an **opt-in engine**. Install a trusted oasdiff binary and add it to your PATH. Windows, Linux and macOS builds are available from the [official releases](https://github.com/oasdiff/oasdiff/releases). The CI smoke test pins version `v1.29.1`; for reproducibility, use that version locally too.
+
+```bash
+pnpm --filter @rakshex/cli dev api diff old.yaml new.yaml --engine oasdiff --format json
+```
+
+This invokes `oasdiff breaking --format json --fail-on WARN --allow-external-refs=false -- <local-old-file> <local-new-file>`. The `--` separator prevents file paths from being interpreted as flags. Remote and external `$ref` loading is disabled explicitly to reduce SSRF/file-import exposure from untrusted documents. Both inputs remain **local files only**, with a 5 MiB limit each; the command makes no RaksHex cloud request. The adapter uses a fixed subprocess argument array, no shell, a 30-second timeout and capped output; unexpected engine output or exit codes become exit 2 instead of a false-clean report. Do not use `--open` with confidential specs: it is not supported by this adapter.
+
+The default `--engine basic` keeps the original narrow deterministic scanner. The extended `oasdiff` report exposes stable `id`, `level`, operation/path and summary text. Exit code 1 means ERR/WARN-level changes were found, which include _possible_ rather than only proven breaking changes. Exit 0 means none were reported **by that tool**—not verified runtime compatibility. If the external executable is absent or reports an unexpected result, exit code 2 is returned; there is no silent fallback to the basic engine.
+
+The new fixture in `apps/cli/fixtures/api-contracts/` demonstrates `$ref`-backed response schema evolution, nested property removal and response type changes. The Docker CI job calls a pinned oasdiff release on these local fixtures; RaksHex CLI unit tests also verify safe subprocess invocation and errors.
+
+The oasdiff package is Apache-2.0 licensed and remains a separate local tool; the RaksHex package doesn't embed or redistribute its binary.
+
 ## Currently detected
 
 - Removed HTTP methods on previously supported paths
@@ -44,16 +60,16 @@ The report is deterministic, sorted by old path and HTTP method, with no auto-ed
 ## Explicit non-goals / limitations
 
 - The old and new documents must be OpenAPI 3.0/3.1 objects with `paths`.
-- Neither external nor local `$ref` graphs are resolved; unsupported references on inspected paths throw errors instead of being falsely reported safe.
+- The **basic** engine does not resolve local or external `$ref` graphs; unsupported references on inspected paths throw errors. The optional oasdiff engine supports local `$ref`s, with external references disabled for untrusted input.
 - Only top-level `application/json` request properties and status-200 response properties are covered.
-- Missing comparison categories include response status removal, schema type changes, enum reductions, nested fields, auth requirements, media type changes, semantic constraints, SDK call-site impact, aliases, polymorphic schemas and vendor-specific extensions.
+- In the **basic** engine, missing comparison categories include response status removal, schema type changes, enum reductions, nested fields, auth requirements, media type changes, semantic constraints, SDK call-site impact, aliases, polymorphic schemas and vendor-specific extensions. The optional oasdiff engine expands coverage but doesn't guarantee exhaustive compatibility.
 - No automatic vendor monitoring, GitHub code editing, test execution sandbox, PR creation or deployments.
 - A result with `breaking: false` **does not prove backwards compatibility**. It only indicates no changes matching the currently implemented limited rules.
 - Partial support should never be marketed as oasdiff-equivalent.
 
 ## Next increments
 
-1. Evaluate maintained open-source `oasdiff` or `openapi-diff` for more comprehensive breaking-change coverage; compare license, runtime placement and rule compatibility before adding dependencies.
+1. **Implemented as an optional adapter:** use the Apache-2.0 oasdiff binary locally for broader breaking-change detection; validate version, output and false-positive/false-negative behavior against customer fixtures before making it the default.
 2. **Implemented as a beta CLI subcommand:** compare two local OpenAPI documents, report JSON or terminal output, and fail explicitly on unsupported schema features. Next: add more comprehensive fixtures and broader OpenAPI compatibility checks.
 3. Once the detection signal is reliable, build vendor-watch ingestion and impacted customer call-site analysis.
 4. Produce isolated, test-validated, **approval-only** migration PRs. Route consequential repository actions through the existing RaksHex Agent Firewall/Action Ledger.
