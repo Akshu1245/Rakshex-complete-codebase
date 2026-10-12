@@ -88,8 +88,18 @@ DATABASE_URL="..." pnpm --filter @rakshex/database db:migrate
 
 ## Phase 2 — Vercel web
 
+### One Git-linked web project only
+
+Use a **single** Vercel project for production Next.js (repo-root **`rakshex`**, root `vercel.json`).
+
+A second project (**`rakshex-ui`**, Root Directory `apps/web`) duplicates every Git push, doubles Hobby build quota usage, and posts a separate GitHub status (`Vercel – rakshex-ui`). When the account hits Vercel’s daily build limit, that check fails with **`Deployment rate limited — retry in …`** even though the canonical **`Vercel – rakshex`** deploy succeeded. That is a quota/platform limit, not a Next.js compile error.
+
+**Recommended (same as the legacy `*-api` project):** Vercel → **`rakshex-ui`** → **Settings → Git** → **Disconnect** (or delete the duplicate project). Keep deploy hooks only on **`rakshex`**.
+
+Until disconnect, `apps/web/vercel.json` and root `vercel.json` run `scripts/vercel-should-build.mjs` as `ignoreCommand` to skip **`rakshex-ui`** and non-web diffs. Ignored builds still consume webhook/status slots on Hobby when rate-limited, so GitHub may stay red until quota resets or the duplicate Git link is removed.
+
 1. [vercel.com](https://vercel.com) → **Add New Project** → import the monorepo.
-2. **Root Directory**: leave repo root (uses root `vercel.json`), **or** set Root Directory to `apps/web` and use `apps/web/vercel.json`.
+2. **Root Directory**: leave repo root (uses root `vercel.json`), **or** set Root Directory to `apps/web` and use `apps/web/vercel.json` (prefer repo root only — do not keep both linked to Git).
 3. Framework: Next.js. Install/build from `vercel.json`:
    - `pnpm install --frozen-lockfile`
    - `pnpm --filter @rakshex/web build`
@@ -210,13 +220,14 @@ Point provider webhooks at:
 
 ## Common failures
 
-| Symptom                               | Fix                                                                            |
-| ------------------------------------- | ------------------------------------------------------------------------------ |
-| Async scans stuck / `scanType` errors | Worker service missing or wrong Docker target                                  |
-| Browser CORS errors                   | Add exact Vercel origin to `CORS_ORIGINS`; redeploy API                        |
-| Dashboard never “live”                | Set `NEXT_PUBLIC_TS_API_URL` / `NEXT_PUBLIC_WS_URL` to API; rebuild Vercel     |
-| Migrate fails mid-deploy              | Check Railway API logs; ensure Postgres reachable; migrations through `0020_*` |
-| Worker “unhealthy”                    | Remove HTTP healthcheck; use `railway.worker.toml`                             |
+| Symptom                                                                                               | Fix                                                                                                                                                              |
+| ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GitHub red **`Vercel – rakshex-ui`**: “Deployment rate limited” while **`Vercel – rakshex`** is green | Hobby daily build cap on the duplicate `apps/web` project. Disconnect **`rakshex-ui`** from Git (see Phase 2) or wait for quota reset; not a repo build failure. |
+| Async scans stuck / `scanType` errors                                                                 | Worker service missing or wrong Docker target                                                                                                                    |
+| Browser CORS errors                                                                                   | Add exact Vercel origin to `CORS_ORIGINS`; redeploy API                                                                                                          |
+| Dashboard never “live”                                                                                | Set `NEXT_PUBLIC_TS_API_URL` / `NEXT_PUBLIC_WS_URL` to API; rebuild Vercel                                                                                       |
+| Migrate fails mid-deploy                                                                              | Check Railway API logs; ensure Postgres reachable; migrations through `0020_*`                                                                                   |
+| Worker “unhealthy”                                                                                    | Remove HTTP healthcheck; use `railway.worker.toml`                                                                                                               |
 
 ---
 
