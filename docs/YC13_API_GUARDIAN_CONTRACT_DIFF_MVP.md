@@ -29,6 +29,8 @@ Exit codes: **0** = no _supported_ breaking changes detected (not guaranteed com
 
 For an end-to-end test, use `pnpm --filter @rakshex/cli test`. The detector does **not** resolve `$ref` graphs or provide comprehensive compatibility checking.
 
+**Safety for CI use:** Check both specs into a trusted workspace or use trusted local files. A clean comparison is a partial signal only; do not use exit code 0 as an automatic migration or deployment approval.
+
 ## Currently detected
 
 - Removed HTTP methods on previously supported paths
