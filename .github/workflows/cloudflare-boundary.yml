@@ -6,6 +6,7 @@ on:
       - "apps/web/next.config.js"
       - "apps/web/backend-origin.cjs"
       - "scripts/cloudflare/**"
+      - "cloudflare/staging/**"
       - ".github/workflows/cloudflare-boundary.yml"
   push:
     branches: [main]
@@ -29,4 +30,4 @@ jobs:
         with:
           node-version: "24"
       - name: Run origin and CSP regression tests
-        run: node --test scripts/cloudflare/backend-origin.test.mjs
+        run: node --test scripts/cloudflare/*.test.mjs
