@@ -2,9 +2,9 @@
 /**
  * @rakshex/cli — local + CI scanner
  *
- * Commands: login | configure | scan | secrets | policy | report | doctor | rules | help
+ * Commands: login | configure | scan | api diff | secrets | policy | report | doctor | rules | help
  * Outputs:  terminal | json | sarif
- * Offline:  scan / secrets use @rakshex/scanner-core (deterministic, no network)
+ * Offline:  scan / secrets / api diff use @rakshex/scanner-core (deterministic, no network)
  */
 import {
   readFileSync,
@@ -28,6 +28,7 @@ import {
   type RuleFinding,
 } from "@rakshex/scanner-core";
 import { cmdSecrets } from "./secrets.js";
+import { cmdApiDiff } from "./apiDiff.js";
 
 const CONFIG_DIR = join(homedir(), ".rakshex");
 const CONFIG_PATH = join(CONFIG_DIR, "config.json");
@@ -90,6 +91,7 @@ Usage:
   rakshex login --api-key <key> [--api-url <url>]
   rakshex configure --fail-on Critical,High [--ignore-rules id1,id2]
   rakshex scan <file-or-dir> [--format terminal|json|sarif] [--fail-on High] [--baseline] [--upload]
+  rakshex api diff <old.json|yaml> <new.json|yaml> [--format terminal|json]
   rakshex secrets <path> [--format terminal|json] [--fail-on Critical,High]
   rakshex secrets rules
   rakshex policy check <file> [--format json]
@@ -514,6 +516,8 @@ async function main(): Promise<number> {
       return cmdConfigure(flags);
     case "scan":
       return cmdScan(positional, flags);
+    case "api":
+      return cmdApiDiff(positional, flags);
     case "secrets":
       return cmdSecrets(positional, flags);
     case "policy":
