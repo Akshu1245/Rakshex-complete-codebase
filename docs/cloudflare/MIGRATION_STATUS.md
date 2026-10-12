@@ -38,7 +38,7 @@ No real customer data has been copied into these staging resources. No RaksHex p
 ## Safety boundary introduced in this branch
 
 - `apps/web/backend-origin.cjs` centralizes Next.js rewrite backend routing.
-- `RAKSHEX_DEPLOY_TARGET=cloudflare` disables the *implicit* legacy Railway fallback and requires an explicit clean HTTPS origin. With `RAKSHEX_CLOUDFLARE_ENV=staging`, it also rejects a hostname without `staging`.
+- `RAKSHEX_DEPLOY_TARGET=cloudflare` disables the _implicit_ legacy Railway fallback and requires an explicit clean HTTPS origin. With `RAKSHEX_CLOUDFLARE_ENV=staging`, it also rejects a hostname without `staging`.
 - Cloudflare-target builds substitute that explicit backend origin into CSP `connect-src`, removing legacy Railway origins for those builds.
 - Existing non-Cloudflare behavior is unchanged until an explicit, tested production cutover.
 - `cloudflare/staging/api-worker.mjs` is **only a binding probe**. `GET /__health` returns whether staging resources are bound, and it explicitly reports `application_api_migrated: false`. All other API requests return `501 NOT_MIGRATED`. It is not an Agent Firewall, a database migration or a real API deployment.

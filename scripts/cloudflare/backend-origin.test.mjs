@@ -3,9 +3,10 @@ import { createRequire } from "node:module";
 import { test } from "node:test";
 
 const require = createRequire(import.meta.url);
-const { resolveBackendOrigin, LEGACY_RAILWAY_ORIGIN } = require(
-  "../../apps/web/backend-origin.cjs",
-);
+const {
+  resolveBackendOrigin,
+  LEGACY_RAILWAY_ORIGIN,
+} = require("../../apps/web/backend-origin.cjs");
 
 test("existing production routing is unchanged until cutover", () => {
   assert.equal(resolveBackendOrigin({ NODE_ENV: "production" }), LEGACY_RAILWAY_ORIGIN);
