@@ -1,0 +1,33 @@
+name: Normalize YC13 oasdiff Formatting Once
+
+on:
+  push:
+    branches:
+      - feat/yc13-oasdiff-engine-20261012
+
+permissions:
+  contents: write
+
+jobs:
+  prettier-once:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Canonical Prettier and remove temporary workflow
+        run: |
+          set -euo pipefail
+          pnpm exec prettier --write apps/cli/src/apiDiff.ts apps/cli/src/oasdiffAdapter.ts docs/YC13_API_GUARDIAN_CONTRACT_DIFF_MVP.md
+          rm .github/workflows/format-yc13-oasdiff-once.yml
+          git add apps/cli/src/apiDiff.ts apps/cli/src/oasdiffAdapter.ts docs/YC13_API_GUARDIAN_CONTRACT_DIFF_MVP.md .github/workflows/format-yc13-oasdiff-once.yml
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "style(YC13): use project Prettier output and remove one-time formatter"
+          git push origin HEAD:feat/yc13-oasdiff-engine-20261012
