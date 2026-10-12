@@ -4,7 +4,8 @@
  *
  * Commands: login | configure | scan | api diff | secrets | policy | report | doctor | rules | help
  * Outputs:  terminal | json | sarif
- * Offline:  scan / secrets / api diff use @rakshex/scanner-core (deterministic, no network)
+ * Offline:  scan / secrets / basic api diff use deterministic scanner-core
+ * Extended API diff: optional trusted oasdiff binary, local files only.
  */
 import {
   readFileSync,
