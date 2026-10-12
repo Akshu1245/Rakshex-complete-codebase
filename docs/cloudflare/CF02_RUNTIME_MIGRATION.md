@@ -44,7 +44,7 @@ not evidence of an actual live Worker.
 ## Remaining critical migration
 
 - Full PostgreSQL tenant/account/payment/scan/findings schema → D1, using a
-  versioned canonical SQLite schema and a *verified original PG export*.
+  versioned canonical SQLite schema and a _verified original PG export_.
 - Existing Agent Firewall authorization, signed Action Ledger, credential mediation
   and OAuth sessions → Workers with exact security parity.
 - Socket.IO and Redis/BullMQ → Cloudflare-native event/queue contracts with

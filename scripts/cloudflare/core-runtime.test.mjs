@@ -4,7 +4,7 @@ import core from "../../cloudflare/staging/core-worker.mjs";
 
 const key = "test-cloudflare-staging-api-key-123456789";
 const base = "https://rakshex-core-staging.rakshex.workers.dev";
-const op = { responses: { "200": { description: "OK" } } };
+const op = { responses: { 200: { description: "OK" } } };
 const specs = {
   before: { openapi: "3.0.3", paths: { "/users": { get: op } } },
   after: { openapi: "3.0.3", paths: {} },
@@ -36,7 +36,10 @@ test("public health does not misrepresent migration completeness", async () => {
 test("missing secret and missing token always fail closed", async () => {
   const unconfigured = await core.fetch(request("/api/v1/contract-diff", "POST", specs), {});
   assert.equal(unconfigured.status, 503);
-  const missingToken = await core.fetch(request("/api/v1/contract-diff", "POST", specs, false), env);
+  const missingToken = await core.fetch(
+    request("/api/v1/contract-diff", "POST", specs, false),
+    env,
+  );
   assert.equal(missingToken.status, 401);
 });
 
@@ -67,7 +70,11 @@ test("invalid contracts do not enqueue jobs", async () => {
     {
       ...env,
       DB: { prepare: () => ({ first: async () => ({ name: "contract_diff_jobs" }) }) },
-      JOBS: { send: async () => { enqueues++; } },
+      JOBS: {
+        send: async () => {
+          enqueues++;
+        },
+      },
     },
   );
   assert.equal(response.status, 422);
@@ -128,7 +135,9 @@ test("authenticated queue job persists a deterministic completed result and retr
     ...env,
     DB: fakeDb,
     JOBS: {
-      async send(message) { sent.push(message); },
+      async send(message) {
+        sent.push(message);
+      },
     },
   };
   const create = await core.fetch(request("/api/v1/contract-diff/jobs", "POST", specs), workingEnv);
@@ -141,8 +150,12 @@ test("authenticated queue job persists a deterministic completed result and retr
   let retries = 0;
   const message = {
     body: sent[0],
-    ack() { acknowledgements++; },
-    retry() { retries++; },
+    ack() {
+      acknowledgements++;
+    },
+    retry() {
+      retries++;
+    },
   };
   await core.queue({ messages: [message] }, workingEnv);
   await core.queue({ messages: [message] }, workingEnv);
