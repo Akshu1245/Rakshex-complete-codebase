@@ -8,14 +8,12 @@ try {
 const path = require("path");
 
 /** @type {import('next').NextConfig} */
-const RAILWAY_PRODUCTION_API_URL = "https://api-production-0a2b.up.railway.app";
-const TS_BACKEND_URL =
-  process.env.RAKSHEX_BACKEND_URL ||
-  (process.env.NODE_ENV === "production"
-    ? RAILWAY_PRODUCTION_API_URL
-    : process.env.NEXT_PUBLIC_TS_API_URL ||
-      process.env.NEXT_PUBLIC_API_URL ||
-      "http://localhost:3000");
+const { resolveBackendOrigin } = require("./backend-origin.cjs");
+const cloudflareBuild = process.env.RAKSHEX_DEPLOY_TARGET === "cloudflare";
+const TS_BACKEND_URL = resolveBackendOrigin(process.env);
+const CSP_API_ORIGINS = cloudflareBuild
+  ? TS_BACKEND_URL
+  : "https://api.rakshex.in https://api-production-0a2b.up.railway.app wss://api-production-0a2b.up.railway.app";
 
 const nextConfig = {
   // Workspace TS sources use Node ESM ".js" import specifiers; webpack must map them to .ts.
@@ -66,7 +64,7 @@ const nextConfig = {
           {
             key: "Content-Security-Policy",
             value:
-              "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' wss: https://api.rakshex.in https://api-production-0a2b.up.railway.app wss://api-production-0a2b.up.railway.app https://*.sentry.io https://script.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;",
+              `default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' wss: ${CSP_API_ORIGINS} https://*.sentry.io https://script.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;`,
           },
         ],
       },
@@ -170,7 +168,7 @@ const nextConfig = {
   },
   async rewrites() {
     return [
-      // All API traffic goes to the Node tRPC backend on Railway. The legacy
+      // Legacy deployments may use Railway; Cloudflare builds require an explicit
       // Python/Vercel backend has been retired; production intentionally uses
       // the known Railway origin unless RAKSHEX_BACKEND_URL explicitly overrides it.
       {

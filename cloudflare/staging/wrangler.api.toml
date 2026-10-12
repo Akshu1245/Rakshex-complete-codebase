@@ -1,0 +1,26 @@
+# Staging ONLY. Never reference existing production Firewall D1, KV, R2 or Queue IDs.
+# This Worker is a binding compatibility probe, not a migrated backend.
+name = "rakshex-api-staging"
+main = "./api-worker.mjs"
+compatibility_date = "2026-10-12"
+workers_dev = true
+
+[vars]
+ENVIRONMENT = "staging"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "rakshex-migration-staging"
+database_id = "3e13ba92-e005-4220-a272-cb972a57bf9d"
+
+[[kv_namespaces]]
+binding = "CONFIG_KV"
+id = "c70babd55491444e96046824fde32224"
+
+[[queues.producers]]
+binding = "JOBS"
+queue = "rakshex-migration-staging-jobs"
+
+[[r2_buckets]]
+binding = "OBJECTS"
+bucket_name = "rakshex-migration-staging-objects"
