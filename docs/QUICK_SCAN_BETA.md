@@ -4,7 +4,7 @@
 
 This UI uses `packages/scanner-core/src/browser.ts` and the existing deterministic `runScan` engine, in the browser tab. A file or pasted text is parsed locally using the existing `yaml` dependency. The page does not send the specification to an API, scrape an API, or spend AI credits. It supports local OpenAPI JSON/YAML and Postman JSON **documents**, not arbitrary source-code projects or runtime vulnerability verification. All findings are potential static indicators unless independently confirmed.
 
-URL fetching has been removed **from the browser UI**. The existing Express `/api/public/quick-scan` endpoint remains present for compatibility and needs a separate SSRF/security review before use. This patch does not remove it or disable it.
+URL fetching is removed **from the browser UI and the legacy Express `/api/public/quick-scan` endpoint**. The legacy endpoint still accepts inline `spec` JSON; supplying a `url` now returns HTTP 400 with an explicit message. This intentionally breaks the old public URL-fetch convenience path to eliminate unauthenticated server-side URL retrieval and its SSRF exposure. Use browser-local document upload/paste instead.
 
 The Quick Scan route is still rendered by the existing Next.js app and global app layout; it is **not yet independently hosted as a static Cloudflare Pages site**. That deployment step is deliberately deferred.
 
