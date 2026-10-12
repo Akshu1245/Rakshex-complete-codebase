@@ -1,0 +1,39 @@
+name: Cloudflare web dependency lock one-shot
+
+on:
+  push:
+    branches: [feat/cloudflare-full-web-staging-20261012]
+    paths: [".github/workflows/cloudflare-web-lock-once.yml"]
+
+permissions:
+  contents: write
+
+jobs:
+  lock-web-adapter:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/cloudflare-full-web-staging-20261012
+          persist-credentials: true
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Lock exact adapter and Wrangler versions
+        run: pnpm --filter @rakshex/web add -D -E @opennextjs/cloudflare@1.20.10 wrangler@4.149.0
+      - name: Format new migration files
+        run: pnpm exec prettier --write apps/web/open-next.config.ts docs/cloudflare/CF03_FRONTEND_STAGING.md scripts/cloudflare/web-staging-routes.test.mjs .github/workflows/cloudflare-web-staging.yml
+      - name: Commit lockfile and formatted code
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/web/package.json pnpm-lock.yaml apps/web/open-next.config.ts docs/cloudflare/CF03_FRONTEND_STAGING.md scripts/cloudflare/web-staging-routes.test.mjs .github/workflows/cloudflare-web-staging.yml
+          if ! git diff --cached --quiet; then
+            git commit -m "build(cloudflare): lock OpenNext staging frontend dependencies"
+            git push origin HEAD:refs/heads/feat/cloudflare-full-web-staging-20261012
+          fi
