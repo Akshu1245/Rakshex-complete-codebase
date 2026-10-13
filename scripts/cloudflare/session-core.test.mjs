@@ -27,9 +27,7 @@ function fixture() {
   ]) {
     sql.exec(readFileSync("cloudflare/app/migrations/" + file, "utf8"));
   }
-  sql.exec(
-    "INSERT INTO cf_workspaces (id,name,policy_json) VALUES (1,'A','{}'), (2,'B','{}')",
-  );
+  sql.exec("INSERT INTO cf_workspaces (id,name,policy_json) VALUES (1,'A','{}'), (2,'B','{}')");
   sql.exec(
     "INSERT INTO cf_workspace_memberships (workspace_id,subject_id,role) VALUES " +
       "(1,'user-a','owner'),(2,'user-b','admin'),(2,'user-a','member')",
@@ -82,10 +80,12 @@ test("hashed D1 session storage and safe cookie attributes", async () => {
   assert.ok(!JSON.stringify(row).includes(created.token));
   assert.equal(row.workspace_id, 1);
   assert.equal(row.subject_id, "user-a");
-  assert.deepEqual(
-    await verifySession(db, created.token, CLOCK),
-    { subjectId: "user-a", workspaceId: 1, role: "owner", membershipRevision: 1 },
-  );
+  assert.deepEqual(await verifySession(db, created.token, CLOCK), {
+    subjectId: "user-a",
+    workspaceId: 1,
+    role: "owner",
+    membershipRevision: 1,
+  });
   assert.match(expiredSessionCookie(), /Max-Age=0/);
 });
 
@@ -93,11 +93,7 @@ test("expired, revoked and tampered sessions deny on the next read", async () =>
   const { db } = fixture();
   const created = await createSession(db, identity("user-a", 1), CLOCK);
   await rejects(verifySession(db, created.token, LATER), 401, "SESSION_INVALID");
-  await rejects(
-    verifySession(db, created.token.slice(0, -1) + "!", CLOCK),
-    401,
-    "SESSION_INVALID",
-  );
+  await rejects(verifySession(db, created.token.slice(0, -1) + "!", CLOCK), 401, "SESSION_INVALID");
   assert.equal(await revokeSession(db, created.token, CLOCK), true);
   assert.equal(await revokeSession(db, created.token, CLOCK), false);
   await rejects(verifySession(db, created.token, CLOCK), 401, "SESSION_INVALID");
@@ -107,10 +103,14 @@ test("duplicate cookies, forged format and absent cookies deny", () => {
   const legit = "rkh_s_" + "a".repeat(43);
   assert.throws(() => readSessionCookie("other=value"), /SESSION_INVALID/);
   assert.throws(
-    () => readSessionCookie("__Host-rakshex_session=" + legit + "; __Host-rakshex_session=" + legit),
+    () =>
+      readSessionCookie("__Host-rakshex_session=" + legit + "; __Host-rakshex_session=" + legit),
     /SESSION_INVALID/,
   );
-  assert.throws(() => readSessionCookie("__Host-rakshex_session=" + legit + "%3B"), /SESSION_INVALID/);
+  assert.throws(
+    () => readSessionCookie("__Host-rakshex_session=" + legit + "%3B"),
+    /SESSION_INVALID/,
+  );
   assert.throws(() => readSessionCookie("x".repeat(9000)), /SESSION_INVALID/);
 });
 
@@ -160,7 +160,11 @@ test("revoked membership and unavailable database cannot grant a session", async
   await rejects(verifySession(null, current.token, CLOCK), 503, "SESSION_STORE_UNAVAILABLE");
   await rejects(
     createSession(
-      { prepare() { throw Error("database unavailable"); } },
+      {
+        prepare() {
+          throw Error("database unavailable");
+        },
+      },
       identity("user-b", 2),
       CLOCK,
     ),
@@ -171,7 +175,11 @@ test("revoked membership and unavailable database cannot grant a session", async
 
 test("no cookie/session issuance from unverified or invalid identity", async () => {
   const { db, sql } = fixture();
-  await rejects(createSession(db, { subjectId: "user-a", workspaceId: 1 }, CLOCK), 401, "VERIFIED_IDENTITY_REQUIRED");
+  await rejects(
+    createSession(db, { subjectId: "user-a", workspaceId: 1 }, CLOCK),
+    401,
+    "VERIFIED_IDENTITY_REQUIRED",
+  );
   await rejects(createSession(db, identity("user-a", 0), CLOCK), 401, "VERIFIED_IDENTITY_REQUIRED");
   assert.equal(sql.prepare("SELECT COUNT(*) AS count FROM cf_browser_sessions").get().count, 0);
 });
