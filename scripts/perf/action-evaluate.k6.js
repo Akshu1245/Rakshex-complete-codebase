@@ -42,6 +42,7 @@ const authorizedMs = new Trend("rakshex_authorize_ms", true);
 const authorizationErrors = new Rate("rakshex_authorize_http_errors");
 
 export const options = {
+  summaryTrendStats: ["avg", "min", "med", "max", "p(50)", "p(95)", "p(99)"],
   discardResponseBodies: false,
   scenarios: {
     // Deliberately bounded until baseline is known. Increase cautiously in
