@@ -38,8 +38,9 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createServer, type Server } from "node:http";
 import crypto from "node:crypto";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import {
+  actionLedger,
   agentIdentities,
   brokeredCredentials,
   credentialEgressLog,
@@ -332,6 +333,90 @@ d("Agent Firewall — authenticated end-to-end", () => {
     const found = rows.filter((r) => r.id === first.ledgerId || r.id === second.ledgerId);
     expect(found).toHaveLength(2);
     for (const row of found) expect(row.recordHash).toBeTruthy();
+  });
+
+  it("returns one decision for simultaneous retries and rejects mismatched requests", async () => {
+    const idempotencyKey = idem();
+    const request = {
+      workspaceId,
+      agentId,
+      capabilityToken,
+      idempotencyKey,
+      provider: "stripe",
+      operation: "refunds.create",
+      resource: "customer:1827",
+      amountMinor: 10,
+      currency: "INR",
+      environment: "production",
+    };
+    const attempts = await Promise.all(
+      Array.from({ length: 5 }, () => caller().agentFirewall.evaluate(request)),
+    );
+    const identities = attempts.map((value) =>
+      "ledgerId" in value ? value.ledgerId : value.id,
+    );
+    expect(new Set(identities).size).toBe(1);
+    expect(attempts.filter((value) => value.replayed)).toHaveLength(4);
+
+    const database = await getDb();
+    if (!database) throw new Error("database not available");
+    const rows = await database
+      .select({ id: actionLedger.id })
+      .from(actionLedger)
+      .where(and(eq(actionLedger.workspaceId, workspaceId), eq(actionLedger.idempotencyKey, idempotencyKey)));
+    expect(rows).toHaveLength(1);
+    await expect(
+      caller().agentFirewall.evaluate({ ...request, amountMinor: 20 }),
+    ).rejects.toMatchObject({ code: "CONFLICT" });
+  });
+
+  it("limits parallel actions atomically under the same workspace", async () => {
+    const agent = await caller().agentFirewall.identities.create({
+      workspaceId,
+      agentKey: `e2e-atomic-${Math.random().toString(36).slice(2, 8)}`,
+      name: "Atomic Test Agent",
+      environment: "production",
+      mode: "enforce",
+      capabilities: ["financial.refund"],
+    });
+    const testAgentId = (agent as { id: string }).id;
+    const granted = await caller().agentFirewall.authorities.create({
+      workspaceId,
+      agentId: testAgentId,
+      scope: { actions: ["financial.refund"], maxCount: 3 },
+    });
+    const token = (granted as { capabilityToken: string }).capabilityToken;
+    const outcomes = await Promise.all(
+      Array.from({ length: 8 }, (_, i) =>
+        caller().agentFirewall.evaluate({
+          workspaceId,
+          agentId: testAgentId,
+          capabilityToken: token,
+          idempotencyKey: `parallel-${idem()}-${i}`,
+          provider: "stripe",
+          operation: "refunds.create",
+          amountMinor: 1,
+          currency: "INR",
+          environment: "production",
+        }),
+      ),
+    );
+    expect(outcomes.filter((outcome) => outcome.decision === "ALLOW")).toHaveLength(3);
+    expect(outcomes.filter((outcome) => outcome.decision === "LIMIT")).toHaveLength(5);
+
+    const database = await getDb();
+    if (!database) throw new Error("database not available");
+    const ledgerIds = new Set(outcomes.map((outcome) => "ledgerId" in outcome ? outcome.ledgerId : outcome.id));
+    const rows = await database
+      .select({ id: actionLedger.id, previousHash: actionLedger.previousHash, recordHash: actionLedger.recordHash, occurredAt: actionLedger.occurredAt })
+      .from(actionLedger)
+      .where(and(eq(actionLedger.workspaceId, workspaceId), eq(actionLedger.agentId, testAgentId)));
+    expect(rows).toHaveLength(8);
+    expect(rows.every((row) => ledgerIds.has(row.id))).toBe(true);
+    const ordered = [...rows].sort((a, b) => a.occurredAt.getTime() - b.occurredAt.getTime());
+    for (let i = 1; i < ordered.length; i++) {
+      expect(ordered[i]!.previousHash).toBe(ordered[i - 1]!.recordHash);
+    }
   });
 
   it("refuses a revoked credential", async () => {
