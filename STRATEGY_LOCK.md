@@ -6,9 +6,9 @@
 
 **Horizon:** Six months from adoption  
 
-**Supersedes:** Earlier product positioning that presents RaksHex primarily as
+**Evidence snapshot:** 13 October 2026; refresh status classifications before external claims  
 
-a scanner, LLM gateway, cost dashboard, compliance-certification product, or general AI-governance suite.
+**Supersedes:** Earlier product positioning that presents RaksHex primarily as a scanner, LLM gateway, cost dashboard, compliance-certification product, or general AI-governance suite.
 
 This document is the decision record for RaksHex's next six months.
 
