@@ -21,7 +21,7 @@ for attempt in range(60):
     try:
         if call('/health')[0] == 200:
             break
-    except (HTTPError, URLError, TimeoutError):
+    except (HTTPError, URLError, OSError):
         pass
     time.sleep(1)
 else:

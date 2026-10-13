@@ -6,6 +6,7 @@
 - Alembic revisions through `002_onboarding_progress` were applied on 14 October 2026 (India time). All ORM tables and columns were verified through the database connector.
 - Cloudflare Secrets Store: `7f1fc7c778ff41cab15f8726f1f51625`. Four active secrets are bound in `wrangler.jsonc`: database connection, JWT signing key, encryption key, frontend origin. Values are not committed.
 - Worker code resolves Secrets Store values before starting FastAPI. Missing/unreadable configuration returns 503. Production rejects a default signing key and temporary SQLite storage.
+- A temporary Cloudflare Worker successfully read all four secret bindings and queried the migrated Neon database over the serverless HTTP driver: `ok=true`, `secrets=true`, `database=true`. The probe was removed after verification. This verifies read-only edge connectivity, not the still-blocked FastAPI container deployment.
 
 ## Current deployment status
 
