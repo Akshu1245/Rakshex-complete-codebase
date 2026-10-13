@@ -53,6 +53,8 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Print canonical browser access test formatting
+        run: pnpm exec prettier scripts/cloudflare/browser-access.test.mjs
       - run: pnpm run format:check
 
   lint:
