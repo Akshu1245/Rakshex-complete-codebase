@@ -31,3 +31,5 @@ jobs:
           node-version: "24"
       - name: Run origin and CSP regression tests
         run: node --test scripts/cloudflare/api-probe.test.mjs scripts/cloudflare/backend-origin.test.mjs scripts/cloudflare/core-*.test.mjs
+      - name: Verify isolated workspace membership security invariants
+        run: node --test scripts/cloudflare/membership-foundation.test.mjs
