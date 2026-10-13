@@ -234,7 +234,8 @@ export function analyzeApiImpact(rootInput: string, changes: ImpactChange[]): Ap
         ? ts.ScriptKind.TSX
         : ts.ScriptKind.TS;
       const sf = ts.createSourceFile(file, content, ts.ScriptTarget.Latest, true, scriptKind);
-      if (sf.parseDiagnostics.length > 0) parseErrors++;
+      const parseDiagnostics = (sf as ts.SourceFile & { parseDiagnostics?: readonly ts.Diagnostic[] }).parseDiagnostics;
+      if (parseDiagnostics?.length) parseErrors++;
       const axiosNames = axiosImports(sf);
       const walk = (node: ts.Node): void => {
         if (ts.isCallExpression(node)) {
