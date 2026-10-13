@@ -1618,11 +1618,14 @@ async def get_threat_events_db(
     limit: int = 50,
     severity: Optional[str] = None,
     unresolved_only: bool = False,
+    user_id: Optional[int] = None,
 ) -> List[Dict[str, Any]]:
     """Get threat events from the database."""
     async with AsyncSessionLocal() as session:
         stmt = select(ThreatEvent)
         conditions = []
+        if user_id is not None:
+            conditions.append(or_(ThreatEvent.user_id == user_id, ThreatEvent.user_id.is_(None)))
         if severity:
             conditions.append(ThreatEvent.severity == severity)
         if unresolved_only:
@@ -1634,12 +1637,12 @@ async def get_threat_events_db(
         return [_row_to_dict(r) for r in result.scalars().all()]
 
 
-async def resolve_threat_event(threat_id: int) -> bool:
+async def resolve_threat_event(threat_id: int, user_id: Optional[int] = None) -> bool:
     """Mark a threat event as resolved."""
     async with AsyncSessionLocal() as session:
         stmt = (
             update(ThreatEvent)
-            .where(ThreatEvent.id == threat_id)
+            .where(ThreatEvent.id == threat_id, True if user_id is None else ThreatEvent.user_id == user_id)
             .values(resolved=True, resolved_at=datetime.now(timezone.utc))
         )
         result = await session.execute(stmt)

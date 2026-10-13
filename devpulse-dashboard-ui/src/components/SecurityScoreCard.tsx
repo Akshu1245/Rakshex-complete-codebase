@@ -1,5 +1,6 @@
 'use client';
 
+import { apiFetch, getAuthToken } from '@/lib/api';
 import { useState, useEffect } from 'react';
 import { Card, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -30,12 +31,11 @@ export default function SecurityScoreCard() {
   const [scanning, setScanning] = useState(false);
   const [code, setCode] = useState('');
 
-  const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   const fetchHistory = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`${API}/api/v1/security/score-history?limit=10`, {
+      const token = getAuthToken();
+      const res = await apiFetch(`/api/v1/security/score-history?limit=10`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (res.ok) {
@@ -52,8 +52,8 @@ export default function SecurityScoreCard() {
     if (!code.trim()) return;
     setScanning(true);
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`${API}/api/v1/security/scan/full`, {
+      const token = getAuthToken();
+      const res = await apiFetch(`/api/v1/security/scan/full`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

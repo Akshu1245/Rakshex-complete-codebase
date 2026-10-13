@@ -54,6 +54,12 @@ class User(Base):
     security_scans = relationship("SecurityScan", back_populates="user")
 
 
+class OnboardingProgress(Base):
+    __tablename__ = "onboarding_progress"
+    user_id = Column(BigInt, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    completed_steps = Column(Text, nullable=False, default="[]")
+
+
 class ApiKey(Base):
     __tablename__ = "api_keys"
 
@@ -429,6 +435,14 @@ class BillingEvent(Base):
     currency = Column(String(10), default="usd")
     stripe_event_id = Column(String(255))
     description = Column(Text, default="")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class BillingWebhook(Base):
+    __tablename__ = "billing_webhooks"
+    event_id = Column(String(255), primary_key=True)
+    user_id = Column(BigInt, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    event_type = Column(String(100), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 

@@ -22,7 +22,7 @@ from services.database import (
     save_billing_event, get_billing_history, update_user_plan,
     get_user_by_id,
 )
-from services.stripe_billing import StripeBillingService
+from services.stripe_billing import StripeBillingService, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_AVAILABLE
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -79,45 +79,12 @@ async def subscribe(
     req: SubscribeRequest,
     user: Dict = Depends(require_auth),
 ) -> Dict[str, Any]:
-    """Subscribe to a plan. In production, integrates with Stripe."""
-    try:
-        if req.plan not in PLANS:
-            return {"status": "error", "error": f"Invalid plan: {req.plan}"}
-
-        current_plan = user.get("plan", "free")
-        if current_plan == req.plan:
-            return {"status": "error", "error": f"Already on {req.plan} plan"}
-
-        # In production, this would create/update a Stripe subscription
-        # For now, update the plan directly
-        plan_info = PLANS[req.plan]
-        amount = plan_info["price_monthly"] if req.billing_period == "monthly" else plan_info["price_yearly"]
-
-        await update_user_plan(
-            user_id=user["id"], plan=req.plan,
-            stripe_customer_id=None, stripe_subscription_id=None,
-        )
-
-        await save_billing_event(
-            user_id=user["id"], event_type="subscription_created",
-            amount_cents=amount * 100,
-            currency="usd",
-            stripe_event_id="",
-            description=f"Subscribed to {req.plan} ({req.billing_period})",
-        )
-
-        return {
-            "status": "success",
-            "message": f"Subscribed to {req.plan} plan",
-            "plan": req.plan,
-            "api_limit": PLAN_LIMITS.get(req.plan, 50),
-            "billing_period": req.billing_period,
-            "amount_usd": amount,
-            "stripe_note": "Stripe integration ready — set STRIPE_SECRET_KEY to enable live payments",
-        }
-    except Exception as e:
-        logger.error(f"Subscription error: {e}")
-        return {"status": "error", "error": "Failed to process subscription"}
+    """Start hosted checkout; entitlements change only after verified provider state."""
+    if req.plan not in PLANS:
+        return {"status": "error", "error": f"Invalid plan: {req.plan}"}
+    if req.plan == "free":
+        return {"status": "error", "error": "Use cancellation to manage the existing plan"}
+    return await create_checkout(CheckoutRequest(plan=req.plan, billing_period=req.billing_period), user)
 
 
 @router.get("/api/billing/status")
@@ -156,24 +123,19 @@ async def cancel_subscription(
     req: CancelRequest,
     user: Dict = Depends(require_auth),
 ) -> Dict[str, Any]:
-    """Cancel current subscription and revert to free plan."""
-    try:
-        current_plan = user.get("plan", "free")
-        if current_plan == "free":
-            return {"status": "error", "error": "Already on free plan"}
-
+    """Schedule provider cancellation; leave access in sync with the provider."""
+    subscription_id = user.get("stripe_subscription_id")
+    if subscription_id:
+        if not STRIPE_AVAILABLE or not STRIPE_SECRET_KEY:
+            raise HTTPException(503, "Billing is not configured")
+        ok = await StripeBillingService.cancel_subscription(subscription_id)
+        if not ok:
+            raise HTTPException(502, "Provider did not confirm cancellation")
+        return {"status": "success", "message": "Cancellation scheduled at period end"}
+    if user.get("trial_ends_at"):
         await update_user_plan(user_id=user["id"], plan="free")
-        await save_billing_event(
-            user_id=user["id"], event_type="subscription_cancelled",
-            amount_cents=0,
-            currency="usd",
-            stripe_event_id="",
-            description=f"Cancelled {current_plan} plan" + (f": {req.reason}" if req.reason else ""),
-        )
-        return {"status": "success", "message": "Subscription cancelled, reverted to free plan"}
-    except Exception as e:
-        logger.error(f"Cancel error: {e}")
-        return {"status": "error", "error": "Failed to cancel subscription"}
+        return {"status": "success", "message": "Trial cancelled"}
+    return {"status": "error", "error": "No subscription to cancel"}
 
 
 # =============================================================================
@@ -191,6 +153,10 @@ async def create_checkout(
     user: Dict = Depends(require_auth),
 ) -> Dict[str, Any]:
     """Create a Stripe Checkout Session for upgrading."""
+    if not STRIPE_AVAILABLE or not STRIPE_SECRET_KEY or not STRIPE_WEBHOOK_SECRET:
+        raise HTTPException(503, "Billing is not configured")
+    if user.get("stripe_subscription_id"):
+        raise HTTPException(409, "Manage your existing subscription in the billing portal")
     try:
         if req.plan not in ("pro", "enterprise"):
             return {"status": "error", "error": "Invalid plan"}
@@ -230,6 +196,8 @@ async def create_checkout(
 @router.post("/api/billing/portal")
 async def create_portal(user: Dict = Depends(require_auth)) -> Dict[str, Any]:
     """Create a Stripe Customer Portal session for managing billing."""
+    if not STRIPE_AVAILABLE or not STRIPE_SECRET_KEY:
+        raise HTTPException(503, "Billing is not configured")
     try:
         customer_id = user.get("stripe_customer_id")
         if not customer_id:
@@ -248,6 +216,8 @@ async def create_portal(user: Dict = Depends(require_auth)) -> Dict[str, Any]:
 @router.post("/api/billing/webhook")
 async def stripe_webhook(request: Request) -> Dict[str, Any]:
     """Handle Stripe webhook events (no auth — Stripe-signed)."""
+    if not STRIPE_AVAILABLE or not STRIPE_SECRET_KEY or not STRIPE_WEBHOOK_SECRET:
+        raise HTTPException(503, "Billing is not configured")
     try:
         payload = await request.body()
         sig = request.headers.get("stripe-signature", "")
@@ -259,6 +229,8 @@ async def stripe_webhook(request: Request) -> Dict[str, Any]:
         else:
             logger.warning(f"Webhook not handled: {result}")
             return {"status": "ignored", "reason": result.get("reason", "unknown")}
-    except Exception as e:
-        logger.error(f"Webhook error: {e}")
-        raise HTTPException(status_code=400, detail="Webhook processing failed")
+    except ValueError:
+        raise HTTPException(400, "Invalid webhook signature or payload")
+    except Exception:
+        logger.exception("Webhook state synchronization failed")
+        raise HTTPException(503, "Webhook synchronization must be retried")

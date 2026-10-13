@@ -36,7 +36,7 @@ async def record_event(user_id: Optional[int], endpoint: str,
     await log_usage(user_id, endpoint, response_time_ms, status_code)
 
 
-async def get_usage_trends(days: int = 30) -> Dict[str, Any]:
+async def get_usage_trends(days: int = 30, user_id: Optional[int] = None) -> Dict[str, Any]:
     """Get daily usage trends from DB."""
     cutoff = _date_ago(days)
     date_col = _date_trunc_expr()
@@ -58,6 +58,8 @@ async def get_usage_trends(days: int = 30) -> Dict[str, Any]:
             .group_by(date_col)
             .order_by(date_col.asc())
         )
+        if user_id is not None:
+            stmt = stmt.where(UsageStat.user_id == user_id)
         result = await session.execute(stmt)
         rows = [dict(r._mapping) for r in result]
 
@@ -87,7 +89,7 @@ async def get_usage_trends(days: int = 30) -> Dict[str, Any]:
     }
 
 
-async def get_api_breakdown(days: int = 30) -> Dict[str, Any]:
+async def get_api_breakdown(days: int = 30, user_id: Optional[int] = None) -> Dict[str, Any]:
     """Get usage breakdown by endpoint."""
     cutoff = _date_ago(days)
     async with AsyncSessionLocal() as session:
@@ -102,12 +104,14 @@ async def get_api_breakdown(days: int = 30) -> Dict[str, Any]:
             .order_by(func.count().desc())
             .limit(20)
         )
+        if user_id is not None:
+            stmt = stmt.where(UsageStat.user_id == user_id)
         result = await session.execute(stmt)
         rows = [dict(r._mapping) for r in result]
     return {"breakdown": rows, "period_days": days}
 
 
-async def get_performance_insights() -> List[Dict[str, Any]]:
+async def get_performance_insights(user_id: Optional[int] = None) -> List[Dict[str, Any]]:
     """Generate performance insights from usage data."""
     insights: List[Dict[str, Any]] = []
     cutoff_1d = _date_ago(1)
@@ -119,6 +123,8 @@ async def get_performance_insights() -> List[Dict[str, Any]]:
             func.count().label("total"),
             func.sum(case((UsageStat.status_code >= 400, 1), else_=0)).label("errors"),
         ).where(UsageStat.created_at > cutoff_1d)
+        if user_id is not None:
+            stmt = stmt.where(UsageStat.user_id == user_id)
         result = await session.execute(stmt)
         row = dict(result.one()._mapping)
         total = row.get("total") or 0
@@ -142,6 +148,8 @@ async def get_performance_insights() -> List[Dict[str, Any]]:
             .group_by(UsageStat.endpoint)
             .having(func.avg(UsageStat.response_time_ms) > 2000)
         )
+        if user_id is not None:
+            stmt2 = stmt2.where(UsageStat.user_id == user_id)
         result2 = await session.execute(stmt2)
         for s in result2:
             m = dict(s._mapping)
@@ -153,13 +161,13 @@ async def get_performance_insights() -> List[Dict[str, Any]]:
 
         # Usage growth
         today_r = await session.execute(
-            select(func.count()).select_from(UsageStat).where(UsageStat.created_at > cutoff_1d)
+            select(func.count()).select_from(UsageStat).where(UsageStat.created_at > cutoff_1d, True if user_id is None else UsageStat.user_id == user_id)
         )
         today_count = today_r.scalar() or 0
 
         yesterday_r = await session.execute(
             select(func.count()).select_from(UsageStat).where(
-                and_(UsageStat.created_at > cutoff_2d, UsageStat.created_at <= cutoff_1d)
+                and_(UsageStat.created_at > cutoff_2d, UsageStat.created_at <= cutoff_1d, True if user_id is None else UsageStat.user_id == user_id)
             )
         )
         yesterday_count = yesterday_r.scalar() or 0
@@ -183,7 +191,7 @@ async def get_performance_insights() -> List[Dict[str, Any]]:
     return insights
 
 
-async def forecast_usage(days_ahead: int = 7) -> Dict[str, Any]:
+async def forecast_usage(days_ahead: int = 7, user_id: Optional[int] = None) -> Dict[str, Any]:
     """Forecast future usage using linear regression on recent data."""
     cutoff = _date_ago(30)
     date_col = _date_trunc_expr()
@@ -195,6 +203,8 @@ async def forecast_usage(days_ahead: int = 7) -> Dict[str, Any]:
             .group_by(date_col)
             .order_by(date_col.asc())
         )
+        if user_id is not None:
+            stmt = stmt.where(UsageStat.user_id == user_id)
         result = await session.execute(stmt)
         rows = [dict(r._mapping) for r in result]
 

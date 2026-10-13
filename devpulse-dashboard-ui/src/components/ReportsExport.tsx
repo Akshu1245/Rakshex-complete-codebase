@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { apiClient } from '@/lib/api';
+import { apiClient, apiFetch } from '@/lib/api';
 import { Card, CardHeader, CardSkeleton } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 
@@ -24,7 +24,7 @@ export default function ReportsExport() {
     setExporting(`${type}-${format}`);
     try {
       if (format === 'csv') {
-        const res = await fetch(`http://localhost:8000/api/reports/export?report_type=${type}&format=csv&days=30`);
+        const res = await apiFetch(`/api/reports/export?report_type=${type}&format=csv&days=30`);
         if (res.ok) {
           const blob = await res.blob();
           const url = URL.createObjectURL(blob);

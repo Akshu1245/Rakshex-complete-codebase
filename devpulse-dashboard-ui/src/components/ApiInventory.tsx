@@ -1,5 +1,6 @@
 'use client';
 
+import { apiFetch, getAuthToken } from '@/lib/api';
 import { useState } from 'react';
 import { Card, CardHeader } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Shared';
@@ -24,14 +25,13 @@ export default function ApiInventory() {
   const [result, setResult] = useState<InventoryResult | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   const scanInventory = async () => {
     if (!code.trim()) return;
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`${API}/api/v1/security/inventory`, {
+      const token = getAuthToken();
+      const res = await apiFetch(`/api/v1/security/inventory`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

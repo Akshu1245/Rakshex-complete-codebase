@@ -1,5 +1,6 @@
 'use client';
 
+import { apiFetch, getAuthToken } from '@/lib/api';
 import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardSkeleton } from '@/components/ui/Card';
 import { Badge, EmptyState } from '@/components/ui/Shared';
@@ -18,13 +19,12 @@ export default function CostIntelligenceDashboard() {
   const [data, setData] = useState<CostBreakdown | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const res = await fetch(`${API}/api/v1/costs/breakdown?days=30`, {
+        const token = getAuthToken();
+        const res = await apiFetch(`/api/v1/costs/breakdown?days=30`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         if (res.ok) {
@@ -35,7 +35,7 @@ export default function CostIntelligenceDashboard() {
       setLoading(false);
     };
     fetchData();
-  }, [API]);
+  }, []);
 
   const formatUSD = (n: number) => `$${n.toFixed(2)}`;
 

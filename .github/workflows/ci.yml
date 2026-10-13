@@ -19,7 +19,9 @@ jobs:
           node-version: "24"
       - name: Validate production configuration
         working-directory: cloudflare-backend
-        run: python -m unittest test_production_config.py
+        run: |
+          python -m unittest test_production_config.py
+          node --test runtime-config.test.mjs
       - name: Install Worker dependencies
         working-directory: cloudflare-backend
         run: npm ci --workspaces=false
@@ -28,6 +30,28 @@ jobs:
         run: npx wrangler deploy --dry-run --containers-rollout=none
       - name: Build FastAPI container
         run: docker build -f cloudflare-backend/Dockerfile .
+
+  full-stack-postgres:
+    name: Full Stack PostgreSQL Smoke
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create isolated test configuration
+        run: |
+          python - <<'PY'
+          import secrets
+          from pathlib import Path
+          Path('devpulse-backend/.env').write_text('JWT_SECRET=' + secrets.token_urlsafe(48) + '\nFRONTEND_URL=http://localhost:3000\n')
+          PY
+      - name: Build and start both applications with PostgreSQL
+        run: docker compose up --build -d
+      - name: Verify browser-facing API and persistent data
+        run: python scripts/smoke_stack.py
+      - name: Stop isolated test stack
+        if: always()
+        run: docker compose down
 
   backend-tests:
     name: Backend Tests (Python)
@@ -87,6 +111,10 @@ jobs:
         working-directory: devpulse-dashboard-ui
         run: npm test
 
+      - name: Build frontend and runtime API routes
+        working-directory: devpulse-dashboard-ui
+        run: npm run build
+
   frontend-e2e:
     name: Frontend E2E Tests (Cypress)
     runs-on: ubuntu-latest
@@ -116,6 +144,9 @@ jobs:
       - name: Install backend dependencies
         working-directory: devpulse-backend
         run: pip install -r requirements.txt
+
+      - name: Verify browser request contracts against FastAPI
+        run: python scripts/check_browser_contracts.py
 
       - name: Start backend
         working-directory: devpulse-backend

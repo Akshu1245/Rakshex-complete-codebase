@@ -507,7 +507,7 @@ export default function BudgetManager() {
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-white flex items-center gap-2">
           <span className="text-violet-400">$</span> Budget & API Keys
-          <span className="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full">AES-256 Encrypted</span>
+          <span className="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full">Encrypted key storage</span>
         </h2>
         <div className="flex gap-2">
           <button

@@ -1,40 +1,19 @@
-# DevPulse Frontend Dockerfile
-# Production-ready Next.js standalone build
-
-FROM node:20-alpine AS base
-
-# Install dependencies
-FROM base AS deps
+FROM node:24-alpine AS builder
 WORKDIR /app
-COPY package.json package-lock.json* ./
-RUN npm ci --omit=dev
+ENV NEXT_TELEMETRY_DISABLED=1 CYPRESS_INSTALL_BINARY=0
+COPY package.json package-lock.json ./
+COPY devpulse-dashboard-ui/package.json devpulse-dashboard-ui/package.json
+RUN npm ci
+COPY devpulse-dashboard-ui/ devpulse-dashboard-ui/
+RUN npm run build --workspace devpulse-dashboard-ui
 
-# Build
-FROM base AS builder
+FROM node:24-alpine AS runner
 WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-ENV NEXT_TELEMETRY_DISABLED=1
-RUN npm run build
-
-# Production
-FROM base AS runner
-WORKDIR /app
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
-
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
-COPY --from=builder /app/public ./public
-
-# Leverage output traces for minimal image
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=0.0.0.0
+RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
+COPY --from=builder --chown=nextjs:nodejs /app/devpulse-dashboard-ui/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/devpulse-dashboard-ui/.next/static ./devpulse-dashboard-ui/.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/devpulse-dashboard-ui/public ./devpulse-dashboard-ui/public
 USER nextjs
 EXPOSE 3000
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
-
-CMD ["node", "server.js"]
+CMD ["node", "devpulse-dashboard-ui/server.js"]

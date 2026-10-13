@@ -1,22 +1,37 @@
 'use client';
 
 import { Badge } from '@/components/ui/Shared';
+import AccountMenu from '@/components/AccountMenu';
+import { useEffect, useState } from 'react';
+import { apiFetch, getBackendStatus } from '@/lib/api';
 
 export default function Topbar() {
+  const [connected, setConnected] = useState(false);
+  useEffect(() => {
+    let active = true;
+    async function probe() {
+      try { await apiFetch('/health'); } catch {}
+      if (active) setConnected(getBackendStatus().online);
+    }
+    void probe();
+    const timer = setInterval(probe, 30000);
+    return () => { active = false; clearInterval(timer); };
+  }, []);
   return (
     <header className="h-16 border-b border-zinc-800/40 bg-zinc-950/80 backdrop-blur-xl sticky top-0 z-20 flex items-center justify-between px-8">
       <div className="flex items-center gap-3">
-        <Badge variant="success" dot>All systems operational</Badge>
+        <Badge variant={connected ? 'success' : 'warning'} dot>{connected ? 'Backend connected' : 'Backend unavailable'}</Badge>
       </div>
 
       <div className="flex items-center gap-3">
+        <AccountMenu />
         <span className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900/60 border border-zinc-800/60 rounded-lg text-[11px] text-zinc-500 font-medium">
           <svg className="w-3 h-3 text-emerald-500" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" /></svg>
-          AES-256 Encrypted
+          API connection
         </span>
 
         <a
-          href="http://localhost:8000/docs"
+          href="/backend-docs"
           target="_blank"
           rel="noopener noreferrer"
           className="px-3 py-1.5 text-[11px] font-medium text-zinc-500 hover:text-zinc-200 bg-zinc-900/60 border border-zinc-800/60 rounded-lg hover:border-zinc-700 transition-colors"
@@ -25,7 +40,7 @@ export default function Topbar() {
         </a>
 
         <a
-          href="https://github.com/ganesh2317/DevPulse"
+          href="https://github.com/Akshu1245/Rakshex-complete-codebase"
           target="_blank"
           rel="noopener noreferrer"
           className="p-2 text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800/60 rounded-lg transition-colors"

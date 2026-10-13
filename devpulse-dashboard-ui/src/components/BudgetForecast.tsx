@@ -1,5 +1,6 @@
 'use client';
 
+import { apiFetch, getAuthToken } from '@/lib/api';
 import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardSkeleton } from '@/components/ui/Card';
 import { Badge, EmptyState } from '@/components/ui/Shared';
@@ -22,13 +23,12 @@ export default function BudgetForecast() {
   const [forecast, setForecast] = useState<ForecastData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   useEffect(() => {
     const fetchForecast = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const res = await fetch(`${API}/api/v1/costs/forecast?days_ahead=30`, {
+        const token = getAuthToken();
+        const res = await apiFetch(`/api/v1/costs/forecast?days_ahead=30`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         if (res.ok) {
@@ -39,7 +39,7 @@ export default function BudgetForecast() {
       setLoading(false);
     };
     fetchForecast();
-  }, [API]);
+  }, []);
 
   const trendVariant = (trend: string): 'danger' | 'success' | 'warning' => {
     if (trend === 'increasing') return 'danger';

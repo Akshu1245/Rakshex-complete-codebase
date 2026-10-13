@@ -1,5 +1,6 @@
 'use client';
 
+import { apiFetch, getAuthToken } from '@/lib/api';
 import { useState } from 'react';
 import { Card, CardHeader } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Shared';
@@ -23,14 +24,13 @@ export default function AIFixSuggestion() {
   const [loading, setLoading] = useState(false);
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
 
-  const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   const getSuggestions = async () => {
     if (!code.trim()) return;
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const scanRes = await fetch(`${API}/api/v1/security/scan/full`, {
+      const token = getAuthToken();
+      const scanRes = await apiFetch(`/api/v1/security/scan/full`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -40,7 +40,7 @@ export default function AIFixSuggestion() {
       });
       if (scanRes.ok) {
         const scanData = await scanRes.json();
-        const fixRes = await fetch(`${API}/api/v1/security/fix-suggestions`, {
+        const fixRes = await apiFetch(`/api/v1/security/fix-suggestions`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

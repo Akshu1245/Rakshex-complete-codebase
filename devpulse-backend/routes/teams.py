@@ -13,7 +13,7 @@ Endpoints:
 import logging
 from typing import Dict, Any, Optional
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from routes.auth import require_auth
@@ -24,6 +24,14 @@ from services.team_manager import (
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+async def workspace_access(workspace_id, user, admin=False):
+    workspaces = await get_user_workspaces(user["id"])
+    workspace = next((item for item in workspaces if item["id"] == workspace_id), None)
+    if not workspace or (admin and workspace.get("role") not in ("owner", "admin")):
+        raise HTTPException(403, "Workspace access denied")
+    return workspace
 
 
 class CreateWorkspaceRequest(BaseModel):
@@ -65,8 +73,9 @@ async def list_workspaces(user: Dict = Depends(require_auth)) -> Dict[str, Any]:
 
 
 @router.get("/api/teams/workspaces/{workspace_id}")
-async def get_team_workspace(workspace_id: str) -> Dict[str, Any]:
+async def get_team_workspace(workspace_id: str, user: Dict = Depends(require_auth)) -> Dict[str, Any]:
     """Get workspace details with members."""
+    await workspace_access(workspace_id, user)
     try:
         ws = await get_workspace(workspace_id)
         if not ws:
@@ -84,6 +93,9 @@ async def invite_to_workspace(
     user: Dict = Depends(require_auth),
 ) -> Dict[str, Any]:
     """Invite a user to a workspace."""
+    await workspace_access(workspace_id, user, admin=True)
+    if req.role == "owner":
+        raise HTTPException(400, "Ownership cannot be assigned by invitation")
     try:
         result = await invite_member(
             workspace_id=workspace_id, user_id=req.user_id,
@@ -100,8 +112,12 @@ async def update_member_role(
     workspace_id: str,
     user_id: int,
     req: ChangeRoleRequest,
+    user: Dict = Depends(require_auth),
 ) -> Dict[str, Any]:
     """Change a member's role in a workspace."""
+    access = await workspace_access(workspace_id, user, admin=True)
+    if user_id == access["owner_id"] or req.role == "owner" or (access["role"] != "owner" and req.role == "admin"):
+        raise HTTPException(403, "Ownership or admin elevation is not allowed")
     try:
         result = await change_member_role(workspace_id, user_id, req.role)
         return {"status": "success", **result}
@@ -111,8 +127,9 @@ async def update_member_role(
 
 
 @router.delete("/api/teams/workspaces/{workspace_id}/members/{user_id}")
-async def delete_member(workspace_id: str, user_id: int) -> Dict[str, Any]:
+async def delete_member(workspace_id: str, user_id: int, user: Dict = Depends(require_auth)) -> Dict[str, Any]:
     """Remove a member from a workspace."""
+    await workspace_access(workspace_id, user, admin=True)
     try:
         result = await remove_member(workspace_id, user_id)
         return {"status": "success", **result}
@@ -125,3 +142,11 @@ async def delete_member(workspace_id: str, user_id: int) -> Dict[str, Any]:
 async def list_roles() -> Dict[str, Any]:
     """Get available roles and their permissions."""
     return {"status": "success", "roles": get_roles_info()}
+
+
+@router.get("/api/teams/workspaces/{workspace_id}/members")
+async def workspace_members(workspace_id: str, user: Dict = Depends(require_auth)):
+    await workspace_access(workspace_id, user)
+    workspace = await get_workspace(workspace_id)
+    members = workspace.get("members", []) if workspace else []
+    return {"status": "success", "members": members, "count": len(members)}

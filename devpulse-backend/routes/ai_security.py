@@ -84,53 +84,32 @@ async def scan_owasp_endpoint(req: ScanRequest, user=Depends(require_auth)):
 
 @router.post("/scan/full")
 async def full_scan_endpoint(req: ScanRequest, user=Depends(require_auth)):
-    """Run complete security scan (tokens + agents + OWASP). Returns composite score. Cached 5 min. Persisted to DB."""
+    """Cache only evaluation; every requested scan persists to the caller's history."""
     try:
-        code_hash = make_code_hash(req.code)
-        key = security_scan_key(code_hash)
-        cached = await cache_get(key)
-        if cached:
-            return {"status": "ok", **cached, "cached": True}
-
-        result = full_security_scan(req.code, req.language)
-        await cache_set(key, result, ttl=300)
-
-        # Persist scan result to DB for real score history
-        user_id = user.get("user_id", 0)
-        if user_id:
-            try:
-                score = result.get("composite_score", 100)
-                findings = result.get("all_findings", [])
-                severity_counts = {"critical": 0, "high": 0, "medium": 0, "low": 0}
-                for f in findings:
-                    sev = f.get("severity", "medium").lower()
-                    if sev in severity_counts:
-                        severity_counts[sev] += 1
-                grade = (
-                    "A+" if score >= 97 else "A" if score >= 90 else
-                    "B" if score >= 75 else "C" if score >= 60 else
-                    "D" if score >= 40 else "F"
-                )
-                await save_ai_security_scan(
-                    user_id=user_id,
-                    scan_type="full",
-                    target=req.code[:500],
-                    score=score,
-                    grade=grade,
-                    threats_found=result.get("total_threats", 0),
-                    critical_count=severity_counts["critical"],
-                    high_count=severity_counts["high"],
-                    medium_count=severity_counts["medium"],
-                    low_count=severity_counts["low"],
-                    results_json=result,
-                )
-            except Exception as db_err:
-                logger.warning(f"Failed to persist scan to DB: {db_err}")
-
-        return {"status": "ok", **result}
-    except Exception as e:
-        logger.error(f"Full scan failed: {e}")
-        raise HTTPException(500, "Full security scan failed")
+        key = security_scan_key(make_code_hash(req.language + "\n" + req.code))
+        result = await cache_get(key)
+        cached = result is not None
+        if result is None:
+            result = full_security_scan(req.code, req.language)
+            await cache_set(key, result, ttl=300)
+        counts = {severity: 0 for severity in ("critical", "high", "medium", "low")}
+        for finding in result.get("all_findings", []):
+            severity = finding.get("severity", "medium").lower()
+            if severity in counts:
+                counts[severity] += 1
+        scan_id = await save_ai_security_scan(
+            user_id=user["id"], scan_type="full", target="submitted source",
+            score=result["score"], grade=result["grade"],
+            threats_found=result.get("total_threats", 0),
+            critical_count=counts["critical"], high_count=counts["high"],
+            medium_count=counts["medium"], low_count=counts["low"], results_json=result,
+        )
+        return {"status": "ok", **result, "scan_id": scan_id, "cached": cached,
+                "critical_count": counts["critical"], "high_count": counts["high"],
+                "medium_count": counts["medium"], "low_count": counts["low"]}
+    except Exception:
+        logger.exception("Full scan or persistence failed")
+        raise HTTPException(500, "Full security scan could not be saved")
 
 
 @router.post("/fix-suggestions")
@@ -150,38 +129,15 @@ async def fix_suggestions_endpoint(req: FixRequest, user=Depends(require_auth)):
 
 @router.get("/threat-feed")
 async def threat_feed_endpoint(user=Depends(require_auth)):
-    """Get real-time AI/API threat intelligence feed. DB-backed with seed data fallback."""
+    """Return recorded public advisories and this account's threats; never seed invented activity."""
     try:
-        # Cache for 5 minutes
-        cached = await cache_get("threat_feed")
-        if cached:
-            return {"status": "ok", "threats": cached, "cached": True}
-
-        # Try DB first
-        db_threats = await get_threat_events_db(limit=50)
-        if db_threats:
-            await cache_set("threat_feed", db_threats, ttl=300)
-            return {"status": "ok", "threats": db_threats, "cached": False}
-
-        # Seed the DB with known threats on first request
-        seed_threats = get_threat_feed()
-        for t in seed_threats:
-            try:
-                await save_threat_event(
-                    threat_type=t.get("title", "Unknown"),
-                    severity=t.get("severity", "medium"),
-                    source=t.get("source", ""),
-                    description=t.get("description", ""),
-                    api_endpoint=",".join(t.get("affected_providers", [])),
-                )
-            except Exception:
-                pass
-
-        db_threats = await get_threat_events_db(limit=50)
-        await cache_set("threat_feed", db_threats, ttl=300)
-        return {"status": "ok", "threats": db_threats, "cached": False}
-    except Exception as e:
-        logger.error(f"Threat feed failed: {e}")
+        threats = await get_threat_events_db(limit=50, user_id=user["id"])
+        return {"status": "ok", "threats": [
+            {**item, "id": str(item["id"]), "title": item["threat_type"],
+             "date": item["created_at"], "affected_providers": [item["api_endpoint"]] if item.get("api_endpoint") else [],
+             "mitigation": ""} for item in threats], "cached": False}
+    except Exception:
+        logger.exception("Threat feed query failed")
         raise HTTPException(500, "Threat feed unavailable")
 
 
@@ -202,7 +158,7 @@ async def report_threat_endpoint(
             source=source,
             description=description,
             api_endpoint=api_endpoint,
-            user_id=user.get("user_id"),
+            user_id=user["id"],
         )
         # Invalidate cache
         await cache_set("threat_feed", None, ttl=0)
@@ -216,7 +172,7 @@ async def report_threat_endpoint(
 async def resolve_threat_endpoint(threat_id: int, user=Depends(require_auth)):
     """Mark a threat as resolved."""
     try:
-        ok = await resolve_threat_event(threat_id)
+        ok = await resolve_threat_event(threat_id, user_id=user["id"])
         if ok:
             await cache_set("threat_feed", None, ttl=0)
             return {"status": "ok", "message": f"Threat {threat_id} resolved"}
@@ -246,7 +202,7 @@ async def score_history_endpoint(
 ):
     """Get security scan score history for the current user. Real DB-backed data."""
     try:
-        user_id = user.get("user_id", 0)
+        user_id = user["id"]
         history = await get_ai_security_score_history(user_id, limit=limit)
         return {"status": "ok", "history": history, "total": len(history)}
     except Exception as e:

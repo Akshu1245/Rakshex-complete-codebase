@@ -41,8 +41,8 @@ export default function BillingPanel() {
     try {
       const res = await apiClient.subscribePlan(plan, billingPeriod);
       if (res.status === 'success') {
-        setCurrentPlan(plan);
-        setMessage(`Subscribed to ${plan} plan!`);
+        if (res.checkout_url) window.location.assign(res.checkout_url);
+        else setMessage('Checkout did not return a payment URL.');
       } else {
         setMessage(res.message || 'Failed to subscribe');
       }
@@ -54,8 +54,9 @@ export default function BillingPanel() {
     try {
       const res = await apiClient.cancelSubscription();
       if (res.status === 'success') {
-        setCurrentPlan('free');
-        setMessage('Subscription cancelled');
+        setMessage(res.message || 'Cancellation requested');
+        const status = await apiClient.getBillingStatus();
+        setCurrentPlan(String(status.plan || 'free'));
       }
     } catch { setMessage('Error cancelling'); }
   };

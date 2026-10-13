@@ -27,7 +27,30 @@ export default function HealthMonitor() {
   useEffect(() => {
     fetchHealth();
     const interval = setInterval(fetchHealth, 30000);
-    return () => clearInterval(interval);
+    let active = true;
+    let socket: WebSocket | undefined;
+    let retry: ReturnType<typeof setTimeout> | undefined;
+    async function connect() {
+      try {
+        const response = await fetch('/connection-info', {cache: 'no-store'});
+        if (!response.ok || !active) return;
+        const config = await response.json();
+        if (!active) return;
+        socket = new WebSocket(config.health_websocket_url);
+        socket.onmessage = event => {
+          if (!active) return;
+          try {
+            const data = JSON.parse(event.data) as {type: string; timestamp: string; apis: Record<string, {status: string; latency_ms: number; last_checked: string}>};
+            if (data.type !== 'health_update' || !data.apis) return;
+            setHealth({status: 'success', timestamp: data.timestamp, apis: Object.fromEntries(Object.entries(data.apis).map(([name, info]) => [name, {...info, last_check: info.last_checked}]))});
+            setLoading(false); setError(null);
+          } catch { /* Keep the HTTP refresh path when an update cannot be decoded. */ }
+        };
+        socket.onclose = () => { if (active) retry = setTimeout(connect, 5000); };
+      } catch { /* HTTP polling remains available when WebSockets cannot connect. */ }
+    }
+    void connect();
+    return () => { active = false; clearInterval(interval); if (retry) clearTimeout(retry); socket?.close(); };
   }, []);
 
   if (loading && !health) return <CardSkeleton rows={4} />;

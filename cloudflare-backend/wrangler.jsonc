@@ -6,6 +6,12 @@
   "compatibility_date": "2026-10-13",
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
+  "secrets_store_secrets": [
+    {"binding": "DATABASE_URL", "store_id": "7f1fc7c778ff41cab15f8726f1f51625", "secret_name": "DEVPULSE_DATABASE_URL"},
+    {"binding": "JWT_SECRET", "store_id": "7f1fc7c778ff41cab15f8726f1f51625", "secret_name": "DEVPULSE_JWT_SECRET"},
+    {"binding": "DEVPULSE_ENCRYPTION_KEY", "store_id": "7f1fc7c778ff41cab15f8726f1f51625", "secret_name": "DEVPULSE_DEVPULSE_ENCRYPTION_KEY"},
+    {"binding": "FRONTEND_URL", "store_id": "7f1fc7c778ff41cab15f8726f1f51625", "secret_name": "DEVPULSE_FRONTEND_URL"}
+  ],
   "containers": [{
     "class_name": "DevPulseBackend",
     "image": "./Dockerfile",

@@ -139,7 +139,12 @@ async def test_threat_feed_returns_threats(client: AsyncClient, auth_headers: Di
     data = resp.json()
     assert "threats" in data
     assert isinstance(data["threats"], list)
-    assert len(data["threats"]) > 0
+    assert data["threats"] == []  # New accounts must not receive seeded fake activity.
+    await client.post("/api/v1/security/threats", headers=auth_headers,
+                      json={"threat_type": "Recorded issue", "severity": "low"})
+    recorded = (await client.get("/api/v1/security/threat-feed", headers=auth_headers)).json()["threats"]
+    assert len(recorded) == 1
+    assert recorded[0]["title"] == "Recorded issue"
 
 
 # ── API Inventory ─────────────────────────────────────────────────────────────

@@ -14,6 +14,8 @@ Environment variables:
 """
 import os
 import logging
+import ssl
+from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
 from typing import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import (
@@ -28,20 +30,28 @@ logger = logging.getLogger(__name__)
 # ── Connection URL ───────────────────────────────────────────────────────────
 # Production:  postgresql+asyncpg://user:pass@host:5432/devpulse
 # Development: sqlite+aiosqlite:///devpulse.db  (auto-fallback)
-_raw_url: str = os.getenv("DATABASE_URL", "").strip()
+def normalize_database_url(raw):
+    raw = raw.strip().replace("postgresql://", "postgresql+asyncpg://", 1).replace("postgres://", "postgresql+asyncpg://", 1)
+    if not raw.startswith("postgresql"):
+        return raw, {}
+    parts = urlsplit(raw)
+    query = dict(parse_qsl(parts.query))
+    mode = query.pop("sslmode", None)
+    # These libpq options are not accepted as asyncpg connection kwargs.
+    query.pop("channel_binding", None)
+    connect_args = {}
+    if mode == "disable":
+        connect_args["ssl"] = False
+    elif mode in ("require", "verify-ca", "verify-full"):
+        connect_args["ssl"] = ssl.create_default_context()
+    return urlunsplit(parts._replace(query=urlencode(query))), connect_args
 
-# Replit provides a plain postgresql:// URL; rewrite it to use the async driver
-if _raw_url.startswith("postgresql://") or _raw_url.startswith("postgres://"):
-    _raw_url = _raw_url.replace("postgresql://", "postgresql+asyncpg://", 1).replace("postgres://", "postgresql+asyncpg://", 1)
 
-# asyncpg does not accept sslmode as a query parameter — strip it and handle via connect_args
-import re as _re
-_ssl_match = _re.search(r'[?&]sslmode=([^&]+)', _raw_url)
-_ssl_mode = _ssl_match.group(1) if _ssl_match else None
-if _ssl_mode:
-    _raw_url = _re.sub(r'[?&]sslmode=[^&]+', '', _raw_url).rstrip('?').rstrip('&')
+_raw_url, _connect_args = normalize_database_url(os.getenv("DATABASE_URL", ""))
 
 DATABASE_URL: str = _raw_url or "sqlite+aiosqlite:///devpulse.db"
+if os.getenv("ENV") == "production" and not DATABASE_URL.startswith("postgresql"):
+    raise RuntimeError("Production requires persistent PostgreSQL")
 
 # ── Detect driver ────────────────────────────────────────────────────────────
 IS_POSTGRES: bool = DATABASE_URL.startswith("postgresql")
@@ -61,9 +71,8 @@ if IS_POSTGRES:
         pool_recycle=int(os.getenv("DB_POOL_RECYCLE", "1800")),
         pool_pre_ping=True,
     )
-    # Pass ssl=False when sslmode=disable was present in the original URL
-    if _ssl_mode == "disable":
-        _engine_kwargs["connect_args"] = {"ssl": False}
+    if _connect_args:
+        _engine_kwargs["connect_args"] = _connect_args
 
 # ── Engine & Session Factory ────────────────────────────────────────────────
 engine: AsyncEngine = create_async_engine(DATABASE_URL, **_engine_kwargs)

@@ -19,8 +19,9 @@ load_dotenv()
 config = context.config
 
 # Override sqlalchemy.url from environment if present
-db_url = os.getenv("DATABASE_URL", config.get_main_option("sqlalchemy.url"))
-config.set_main_option("sqlalchemy.url", db_url)
+from services.db_config import normalize_database_url
+db_url, connect_args = normalize_database_url(os.getenv("DATABASE_URL", config.get_main_option("sqlalchemy.url")))
+config.set_main_option("sqlalchemy.url", db_url.replace("%", "%%"))
 
 # Logging
 if config.config_file_name is not None:
@@ -63,6 +64,7 @@ async def run_async_migrations() -> None:
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        connect_args=connect_args,
     )
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)

@@ -10,6 +10,7 @@ Handles:
 """
 import os
 import logging
+import asyncio
 from typing import Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
@@ -21,7 +22,7 @@ try:
 except ImportError:
     stripe = None  # type: ignore
     STRIPE_AVAILABLE = False
-    logger.warning("stripe package not installed – billing runs in stub mode")
+    logger.warning("stripe package not installed – billing is disabled")
 
 # ── Configuration ────────────────────────────────────────────────────────────
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
@@ -34,10 +35,10 @@ if STRIPE_AVAILABLE and STRIPE_SECRET_KEY:
 
 # Price IDs mapped in your Stripe Dashboard
 STRIPE_PRICE_IDS = {
-    "pro_monthly": os.getenv("STRIPE_PRICE_PRO_MONTHLY", "price_pro_monthly"),
-    "pro_yearly": os.getenv("STRIPE_PRICE_PRO_YEARLY", "price_pro_yearly"),
-    "enterprise_monthly": os.getenv("STRIPE_PRICE_ENT_MONTHLY", "price_ent_monthly"),
-    "enterprise_yearly": os.getenv("STRIPE_PRICE_ENT_YEARLY", "price_ent_yearly"),
+    "pro_monthly": os.getenv("STRIPE_PRICE_PRO_MONTHLY", ""),
+    "pro_yearly": os.getenv("STRIPE_PRICE_PRO_YEARLY", ""),
+    "enterprise_monthly": os.getenv("STRIPE_PRICE_ENT_MONTHLY", ""),
+    "enterprise_yearly": os.getenv("STRIPE_PRICE_ENT_YEARLY", ""),
 }
 
 
@@ -49,13 +50,13 @@ class StripeBillingService:
     async def create_customer(email: str, name: str, user_id: int) -> Optional[str]:
         """Create a Stripe customer and return the customer ID."""
         if not STRIPE_AVAILABLE or not STRIPE_SECRET_KEY:
-            logger.info("Stripe stub: create_customer(%s)", email)
-            return f"cus_stub_{user_id}"
+            return None
         try:
             customer = stripe.Customer.create(
                 email=email,
                 name=name,
                 metadata={"devpulse_user_id": str(user_id)},
+                idempotency_key=f"devpulse-customer-{user_id}",
             )
             logger.info("Created Stripe customer %s for user %d", customer.id, user_id)
             return customer.id
@@ -78,8 +79,7 @@ class StripeBillingService:
             return None
 
         if not STRIPE_AVAILABLE or not STRIPE_SECRET_KEY:
-            logger.info("Stripe stub: checkout for %s", price_key)
-            return f"{FRONTEND_URL}/billing?session=stub&plan={plan}"
+            return None
 
         try:
             session = stripe.checkout.Session.create(
@@ -87,8 +87,8 @@ class StripeBillingService:
                 payment_method_types=["card"],
                 line_items=[{"price": price_id, "quantity": 1}],
                 mode="subscription",
-                success_url=f"{FRONTEND_URL}/billing?success=true",
-                cancel_url=f"{FRONTEND_URL}/billing?canceled=true",
+                success_url=f"{FRONTEND_URL}/settings/billing?success=true",
+                cancel_url=f"{FRONTEND_URL}/settings/billing?canceled=true",
                 metadata={"plan": plan, "period": billing_period},
             )
             return session.url
@@ -101,11 +101,11 @@ class StripeBillingService:
     async def create_portal_session(customer_id: str) -> Optional[str]:
         """Create a Stripe Customer Portal session URL."""
         if not STRIPE_AVAILABLE or not STRIPE_SECRET_KEY:
-            return f"{FRONTEND_URL}/billing?portal=stub"
+            return None
         try:
             session = stripe.billing_portal.Session.create(
                 customer=customer_id,
-                return_url=f"{FRONTEND_URL}/billing",
+                return_url=f"{FRONTEND_URL}/settings/billing",
             )
             return session.url
         except Exception as e:
@@ -117,8 +117,7 @@ class StripeBillingService:
     async def cancel_subscription(subscription_id: str) -> bool:
         """Cancel a Stripe subscription at period end."""
         if not STRIPE_AVAILABLE or not STRIPE_SECRET_KEY:
-            logger.info("Stripe stub: cancel %s", subscription_id)
-            return True
+            return False
         try:
             stripe.Subscription.modify(
                 subscription_id,
@@ -137,7 +136,7 @@ class StripeBillingService:
         Returns {"handled": True/False, "type": "<event.type>"}.
         """
         if not STRIPE_AVAILABLE or not STRIPE_SECRET_KEY:
-            return {"handled": False, "reason": "stripe not configured"}
+            raise RuntimeError("Stripe is not configured")
 
         try:
             event = stripe.Webhook.construct_event(
@@ -145,24 +144,10 @@ class StripeBillingService:
             )
         except stripe.error.SignatureVerificationError:
             logger.warning("Webhook signature verification failed")
-            return {"handled": False, "reason": "bad_signature"}
+            raise ValueError("Invalid Stripe signature")
         except Exception as e:
             logger.error("Webhook parse error: %s", e)
-            return {"handled": False, "reason": str(e)}
+            raise ValueError("Invalid Stripe event") from e
 
-        event_type = event["type"]
-        data = event["data"]["object"]
-        logger.info("Processing webhook: %s", event_type)
-
-        if event_type == "checkout.session.completed":
-            # Activate subscription
-            return {"handled": True, "type": event_type, "customer": data.get("customer")}
-        elif event_type == "customer.subscription.updated":
-            return {"handled": True, "type": event_type, "status": data.get("status")}
-        elif event_type == "customer.subscription.deleted":
-            return {"handled": True, "type": event_type, "customer": data.get("customer")}
-        elif event_type == "invoice.payment_failed":
-            return {"handled": True, "type": event_type, "customer": data.get("customer")}
-        else:
-            logger.info("Unhandled webhook type: %s", event_type)
-            return {"handled": False, "type": event_type}
+        from services.billing_sync import apply_verified_event
+        return await apply_verified_event(event, stripe, STRIPE_PRICE_IDS)

@@ -1,5 +1,6 @@
 'use client';
 
+import { apiFetch, getAuthToken } from '@/lib/api';
 import { useState } from 'react';
 import { Card, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -19,13 +20,12 @@ export default function ROICalculator() {
     payback_days: number;
   } | null>(null);
 
-  const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   const calculateFromAPI = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const res = await fetch(`${API}/api/v1/costs/roi`, {
+      const token = getAuthToken();
+      const res = await apiFetch(`/api/v1/costs/roi`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

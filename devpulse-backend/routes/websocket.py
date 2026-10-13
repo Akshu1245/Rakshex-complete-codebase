@@ -10,7 +10,7 @@ from typing import Set
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-from services.health_monitor import health_data, _last_run
+from services import health_monitor
 
 logger = logging.getLogger(__name__)
 
@@ -64,11 +64,11 @@ async def _send_health_data(websocket: WebSocket):
     try:
         payload = {
             "type": "health_update",
-            "timestamp": _last_run or "",
+            "timestamp": health_monitor._last_run or "",
             "apis": {}
         }
         
-        for name, info in health_data.items():
+        for name, info in health_monitor.health_data.items():
             payload["apis"][name] = {
                 "status": info.get("status", "unknown"),
                 "latency_ms": info.get("latency_ms", 0),
