@@ -51,8 +51,7 @@ function access(db, subjectId, workspaceId = 1, minRole = "member") {
 async function denied(work, status, code) {
   await assert.rejects(
     work,
-    (err) =>
-      err instanceof MembershipAccessError && err.status === status && err.code === code,
+    (err) => err instanceof MembershipAccessError && err.status === status && err.code === code,
   );
 }
 
@@ -110,7 +109,8 @@ test("membership schema enforces roles, tenancy references and revocation consis
   assert.throws(() => grant(3, "user-2"), /FOREIGN KEY/);
   assert.throws(() => grant(1, "bad-role", "root"), /CHECK/);
   assert.throws(
-    () => sql.exec("UPDATE cf_workspace_memberships SET status='revoked' WHERE subject_id='user-1'"),
+    () =>
+      sql.exec("UPDATE cf_workspace_memberships SET status='revoked' WHERE subject_id='user-1'"),
     /CHECK/,
   );
   assert.throws(() => grant(1, "user-1"), /UNIQUE/);
