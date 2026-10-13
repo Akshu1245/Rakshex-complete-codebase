@@ -1,151 +1,95 @@
-# Local full stack: Postgres, Redis, API, worker, web
-# Usage:
-#   docker compose up -d postgres redis   # infra only
-#   docker compose up -d --build          # full stack
-# Health: curl http://localhost:3000/api/health
+# DevPulse v4.0 – Full Stack Docker Compose
+# The API Security & Cost Intelligence Platform Built for the AI Agent Era
+# Usage: docker-compose up --build
+
+version: "3.9"
 
 services:
+  # ── PostgreSQL ─────────────────────────────────────────────────────────────
   postgres:
-    image: postgres:15-alpine
-    container_name: rakshex-postgres
-    restart: unless-stopped
+    image: postgres:16-alpine
+    container_name: devpulse-postgres
     environment:
-      POSTGRES_USER: rakshex
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rakshex}
-      POSTGRES_DB: rakshex
+      POSTGRES_DB: devpulse
+      POSTGRES_USER: devpulse
+      POSTGRES_PASSWORD: devpulse_secret
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U rakshex -d rakshex"]
+      test: ["CMD-SHELL", "pg_isready -U devpulse"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 10s
+    restart: unless-stopped
 
+  # ── Redis ──────────────────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
-    container_name: rakshex-redis
-    restart: unless-stopped
-    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    container_name: devpulse-redis
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru
     ports:
       - "6379:6379"
     volumes:
-      - redis_data:/data
+      - redis-data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
-      timeout: 3s
+      timeout: 5s
       retries: 5
+    restart: unless-stopped
 
-  migrate:
+  # ── Backend API ────────────────────────────────────────────────────────────
+  backend:
     build:
-      context: .
+      context: ./devpulse-backend
       dockerfile: Dockerfile
-      target: api
-    restart: "no"
-    user: "1001:1001"
-    command: ["node", "--import", "tsx", "packages/database/src/migrate.ts"]
+    container_name: devpulse-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./devpulse-backend/.env
     environment:
-      NODE_ENV: ${NODE_ENV:-development}
-      DATABASE_URL: postgresql://rakshex:${POSTGRES_PASSWORD:-rakshex}@postgres:5432/rakshex
+      - ENV=production
+      - PORT=8000
+      - HOST=0.0.0.0
+      - DATABASE_URL=postgresql+asyncpg://devpulse:devpulse_secret@postgres:5432/devpulse
+      - REDIS_URL=redis://redis:6379/0
+    command: >
+      sh -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000"
+    volumes:
+      - backend-data:/app/data
     depends_on:
       postgres:
         condition: service_healthy
-
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: api
-    container_name: rakshex-api
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
     restart: unless-stopped
-    user: "1001:1001"
+
+  # ── Frontend Dashboard ─────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./devpulse-dashboard-ui
+      dockerfile: Dockerfile
+    container_name: devpulse-frontend
     ports:
       - "3000:3000"
     environment:
-      NODE_ENV: ${NODE_ENV:-development}
-      PORT: 3000
-      DATABASE_URL: postgresql://rakshex:${POSTGRES_PASSWORD:-rakshex}@postgres:5432/rakshex
-      REDIS_URL: redis://redis:6379
-      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me-min-32-chars-long}
-      APP_URL: ${APP_URL:-http://localhost:3000}
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3001}
+      - NEXT_PUBLIC_API_URL=http://backend:8000
+      - NODE_ENV=production
     depends_on:
-      migrate:
-        condition: service_completed_successfully
-      redis:
+      backend:
         condition: service_healthy
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "node",
-          "-e",
-          "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
-        ]
-      interval: 30s
-      timeout: 5s
-      retries: 5
-      start_period: 40s
-    stop_grace_period: 30s
-
-  worker:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: worker
-    container_name: rakshex-worker
     restart: unless-stopped
-    user: "1001:1001"
-    environment:
-      NODE_ENV: ${NODE_ENV:-development}
-      DATABASE_URL: postgresql://rakshex:${POSTGRES_PASSWORD:-rakshex}@postgres:5432/rakshex
-      REDIS_URL: redis://redis:6379
-      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me-min-32-chars-long}
-      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-3}
-    depends_on:
-      migrate:
-        condition: service_completed_successfully
-      redis:
-        condition: service_healthy
-    stop_grace_period: 30s
-
-  web:
-    build:
-      context: .
-      dockerfile: apps/web/Dockerfile
-    container_name: rakshex-web
-    restart: unless-stopped
-    ports:
-      - "3001:3000"
-    environment:
-      NODE_ENV: production
-      NEXT_PUBLIC_TS_API_URL: ${NEXT_PUBLIC_TS_API_URL:-http://localhost:3000}
-      NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL:-ws://localhost:3000/ws}
-    depends_on:
-      api:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/"]
-      interval: 30s
-      timeout: 5s
-      retries: 5
-      start_period: 40s
-
-  # Optional local tracing UI
-  jaeger:
-    image: jaegertracing/all-in-one:1.57
-    container_name: rakshex-jaeger
-    profiles: ["observability"]
-    restart: unless-stopped
-    ports:
-      - "16686:16686"
-      - "4318:4318"
-    environment:
-      COLLECTOR_OTLP_ENABLED: "true"
 
 volumes:
-  postgres_data:
-  redis_data:
+  postgres-data:
+  redis-data:
+  backend-data:

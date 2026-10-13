@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <!-- Hexagon border -->
-  <path d="M12 2 L21 7.2 L21 16.8 L12 22 L3 16.8 L3 7.2 Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none" />
-  <!-- Padlock shackle -->
-  <path d="M10 12 V9 A2 2 0 1 1 14 9 V12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none" />
-  <!-- Padlock body -->
-  <rect x="8" y="12" width="8" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5" fill="none" />
-</svg>

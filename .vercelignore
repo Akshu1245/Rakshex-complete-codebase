@@ -1,0 +1,76 @@
+# Version control
+.git
+.gitignore
+
+# Exclude root and backend requirements - only api/requirements.txt is used by Vercel
+/requirements.txt
+/devpulse-backend/requirements.txt
+
+# Python
+*.egg-info
+.pytest_cache
+.coverage
+venv/
+.venv/
+
+# Node
+node_modules
+.pnp.*
+
+# Build artifacts (these will be generated during deployment)
+.next
+dist/
+build/
+
+# Environment files (configure via Vercel Dashboard)
+.env
+.env.*
+!.env.example
+!.env.vercel.example
+
+# Testing
+tests/
+__tests__/
+*.test.*
+*.spec.*
+cypress/
+
+# Documentation (not needed in production)
+*.md
+!README.md
+CHANGELOG.md
+hacker-news.md
+product-hunt.md
+reddit-post.md
+demo-gif-instructions.md
+
+# Docker (not used in Vercel)
+docker-compose.yml
+Dockerfile
+.dockerignore
+
+# Database files (use managed database)
+*.db
+*.sqlite3
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Assets not needed in deployment
+attached_assets/
+launch-assets/
+
+# VSCode Extension (separate deployment)
+vscode-extension/
+

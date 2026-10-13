@@ -1,9 +1,0 @@
-{
-  "name": "rakshex-github-action",
-  "version": "1.0.0",
-  "description": "Rakshex Security Scan GitHub Action",
-  "main": "index.js",
-  "dependencies": {
-    "@octokit/rest": "^20.0.2"
-  }
-}
