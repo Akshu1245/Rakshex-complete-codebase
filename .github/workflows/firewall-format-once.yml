@@ -1,0 +1,38 @@
+name: One-time Agent Firewall Formatting
+
+on:
+  push:
+    branches:
+      - fix/agent-evaluate-atomic-ledger-20261013
+    paths:
+      - .github/workflows/firewall-format-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.repository == 'Akshu1245/Rakshex-complete-codebase'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/agent-evaluate-atomic-ledger-20261013
+          persist-credentials: true
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: pnpm install --frozen-lockfile
+        env:
+          HUSKY: '0'
+      - run: pnpm exec prettier --write apps/api/api/agentFirewall.ts apps/api/api/agentFirewall.e2e.test.ts docs/architecture/ACTION_PILOT_CORRECTNESS_AND_PERF.md scripts/perf/action-evaluate.k6.js
+      - name: Commit formatting
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add apps/api/api/agentFirewall.ts apps/api/api/agentFirewall.e2e.test.ts docs/architecture/ACTION_PILOT_CORRECTNESS_AND_PERF.md scripts/perf/action-evaluate.k6.js
+          if ! git diff --cached --quiet; then
+            git commit -m 'style(firewall): conform to project Prettier'
+            git push origin HEAD:fix/agent-evaluate-atomic-ledger-20261013
+          fi
