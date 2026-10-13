@@ -14,7 +14,10 @@ type ParityCase = {
 };
 
 const fixtures = JSON.parse(
-  readFileSync(new URL("../../../rust/action-core/fixtures/policy_cases.json", import.meta.url), "utf8"),
+  readFileSync(
+    new URL("../../../rust/action-core/fixtures/policy_cases.json", import.meta.url),
+    "utf8",
+  ),
 ) as ParityCase[];
 
 describe("Rust migration: TypeScript policy conformance", () => {

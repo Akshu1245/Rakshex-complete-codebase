@@ -93,8 +93,11 @@ fn matches_action(pattern: &str, value: &str) -> bool {
 }
 
 fn any_matches(patterns: Option<&Vec<String>>, value: &str) -> bool {
-    patterns
-        .is_some_and(|patterns| patterns.iter().any(|pattern| matches_action(pattern, value)))
+    patterns.is_some_and(|patterns| {
+        patterns
+            .iter()
+            .any(|pattern| matches_action(pattern, value))
+    })
 }
 
 fn sequence_matches(history: &[String], sequence: &[String]) -> bool {
@@ -112,11 +115,7 @@ fn parse_time(value: &str) -> Option<DateTime<Utc>> {
         .map(|date| date.with_timezone(&Utc))
 }
 
-fn authority_reasons(
-    scope: &Authority,
-    action: &Action,
-    now: DateTime<Utc>,
-) -> Vec<String> {
+fn authority_reasons(scope: &Authority, action: &Action, now: DateTime<Utc>) -> Vec<String> {
     let mut reasons = Vec::new();
 
     if !scope
@@ -170,9 +169,7 @@ fn authority_reasons(
             scope.max_amount_minor.unwrap_or_default()
         ));
     }
-    if let (Some(scope_currency), Some(action_currency)) =
-        (&scope.currency, &action.currency)
-    {
+    if let (Some(scope_currency), Some(action_currency)) = (&scope.currency, &action.currency) {
         if scope_currency != action_currency {
             reasons.push(format!(
                 "Currency {} is outside delegated authority",
@@ -222,14 +219,16 @@ pub fn evaluate(input: &EvaluationInput) -> EvaluationResult {
             .and_then(|policy| policy.unknown_write_decision.as_deref())
             .filter(|value| *value == "APPROVAL_REQUIRED")
             .unwrap_or("DENY");
-        reasons.push(
-            "Unknown write or destructive action follows the restrictive path".to_string(),
-        );
+        reasons
+            .push("Unknown write or destructive action follows the restrictive path".to_string());
     }
 
     if decision == "ALLOW"
         && any_matches(
-            input.policy.as_ref().and_then(|policy| policy.deny_actions.as_ref()),
+            input
+                .policy
+                .as_ref()
+                .and_then(|policy| policy.deny_actions.as_ref()),
             &input.action.name,
         )
     {
@@ -238,7 +237,10 @@ pub fn evaluate(input: &EvaluationInput) -> EvaluationResult {
     }
     if decision == "ALLOW"
         && any_matches(
-            input.policy.as_ref().and_then(|policy| policy.approval_actions.as_ref()),
+            input
+                .policy
+                .as_ref()
+                .and_then(|policy| policy.approval_actions.as_ref()),
             &input.action.name,
         )
     {
@@ -260,9 +262,7 @@ pub fn evaluate(input: &EvaluationInput) -> EvaluationResult {
             .authority
             .as_ref()
             .and_then(|authority| authority.max_count)
-            .is_some_and(|limit| {
-                input.cumulative.as_ref().map_or(0, |c| c.action_count) >= limit
-            })
+            .is_some_and(|limit| input.cumulative.as_ref().map_or(0, |c| c.action_count) >= limit)
     {
         decision = "LIMIT";
         reasons.push("Delegated action-count limit has been reached".to_string());
@@ -354,17 +354,23 @@ mod tests {
     fn wildcard_matching_matches_typescript_contract() {
         assert!(matches_action("*", "financial.refund"));
         assert!(matches_action("financial.*", "financial.refund"));
-        assert!(!matches_action("financial.refund", "financial.refund.extra"));
+        assert!(!matches_action(
+            "financial.refund",
+            "financial.refund.extra"
+        ));
         assert!(!matches_action("*.refund", "financial.refund"));
     }
 
     #[test]
     fn malformed_timestamp_fails_closed_in_enforce_mode() {
-        let input: EvaluationInput = serde_json::from_str(r#"{
+        let input: EvaluationInput = serde_json::from_str(
+            r#"{
             "mode":"enforce",
             "action":{"name":"financial.refund","effect":"write","known":true},
             "authority":{"actions":["*"],"expiresAt":"not-a-date"}
-        }"#).expect("parse");
+        }"#,
+        )
+        .expect("parse");
         let result = evaluate(&input);
         assert_eq!(result.decision, "DENY");
         assert_eq!(result.effective_decision, "DENY");
