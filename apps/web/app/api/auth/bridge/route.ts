@@ -1,11 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
+import { resolveBackendOrigin } from "../../../../backend-origin.cjs";
 
-const BACKEND_URL =
-  process.env.RAKSHEX_BACKEND_URL ||
-  process.env.NEXT_PUBLIC_TS_API_URL ||
-  "https://api-production-0a2b.up.railway.app";
-
+/**
+ * A NextAuth OAuth login is NOT an authoritative RaksHex app session.
+ * Until the legacy backend auth.oauthSync and its signed app cookies have
+ * security parity on Cloudflare, reject the bridge before reading/forwarding
+ * cookies. This prevents Cloudflare preview logins from forwarding user
+ * cookies to stopped Railway infrastructure or a partial staging backend.
+ */
 export async function POST(request: NextRequest) {
+  if (process.env.RAKSHEX_DEPLOY_TARGET === "cloudflare") {
+    return NextResponse.json(
+      { error: "Cloudflare session bridge not yet migrated" },
+      {
+        status: 503,
+        headers: { "cache-control": "no-store" },
+      },
+    );
+  }
+
+  // Keep legacy deployment's explicit backend priority intact for rollback.
+  // Cloudflare builds always return 503 above, before any cookie is read.
+  const BACKEND_URL =
+    process.env.RAKSHEX_BACKEND_URL ||
+    process.env.NEXT_PUBLIC_TS_API_URL ||
+    resolveBackendOrigin(process.env);
   const cookieHeader = request.headers.get("cookie") ?? "";
   const csrfToken = request.cookies.get("csrf-token")?.value;
 

@@ -1,0 +1,67 @@
+name: Cloudflare complete web staging
+
+on:
+  pull_request:
+    paths:
+      - "apps/web/**"
+      - "scripts/cloudflare/web-staging-routes.test.mjs"
+      - "docs/cloudflare/CF03_FRONTEND_STAGING.md"
+      - ".github/workflows/cloudflare-web-staging.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      RAKSHEX_DEPLOY_TARGET: cloudflare
+      RAKSHEX_CLOUDFLARE_ENV: staging
+      RAKSHEX_BACKEND_URL: https://rakshex-api-staging.rakshex.workers.dev
+      NEXT_PUBLIC_TS_API_URL: https://rakshex-api-staging.rakshex.workers.dev
+      NEXT_PUBLIC_SITE_URL: https://rakshex-frontend.rakshex.workers.dev
+      NEXTAUTH_URL: https://rakshex-frontend.rakshex.workers.dev
+      NEXTAUTH_SECRET: ci-only-placeholder-not-a-production-secret
+      NODE_ENV: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --prod=false
+      - name: Test Cloudflare routing and auth fail-closed behavior
+        run: node --test scripts/cloudflare/web-staging-routes.test.mjs scripts/cloudflare/frontend-entry.test.mjs
+      - name: Apply exact upstream manifest fix for Next.js 16.4
+        run: node scripts/cloudflare/patch-opennext-preview-props.mjs
+      - name: Build full RaksHex site for Cloudflare Workers
+        working-directory: apps/web
+        run: pnpm exec opennextjs-cloudflare build
+      - name: Populate immutable prerendered pages in static assets
+        working-directory: apps/web
+        run: pnpm exec opennextjs-cloudflare populateCache local
+      - name: Validate actual Cloudflare Worker bundle (no deployment)
+        working-directory: apps/web
+        run: pnpm exec wrangler deploy --dry-run --config wrangler.toml --outdir /tmp/rakshex-cf-web
+      - name: HTTP smoke test inside local Workers runtime
+        shell: bash
+        working-directory: apps/web
+        run: |
+          set -eu
+          pnpm exec wrangler dev --local --config wrangler.toml --ip 127.0.0.1 --port 8787 > /tmp/rakshex-cf-web.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true' EXIT
+          READY=0
+          for _ in $(seq 1 60); do
+            if curl -fsS --max-time 2 http://127.0.0.1:8787/ -o /tmp/rakshex-home.html; then READY=1; break; fi
+            sleep 1
+          done
+          if [ "$READY" != 1 ]; then tail -100 /tmp/rakshex-cf-web.log; exit 1; fi
+          CODE=$(curl -s -o /tmp/rakshex-cf-bridge.json -w '%{http_code}' -X POST http://127.0.0.1:8787/api/auth/bridge)
+          test "$CODE" = "503" || { tail -100 /tmp/rakshex-cf-web.log; exit 1; }
+          CODE=$(curl -s -o /tmp/rakshex-cf-oauth.json -w '%{http_code}' http://127.0.0.1:8787/api/auth/session)
+          test "$CODE" = "503" || { tail -100 /tmp/rakshex-cf-web.log; exit 1; }
+          echo "RaksHex homepage works; Cloudflare auth routes reject sessions"

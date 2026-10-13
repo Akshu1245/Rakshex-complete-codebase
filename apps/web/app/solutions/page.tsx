@@ -94,12 +94,6 @@ export default function SolutionsPage() {
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link
-              href="/demo"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-[#14B8A6] to-[#2dd4bf] text-black font-semibold hover:opacity-90 transition-opacity"
-            >
-              Book a demo <ArrowRight className="w-4 h-4" />
-            </Link>
-            <Link
               href="/contact"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-black/50 border border-neutral-700 text-white font-medium hover:border-[#14B8A6]/40 transition-colors"
             >

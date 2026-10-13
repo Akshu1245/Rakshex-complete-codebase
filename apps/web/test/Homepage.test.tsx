@@ -25,7 +25,6 @@ const homepageFiles = [
   path.resolve(__dirname, "../app/HomePageClient.tsx"),
   path.resolve(__dirname, "../app/layout.tsx"),
   path.join(homepageDir, "HeroSection.tsx"),
-  path.join(homepageDir, "TerminalDemo.tsx"),
   path.join(homepageDir, "BenchmarkSection.tsx"),
   path.join(homepageDir, "ArchitectureCompareSlider.tsx"),
 ];
@@ -61,17 +60,16 @@ describe("homepage investor/private-beta cut", () => {
     expect(violations, violations.join("\n")).toEqual([]);
   });
 
-  it("renders the beta CTA and demo CTA with investor-grade positioning", () => {
+  it("renders the beta CTA without simulated product results", () => {
     render(<HeroSection />);
 
     expect(screen.getByRole("link", { name: /request beta access/i })).toHaveAttribute(
       "href",
       "/waitlist",
     );
-    expect(screen.getByRole("link", { name: /see an action get blocked/i })).toHaveAttribute(
-      "href",
-      "/demo",
-    );
+    expect(
+      screen.queryByRole("link", { name: /see an action get blocked/i }),
+    ).not.toBeInTheDocument();
     expect(screen.getByText(/AI agents don't just generate/i)).toBeInTheDocument();
     expect(screen.getByText("They act.")).toBeInTheDocument();
     expect(screen.getByText("Fail-closed credential broker")).toBeInTheDocument();
@@ -87,7 +85,7 @@ describe("homepage investor/private-beta cut", () => {
     for (const cta of ctas) expect(cta).toHaveAttribute("href", "/waitlist");
 
     expect(screen.getByRole("link", { name: "Product" })).toHaveAttribute("href", "/overview");
-    expect(screen.getByRole("link", { name: "Demo" })).toHaveAttribute("href", "/demo");
+    expect(screen.queryByRole("link", { name: "Demo" })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Docs" })).toHaveAttribute("href", "/docs");
     expect(screen.getByRole("link", { name: "Trust" })).toHaveAttribute("href", "/trust");
     expect(screen.queryByText(/npm cli/i)).not.toBeInTheDocument();

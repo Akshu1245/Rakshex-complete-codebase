@@ -193,7 +193,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <StatCard label="AI costs saved" value="Track your savings" />
             <StatCard label="Rogue agents stopped" value="Kill switch ready" />
-            <StatCard label="Vulnerabilities found" value="Run a demo scan" />
+            <StatCard label="Vulnerabilities found" value="No scan results yet" />
             <StatCard label="Uptime SLA" value="Enterprise SLA available" />
           </div>
         </div>

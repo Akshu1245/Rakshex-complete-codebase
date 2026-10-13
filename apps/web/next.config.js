@@ -63,8 +63,7 @@ const nextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value:
-              `default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' wss: ${CSP_API_ORIGINS} https://*.sentry.io https://script.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;`,
+            value: `default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' wss: ${CSP_API_ORIGINS} https://*.sentry.io https://script.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;`,
           },
         ],
       },
@@ -168,6 +167,18 @@ const nextConfig = {
   },
   async rewrites() {
     return [
+      {
+        source: "/api/v1/control/:path*",
+        destination: `${TS_BACKEND_URL}/api/v1/control/:path*`,
+      },
+      {
+        source: "/api/v1/contract-diff",
+        destination: `${TS_BACKEND_URL}/api/v1/contract-diff`,
+      },
+      {
+        source: "/api/v1/contract-diff/jobs/:path*",
+        destination: `${TS_BACKEND_URL}/api/v1/contract-diff/jobs/:path*`,
+      },
       // Legacy deployments may use Railway; Cloudflare builds require an explicit
       // Python/Vercel backend has been retired; production intentionally uses
       // the known Railway origin unless RAKSHEX_BACKEND_URL explicitly overrides it.

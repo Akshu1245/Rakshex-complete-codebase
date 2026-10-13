@@ -17,7 +17,6 @@ const routes = [
   "/legal/ai-transparency",
   "/dpa",
   "/security",
-  "/demo",
   "/compare",
   "/compare/helicone",
   "/compare/portkey",

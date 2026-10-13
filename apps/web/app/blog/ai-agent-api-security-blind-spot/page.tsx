@@ -237,12 +237,6 @@ export default function BlogAgentSecurity() {
             </p>
             <div className="flex gap-4">
               <Link
-                href="/demo"
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm rounded-lg transition-colors shadow-lg shadow-blue-500/20"
-              >
-                Run a Free Scan
-              </Link>
-              <Link
                 href="/pricing"
                 className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-semibold text-sm rounded-lg border border-slate-700 transition-colors"
               >

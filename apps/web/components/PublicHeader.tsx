@@ -17,14 +17,12 @@ const HIDE_BANNER_PATHS = [
 
 const NAV_ITEMS = [
   { href: "/overview", label: "Product" },
-  { href: "/demo", label: "Demo" },
   { href: "/docs", label: "Docs" },
   { href: "/trust", label: "Trust" },
   { href: "/pricing", label: "Pricing" },
 ] as const;
 
-const VSCODE_URL =
-  "https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex-vscode";
+const VSCODE_URL = "https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex-vscode";
 const GITHUB_URL = "https://github.com/Akshu1245/Rakshex-complete-codebase";
 
 export function PublicHeader() {

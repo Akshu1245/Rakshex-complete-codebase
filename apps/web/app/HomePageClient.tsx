@@ -134,12 +134,6 @@ export default function RootHomePage() {
             >
               Request beta access <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
-            <Link
-              href="/demo"
-              className="inline-flex min-h-12 items-center justify-center rounded-md border border-white/15 px-5 py-3 text-sm font-semibold text-white no-underline hover:border-[#14B8A6]/50"
-            >
-              Run the public demo
-            </Link>
           </div>
         </div>
       </section>

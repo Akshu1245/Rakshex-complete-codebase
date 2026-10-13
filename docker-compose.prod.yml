@@ -58,4 +58,3 @@ services:
     environment:
       NODE_ENV: production
       NEXT_PUBLIC_TS_API_URL: ${NEXT_PUBLIC_TS_API_URL:-${APP_URL}}
-      NEXT_PUBLIC_SANDBOX_MODE: "false"
