@@ -11,14 +11,7 @@ export type UsageUnit =
   | "byte"
   | "completion";
 
-export type UsageDomain =
-  | "text"
-  | "code"
-  | "voice"
-  | "image"
-  | "video"
-  | "cloud"
-  | "generic_api";
+export type UsageDomain = "text" | "code" | "voice" | "image" | "video" | "cloud" | "generic_api";
 
 export interface UsageMeasurement {
   domain: UsageDomain;
