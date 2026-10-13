@@ -143,24 +143,37 @@ export async function getDb() {
 
   if (!_dbInitPromise) {
     _dbInitPromise = (async () => {
+      const pool = new Pool({
+        connectionString: process.env.DATABASE_URL,
+        max: 20,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 5000,
+      });
+      // node-postgres emits background errors on idle connections whenever
+      // the database restarts. Without this handler Node treats an 'error'
+      // event as uncaught and terminates the API process during an outage.
+      // pg pools discard these clients and reconnect on subsequent queries.
+      pool.on("error", (error) => {
+        logger.error({ err: error }, "[Database] Idle pool connection lost");
+      });
       try {
-        const pool = new Pool({
-          connectionString: process.env.DATABASE_URL,
-          max: 20,
-          idleTimeoutMillis: 30000,
-          connectionTimeoutMillis: 5000,
-        });
-        // Test the connection before caching
+        // Verify connectivity before allowing this pool onto the hot path.
         await pool.query("SELECT 1");
         _db = drizzle(pool);
         logger.info("[Database] Connection pool initialized");
         return _db;
       } catch (error) {
         logger.warn({ err: error }, "[Database] Failed to connect");
+        await pool.end().catch(() => undefined);
         _db = null;
         return null;
       }
-    })();
+    })().then((value) => {
+      // The previous rejected/NULL init promise was cached permanently.
+      // Allow a later request to initialize after Postgres is restored.
+      if (!value) _dbInitPromise = null;
+      return value;
+    });
   }
 
   return _dbInitPromise;
