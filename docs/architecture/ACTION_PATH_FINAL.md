@@ -31,20 +31,20 @@ The original Express application plane is deliberately not represented. This is 
 
 **Definitions:** Class A = authoritative security decision and durable signed evidence **before side-effecting egress**; if an upstream dependency prevents either, DENY. Class B = future low-risk, non-credentialed action with explicitly certified resource/read-only behavior, signed bounded cache policy, and **durably accepted** receipt intent before an ALLOW. Class B currently has **zero eligible catalogue entries**; merely tagging `effect: "read"` does not confer eligibility.
 
-| Known semantic action | Current class | Revocation source to check / replicate | Failure mode | Risk note |
-| --- | --- | --- | --- | --- |
-| `financial.refund` | A | Agent/workspace status; authority; policy; credential; financial limits | DENY absent fresh authority and durable receipt | Money |
-| `financial.payment.create` | A | Agent/workspace status; authority; policy; credential; financial limits | DENY absent fresh authority and durable receipt | Money |
-| `financial.subscription.cancel` | A | Agent/workspace status; authority; policy; credential; financial limits | DENY absent fresh authority and durable receipt | Destructive contract change |
-| `code.pr.create` | A | Agent/workspace status; authority; policy; repo permissions | DENY absent fresh authority and durable receipt | Write |
-| `code.merge` | A | Agent/workspace status; authority; policy; repo permissions | DENY absent fresh authority and durable receipt | Destructive |
-| `code.branch.delete` | A | Agent/workspace status; authority; policy; repo permissions | DENY absent fresh authority and durable receipt | Destructive |
-| `code.deploy` | A | Agent/workspace status; authority; policy; deployment permissions | DENY absent fresh authority and durable receipt | Production impact |
-| `database.read` | **A (future B candidate only)** | Agent/workspace status; authority; policy; tenant/data permissions | DENY absent fresh authority and durable receipt | Secrets/PII; SQL may have side effects |
-| `database.write` | A | Agent/workspace status; authority; policy; tenant/data permissions | DENY absent fresh authority and durable receipt | Write |
-| `database.delete` | A | Agent/workspace status; authority; policy; tenant/data permissions | DENY absent fresh authority and durable receipt | Destructive |
-| `database.schema.change` | A | Agent/workspace status; authority; policy; tenant/data permissions | DENY absent fresh authority and durable receipt | Destructive |
-| `semantic.unknown` (fallback) | **A** | No trustworthy metadata; authoritative verification required | DENY unless validated as a known, authorized action | Unclassified/mismatch |
+| Known semantic action           | Current class                   | Revocation source to check / replicate                                  | Failure mode                                        | Risk note                              |
+| ------------------------------- | ------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------- | -------------------------------------- |
+| `financial.refund`              | A                               | Agent/workspace status; authority; policy; credential; financial limits | DENY absent fresh authority and durable receipt     | Money                                  |
+| `financial.payment.create`      | A                               | Agent/workspace status; authority; policy; credential; financial limits | DENY absent fresh authority and durable receipt     | Money                                  |
+| `financial.subscription.cancel` | A                               | Agent/workspace status; authority; policy; credential; financial limits | DENY absent fresh authority and durable receipt     | Destructive contract change            |
+| `code.pr.create`                | A                               | Agent/workspace status; authority; policy; repo permissions             | DENY absent fresh authority and durable receipt     | Write                                  |
+| `code.merge`                    | A                               | Agent/workspace status; authority; policy; repo permissions             | DENY absent fresh authority and durable receipt     | Destructive                            |
+| `code.branch.delete`            | A                               | Agent/workspace status; authority; policy; repo permissions             | DENY absent fresh authority and durable receipt     | Destructive                            |
+| `code.deploy`                   | A                               | Agent/workspace status; authority; policy; deployment permissions       | DENY absent fresh authority and durable receipt     | Production impact                      |
+| `database.read`                 | **A (future B candidate only)** | Agent/workspace status; authority; policy; tenant/data permissions      | DENY absent fresh authority and durable receipt     | Secrets/PII; SQL may have side effects |
+| `database.write`                | A                               | Agent/workspace status; authority; policy; tenant/data permissions      | DENY absent fresh authority and durable receipt     | Write                                  |
+| `database.delete`               | A                               | Agent/workspace status; authority; policy; tenant/data permissions      | DENY absent fresh authority and durable receipt     | Destructive                            |
+| `database.schema.change`        | A                               | Agent/workspace status; authority; policy; tenant/data permissions      | DENY absent fresh authority and durable receipt     | Destructive                            |
+| `semantic.unknown` (fallback)   | **A**                           | No trustworthy metadata; authoritative verification required            | DENY unless validated as a known, authorized action | Unclassified/mismatch                  |
 
 These are **target revocation inputs**, not proof that every adapter can deliver an instantaneous revocation signal. Future signed Class B bundles must explicitly define maximum staleness, expiration, version/epoch and an emergency revocation channel; TTL alone cannot guarantee immediate revocation.
 
@@ -63,14 +63,14 @@ A queue acknowledgment is a **durably accepted intent**, **not yet a final signe
 
 ## 4. Failure behavior: desired vs verified
 
-| Failure | Target requirement | What is proven right now |
-| --- | --- | --- |
-| Postgres down | A denies; explicitly safe B can use valid cache only with queue-accepted receipt intent | Existing `agentFirewall.evaluate` is Postgres-dependent; independent Class B is not wired |
-| Control plane down | A denies when fresh auth unavailable. B only uses a signed in-TTL bundle. After TTL, a separate hard-coded, reviewed fail-open B scope may be used **only with durable logging**; otherwise DENY | Signed policy bundle revocation & B path not proven |
-| Queue unavailable | Never return B ALLOW without durable intent; A synchronous receipt path allowed only if real database and signing dependencies work, else DENY | Requires a fault-injection test |
-| Unclassified / conflicting | Class A (default); unknown writes denied/approval-gated by existing engine | Source treats unknown writes restrictively in enforce mode; classification metadata is proposed |
-| Postgres restored | Replay buffered intent idempotently; sequence hash-chain updates under lock; measure lag/backlog | Cloudflare Queues is not FIFO; reorder/duplicate deliveries must be handled by consumer |
-| Stale or revoked B bundle | Forbid secrets, writes, sensitive reads and side effects; reject if signature/version/epoch or TTL invalid | No Class B bundle authorization yet |
+| Failure                    | Target requirement                                                                                                                                                                               | What is proven right now                                                                        |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| Postgres down              | A denies; explicitly safe B can use valid cache only with queue-accepted receipt intent                                                                                                          | Existing `agentFirewall.evaluate` is Postgres-dependent; independent Class B is not wired       |
+| Control plane down         | A denies when fresh auth unavailable. B only uses a signed in-TTL bundle. After TTL, a separate hard-coded, reviewed fail-open B scope may be used **only with durable logging**; otherwise DENY | Signed policy bundle revocation & B path not proven                                             |
+| Queue unavailable          | Never return B ALLOW without durable intent; A synchronous receipt path allowed only if real database and signing dependencies work, else DENY                                                   | Requires a fault-injection test                                                                 |
+| Unclassified / conflicting | Class A (default); unknown writes denied/approval-gated by existing engine                                                                                                                       | Source treats unknown writes restrictively in enforce mode; classification metadata is proposed |
+| Postgres restored          | Replay buffered intent idempotently; sequence hash-chain updates under lock; measure lag/backlog                                                                                                 | Cloudflare Queues is not FIFO; reorder/duplicate deliveries must be handled by consumer         |
+| Stale or revoked B bundle  | Forbid secrets, writes, sensitive reads and side effects; reject if signature/version/epoch or TTL invalid                                                                                       | No Class B bundle authorization yet                                                             |
 
 **Do not label the first three cases `[Certain]` until outage tests and telemetry prove them.**
 
