@@ -129,7 +129,7 @@ jobs:
 
       - name: Wait for servers to be ready
         run: |
-          npx --yes wait-on http://localhost:5000 http://localhost:8000/health --timeout 60000
+          npx --yes wait-on http-get://localhost:5000 http-get://localhost:8000/health --timeout 60000
 
       - name: Run Cypress E2E tests
         working-directory: devpulse-dashboard-ui
