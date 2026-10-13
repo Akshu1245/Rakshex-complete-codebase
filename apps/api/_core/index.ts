@@ -1210,7 +1210,12 @@ async function startServer() {
     logger.warn({ preferredPort, port }, "[Server] Preferred port busy, using fallback");
   }
 
-  server.listen(port, async () => {
+  // Never accept HTTP traffic until the background queue is initialized.
+  // Production initialization fails closed if Redis/BullMQ is not configured.
+  await initJobQueue();
+  registerJobWorkers();
+
+  server.listen(port, () => {
     logger.info(
       {
         port,
@@ -1222,8 +1227,6 @@ async function startServer() {
       logger.info({ healthUrl: `http://localhost:${port}/api/health` }, "[Server] Health check");
     }
 
-    await initJobQueue();
-    registerJobWorkers();
     startSecurityEventsFlusher();
     scheduleWeeklyDigest();
     if (process.env.RAKSHEX_REDTEAM_SCHEDULER !== "disabled") {
