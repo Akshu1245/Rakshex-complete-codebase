@@ -2,5 +2,6 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
   "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
-  "buildCommand": "next build --webpack"
+  "buildCommand": "node ../../scripts/vercel-cleanup-partial-next.mjs && next build --webpack",
+  "ignoreCommand": "node ../../scripts/vercel-should-build.mjs"
 }

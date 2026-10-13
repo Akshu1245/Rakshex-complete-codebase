@@ -173,12 +173,6 @@ export default function FeaturesPage() {
         <h2 className="text-2xl font-bold mb-4">Ready to see it in action?</h2>
         <div className="flex flex-col sm:flex-row justify-center gap-4">
           <Link
-            href="/demo"
-            className="bg-blue-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-          >
-            Try Live Demo →
-          </Link>
-          <Link
             href="/pricing"
             className="border border-gray-600 text-gray-300 px-8 py-3 rounded-lg font-medium hover:border-gray-400 transition-colors"
           >

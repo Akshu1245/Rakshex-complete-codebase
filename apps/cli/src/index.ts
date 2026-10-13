@@ -2,11 +2,21 @@
 /**
  * @rakshex/cli — local + CI scanner
  *
- * Commands: login | configure | scan | policy | report | doctor | rules | help
+ * Commands: login | configure | scan | api diff | secrets | policy | report | doctor | rules | help
  * Outputs:  terminal | json | sarif
- * Offline:  scan uses @rakshex/scanner-core (deterministic, no network)
+ * Offline:  scan / secrets / basic api diff use deterministic scanner-core
+ * Extended API diff: optional trusted oasdiff binary, local files only.
  */
-import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync } from "node:fs";
+import {
+  readFileSync,
+  writeFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  statSync,
+  chmodSync,
+} from "node:fs";
+import { parse as parseYaml } from "yaml";
 import { join, resolve, extname, basename } from "node:path";
 import { homedir } from "node:os";
 import { createHash } from "node:crypto";
@@ -18,6 +28,8 @@ import {
   getRiskLevel,
   type RuleFinding,
 } from "@rakshex/scanner-core";
+import { cmdSecrets } from "./secrets.js";
+import { cmdApiDiff } from "./apiDiff.js";
 
 const CONFIG_DIR = join(homedir(), ".rakshex");
 const CONFIG_PATH = join(CONFIG_DIR, "config.json");
@@ -43,8 +55,10 @@ function loadConfig(): CliConfig {
 }
 
 function saveConfig(cfg: CliConfig): void {
-  if (!existsSync(CONFIG_DIR)) mkdirSync(CONFIG_DIR, { recursive: true });
-  writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 2), "utf8");
+  if (!existsSync(CONFIG_DIR)) mkdirSync(CONFIG_DIR, { recursive: true, mode: 0o700 });
+  if (process.platform !== "win32") chmodSync(CONFIG_DIR, 0o700);
+  writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 2), { encoding: "utf8", mode: 0o600 });
+  if (process.platform !== "win32") chmodSync(CONFIG_PATH, 0o600);
 }
 
 function parseArgs(argv: string[]) {
@@ -77,7 +91,10 @@ function printHelp(): void {
 Usage:
   rakshex login --api-key <key> [--api-url <url>]
   rakshex configure --fail-on Critical,High [--ignore-rules id1,id2]
-  rakshex scan <file-or-dir> [--format terminal|json|sarif] [--changed-only] [--baseline] [--upload]
+  rakshex scan <file-or-dir> [--format terminal|json|sarif] [--fail-on High] [--baseline] [--upload]
+  rakshex api diff <old.json|yaml> <new.json|yaml> [--engine basic|oasdiff] [--impact-dir <source-dir>] [--format terminal|json]
+  rakshex secrets <path> [--format terminal|json] [--fail-on Critical,High]
+  rakshex secrets rules
   rakshex policy check <file> [--format json]
   rakshex report <file> [--format sarif|json]
   rakshex doctor
@@ -90,7 +107,7 @@ never automatic just because a key is configured; it must be requested on
 every invocation that should transmit data. A failed upload never changes the
 scan's own exit code — offline scanning stays authoritative for CI gating.
 
-Exit codes (scan):
+Exit codes (scan / secrets):
   0  clean / below threshold
   1  findings at or above fail-on severity
   2  usage / parse error
@@ -101,30 +118,28 @@ function loadCollection(filePath: string): unknown {
   const text = readFileSync(filePath, "utf8");
   const ext = extname(filePath).toLowerCase();
   if (ext === ".yaml" || ext === ".yml") {
-    // Minimal YAML: require JSON-compatible docs or use scanner after crude conversion
-    // Prefer JSON for CI; for YAML use simple openapi key detection via JSON if possible
-    try {
-      return JSON.parse(text);
-    } catch {
-      // Best-effort: wrap as openapi if looks like YAML openapi without full parser in CLI
-      if (text.includes("openapi:") || text.includes("swagger:")) {
-        // Convert very simple openapi yaml is hard without dep — try dynamic import of yaml if present
-        try {
-          const yaml = require("yaml") as { parse: (s: string) => unknown };
-          return yaml.parse(text);
-        } catch {
-          throw new Error(
-            `YAML requires the 'yaml' package. Convert to JSON or install yaml in the CLI environment.`,
-          );
-        }
-      }
-      throw new Error(`Cannot parse ${filePath} as JSON/YAML`);
-    }
+    // yaml is an ESM dependency; `require()` is undefined in this module.
+    return validateScanDocument(parseYaml(text));
   }
-  return JSON.parse(text);
+  return validateScanDocument(JSON.parse(text));
 }
 
-function collectScanTargets(root: string, changedOnly: boolean): string[] {
+// Reject unrelated JSON/YAML rather than reporting a false clean scan.
+function validateScanDocument(value: unknown): unknown {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("Expected an OpenAPI specification or Postman collection object");
+  }
+  const doc = value as Record<string, unknown>;
+  if (
+    !Array.isArray(doc.item) &&
+    !(doc.paths && typeof doc.paths === "object" && !Array.isArray(doc.paths))
+  ) {
+    throw new Error("Input has neither Postman 'item' nor OpenAPI 'paths'");
+  }
+  return value;
+}
+
+function collectScanTargets(root: string): string[] {
   const abs = resolve(root);
   if (statSync(abs).isFile()) return [abs];
   const out: string[] = [];
@@ -134,11 +149,13 @@ function collectScanTargets(root: string, changedOnly: boolean): string[] {
       const p = join(dir, name);
       const st = statSync(p);
       if (st.isDirectory()) walk(p);
-      else if (/\.(json|ya?ml)$/i.test(name)) {
-        // Heuristic: openapi/postman filenames or content later
-        if (/openapi|swagger|postman|collection|api/i.test(name) || !changedOnly) {
-          out.push(p);
-        }
+      else if (
+        /\.(json|ya?ml)$/i.test(name) &&
+        /(?:^|[._-])(openapi|swagger|postman|collection)(?:[._-]|$)/i.test(name)
+      ) {
+        // Directory scans intentionally ignore unrelated package/config files.
+        // Users can scan a custom-named spec by supplying its exact file path.
+        out.push(p);
       }
     }
   };
@@ -226,7 +243,8 @@ async function maybeUploadScan(
   collection: unknown,
 ): Promise<void> {
   if (!requested) return;
-  if (!cfg.apiKey) {
+  const apiKey = process.env.RAKSHEX_API_KEY ?? cfg.apiKey;
+  if (!apiKey) {
     console.warn(
       "--upload requested but no API key configured. Run: rakshex login --api-key <key>",
     );
@@ -238,7 +256,7 @@ async function maybeUploadScan(
     const timeout = setTimeout(() => controller.abort(), 15_000);
     const res = await fetch(`${base}/api/github/scan`, {
       method: "POST",
-      headers: { "content-type": "application/json", "x-api-key": cfg.apiKey },
+      headers: { "content-type": "application/json", "x-api-key": apiKey },
       body: JSON.stringify({ collection }),
       signal: controller.signal,
     }).finally(() => clearTimeout(timeout));
@@ -266,7 +284,7 @@ function shouldFail(
 }
 
 function cmdLogin(flags: Record<string, string | boolean>): number {
-  const apiKey = String(flags["api-key"] ?? flags.apiKey ?? "");
+  const apiKey = String(flags["api-key"] ?? flags.apiKey ?? process.env.RAKSHEX_API_KEY ?? "");
   if (!apiKey || apiKey.length < 8) {
     console.error("Usage: rakshex login --api-key <key> [--api-url <url>]");
     return 2;
@@ -275,7 +293,9 @@ function cmdLogin(flags: Record<string, string | boolean>): number {
   cfg.apiKey = apiKey;
   if (flags["api-url"]) cfg.apiUrl = String(flags["api-url"]);
   saveConfig(cfg);
-  console.log("Logged in. API key stored in ~/.rakshex/config.json (mode 600 recommended).");
+  console.log(
+    "Logged in. API key stored in ~/.rakshex/config.json (restricted permissions on POSIX systems).",
+  );
   return 0;
 }
 
@@ -294,7 +314,10 @@ function cmdConfigure(flags: Record<string, string | boolean>): number {
       .filter(Boolean);
   }
   saveConfig(cfg);
-  console.log("Config updated:", JSON.stringify(cfg, null, 2));
+  console.log(
+    "Config updated:",
+    JSON.stringify({ ...cfg, apiKey: cfg.apiKey ? "[REDACTED]" : undefined }, null, 2),
+  );
   return 0;
 }
 
@@ -308,13 +331,36 @@ async function cmdScan(
     return 2;
   }
   const format = (String(flags.format ?? "terminal") as OutputFormat) || "terminal";
+  if (!["terminal", "json", "sarif"].includes(format)) {
+    console.error("Invalid --format. Choose terminal, json or sarif.");
+    return 2;
+  }
   const cfg = loadConfig();
-  const failOn = cfg.failOn ?? ["Critical", "High"];
+  if (flags["changed-only"] !== undefined) {
+    console.error("--changed-only is not implemented. Scan a specific file or directory instead.");
+    return 2;
+  }
+  const override = flags["fail-on"];
+  if (
+    override !== undefined &&
+    (typeof override !== "string" ||
+      !["Critical", "High", "Medium", "Low", "none"].includes(override))
+  ) {
+    console.error("Invalid --fail-on. Choose Critical, High, Medium, Low or none.");
+    return 2;
+  }
+  const failOn =
+    override === "none"
+      ? []
+      : override
+        ? [override as "Critical" | "High" | "Medium" | "Low"]
+        : (cfg.failOn ?? ["Critical", "High"]);
   const ignore = new Set(cfg.ignoreRules ?? []);
   const upload = Boolean(flags.upload);
 
   let all: RuleFinding[] = [];
-  const files = collectScanTargets(target, Boolean(flags["changed-only"]));
+  const files = collectScanTargets(target);
+  let parseFailures = 0;
   if (files.length === 0) {
     console.error("No scannable OpenAPI/Postman JSON/YAML files found.");
     return 2;
@@ -328,10 +374,17 @@ async function cmdScan(
       all.push(...result.findings.filter((f) => !ignore.has(f.ruleId)));
       if (upload) uploads.push(maybeUploadScan(cfg, upload, file, data));
     } catch (err) {
-      console.error(`Skip ${file}: ${(err as Error).message}`);
+      parseFailures += 1;
+      console.error(`Invalid scan input ${file}: ${(err as Error).message}`);
     }
   }
   if (uploads.length > 0) await Promise.all(uploads);
+  if (parseFailures > 0) {
+    console.error(
+      `Scan aborted: ${parseFailures} input file(s) were invalid; no clean report generated.`,
+    );
+    return 2;
+  }
 
   // Dedupe by fingerprint
   const byFp = new Map<string, RuleFinding>();
@@ -339,19 +392,36 @@ async function cmdScan(
   all = [...byFp.values()];
 
   if (flags.baseline) {
+    if (!existsSync(CONFIG_DIR)) mkdirSync(CONFIG_DIR, { recursive: true, mode: 0o700 });
     if (existsSync(BASELINE_PATH)) {
-      const base = JSON.parse(readFileSync(BASELINE_PATH, "utf8")) as { fingerprints: string[] };
-      const known = new Set(base.fingerprints);
+      const parsed = JSON.parse(readFileSync(BASELINE_PATH, "utf8")) as { fingerprints?: unknown };
+      if (
+        !Array.isArray(parsed.fingerprints) ||
+        !parsed.fingerprints.every((fp) => typeof fp === "string")
+      ) {
+        console.error("Invalid baseline: expected a fingerprints string array.");
+        return 2;
+      }
+      const known = new Set(parsed.fingerprints);
       all = all.filter((f) => !known.has(f.fingerprint));
+      // Comparing must never replace the approved baseline with a subset.
+    } else {
+      writeFileSync(
+        BASELINE_PATH,
+        JSON.stringify(
+          {
+            fingerprints: [...fingerprintSet(all)],
+            updatedAt: new Date().toISOString(),
+          },
+          null,
+          2,
+        ),
+        { encoding: "utf8", mode: 0o600 },
+      );
+      console.error(
+        `New baseline created at ${BASELINE_PATH}. Review and preserve it before CI use.`,
+      );
     }
-    writeFileSync(
-      BASELINE_PATH,
-      JSON.stringify(
-        { fingerprints: [...fingerprintSet(all)], updatedAt: new Date().toISOString() },
-        null,
-        2,
-      ),
-    );
   }
 
   const score = calculateRiskScore(all);
@@ -412,7 +482,7 @@ function cmdReport(positional: string[], flags: Record<string, string | boolean>
 function cmdDoctor(): number {
   const issues: string[] = [];
   const cfg = loadConfig();
-  if (!cfg.apiKey) {
+  if (!(process.env.RAKSHEX_API_KEY ?? cfg.apiKey)) {
     issues.push(
       "No API key configured — offline scan still works; run 'rakshex login --api-key …' to enable 'scan --upload'",
     );
@@ -447,6 +517,10 @@ async function main(): Promise<number> {
       return cmdConfigure(flags);
     case "scan":
       return cmdScan(positional, flags);
+    case "api":
+      return cmdApiDiff(positional, flags);
+    case "secrets":
+      return cmdSecrets(positional, flags);
     case "policy":
       return cmdPolicy(positional, flags);
     case "report":

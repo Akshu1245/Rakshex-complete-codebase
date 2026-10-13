@@ -50,6 +50,7 @@ export const MIGRATION_ORDER = [
   "0028_signed_action_receipts.sql",
   "0029_openrouter_provider.sql",
   "0030_elevenlabs_provider.sql",
+  "0031_action_receipt_idempotency.sql",
 ];
 
 export async function migrate(databaseUrl?: string): Promise<string[]> {

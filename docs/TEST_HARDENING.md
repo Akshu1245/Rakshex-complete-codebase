@@ -31,6 +31,12 @@ Package vitest configs should fail CI on test failure. Meaningful coverage targe
 
 Do not add empty `expect(true)` tests to inflate coverage.
 
+## Dependabot and vitest
+
+This repo is a **pnpm workspace**. Dependabot npm updates must use `.github/dependabot.yml` with `directory: "/"` only. Subdirectory npm entries cause `misconfigured_tooling` failures when GitHub tries grouped security updates across `apps/*` and `packages/*`.
+
+Vitest advisories are addressed at the root via `pnpm.overrides` (`vitest: 4.1.11`) and the root devDependency range. No per-package Dependabot vitest jobs are required once the lockfile reflects the override.
+
 ## Security suites (API)
 
 Existing and new tests under `apps/api`:

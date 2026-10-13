@@ -149,40 +149,6 @@ rules:
     deny_by_default: true
 `,
   },
-  {
-    id: "demo-loose",
-    name: "Demo / Trial",
-    description:
-      "For sandbox accounts. Minimal blocks, very small daily token budget so accounts can't accidentally rack up provider bills.",
-    yaml: `name: "Demo Trial"
-version: 1
-applies_to: ["trial"]
-description: "Tight token budget, loose policy — designed for sandbox demos."
-rules:
-  - id: pii_redaction
-    enabled: true
-    redact: [EMAIL]
-    action: mask
-  - id: prompt_injection
-    enabled: true
-    threshold: 80
-    on_detection: warn
-  - id: token_budget
-    enabled: true
-    daily_tokens: 50000
-    monthly_usd: 5
-    on_breach: block
-  - id: kill_switch
-    enabled: true
-    cost_anomaly_multiplier: 2
-    error_rate_threshold: 0.5
-  - id: tool_approval
-    enabled: false
-    allowlist: []
-    require_approval: []
-    deny_by_default: false
-`,
-  },
 ];
 
 export function getPolicyTemplate(id: string): PolicyTemplate | undefined {

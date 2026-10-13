@@ -85,7 +85,11 @@ export default function BlogHeliconeAlternative() {
                   ["Shadow API discovery", "❌", "✅"],
                   ["Credential leak scanning", "❌", "✅"],
                   ["Kill switch / budget cap", "⚠️ Alert only", "✅ Hard stop"],
-                  ["Compliance evidence export", "❌", "✅ Mapping and evidence, not a certification"],
+                  [
+                    "Compliance evidence export",
+                    "❌",
+                    "✅ Mapping and evidence, not a certification",
+                  ],
                   ["Self-hosted option", "❌", "✅ Docker"],
                 ].map(([cap, hel, dev]) => (
                   <tr key={cap}>
@@ -129,12 +133,6 @@ export default function BlogHeliconeAlternative() {
 
         <div className="mt-10 p-6 bg-blue-900/20 border border-blue-500/30 rounded-xl text-center">
           <p className="text-blue-300 mb-4">Ready to see what Helicone is not catching?</p>
-          <Link
-            href="/demo"
-            className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors"
-          >
-            Try RaksHex Free →
-          </Link>
         </div>
       </div>
     </article>

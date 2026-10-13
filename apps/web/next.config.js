@@ -8,16 +8,16 @@ try {
 const path = require("path");
 
 /** @type {import('next').NextConfig} */
-const RAILWAY_PRODUCTION_API_URL = "https://api-production-0a2b.up.railway.app";
-const TS_BACKEND_URL =
-  process.env.RAKSHEX_BACKEND_URL ||
-  (process.env.NODE_ENV === "production"
-    ? RAILWAY_PRODUCTION_API_URL
-    : process.env.NEXT_PUBLIC_TS_API_URL ||
-      process.env.NEXT_PUBLIC_API_URL ||
-      "http://localhost:3000");
+const { resolveBackendOrigin } = require("./backend-origin.cjs");
+const cloudflareBuild = process.env.RAKSHEX_DEPLOY_TARGET === "cloudflare";
+const TS_BACKEND_URL = resolveBackendOrigin(process.env);
+const CSP_API_ORIGINS = cloudflareBuild
+  ? TS_BACKEND_URL
+  : "https://api.rakshex.in https://api-production-0a2b.up.railway.app wss://api-production-0a2b.up.railway.app";
 
 const nextConfig = {
+  // Workspace TS sources use Node ESM ".js" import specifiers; webpack must map them to .ts.
+  transpilePackages: ["@rakshex/scanner-core"],
   serverExternalPackages: ["async_hooks"],
   // This project sits inside a larger local workspace that has its own lock
   // file. Pin tracing here so production builds never walk the parent tree.
@@ -63,8 +63,7 @@ const nextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value:
-              "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' wss: https://api.rakshex.in https://api-production-0a2b.up.railway.app wss://api-production-0a2b.up.railway.app https://*.sentry.io https://script.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;",
+            value: `default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' wss: ${CSP_API_ORIGINS} https://*.sentry.io https://script.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;`,
           },
         ],
       },
@@ -120,6 +119,36 @@ const nextConfig = {
         permanent: true,
       },
       {
+        source: "/roi-calculator",
+        destination: "/pricing",
+        permanent: true,
+      },
+      {
+        source: "/roi-calculator/:path*",
+        destination: "/pricing",
+        permanent: true,
+      },
+      {
+        source: "/blog/helicone-alternative",
+        destination: "/blog",
+        permanent: true,
+      },
+      {
+        source: "/blog/lakera-alternative",
+        destination: "/blog",
+        permanent: true,
+      },
+      {
+        source: "/blog/portkey-alternative",
+        destination: "/blog",
+        permanent: true,
+      },
+      {
+        source: "/blog/snyk-alternative",
+        destination: "/blog",
+        permanent: true,
+      },
+      {
         source: "/security.txt",
         destination: "/.well-known/security.txt",
         permanent: true,
@@ -138,7 +167,19 @@ const nextConfig = {
   },
   async rewrites() {
     return [
-      // All API traffic goes to the Node tRPC backend on Railway. The legacy
+      {
+        source: "/api/v1/control/:path*",
+        destination: `${TS_BACKEND_URL}/api/v1/control/:path*`,
+      },
+      {
+        source: "/api/v1/contract-diff",
+        destination: `${TS_BACKEND_URL}/api/v1/contract-diff`,
+      },
+      {
+        source: "/api/v1/contract-diff/jobs/:path*",
+        destination: `${TS_BACKEND_URL}/api/v1/contract-diff/jobs/:path*`,
+      },
+      // Legacy deployments may use Railway; Cloudflare builds require an explicit
       // Python/Vercel backend has been retired; production intentionally uses
       // the known Railway origin unless RAKSHEX_BACKEND_URL explicitly overrides it.
       {
@@ -177,6 +218,9 @@ const nextConfig = {
   },
   // Bundle splitting: extract vendor chunks and enable code splitting
   webpack: (config, { isServer }) => {
+    config.resolve.extensionAlias = {
+      ".js": [".ts", ".tsx", ".js"],
+    };
     config.module.rules.push({
       test: /\.md$/,
       type: "asset/source",

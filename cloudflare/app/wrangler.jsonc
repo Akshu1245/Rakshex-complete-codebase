@@ -1,0 +1,24 @@
+{
+  "name": "rakshex-app-staging",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-10-13",
+  "workers_dev": true,
+  "vars": {
+    "ENVIRONMENT": "staging",
+    "RECEIPT_KEY_ID": "cf-app-staging-20261013",
+    "RECEIPT_PUBLIC_PEM": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEApks/jA2Be/J4tz+hl5HRvV1WEYEJjEQvdvCE2V/D51U=\n-----END PUBLIC KEY-----\n",
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "rakshex-app-staging",
+      "database_id": "61d9411a-e3dc-4f9b-9dad-88decdbf1d54",
+      "migrations_dir": "migrations",
+    },
+  ],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 0.1,
+    "redact_query_string": true,
+  },
+}

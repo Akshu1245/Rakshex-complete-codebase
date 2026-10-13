@@ -1,0 +1,33 @@
+name: Cloudflare boundary
+
+on:
+  pull_request:
+    paths:
+      - "apps/web/next.config.js"
+      - "apps/web/backend-origin.cjs"
+      - "scripts/cloudflare/**"
+      - "cloudflare/staging/**"
+      - ".github/workflows/cloudflare-boundary.yml"
+  push:
+    branches: [main]
+    paths:
+      - "apps/web/next.config.js"
+      - "apps/web/backend-origin.cjs"
+      - "scripts/cloudflare/**"
+      - ".github/workflows/cloudflare-boundary.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  edge-origin-preflight:
+    name: No Railway fallback in Cloudflare builds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Run origin and CSP regression tests
+        run: node --test scripts/cloudflare/api-probe.test.mjs scripts/cloudflare/backend-origin.test.mjs scripts/cloudflare/core-*.test.mjs

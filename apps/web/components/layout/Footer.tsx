@@ -2,13 +2,12 @@ import Link from "next/link";
 import { ExternalLink, Github, Instagram, Mail, MessageCircle } from "lucide-react";
 import { RaksHexLogo } from "@/components/common/RaksHexLogo";
 
-const VSCODE_URL =
-  "https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex-vscode";
+const VSCODE_URL = "https://marketplace.visualstudio.com/items?itemName=rakshex.rakshex-vscode";
 const GITHUB_URL = "https://github.com/Akshu1245/Rakshex-complete-codebase";
 const INSTAGRAM_URL = "https://www.instagram.com/rakshex.in?igsi=YWlzcDg2ODcybmpz";
 const REDDIT_URL = "https://www.reddit.com/u/RaksHex_in/s/8zzCSUdomW";
-const CONTACT_EMAIL = "rakshex@gmail.com";
-const FOUNDER_EMAIL = "akshaykammar31@gmail.com";
+const CONTACT_EMAIL = "akshay@rakshex.in";
+const FOUNDER_EMAIL = "akshay@rakshex.in";
 
 export function Footer() {
   return (
@@ -59,16 +58,23 @@ export function Footer() {
               Product
             </p>
             <div className="mt-4 flex flex-col gap-3 text-sm">
-              <Link href="/overview" className="w-fit text-neutral-400 no-underline hover:text-white">
+              <Link
+                href="/overview"
+                className="w-fit text-neutral-400 no-underline hover:text-white"
+              >
                 Overview
               </Link>
-              <Link href="/demo" className="w-fit text-neutral-400 no-underline hover:text-white">
-                Public demo
-              </Link>
-              <Link href="/pricing" className="w-fit text-neutral-400 no-underline hover:text-white">
+
+              <Link
+                href="/pricing"
+                className="w-fit text-neutral-400 no-underline hover:text-white"
+              >
                 Pricing
               </Link>
-              <Link href="/changelog" className="w-fit text-neutral-400 no-underline hover:text-white">
+              <Link
+                href="/changelog"
+                className="w-fit text-neutral-400 no-underline hover:text-white"
+              >
                 Changelog
               </Link>
             </div>
@@ -82,7 +88,10 @@ export function Footer() {
               <Link href="/docs" className="w-fit text-neutral-400 no-underline hover:text-white">
                 Documentation
               </Link>
-              <Link href="/docs/agent-firewall" className="w-fit text-neutral-400 no-underline hover:text-white">
+              <Link
+                href="/docs/agent-firewall"
+                className="w-fit text-neutral-400 no-underline hover:text-white"
+              >
                 Agent Firewall
               </Link>
               <a
@@ -112,16 +121,25 @@ export function Footer() {
               <Link href="/trust" className="w-fit text-neutral-400 no-underline hover:text-white">
                 Trust Center
               </Link>
-              <Link href="/privacy" className="w-fit text-neutral-400 no-underline hover:text-white">
+              <Link
+                href="/privacy"
+                className="w-fit text-neutral-400 no-underline hover:text-white"
+              >
                 Privacy
               </Link>
               <Link href="/terms" className="w-fit text-neutral-400 no-underline hover:text-white">
                 Terms
               </Link>
-              <Link href="/legal/dpa" className="w-fit text-neutral-400 no-underline hover:text-white">
+              <Link
+                href="/legal/dpa"
+                className="w-fit text-neutral-400 no-underline hover:text-white"
+              >
                 DPA
               </Link>
-              <Link href="/legal/refund" className="w-fit text-neutral-400 no-underline hover:text-white">
+              <Link
+                href="/legal/refund"
+                className="w-fit text-neutral-400 no-underline hover:text-white"
+              >
                 Refund policy
               </Link>
             </div>
@@ -143,7 +161,10 @@ export function Footer() {
             >
               Founder contact
             </a>
-            <Link href="/status" className="inline-flex items-center gap-2 text-neutral-400 no-underline hover:text-white">
+            <Link
+              href="/status"
+              className="inline-flex items-center gap-2 text-neutral-400 no-underline hover:text-white"
+            >
               <span className="h-1.5 w-1.5 rounded-full bg-[#14B8A6]" aria-hidden="true" />
               Service status
             </Link>

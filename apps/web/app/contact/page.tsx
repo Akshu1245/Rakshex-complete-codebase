@@ -58,13 +58,7 @@ export default function ContactPage() {
               </div>
               <div>
                 <h3 className="font-semibold text-white mb-1">Sales</h3>
-                <p className="text-neutral-400">Book a demo call with our team</p>
-                <Link
-                  href="/demo"
-                  className="inline-flex items-center gap-2 mt-2 text-sm text-[#14B8A6] hover:text-[#2dd4bf] transition-colors"
-                >
-                  Schedule a demo <ArrowRight className="w-4 h-4" />
-                </Link>
+                <p className="text-neutral-400">Discuss your integration with our team</p>
               </div>
             </div>
 

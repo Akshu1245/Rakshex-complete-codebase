@@ -19,7 +19,7 @@ from .types import (
 )
 
 SDK_VERSION = "0.2.0"
-DEFAULT_GATEWAY = "https://api.rakshex.com"
+DEFAULT_GATEWAY = "https://api.rakshex.in"
 
 
 def _sha256(text: str) -> str:

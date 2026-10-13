@@ -410,181 +410,243 @@ export const agentFirewallRouter = router({
       await requireWorkspaceMembership(input.workspaceId, ctx.user.id);
       assertRuntimeApiKeyScope(ctx.user, input.workspaceId, "agent:execute");
       const database = requireDb(await db.getDb());
-      const [existing] = await database
-        .select()
-        .from(actionLedger)
-        .where(
-          and(
-            eq(actionLedger.workspaceId, input.workspaceId),
-            eq(actionLedger.idempotencyKey, input.idempotencyKey),
-          ),
-        )
-        .limit(1);
-      if (existing) {
-        return {
-          ...existing,
-          amountMinor: existing.amountMinor == null ? null : numeric(existing.amountMinor),
-          replayed: true,
-        };
+      // A caller without a capability must prove workspace policy-write access
+      // before entering the serialized transactional critical section.
+      if (!input.capabilityToken) {
+        await requireWorkspacePermission(input.workspaceId, ctx.user.id, "security", "write");
       }
-
-      const [agent] = await database
-        .select()
-        .from(agentIdentities)
-        .where(
-          and(
-            eq(agentIdentities.id, input.agentId),
-            eq(agentIdentities.workspaceId, input.workspaceId),
-          ),
-        )
-        .limit(1);
-      if (!agent) throw new TRPCError({ code: "NOT_FOUND", message: "Agent identity not found" });
-
-      let authority;
-      if (input.capabilityToken) {
-        [authority] = await database
+      // This xact lock serializes evaluate() within a workspace so the
+      // prior hash, cumulative policy limits, idempotency and approval rows
+      // are decided and committed atomically. Measure workspace lock wait
+      // before reducing its scope or replacing this with counters.
+      return database.transaction(async (tx) => {
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(${input.workspaceId}::bigint)`);
+        const [existing] = await tx
           .select()
-          .from(delegatedAuthorities)
+          .from(actionLedger)
           .where(
             and(
-              eq(delegatedAuthorities.workspaceId, input.workspaceId),
-              eq(delegatedAuthorities.agentId, input.agentId),
-              eq(delegatedAuthorities.capabilityTokenHash, capabilityHash(input.capabilityToken)),
-              eq(delegatedAuthorities.status, "active"),
+              eq(actionLedger.workspaceId, input.workspaceId),
+              eq(actionLedger.idempotencyKey, input.idempotencyKey),
             ),
           )
           .limit(1);
-      } else {
-        await requireWorkspacePermission(input.workspaceId, ctx.user.id, "security", "write");
-        if (input.authorityId) {
-          [authority] = await database
+        if (existing) {
+          // The idempotency key belongs to exactly one logical request.
+          // Returning a previous ALLOW for a different action is unsafe.
+          const replayAction = normalizeSemanticAction({
+            provider: input.provider,
+            operation: input.operation,
+            toolName: input.toolName,
+            requestId: input.requestId,
+            parameters: input.parameters,
+            resource: input.resource,
+            environment: input.environment ?? existing.environment ?? undefined,
+            amountMinor: input.amountMinor,
+            currency: input.currency,
+          });
+          const normalizedJson = (value: unknown) =>
+            canonical(JSON.parse(JSON.stringify(value)) as unknown);
+          if (
+            existing.agentId !== input.agentId ||
+            existing.projectId !== (input.projectId ?? null) ||
+            existing.semanticAction !== replayAction.name ||
+            existing.resource !== (replayAction.resource ?? null) ||
+            existing.environment !== (replayAction.environment ?? null) ||
+            existing.amountMinor !==
+              (replayAction.amountMinor == null ? null : String(replayAction.amountMinor)) ||
+            existing.currency !== (replayAction.currency ?? null) ||
+            normalizedJson(existing.rawReference) !== normalizedJson(replayAction.raw) ||
+            normalizedJson(existing.parametersRedacted) !== normalizedJson(replayAction.parameters)
+          ) {
+            throw new TRPCError({
+              code: "CONFLICT",
+              message: "Idempotency key was already used for a different action",
+            });
+          }
+          return {
+            ...existing,
+            amountMinor: existing.amountMinor == null ? null : numeric(existing.amountMinor),
+            replayed: true,
+          };
+        }
+
+        const [agent] = await tx
+          .select()
+          .from(agentIdentities)
+          .where(
+            and(
+              eq(agentIdentities.id, input.agentId),
+              eq(agentIdentities.workspaceId, input.workspaceId),
+            ),
+          )
+          .limit(1)
+          .for("share");
+        if (!agent) throw new TRPCError({ code: "NOT_FOUND", message: "Agent identity not found" });
+
+        let authority;
+        if (input.capabilityToken) {
+          [authority] = await tx
             .select()
             .from(delegatedAuthorities)
             .where(
               and(
-                eq(delegatedAuthorities.id, input.authorityId),
                 eq(delegatedAuthorities.workspaceId, input.workspaceId),
                 eq(delegatedAuthorities.agentId, input.agentId),
+                eq(delegatedAuthorities.capabilityTokenHash, capabilityHash(input.capabilityToken)),
                 eq(delegatedAuthorities.status, "active"),
               ),
             )
-            .limit(1);
+            .limit(1)
+            .for("share");
+        } else {
+          if (input.authorityId) {
+            [authority] = await tx
+              .select()
+              .from(delegatedAuthorities)
+              .where(
+                and(
+                  eq(delegatedAuthorities.id, input.authorityId),
+                  eq(delegatedAuthorities.workspaceId, input.workspaceId),
+                  eq(delegatedAuthorities.agentId, input.agentId),
+                  eq(delegatedAuthorities.status, "active"),
+                ),
+              )
+              .limit(1)
+              .for("share");
+          }
         }
-      }
 
-      const action = normalizeSemanticAction({
-        provider: input.provider,
-        operation: input.operation,
-        toolName: input.toolName,
-        requestId: input.requestId,
-        parameters: input.parameters,
-        resource: input.resource,
-        environment: input.environment ?? agent.environment,
-        amountMinor: input.amountMinor,
-        currency: input.currency,
-      });
-      const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
-      const recent = await database
-        .select({
-          semanticAction: actionLedger.semanticAction,
-          amountMinor: actionLedger.amountMinor,
-        })
-        .from(actionLedger)
-        .where(
-          and(
-            eq(actionLedger.workspaceId, input.workspaceId),
-            eq(actionLedger.agentId, input.agentId),
-            gte(actionLedger.occurredAt, since),
-          ),
-        )
-        .orderBy(desc(actionLedger.occurredAt))
-        .limit(1000);
-      const cumulative = {
-        actionCount: recent.length,
-        amountMinor: recent.reduce((sum, row) => sum + numeric(row.amountMinor), 0),
-        recentActions: recent
-          .slice(0, 20)
-          .reverse()
-          .map((row) => row.semanticAction),
-      };
-      const result = evaluateAction({
-        mode: agent.mode,
-        action,
-        authority: authority ? scopeFromRow(authority.scope) : null,
-        cumulative,
-        policy: policyFromRow(agent.policyConfig),
-        frozen: agent.status !== "active",
-      });
+        const action = normalizeSemanticAction({
+          provider: input.provider,
+          operation: input.operation,
+          toolName: input.toolName,
+          requestId: input.requestId,
+          parameters: input.parameters,
+          resource: input.resource,
+          environment: input.environment ?? agent.environment,
+          amountMinor: input.amountMinor,
+          currency: input.currency,
+        });
+        const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        // Exact totals are mandatory for limits. The old 1,000-row scan could
+        // underestimate usage and authorize over-budget requests on busy agents.
+        const recentFilter = and(
+          eq(actionLedger.workspaceId, input.workspaceId),
+          eq(actionLedger.agentId, input.agentId),
+          gte(actionLedger.occurredAt, since),
+        );
+        const [totals] = await tx
+          .select({
+            actionCount: sql<string>`count(*)::text`,
+            amountMinor: sql<string>`coalesce(sum(${actionLedger.amountMinor}), 0)::text`,
+          })
+          .from(actionLedger)
+          .where(recentFilter);
+        const recent = await tx
+          .select({ semanticAction: actionLedger.semanticAction })
+          .from(actionLedger)
+          .where(recentFilter)
+          .orderBy(desc(actionLedger.occurredAt))
+          .limit(20);
+        const actionCount = Number(totals?.actionCount ?? "0");
+        const amountMinor = Number(totals?.amountMinor ?? "0");
+        // JS cannot safely compare financial limits above 2^53-1.
+        // Return a safe error rather than silently rounding to an ALLOW.
+        if (!Number.isSafeInteger(actionCount) || !Number.isSafeInteger(amountMinor)) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Cumulative action limits exceed safe integer precision",
+          });
+        }
+        const cumulative = {
+          actionCount,
+          amountMinor,
+          recentActions: recent.reverse().map((row) => row.semanticAction),
+        };
+        const result = evaluateAction({
+          mode: agent.mode,
+          action,
+          authority: authority ? scopeFromRow(authority.scope) : null,
+          cumulative,
+          policy: policyFromRow(agent.policyConfig),
+          frozen: agent.status !== "active",
+        });
 
-      const [previous] = await database
-        .select({ recordHash: actionLedger.recordHash })
-        .from(actionLedger)
-        .where(eq(actionLedger.workspaceId, input.workspaceId))
-        .orderBy(desc(actionLedger.occurredAt))
-        .limit(1);
-      const ledgerId = id("act");
-      const approvalId = result.decision === "APPROVAL_REQUIRED" ? id("apr") : undefined;
-      const traceId = input.traceId ?? id("trace");
-      const record = {
-        id: ledgerId,
-        workspaceId: input.workspaceId,
-        projectId: input.projectId,
-        agentId: input.agentId,
-        principalUserId: authority?.principalUserId ?? agent.ownerUserId,
-        authorityId: authority?.id,
-        traceId,
-        idempotencyKey: input.idempotencyKey,
-        mode: agent.mode,
-        semanticAction: action.name,
-        actionVersion: action.version,
-        domain: action.domain,
-        effect: action.effect,
-        parametersRedacted: action.parameters,
-        resource: action.resource,
-        environment: action.environment,
-        rawReference: action.raw as unknown as Record<string, unknown>,
-        policyVersion: result.policyVersion,
-        decision: result.decision,
-        effectiveDecision: result.effectiveDecision,
-        reasons: result.reasons,
-        amountMinor: action.amountMinor == null ? undefined : String(action.amountMinor),
-        currency: action.currency,
-        approvalId,
-        previousHash: previous?.recordHash,
-      };
-      const recordHash = sha256(`${previous?.recordHash ?? "GENESIS"}\n${canonical(record)}`);
-      await database.insert(actionLedger).values({ ...record, recordHash });
-      if (approvalId) {
-        await database.insert(actionApprovals).values({
-          id: approvalId,
+        const [previous] = await tx
+          .select({ recordHash: actionLedger.recordHash })
+          .from(actionLedger)
+          .where(eq(actionLedger.workspaceId, input.workspaceId))
+          .orderBy(desc(actionLedger.occurredAt), desc(actionLedger.id))
+          .limit(1);
+        const ledgerId = id("act");
+        const approvalId = result.decision === "APPROVAL_REQUIRED" ? id("apr") : undefined;
+        const traceId = input.traceId ?? id("trace");
+        const record = {
+          id: ledgerId,
           workspaceId: input.workspaceId,
-          ledgerId,
-          requestedByAgentId: input.agentId,
+          projectId: input.projectId,
+          agentId: input.agentId,
+          principalUserId: authority?.principalUserId ?? agent.ownerUserId,
+          authorityId: authority?.id,
+          traceId,
+          idempotencyKey: input.idempotencyKey,
+          mode: agent.mode,
           semanticAction: action.name,
+          actionVersion: action.version,
+          domain: action.domain,
+          effect: action.effect,
+          parametersRedacted: action.parameters,
           resource: action.resource,
+          environment: action.environment,
+          rawReference: action.raw as unknown as Record<string, unknown>,
+          policyVersion: result.policyVersion,
+          decision: result.decision,
+          effectiveDecision: result.effectiveDecision,
+          reasons: result.reasons,
           amountMinor: action.amountMinor == null ? undefined : String(action.amountMinor),
           currency: action.currency,
-          expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+          approvalId,
+          previousHash: previous?.recordHash,
+        };
+        const recordHash = sha256(`${previous?.recordHash ?? "GENESIS"}\n${canonical(record)}`);
+        await tx.insert(actionLedger).values({
+          ...record,
+          recordHash,
+          occurredAt: sql`clock_timestamp()`,
         });
-      }
-      if (authority && agent.mode === "enforce" && result.effectiveDecision === "ALLOW") {
-        await database
-          .update(delegatedAuthorities)
-          .set({
-            useCount: sql`${delegatedAuthorities.useCount} + 1`,
-            amountUsedMinor: sql`${delegatedAuthorities.amountUsedMinor} + ${action.amountMinor ?? 0}`,
-          })
-          .where(eq(delegatedAuthorities.id, authority.id));
-      }
-      return {
-        ledgerId,
-        traceId,
-        approvalId,
-        mode: agent.mode,
-        normalizedAction: action,
-        ...result,
-        replayed: false,
-      };
+        if (approvalId) {
+          await tx.insert(actionApprovals).values({
+            id: approvalId,
+            workspaceId: input.workspaceId,
+            ledgerId,
+            requestedByAgentId: input.agentId,
+            semanticAction: action.name,
+            resource: action.resource,
+            amountMinor: action.amountMinor == null ? undefined : String(action.amountMinor),
+            currency: action.currency,
+            expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+          });
+        }
+        if (authority && agent.mode === "enforce" && result.effectiveDecision === "ALLOW") {
+          await tx
+            .update(delegatedAuthorities)
+            .set({
+              useCount: sql`${delegatedAuthorities.useCount} + 1`,
+              amountUsedMinor: sql`${delegatedAuthorities.amountUsedMinor} + ${action.amountMinor ?? 0}`,
+            })
+            .where(eq(delegatedAuthorities.id, authority.id));
+        }
+        return {
+          ledgerId,
+          traceId,
+          approvalId,
+          mode: agent.mode,
+          normalizedAction: action,
+          ...result,
+          replayed: false,
+        };
+      });
     }),
 
   ledger: router({

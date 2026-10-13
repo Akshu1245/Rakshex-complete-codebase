@@ -38,7 +38,7 @@ const GET_USER_INFO_WITH_JWT_PATH = `/webdev.v1.WebDevAuthPublicService/GetUserI
 class OAuthService {
   constructor(private client: ReturnType<typeof axios.create>) {
     if (ENV.oAuthServerUrl && ENV.appId) {
-      logger.info({ baseURL: ENV.oAuthServerUrl }, "[OAuth] Legacy external OAuth initialized");
+      logger.info("[OAuth] Legacy external OAuth initialized");
     } else {
       // Legacy OAuth is deliberately optional during private beta. Missing
       // configuration is a disabled capability, not a production error.

@@ -1,3 +1,4 @@
+import { SAFE_SAMPLE_COLLECTIONS } from "./secureParse.fixtures";
 import { describe, expect, it } from "vitest";
 import {
   parseCollectionImport,
@@ -6,7 +7,6 @@ import {
   stripExternalRefs,
   redactSecrets,
   detectFormat,
-  SAFE_SAMPLE_COLLECTIONS,
   ImportSecurityError,
   assertSafeStructure,
   MAX_RECURSION_DEPTH,

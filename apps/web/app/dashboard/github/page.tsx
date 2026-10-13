@@ -4,9 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { trpc } from "@/lib/trpc";
 
-/** Explicit local-only sandbox. Never enabled by NODE_ENV alone. */
-const SANDBOX_MODE = process.env.NEXT_PUBLIC_SANDBOX_MODE === "true";
-
 export default function GitHubIntegrationPage() {
   const [installationId, setInstallationId] = useState("");
   const [connectionError, setConnectionError] = useState<string | null>(null);
@@ -14,6 +11,7 @@ export default function GitHubIntegrationPage() {
   const [prNumber, setPrNumber] = useState("");
   const [headSha, setHeadSha] = useState("");
 
+  const scanMutation = trpc.github.scanPullRequest.useMutation();
   const connectMutation = trpc.github.connectInstallation.useMutation();
   const installUrlQuery = trpc.github.getInstallUrl.useQuery();
   const listReposQuery = trpc.github.listRepos.useQuery(
@@ -47,18 +45,21 @@ export default function GitHubIntegrationPage() {
       alert("Enter a GitHub App installation ID first");
       return;
     }
-    if (!repo || !pr) {
-      alert("Enter the repository (owner/repo) and PR number to scan");
+    if (!repo || !Number.isInteger(pr) || pr <= 0 || !/^[a-f0-9]{40}$/i.test(headSha.trim())) {
+      alert(
+        "Enter the repository (owner/repo), a positive PR number, and the 40-character head SHA",
+      );
       return;
     }
     try {
-      const result = await (trpc as any).github.scanPullRequest.mutate({
+      const result = await scanMutation.mutateAsync({
         installationId: id,
         repoFullName: repo,
         prNumber: pr,
-        headSha: headSha.trim() || undefined,
+        headSha: headSha.trim(),
       });
-      alert(`PR scan job queued successfully! (jobId: ${result?.jobId ?? "pending"})`);
+      if (!result.jobId) throw new Error("Scan API returned no job ID");
+      alert(`PR scan job queued successfully! (jobId: ${result.jobId})`);
     } catch {
       alert("Failed to queue PR scan. Check your GitHub App installation and try again.");
     }
@@ -109,12 +110,6 @@ export default function GitHubIntegrationPage() {
                 Set GITHUB_APP_SLUG (or GITHUB_APP_ID) on the API to enable the live install link.
               </p>
             ) : null}
-            {SANDBOX_MODE ? (
-              <p className="text-xs text-amber-500/80 mt-2">
-                NEXT_PUBLIC_SANDBOX_MODE is on — use only for local demos. Production builds must
-                leave this unset.
-              </p>
-            ) : null}
           </div>
 
           <div className="bg-black/50 p-6 rounded-lg border border-gray-700">
@@ -153,7 +148,7 @@ export default function GitHubIntegrationPage() {
               />
               <input
                 type="text"
-                placeholder="Head SHA (optional)"
+                placeholder="Head SHA (40 characters)"
                 value={headSha}
                 onChange={(e) => setHeadSha(e.target.value)}
                 className="px-4 py-2 rounded bg-gray-700 border border-gray-600 text-white"
@@ -161,7 +156,9 @@ export default function GitHubIntegrationPage() {
             </div>
             <button
               onClick={() => handleTriggerPRScan()}
-              disabled={!installationId || !repoFullName || !prNumber}
+              disabled={
+                !installationId || !repoFullName || !prNumber || !headSha || scanMutation.isPending
+              }
               className="px-4 py-2 mb-4 bg-emerald-600 hover:bg-emerald-500 disabled:bg-gray-700 disabled:cursor-not-allowed rounded"
             >
               Trigger PR Scan
@@ -175,6 +172,10 @@ export default function GitHubIntegrationPage() {
 
             {listReposQuery.isLoading ? (
               <p className="text-gray-400">Loading repos...</p>
+            ) : listReposQuery.isError ? (
+              <p role="alert" className="text-sm text-red-300">
+                Could not load repositories. Check your GitHub connection and retry.
+              </p>
             ) : listReposQuery.data?.repos?.length ? (
               <div className="space-y-2">
                 {listReposQuery.data.repos.map((repo: any, idx: number) => (

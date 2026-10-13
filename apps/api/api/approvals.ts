@@ -7,6 +7,7 @@ import { TRPCError } from "@trpc/server";
 import * as db from "../db";
 import { sql } from "drizzle-orm";
 import { logger } from "../_core/logger";
+import { affectedApprovalCount } from "./approvalUpdateResult";
 
 export const approvalsRouter = router({
   /**
@@ -60,9 +61,17 @@ export const approvalsRouter = router({
       if (!dbClient)
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
 
-      await dbClient.execute(
-        sql`UPDATE pending_approvals SET status = 'approved', resolved_at = NOW(), resolved_by = ${ctx.user.id}, resolution_note = ${input.note ?? ""} WHERE approval_id = ${input.approvalId}`,
+      // Legacy approval records use user-owned workspace identifiers (`ws_<userId>`).
+      // Scope the atomic update to the authenticated owner's workspace and pending status.
+      const updated = await dbClient.execute(
+        sql`UPDATE pending_approvals SET status = 'approved', resolved_at = NOW(), resolved_by = ${ctx.user.id}, resolution_note = ${input.note ?? ""} WHERE approval_id = ${input.approvalId} AND workspace_id = ${`ws_${ctx.user.id}`} AND status = 'pending' RETURNING approval_id`,
       );
+      if (affectedApprovalCount(updated) === 0) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Pending approval not found in your workspace",
+        });
+      }
       await db.createAuditLogEntry(ctx.user.id, "approval_approved", {
         approvalId: input.approvalId,
         note: input.note,
@@ -88,11 +97,18 @@ export const approvalsRouter = router({
       if (!dbClient)
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
 
-      await dbClient.execute(sql`
+      const updated = await dbClient.execute(sql`
         UPDATE pending_approvals
         SET status = 'rejected', resolved_at = NOW(), resolved_by = ${ctx.user.id}, resolution_note = ${input.note ?? ""}
-        WHERE approval_id = ${input.approvalId}
+        WHERE approval_id = ${input.approvalId} AND workspace_id = ${`ws_${ctx.user.id}`} AND status = 'pending'
+        RETURNING approval_id
       `);
+      if (affectedApprovalCount(updated) === 0) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Pending approval not found in your workspace",
+        });
+      }
       await db.createAuditLogEntry(ctx.user.id, "approval_rejected", {
         approvalId: input.approvalId,
         note: input.note,

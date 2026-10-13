@@ -120,14 +120,7 @@ export default function CompareLakera() {
           </div>
         </div>
 
-        <div className="text-center">
-          <Link
-            href="/demo"
-            className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors"
-          >
-            Try RaksHex Free →
-          </Link>
-        </div>
+        <div className="text-center"></div>
       </div>
     </div>
   );

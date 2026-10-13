@@ -29,6 +29,11 @@ export const actionReceiptLedger = pgTable(
   },
   (table) => ({
     entryHashUniq: uniqueIndex("action_receipt_ledger_entry_hash_uniq").on(table.entryHash),
+    eventIdempotencyUniq: uniqueIndex("action_receipt_ledger_event_idempotency_uniq").on(
+      table.workspaceId,
+      table.requestId,
+      table.eventType,
+    ),
     workspaceChainIdx: index("action_receipt_ledger_workspace_chain_idx").on(
       table.workspaceId,
       table.id,

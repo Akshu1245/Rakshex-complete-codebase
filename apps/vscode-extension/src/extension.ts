@@ -797,15 +797,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     }),
   );
 
-  // Demo mode command
-  context.subscriptions.push(
-    vscode.commands.registerCommand("rakshex.runDemo", async () => {
-      const { runDemoScenarios } = await import("./demoMode");
-      await runDemoScenarios();
-      engagementTracker.record("demo_completed");
-    }),
-  );
-
   // Weekly digest command
   const weeklyDigest = new WeeklyDigestCommand(api, engagementTracker, context);
   context.subscriptions.push(
