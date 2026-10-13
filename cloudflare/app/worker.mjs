@@ -5,6 +5,7 @@ import {
   semanticActionCatalog,
 } from "../../packages/action-control/src/index.ts";
 import { canonical, sha256, signReceipt } from "./evidence.mjs";
+import { handleBrowserAccess } from "./browser-access.mjs";
 const PREFIX = "/api/v1/control";
 const safeNumber = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER);
 const identifier = z
@@ -337,6 +338,8 @@ export default {
           requestId,
         );
       }
+      const browserResponse = await handleBrowserAccess(request, env);
+      if (browserResponse) return browserResponse;
       if (request.method === "GET" && path === PREFIX + "/capabilities")
         return response(
           {
