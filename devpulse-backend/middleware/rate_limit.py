@@ -67,45 +67,20 @@ def _is_exempt(path: str) -> bool:
     return False
 
 
-def _extract_identifier(request: Request) -> Tuple[str, str]:
-    """
-    Return ``(identifier, tier)`` for the request.
-
-    If the request carries a valid JWT (set by auth middleware / dependency),
-    we use the ``user_id`` claim; otherwise fall back to the client IP.
-    """
-    # FastAPI's Depends(require_auth) stores user in request.state in some
-    # setups, but at middleware level it hasn't run yet.  We peek at the
-    # Authorization header and decode minimally — but to keep this middleware
-    # dependency-free we just use IP + optional sub from a lightweight decode.
-    user_id: str | None = None
-    tier = "free"
-
-    # Try lightweight JWT peek (no verification — auth dependency does that)
-    auth_header = request.headers.get("authorization", "")
-    if auth_header.startswith("Bearer "):
-        try:
-            import base64, json as _json
-
-            token = auth_header.split(" ", 1)[1]
-            payload_b64 = token.split(".")[1]
-            # Add padding
-            payload_b64 += "=" * (-len(payload_b64) % 4)
-            payload = _json.loads(base64.urlsafe_b64decode(payload_b64))
-            user_id = str(payload.get("sub", ""))
-            tier = payload.get("plan", "free")
-        except Exception:
-            pass
-
-    if user_id:
-        identifier = f"user:{user_id}"
-    else:
-        # Fallback to client IP
-        forwarded = request.headers.get("x-forwarded-for", "")
-        ip = forwarded.split(",")[0].strip() if forwarded else (request.client.host if request.client else "unknown")
-        identifier = f"ip:{ip}"
-
-    return identifier, tier
+async def _extract_identifier(request: Request) -> Tuple[str, str]:
+    """Use verified identity and persisted tier, never an unsigned token's claims."""
+    from routes.auth import verify_token, expire_trial
+    from services.database import get_user_by_id
+    authorization = request.headers.get("authorization", "")
+    if authorization.startswith("Bearer "):
+        payload = verify_token(authorization.split(" ", 1)[1])
+        if payload:
+            user = await expire_trial(await get_user_by_id(int(payload["sub"])))
+            if user:
+                return f"user:{user['id']}", user.get("plan", "free")
+    # Reverse proxies can be shared by many users; unverified credentials receive only the public quota.
+    ip = request.client.host if request.client else "anonymous"
+    return f"ip:{ip}", "free"
 
 
 # ── Redis helpers ────────────────────────────────────────────────────────────
@@ -175,7 +150,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if _is_exempt(path):
             return await call_next(request)
 
-        identifier, tier = _extract_identifier(request)
+        identifier, tier = await _extract_identifier(request)
         limit = TIER_LIMITS.get(tier, DEFAULT_LIMIT)
 
         count, reset_epoch = await _redis_increment(identifier, WINDOW_SECONDS)

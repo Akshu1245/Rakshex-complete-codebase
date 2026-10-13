@@ -1,5 +1,6 @@
 'use client';
 
+import { apiFetch, getAuthToken } from '@/lib/api';
 import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardSkeleton } from '@/components/ui/Card';
 import { Badge, EmptyState } from '@/components/ui/Shared';
@@ -19,13 +20,12 @@ export default function SecurityReport() {
   const [totalSavings, setTotalSavings] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   useEffect(() => {
     const fetchTips = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const res = await fetch(`${API}/api/v1/costs/optimization`, {
+        const token = getAuthToken();
+        const res = await apiFetch(`/api/v1/costs/optimization`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         if (res.ok) {
@@ -37,7 +37,7 @@ export default function SecurityReport() {
       setLoading(false);
     };
     fetchTips();
-  }, [API]);
+  }, []);
 
   const priorityVariant = (p: string): 'danger' | 'warning' | 'info' => {
     if (p === 'high') return 'danger';

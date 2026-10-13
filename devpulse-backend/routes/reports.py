@@ -12,12 +12,13 @@ import logging
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Depends
+from routes.auth import require_auth
 from fastapi.responses import StreamingResponse
 
 from services.analytics_engine import get_usage_trends, get_api_breakdown
 from services.health_monitor import get_health_data, get_api_details_list
-from services.database import get_security_scans, get_incidents_db
+from services.database import get_security_scans, get_incidents_db, get_ai_security_score_history
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -28,6 +29,7 @@ async def export_report(
     report_type: str = Query("analytics", description="analytics, health, security, incidents"),
     format: str = Query("json", description="json or csv"),
     days: int = Query(30, ge=1, le=365),
+    user: Dict = Depends(require_auth),
 ) -> Any:
     """Export data as JSON or CSV."""
     try:
@@ -35,12 +37,13 @@ async def export_report(
         filename = f"devpulse_{report_type}_{datetime.now(timezone.utc).strftime('%Y%m%d')}"
 
         if report_type == "analytics":
-            data = await get_usage_trends(days)
+            data = await get_usage_trends(days, user_id=user["id"])
         elif report_type == "health":
             api_list = get_api_details_list()
             data = {"apis": api_list}
         elif report_type == "security":
-            scans = await get_security_scans(limit=100)
+            scans = await get_security_scans(user_id=user["id"], limit=100)
+            scans += [{"id": s["scan_id"], "score": s["score"], "grade": s["grade"], "scan_type": "ai", "created_at": s["scanned_at"]} for s in await get_ai_security_score_history(user["id"], limit=100)]
             data = {"scans": scans}
         elif report_type == "incidents":
             incidents = await get_incidents_db(limit=100)
@@ -98,14 +101,15 @@ async def export_report(
 
 
 @router.get("/api/reports/summary")
-async def summary_report() -> Dict[str, Any]:
+async def summary_report(user: Dict = Depends(require_auth)) -> Dict[str, Any]:
     """Quick summary report across all domains."""
     try:
-        trends = await get_usage_trends(7)
-        breakdown = await get_api_breakdown(7)
+        trends = await get_usage_trends(7, user_id=user["id"])
+        breakdown = await get_api_breakdown(7, user_id=user["id"])
         health_data = get_health_data()
         api_list = get_api_details_list()
-        scans = await get_security_scans(limit=5)
+        scans = await get_security_scans(user_id=user["id"], limit=5)
+        scans += await get_ai_security_score_history(user["id"], limit=5)
         incidents = await get_incidents_db(limit=5)
 
         total_apis = len(api_list)
@@ -116,7 +120,7 @@ async def summary_report() -> Dict[str, Any]:
             "summary": {
                 "health": {"total_apis": total_apis, "healthy": healthy,
                            "degraded": total_apis - healthy},
-                "usage_7d": {"total_calls": trends.get("total_calls", 0),
+                "usage_7d": {"total_calls": trends.get("totals", {}).get("total_events", 0),
                              "avg_response_time": trends.get("avg_response_time", 0)},
                 "api_breakdown": breakdown.get("breakdown", [])[:5],
                 "recent_scans": len(scans),

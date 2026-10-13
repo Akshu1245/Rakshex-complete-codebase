@@ -11,7 +11,8 @@ Endpoints:
 import logging
 from typing import Dict, Any
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Depends
+from routes.auth import require_auth
 from pydantic import BaseModel, Field
 
 from services.analytics_engine import (
@@ -31,10 +32,10 @@ class TrackEventRequest(BaseModel):
 
 
 @router.get("/api/analytics/trends")
-async def usage_trends(days: int = Query(30, ge=1, le=365)) -> Dict[str, Any]:
+async def usage_trends(days: int = Query(30, ge=1, le=365), user=Depends(require_auth)) -> Dict[str, Any]:
     """Get usage trends over the specified time window."""
     try:
-        trends = await get_usage_trends(days)
+        trends = await get_usage_trends(days, user_id=user["id"])
         return {"status": "success", **trends}
     except Exception as e:
         logger.error(f"Error getting usage trends: {e}")
@@ -42,10 +43,10 @@ async def usage_trends(days: int = Query(30, ge=1, le=365)) -> Dict[str, Any]:
 
 
 @router.get("/api/analytics/breakdown")
-async def api_breakdown(days: int = Query(30, ge=1, le=365)) -> Dict[str, Any]:
+async def api_breakdown(days: int = Query(30, ge=1, le=365), user=Depends(require_auth)) -> Dict[str, Any]:
     """Get API usage breakdown."""
     try:
-        breakdown = await get_api_breakdown(days)
+        breakdown = await get_api_breakdown(days, user_id=user["id"])
         return {"status": "success", **breakdown}
     except Exception as e:
         logger.error(f"Error getting API breakdown: {e}")
@@ -53,10 +54,10 @@ async def api_breakdown(days: int = Query(30, ge=1, le=365)) -> Dict[str, Any]:
 
 
 @router.get("/api/analytics/insights")
-async def performance_insights() -> Dict[str, Any]:
+async def performance_insights(user=Depends(require_auth)) -> Dict[str, Any]:
     """Get performance insights and recommendations."""
     try:
-        insights = await get_performance_insights()
+        insights = await get_performance_insights(user_id=user["id"])
         return {"status": "success", "insights": insights, "count": len(insights)}
     except Exception as e:
         logger.error(f"Error getting insights: {e}")
@@ -64,10 +65,10 @@ async def performance_insights() -> Dict[str, Any]:
 
 
 @router.get("/api/analytics/forecast")
-async def usage_forecast(days_ahead: int = Query(7, ge=1, le=90)) -> Dict[str, Any]:
+async def usage_forecast(days_ahead: int = Query(7, ge=1, le=90), user=Depends(require_auth)) -> Dict[str, Any]:
     """Get predictive usage forecast."""
     try:
-        forecast = await forecast_usage(days_ahead)
+        forecast = await forecast_usage(days_ahead, user_id=user["id"])
         return {"status": "success", **forecast}
     except Exception as e:
         logger.error(f"Error generating forecast: {e}")
@@ -75,11 +76,11 @@ async def usage_forecast(days_ahead: int = Query(7, ge=1, le=90)) -> Dict[str, A
 
 
 @router.post("/api/analytics/track")
-async def track_event(req: TrackEventRequest) -> Dict[str, Any]:
+async def track_event(req: TrackEventRequest, user=Depends(require_auth)) -> Dict[str, Any]:
     """Record an analytics event."""
     try:
         await record_event(
-            user_id=None, endpoint=req.endpoint,
+            user_id=user["id"], endpoint=req.endpoint,
             response_time_ms=req.response_time_ms,
             status_code=req.status_code,
         )

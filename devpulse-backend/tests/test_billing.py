@@ -38,9 +38,8 @@ async def test_subscribe_to_pro(client, auth_headers):
         "plan": "pro",
         "billing_period": "monthly",
     }, headers=auth_headers)
-    data = resp.json()
-    assert data["status"] == "success"
-    assert data["plan"] == "pro"
+    assert resp.status_code == 503
+    assert (await client.get("/api/billing/status", headers=auth_headers)).json()["plan"] == "free"
 
 
 @pytest.mark.asyncio
@@ -54,10 +53,9 @@ async def test_billing_history(client, auth_headers):
 
 @pytest.mark.asyncio
 async def test_cancel_subscription(client, auth_headers):
-    # Subscribe first
-    await client.post("/api/billing/subscribe", json={
-        "plan": "pro", "billing_period": "monthly",
-    }, headers=auth_headers)
+    # Create a real persisted trial, rather than granting a paid plan without payment.
+    from tests.test_wiring import signup
+    _, auth_headers = await signup(client, trial=True)
     # Cancel
     resp = await client.post("/api/billing/cancel", json={
         "reason": "testing",

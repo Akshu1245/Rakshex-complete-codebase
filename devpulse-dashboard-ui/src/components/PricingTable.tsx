@@ -116,6 +116,7 @@ export default function PricingTable() {
               </div>
               <p className="text-xs text-zinc-400 mb-4">{plan.description}</p>
               <Button
+                onClick={() => { window.location.assign('/settings/billing'); }}
                 variant={plan.highlighted ? 'primary' : 'secondary'}
                 className={`w-full ${plan.highlighted ? 'bg-gradient-to-r from-violet-600 to-emerald-500 hover:from-violet-500 hover:to-emerald-400' : ''}`}
               >

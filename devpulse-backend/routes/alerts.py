@@ -58,7 +58,7 @@ async def create_config(req: CreateAlertConfigRequest, user=Depends(require_auth
     """Create a new alert configuration."""
     try:
         result = await create_alert_config(
-            user_id=user.get("user_id"), name=req.name, channel=req.channel,
+            user_id=user["id"], name=req.name, channel=req.channel,
             event_types=req.event_types, destination=req.destination,
             threshold=req.threshold,
         )

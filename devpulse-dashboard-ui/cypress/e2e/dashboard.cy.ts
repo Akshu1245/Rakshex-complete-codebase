@@ -39,7 +39,7 @@ describe('DevPulse Dashboard', () => {
 
   it('footer shows v4.0 branding', () => {
     cy.scrollTo('bottom');
-    cy.contains('All systems operational').should('be.visible');
-    cy.contains('AES-256 Encrypted').should('exist');
+    cy.contains('Backend connected').should('be.visible');
+    cy.contains('API connection').should('exist');
   });
 });

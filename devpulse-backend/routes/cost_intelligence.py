@@ -29,7 +29,7 @@ from services.database import (
     get_cost_budgets,
     delete_cost_budget,
 )
-from services.cache import cache_get, cache_set
+from services.cache import cache_get, cache_set, cache_delete_pattern
 
 logger = logging.getLogger(__name__)
 
@@ -93,23 +93,16 @@ async def calculate_cost_endpoint(req: LogCallRequest, user=Depends(require_auth
                 "cohere" if req.model.startswith("command") else
                 "unknown"
             )
-        # Persist to database
-        user_id = user.get("user_id", 0)
-        if user_id:
-            try:
-                await save_api_call_log(
-                    user_id=user_id,
-                    provider=provider,
-                    model=req.model,
-                    endpoint=req.endpoint,
-                    tokens_input=req.tokens_input,
-                    tokens_output=req.tokens_output,
-                    cost_usd=cost,
-                    latency_ms=req.latency_ms,
-                    status_code=req.status_code,
-                )
-            except Exception as db_err:
-                logger.warning(f"Failed to log API call to DB: {db_err}")
+        # Never report logged=True until the durable write has succeeded.
+        user_id = user["id"]
+        await save_api_call_log(
+            user_id=user_id, provider=provider, model=req.model, endpoint=req.endpoint,
+            tokens_input=req.tokens_input, tokens_output=req.tokens_output, cost_usd=cost,
+            latency_ms=req.latency_ms, status_code=req.status_code,
+        )
+        await cache_delete_pattern(f"cost_breakdown:{user_id}:*")
+        await cache_delete_pattern(f"cost_forecast:{user_id}:*")
+        await cache_delete_pattern(f"cost_dashboard:{user_id}")
         return {
             "status": "ok",
             "model": req.model,
@@ -131,13 +124,13 @@ async def cost_breakdown_endpoint(
 ):
     """Get cost breakdown by provider, model, and day."""
     try:
-        cache_key = f"cost_breakdown:{user.get('user_id', 0)}:{days}"
+        cache_key = f"cost_breakdown:{user['id']}:{days}"
         cached = await cache_get(cache_key)
         if cached:
             return {"status": "ok", **cached, "cached": True}
 
         # Real DB-backed implementation: query ApiCallLog table
-        user_id = user.get("user_id", 0)
+        user_id = user["id"]
         call_logs = await get_api_call_logs(user_id, days=days)
         result = compute_cost_breakdown(call_logs)
         await cache_set(cache_key, result, ttl=120)
@@ -154,13 +147,13 @@ async def cost_forecast_endpoint(
 ):
     """Forecast future API costs based on historical usage."""
     try:
-        cache_key = f"cost_forecast:{user.get('user_id', 0)}:{days_ahead}"
+        cache_key = f"cost_forecast:{user['id']}:{days_ahead}"
         cached = await cache_get(cache_key)
         if cached:
             return {"status": "ok", **cached, "cached": True}
 
         # Real DB-backed: query daily costs, then forecast
-        user_id = user.get("user_id", 0)
+        user_id = user["id"]
         daily_costs = await get_api_call_daily_costs(user_id, days=60)
         result = forecast_costs(daily_costs, days_ahead=days_ahead)
         await cache_set(cache_key, result, ttl=300)
@@ -175,7 +168,7 @@ async def cost_anomalies_endpoint(user=Depends(require_auth)):
     """Detect cost anomalies and spending spikes."""
     try:
         # Real DB-backed anomaly detection
-        user_id = user.get("user_id", 0)
+        user_id = user["id"]
         daily_costs = await get_api_call_daily_costs(user_id, days=60)
         anomalies = detect_cost_anomalies(daily_costs)
         return {"status": "ok", "anomalies": anomalies, "total": len(anomalies)}
@@ -189,7 +182,7 @@ async def optimization_tips_endpoint(user=Depends(require_auth)):
     """Get AI-powered cost optimization recommendations."""
     try:
         # Real DB-backed optimization tips
-        user_id = user.get("user_id", 0)
+        user_id = user["id"]
         call_logs = await get_api_call_logs(user_id, days=30)
         breakdown = compute_cost_breakdown(call_logs)
         tips = get_optimization_tips(breakdown)
@@ -226,13 +219,13 @@ async def roi_calculator_endpoint(req: ROIRequest, user=Depends(require_auth)):
 async def cost_dashboard_endpoint(user=Depends(require_auth)):
     """Get complete cost intelligence dashboard data."""
     try:
-        cache_key = f"cost_dashboard:{user.get('user_id', 0)}"
+        cache_key = f"cost_dashboard:{user['id']}"
         cached = await cache_get(cache_key)
         if cached:
             return {"status": "ok", **cached, "cached": True}
 
         # Real DB-backed full dashboard
-        user_id = user.get("user_id", 0)
+        user_id = user["id"]
         call_logs = await get_api_call_logs(user_id, days=30)
         daily_costs = await get_api_call_daily_costs(user_id, days=30)
         breakdown = compute_cost_breakdown(call_logs)
@@ -257,7 +250,7 @@ async def cost_dashboard_endpoint(user=Depends(require_auth)):
 async def create_budget_endpoint(req: BudgetRequest, user=Depends(require_auth)):
     """Create a cost budget with alerts and optional auto-kill. Persisted to DB."""
     try:
-        user_id = user.get("user_id", 0)
+        user_id = user["id"]
         budget = await save_cost_budget(
             user_id=user_id,
             name=req.name,
@@ -276,7 +269,7 @@ async def create_budget_endpoint(req: BudgetRequest, user=Depends(require_auth))
 async def list_budgets_endpoint(user=Depends(require_auth)):
     """List all cost budgets for the user. Real DB-backed with live spend calculation."""
     try:
-        user_id = user.get("user_id", 0)
+        user_id = user["id"]
         budgets = await get_cost_budgets(user_id)
         return {"status": "ok", "budgets": budgets, "total": len(budgets)}
     except Exception as e:
@@ -288,7 +281,7 @@ async def list_budgets_endpoint(user=Depends(require_auth)):
 async def delete_budget_endpoint(budget_id: int, user=Depends(require_auth)):
     """Delete a cost budget."""
     try:
-        user_id = user.get("user_id", 0)
+        user_id = user["id"]
         ok = await delete_cost_budget(budget_id, user_id)
         if ok:
             return {"status": "ok", "message": f"Budget {budget_id} deleted"}
@@ -304,7 +297,7 @@ async def delete_budget_endpoint(budget_id: int, user=Depends(require_auth)):
 async def log_api_call_endpoint(req: LogCallRequest, user=Depends(require_auth)):
     """Manually log an API call for cost tracking."""
     try:
-        user_id = user.get("user_id", 0)
+        user_id = user["id"]
         cost = calculate_cost(req.model, req.tokens_input, req.tokens_output)
         provider = req.provider
         if not provider:
@@ -327,6 +320,9 @@ async def log_api_call_endpoint(req: LogCallRequest, user=Depends(require_auth))
             latency_ms=req.latency_ms,
             status_code=req.status_code,
         )
+        await cache_delete_pattern(f"cost_breakdown:{user_id}:*")
+        await cache_delete_pattern(f"cost_forecast:{user_id}:*")
+        await cache_delete_pattern(f"cost_dashboard:{user_id}")
         return {"status": "ok", "log_id": log_id, "cost_usd": cost}
     except Exception as e:
         logger.error(f"Log API call failed: {e}")
@@ -341,7 +337,7 @@ async def list_api_call_logs_endpoint(
 ):
     """List recent API call logs."""
     try:
-        user_id = user.get("user_id", 0)
+        user_id = user["id"]
         logs = await get_api_call_logs(user_id, days=days, limit=limit)
         return {"status": "ok", "logs": logs, "total": len(logs)}
     except Exception as e:

@@ -18,7 +18,7 @@ from fastapi import APIRouter, Request, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field, field_validator
 
-from services.database import create_user, get_user_by_email, get_user_by_id
+from services.database import create_user, get_user_by_email, get_user_by_id, update_user_plan
 
 logger = logging.getLogger(__name__)
 
@@ -26,10 +26,23 @@ router = APIRouter()
 
 # JWT configuration
 JWT_SECRET = os.getenv("JWT_SECRET", "devpulse-secret-key-change-in-production")
+if os.getenv("ENV") == "production" and (len(JWT_SECRET) < 32 or JWT_SECRET == "devpulse-secret-key-change-in-production"):
+    raise RuntimeError("Production JWT_SECRET is missing or unsafe")
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRY_HOURS = int(os.getenv("JWT_EXPIRY_HOURS", "24"))
 
 security = HTTPBearer(auto_error=False)
+
+
+async def expire_trial(user):
+    if user and user.get("plan") == "pro" and user.get("trial_ends_at") and not user.get("stripe_subscription_id"):
+        deadline = datetime.fromisoformat(user["trial_ends_at"])
+        if deadline.tzinfo is None:
+            deadline = deadline.replace(tzinfo=timezone.utc)
+        if deadline <= datetime.now(timezone.utc):
+            await update_user_plan(user_id=user["id"], plan="free")
+            user["plan"] = "free"
+    return user
 
 # Plan limits (API calls per day)
 PLAN_LIMITS = {
@@ -46,7 +59,7 @@ PLAN_LIMITS = {
 class RegisterRequest(BaseModel):
     email: str = Field(..., min_length=5, max_length=100)
     username: str = Field(..., min_length=3, max_length=30)
-    password: str = Field(..., min_length=8, max_length=100)
+    password: str = Field(..., min_length=8, max_length=72)
     
     @field_validator("email")
     @classmethod
@@ -67,7 +80,7 @@ class RegisterRequest(BaseModel):
 
 class LoginRequest(BaseModel):
     email: str = Field(..., min_length=5, max_length=100)
-    password: str = Field(..., min_length=1, max_length=100)
+    password: str = Field(..., min_length=1, max_length=72)
     
     @field_validator("email")
     @classmethod
@@ -94,6 +107,8 @@ def verify_token(token: str) -> Optional[Dict[str, Any]]:
     """Verify and decode a JWT token."""
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        if not isinstance(payload.get("sub"), str) or not payload["sub"].isdigit():
+            return None
         return payload
     except jwt.ExpiredSignatureError:
         return None
@@ -114,7 +129,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         return None
     
     user = await get_user_by_id(int(payload["sub"]))
-    return user
+    return await expire_trial(user)
 
 
 async def require_auth(credentials: HTTPAuthorizationCredentials = Depends(security)) -> Dict[str, Any]:
@@ -133,7 +148,7 @@ async def require_auth(credentials: HTTPAuthorizationCredentials = Depends(secur
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
     
-    return user
+    return await expire_trial(user)
 
 
 # =============================================================================

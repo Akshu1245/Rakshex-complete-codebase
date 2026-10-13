@@ -1,5 +1,6 @@
 'use client';
 
+import { apiFetch, getAuthToken } from '@/lib/api';
 import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardSkeleton } from '@/components/ui/Card';
 import { Badge, EmptyState } from '@/components/ui/Shared';
@@ -20,13 +21,12 @@ export default function ThreatFeed() {
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   useEffect(() => {
     const fetchThreats = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const res = await fetch(`${API}/api/v1/security/threat-feed`, {
+        const token = getAuthToken();
+        const res = await apiFetch(`/api/v1/security/threat-feed`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         if (res.ok) {
@@ -37,7 +37,7 @@ export default function ThreatFeed() {
       setLoading(false);
     };
     fetchThreats();
-  }, [API]);
+  }, []);
 
   const severityVariant = (severity: string): 'danger' | 'warning' | 'info' | 'purple' => {
     const map: Record<string, 'danger' | 'warning' | 'info' | 'purple'> = {

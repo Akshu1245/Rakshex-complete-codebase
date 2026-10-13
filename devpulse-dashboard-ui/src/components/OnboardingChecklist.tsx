@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { apiClient, getAuthToken } from '@/lib/api';
 import { Card } from '@/components/ui/Card';
 import { IconButton } from '@/components/ui/Button';
 
@@ -13,40 +14,29 @@ interface Step {
 }
 
 export default function OnboardingChecklist() {
-  const [steps, setSteps] = useState<Step[]>(() => {
-    const defaults: Step[] = [
-      { id: 'scan', label: 'Run your first security scan', description: 'Paste code into the AI Security Scanner', completed: false, action: 'security' },
-      { id: 'costs', label: 'View cost dashboard', description: 'See your API spending breakdown', completed: false, action: 'costs' },
-      { id: 'budget', label: 'Set a budget alert', description: 'Create a spending limit to avoid surprise bills', completed: false, action: 'budget' },
-      { id: 'apikey', label: 'Add an API key', description: 'Connect your first AI provider', completed: false, action: 'keys' },
-      { id: 'vscode', label: 'Install VS Code extension', description: 'Get inline security scanning in your editor', completed: false, action: 'vscode' },
-    ];
-    if (typeof window === 'undefined') return defaults;
+  const [steps, setSteps] = useState<Step[]>([
+    { id: 'add_api', label: 'Add your first API', description: 'Import an OpenAPI specification', completed: false, action: '/tools/compatibility' },
+    { id: 'set_budget', label: 'Set a budget alert', description: 'Create a spending limit', completed: false, action: '/costs/budget' },
+    { id: 'run_scan', label: 'Run a security scan', description: 'Check source code for vulnerabilities', completed: false, action: '/security/scanner' },
+    { id: 'invite_team', label: 'Invite a teammate', description: 'Configure your workspace', completed: false, action: '/settings' },
+  ]);
+  const [dismissed, setDismissed] = useState(false);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    if (!getAuthToken()) return;
+    let active = true;
+    apiClient.getOnboardingStatus().then(result => {
+      if (active) setSteps(previous => previous.map(step => ({ ...step, completed: (result.completed as string[]).includes(step.id) })));
+    }).catch(() => {});
+    return () => { active = false; };
+  }, []);
+  const completeStep = async (id: string) => {
+    if (busy) return;
+    setBusy(true);
     try {
-      const saved = localStorage.getItem('onboarding_steps');
-      if (!saved) return defaults;
-      const parsed = JSON.parse(saved);
-      if (!Array.isArray(parsed)) return defaults;
-      return defaults.map((step) => ({
-        ...step,
-        completed: parsed.includes(step.id),
-      }));
-    } catch {
-      return defaults;
-    }
-  });
-  const [dismissed, setDismissed] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return localStorage.getItem('onboarding_dismissed') === 'true';
-  });
-
-  const completeStep = (id: string) => {
-    setSteps((prev) => {
-      const updated = prev.map(s => s.id === id ? { ...s, completed: true } : s);
-      const completedIds = updated.filter(s => s.completed).map(s => s.id);
-      localStorage.setItem('onboarding_steps', JSON.stringify(completedIds));
-      return updated;
-    });
+      const result = await apiClient.completeOnboardingStep(id);
+      setSteps(previous => previous.map(step => ({ ...step, completed: (result.completed as string[]).includes(step.id) })));
+    } catch {} finally { setBusy(false); }
   };
 
   const completedCount = steps.filter(s => s.completed).length;
@@ -71,7 +61,7 @@ export default function OnboardingChecklist() {
         <IconButton
           onClick={() => {
             setDismissed(true);
-            localStorage.setItem('onboarding_dismissed', 'true');
+
           }}
           aria-label="Dismiss"
         >
@@ -96,7 +86,9 @@ export default function OnboardingChecklist() {
             className={`flex items-center gap-3 bg-zinc-900/60 border border-zinc-800/40 rounded-xl px-4 py-3 transition-all duration-200 ${
               step.completed ? 'opacity-50' : 'hover:bg-zinc-800/40 hover:border-zinc-700/40 cursor-pointer'
             }`}
-            onClick={() => !step.completed && completeStep(step.id)}
+            onClick={() => !step.completed && void completeStep(step.id)}
+            role="button" tabIndex={0}
+            onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); if (!step.completed) void completeStep(step.id); } }}
             style={{ animationDelay: `${i * 50}ms` }}
           >
             <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-all duration-300 ${

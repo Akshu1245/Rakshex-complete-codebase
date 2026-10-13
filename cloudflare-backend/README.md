@@ -1,16 +1,33 @@
 # DevPulse backend on Cloudflare
 
-Prepared deployment, not live. Cloudflare returned `Unauthorized: You do not have access to Cloudflare Containers. Deploying containers requires the Workers Paid plan` on 13 October 2026.
+## Provisioned infrastructure
 
-This runs the original FastAPI backend in a Container rather than rewriting it into a partial Worker. The existing Cloudflare Workers and their databases are preserved.
+- PostgreSQL project: `billowing-hat-28677330` (`rakshex-devpulse`), database `devpulse`, AWS Singapore. Default branch is `production`; no archived RaksHex data was reused.
+- Alembic revisions through `002_onboarding_progress` were applied on 14 October 2026 (India time). All ORM tables and columns were verified through the database connector.
+- Cloudflare Secrets Store: `7f1fc7c778ff41cab15f8726f1f51625`. Four active secrets are bound in `wrangler.jsonc`: database connection, JWT signing key, encryption key, frontend origin. Values are not committed.
+- Worker code resolves Secrets Store values before starting FastAPI. Missing/unreadable configuration returns 503. Production rejects a default signing key and temporary SQLite storage.
+- A temporary Cloudflare Worker successfully read all four secret bindings and queried the migrated Neon database over the serverless HTTP driver: `ok=true`, `secrets=true`, `database=true`. The probe was removed after verification. This verifies read-only edge connectivity, not the still-blocked FastAPI container deployment.
 
-## Deployment prerequisites
+## Current deployment status
 
-1. Enable Workers Paid on account `b3225f198c6d2286afbb6f416c230f10`.
-2. Provision persistent PostgreSQL and apply `devpulse-backend/alembic` migrations. Container disk and the Durable Object SQLite database are not the application's PostgreSQL storage.
-3. Install Docker and Node, then run `npm ci --workspaces=false` from this directory.
-4. Configure Worker secrets using `npx wrangler secret put NAME`: `DATABASE_URL`, `JWT_SECRET` (at least 32 random characters), `DEVPULSE_ENCRYPTION_KEY`, and `FRONTEND_URL` (the HTTPS frontend origin). Preserve signing/encryption keys across redeploys. Set provider credentials separately for enabled integrations.
-5. Run `npm run check`, then `npm run deploy`. Wait for container provisioning and verify `/health`, registration/login, authenticated tenant APIs, and WebSockets at the returned URL.
-6. Point the frontend `BACKEND_URL` at the backend and rebuild the frontend; browser CORS origin must match `FRONTEND_URL`.
+**Not live.** Cloudflare returned: `Unauthorized: You do not have access to Cloudflare Containers. Deploying containers requires the Workers Paid plan`.
 
-The backend is limited to one container because existing WebSocket coordination, rate limiting, and optional memory caching are process-local. Background monitors stop when the container sleeps; continuously scheduled monitoring is not implemented by this configuration. Production launch checks reject missing secrets, temporary SQLite storage, and unavailable/unmigrated PostgreSQL. Full security review, migrations, integration credentials, and deployed end-to-end testing remain launch requirements.
+Enable Workers Paid on account `b3225f198c6d2286afbb6f416c230f10`, then deploy from this directory with `npm ci --workspaces=false` and `npm run deploy` (Docker must be available). Wait for container provisioning. Existing Cloudflare Workers and archived data were preserved.
+
+The expected backend address after deployment is `https://rakshex-devpulse-backend.rakshex.workers.dev`. It is not currently a verified live endpoint.
+
+## Frontend routing
+
+Set frontend server variable `BACKEND_URL` to the deployed backend origin. HTTP requests use the same-origin Next.js runtime proxy; browser code must not receive an internal Docker hostname. CSV bodies, authorization headers, webhook signatures, and HTTP errors are preserved. `/health`, `/openapi.json`, and `/backend-docs` use this same proxy. `/connection-info` supplies the backend WebSocket address; HTTP health refresh remains available if a socket disconnects.
+
+For hosted traffic use HTTPS; `ALLOW_HTTP_BACKEND=true` is reserved for the trusted local Docker network. The configured frontend origin is `https://rakshex-frontend.rakshex.workers.dev`; update the Secrets Store value if using a different frontend hostname.
+
+## Provider-backed features
+
+Core signup/trials, deterministic security scans and history, cost recording, budgets, onboarding, and CSV exports do not need model or payment keys. AI generation requires `GROQ_API_KEY` and a supported `GROQ_MODEL` (or the existing xAI configuration). Paid checkout requires Stripe keys, webhook signing secret, and real price IDs. Configure those as Worker secrets using secure prompts. All supported variables are passed through by `runtime-config.mjs`. Billing never grants a paid plan from a button click; a verified webhook triggers current provider-state reconciliation and an idempotent database receipt. No real payment/provider integration was exercised without credentials.
+
+## Verification
+
+CI checks Python integration tests, browser request contracts against OpenAPI, Next.js type checking/build/unit tests, Cypress browser flows, Cloudflare Worker binding/bundle tests, and a full Docker frontend/backend/PostgreSQL smoke flow.
+
+The container remains limited to one instance because legacy background services and socket coordination are process-local. Background monitors sleep with the container; always-on scheduling, broader legacy-feature security review, and deployed provider/live end-to-end validation are separate outstanding launch gates. Source and local/CI tests are not proof of a production deployment.

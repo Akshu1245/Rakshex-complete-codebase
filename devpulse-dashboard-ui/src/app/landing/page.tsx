@@ -177,7 +177,7 @@ export default function LandingPage() {
               Scan Your Code Free
             </a>
             <a
-              href="https://github.com/ganesh2317/DevPulse"
+              href="https://github.com/Akshu1245/Rakshex-complete-codebase"
               target="_blank"
               rel="noopener noreferrer"
               className="px-8 py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-semibold rounded-xl transition-colors text-lg border border-zinc-700"
@@ -324,7 +324,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-600">
           <p>DevPulse &copy; {new Date().getFullYear()} &middot; API Security &amp; Cost Intelligence Platform</p>
           <div className="flex items-center gap-4">
-            <a href="https://github.com/ganesh2317/DevPulse" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-400 transition-colors">GitHub</a>
+            <a href="https://github.com/Akshu1245/Rakshex-complete-codebase" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-400 transition-colors">GitHub</a>
             <span>FastAPI + Next.js + PostgreSQL + Redis</span>
           </div>
         </div>
