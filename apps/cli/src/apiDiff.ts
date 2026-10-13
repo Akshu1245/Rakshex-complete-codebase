@@ -97,14 +97,31 @@ export function cmdApiDiff(positional: string[], flags: Record<string, string | 
       console.log("Coverage: " + result.scope);
       if (impact) {
         console.log(
-          "Impact candidates: " + impact.matches.length + " in " + impact.filesScanned + " files; " +
-          impact.dynamicCalls + " dynamic calls and " + impact.changesWithoutMatches +
-          " changes without mapped source calls.",
+          "Impact candidates: " +
+            impact.matches.length +
+            " in " +
+            impact.filesScanned +
+            " files; " +
+            impact.dynamicCalls +
+            " dynamic calls and " +
+            impact.changesWithoutMatches +
+            " changes without mapped source calls.",
         );
         for (const match of impact.matches) {
           console.log(
-            "  [candidate] " + match.file + ":" + match.line + ":" + match.column +
-            " " + match.method + " " + match.path + " (" + match.rule + ")",
+            "  [candidate] " +
+              match.file +
+              ":" +
+              match.line +
+              ":" +
+              match.column +
+              " " +
+              match.method +
+              " " +
+              match.path +
+              " (" +
+              match.rule +
+              ")",
           );
         }
         console.log("Impact coverage: " + impact.scope);

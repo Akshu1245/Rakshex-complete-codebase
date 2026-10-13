@@ -51,9 +51,9 @@ The oasdiff package is Apache-2.0 licensed and remains a separate local tool; th
 
 RaksHex can now correlate detected API contract changes with **candidate** TypeScript/JavaScript HTTP call sites in a local source directory, without uploading customer code:
 
-~~~bash
+```bash
 pnpm --filter @rakshex/cli dev api diff old.yaml new.yaml --engine oasdiff --impact-dir ./src --format json
-~~~
+```
 
 This adds an `impact` object to the existing JSON report. It includes file-relative paths, 1-based line/column numbers, matched HTTP method/path, candidate rule ID, and coverage counts. Existing `api diff` JSON output remains unchanged when `--impact-dir` is omitted. Basic and optional oasdiff modes both support the flag.
 

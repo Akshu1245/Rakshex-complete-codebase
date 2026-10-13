@@ -26,7 +26,7 @@ describe("static API impact analysis", () => {
       [
         'import agent from "axios";',
         "export async function load(orderId: string) {",
-        '  await fetch(`/orders/${orderId}`);',
+        "  await fetch(`/orders/${orderId}`);",
         '  await agent.post("/orders", { amount: 20 });',
         '  await agent.get("https://api.example.com/orders/123?expand=true");',
         '  await fetch("/orders", { method: "POST" });',
@@ -54,7 +54,7 @@ describe("static API impact analysis", () => {
     source(
       "src/client.ts",
       [
-        'fetch(buildUrl());',
+        "fetch(buildUrl());",
         'fetch("/orders", { method: resolveMethod() });',
         'fetch("/orders", { method: "POST" });',
         'fetch("/other");',

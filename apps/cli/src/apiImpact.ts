@@ -60,9 +60,7 @@ export interface ApiImpactReport {
 function property(object: ts.ObjectLiteralExpression, name: string): ts.Expression | undefined {
   for (const item of object.properties) {
     if (!ts.isPropertyAssignment(item)) continue;
-    const key = ts.isIdentifier(item.name) || ts.isStringLiteral(item.name)
-      ? item.name.text
-      : "";
+    const key = ts.isIdentifier(item.name) || ts.isStringLiteral(item.name) ? item.name.text : "";
     if (key === name) return item.initializer;
   }
   return undefined;
@@ -248,7 +246,9 @@ export function analyzeApiImpact(rootInput: string, changes: ImpactChange[]): Ap
         ? ts.ScriptKind.TSX
         : ts.ScriptKind.TS;
       const sf = ts.createSourceFile(file, content, ts.ScriptTarget.Latest, true, scriptKind);
-      const parseDiagnostics = (sf as ts.SourceFile & { parseDiagnostics?: readonly ts.Diagnostic[] }).parseDiagnostics;
+      const parseDiagnostics = (
+        sf as ts.SourceFile & { parseDiagnostics?: readonly ts.Diagnostic[] }
+      ).parseDiagnostics;
       if (parseDiagnostics?.length) parseErrors++;
       const axiosNames = axiosImports(sf);
       const walk = (node: ts.Node): void => {
