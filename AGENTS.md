@@ -47,20 +47,103 @@ Extension: package.json contributes, commands, views, webview or TreeView. Webvi
 ### E. India ops tools (GST, clinic, school, RTO, forms)
 shadcn forms + tables + stepper + printable/PDF output. Large tap targets, obvious primary button, bilingual-ready strings.
 
-## RaksHex / DevPulse
-Product: AI cybersecurity SaaS + VS Code extension.
-Jobs: real-time secrets/token/password detection in code, Postman, repos; OWASP/compliance scanning; LLM API cost intelligence.
-Surfaces that may exist together:
-1. VS Code extension (kit D) — scan current file / workspace, inline diagnostics, panel of findings
-2. CLI `npx rakshex scan` — CI and local
-3. SaaS dashboard (kit B) — org, repos, findings inbox, policy, cost of LLM calls, billing
-4. Marketing site (kit A) — rakshex.in style launch page only
+## Strategy precedence
 
-First vertical slice unless specified otherwise:
-Extension or CLI that scans a folder for high-confidence secrets and prints / shows a findings list.
-Dashboard and billing come AFTER that slice works.
+Before planning, coding, reviewing, or documenting any RaksHex work:
 
-Visual: kit B. Security product. No neon hacker aesthetic, no particle heroes.
+1. Read \`STRATEGY_LOCK.md\`.
+2. Read the GitHub issue assigned for the current task.
+3. Treat \`STRATEGY_LOCK.md\` as authoritative if README files, older docs,
+   pitch material, comments, or previous instructions conflict with it.
+4. Do not infer production readiness from staging deployments, implemented
+   source code, demonstrations, or issue closure.
+5. Do not work on frozen scope unless the assigned issue explicitly
+   authorizes that work.
+
+## RaksHex — locked product direction
+
+RaksHex is the authorization and execution-control layer for AI agents.
+
+No consequential action proceeds without:
+
+- valid delegated authority;
+- policy enforcement;
+- controlled credential use by the trusted RaksHex broker;
+- verifiable authorization and execution evidence.
+
+The central milestone is:
+
+> One real agent → one Stripe test-mode refund → one enforceable credential
+> boundary → one verifiable execution outcome.
+
+### Non-negotiable invariants
+
+- The agent must never receive the raw provider credential.
+- The trusted broker executes only the exact authorized provider operation.
+- Authority must be revalidated immediately before execution.
+- Authorization receipts and execution receipts are different records.
+- An \`ALLOW\` decision never proves provider execution succeeded.
+- Retries must not create duplicate provider operations.
+- Provider timeouts create uncertain outcomes requiring reconciliation.
+- Historical receipts must never be rewritten.
+- Unverifiable authority, policy, approval, credential, or execution state
+  must fail closed.
+
+### Current engineering order
+
+Work only on the priority authorized by the current tracking issue:
+
+1. Cloudflare browser authentication, memberships, RBAC, and tenant
+   isolation.
+2. Human approval expiry, rejection, revocation, and single-use consumption.
+3. Stripe test-mode credential broker.
+4. Idempotency, execution safety, and provider reconciliation.
+5. Signed execution receipts and independent verification.
+6. Customer validation with real agent builders.
+
+Do not skip ahead to a later priority unless its dependencies and acceptance
+gates are demonstrably complete.
+
+### Frozen scope
+
+Do not expand:
+
+- API or secret scanning;
+- MCP-security features;
+- the VS Code extension;
+- additional gateway providers;
+- cost dashboards or general AI-governance dashboards;
+- speculative Rust migration;
+- additional cloud migrations;
+- unrelated provider integrations;
+- simulated production data or demonstrations.
+
+Existing frozen code may receive security fixes or changes strictly required
+to keep release gates passing.
+
+### Deployment
+
+- Cloudflare is the primary hosted-product deployment path, subject to the
+  release, security, concurrency, durability, and recovery gates in
+  \`STRATEGY_LOCK.md\`.
+- Docker remains for local development, reproducible testing, and optional
+  self-hosting.
+- Do not present staging as production.
+- Do not merge pull requests merely because they are complete in isolation.
+  Reconcile dependencies, preserve existing production data and signed
+  receipts, and run the required gates on the exact final commit.
+
+### Definition of done
+
+A task is done only when:
+
+- the assigned acceptance tests pass;
+- tenant isolation and fail-closed behavior are tested where relevant;
+- no raw credential is exposed to an agent;
+- authorization evidence is not represented as execution evidence;
+- implementation status is classified accurately as implemented, tested in
+  staging, unverified, or not implemented;
+- the final commit passes the required CI and security gates.
 
 ## How you research
 1. Context7 / ctx7 docs for that library + current version.
