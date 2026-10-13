@@ -44,7 +44,9 @@ describe("action class inventory — deployment gated", () => {
     const query = normalizeSemanticAction({
       provider: "postgres",
       operation: "query",
-      parameters: { sql: "WITH deleted AS (DELETE FROM customers RETURNING id) SELECT id FROM deleted" },
+      parameters: {
+        sql: "WITH deleted AS (DELETE FROM customers RETURNING id) SELECT id FROM deleted",
+      },
     });
     // This observes a current matching limitation; security is protected by fail-closed Class A.
     expect(classifySemanticAction(query).actionClass).toBe("A");
