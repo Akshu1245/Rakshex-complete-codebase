@@ -26,7 +26,7 @@ export function HeroSection() {
     <section className="hero-section relative w-full overflow-hidden bg-transparent">
       <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_72%_18%,rgba(20,184,166,0.10),transparent_38%)]" />
 
-      <div className="hero-grid relative z-10">
+      <div className="hero-grid relative z-10" style={{ gridTemplateColumns: "minmax(0, 1fr)" }}>
         <div className="hero-left text-left">
           <div className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-[#14B8A6]/25 bg-[#14B8A6]/[0.07] px-3.5 py-1.5">
             <span className="h-1.5 w-1.5 rounded-full bg-[#14B8A6]" aria-hidden="true" />

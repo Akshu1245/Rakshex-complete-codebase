@@ -41,7 +41,6 @@ Required for Vercel:
 - `NEXT_PUBLIC_TS_API_URL=https://<api-host>`
 - `NEXT_PUBLIC_SITE_URL=https://<web-host>`
 - `NEXT_PUBLIC_RAZORPAY_KEY_ID=<public key>` for paid checkout
-- `NEXT_PUBLIC_SANDBOX_MODE=false`
 
 ## Deploy order
 
