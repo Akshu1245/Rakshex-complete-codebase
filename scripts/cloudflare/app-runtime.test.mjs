@@ -22,6 +22,7 @@ function fixture() {
   const sql = new DatabaseSync(":memory:");
   sql.exec("PRAGMA foreign_keys=ON");
   sql.exec(readFileSync("cloudflare/app/migrations/0001_control_plane.sql", "utf8"));
+  sql.exec(readFileSync("cloudflare/app/migrations/0002_agent_scoped_keys.sql", "utf8"));
   const DB = {
     prepare(query) {
       let params = [];
@@ -211,7 +212,8 @@ test("concurrent authorizations cannot exceed stored authority maxCount or fork 
 test("runtime/read keys cannot administer and revoked keys fail authentication", async () => {
   const f = fixture();
   const s = await setup(f);
-  const k = await f.call("/keys", "POST", { role: "runtime" }, s.key);
+  const k = await f.call("/keys", "POST", { role: "runtime", agentId: s.agentId }, s.key);
+  assert.equal(k.status, 201);
   assert.equal((await f.call("/policy", "PUT", { version: "x" }, k.body.apiKey)).status, 403);
   await f.call("/keys/" + k.body.keyId + "/revoke", "POST", null, s.key);
   assert.equal((await f.call("/workspace", "GET", null, k.body.apiKey)).status, 401);
@@ -275,4 +277,39 @@ test("key revocation racing receipt insertion cannot return ALLOW", async () => 
   };
   assert.equal((await f.call("/authorize", "POST", action(s, "key-race"), s.key)).status, 401);
   assert.equal(f.sql.prepare("SELECT COUNT(*) AS n FROM cf_receipts").get().n, 0);
+});
+
+test("runtime keys are agent-bound and cannot inspect or authorize another agent", async () => {
+  const f = fixture();
+  const a = await setup(f);
+  const other = await f.call("/agents", "POST", { name: "another agent" }, a.key);
+  const grant = await f.call(
+    "/authorities",
+    "POST",
+    { agentId: other.body.agentId, scope: { actions: ["database.read"] } },
+    a.key,
+  );
+  assert.equal((await f.call("/keys", "POST", { role: "runtime" }, a.key)).status, 400);
+  assert.equal(
+    (await f.call("/keys", "POST", { role: "runtime", agentId: "missing" }, a.key)).status,
+    404,
+  );
+  const runtime = await f.call("/keys", "POST", { role: "runtime", agentId: a.agentId }, a.key);
+  assert.equal(runtime.status, 201);
+  const proposal = {
+    ...action(a, "agent-scope"),
+    agentId: other.body.agentId,
+    authorityId: grant.body.authorityId,
+  };
+  assert.equal((await f.call("/authorize", "POST", proposal, runtime.body.apiKey)).status, 403);
+  await f.call("/authorize", "POST", proposal, a.key);
+  assert.equal(
+    (await f.call("/receipts", "GET", null, runtime.body.apiKey)).body.receipts.length,
+    0,
+  );
+  assert.equal(
+    (await f.call("/authorize", "POST", action(a, "own-agent"), runtime.body.apiKey)).body.receipt
+      .payload.effectiveDecision,
+    "ALLOW",
+  );
 });

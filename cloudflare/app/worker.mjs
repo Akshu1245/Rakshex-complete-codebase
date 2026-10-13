@@ -141,7 +141,7 @@ async function authenticate(request, env) {
   if (!/^Bearer rk_cf_[a-f0-9]{64}$/.test(supplied)) error(401, "UNAUTHORIZED");
   const hash = await sha256(supplied.slice(7));
   const row = await env.DB.prepare(
-    "SELECT id,workspace_id,role FROM cf_api_keys WHERE token_hash = ? AND revoked_at IS NULL",
+    "SELECT id,workspace_id,role,agent_id FROM cf_api_keys WHERE token_hash = ? AND revoked_at IS NULL",
   )
     .bind(hash)
     .first();
@@ -313,6 +313,7 @@ export default {
       if (request.method === "GET" && path === PREFIX + "/health") {
         let db = false;
         try {
+          await env.DB?.prepare("SELECT agent_id FROM cf_api_keys LIMIT 1").first();
           db = Boolean(
             await env.DB?.prepare(
               "SELECT name FROM sqlite_master WHERE type='table' AND name='cf_receipts'",
@@ -424,9 +425,14 @@ export default {
         if (!/^\d+$/.test(raw)) error(400, "INVALID_LIMIT");
         const limit = Math.min(100, Math.max(1, Number(raw)));
         const rows = await env.DB.prepare(
-          "SELECT id,receipt_json FROM cf_receipts WHERE workspace_id = ? ORDER BY id DESC LIMIT ?",
+          "SELECT id,receipt_json FROM cf_receipts WHERE workspace_id = ? AND (? IS NULL OR agent_id = ?) ORDER BY id DESC LIMIT ?",
         )
-          .bind(key.workspace_id, limit)
+          .bind(
+            key.workspace_id,
+            key.role === "runtime" ? key.agent_id : null,
+            key.role === "runtime" ? key.agent_id : null,
+            limit,
+          )
           .all();
         return response(
           {
@@ -440,6 +446,8 @@ export default {
       if (path === PREFIX + "/authorize") {
         if (key.role === "read") error(403, "RUNTIME_REQUIRED");
         const input = await body(request, authorizeSchema);
+        if (key.role === "runtime" && key.agent_id !== input.agentId)
+          error(403, "AGENT_SCOPE_MISMATCH");
         return response(await authorize(env, key, input), 200, requestId);
       }
       requireAdmin(key);
@@ -449,7 +457,7 @@ export default {
             {
               keys: (
                 await env.DB.prepare(
-                  "SELECT id,role,revoked_at,created_at FROM cf_api_keys WHERE workspace_id = ?",
+                  "SELECT id,role,agent_id,revoked_at,created_at FROM cf_api_keys WHERE workspace_id = ?",
                 )
                   .bind(key.workspace_id)
                   .all()
@@ -458,15 +466,37 @@ export default {
             200,
             requestId,
           );
-        const input = await body(request, z.object({ role: z.enum(["runtime", "read"]) }).strict());
+        const input = await body(
+          request,
+          z
+            .object({ role: z.enum(["runtime", "read"]), agentId: identifier.optional() })
+            .strict()
+            .refine((value) =>
+              value.role === "runtime" ? Boolean(value.agentId) : !value.agentId,
+            ),
+        );
         const newKey = token();
         const id = crypto.randomUUID();
-        await env.DB.prepare(
-          "INSERT INTO cf_api_keys (id,workspace_id,token_hash,role) VALUES (?,?,?,?)",
+        const insertedKey = await env.DB.prepare(
+          "INSERT INTO cf_api_keys (id,workspace_id,token_hash,role,agent_id) SELECT ?,?,?,?,? WHERE ? = 'read' OR EXISTS(SELECT 1 FROM cf_agents WHERE workspace_id = ? AND id = ? AND status = 'active')",
         )
-          .bind(id, key.workspace_id, await sha256(newKey), input.role)
+          .bind(
+            id,
+            key.workspace_id,
+            await sha256(newKey),
+            input.role,
+            input.agentId ?? null,
+            input.role,
+            key.workspace_id,
+            input.agentId ?? null,
+          )
           .run();
-        return response({ keyId: id, apiKey: newKey, role: input.role }, 201, requestId);
+        if (!insertedKey.meta.changes) error(404, "AGENT_NOT_FOUND");
+        return response(
+          { keyId: id, apiKey: newKey, role: input.role, agentId: input.agentId ?? null },
+          201,
+          requestId,
+        );
       }
       if (path === PREFIX + "/agents") {
         if (request.method === "GET")

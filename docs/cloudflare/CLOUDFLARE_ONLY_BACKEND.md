@@ -16,7 +16,7 @@
 | ------------------------------------ | --------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
 | Health and capabilities              | Database/signing readiness, scoped capability inventory                                                         | Deployed                                                       |
 | Workspace provisioning               | Private operator bootstrap, currency, default policy                                                            | Deployed; not public sign-up                                   |
-| Workspace API keys                   | Hashed high-entropy keys, admin/runtime/read roles, revocation                                                  | Deployed                                                       |
+| Workspace API keys                   | Hashed high-entropy keys, admin/runtime/read roles, runtime agent binding, revocation                           | Deployed                                                       |
 | Browser authentication               | Better Auth/Auth.js on Cloudflare, sessions, OAuth/OTP, logout                                                  | Next integration; do not invent login sessions                 |
 | Membership and RBAC                  | Users, invitations, owner/admin/member permissions                                                              | Pending browser auth                                           |
 | Agent identities                     | Create/list agents, pause/reactivate/revoke                                                                     | Deployed                                                       |
@@ -68,7 +68,7 @@ Base path: `/api/v1/control`. Except health/capabilities and private bootstrap, 
 | GET        | `/receipts?limit=50`       | Workspace key; maximum 100                                                     |
 | GET        | `/catalog`                 | Workspace key                                                                  |
 
-Bootstrap JSON: `{"name":"Team name","currency":"INR"}`. Initial credentials are returned once; token hashes only are persisted. Bootstrap is an operator endpoint, not a substitute for public customer registration.
+Bootstrap JSON: `{"name":"Team name","currency":"INR"}`. Initial credentials are returned once; token hashes only are persisted. Runtime-key creation requires an active same-workspace `agentId`; runtime keys cannot authorize or export receipt history for another agent. Bootstrap is an operator endpoint, not a substitute for public customer registration.
 
 Authorization JSON contains `requestId`, `agentId`, `authorityId`, and an `action` with `provider`, `operation`, optional parameters/resource/environment/amount/currency. The workspace is derived from the authenticated key; caller-supplied workspace IDs are rejected. Example:
 
@@ -93,7 +93,7 @@ There are no raw prompts, parameter bodies, provider tokens or SQL strings in re
 
 Live Cloudflare checks passed for health, private workspace/agent/grant provisioning, signed ALLOW, identical replay, changed-input rejection, CTE denial and revocation. Six concurrent live requests issued exactly two ALLOW receipts under a limit of two. All eight fixture receipt signatures and the full fixture chain verified offline. Synthetic workspace access was frozen and its API key revoked afterward; append-only evidence is preserved.
 
-36 local Cloudflare tests pass, including real SQLite control API tests, concurrent maxCount/chain behavior, signature verification, tenant substitution, key/authority revocation races, freeze, retries and error codes. Existing action-control tests remain applicable. The new app is an alpha staging control path, not production certification or complete product parity.
+37 local Cloudflare tests pass, including real SQLite control API tests, concurrent maxCount/chain behavior, signature verification, tenant substitution, key/authority revocation races, freeze, retries and error codes. Existing action-control tests remain applicable. The new app is an alpha staging control path, not production certification or complete product parity.
 
 Secrets are deployed as Worker secrets. The fresh signing key is distinct from historical Firewall keys. Keep old public keys for historical verification. Do not copy source databases, reset existing receipts, or run PostgreSQL migrations against D1.
 
