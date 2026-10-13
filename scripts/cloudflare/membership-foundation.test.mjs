@@ -43,6 +43,11 @@ function fixture() {
   }
   return { sql, db, grant };
 }
+
+function access(db, subjectId, workspaceId = 1, minRole = "member") {
+  return requireWorkspaceMembership(db, { subjectId, workspaceId, minRole });
+}
+
 async function denied(work, status, code) {
   await assert.rejects(
     work,
@@ -56,39 +61,47 @@ test("member, admin and owner grant the minimum requested role only", async () =
   grant(1, "member-1", "member");
   grant(1, "admin-1", "admin");
   grant(1, "owner-1", "owner");
-  assert.equal((await requireWorkspaceMembership(db, { workspaceId: 1, subjectId: "member-1" })).role, "member");
-  assert.equal((await requireWorkspaceMembership(db, { workspaceId: 1, subjectId: "admin-1", minRole: "admin" })).role, "admin");
-  assert.equal((await requireWorkspaceMembership(db, { workspaceId: 1, subjectId: "owner-1", minRole: "owner" })).role, "owner");
-  await denied(requireWorkspaceMembership(db, { workspaceId: 1, subjectId: "member-1", minRole: "admin" }), 403, "WORKSPACE_ACCESS_DENIED");
-  await denied(requireWorkspaceMembership(db, { workspaceId: 1, subjectId: "admin-1", minRole: "owner" }), 403, "WORKSPACE_ACCESS_DENIED");
+  assert.equal((await access(db, "member-1")).role, "member");
+  assert.equal((await access(db, "admin-1", 1, "admin")).role, "admin");
+  assert.equal((await access(db, "owner-1", 1, "owner")).role, "owner");
+  await denied(access(db, "member-1", 1, "admin"), 403, "WORKSPACE_ACCESS_DENIED");
+  await denied(access(db, "admin-1", 1, "owner"), 403, "WORKSPACE_ACCESS_DENIED");
 });
 
 test("one workspace cannot borrow another workspace membership or an admin role", async () => {
   const { db, grant } = fixture();
   grant(1, "user-1", "owner");
   grant(2, "user-2", "admin");
-  await denied(requireWorkspaceMembership(db, { workspaceId: 2, subjectId: "user-1" }), 403, "WORKSPACE_ACCESS_DENIED");
-  await denied(requireWorkspaceMembership(db, { workspaceId: 1, subjectId: "user-2" }), 403, "WORKSPACE_ACCESS_DENIED");
-  await denied(requireWorkspaceMembership(db, { workspaceId: 1, subjectId: "' OR 1=1 --" }), 403, "WORKSPACE_ACCESS_DENIED");
+  await denied(access(db, "user-1", 2), 403, "WORKSPACE_ACCESS_DENIED");
+  await denied(access(db, "user-2", 1), 403, "WORKSPACE_ACCESS_DENIED");
+  await denied(access(db, "' OR 1=1 --"), 403, "WORKSPACE_ACCESS_DENIED");
 });
 
 test("missing identity, membership and unsupported role fail closed", async () => {
   const { db } = fixture();
-  await denied(requireWorkspaceMembership(db, { workspaceId: 1 }), 401, "VERIFIED_SESSION_REQUIRED");
-  await denied(requireWorkspaceMembership(db, { workspaceId: 1, subjectId: "" }), 401, "VERIFIED_SESSION_REQUIRED");
-  await denied(requireWorkspaceMembership(db, { workspaceId: 1, subjectId: "someone" }), 403, "WORKSPACE_ACCESS_DENIED");
-  await denied(requireWorkspaceMembership(db, { workspaceId: 0, subjectId: "someone" }), 403, "WORKSPACE_ACCESS_DENIED");
-  await denied(requireWorkspaceMembership(db, { workspaceId: 1, subjectId: "someone", minRole: "superadmin" }), 403, "WORKSPACE_ACCESS_DENIED");
+  await denied(access(db, undefined), 401, "VERIFIED_SESSION_REQUIRED");
+  await denied(access(db, ""), 401, "VERIFIED_SESSION_REQUIRED");
+  await denied(access(db, "someone"), 403, "WORKSPACE_ACCESS_DENIED");
+  await denied(access(db, "someone", 0), 403, "WORKSPACE_ACCESS_DENIED");
+  await denied(access(db, "someone", 1, "superadmin"), 403, "WORKSPACE_ACCESS_DENIED");
 });
 
 test("revoked memberships and missing database cannot authorize", async () => {
   const { db, sql, grant } = fixture();
   grant(1, "user-1", "owner");
-  assert.equal((await requireWorkspaceMembership(db, { workspaceId: 1, subjectId: "user-1" })).role, "owner");
-  sql.exec("UPDATE cf_workspace_memberships SET status='revoked', revoked_at=CURRENT_TIMESTAMP, revision=revision+1 WHERE workspace_id=1 AND subject_id='user-1'");
-  await denied(requireWorkspaceMembership(db, { workspaceId: 1, subjectId: "user-1" }), 403, "WORKSPACE_ACCESS_DENIED");
-  await denied(requireWorkspaceMembership(null, { workspaceId: 1, subjectId: "user-1" }), 503, "MEMBERSHIP_STORE_UNAVAILABLE");
-  await denied(requireWorkspaceMembership({ prepare() { throw Error("offline") } }, { workspaceId: 1, subjectId: "user-1" }), 503, "MEMBERSHIP_STORE_UNAVAILABLE");
+  assert.equal((await access(db, "user-1")).role, "owner");
+  sql.exec(
+    "UPDATE cf_workspace_memberships SET status='revoked', revoked_at=CURRENT_TIMESTAMP, " +
+      "revision=revision+1 WHERE workspace_id=1 AND subject_id='user-1'",
+  );
+  await denied(access(db, "user-1"), 403, "WORKSPACE_ACCESS_DENIED");
+  await denied(access(null, "user-1"), 503, "MEMBERSHIP_STORE_UNAVAILABLE");
+  const unavailable = {
+    prepare() {
+      throw Error("offline");
+    },
+  };
+  await denied(access(unavailable, "user-1"), 503, "MEMBERSHIP_STORE_UNAVAILABLE");
 });
 
 test("membership schema enforces roles, tenancy references and revocation consistency", () => {
@@ -96,6 +109,9 @@ test("membership schema enforces roles, tenancy references and revocation consis
   grant(1, "user-1", "member");
   assert.throws(() => grant(3, "user-2"), /FOREIGN KEY/);
   assert.throws(() => grant(1, "bad-role", "root"), /CHECK/);
-  assert.throws(() => sql.exec("UPDATE cf_workspace_memberships SET status='revoked' WHERE subject_id='user-1'"), /CHECK/);
+  assert.throws(
+    () => sql.exec("UPDATE cf_workspace_memberships SET status='revoked' WHERE subject_id='user-1'"),
+    /CHECK/,
+  );
   assert.throws(() => grant(1, "user-1"), /UNIQUE/);
 });
