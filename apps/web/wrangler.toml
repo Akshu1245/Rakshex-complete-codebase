@@ -1,6 +1,6 @@
 # Complete Next.js frontend, isolated Cloudflare staging ONLY.
-name = "rakshex-web-opennext-staging"
-main = ".open-next/worker.js"
+name = "rakshex-frontend"
+main = "cloudflare-entry.mjs"
 compatibility_date = "2026-10-12"
 compatibility_flags = ["nodejs_compat"]
 workers_dev = true
@@ -12,10 +12,14 @@ binding = "ASSETS"
 [vars]
 RAKSHEX_DEPLOY_TARGET = "cloudflare"
 RAKSHEX_CLOUDFLARE_ENV = "staging"
-RAKSHEX_BACKEND_URL = "https://rakshex-core-staging.rakshex.workers.dev"
-NEXT_PUBLIC_TS_API_URL = "https://rakshex-core-staging.rakshex.workers.dev"
-NEXT_PUBLIC_SITE_URL = "https://rakshex-web-opennext-staging.rakshex.workers.dev"
-NEXTAUTH_URL = "https://rakshex-web-opennext-staging.rakshex.workers.dev"
+RAKSHEX_BACKEND_URL = "https://rakshex-api-staging.rakshex.workers.dev"
+NEXT_PUBLIC_TS_API_URL = "https://rakshex-api-staging.rakshex.workers.dev"
+NEXT_PUBLIC_SITE_URL = "https://rakshex-frontend.rakshex.workers.dev"
+NEXTAUTH_URL = "https://rakshex-frontend.rakshex.workers.dev"
 
 [observability]
 enabled = true
+
+[[services]]
+binding = "RAKSHEX_API"
+service = "rakshex-api-staging"

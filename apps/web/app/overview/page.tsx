@@ -36,7 +36,7 @@ export default function OverviewPage() {
     <div className="min-h-screen overflow-x-clip bg-transparent pb-0 pt-[94px] text-white">
       <main>
         <section className="mx-auto w-full max-w-[1280px] px-5 pb-16 pt-14 sm:px-6 sm:pt-20 xl:px-8">
-          <div className="grid gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
+          <div className="grid gap-12">
             <div>
               <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-[#14B8A6]">
                 Product · AI Action Control Plane
@@ -57,41 +57,6 @@ export default function OverviewPage() {
                 >
                   Read the technical model
                 </Link>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-white/[0.08] bg-[#090D14]/70 p-5 sm:p-6">
-              <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-500">
-                Governed action receipt
-              </p>
-              <div className="mt-4 space-y-3 font-mono text-[11px]">
-                {[
-                  ["actor", "support-agent-prod"],
-                  ["action", "financial.refund"],
-                  ["requested", "$400"],
-                  ["authority", "refund ≤ $50"],
-                  ["decision", "DENY"],
-                  ["credential", "NOT RELEASED"],
-                  ["ledger", "0x8f7a21c4"],
-                ].map(([label, value]) => (
-                  <div
-                    key={label}
-                    className="grid grid-cols-[96px_minmax(0,1fr)] gap-3 border-b border-white/[0.06] pb-3 last:border-0 last:pb-0"
-                  >
-                    <span className="text-neutral-600">{label}</span>
-                    <span
-                      className={`break-words ${
-                        value === "DENY" || value === "NOT RELEASED"
-                          ? "font-semibold text-red-400"
-                          : label === "ledger"
-                            ? "text-[#14B8A6]"
-                            : "text-neutral-300"
-                      }`}
-                    >
-                      {value}
-                    </span>
-                  </div>
-                ))}
               </div>
             </div>
           </div>

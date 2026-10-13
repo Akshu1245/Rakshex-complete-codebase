@@ -19,10 +19,10 @@ jobs:
     env:
       RAKSHEX_DEPLOY_TARGET: cloudflare
       RAKSHEX_CLOUDFLARE_ENV: staging
-      RAKSHEX_BACKEND_URL: https://rakshex-core-staging.rakshex.workers.dev
-      NEXT_PUBLIC_TS_API_URL: https://rakshex-core-staging.rakshex.workers.dev
-      NEXT_PUBLIC_SITE_URL: https://rakshex-web-opennext-staging.rakshex.workers.dev
-      NEXTAUTH_URL: https://rakshex-web-opennext-staging.rakshex.workers.dev
+      RAKSHEX_BACKEND_URL: https://rakshex-api-staging.rakshex.workers.dev
+      NEXT_PUBLIC_TS_API_URL: https://rakshex-api-staging.rakshex.workers.dev
+      NEXT_PUBLIC_SITE_URL: https://rakshex-frontend.rakshex.workers.dev
+      NEXTAUTH_URL: https://rakshex-frontend.rakshex.workers.dev
       NEXTAUTH_SECRET: ci-only-placeholder-not-a-production-secret
       NODE_ENV: production
     steps:
@@ -34,12 +34,15 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile --prod=false
       - name: Test Cloudflare routing and auth fail-closed behavior
-        run: node --test scripts/cloudflare/web-staging-routes.test.mjs
+        run: node --test scripts/cloudflare/web-staging-routes.test.mjs scripts/cloudflare/frontend-entry.test.mjs
       - name: Apply exact upstream manifest fix for Next.js 16.4
         run: node scripts/cloudflare/patch-opennext-preview-props.mjs
       - name: Build full RaksHex site for Cloudflare Workers
         working-directory: apps/web
         run: pnpm exec opennextjs-cloudflare build
+      - name: Populate immutable prerendered pages in static assets
+        working-directory: apps/web
+        run: pnpm exec opennextjs-cloudflare populateCache local
       - name: Validate actual Cloudflare Worker bundle (no deployment)
         working-directory: apps/web
         run: pnpm exec wrangler deploy --dry-run --config wrangler.toml --outdir /tmp/rakshex-cf-web

@@ -19,7 +19,7 @@ test("staging Worker routes to Cloudflare and never Railway", () => {
   const env = {
     RAKSHEX_DEPLOY_TARGET: "cloudflare",
     RAKSHEX_CLOUDFLARE_ENV: "staging",
-    RAKSHEX_BACKEND_URL: "https://rakshex-core-staging.rakshex.workers.dev",
+    RAKSHEX_BACKEND_URL: "https://rakshex-api-staging.rakshex.workers.dev",
   };
   assert.equal(resolveBackendOrigin(env), env.RAKSHEX_BACKEND_URL);
   assert.throws(() =>
@@ -28,7 +28,7 @@ test("staging Worker routes to Cloudflare and never Railway", () => {
       RAKSHEX_BACKEND_URL: "https://api-production-0a2b.up.railway.app",
     }),
   );
-  assert.match(cfg, /name = "rakshex-web-opennext-staging"/);
+  assert.match(cfg, /name = "rakshex-frontend"/);
   assert.doesNotMatch(cfg, /rakshex-firewall|railway\.app|zone_id|\[\[routes\]\]/);
 });
 
