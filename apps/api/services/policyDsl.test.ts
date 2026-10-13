@@ -172,7 +172,7 @@ rules:
 describe("policy templates", () => {
   it("ships the 5 expected templates", () => {
     const ids = POLICY_TEMPLATES.map((t) => t.id).sort();
-    expect(ids).toEqual(["balanced", "demo-loose", "india-pii", "permissive", "strict"]);
+    expect(ids).toEqual(["balanced", "india-pii", "permissive", "strict"]);
   });
 
   it("every template parses and compiles without errors", () => {

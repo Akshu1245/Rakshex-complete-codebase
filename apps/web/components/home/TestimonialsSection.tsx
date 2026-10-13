@@ -25,12 +25,6 @@ export function TestimonialsSection() {
         </p>
         <div className="mt-7 flex flex-wrap gap-4">
           <Link
-            href="/demo"
-            className="inline-flex items-center gap-2 bg-[#14B8A6] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0D9488]"
-          >
-            Run the product demo <ArrowRight className="h-4 w-4" />
-          </Link>
-          <Link
             href="/trust"
             className="inline-flex items-center gap-2 border border-neutral-600 px-4 py-2.5 text-sm font-semibold text-white hover:border-[#14B8A6]"
           >

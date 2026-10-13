@@ -143,12 +143,6 @@ export default function FintechSolutionPage() {
             Walk through how RaksHex can authorize and audit financial agent actions in your
             environment.
           </p>
-          <Link
-            href="/demo"
-            className="inline-block bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm py-3 px-8 rounded-lg transition-colors shadow-lg shadow-blue-500/20"
-          >
-            Book a demo
-          </Link>
         </div>
       </div>
     </div>
