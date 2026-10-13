@@ -3,7 +3,11 @@
   "main": "worker.mjs",
   "compatibility_date": "2026-10-13",
   "workers_dev": true,
-  "vars": { "ENVIRONMENT": "staging" },
+  "vars": {
+    "ENVIRONMENT": "staging",
+    "RECEIPT_KEY_ID": "cf-app-staging-20261013",
+    "RECEIPT_PUBLIC_PEM": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEApks/jA2Be/J4tz+hl5HRvV1WEYEJjEQvdvCE2V/D51U=\n-----END PUBLIC KEY-----\n",
+  },
   "d1_databases": [
     {
       "binding": "DB",
@@ -12,5 +16,9 @@
       "migrations_dir": "migrations",
     },
   ],
-  "observability": { "enabled": true, "head_sampling_rate": 0.1, "redact_query_string": true },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 0.1,
+    "redact_query_string": true,
+  },
 }
