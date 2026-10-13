@@ -9,6 +9,14 @@ export const metadata = {
 
 const posts = [
   {
+    href: "/blog/metr-stolen-api-key-600k-credits-2026",
+    date: "4 Sep 2026",
+    category: "Credentials & cost",
+    title: "Attackers stole a METR model API key and consumed credits worth about $600,000.",
+    summary:
+      "METR's own disclosure connects a fail-open public agent dashboard, reusable credentials, missing spend ceilings and weak usage visibility. We map what RaksHex could reduce without pretending it replaces infrastructure security.",
+  },
+  {
     href: "/blog/google-cloud-api-key-18000-bill-2026",
     date: "1 Sep 2026",
     category: "Credentials & cost",
