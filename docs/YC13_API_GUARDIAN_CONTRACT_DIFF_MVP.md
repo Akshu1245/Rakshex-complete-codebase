@@ -99,6 +99,7 @@ Do not add a second service, another dashboard, or a 30-agent orchestration laye
 ```bash
 pnpm --filter @rakshex/scanner-core test
 pnpm --filter @rakshex/scanner-core typecheck
+pnpm --filter @rakshex/cli test
 ```
 
 The GitHub CI and security scan must pass on the exact PR head commit before merging. Local/CI results, when obtained, should be recorded separately; source existence alone is not proof of test success.
