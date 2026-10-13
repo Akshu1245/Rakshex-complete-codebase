@@ -15,6 +15,9 @@ dockerBuildTarget = "api"
 [deploy]
 healthcheckPath = "/api/health"
 healthcheckTimeout = 300
-preDeployCommand = "pnpm --filter @rakshex/database db:migrate"
+# The runtime image deliberately excludes package devDependencies. Database
+# migrations are TypeScript, so execute them with the API's production `tsx`
+# dependency instead of relying on @rakshex/database's dev-only binary.
+preDeployCommand = "./apps/api/node_modules/.bin/tsx packages/database/src/migrate.ts"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
