@@ -48,6 +48,24 @@ test("skips web deploy when diff is CLI-only", () => {
   assert.match(result.message, /no web-relevant files changed/);
 });
 
+test("skips web deploy for YC13 apiImpact-only merge (593e2abd)", () => {
+  const result = evaluateVercelShouldBuild({
+    projectName: "rakshex",
+    previousSha: "40fa44049bc965ab875c0547cc5cb249e0023e4a",
+    currentSha: "593e2abd93e472a2f14465bdd2f0fb5dc7fe9d5f",
+    changedFiles: [
+      "apps/cli/src/apiDiff.ts",
+      "apps/cli/src/apiImpact.process.test.ts",
+      "apps/cli/src/apiImpact.test.ts",
+      "apps/cli/src/apiImpact.ts",
+      "apps/cli/src/index.ts",
+      "docs/YC13_API_GUARDIAN_CONTRACT_DIFF_MVP.md",
+    ],
+  });
+  assert.equal(result.exitCode, 0);
+  assert.match(result.message, /no web-relevant files changed/);
+});
+
 test("proceeds when apps/web changes", () => {
   const result = evaluateVercelShouldBuild({
     projectName: "rakshex",

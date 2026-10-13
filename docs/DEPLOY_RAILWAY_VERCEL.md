@@ -92,7 +92,7 @@ DATABASE_URL="..." pnpm --filter @rakshex/database db:migrate
 
 Use a **single** Vercel project for production Next.js (repo-root **`rakshex`**, root `vercel.json`).
 
-A second project (**`rakshex-ui`**, Root Directory `apps/web`) duplicates every Git push, doubles Hobby build quota usage, and posts a separate GitHub status (`Vercel – rakshex-ui`). When the account hits Vercel’s daily build limit, that check fails with **`Deployment rate limited — retry in …`** even though the canonical **`Vercel – rakshex`** deploy succeeded. That is a quota/platform limit, not a Next.js compile error.
+A second project (**`rakshex-ui`**, Root Directory `apps/web`) duplicates every Git push, doubles Hobby build quota usage, and posts a separate GitHub status (`Vercel – rakshex-ui`). When the account nears Vercel’s daily Hobby build cap, checks fail with **`Deployment rate limited — retry in …`** before `ignoreCommand` can cancel the deploy (GitHub shows **failure**, not “Canceled by Ignored Build Step”). Often only **`Vercel – rakshex-ui`** is red while **`Vercel – rakshex`** is green or skipped; when quota is fully exhausted, **both** checks fail on CLI/docs-only commits that would otherwise skip (e.g. `593e2abd`). That is a quota/platform limit, not a Next.js compile error.
 
 **Recommended (same as the legacy `*-api` project):** Vercel → **`rakshex-ui`** → **Settings → Git** → **Disconnect** (or delete the duplicate project). Keep deploy hooks only on **`rakshex`**.
 
