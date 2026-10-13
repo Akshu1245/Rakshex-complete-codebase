@@ -88,6 +88,20 @@ function httpMethod(node: ts.Expression | undefined, fallback: string): string |
   return value.toUpperCase();
 }
 
+function methodFromOptions(options: ts.ObjectLiteralExpression): string | null {
+  // Spread/shorthand options can override a method: never assume GET.
+  if (
+    options.properties.some(
+      (item) =>
+        ts.isSpreadAssignment(item) ||
+        (ts.isShorthandPropertyAssignment(item) && item.name.text === "method"),
+    )
+  ) {
+    return null;
+  }
+  return httpMethod(property(options, "method"), "GET");
+}
+
 function urlPath(value: string): string | null {
   let url = value.trim();
   if (/^https?:\/\//i.test(url)) {
@@ -128,7 +142,7 @@ function candidate(node: ts.CallExpression, axiosNames: Set<string>): Candidate 
     const opts = node.arguments[1];
     const method = opts
       ? ts.isObjectLiteralExpression(opts)
-        ? httpMethod(property(opts, "method"), "GET")
+        ? methodFromOptions(opts)
         : null
       : "GET";
     const text = staticText(node.arguments[0]);
@@ -140,7 +154,7 @@ function candidate(node: ts.CallExpression, axiosNames: Set<string>): Candidate 
   if (ts.isIdentifier(callee) && axiosNames.has(callee.text)) {
     const opts = node.arguments[0];
     if (opts && ts.isObjectLiteralExpression(opts)) {
-      method = httpMethod(property(opts, "method"), "GET");
+      method = methodFromOptions(opts);
       url = property(opts, "url");
     } else {
       method = "GET";
@@ -158,7 +172,7 @@ function candidate(node: ts.CallExpression, axiosNames: Set<string>): Candidate 
     } else if (operation === "request") {
       const opts = node.arguments[0];
       if (opts && ts.isObjectLiteralExpression(opts)) {
-        method = httpMethod(property(opts, "method"), "GET");
+        method = methodFromOptions(opts);
         url = property(opts, "url");
       }
     } else {
