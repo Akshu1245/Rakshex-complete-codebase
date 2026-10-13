@@ -92,7 +92,7 @@ Usage:
   rakshex login --api-key <key> [--api-url <url>]
   rakshex configure --fail-on Critical,High [--ignore-rules id1,id2]
   rakshex scan <file-or-dir> [--format terminal|json|sarif] [--fail-on High] [--baseline] [--upload]
-  rakshex api diff <old.json|yaml> <new.json|yaml> [--engine basic|oasdiff] [--format terminal|json]
+  rakshex api diff <old.json|yaml> <new.json|yaml> [--engine basic|oasdiff] [--impact-dir <source-dir>] [--format terminal|json]
   rakshex secrets <path> [--format terminal|json] [--fail-on Critical,High]
   rakshex secrets rules
   rakshex policy check <file> [--format json]

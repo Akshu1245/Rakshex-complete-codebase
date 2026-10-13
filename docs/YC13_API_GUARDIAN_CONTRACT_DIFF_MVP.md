@@ -47,6 +47,24 @@ The new fixture in `apps/cli/fixtures/api-contracts/` demonstrates `$ref`-backed
 
 The oasdiff package is Apache-2.0 licensed and remains a separate local tool; the RaksHex package doesn't embed or redistribute its binary.
 
+## Static source impact candidates (YC #13 beta)
+
+RaksHex can now correlate detected API contract changes with **candidate** TypeScript/JavaScript HTTP call sites in a local source directory, without uploading customer code:
+
+```bash
+pnpm --filter @rakshex/cli dev api diff old.yaml new.yaml --engine oasdiff --impact-dir ./src --format json
+```
+
+This adds an `impact` object to the existing JSON report. It includes file-relative paths, 1-based line/column numbers, matched HTTP method/path, candidate rule ID, and coverage counts. Existing `api diff` JSON output remains unchanged when `--impact-dir` is omitted. Basic and optional oasdiff modes both support the flag.
+
+The initial TypeScript compiler AST matcher finds direct `fetch(...)`, `globalThis.fetch(...)`, and `axios` calls with static paths, including single-segment template interpolations. It recognizes literal methods, standard Axios HTTP verbs, Axios default-import aliases, path parameters, and query strings.
+
+**This is a candidate finder, not a verified dependency graph.** It does **not** resolve custom API clients created with `axios.create`, named/re-exported wrappers, arbitrary URL builders, SDK usage, import graphs, base-URL configuration, provider identity, response field dataflow or runtime behavior. Multiple APIs can share the same method/path; each match is therefore marked `confidence: "candidate"`. The report counts dynamic/unlocatable calls and change rules lacking matches. **Zero candidates is never proof that no code will break.**
+
+The scan is bounded (3,000 source files, maximum 1 MiB per file and 32 MiB total, depth 20), skips dependencies/build folders, and does not follow symlinks. It prints source locations, not source snippets. Exceeding resource limits or failing to read a directory returns exit 2 rather than a misleading clean report. No files are modified and no pull requests are opened.
+
+Exit codes continue to reflect **contract differences**, not impact findings: 0 = no supported breaking contract rules detected, 1 = breaking contract rules detected, 2 = invalid/unsupported comparison or impact analysis failure.
+
 ## Currently detected
 
 - Removed HTTP methods on previously supported paths
@@ -71,7 +89,7 @@ The report is deterministic, sorted by old path and HTTP method, with no auto-ed
 
 1. **Implemented as an optional adapter:** use the Apache-2.0 oasdiff binary locally for broader breaking-change detection; validate version, output and false-positive/false-negative behavior against customer fixtures before making it the default.
 2. **Implemented as a beta CLI subcommand:** compare two local OpenAPI documents, report JSON or terminal output, and fail explicitly on unsupported schema features. Next: add more comprehensive fixtures and broader OpenAPI compatibility checks.
-3. Once the detection signal is reliable, build vendor-watch ingestion and impacted customer call-site analysis.
+3. **Initial static impact mapping implemented:** bounded local AST-based fetch/Axios candidate detection. Next extend SDK/client coverage and add vendor-watch ingestion with explicit provider identity.
 4. Produce isolated, test-validated, **approval-only** migration PRs. Route consequential repository actions through the existing RaksHex Agent Firewall/Action Ledger.
 
 Do not add a second service, another dashboard, or a 30-agent orchestration layer just for this detector.
@@ -81,6 +99,7 @@ Do not add a second service, another dashboard, or a 30-agent orchestration laye
 ```bash
 pnpm --filter @rakshex/scanner-core test
 pnpm --filter @rakshex/scanner-core typecheck
+pnpm --filter @rakshex/cli test
 ```
 
 The GitHub CI and security scan must pass on the exact PR head commit before merging. Local/CI results, when obtained, should be recorded separately; source existence alone is not proof of test success.
