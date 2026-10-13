@@ -115,20 +115,38 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
     if (request.method === "GET" && path === "/api/health") {
-      return json({ service: "rakshex-cloudflare-core-staging", state: "partial", production: false });
+      return json({
+        service: "rakshex-cloudflare-core-staging",
+        state: "partial",
+        production: false,
+      });
     }
     if (request.method === "GET" && path === "/api/health/ready") {
       const db = await databaseReady(env);
+      const auth = typeof env.STAGING_API_KEY === "string" && env.STAGING_API_KEY.length >= 32;
+      const queue = typeof env.JOBS?.send === "function";
+      const ready = db && auth && queue;
       return json(
-        { service: "rakshex-cloudflare-core-staging", ready: db, database: db ? "ready" : "missing" },
-        db ? 200 : 503,
+        {
+          service: "rakshex-cloudflare-core-staging",
+          production: false,
+          scope: "contract-diff-only",
+          ready,
+          database: db ? "ready" : "missing",
+          authentication: auth ? "configured" : "missing",
+          queue: queue ? "configured" : "missing",
+        },
+        ready ? 200 : 503,
       );
     }
     if (request.method === "GET" && path === "/api/v1/capabilities") {
       return json({
         service: "rakshex-cloudflare-core-staging",
         production: false,
-        implemented: ["authenticated deterministic OpenAPI contract diff", "D1-backed asynchronous diff jobs"],
+        implemented: [
+          "authenticated deterministic OpenAPI contract diff",
+          "D1-backed asynchronous diff jobs",
+        ],
         not_migrated: notMigrated,
       });
     }
@@ -151,24 +169,31 @@ export default {
           const inputHash = await hash(JSON.stringify(input));
           await env.DB.prepare(
             "INSERT INTO contract_diff_jobs (id, input_sha256, status) VALUES (?, ?, 'queued')",
-          ).bind(id, inputHash).run();
+          )
+            .bind(id, inputHash)
+            .run();
           try {
             await env.JOBS.send({ kind: "contract_diff_v1", id, ...input });
           } catch {
             await env.DB.prepare(
               "UPDATE contract_diff_jobs SET status = 'failed', error_code = 'ENQUEUE_FAILED', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-            ).bind(id).run();
+            )
+              .bind(id)
+              .run();
             return json({ code: "ENQUEUE_FAILED" }, 503);
           }
           return json({ job_id: id, status: "queued" }, 202);
         }
-        const match = request.method === "GET" &&
+        const match =
+          request.method === "GET" &&
           /^\/api\/v1\/contract-diff\/jobs\/([0-9a-f-]{36})$/.exec(path);
         if (match) {
           if (!(await databaseReady(env))) return json({ code: "DEPENDENCY_UNAVAILABLE" }, 503);
           const row = await env.DB.prepare(
             "SELECT id, status, breaking, changes_json, error_code, created_at, updated_at FROM contract_diff_jobs WHERE id = ?",
-          ).bind(match[1]).first();
+          )
+            .bind(match[1])
+            .first();
           if (!row) return json({ code: "NOT_FOUND" }, 404);
           return json({
             job_id: row.id,
@@ -181,38 +206,60 @@ export default {
           });
         }
       } catch (error) {
-        if (error?.status) return json({ code: "INVALID_REQUEST", message: error.message }, error.status);
-        if (error instanceof Error && /Unsupported|OpenAPI|Invalid|\.paths|required|composition/.test(error.message)) {
+        if (error?.status)
+          return json({ code: "INVALID_REQUEST", message: error.message }, error.status);
+        if (
+          error instanceof Error &&
+          /Unsupported|OpenAPI|Invalid|\.paths|required|composition/.test(error.message)
+        ) {
           return json({ code: "UNSUPPORTED_CONTRACT", message: error.message }, 422);
         }
         return json({ code: "STAGING_API_ERROR" }, 500);
       }
     }
-    return json({ code: "NOT_MIGRATED", message: "This RaksHex endpoint has not been migrated." }, 501);
+    return json(
+      { code: "NOT_MIGRATED", message: "This RaksHex endpoint has not been migrated." },
+      501,
+    );
   },
 
   async queue(batch, env) {
     if (!env.DB?.prepare) throw new Error("D1 database binding missing");
     for (const message of batch.messages) {
       const payload = message.body;
-      if (payload?.kind !== "contract_diff_v1" ||
-        !/^[0-9a-f-]{36}$/.test(payload.id ?? "")) {
+      if (payload?.kind !== "contract_diff_v1" || !/^[0-9a-f-]{36}$/.test(payload.id ?? "")) {
         // Unrecognized jobs never execute arbitrary effects or mutate data.
         message.ack();
         continue;
       }
       try {
         const row = await env.DB.prepare(
-          "SELECT status FROM contract_diff_jobs WHERE id = ?",
-        ).bind(payload.id).first();
+          "SELECT status, input_sha256 FROM contract_diff_jobs WHERE id = ?",
+        )
+          .bind(payload.id)
+          .first();
         if (!row || row.status === "completed" || row.status === "failed") {
+          message.ack();
+          continue;
+        }
+        const inputHash = await hash(
+          JSON.stringify({ before: payload.before, after: payload.after }),
+        );
+        if (inputHash !== row.input_sha256) {
+          await env.DB.prepare(
+            "UPDATE contract_diff_jobs SET status = 'failed', error_code = 'INPUT_HASH_MISMATCH', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND status = 'queued'",
+          )
+            .bind(payload.id)
+            .run();
           message.ack();
           continue;
         }
         const result = diffOpenApiContracts(payload.before, payload.after);
         await env.DB.prepare(
           "UPDATE contract_diff_jobs SET status = 'completed', breaking = ?, changes_json = ?, error_code = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND status = 'queued'",
-        ).bind(result.breaking ? 1 : 0, JSON.stringify(result.changes), payload.id).run();
+        )
+          .bind(result.breaking ? 1 : 0, JSON.stringify(result.changes), payload.id)
+          .run();
         message.ack();
       } catch {
         // At-least-once queue delivery. No side effects beyond an idempotent

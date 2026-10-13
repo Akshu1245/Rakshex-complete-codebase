@@ -94,7 +94,7 @@ test("authenticated queue job persists a deterministic completed result and retr
         },
         async first() {
           if (sql.includes("sqlite_master")) return { name: "contract_diff_jobs" };
-          if (sql.includes("SELECT status FROM contract_diff_jobs")) {
+          if (sql.includes("SELECT status, input_sha256 FROM contract_diff_jobs")) {
             return rows.get(bindings[0]) ?? null;
           }
           if (sql.includes("SELECT id, status, breaking")) {

@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { asc, desc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { actionReceiptLedger, type ActionReceiptLedgerEntry } from "@rakshex/database";
 import * as db from "../../db";
 
@@ -328,6 +328,26 @@ export async function appendActionReceipt(input: {
   return database.transaction(async (tx) => {
     // Serialize one workspace chain without blocking unrelated workspaces.
     await tx.execute(sql`SELECT pg_advisory_xact_lock(${input.workspaceId}::bigint)`);
+    const [existing] = await tx
+      .select()
+      .from(actionReceiptLedger)
+      .where(
+        and(
+          eq(actionReceiptLedger.workspaceId, input.workspaceId),
+          eq(actionReceiptLedger.requestId, input.requestId),
+          eq(actionReceiptLedger.eventType, input.eventType),
+        ),
+      )
+      .limit(1);
+    if (existing) {
+      if (
+        canonicalJson(existing.payload) !== canonicalJson(sanitizeReceiptPayload(input.payload)) ||
+        (input.occurredAt && existing.occurredAt.getTime() !== input.occurredAt.getTime())
+      ) {
+        throw new Error("Receipt idempotency conflict: existing event has different evidence");
+      }
+      return fromRow(existing);
+    }
     const [previous] = await tx
       .select({ entryHash: actionReceiptLedger.entryHash })
       .from(actionReceiptLedger)

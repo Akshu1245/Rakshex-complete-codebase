@@ -98,6 +98,75 @@ function inferMcp(reference: RawActionReference): Definition | undefined {
   );
 }
 
+// Ignore literal/identifier contents and comments before looking for writes.
+// This is conservative classification, not SQL validation or a SQL sandbox.
+function executableSql(sql: string): string | undefined {
+  let output = "";
+  for (let i = 0; i < sql.length;) {
+    if (sql.startsWith("--", i)) {
+      const end = sql.indexOf("\n", i + 2);
+      i = end < 0 ? sql.length : end;
+      output += " ";
+    } else if (sql.startsWith("/*", i)) {
+      let depth = 1;
+      i += 2;
+      while (i < sql.length && depth > 0) {
+        if (sql.startsWith("/*", i)) {
+          depth++;
+          i += 2;
+        } else if (sql.startsWith("*/", i)) {
+          depth--;
+          i += 2;
+        } else i++;
+      }
+      if (depth) return undefined;
+      output += " ";
+    } else if (sql[i] === "'" || sql[i] === '"') {
+      const quote = sql[i++];
+      let closed = false;
+      while (i < sql.length) {
+        // Backslash interpretation depends on SQL session settings; do not
+        // assert read-only when that interpretation is ambiguous.
+        if (sql[i] === "\\") return undefined;
+        if (sql[i] === quote) {
+          if (sql[i + 1] === quote) {
+            i += 2;
+            continue;
+          }
+          i++;
+          closed = true;
+          break;
+        }
+        i++;
+      }
+      if (!closed) return undefined;
+      output += " ";
+    } else {
+      const dollar = sql[i] === "$" ? /^\$(?:[A-Za-z_][A-Za-z0-9_]*)?\$/.exec(sql.slice(i)) : null;
+      if (dollar) {
+        const end = sql.indexOf(dollar[0], i + dollar[0].length);
+        if (end < 0) return undefined;
+        i = end + dollar[0].length;
+        output += " ";
+      } else output += sql[i++];
+    }
+  }
+  return output;
+}
+
+function sqlDefinition(sql: string): Definition | undefined {
+  const executable = executableSql(sql);
+  if (executable === undefined) return undefined;
+  const name = /\b(delete|truncate|drop)\b/i.test(executable)
+    ? "database.delete"
+    : /\b(alter|create\s+(table|schema|index))\b/i.test(executable)
+      ? "database.schema.change"
+      : /\b(insert|update|upsert|merge)\b/i.test(executable)
+        ? "database.write"
+        : "database.read";
+  return DEFINITIONS.find((item) => item.name === name);
+}
+
 export function semanticActionCatalog(): Array<Pick<Definition, "name" | "domain" | "effect">> {
   return DEFINITIONS.map(({ name, domain, effect }) => ({ name, domain, effect }));
 }
@@ -126,10 +195,14 @@ export function normalizeSemanticAction(input: {
     sql
       ? sql
       : textFor(raw, input.parameters ?? {});
-  const definition =
+  let definition =
     raw.provider === "mcp" || raw.provider.startsWith("mcp:")
       ? inferMcp(raw)
       : DEFINITIONS.find((item) => item.aliases.some((pattern) => pattern.test(candidate)));
+
+  if (definition?.name === "database.read" && sql) {
+    definition = sqlDefinition(sql);
+  }
 
   return {
     name: definition?.name ?? "semantic.unknown",
