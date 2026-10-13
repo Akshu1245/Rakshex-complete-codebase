@@ -225,7 +225,9 @@ export function getJobQueue(): JobQueue {
     }
     // Development and tests can still use an in-process queue without Redis.
     queue = new MemoryJobQueue();
-    logger.warn("[JobQueue] getJobQueue called before initJobQueue — using development memory queue");
+    logger.warn(
+      "[JobQueue] getJobQueue called before initJobQueue — using development memory queue",
+    );
   }
   return queue;
 }
