@@ -470,7 +470,7 @@ export const agentFirewallRouter = router({
             replayed: true,
           };
         }
-  
+
         const [agent] = await tx
           .select()
           .from(agentIdentities)
@@ -483,7 +483,7 @@ export const agentFirewallRouter = router({
           .limit(1)
           .for("share");
         if (!agent) throw new TRPCError({ code: "NOT_FOUND", message: "Agent identity not found" });
-  
+
         let authority;
         if (input.capabilityToken) {
           [authority] = await tx
@@ -516,7 +516,7 @@ export const agentFirewallRouter = router({
               .for("share");
           }
         }
-  
+
         const action = normalizeSemanticAction({
           provider: input.provider,
           operation: input.operation,
@@ -572,7 +572,7 @@ export const agentFirewallRouter = router({
           policy: policyFromRow(agent.policyConfig),
           frozen: agent.status !== "active",
         });
-  
+
         const [previous] = await tx
           .select({ recordHash: actionLedger.recordHash })
           .from(actionLedger)

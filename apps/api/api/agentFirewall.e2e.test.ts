@@ -352,9 +352,7 @@ d("Agent Firewall — authenticated end-to-end", () => {
     const attempts = await Promise.all(
       Array.from({ length: 5 }, () => caller().agentFirewall.evaluate(request)),
     );
-    const identities = attempts.map((value) =>
-      "ledgerId" in value ? value.ledgerId : value.id,
-    );
+    const identities = attempts.map((value) => ("ledgerId" in value ? value.ledgerId : value.id));
     expect(new Set(identities).size).toBe(1);
     expect(attempts.filter((value) => value.replayed)).toHaveLength(4);
 
@@ -363,7 +361,12 @@ d("Agent Firewall — authenticated end-to-end", () => {
     const rows = await database
       .select({ id: actionLedger.id })
       .from(actionLedger)
-      .where(and(eq(actionLedger.workspaceId, workspaceId), eq(actionLedger.idempotencyKey, idempotencyKey)));
+      .where(
+        and(
+          eq(actionLedger.workspaceId, workspaceId),
+          eq(actionLedger.idempotencyKey, idempotencyKey),
+        ),
+      );
     expect(rows).toHaveLength(1);
     await expect(
       caller().agentFirewall.evaluate({ ...request, amountMinor: 20 }),
@@ -406,9 +409,16 @@ d("Agent Firewall — authenticated end-to-end", () => {
 
     const database = await getDb();
     if (!database) throw new Error("database not available");
-    const ledgerIds = new Set(outcomes.map((outcome) => "ledgerId" in outcome ? outcome.ledgerId : outcome.id));
+    const ledgerIds = new Set(
+      outcomes.map((outcome) => ("ledgerId" in outcome ? outcome.ledgerId : outcome.id)),
+    );
     const rows = await database
-      .select({ id: actionLedger.id, previousHash: actionLedger.previousHash, recordHash: actionLedger.recordHash, occurredAt: actionLedger.occurredAt })
+      .select({
+        id: actionLedger.id,
+        previousHash: actionLedger.previousHash,
+        recordHash: actionLedger.recordHash,
+        occurredAt: actionLedger.occurredAt,
+      })
       .from(actionLedger)
       .where(and(eq(actionLedger.workspaceId, workspaceId), eq(actionLedger.agentId, testAgentId)));
     expect(rows).toHaveLength(8);

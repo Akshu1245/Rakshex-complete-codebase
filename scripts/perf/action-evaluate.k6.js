@@ -24,12 +24,18 @@ const workspaceId = Number(__ENV.WORKSPACE_ID);
 const agentId = __ENV.AGENT_ID;
 const capabilityToken = __ENV.CAPABILITY_TOKEN;
 
-const safe = __ENV.RAKSHEX_PERF_STAGING_ONLY === "1" &&
+const safe =
+  __ENV.RAKSHEX_PERF_STAGING_ONLY === "1" &&
   /^https?:\/\//.test(baseUrl) &&
   !/^https?:\/\/(api\.rakshex\.in|rakshex-backend\.onrender\.com)([:/]|$)/i.test(baseUrl) &&
-  key && workspaceId > 0 && agentId && capabilityToken;
+  key &&
+  workspaceId > 0 &&
+  agentId &&
+  capabilityToken;
 if (!safe) {
-  throw new Error("Refusing performance requests: set staging-only guard and all test-only credentials; never target the live API");
+  throw new Error(
+    "Refusing performance requests: set staging-only guard and all test-only credentials; never target the live API",
+  );
 }
 
 const authorizedMs = new Trend("rakshex_authorize_ms", true);

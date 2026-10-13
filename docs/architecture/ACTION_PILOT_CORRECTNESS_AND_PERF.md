@@ -4,7 +4,7 @@
 
 ## Exact present-state distinction
 
-- `apps/api/api/agentFirewall.ts` issues an `action_ledger` decision and hash, NOT a signed `action_receipt_ledger` entry. Broker authorization currently relies on the *unsigned* `action_ledger` decision.
+- `apps/api/api/agentFirewall.ts` issues an `action_ledger` decision and hash, NOT a signed `action_receipt_ledger` entry. Broker authorization currently relies on the _unsigned_ `action_ledger` decision.
 - `apps/api/services/receipts/actionReceipts.ts` implements a separate transactionally appended, Ed25519-signed, workspace-chained receipt ledger, currently called from AI provider gateway paths. It is **not** wired into the Agent Firewall authorization/broker path. **Do not claim all agent actions have a signed receipt.**
 - `credentialEgressLog` has a unique ledger id, preventing two brokered calls on the same decision. However, a provider success followed by DB settlement failure leaves an ambiguous outcome. Blind retry would risk a duplicate provider action.
 - `packages/sdk/src/firewall.ts` also offers `authorizeAndRun`, which executes through a caller-owned function and therefore cannot enforce credential isolation; market claims must distinguish the mediated broker path.
@@ -29,15 +29,16 @@
 
 ## Phase 3 — performance tests (isolated staging only)
 
-Use `scripts/perf/action-evaluate.k6.js` with a **disposable staging tenant + database**, not `api.rakshex.in`. The script performs policy evaluations but *no* provider execution.
+Use `scripts/perf/action-evaluate.k6.js` with a **disposable staging tenant + database**, not `api.rakshex.in`. The script performs policy evaluations but _no_ provider execution.
 
 Metrics to record at 1, 5, 10 and 25 virtual users (if the staging capacity supports it):
+
 - p50/p95/p99 authorization latency, request rate, errors/timeouts, successful decision writes
 - Per-workspace throughput and lock wait, DB pool saturation, CPU/memory
 - Receipt append/settlement lag and unresolved `UNKNOWN` outcomes when phase 2 is implemented
 - Multiple-workspace isolation vs one hot workspace; replay/collision behavior
 
-**Postgres failure injection:** create disposable test database with migrated schema, and test-only API keys. Run a small baseline; stop/restrict only the *disposable Postgres container*, never a live or shared database. Record how long until the API returns a non-ALLOW error, restoration duration, duplicate requests and unprocessed queue backlog. Restore the container and verify DB integrity. Repeat for disposable Redis and worker, separately. An HTTP failure or unavailable auth is acceptable: an unauthorized ALLOW is not.
+**Postgres failure injection:** create disposable test database with migrated schema, and test-only API keys. Run a small baseline; stop/restrict only the _disposable Postgres container_, never a live or shared database. Record how long until the API returns a non-ALLOW error, restoration duration, duplicate requests and unprocessed queue backlog. Restore the container and verify DB integrity. Repeat for disposable Redis and worker, separately. An HTTP failure or unavailable auth is acceptable: an unauthorized ALLOW is not.
 
 **Acceptance:** no lost/duplicate privileged egress; no ALLOW without persisted authorization + signed pre-egress receipt (after phase 2 is rolled out); no broken receipt chain; no unbounded lock waits; rollback demonstrated. No latency target or improvement claim without data.
 
