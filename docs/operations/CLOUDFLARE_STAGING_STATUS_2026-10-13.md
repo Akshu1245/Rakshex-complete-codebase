@@ -28,3 +28,9 @@ Local checks: 74 action-control tests; 12 signed-receipt/retry tests; 20 Cloudfl
 - Revocation ordering, transactional action-limit reservations, external-call reconciliation and real per-workspace load/outage measurements remain release gates.
 
 Resource existence and a staging health response are not full application readiness.
+
+## Frontend routing follow-up
+
+The staging API entry now relays only verified health/capability and contract-diff routes through the `CORE_API` service binding. It preserves caller authentication and body, and returns 503 on core dependency failure. Next.js now has same-origin rewrites for contract-diff and job paths using the existing explicit backend origin. These rewrite changes are source changes in the PR; the production Web Worker was not rebuilt or deployed.
+
+The API entry relay was deployed. An unauthenticated live diff request returned 401 through the entry. Local Cloudflare tests now total 24, including entry-to-real-core authentication and body forwarding, polling statuses and dependency failures. The legacy Railway health URL returned HTTP 404, Application not found. Full frontend login/dashboard readiness cannot be claimed until the main backend is restored or migrated.

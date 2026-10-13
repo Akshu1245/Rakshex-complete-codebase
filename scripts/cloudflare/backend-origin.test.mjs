@@ -56,7 +56,8 @@ test("Next.js rewrites and CSP respect Cloudflare target without Railway", async
     process.env.NODE_ENV = "production";
     const config = require("../../apps/web/next.config.js");
     const rewrites = await config.rewrites();
-    assert.ok(rewrites.length > 0);
+    assert.ok(rewrites.some((route) => route.source === "/api/v1/contract-diff"));
+    assert.ok(rewrites.some((route) => route.source === "/api/v1/contract-diff/jobs/:path*"));
     for (const route of rewrites) {
       assert.ok(
         route.destination.startsWith("https://rakshex-api-staging.example.com/"),
