@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { normalizeSemanticAction, semanticActionCatalog } from "./semanticActions";
-import {
-  ACTION_CLASS_MATRIX,
-  UNKNOWN_ACTION_CLASS,
-  classifySemanticAction,
-} from "./actionClasses";
+import { ACTION_CLASS_MATRIX, UNKNOWN_ACTION_CLASS, classifySemanticAction } from "./actionClasses";
 
 describe("action class inventory — deployment gated", () => {
   it("lists every known semanticActions.ts definition once with matching domain/effect", () => {

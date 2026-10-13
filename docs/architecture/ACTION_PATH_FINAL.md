@@ -80,7 +80,7 @@ Current code note: `normalizeSemanticAction` uses regexes; e.g. `WITH deleted AS
 
 **Execution status: NOT RUN.** A real outage test requires an isolated staging Postgres instance, API, receipt signing keys, queue, an operational Class B implementation and observable timestamps. Do not stop the production database or the unrelated DecisionTrace Railway database.
 
-1. Create an isolated, disposable dataset in staging; confirm backup/restore; prepare seeded workspace, valid/revoked authority, policy, test keys, A actions and *separately verified future* B fixtures.
+1. Create an isolated, disposable dataset in staging; confirm backup/restore; prepare seeded workspace, valid/revoked authority, policy, test keys, A actions and _separately verified future_ B fixtures.
 2. Run an end-to-end A allow and deny; verify signed receipt is persisted before any provider side effect, and no credential is released for DENY.
 3. Establish healthy baseline with representative concurrency, recorded environment, and warm-up. Instrument request start, decision response, queue enqueue acknowledgment, persistent receipt commit, idempotency dedupe, and per-workspace chain sequence.
 4. Stop **staging Postgres only** for a controlled interval. Replay A and B fixtures while holding queue healthy. Assert A is never ALLOW; assert **only certified** B operations continue; ensure each B ALLOW has a durable accepted receipt intent. If there are no certified B actions, this test should show A denies and **zero** B ALLOW.

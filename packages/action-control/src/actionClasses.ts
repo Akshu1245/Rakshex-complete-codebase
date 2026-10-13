@@ -11,9 +11,7 @@
 import type { ActionDomain, ActionEffect, SemanticAction } from "./types";
 
 export type ActionClass = "A" | "B";
-export type FailMode =
-  | "DENY_UNLESS_AUTHORITATIVE_AND_RECEIPTED"
-  | "ALLOW_ONLY_WITH_DURABLE_INTENT";
+export type FailMode = "DENY_UNLESS_AUTHORITATIVE_AND_RECEIPTED" | "ALLOW_ONLY_WITH_DURABLE_INTENT";
 export type BReadiness = "not-eligible" | "candidate-requires-review";
 
 export interface ActionClassRow {
@@ -43,7 +41,7 @@ export const ACTION_CLASS_MATRIX: readonly ActionClassRow[] = [
     revocationSources: FINANCIAL,
     failMode: A,
     bReadiness: "not-eligible",
-    rationale: "Refund moves money" ,
+    rationale: "Refund moves money",
   },
   {
     name: "financial.payment.create",
@@ -53,7 +51,7 @@ export const ACTION_CLASS_MATRIX: readonly ActionClassRow[] = [
     revocationSources: FINANCIAL,
     failMode: A,
     bReadiness: "not-eligible",
-    rationale: "Payment can transfer money" ,
+    rationale: "Payment can transfer money",
   },
   {
     name: "financial.subscription.cancel",
@@ -63,7 +61,7 @@ export const ACTION_CLASS_MATRIX: readonly ActionClassRow[] = [
     revocationSources: FINANCIAL,
     failMode: A,
     bReadiness: "not-eligible",
-    rationale: "Cancellation has customer impact" ,
+    rationale: "Cancellation has customer impact",
   },
   {
     name: "code.pr.create",
@@ -73,7 +71,7 @@ export const ACTION_CLASS_MATRIX: readonly ActionClassRow[] = [
     revocationSources: CODE,
     failMode: A,
     bReadiness: "not-eligible",
-    rationale: "PR creation mutates repository state" ,
+    rationale: "PR creation mutates repository state",
   },
   {
     name: "code.merge",
@@ -83,7 +81,7 @@ export const ACTION_CLASS_MATRIX: readonly ActionClassRow[] = [
     revocationSources: CODE,
     failMode: A,
     bReadiness: "not-eligible",
-    rationale: "Merge changes executable code" ,
+    rationale: "Merge changes executable code",
   },
   {
     name: "code.branch.delete",
@@ -93,7 +91,7 @@ export const ACTION_CLASS_MATRIX: readonly ActionClassRow[] = [
     revocationSources: CODE,
     failMode: A,
     bReadiness: "not-eligible",
-    rationale: "Branch deletion destroys references" ,
+    rationale: "Branch deletion destroys references",
   },
   {
     name: "code.deploy",
@@ -103,7 +101,7 @@ export const ACTION_CLASS_MATRIX: readonly ActionClassRow[] = [
     revocationSources: CODE,
     failMode: A,
     bReadiness: "not-eligible",
-    rationale: "Deploy affects live systems" ,
+    rationale: "Deploy affects live systems",
   },
   {
     name: "database.read",
@@ -113,7 +111,8 @@ export const ACTION_CLASS_MATRIX: readonly ActionClassRow[] = [
     revocationSources: DATABASE,
     failMode: A,
     bReadiness: "candidate-requires-review",
-    rationale: "Read queries may expose PII/secrets or invoke side-effecting SQL; cannot safely infer low risk from SQL regex" ,
+    rationale:
+      "Read queries may expose PII/secrets or invoke side-effecting SQL; cannot safely infer low risk from SQL regex",
   },
   {
     name: "database.write",
@@ -123,7 +122,7 @@ export const ACTION_CLASS_MATRIX: readonly ActionClassRow[] = [
     revocationSources: DATABASE,
     failMode: A,
     bReadiness: "not-eligible",
-    rationale: "Mutation requires live authorization" ,
+    rationale: "Mutation requires live authorization",
   },
   {
     name: "database.delete",
@@ -133,7 +132,7 @@ export const ACTION_CLASS_MATRIX: readonly ActionClassRow[] = [
     revocationSources: DATABASE,
     failMode: A,
     bReadiness: "not-eligible",
-    rationale: "Deletion is destructive" ,
+    rationale: "Deletion is destructive",
   },
   {
     name: "database.schema.change",
@@ -143,7 +142,7 @@ export const ACTION_CLASS_MATRIX: readonly ActionClassRow[] = [
     revocationSources: DATABASE,
     failMode: A,
     bReadiness: "not-eligible",
-    rationale: "Schema changes are high impact" ,
+    rationale: "Schema changes are high impact",
   },
 ];
 
