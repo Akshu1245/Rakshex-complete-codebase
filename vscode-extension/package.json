@@ -1,0 +1,99 @@
+{
+  "name": "devpulse-vscode",
+  "displayName": "DevPulse – AI API Security & Cost Intelligence",
+  "description": "Scan for token leaks, detect AI agent attacks, track API costs, and get AI-powered fix suggestions — directly in VS Code",
+  "version": "0.4.0",
+  "publisher": "devpulse",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other", "Testing", "Linters"],
+  "activationEvents": [
+    "onLanguage:python",
+    "onLanguage:javascript",
+    "onLanguage:typescript",
+    "onLanguage:go",
+    "onLanguage:java",
+    "onLanguage:yaml"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "devpulse.showDashboard",
+        "title": "DevPulse: Show Security & Cost Dashboard"
+      },
+      {
+        "command": "devpulse.fullSecurityScan",
+        "title": "DevPulse: Full Security Scan (Token Leaks + Agent Attacks + OWASP)"
+      },
+      {
+        "command": "devpulse.scanTokenLeaks",
+        "title": "DevPulse: Scan for Token/Secret Leaks"
+      },
+      {
+        "command": "devpulse.scanAgentAttacks",
+        "title": "DevPulse: Scan for AI Agent Attacks"
+      },
+      {
+        "command": "devpulse.costEstimate",
+        "title": "DevPulse: Estimate API Call Cost"
+      },
+      {
+        "command": "devpulse.aiFixSuggestions",
+        "title": "DevPulse: Get AI Fix Suggestions"
+      },
+      {
+        "command": "devpulse.checkHealth",
+        "title": "DevPulse: Check API Health"
+      },
+      {
+        "command": "devpulse.cicdGate",
+        "title": "DevPulse: CI/CD Quality Gate"
+      },
+      {
+        "command": "devpulse.showThreatFeed",
+        "title": "DevPulse: Show Threat Intelligence Feed"
+      },
+      {
+        "command": "devpulse.costDashboard",
+        "title": "DevPulse: Open Cost Intelligence Dashboard"
+      }
+    ],
+    "configuration": {
+      "title": "DevPulse",
+      "properties": {
+        "devpulse.apiUrl": {
+          "type": "string",
+          "default": "http://localhost:8000",
+          "description": "DevPulse backend API URL"
+        },
+        "devpulse.token": {
+          "type": "string",
+          "default": "",
+          "description": "JWT authentication token"
+        },
+        "devpulse.inlineDiagnostics": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show inline token leak warnings as you type"
+        },
+        "devpulse.scanOnSave": {
+          "type": "boolean",
+          "default": false,
+          "description": "Auto-run security scan on file save"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  }
+}

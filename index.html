@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevPulse - Real-Time API Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        body {
+            background-color: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+        
+        .monospace {
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .gradient-border {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 8px;
+            padding: 1px;
+            background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.3), transparent);
+            -webkit-mask: 
+                linear-gradient(#fff 0 0) content-box, 
+                linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            pointer-events: none;
+        }
+        
+        .gradient-border:hover::before {
+            opacity: 1;
+        }
+        
+        .pulse-indicator {
+            position: relative;
+        }
+        
+        .pulse-indicator::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.5;
+                transform: scale(1.2);
+            }
+        }
+        
+        .tab-active {
+            border-bottom: 2px solid #3b82f6;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="sticky top-0 z-50 bg-[#0f172a] border-b border-gray-800 shadow-sm">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="text-2xl font-bold text-white">⚡ DevPulse</div>
+                    <div class="hidden md:block text-sm text-gray-400">Real-Time API Intelligence</div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="pulse-indicator mr-2">
+                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                    </div>
+                    <div class="text-2xl font-semibold text-white">98.5%</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="bg-[#1e293b] border-b border-gray-800">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex space-x-8">
+                <button class="py-4 px-2 text-sm font-medium tab-active text-white border-b-2 border-blue-500">
+                    Health Monitor
+                </button>
+                <button class="py-4 px-2 text-sm font-medium text-gray-400 hover:text-white transition-colors">
+                    Compatibility
+                </button>
+                <button class="py-4 px-2 text-sm font-medium text-gray-400 hover:text-white transition-colors">
+                    Code Generator
+                </button>
+                <button class="py-4 px-2 text-sm font-medium text-gray-400 hover:text-white transition-colors">
+                    Documentation
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-6 py-8">
+        <!-- Health Monitor Module -->
+        <div id="health-monitor" class="animate-fade-in">
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Total APIs -->
+                <div class="bg-[#1e293b] rounded-lg p-6 border border-gray-800">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="text-gray-400 text-sm">Total APIs</div>
+                    </div>
+                    <div class="text-3xl font-semibold text-white">248</div>
+                    <div class="text-xs text-gray-400 mt-2">+12 from last month</div>
+                </div>
+
+                <!-- Healthy APIs -->
+                <div class="bg-[#1e293b] rounded-lg p-6 border border-gray-800">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="text-gray-400 text-sm">Healthy</div>
+                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                    </div>
+                    <div class="text-3xl font-semibold text-white">244</div>
+                    <div class="text-xs text-gray-400 mt-2">98.5% uptime</div>
+                </div>
+
+                <!-- Degraded APIs -->
+                <div class="bg-[#1e293b] rounded-lg p-6 border border-gray-800">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="text-gray-400 text-sm">Degraded</div>
+                        <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                    </div>
+                    <div class="text-3xl font-semibold text-white">3</div>
+                    <div class="text-xs text-gray-400 mt-2">High latency</div>
+                </div>
+
+                <!-- Down APIs -->
+                <div class="bg-[#1e293b] rounded-lg p-6 border border-gray-800">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="text-gray-400 text-sm">Down</div>
+                        <div class="w-2 h-2 bg-red-500 rounded-full"></div>
+                    </div>
+                    <div class="text-3xl font-semibold text-white">1</div>
+                    <div class="text-xs text-gray-400 mt-2">API Gateway failure</div>
+                </div>
+            </div>
+
+            <!-- API Status Grid -->
+            <div class="bg-[#1e293b] rounded-lg p-6 border border-gray-800">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-lg font-semibold text-white">API Status</h2>
+                    <div class="text-xs text-gray-400">Last updated: 2 minutes ago</div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                    <!-- API Card 1 -->
+                    <div class="bg-[#0f172a] rounded-lg p-4 border-l-4 border-green-500 gradient-border hover:border-green-400 transition-all">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-semibold text-white">User Authentication</h3>
+                            <span class="px-2 py-1 text-xs rounded-full bg-green-900/30 text-green-400">Healthy</span>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-400">Latency</span>
+                                <span class="text-white">124ms</span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-400">Uptime (24h)</span>
+                                <span class="text-white">99.8%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- API Card 2 -->
+                    <div class="bg-[#0f172a] rounded-lg p-4 border-l-4 border-green-500 gradient-border hover:border-green-400 transition-all">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-semibold text-white">Payment Gateway</h3>
+                            <span class="px-2 py-1 text-xs rounded-full bg-green-900/30 text-green-400">Healthy</span>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-400">Latency</span>
+                                <span class="text-white">342ms</span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-400">Uptime (24h)</span>
+                                <span class="text-white">99.5%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- API Card 3 -->
+                    <div class="bg-[#0f172a] rounded-lg p-4 border-l-4 border-yellow-500 gradient-border hover:border-yellow-400 transition-all">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-semibold text-white">Product Catalog</h3>
+                            <span class="px-2 py-1 text-xs rounded-full bg-yellow-900/30 text-yellow-400">Degraded</span>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-400">Latency</span>
+                                <span class="text-white">856ms</span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-400">Uptime (24h)</span>
+                                <span class="text-white">95.2%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- API Card 4 -->
+                    <div class="bg-[#0f172a] rounded-lg p-4 border-l-4 border-green-500 gradient-border hover:border-green-400 transition-all">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-semibold text-white">Order Management</h3>
+                            <span class="px-2 py-1 text-xs rounded-full bg-green-900/30 text-green-400">Healthy</span>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-400">Latency</span>
+                                <span class="text-white">284ms</span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-400">Uptime (24h)</span>
+                                <span class="text-white">99.2%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- API Card 5 -->
+                    <div class="bg-[#0f172a] rounded-lg p-4 border-l-4 border-red-500 gradient-border hover:border-red-400 transition-all">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-semibold text-white">Analytics Service</h3>
+                            <span class="px-2 py-1 text-xs rounded-full bg-red-900/30 text-red-400">Down</span>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-400">Latency</span>
+                                <span class="text-white">--</span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-400">Uptime (24h)</span>
+                                <span class="text-white">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compatibility Module -->
+        <div id="compatibility" class="hidden animate-fade-in">
+            <div class="bg-[#1e293b] rounded-lg p-6 border border-gray-800">
+                <h2 class="text-lg font-semibold text-white mb-6">API Compatibility Checker</h2>
+                
+                <div class="space-y-6">
+                    <!-- API Selectors -->
+                    <div class="flex flex-col lg:flex-row items-center justify-between space-y-4 lg:space-y-0 lg:space-x-6">
+                        <div class="flex-1 w-full">
+                            <label class="block text-sm font-medium text-gray-400 mb-2">Source API</label>
+                            <select class="w-full bg-[#0f172a] border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option>User Authentication API (v2.1)</option>
+                                <option>Payment Gateway API (v3.0)</option>
+                                <option>Product Catalog API (v1.8)</option>
+                                <option>Order Management API (v2.5)</option>
+                            </select>
+                        </div>
+
+                        <div class="text-2xl text-gray-500">→</div>
+
+                        <div class="flex-1 w-full">
+                            <label class="block text-sm font-medium text-gray-400 mb-2">Target API</label>
+                            <select class="w-full bg-[#0f172a] border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option>Product Catalog API (v1.8)</option>
+                                <option>Order Management API (v2.5)</option>
+                                <option>Analytics Service API (v1.2)</option>
+                                <option>Customer Service API (v2.0)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Action Button -->
+                    <div class="flex justify-center">
+                        <button class="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">
+                            Find Optimal Chain
+                        </button>
+                    </div>
+
+                    <!-- Result Panel -->
+                    <div class="border-t border-gray-800 pt-6">
+                        <h3 class="text-sm font-semibold text-gray-400 mb-4">Compatibility Analysis</h3>
+                        
+                        <div class="bg-[#0f172a] rounded-lg p-6">
+                            <!-- Chain Visualization -->
+                            <div class="flex items-center justify-center space-x-2 mb-4">
+                                <div class="bg-[#1e293b] px-4 py-2 rounded-lg border border-gray-700">
+                                    <span class="font-medium text-white">User Authentication</span>
+                                </div>
+                                <div class="text-gray-500">→</div>
+                                <div class="bg-[#1e293b] px-4 py-2 rounded-lg border border-gray-700">
+                                    <span class="font-medium text-white">Order Management</span>
+                                </div>
+                                <div class="text-gray-500">→</div>
+                                <div class="bg-[#1e293b] px-4 py-2 rounded-lg border border-gray-700">
+                                    <span class="font-medium text-white">Product Catalog</span>
+                                </div>
+                            </div>
+
+                            <!-- Compatibility Score -->
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="text-sm font-medium text-gray-400">Compatibility Score</div>
+                                <div class="text-2xl font-semibold text-green-400">87%</div>
+                            </div>
+
+                            <!-- Reasoning -->
+                            <div class="bg-[#1e293b] rounded-lg p-4">
+                                <h4 class="text-sm font-semibold text-gray-300 mb-2">Compatibility Reasoning:</h4>
+                                <p class="text-sm text-gray-400 leading-relaxed">
+                                    The integration path is viable with minor adjustments. 
+                                    User Authentication API v2.1 supports OAuth 2.0 token exchange with Order Management API v2.5.
+                                    The Order Management API can directly communicate with the Product Catalog API using the standard REST interface.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Code Generator Module -->
+        <div id="code-generator" class="hidden animate-fade-in">
+            <div class="bg-[#1e293b] rounded-lg p-6 border border-gray-800">
+                <h2 class="text-lg font-semibold text-white mb-6">AI Code Generator</h2>
+                
+                <div class="space-y-6">
+                    <!-- Input Textarea -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Describe your integration use case</label>
+                        <textarea 
+                            class="w-full h-40 bg-[#0f172a] border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                            placeholder="e.g., Integrate user authentication with payment processing and order management. Handle JWT token validation and payment status callbacks."
+                        ></textarea>
+                    </div>
+
+                    <!-- Action Button -->
+                    <div class="flex justify-end">
+                        <button class="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">
+                            Generate Code
+                        </button>
+                    </div>
+
+                    <!-- Code Output -->
+                    <div class="border-t border-gray-800 pt-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-sm font-semibold text-gray-400">Generated Code</h3>
+                            <button class="px-3 py-1 text-sm bg-[#1e293b] border border-gray-700 rounded-lg text-gray-400 hover:text-white hover:bg-[#0f172a] transition-colors">
+                                Copy Code
+                            </button>
+                        </div>
+
+                        <div class="bg-[#0f172a] rounded-lg p-4 overflow-x-auto scrollbar-hide">
+                            <pre class="monospace text-sm text-gray-300 leading-relaxed">
+<span class="text-blue-400">import</span> { AuthService, PaymentGateway, OrderManager } <span class="text-blue-400">from</span> <span class="text-yellow-400">'@devpulse/api'</span>;
+
+<span class="text-blue-400">class</span> IntegrationService {
+  <span class="text-blue-400">private</span> auth: AuthService;
+  <span class="text-blue-400">private</span> payments: PaymentGateway;
+  <span class="text-blue-400">private</span> orders: OrderManager;
+
+  <span class="text-blue-400">constructor</span>() {
+    <span class="text-blue-400">this</span>.auth = <span class="text-blue-400">new</span> AuthService();
+    <span class="text-blue-400">this</span>.payments = <span class="text-blue-400">new</span> PaymentGateway();
+    <span class="text-blue-400">this</span>.orders = <span class="text-blue-400">new</span> OrderManager();
+  }
+
+  <span class="text-blue-400">async</span> processUserTransaction(userData: UserData, paymentDetails: PaymentInfo): <span class="text-blue-400">Promise</span><TransactionResult> {
+    <span class="text-gray-500">// Validate user credentials</span>
+    <span class="text-blue-400">const</span> userToken = <span class="text-blue-400">await</span> <span class="text-blue-400">this</span>.auth.login(userData);
+
+    <span class="text-gray-500">// Create payment transaction</span>
+    <span class="text-blue-400">const</span> paymentResult = <span class="text-blue-400">await</span> <span class="text-blue-400">this</span>.payments.processPayment(paymentDetails, userToken);
+
+    <span class="text-gray-500">// Create order if payment successful</span>
+    <span class="text-blue-400">if</span> (paymentResult.success) {
+      <span class="text-blue-400">const</span> order = <span class="text-blue-400">await</span> <span class="text-blue-400">this</span>.orders.createOrder(paymentResult.transactionId, userData);
+      
+      <span class="text-blue-400">return</span> {
+        success: <span class="text-blue-400">true</span>,
+        orderId: order.id,
+        transactionId: paymentResult.transactionId
+      };
+    }
+
+    <span class="text-blue-400">return</span> {
+      success: <span class="text-blue-400">false</span>,
+      error: paymentResult.error
+    };
+  }
+}
+
+<span class="text-blue-400">export</span> <span class="text-blue-400">default</span> IntegrationService;
+                            </pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Documentation Module -->
+        <div id="documentation" class="hidden animate-fade-in">
+            <div class="bg-[#1e293b] rounded-lg p-6 border border-gray-800">
+                <h2 class="text-lg font-semibold text-white mb-6">API Documentation Search</h2>
+                
+                <div class="space-y-6">
+                    <!-- Search Bar -->
+                    <div class="flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-4">
+                        <div class="flex-1">
+                            <input 
+                                type="text" 
+                                placeholder="Search API documentation, endpoints, or parameters..." 
+                                class="w-full bg-[#0f172a] border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                        </div>
+                        <div>
+                            <button class="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">
+                                Search
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Search Results -->
+                    <div class="border-t border-gray-800 pt-6">
+                        <h3 class="text-sm font-semibold text-gray-400 mb-4">Search Results</h3>
+                        
+                        <div class="space-y-4">
+                            <!-- Result Card 1 -->
+                            <div class="bg-[#0f172a] rounded-lg p-4 border border-gray-700 hover:border-gray-600 transition-colors">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h4 class="font-semibold text-white">Authentication API v2.1</h4>
+                                    <span class="px-2 py-1 text-xs rounded-full bg-blue-900/30 text-blue-400">Official Docs</span>
+                                </div>
+                                <p class="text-sm text-gray-400 mb-3">
+                                    Complete API documentation for user authentication, token management, and session handling. 
+                                    Supports OAuth 2.0 and JWT tokens.
+                                </p>
+                                <a href="#" class="text-sm text-blue-400 hover:text-blue-300">View Documentation →</a>
+                            </div>
+
+                            <!-- Result Card 2 -->
+                            <div class="bg-[#0f172a] rounded-lg p-4 border border-gray-700 hover:border-gray-600 transition-colors">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h4 class="font-semibold text-white">Payment Gateway Integration Guide</h4>
+                                    <span class="px-2 py-1 text-xs rounded-full bg-green-900/30 text-green-400">Integration</span>
+                                </div>
+                                <p class="text-sm text-gray-400 mb-3">
+                                    Step-by-step guide for integrating payment processing with supported payment gateways. 
+                                    Includes error handling and retry strategies.
+                                </p>
+                                <a href="#" class="text-sm text-blue-400 hover:text-blue-300">View Guide →</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Summary -->
+                    <div class="border-t border-gray-800 pt-6">
+                        <div class="bg-[#0f172a] rounded-lg p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-sm font-semibold text-gray-400">AI-Powered Summary</h3>
+                                <span class="px-2 py-1 text-xs rounded-full bg-purple-900/30 text-purple-400">Generated</span>
+                            </div>
+                            
+                            <div class="space-y-3">
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-8 h-8 bg-purple-900/30 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                                        <span class="text-purple-400">💡</span>
+                                    </div>
+                                    <p class="text-sm text-gray-400 leading-relaxed">
+                                        The Authentication API v2.1 supports multiple authentication flows including OAuth 2.0 implicit flow 
+                                        for single-page applications and authorization code flow for server-side applications. JWT tokens are 
+                                        valid for 24 hours with automatic refresh token support.
+                                    </p>
+                                </div>
+                                
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-8 h-8 bg-purple-900/30 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                                        <span class="text-purple-400">📊</span>
+                                    </div>
+                                    <p class="text-sm text-gray-400 leading-relaxed">
+                                        The Payment Gateway integration supports 15+ payment methods including credit cards, digital wallets, 
+                                        and bank transfers. All transactions are encrypted and comply with PCI-DSS security standards.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Tab Navigation
+        document.addEventListener('DOMContentLoaded', () => {
+            const tabs = document.querySelectorAll('nav button');
+            const modules = document.querySelectorAll('main > div');
+
+            tabs.forEach((tab, index) => {
+                tab.addEventListener('click', () => {
+                    // Remove active classes from all tabs and modules
+                    tabs.forEach(t => {
+                        t.classList.remove('tab-active', 'text-white', 'border-b-2', 'border-blue-500');
+                        t.classList.add('text-gray-400');
+                    });
+                    modules.forEach(m => m.classList.add('hidden'));
+
+                    // Add active classes to selected tab and module
+                    tab.classList.add('tab-active', 'text-white', 'border-b-2', 'border-blue-500');
+                    tab.classList.remove('text-gray-400');
+                    
+                    // Show corresponding module
+                    const moduleId = ['health-monitor', 'compatibility', 'code-generator', 'documentation'][index];
+                    const module = document.getElementById(moduleId);
+                    if (module) {
+                        module.classList.remove('hidden');
+                    }
+                    
+                    console.log('Tab clicked:', tab.textContent, 'Module:', moduleId);
+                });
+            });
+
+            // Auto-refresh indicator for health tab
+            let seconds = 0;
+            setInterval(() => {
+                seconds++;
+                if (seconds % 30 === 0) {
+                    // Simulate refresh
+                    const healthModule = document.getElementById('health-monitor');
+                    if (!healthModule.classList.contains('hidden')) {
+                        healthModule.style.opacity = '0.8';
+                        setTimeout(() => {
+                            healthModule.style.opacity = '1';
+                        }, 200);
+                    }
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

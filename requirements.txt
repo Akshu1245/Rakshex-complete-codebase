@@ -1,0 +1,8 @@
+# Root requirements.txt — not used by Vercel (see api/requirements.txt)
+# Kept for local reference only
+fastapi==0.109.0
+httpx==0.26.0
+pydantic==2.5.3
+python-dotenv==1.0.0
+groq==0.4.2
+aiohttp==3.9.1
