@@ -188,7 +188,10 @@ let initPromise: Promise<void> | null = null;
 export async function initJobQueue(): Promise<void> {
   if (initPromise) return initPromise;
   initPromise = (async () => {
-    const redisUrl = process.env.REDIS_URL ?? process.env.RAKSHEX_REDIS_URL;
+    const redisUrl = (process.env.REDIS_URL ?? process.env.RAKSHEX_REDIS_URL)?.trim();
+    if (!redisUrl && process.env.NODE_ENV === "production") {
+      throw new Error("Production job queue requires REDIS_URL or RAKSHEX_REDIS_URL");
+    }
     if (redisUrl) {
       try {
         queue = await createBullMQQueue(redisUrl);
@@ -198,9 +201,13 @@ export async function initJobQueue(): Promise<void> {
         );
         return;
       } catch (err) {
+        if (process.env.NODE_ENV === "production") {
+          logger.error({ err }, "[JobQueue] BullMQ unavailable — refusing in-memory fallback");
+          throw new Error("Production BullMQ initialization failed", { cause: err });
+        }
         logger.warn(
           { err: err instanceof Error ? err.message : String(err) },
-          "[JobQueue] BullMQ failed, falling back to in-memory",
+          "[JobQueue] BullMQ failed, falling back to in-memory (development only)",
         );
       }
     }
@@ -213,9 +220,14 @@ export async function initJobQueue(): Promise<void> {
 /** Synchronous accessor — initJobQueue() must be called first at startup. */
 export function getJobQueue(): JobQueue {
   if (!queue) {
-    // Fallback: auto-init with memory queue if startup forgot to call initJobQueue()
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("Production job queue is not initialized; refusing in-memory fallback");
+    }
+    // Development and tests can still use an in-process queue without Redis.
     queue = new MemoryJobQueue();
-    logger.warn("[JobQueue] getJobQueue called before initJobQueue — using memory fallback");
+    logger.warn(
+      "[JobQueue] getJobQueue called before initJobQueue — using development memory queue",
+    );
   }
   return queue;
 }
