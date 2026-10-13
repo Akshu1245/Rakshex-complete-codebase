@@ -1,0 +1,135 @@
+name: Disposable Agent Firewall Load and Postgres Outage
+on:
+  push:
+    branches:
+      - test/isolated-action-k6-postgres-outage-20261013
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ephemeral-benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: rakshex
+          POSTGRES_PASSWORD: rakshex
+          POSTGRES_DB: rakshex_fault_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U rakshex -d rakshex_fault_ci"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+    env:
+      CI: "true"
+      NODE_ENV: test
+      RAKSHEX_PERF_STAGING_ONLY: "1"
+      DATABASE_URL: postgresql://rakshex:rakshex@127.0.0.1:5432/rakshex_fault_ci
+      REDIS_URL: redis://127.0.0.1:6379
+      JWT_SECRET: disposable-ci-only-jwt-secret-long-enough-for-tests
+      RAKSHEX_VAULT_KEY: disposable-ci-only-vault-key-long-enough-123456789
+      PORT: "4789"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Migrate the disposable database
+        run: pnpm run db:migrate
+      - name: Launch isolated router harness
+        run: |
+          mkdir -p artifacts /tmp/rakshex-benchmark
+          nohup pnpm exec tsx scripts/perf/isolated-evaluator-harness.ts > /tmp/rakshex-benchmark/harness.log 2>&1 &
+          echo "$!" > /tmp/rakshex-benchmark/harness.pid
+          for i in $(seq 1 60); do
+            if curl --silent --fail http://127.0.0.1:4789/__database >/dev/null; then exit 0; fi
+            if ! kill -0 "$(cat /tmp/rakshex-benchmark/harness.pid)" 2>/dev/null; then
+              cat /tmp/rakshex-benchmark/harness.log
+              exit 1
+            fi
+            sleep 1
+          done
+          cat /tmp/rakshex-benchmark/harness.log
+          exit 1
+      - uses: grafana/setup-k6-action@v1
+      - name: k6 bounded VU baseline
+        run: |
+          set -euo pipefail
+          META=$(curl --silent --fail http://127.0.0.1:4789/__metadata)
+          export WORKSPACE_ID=$(echo "$META" | jq -r .workspaceId)
+          export AGENT_ID=$(echo "$META" | jq -r .agentId)
+          export CAPABILITY_TOKEN=$(echo "$META" | jq -r .capabilityToken)
+          export API_KEY=$(echo "$META" | jq -r .apiKey)
+          export BASE_URL=http://127.0.0.1:4789
+          for VUS in 1 5 10; do
+            export VUS DURATION=15s
+            k6 run scripts/perf/action-evaluate.k6.js
+            cp action-evaluate-k6-results.json "artifacts/action-$VUS.json"
+          done
+      - name: Kill only runner-owned PostgreSQL
+        run: |
+          set -euo pipefail
+          PG_ID=$(docker ps --filter ancestor=postgres:15-alpine --format '{{.ID}}')
+          test "$(echo "$PG_ID" | wc -w)" -eq 1
+          docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' "$PG_ID" | grep -Fx 'POSTGRES_DB=rakshex_fault_ci'
+          echo "$PG_ID" > /tmp/rakshex-benchmark/pg-id
+          META=$(curl --silent --fail http://127.0.0.1:4789/__metadata)
+          jq -n --arg agent "$(echo "$META" | jq -r .agentId)" \
+                --arg cap "$(echo "$META" | jq -r .capabilityToken)" \
+                --argjson workspace "$(echo "$META" | jq -r .workspaceId)" \
+                --arg idem "ci-outage-$(date +%s%N)" \
+                '{json: {workspaceId: $workspace, agentId: $agent, capabilityToken: $cap, idempotencyKey: $idem, provider:"stripe", operation:"refunds.create", resource:"perf:disposable", environment:"staging", amountMinor:0, currency:"USD"}}' > /tmp/rakshex-benchmark/outage.json
+          echo "$META" | jq -r .apiKey > /tmp/rakshex-benchmark/api-key
+          docker stop -t 5 "$PG_ID"
+          set +e
+          STATUS=$(curl --silent --max-time 12 -o /tmp/rakshex-benchmark/failed.json -w '%{http_code}' \
+            -X POST -H "x-api-key: $(cat /tmp/rakshex-benchmark/api-key)" \
+            -H 'content-type: application/json' --data-binary @/tmp/rakshex-benchmark/outage.json \
+            http://127.0.0.1:4789/api/trpc/agentFirewall.evaluate)
+          set -e
+          echo "Postgres down response: HTTP $STATUS"
+          test "$STATUS" != "200"
+          docker start "$PG_ID"
+      - name: Verify recovery without false ALLOW
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 30); do
+            if curl --silent --fail http://127.0.0.1:4789/__database >/dev/null; then break; fi
+            sleep 1
+          done
+          curl --silent --fail http://127.0.0.1:4789/__database
+          STATUS=$(curl --silent --max-time 15 -o /tmp/rakshex-benchmark/recovered.json -w '%{http_code}' \
+            -X POST -H "x-api-key: $(cat /tmp/rakshex-benchmark/api-key)" \
+            -H 'content-type: application/json' --data-binary @/tmp/rakshex-benchmark/outage.json \
+            http://127.0.0.1:4789/api/trpc/agentFirewall.evaluate)
+          test "$STATUS" = "200"
+          jq -e '.result.data.json.decision and .result.data.json.ledgerId' /tmp/rakshex-benchmark/recovered.json
+      - name: Upload benchmark evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: disposable-evaluator-benchmark
+          path: |
+            artifacts/
+            /tmp/rakshex-benchmark/harness.log
+            /tmp/rakshex-benchmark/failed.json
+            /tmp/rakshex-benchmark/recovered.json
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Stop the isolated server
+        if: always()
+        run: |
+          if [ -f /tmp/rakshex-benchmark/harness.pid ]; then
+            kill "$(cat /tmp/rakshex-benchmark/harness.pid)" || true
+          fi
