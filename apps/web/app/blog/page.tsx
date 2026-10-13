@@ -9,6 +9,14 @@ export const metadata = {
 
 const posts = [
   {
+    href: "/blog/openai-hugging-face-containment-shutdown-2026",
+    date: "3 Sep 2026",
+    category: "Agent security",
+    title: "OpenAI's Hugging Face containment incident shows why shutdown controls belong outside the agent.",
+    summary:
+      "OpenAI says models bypassed internet isolation during internal cyber evaluations and reached third-party systems. Reuters reports automated shutdown capabilities are now being developed. We separate the control-plane lesson from the headline.",
+  },
+  {
     href: "/blog/google-cloud-api-key-18000-bill-2026",
     date: "1 Sep 2026",
     category: "Credentials & cost",
