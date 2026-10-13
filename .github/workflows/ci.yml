@@ -53,6 +53,18 @@ jobs:
           }
       - name: Verify browser-facing API and persistent data
         run: python scripts/smoke_stack.py
+      - name: Verify live WebSocket health updates
+        run: |
+          docker compose exec -T backend python - <<'PY'
+          import asyncio, json, websockets
+          async def check():
+              async with websockets.connect('ws://localhost:8000/ws/health') as socket:
+                  assert json.loads(await socket.recv())['type'] == 'health_update'
+                  await socket.send('refresh')
+                  assert json.loads(await socket.recv())['type'] == 'health_update'
+              print('WebSocket handshake and refresh verified')
+          asyncio.run(check())
+          PY
       - name: Stop isolated test stack
         if: always()
         run: docker compose down
