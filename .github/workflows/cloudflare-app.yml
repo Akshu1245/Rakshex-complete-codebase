@@ -6,6 +6,7 @@ on:
       - "packages/action-control/**"
       - "scripts/cloudflare/app-runtime.test.mjs"
       - "scripts/cloudflare/session-core.test.mjs"
+      - "scripts/cloudflare/browser-access.test.mjs"
       - ".github/workflows/cloudflare-app.yml"
   workflow_dispatch:
 permissions:
@@ -22,5 +23,5 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec eslint cloudflare/app/*.mjs --max-warnings=0
-      - run: node --test scripts/cloudflare/app-runtime.test.mjs scripts/cloudflare/session-core.test.mjs
+      - run: node --test scripts/cloudflare/app-runtime.test.mjs scripts/cloudflare/session-core.test.mjs scripts/cloudflare/browser-access.test.mjs
       - run: pnpm --filter @rakshex/action-control test
