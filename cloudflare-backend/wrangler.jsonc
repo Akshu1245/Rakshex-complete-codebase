@@ -1,0 +1,21 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "rakshex-devpulse-backend",
+  "main": "worker.mjs",
+  "account_id": "b3225f198c6d2286afbb6f416c230f10",
+  "compatibility_date": "2026-10-13",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "containers": [{
+    "class_name": "DevPulseBackend",
+    "image": "./Dockerfile",
+    "image_build_context": "..",
+    "max_instances": 1,
+    "instance_type": "basic"
+  }],
+  "durable_objects": {
+    "bindings": [{ "name": "BACKEND", "class_name": "DevPulseBackend" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["DevPulseBackend"] }],
+  "observability": { "enabled": true, "head_sampling_rate": 0.1 }
+}

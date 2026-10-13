@@ -1,6 +1,5 @@
-import type { Config } from 'jest';
-
-const config: Config = {
+const config = {
+  modulePathIgnorePatterns: ['<rootDir>/.next/'],
   testEnvironment: 'jest-environment-jsdom',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   moduleNameMapper: {
@@ -24,4 +23,4 @@ const config: Config = {
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
 };
 
-export default config;
+module.exports = config;

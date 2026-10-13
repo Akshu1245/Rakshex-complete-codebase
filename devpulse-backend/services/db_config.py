@@ -104,7 +104,7 @@ async def init_db() -> None:
         await conn.run_sync(Base.metadata.create_all)
 
     driver = "asyncpg" if IS_POSTGRES else "aiosqlite"
-    logger.info(f"Database tables initialised (driver={driver}, url={DATABASE_URL[:40]}…)")
+    logger.info("Database tables initialised (driver=%s)", driver)
 
 
 async def close_db() -> None:

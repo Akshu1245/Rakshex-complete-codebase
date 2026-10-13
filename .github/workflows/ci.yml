@@ -7,6 +7,28 @@ on:
     branches: [main, master]
 
 jobs:
+  cloudflare-container-build:
+    name: Cloudflare Backend Build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Validate production configuration
+        working-directory: cloudflare-backend
+        run: python -m unittest test_production_config.py
+      - name: Install Worker dependencies
+        working-directory: cloudflare-backend
+        run: npm ci --workspaces=false
+      - name: Validate Worker bundle
+        working-directory: cloudflare-backend
+        run: npx wrangler deploy --dry-run --containers-rollout=none
+      - name: Build FastAPI container
+        run: docker build -f cloudflare-backend/Dockerfile .
+
   backend-tests:
     name: Backend Tests (Python)
     runs-on: ubuntu-latest
