@@ -51,9 +51,9 @@ shadcn forms + tables + stepper + printable/PDF output. Large tap targets, obvio
 
 Before planning, coding, reviewing, or documenting any RaksHex work:
 
-1. Read \`STRATEGY_LOCK.md\`.
+1. Read `STRATEGY_LOCK.md`.
 2. Read the GitHub issue assigned for the current task.
-3. Treat \`STRATEGY_LOCK.md\` as authoritative if README files, older docs,
+3. Treat `STRATEGY_LOCK.md` as authoritative if README files, older docs,
    pitch material, comments, or previous instructions conflict with it.
 4. Do not infer production readiness from staging deployments, implemented
    source code, demonstrations, or issue closure.
@@ -82,7 +82,7 @@ The central milestone is:
 - The trusted broker executes only the exact authorized provider operation.
 - Authority must be revalidated immediately before execution.
 - Authorization receipts and execution receipts are different records.
-- An \`ALLOW\` decision never proves provider execution succeeded.
+- An `ALLOW` decision never proves provider execution succeeded.
 - Retries must not create duplicate provider operations.
 - Provider timeouts create uncertain outcomes requiring reconciliation.
 - Historical receipts must never be rewritten.
@@ -125,7 +125,7 @@ to keep release gates passing.
 
 - Cloudflare is the primary hosted-product deployment path, subject to the
   release, security, concurrency, durability, and recovery gates in
-  \`STRATEGY_LOCK.md\`.
+  `STRATEGY_LOCK.md`.
 - Docker remains for local development, reproducible testing, and optional
   self-hosting.
 - Do not present staging as production.
