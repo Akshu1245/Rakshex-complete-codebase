@@ -168,6 +168,10 @@ const nextConfig = {
   async rewrites() {
     return [
       {
+        source: "/api/v1/control/:path*",
+        destination: `${TS_BACKEND_URL}/api/v1/control/:path*`,
+      },
+      {
         source: "/api/v1/contract-diff",
         destination: `${TS_BACKEND_URL}/api/v1/contract-diff`,
       },

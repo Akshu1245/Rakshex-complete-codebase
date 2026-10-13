@@ -28,3 +28,7 @@ queue = "rakshex-migration-staging-jobs"
 [[r2_buckets]]
 binding = "OBJECTS"
 bucket_name = "rakshex-migration-staging-objects"
+
+[[services]]
+binding = "APP_API"
+service = "rakshex-app-staging"

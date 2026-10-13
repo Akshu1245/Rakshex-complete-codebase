@@ -39,6 +39,21 @@ export default tseslint.config(
     },
   },
   {
+    files: ["cloudflare/**/*.mjs"],
+    languageOptions: {
+      globals: {
+        crypto: "readonly",
+        Response: "readonly",
+        Request: "readonly",
+        URL: "readonly",
+        TextEncoder: "readonly",
+        TextDecoder: "readonly",
+        atob: "readonly",
+        btoa: "readonly",
+      },
+    },
+  },
+  {
     files: ["**/next.config.js", "**/postcss.config.js", "**/tailwind.config.js"],
     languageOptions: {
       globals: {

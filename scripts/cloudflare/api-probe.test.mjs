@@ -114,3 +114,29 @@ test("unmigrated application routes never enter the narrow core relay", async ()
   for (const path of ["/api/trpc/auth.me", "/api/create-order", "/api/v1/unknown"])
     assert.equal((await probe.fetch(new Request("https://entry" + path), env)).status, 501);
 });
+
+test("control-plane routes use only the application service and preserve errors", async () => {
+  let calls = 0;
+  const env = {
+    APP_API: {
+      fetch: async (request) => {
+        calls++;
+        assert.equal(request.headers.get("authorization"), "Bearer sample");
+        return new Response('{"code":"UNAUTHORIZED"}', { status: 401 });
+      },
+    },
+    CORE_API: { fetch: async () => assert.fail("wrong service") },
+  };
+  const r = await probe.fetch(
+    new Request("https://entry/api/v1/control/workspace", {
+      headers: { authorization: "Bearer sample" },
+    }),
+    env,
+  );
+  assert.equal(r.status, 401);
+  assert.equal(calls, 1);
+  assert.equal(
+    (await probe.fetch(new Request("https://entry/api/v1/control/health"), {})).status,
+    503,
+  );
+});

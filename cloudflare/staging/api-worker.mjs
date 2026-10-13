@@ -26,6 +26,17 @@ export default {
       );
     }
 
+    if (path.startsWith("/api/v1/control/")) {
+      if (typeof env.APP_API?.fetch !== "function") {
+        return new Response(JSON.stringify({ code: "APP_UNAVAILABLE" }), { status: 503, headers });
+      }
+      try {
+        return await env.APP_API.fetch(request);
+      } catch {
+        return new Response(JSON.stringify({ code: "APP_UNAVAILABLE" }), { status: 503, headers });
+      }
+    }
+
     const coreRoute =
       (request.method === "GET" &&
         ["/api/health", "/api/health/ready", "/api/v1/capabilities"].includes(path)) ||
