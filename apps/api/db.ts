@@ -170,7 +170,2369 @@ export async function getDb() {
       }
     })().then((value) => {
       // The previous rejected/NULL init promise was cached permanently.
-     …17767 tokens truncated…true)));
+      // Allow a later request to initialize after Postgres is restored.
+      if (!value) _dbInitPromise = null;
+      return value;
+    });
+  }
+
+  return _dbInitPromise;
+}
+
+/**
+ * Execute a callback within a database transaction.
+ *
+ * NOTE: Existing db functions (createWorkspace, addWorkspaceMember, etc.)
+ * call getDb() internally, so they create a NEW transaction context. To
+ * properly wrap multi-step writes in a single transaction, refactor those
+ * functions to accept an optional tx parameter (or use this wrapper for
+ * inline drizzle operations).
+ *
+ * Usage:
+ *   await db.transaction(async (tx) => {
+ *     await tx.insert(workspaces).values({...});
+ *     await tx.insert(workspaceMembers).values({...});
+ *   });
+ */
+export async function transaction<T>(
+  fn: (tx: ReturnType<typeof drizzle> extends infer D ? D : never) => Promise<T>,
+): Promise<T> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available — cannot start transaction");
+  return db.transaction(fn as any) as Promise<T>;
+}
+
+export async function upsertUser(user: InsertUser): Promise<{ isNew: boolean }> {
+  if (!user.openId) {
+    throw new ValidationError("User openId is required for upsert");
+  }
+
+  const db = await getDb();
+  if (!db) {
+    logger.warn("[Database] Cannot upsert user: database not available");
+    return { isNew: false };
+  }
+
+  try {
+    // Check if user exists to detect new signups
+    const existingUser = await getUserByOpenId(user.openId);
+    const isNewUser = !existingUser;
+
+    const values: InsertUser = {
+      openId: user.openId,
+    };
+    const updateSet: Record<string, unknown> = {};
+
+    const textFields = ["name", "email", "loginMethod"] as const;
+    type TextField = (typeof textFields)[number];
+
+    const assignNullable = (field: TextField) => {
+      const value = user[field];
+      if (value === undefined) return;
+      const normalized = value ?? null;
+      values[field] = normalized;
+      updateSet[field] = normalized;
+    };
+
+    textFields.forEach(assignNullable);
+
+    if (user.lastSignedIn !== undefined) {
+      values.lastSignedIn = user.lastSignedIn;
+      updateSet.lastSignedIn = user.lastSignedIn;
+    }
+    if (user.role !== undefined) {
+      values.role = user.role;
+      updateSet.role = user.role;
+    } else if (user.openId === ENV.ownerOpenId) {
+      values.role = "admin";
+      updateSet.role = "admin";
+    }
+
+    if (!values.lastSignedIn) {
+      values.lastSignedIn = new Date();
+    }
+
+    if (Object.keys(updateSet).length === 0) {
+      updateSet.lastSignedIn = new Date();
+    }
+
+    await db.insert(users).values(values).onConflictDoUpdate({
+      target: users.openId,
+      set: updateSet,
+    });
+
+    // Send welcome email for new users
+    if (isNewUser && user.email) {
+      try {
+        await sendWelcomeEmail({
+          toEmail: user.email,
+          userName: user.name || "",
+        });
+        logger.info(`[User] Welcome email sent to ${user.email}`);
+      } catch (emailError) {
+        logger.warn({ err: emailError }, "[User] Failed to send welcome email");
+        // Don't fail user creation if email fails
+      }
+    }
+
+    return { isNew: isNewUser };
+  } catch (error) {
+    logger.error({ err: error }, "[Database] Failed to upsert user");
+    throw error;
+  }
+}
+
+export async function getUserByOpenId(openId: string) {
+  const db = await getDb();
+  if (!db) {
+    logger.warn("[Database] Cannot get user: database not available");
+    return undefined;
+  }
+
+  const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
+
+  return result.length > 0 ? result[0] : undefined;
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// In-memory TTL cache for getUserById / getUserPlan.
+//
+// Every authenticated tRPC request goes through `protectedProcedure`, which
+// re-reads the user record from PostgreSQL. On a busy dashboard that's dozens of
+// identical SELECTs per page view. The user row is small, bounded, and
+// changes infrequently, so a 30-second in-memory cache gives us a visible
+// latency win (PostgreSQL round-trip + JSON serialize) at negligible staleness
+// risk.
+//
+// Invalidated explicitly on writes (plan change, password update,
+// upsertUser, etc.) via `invalidateUserCache` below.
+//
+// Bounded at 10k entries with a simple LRU-ish eviction — if we ever serve
+// more than 10k concurrent users, Redis is already wired up and we should
+// route through that instead.
+// ──────────────────────────────────────────────────────────────────────────
+const USER_CACHE_TTL_MS = 30_000;
+const USER_CACHE_MAX = 10_000;
+interface UserCacheEntry {
+  expiresAt: number;
+  value: any;
+}
+const userCache = new Map<number, UserCacheEntry>();
+
+function userCacheGet(id: number): any | undefined {
+  const entry = userCache.get(id);
+  if (!entry) return undefined;
+  if (entry.expiresAt < Date.now()) {
+    userCache.delete(id);
+    return undefined;
+  }
+  return entry.value;
+}
+
+function userCacheSet(id: number, value: any): void {
+  if (userCache.size >= USER_CACHE_MAX) {
+    // Evict the oldest-inserted entry (Map preserves insertion order).
+    const firstKey = userCache.keys().next().value;
+    if (firstKey !== undefined) userCache.delete(firstKey);
+  }
+  userCache.set(id, { expiresAt: Date.now() + USER_CACHE_TTL_MS, value });
+}
+
+/**
+ * Clear a user from the in-memory cache. Call this after any write that
+ * mutates the user row (plan change, password update, lock, unlock, etc.).
+ * No-op when the cache is cold — safe to call redundantly.
+ *
+ * Named distinctly from `_core/cache.ts`'s Redis-backed `invalidateUserCache`
+ * (which clears dashboard/collection caches) so the two can coexist.
+ */
+export function invalidateUserRowCache(userId: number): void {
+  userCache.delete(userId);
+}
+
+export async function getUserById(id: number) {
+  const cached = userCacheGet(id);
+  if (cached !== undefined) return cached;
+
+  const db = await getDb();
+  if (!db) {
+    // SECURITY: never return a fake "demo" user on DB outage — that would
+    // let any unauthenticated request run as a real user once the DB
+    // briefly hiccups. Health checks must surface the outage instead.
+    logger.warn("[Database] Cannot get user: database not available");
+    return undefined;
+  }
+
+  const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+  const user = result.length > 0 ? result[0] : undefined;
+  if (user) userCacheSet(id, user);
+  return user;
+}
+
+// ============================================================================
+// COLLECTIONS
+// ============================================================================
+
+export async function createCollection(
+  userId: number,
+  name: string,
+  format: "postman" | "openapi" | "bruno",
+  data: any,
+  description?: string,
+  extras?: {
+    contentHash?: string;
+    tags?: string[];
+    version?: number;
+    workspaceId?: number;
+    totalRequests?: number;
+  },
+) {
+  const db = await getDb();
+  assertDb(db);
+
+  const id = secureId("col");
+  let totalRequests: number;
+  if (extras?.totalRequests != null) {
+    totalRequests = extras.totalRequests;
+  } else if (format === "openapi") {
+    totalRequests = Object.keys(data.paths || {}).length;
+  } else if (format === "bruno") {
+    totalRequests = data.item?.length || 0;
+  } else {
+    totalRequests = data.item?.length || 0;
+  }
+
+  await db.insert(collections).values({
+    id,
+    userId,
+    name,
+    format,
+    data,
+    description,
+    totalRequests,
+    contentHash: extras?.contentHash,
+    tags: extras?.tags ?? [],
+    version: extras?.version ?? 1,
+    workspaceId: extras?.workspaceId,
+  });
+
+  return { id, userId, name, format, totalRequests, contentHash: extras?.contentHash };
+}
+
+export async function findCollectionByContentHash(userId: number, contentHash: string) {
+  const db = await getDb();
+  if (!db || !contentHash) return null;
+  const rows = await db
+    .select()
+    .from(collections)
+    .where(and(eq(collections.userId, userId), eq(collections.contentHash, contentHash)))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+export async function saveCollectionVersion(opts: {
+  workspaceId: number;
+  collectionId: string;
+  version: number;
+  format: string;
+  contentHash: string;
+  data: unknown;
+  createdByUserId: number;
+}) {
+  const db = await getDb();
+  assertDb(db);
+  const { collectionVersions } = await import("@rakshex/database");
+  const id = secureId("cver");
+  await db.insert(collectionVersions).values({
+    id,
+    workspaceId: opts.workspaceId,
+    collectionId: opts.collectionId,
+    version: opts.version,
+    format: opts.format,
+    contentHash: opts.contentHash,
+    data: opts.data as any,
+    createdByUserId: opts.createdByUserId,
+  });
+  return { id };
+}
+
+export async function updateCollection(
+  id: string,
+  updates: { name?: string; description?: string },
+) {
+  const db = await getDb();
+  assertDb(db);
+
+  const set: Record<string, unknown> = {};
+  if (updates.name !== undefined) set.name = updates.name;
+  if (updates.description !== undefined) set.description = updates.description;
+
+  if (Object.keys(set).length > 0) {
+    await db.update(collections).set(set).where(eq(collections.id, id));
+  }
+}
+
+export async function getCollectionsByUserId(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    logger.warn("[Database] Cannot list collections: database not available");
+    return [];
+  }
+
+  return await db
+    .select()
+    .from(collections)
+    .where(eq(collections.userId, userId))
+    .orderBy(desc(collections.createdAt));
+}
+
+export async function getCollectionsByWorkspaceId(workspaceId: number) {
+  const db = await getDb();
+  if (!db) {
+    logger.warn("[Database] Cannot list collections: database not available");
+    return [];
+  }
+
+  return await db
+    .select()
+    .from(collections)
+    .where(eq(collections.workspaceId, workspaceId))
+    .orderBy(desc(collections.createdAt));
+}
+
+/**
+ * DB-level paginated collection list for a workspace (hot path).
+ * Includes legacy rows owned by `userId` with null workspaceId so tenancy
+ * backfill does not hide imports mid-migration.
+ */
+export async function listCollectionsPage(opts: {
+  workspaceId: number;
+  userId: number;
+  limit: number;
+  offset: number;
+}): Promise<{ items: Awaited<ReturnType<typeof getCollectionsByWorkspaceId>>; total: number }> {
+  const db = await getDb();
+  if (!db) {
+    logger.warn("[Database] Cannot list collections page: database not available");
+    return { items: [], total: 0 };
+  }
+
+  const scope = or(
+    eq(collections.workspaceId, opts.workspaceId),
+    and(eq(collections.userId, opts.userId), isNull(collections.workspaceId)),
+  );
+
+  const [countRow] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(collections)
+    .where(scope);
+
+  const items = await db
+    .select()
+    .from(collections)
+    .where(scope)
+    .orderBy(desc(collections.createdAt))
+    .limit(opts.limit)
+    .offset(opts.offset);
+
+  return { items, total: Number(countRow?.count ?? 0) };
+}
+
+export async function setCollectionWorkspaceId(collectionId: string, workspaceId: number) {
+  const db = await getDb();
+  assertDb(db);
+  await db
+    .update(collections)
+    .set({ workspaceId })
+    .where(and(eq(collections.id, collectionId), sql`${collections.workspaceId} IS NULL`));
+}
+
+export async function setFindingWorkspaceId(findingId: string, workspaceId: number) {
+  const db = await getDb();
+  assertDb(db);
+  await db
+    .update(findings)
+    .set({ workspaceId })
+    .where(and(eq(findings.id, findingId), sql`${findings.workspaceId} IS NULL`));
+}
+
+/**
+ * Get collections accessible to a user in their workspace.
+ * Includes:
+ * 1. Collections owned by the user
+ * 2. Collections owned by workspace owners where user is an accepted team member
+ */
+export async function getWorkspaceCollections(userId: number, userEmail?: string) {
+  const db = await getDb();
+  if (!db) {
+    logger.warn("[Database] Cannot list workspace collections: database not available");
+    return [];
+  }
+
+  // Get collections owned by the user
+  const ownCollections = await db
+    .select()
+    .from(collections)
+    .where(eq(collections.userId, userId))
+    .orderBy(desc(collections.createdAt));
+
+  // If user has no email, return only own collections
+  if (!userEmail) {
+    return ownCollections;
+  }
+
+  // Get accepted team memberships for this user
+  const memberships = await db
+    .select()
+    .from(teamMembers)
+    .where(and(eq(teamMembers.memberEmail, userEmail), eq(teamMembers.status, "accepted")));
+
+  if (memberships.length === 0) {
+    return ownCollections;
+  }
+
+  // Get owner user IDs from memberships
+  const ownerIds = memberships.map((m) => m.userId);
+
+  // Get collections from workspace owners
+  const sharedCollections = await db
+    .select()
+    .from(collections)
+    .where(sql`${collections.userId} IN (${ownerIds.join(",")})`)
+    .orderBy(desc(collections.createdAt));
+
+  // Combine and deduplicate (in case user owns some and is also team member).
+  // `isShared` is a view-level annotation, not a column — surface it via an
+  // intersection type so callers can distinguish.
+  type CollectionWithShared = (typeof ownCollections)[number] & {
+    isShared?: boolean;
+  };
+  const allCollections: CollectionWithShared[] = [...ownCollections];
+  const seenIds = new Set(ownCollections.map((c) => c.id));
+
+  for (const collection of sharedCollections) {
+    if (!seenIds.has(collection.id)) {
+      allCollections.push({ ...collection, isShared: true });
+      seenIds.add(collection.id);
+    }
+  }
+
+  return allCollections;
+}
+
+export async function getCollectionById(id: string) {
+  const db = await getDb();
+  if (!db) {
+    logger.warn("[Database] Cannot get collection: database not available");
+    return null;
+  }
+
+  const result = await db.select().from(collections).where(eq(collections.id, id)).limit(1);
+
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function getCollectionsByRepoUrl(repoUrl: string) {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Extract owner/repo from full URL or handle owner/repo format
+  let repoName = repoUrl;
+  if (repoUrl.includes("github.com")) {
+    const match = repoUrl.match(/github\.com\/([^\/]+\/[^\/]+)/);
+    if (match) {
+      repoName = match[1].replace(/\.git$/, "");
+    }
+  }
+
+  return await db
+    .select()
+    .from(collections)
+    .where(eq(collections.githubRepo, repoName))
+    .orderBy(desc(collections.createdAt));
+}
+
+export async function updateCollectionLastScannedAt(id: string) {
+  const db = await getDb();
+  if (!db) return;
+
+  await db.update(collections).set({ lastScannedAt: new Date() }).where(eq(collections.id, id));
+}
+
+/**
+ * Check if a user has access to a collection (as owner or team member)
+ */
+export async function hasCollectionAccess(
+  collectionId: string,
+  userId: number,
+  userEmail?: string,
+): Promise<{ access: true; role: string; collection: any } | { access: false }> {
+  const db = await getDb();
+  if (!db) return { access: false };
+
+  const collection = await getCollectionById(collectionId);
+  if (!collection) return { access: false };
+
+  // User is the owner
+  if (collection.userId === userId) {
+    return { access: true, role: "owner", collection };
+  }
+
+  // Check if user is an accepted team member of the owner
+  if (userEmail) {
+    const membership = await db
+      .select()
+      .from(teamMembers)
+      .where(
+        and(
+          eq(teamMembers.userId, collection.userId),
+          eq(teamMembers.memberEmail, userEmail),
+          eq(teamMembers.status, "accepted"),
+        ),
+      )
+      .limit(1);
+
+    if (membership.length > 0) {
+      return { access: true, role: membership[0].role, collection };
+    }
+  }
+
+  return { access: false };
+}
+
+export async function deleteCollection(id: string) {
+  const db = await getDb();
+  assertDb(db);
+
+  await db.transaction(async (tx) => {
+    await tx.delete(findings).where(eq(findings.collectionId, id));
+    await tx.delete(shadowAPIs).where(eq(shadowAPIs.collectionId, id));
+    await tx.delete(scans).where(eq(scans.collectionId, id));
+    await tx.delete(complianceReports).where(eq(complianceReports.collectionId, id));
+    await tx.delete(collections).where(eq(collections.id, id));
+  });
+}
+
+// ============================================================================
+// SCANS
+// ============================================================================
+
+export async function createScan(
+  userId: number,
+  collectionId: string,
+  scanType: "full" | "quick" | "shadow_api" | "prompt_injection",
+  status: "pending" | "running" | "completed" | "failed",
+  riskScore: number,
+  riskLevel: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL",
+  totalFindings: number,
+  findingsData?: any,
+  workspaceId?: number,
+) {
+  const db = await getDb();
+  assertDb(db);
+
+  const id = secureId("scan");
+
+  await db.insert(scans).values({
+    id,
+    userId,
+    collectionId,
+    scanType,
+    status,
+    riskScore: riskScore.toString(),
+    riskLevel,
+    totalFindings,
+    findingsData,
+    workspaceId: workspaceId ?? null,
+    completedAt: status === "completed" ? new Date() : null,
+  });
+
+  return { id };
+}
+
+/**
+ * Paginated, filterable scan list for a collection.
+ *
+ * The non-paginated `getScansByCollectionId` loads every scan for a
+ * collection, which is fine for a detail view but not for the scan history
+ * table, which passes page/pageSize. Returns `total` alongside the page so
+ * the caller can render page counts without a second round trip.
+ */
+export async function getScansPageByCollectionId(params: {
+  collectionId: string;
+  /** `"all"` (or omitted) returns every scan type. */
+  scanType?: "full" | "quick" | "shadow_api" | "prompt_injection" | "all";
+  limit: number;
+  offset: number;
+}): Promise<{ items: (typeof scans.$inferSelect)[]; total: number }> {
+  const db = await getDb();
+  if (!db) {
+    logger.warn("[Database] Cannot list scans: database not available");
+    return { items: [], total: 0 };
+  }
+
+  const typeFilter = params.scanType && params.scanType !== "all" ? params.scanType : undefined;
+  const where = typeFilter
+    ? and(eq(scans.collectionId, params.collectionId), eq(scans.scanType, typeFilter))
+    : eq(scans.collectionId, params.collectionId);
+
+  const [items, totalRows] = await Promise.all([
+    db
+      .select()
+      .from(scans)
+      .where(where)
+      .orderBy(desc(scans.createdAt))
+      .limit(params.limit)
+      .offset(params.offset),
+    db
+      .select({ value: sql<number>`count(*)` })
+      .from(scans)
+      .where(where),
+  ]);
+
+  return { items, total: Number(totalRows[0]?.value ?? 0) };
+}
+
+/**
+ * Create a scan and all of its findings in one transaction.
+ *
+ * Without the transaction a mid-insert failure leaves a scan row claiming N
+ * findings with fewer than N actually written — the risk score and the
+ * evidence behind it disagree, and nothing surfaces the inconsistency. The
+ * call site in scanService has always documented this as atomic; this makes
+ * it true.
+ */
+export async function saveScanWithFindings(input: {
+  userId: number;
+  collectionId: string;
+  scanType: "full" | "quick" | "shadow_api" | "prompt_injection";
+  riskScore: number;
+  riskLevel: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+  findings: Array<{
+    title: string;
+    severity: "Critical" | "High" | "Medium" | "Low";
+    description?: string;
+    category?: string;
+    remediation?: string;
+    cweId?: string;
+  }>;
+  workspaceId?: number;
+}): Promise<{ id: string }> {
+  const db = await getDb();
+  assertDb(db);
+
+  const scanId = secureId("scan");
+
+  await db.transaction(async (tx) => {
+    await tx.insert(scans).values({
+      id: scanId,
+      userId: input.userId,
+      collectionId: input.collectionId,
+      scanType: input.scanType,
+      status: "completed",
+      riskScore: input.riskScore.toString(),
+      riskLevel: input.riskLevel,
+      totalFindings: input.findings.length,
+      findingsData: input.findings as unknown as never,
+      workspaceId: input.workspaceId ?? null,
+      completedAt: new Date(),
+    });
+
+    if (input.findings.length > 0) {
+      await tx.insert(findings).values(
+        input.findings.map((finding) => ({
+          id: secureId("finding"),
+          scanId,
+          collectionId: input.collectionId,
+          userId: input.userId,
+          title: finding.title,
+          severity: finding.severity,
+          description: finding.description,
+          category: finding.category,
+          remediation: finding.remediation,
+          cweId: finding.cweId,
+          workspaceId: input.workspaceId,
+          status: "open" as const,
+        })),
+      );
+    }
+  });
+
+  return { id: scanId };
+}
+
+export async function getScansByCollectionId(collectionId: string) {
+  const db = await getDb();
+  if (!db) {
+    logger.warn("[Database] Cannot list scans: database not available");
+    return [];
+  }
+
+  return await db
+    .select()
+    .from(scans)
+    .where(eq(scans.collectionId, collectionId))
+    .orderBy(desc(scans.createdAt));
+}
+
+export async function getScanById(id: string) {
+  const db = await getDb();
+  if (!db) {
+    logger.warn("[Database] Cannot get scan: database not available");
+    return null;
+  }
+
+  const result = await db.select().from(scans).where(eq(scans.id, id)).limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+// ============================================================================
+// FINDINGS
+// ============================================================================
+
+export async function createFinding(
+  scanId: string,
+  collectionId: string,
+  userId: number,
+  title: string,
+  severity: "Critical" | "High" | "Medium" | "Low",
+  description?: string,
+  category?: string,
+  remediation?: string,
+  cweId?: string,
+  extras?: {
+    ruleId?: string;
+    confidence?: string;
+    fingerprint?: string;
+    endpoint?: string;
+    method?: string;
+    evidence?: unknown;
+    workspaceId?: number;
+    status?:
+      | "open"
+      | "in-progress"
+      | "resolved"
+      | "suppressed"
+      | "false_positive"
+      | "accepted_risk"
+      | "reopened";
+    duplicateOf?: string;
+  },
+) {
+  const db = await getDb();
+  assertDb(db);
+
+  const id = secureId("finding");
+
+  await db.insert(findings).values({
+    id,
+    scanId,
+    collectionId,
+    userId,
+    title,
+    severity,
+    description,
+    category,
+    remediation,
+    cweId,
+    ruleId: extras?.ruleId,
+    confidence: extras?.confidence,
+    fingerprint: extras?.fingerprint,
+    endpoint: extras?.endpoint,
+    method: extras?.method,
+    evidence: extras?.evidence as any,
+    workspaceId: extras?.workspaceId,
+    status: extras?.status ?? "open",
+    duplicateOf: extras?.duplicateOf,
+  });
+
+  return { id };
+}
+
+export async function getFindingsByScanId(scanId: string) {
+  const db = await getDb();
+  if (!db) {
+    logger.warn("[Database] Cannot list findings: database not available");
+    return [];
+  }
+
+  return await db
+    .select()
+    .from(findings)
+    .where(eq(findings.scanId, scanId))
+    .orderBy(desc(findings.createdAt));
+}
+
+export async function getFindingById(id: string) {
+  const db = await getDb();
+  if (!db) {
+    logger.warn("[Database] Cannot get finding: database not available");
+    return null;
+  }
+
+  const result = await db.select().from(findings).where(eq(findings.id, id)).limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function updateFindingStatus(
+  id: string,
+  status:
+    | "open"
+    | "in-progress"
+    | "resolved"
+    | "suppressed"
+    | "false_positive"
+    | "accepted_risk"
+    | "reopened",
+  patch?: Partial<{
+    assigneeUserId: number | null;
+    dueAt: Date | null;
+    suppressionReason: string | null;
+    suppressionExpiresAt: Date | null;
+    acceptedRiskReason: string | null;
+    acceptedRiskApprovedBy: number | null;
+    duplicateOf: string | null;
+  }>,
+) {
+  const db = await getDb();
+  assertDb(db);
+
+  await db
+    .update(findings)
+    .set({ status, updatedAt: new Date(), ...(patch as any) })
+    .where(eq(findings.id, id));
+}
+
+export async function listFindingsForUser(
+  userId: number,
+  opts?: {
+    status?: string;
+    severity?: string;
+    collectionId?: string;
+    assigneeUserId?: number;
+    limit?: number;
+    offset?: number;
+  },
+) {
+  const db = await getDb();
+  if (!db) return [];
+  const conditions = [eq(findings.userId, userId)];
+  if (opts?.status) conditions.push(eq(findings.status, opts.status as any));
+  if (opts?.severity) conditions.push(eq(findings.severity, opts.severity as any));
+  if (opts?.collectionId) conditions.push(eq(findings.collectionId, opts.collectionId));
+  if (opts?.assigneeUserId != null)
+    conditions.push(eq(findings.assigneeUserId, opts.assigneeUserId));
+  return db
+    .select()
+    .from(findings)
+    .where(and(...conditions))
+    .orderBy(desc(findings.createdAt))
+    .limit(opts?.limit ?? 100)
+    .offset(opts?.offset ?? 0);
+}
+
+/** Reactivate suppressions that have expired. */
+export async function reactivateExpiredSuppressions(userId?: number): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+  const conditions = [
+    eq(findings.status, "suppressed" as any),
+    sql`${findings.suppressionExpiresAt} IS NOT NULL`,
+    sql`${findings.suppressionExpiresAt} < NOW()`,
+  ];
+  if (userId != null) conditions.push(eq(findings.userId, userId));
+  const expired = await db
+    .select({ id: findings.id })
+    .from(findings)
+    .where(and(...conditions));
+  if (expired.length === 0) return 0;
+  await db
+    .update(findings)
+    .set({
+      status: "reopened" as any,
+      suppressionReason: null,
+      suppressionExpiresAt: null,
+      updatedAt: new Date(),
+    })
+    .where(and(...conditions));
+  return expired.length;
+}
+
+// ============================================================================
+// SHADOW APIs
+// ============================================================================
+
+export async function createShadowAPI(
+  scanId: string,
+  collectionId: string,
+  userId: number,
+  endpoint: string,
+  riskLevel: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL",
+  method?: string,
+  file?: string,
+  line?: number,
+  reason?: string,
+  recommendation?: string,
+) {
+  const db = await getDb();
+  assertDb(db);
+
+  const id = secureId("shadow");
+
+  await db.insert(shadowAPIs).values({
+    id,
+    scanId,
+    collectionId,
+    userId,
+    endpoint,
+    method,
+    file,
+    line,
+    riskLevel,
+    reason,
+    recommendation,
+  });
+
+  return { id };
+}
+
+export async function getShadowAPIsByScanId(scanId: string) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(shadowAPIs)
+    .where(eq(shadowAPIs.scanId, scanId))
+    .orderBy(desc(shadowAPIs.createdAt));
+}
+
+export async function getShadowAPIsByCollectionId(collectionId: string) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(shadowAPIs)
+    .where(eq(shadowAPIs.collectionId, collectionId))
+    .orderBy(desc(shadowAPIs.createdAt));
+}
+
+export async function getShadowAPIById(id: string) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db.select().from(shadowAPIs).where(eq(shadowAPIs.id, id)).limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function markShadowAPIDocumented(id: string) {
+  const db = await getDb();
+  assertDb(db);
+
+  await db.update(shadowAPIs).set({ isDocumented: true }).where(eq(shadowAPIs.id, id));
+}
+
+// ============================================================================
+// TOKEN USAGE
+// ============================================================================
+
+export async function recordTokenUsage(
+  userId: number,
+  model: string,
+  promptTokens: number,
+  completionTokens: number,
+  thinkingTokens: number,
+  costUSD: number,
+  /**
+   * Optional cost-attribution dimensions. The columns and their indexes have
+   * existed since migration 0013 and the tRPC caller has always passed this,
+   * but the parameter was missing here — so every attribution value was
+   * silently discarded and the per-endpoint/per-feature spend views had
+   * nothing to read.
+   */
+  attribution?: { endpoint?: string; feature?: string },
+) {
+  const db = await getDb();
+  assertDb(db);
+
+  const id = secureId("token");
+  const totalTokens = promptTokens + completionTokens + thinkingTokens;
+
+  await db.insert(tokenUsage).values({
+    id,
+    userId,
+    model,
+    promptTokens,
+    completionTokens,
+    thinkingTokens,
+    totalTokens,
+    costUSD: costUSD.toString(),
+    endpoint: attribution?.endpoint,
+    feature: attribution?.feature,
+  });
+
+  // Auto-increment currentSpendUSD in killSwitchSettings
+  const ksSettings = await getKillSwitchSettings(userId);
+  if (ksSettings) {
+    const currentSpend = parseFloat(ksSettings.currentSpendUSD || "0");
+    const updatedSpend = currentSpend + costUSD;
+    await updateKillSwitchSettings(userId, undefined, undefined, updatedSpend);
+
+    const budgetLimit = parseFloat(ksSettings.budgetLimitUSD || "0");
+
+    // Check for 80% budget warning
+    if (budgetLimit > 0) {
+      const percentUsed = (updatedSpend / budgetLimit) * 100;
+      const wasBelow80 = (currentSpend / budgetLimit) * 100 < 80;
+      const isNowAtOrAbove80 = percentUsed >= 80;
+
+      // Send warning if we just crossed 80% and haven't sent warning in last 24 hours
+      if (wasBelow80 && isNowAtOrAbove80 && percentUsed < 100) {
+        const lastWarning = ksSettings.lastWarningSentAt;
+        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+        if (!lastWarning || new Date(lastWarning) < oneDayAgo) {
+          // Get user for email
+          const user = await getUserById(userId);
+          if (user?.email) {
+            // Send budget warning email
+            const { sendBudgetWarningEmail } = await import("./email");
+            await sendBudgetWarningEmail({
+              toEmail: user.email,
+              userName: user.name || "",
+              currentSpend: updatedSpend,
+              budgetLimit,
+              percentUsed,
+              dashboardUrl: `${process.env.APP_URL || "http://localhost:3000"}/kill-switch`,
+            });
+          }
+
+          // Send Slack warning
+          const { sendSlackBudgetWarning } = await import("./slack");
+          await sendSlackBudgetWarning({
+            userId,
+            userName: user?.name || "Unknown",
+            currentSpend: updatedSpend,
+            budgetLimit,
+            percentUsed,
+          });
+
+          // Fire quota.warning webhook for any user-registered endpoints.
+          // Dynamic import to avoid a db.ts → webhookDelivery → db.ts cycle.
+          try {
+            const { deliver } = await import("./services/webhookDelivery");
+            await deliver(userId, "quota.warning", {
+              currentSpend: updatedSpend,
+              budgetLimit,
+              percentUsed,
+            });
+          } catch (err) {
+            logger.warn({ err: err }, "[BudgetWarning] webhook dispatch failed");
+          }
+
+          // Update last warning timestamp
+          await updateKillSwitchWarningSent(userId);
+        }
+      }
+
+      // Auto-trigger kill switch if budget exceeded and not already active
+      if (updatedSpend >= budgetLimit && !ksSettings.isActive) {
+        await updateKillSwitchSettings(userId, undefined, true);
+        // Publish to Redis immediately so gateway.evaluate sees the new state without
+        // waiting for the 24-hour TTL to expire (fixes stale-cache on auto-trigger).
+        try {
+          const { publishKillSwitchState } = await import("./services/gateway/killSwitchCache");
+          await publishKillSwitchState(userId, {
+            isActive: true,
+            budgetLimitUsd: budgetLimit,
+            currentSpendUsd: updatedSpend,
+          });
+        } catch (cacheErr) {
+          logger.warn(
+            { err: cacheErr, userId },
+            "[KillSwitch] Redis cache publish failed on auto-trigger — PG is source of truth",
+          );
+        }
+        await createKillSwitchEvent(
+          userId,
+          "auto_triggered",
+          budgetLimit,
+          updatedSpend,
+          `Budget limit of $${budgetLimit.toFixed(2)} exceeded (current spend: $${updatedSpend.toFixed(2)})`,
+        );
+        try {
+          const { deliver } = await import("./services/webhookDelivery");
+          await deliver(userId, "kill_switch.triggered", {
+            budgetLimit,
+            currentSpend: updatedSpend,
+            reason: "budget_exceeded",
+          });
+        } catch (err) {
+          logger.warn({ err: err }, "[KillSwitch] webhook dispatch failed");
+        }
+      }
+    }
+  }
+}
+
+export async function getTokenUsageByUserId(userId: number, days: number = 30) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
+
+  return await db
+    .select()
+    .from(tokenUsage)
+    .where(and(eq(tokenUsage.userId, userId), gte(tokenUsage.date, startDate)))
+    .orderBy(desc(tokenUsage.date));
+}
+
+export async function getTokenUsageByModel(userId: number, model: string) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(tokenUsage)
+    .where(and(eq(tokenUsage.userId, userId), eq(tokenUsage.model, model)))
+    .orderBy(desc(tokenUsage.date));
+}
+
+// ============================================================================
+// KILL SWITCH
+// ============================================================================
+
+export async function createKillSwitchEvent(
+  userId: number,
+  eventType: "budget_set" | "triggered" | "auto_triggered" | "reset",
+  budgetLimit?: number,
+  currentSpend?: number,
+  reason?: string,
+  details?: any,
+) {
+  const db = await getDb();
+  assertDb(db);
+
+  const id = secureId("ks");
+
+  await db.insert(killSwitchEvents).values({
+    id,
+    userId,
+    eventType,
+    budgetLimit: budgetLimit?.toString(),
+    currentSpend: currentSpend?.toString(),
+    reason,
+    details,
+  });
+}
+
+export async function getKillSwitchSettings(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db
+    .select()
+    .from(killSwitchSettings)
+    .where(eq(killSwitchSettings.userId, userId))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function updateKillSwitchSettings(
+  userId: number,
+  budgetLimitUSD?: number,
+  isActive?: boolean,
+  currentSpendUSD?: number,
+) {
+  const db = await getDb();
+  assertDb(db);
+
+  const existing = await getKillSwitchSettings(userId);
+
+  if (!existing) {
+    const id = secureId("ks_settings");
+    await db.insert(killSwitchSettings).values({
+      id,
+      userId,
+      budgetLimitUSD: budgetLimitUSD?.toString(),
+      isActive: isActive ?? false,
+      currentSpendUSD: currentSpendUSD?.toString(),
+    });
+  } else {
+    const updates: any = {};
+    if (budgetLimitUSD !== undefined) updates.budgetLimitUSD = budgetLimitUSD.toString();
+    if (isActive !== undefined) updates.isActive = isActive;
+    if (currentSpendUSD !== undefined) updates.currentSpendUSD = currentSpendUSD.toString();
+
+    if (Object.keys(updates).length > 0) {
+      await db.update(killSwitchSettings).set(updates).where(eq(killSwitchSettings.userId, userId));
+    }
+  }
+}
+
+export async function updateKillSwitchWarningSent(userId: number) {
+  const db = await getDb();
+  if (!db) return;
+
+  await db
+    .update(killSwitchSettings)
+    .set({ lastWarningSentAt: new Date() })
+    .where(eq(killSwitchSettings.userId, userId));
+}
+
+export async function getKillSwitchAuditTrail(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(killSwitchEvents)
+    .where(eq(killSwitchEvents.userId, userId))
+    .orderBy(desc(killSwitchEvents.createdAt));
+}
+
+// ============================================================================
+// COMPLIANCE REPORTS
+// ============================================================================
+
+export async function createComplianceReport(
+  userId: number,
+  collectionId: string,
+  reportType: "pci_dss" | "owasp" | "custom",
+  complianceScore: number,
+  totalRequirements: number,
+  metRequirements: number,
+  requirementsData?: any,
+) {
+  const db = await getDb();
+  assertDb(db);
+
+  const id = secureId("comp");
+
+  await db.insert(complianceReports).values({
+    id,
+    userId,
+    collectionId,
+    reportType,
+    complianceScore: complianceScore.toString(),
+    totalRequirements,
+    metRequirements,
+    requirementsData,
+  });
+
+  return { id };
+}
+
+export async function getComplianceReportsByCollectionId(collectionId: string) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(complianceReports)
+    .where(eq(complianceReports.collectionId, collectionId))
+    .orderBy(desc(complianceReports.createdAt));
+}
+
+/**
+ * Most recent compliance score per report type for a user.
+ *
+ * Powers the IDE panel's compliance tiles, which want "where do I stand right
+ * now" across all collections rather than a per-collection history.
+ */
+export async function getLatestComplianceScoresForUser(
+  userId: number,
+): Promise<Record<string, { score: number; collectionId: string; createdAt: Date } | null>> {
+  const db = await getDb();
+  if (!db) return {};
+
+  const rows = await db
+    .select({
+      reportType: complianceReports.reportType,
+      complianceScore: complianceReports.complianceScore,
+      collectionId: complianceReports.collectionId,
+      createdAt: complianceReports.createdAt,
+    })
+    .from(complianceReports)
+    .where(eq(complianceReports.userId, userId))
+    .orderBy(desc(complianceReports.createdAt));
+
+  // Rows arrive newest-first, so the first occurrence of each type is latest.
+  const latest: Record<string, { score: number; collectionId: string; createdAt: Date } | null> =
+    {};
+  for (const row of rows) {
+    if (latest[row.reportType]) continue;
+    latest[row.reportType] = {
+      score: Number(row.complianceScore ?? 0),
+      collectionId: row.collectionId,
+      createdAt: row.createdAt,
+    };
+  }
+  return latest;
+}
+
+export async function getComplianceReportById(id: string) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db
+    .select()
+    .from(complianceReports)
+    .where(eq(complianceReports.id, id))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : null;
+}
+
+// ============================================================================
+// TEAM MEMBERS
+// ============================================================================
+
+export async function inviteTeamMember(
+  userId: number,
+  memberEmail: string,
+  role: "admin" | "editor" | "viewer",
+) {
+  const db = await getDb();
+  assertDb(db);
+
+  const id = secureId("team");
+
+  await db.insert(teamMembers).values({
+    id,
+    userId,
+    memberEmail,
+    role,
+  });
+
+  return { id };
+}
+
+export async function getTeamMemberById(id: string) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db.select().from(teamMembers).where(eq(teamMembers.id, id)).limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function getTeamMemberByEmail(userId: number, memberEmail: string) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db
+    .select()
+    .from(teamMembers)
+    .where(and(eq(teamMembers.userId, userId), eq(teamMembers.memberEmail, memberEmail)))
+    .limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function getTeamMembersByUserId(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(teamMembers)
+    .where(eq(teamMembers.userId, userId))
+    .orderBy(desc(teamMembers.invitedAt));
+}
+
+export async function updateTeamMemberRole(id: string, role: "admin" | "editor" | "viewer") {
+  const db = await getDb();
+  assertDb(db);
+
+  await db.update(teamMembers).set({ role }).where(eq(teamMembers.id, id));
+}
+
+export async function removeTeamMember(id: string) {
+  const db = await getDb();
+  assertDb(db);
+
+  await db.delete(teamMembers).where(eq(teamMembers.id, id));
+}
+
+// ============================================================================
+// ONBOARDING
+// ============================================================================
+
+export async function getOrCreateOnboardingProgress(userId: number) {
+  const db = await getDb();
+  assertDb(db);
+
+  const existing = await db
+    .select()
+    .from(onboardingProgress)
+    .where(eq(onboardingProgress.userId, userId))
+    .limit(1);
+
+  if (existing.length > 0) {
+    return existing[0];
+  }
+
+  const id = secureId("onb");
+  await db.insert(onboardingProgress).values({
+    id,
+    userId,
+  });
+
+  return await db
+    .select()
+    .from(onboardingProgress)
+    .where(eq(onboardingProgress.userId, userId))
+    .limit(1)
+    .then((r) => r[0]);
+}
+
+export async function updateOnboardingStep(
+  userId: number,
+  step: "importCollection" | "runScan" | "reviewFindings" | "inviteTeam" | "setupCompliance",
+) {
+  const db = await getDb();
+  assertDb(db);
+
+  const updates: any = {};
+
+  if (step === "importCollection") {
+    updates.importCollectionCompleted = true;
+    updates.currentStep = 2;
+  }
+  if (step === "runScan") {
+    updates.runScanCompleted = true;
+    updates.currentStep = 3;
+  }
+  if (step === "reviewFindings") {
+    updates.reviewFindingsCompleted = true;
+    updates.currentStep = 4;
+  }
+  if (step === "inviteTeam") {
+    updates.inviteTeamCompleted = true;
+    updates.currentStep = 5;
+  }
+  if (step === "setupCompliance") {
+    updates.setupComplianceCompleted = true;
+  }
+
+  // Mark completedAt if all steps done
+  const progress = await getOrCreateOnboardingProgress(userId);
+  const allStepsCompleted =
+    (updates.importCollectionCompleted || progress.importCollectionCompleted) &&
+    (updates.runScanCompleted || progress.runScanCompleted) &&
+    (updates.reviewFindingsCompleted || progress.reviewFindingsCompleted) &&
+    (updates.inviteTeamCompleted || progress.inviteTeamCompleted) &&
+    (updates.setupComplianceCompleted || progress.setupComplianceCompleted);
+
+  if (allStepsCompleted) {
+    updates.completedAt = new Date();
+  }
+
+  await db.update(onboardingProgress).set(updates).where(eq(onboardingProgress.userId, userId));
+}
+
+export async function completeOnboarding(userId: number) {
+  const db = await getDb();
+  assertDb(db);
+
+  await db.update(users).set({ onboardingCompleted: true }).where(eq(users.id, userId));
+
+  await db
+    .update(onboardingProgress)
+    .set({ completedAt: new Date() })
+    .where(eq(onboardingProgress.userId, userId));
+}
+
+// ============================================================================
+// DASHBOARD (Optimized — avoids N+1 queries)
+// ============================================================================
+
+export async function getDashboardMetrics(userId: number) {
+  const db = await getDb();
+  if (!db)
+    return {
+      totalCollections: 0,
+      totalFindings: 0,
+      highestRiskScore: 0,
+      teamMembers: 0,
+    };
+
+  const [collectionsResult, findingsResult, riskResult, teamResult] = await Promise.all([
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(collections)
+      .where(eq(collections.userId, userId)),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(findings)
+      .where(eq(findings.userId, userId)),
+    db
+      .select({ maxScore: sql<string>`MAX(riskScore)` })
+      .from(scans)
+      .where(eq(scans.userId, userId)),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(teamMembers)
+      .where(eq(teamMembers.userId, userId)),
+  ]);
+
+  return {
+    totalCollections: Number(collectionsResult[0]?.count ?? 0),
+    totalFindings: Number(findingsResult[0]?.count ?? 0),
+    highestRiskScore: Math.round(parseFloat(riskResult[0]?.maxScore ?? "0")),
+    teamMembers: Number(teamResult[0]?.count ?? 0),
+  };
+}
+
+export async function getRecentScans(userId: number, limit: number = 5) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const recentScans = await db
+    .select({
+      id: scans.id,
+      collectionId: scans.collectionId,
+      collectionName: collections.name,
+      scanType: scans.scanType,
+      riskScore: scans.riskScore,
+      riskLevel: scans.riskLevel,
+      totalFindings: scans.totalFindings,
+      createdAt: scans.createdAt,
+    })
+    .from(scans)
+    .leftJoin(collections, eq(scans.collectionId, collections.id))
+    .where(eq(scans.userId, userId))
+    .orderBy(desc(scans.createdAt))
+    .limit(limit);
+
+  return recentScans.map((s) => ({
+    id: s.id,
+    collectionName: s.collectionName ?? "Unknown",
+    scanType: s.scanType,
+    riskScore: toNumber(s.riskScore),
+    riskLevel: s.riskLevel,
+    totalFindings: s.totalFindings,
+    createdAt: s.createdAt,
+  }));
+}
+
+export async function getAllUsers() {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select({
+      id: users.id,
+      email: users.email,
+      name: users.name,
+      role: users.role,
+      plan: users.plan,
+      createdAt: users.createdAt,
+      lastSignedIn: users.lastSignedIn,
+    })
+    .from(users)
+    .orderBy(desc(users.createdAt));
+}
+
+// ============================================================================
+// USER PLAN / SUBSCRIPTION
+// ============================================================================
+
+export async function updateUserPlan(userId: number, plan: "free" | "pro" | "enterprise") {
+  const db = await getDb();
+  assertDb(db);
+
+  await db.update(users).set({ plan }).where(eq(users.id, userId));
+  invalidateUserRowCache(userId);
+}
+
+export async function getUserPlan(userId: number): Promise<string> {
+  const db = await getDb();
+  if (!db) return "free";
+
+  const result = await db
+    .select({ plan: users.plan })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  return result.length > 0 ? result[0].plan : "free";
+}
+
+const TRIAL_DAYS = 14;
+
+export async function getTrialStatus(userId: number): Promise<{
+  isTrial: boolean;
+  daysLeft: number;
+  totalDays: number;
+}> {
+  const user = await getUserById(userId);
+  if (!user) return { isTrial: false, daysLeft: 0, totalDays: TRIAL_DAYS };
+
+  // Users on paid plans are not in trial
+  const plan = user.plan ?? "free";
+  if (plan !== "free") {
+    return { isTrial: false, daysLeft: 0, totalDays: TRIAL_DAYS };
+  }
+
+  const createdAt = user.createdAt ? new Date(user.createdAt) : new Date();
+  const trialEnd = new Date(createdAt.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
+  const now = new Date();
+  const msLeft = trialEnd.getTime() - now.getTime();
+  const daysLeft = Math.max(0, Math.ceil(msLeft / (24 * 60 * 60 * 1000)));
+  const isTrial = msLeft > 0;
+
+  return { isTrial, daysLeft, totalDays: TRIAL_DAYS };
+}
+
+export async function getEffectivePlan(userId: number): Promise<"free" | "pro" | "enterprise"> {
+  const plan = await getUserPlan(userId);
+  if (plan === "enterprise") return "enterprise";
+
+  // A paid workspace subscription grants the plan to every active member of
+  // that workspace. This prevents invited teammates from being incorrectly
+  // evaluated as Free while working inside a paid organisation.
+  const db = await getDb();
+  if (db) {
+    const workspacePlans = await db
+      .select({ plan: workspaceSubscriptions.plan })
+      .from(workspaceMembers)
+      .innerJoin(
+        workspaceSubscriptions,
+        eq(workspaceSubscriptions.workspaceId, workspaceMembers.workspaceId),
+      )
+      .where(
+        and(
+          eq(workspaceMembers.userId, userId),
+          eq(workspaceMembers.active, true),
+          eq(workspaceSubscriptions.status, "active"),
+        ),
+      );
+    if (workspacePlans.some((row) => row.plan === "enterprise")) return "enterprise";
+    if (plan === "pro" || workspacePlans.some((row) => row.plan === "pro")) return "pro";
+  } else if (plan === "pro") {
+    return "pro";
+  }
+
+  const trial = await getTrialStatus(userId);
+  return trial.isTrial ? "pro" : "free";
+}
+
+// ============================================================================
+// TEAM INVITATION ACCEPT / REJECT
+// ============================================================================
+
+export async function acceptTeamInvitation(memberId: string, memberUserId: number) {
+  const db = await getDb();
+  assertDb(db);
+
+  const member = await getTeamMemberById(memberId);
+  if (!member) throw new NotFoundError("Invitation not found");
+  if (member.status !== "pending") throw new ConflictError("Invitation is no longer pending");
+
+  await db
+    .update(teamMembers)
+    .set({ status: "accepted", memberUserId, acceptedAt: new Date() })
+    .where(eq(teamMembers.id, memberId));
+}
+
+export async function rejectTeamInvitation(memberId: string) {
+  const db = await getDb();
+  assertDb(db);
+
+  const member = await getTeamMemberById(memberId);
+  if (!member) throw new NotFoundError("Invitation not found");
+  if (member.status !== "pending") throw new ConflictError("Invitation is no longer pending");
+
+  await db.update(teamMembers).set({ status: "rejected" }).where(eq(teamMembers.id, memberId));
+}
+
+export async function getPendingInvitationsForUser(email: string) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(teamMembers)
+    .where(and(eq(teamMembers.memberEmail, email), eq(teamMembers.status, "pending")))
+    .orderBy(desc(teamMembers.invitedAt));
+}
+
+// ============================================================================
+// COST ANOMALY DETECTION
+// ============================================================================
+
+export async function detectCostAnomaly(
+  userId: number,
+  threshold: number = 2.0,
+): Promise<{
+  isAnomaly: boolean;
+  currentCost: number;
+  averageCost: number;
+  standardDeviation: number;
+}> {
+  const usage = await getTokenUsageByUserId(userId, 30);
+
+  if (usage.length < 5) {
+    return {
+      isAnomaly: false,
+      currentCost: 0,
+      averageCost: 0,
+      standardDeviation: 0,
+    };
+  }
+
+  const costs = usage.map((u) => toNumber(u.costUSD));
+  const currentCost = costs[0] ?? 0;
+  const averageCost = costs.reduce((a, b) => a + b, 0) / costs.length;
+  const variance = costs.reduce((sum, c) => sum + Math.pow(c - averageCost, 2), 0) / costs.length;
+  const standardDeviation = Math.sqrt(variance);
+
+  const isAnomaly =
+    standardDeviation > 0 && currentCost > averageCost + threshold * standardDeviation;
+
+  return { isAnomaly, currentCost, averageCost, standardDeviation };
+}
+
+// ============================================================================
+// PASSWORD RESET TOKENS
+// ============================================================================
+
+export async function createPasswordResetToken(userId: number, token: string, expiresAt: Date) {
+  const db = await getDb();
+  assertDb(db);
+
+  const id = secureId("prt");
+  await db.insert(passwordResetTokens).values({
+    id,
+    userId,
+    token,
+    expiresAt,
+  });
+  return { id };
+}
+
+export async function getPasswordResetToken(token: string) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db
+    .select()
+    .from(passwordResetTokens)
+    .where(eq(passwordResetTokens.token, token))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function markPasswordResetTokenUsed(tokenId: string) {
+  const db = await getDb();
+  assertDb(db);
+
+  await db
+    .update(passwordResetTokens)
+    .set({ usedAt: new Date() })
+    .where(eq(passwordResetTokens.id, tokenId));
+}
+
+export async function cleanupExpiredPasswordResetTokens() {
+  const db = await getDb();
+  if (!db) return;
+
+  await db.delete(passwordResetTokens).where(sql`${passwordResetTokens.expiresAt} < NOW()`);
+}
+
+// ============================================================================
+// USER SESSIONS
+// ============================================================================
+
+export async function createUserSession(
+  userId: number,
+  sessionToken: string,
+  refreshTokenHash: string | null,
+  ipAddress: string | null,
+  userAgent: string | null,
+  expiresAt: Date,
+) {
+  const db = await getDb();
+  assertDb(db);
+
+  const id = secureId("sess");
+  await db.insert(userSessions).values({
+    id,
+    userId,
+    sessionToken,
+    refreshTokenHash,
+    ipAddress,
+    userAgent,
+    expiresAt,
+  });
+  return { id };
+}
+
+export async function getUserSessionByRefreshTokenHash(refreshTokenHash: string) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db
+    .select()
+    .from(userSessions)
+    .where(
+      and(
+        eq(userSessions.refreshTokenHash, refreshTokenHash),
+        eq(userSessions.isRevoked, false),
+        sql`${userSessions.expiresAt} > NOW()`,
+      ),
+    )
+    .limit(1);
+
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function rotateRefreshToken(sessionId: string, newRefreshTokenHash: string) {
+  const db = await getDb();
+  assertDb(db);
+
+  await db
+    .update(userSessions)
+    .set({
+      refreshTokenHash: newRefreshTokenHash,
+      lastUsedAt: new Date(),
+    })
+    .where(eq(userSessions.id, sessionId));
+}
+export async function getUserSessions(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(userSessions)
+    .where(
+      and(
+        eq(userSessions.userId, userId),
+        sql`${userSessions.expiresAt} > NOW()`,
+        eq(userSessions.isRevoked, false),
+      ),
+    )
+    .orderBy(desc(userSessions.createdAt));
+}
+
+export async function getUserSessionByToken(sessionToken: string) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db
+    .select()
+    .from(userSessions)
+    .where(
+      and(
+        eq(userSessions.sessionToken, sessionToken),
+        sql`${userSessions.expiresAt} > NOW()`,
+        eq(userSessions.isRevoked, false),
+      ),
+    )
+    .limit(1);
+
+  return result.length > 0 ? result[0] : null;
+}
+
+/** Active (non-revoked, non-expired) session by id — used to bind JWT access tokens. */
+export async function getActiveUserSessionById(sessionId: string) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db
+    .select()
+    .from(userSessions)
+    .where(
+      and(
+        eq(userSessions.id, sessionId),
+        sql`${userSessions.expiresAt} > NOW()`,
+        eq(userSessions.isRevoked, false),
+      ),
+    )
+    .limit(1);
+
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function revokeUserSession(sessionId: string) {
+  const db = await getDb();
+  assertDb(db);
+
+  await db
+    .update(userSessions)
+    .set({ revokedAt: new Date(), isRevoked: true })
+    .where(eq(userSessions.id, sessionId));
+}
+
+export async function revokeAllUserSessions(userId: number, exceptSessionId?: string) {
+  const db = await getDb();
+  assertDb(db);
+
+  const conditions = [eq(userSessions.userId, userId), eq(userSessions.isRevoked, false)];
+  if (exceptSessionId) {
+    conditions.push(sql`${userSessions.id} != ${exceptSessionId}`);
+  }
+
+  await db
+    .update(userSessions)
+    .set({ revokedAt: new Date(), isRevoked: true })
+    .where(and(...conditions));
+}
+
+export async function updateSessionLastActive(sessionId: string) {
+  const db = await getDb();
+  if (!db) return;
+
+  await db
+    .update(userSessions)
+    .set({ lastActiveAt: new Date() })
+    .where(eq(userSessions.id, sessionId));
+}
+
+export async function cleanupExpiredUserSessions() {
+  const db = await getDb();
+  if (!db) return;
+
+  await db.delete(userSessions).where(sql`${userSessions.expiresAt} < NOW()`);
+}
+
+// ============================================================================
+// EMAIL PREFERENCES
+// ============================================================================
+
+export async function getOrCreateEmailPreferences(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    return {
+      scanComplete: true,
+      budgetAlerts: true,
+      weeklyDigest: true,
+      teamActivity: true,
+      promotionalEmails: false,
+    };
+  }
+
+  const result = await db
+    .select()
+    .from(emailPreferences)
+    .where(eq(emailPreferences.userId, userId))
+    .limit(1);
+
+  if (result.length > 0) {
+    return result[0];
+  }
+
+  // Create default preferences
+  const id = secureId("ep");
+  await db.insert(emailPreferences).values({
+    id,
+    userId,
+    scanComplete: true,
+    budgetAlerts: true,
+    weeklyDigest: true,
+    teamActivity: true,
+    promotionalEmails: false,
+  });
+
+  return await db
+    .select()
+    .from(emailPreferences)
+    .where(eq(emailPreferences.id, id))
+    .limit(1)
+    .then((r) => r[0]);
+}
+
+export async function updateEmailPreferences(
+  userId: number,
+  prefs: {
+    scanComplete?: boolean;
+    budgetAlerts?: boolean;
+    weeklyDigest?: boolean;
+    teamActivity?: boolean;
+    promotionalEmails?: boolean;
+  },
+) {
+  const db = await getDb();
+  assertDb(db);
+
+  const existing = await getOrCreateEmailPreferences(userId);
+
+  await db
+    .update(emailPreferences)
+    .set({
+      ...prefs,
+      updatedAt: new Date(),
+    })
+    .where(eq(emailPreferences.userId, userId));
+
+  return { success: true };
+}
+
+// ============================================================================
+// AUDIT LOG
+// ============================================================================
+
+export async function createAuditLogEntry(
+  userId: number,
+  action: string,
+  details?: Record<string, unknown>,
+  ipAddress?: string,
+  userAgent?: string,
+) {
+  const db = await getDb();
+  if (!db) return;
+
+  const id = secureId("audit");
+  await db.insert(auditLog).values({
+    id,
+    userId,
+    action,
+    details: details || null,
+    ipAddress: ipAddress || null,
+    userAgent: userAgent || null,
+  });
+}
+
+/**
+ * Paginated audit log with optional action and date-range filters.
+ *
+ * Audit history is the one view that must stay complete and navigable under
+ * compliance review, so it needs a real page/total rather than the capped
+ * `getAuditLogForUser` list.
+ */
+export async function getAuditLogForUserPage(params: {
+  userId: number;
+  limit: number;
+  offset: number;
+  action?: string;
+  startDate?: Date;
+  endDate?: Date;
+}): Promise<{ items: (typeof auditLog.$inferSelect)[]; total: number }> {
+  const db = await getDb();
+  if (!db) return { items: [], total: 0 };
+
+  const filters = [eq(auditLog.userId, params.userId)];
+  if (params.action) filters.push(eq(auditLog.action, params.action));
+  if (params.startDate) filters.push(gte(auditLog.createdAt, params.startDate));
+  if (params.endDate) filters.push(lt(auditLog.createdAt, params.endDate));
+  const where = filters.length === 1 ? filters[0] : and(...filters);
+
+  const [items, totalRows] = await Promise.all([
+    db
+      .select()
+      .from(auditLog)
+      .where(where)
+      .orderBy(desc(auditLog.createdAt))
+      .limit(params.limit)
+      .offset(params.offset),
+    db
+      .select({ value: sql<number>`count(*)` })
+      .from(auditLog)
+      .where(where),
+  ]);
+
+  return { items, total: Number(totalRows[0]?.value ?? 0) };
+}
+
+export async function getAuditLogForUser(userId: number, limit: number = 50) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(auditLog)
+    .where(eq(auditLog.userId, userId))
+    .orderBy(desc(auditLog.createdAt))
+    .limit(limit);
+}
+
+// ============================================================================
+// USER PROFILE MANAGEMENT
+// ============================================================================
+
+export async function updateUserProfile(
+  userId: number,
+  updates: {
+    name?: string;
+    email?: string;
+  },
+) {
+  const db = await getDb();
+  assertDb(db);
+
+  await db
+    .update(users)
+    .set({
+      ...updates,
+      updatedAt: new Date(),
+    })
+    .where(eq(users.id, userId));
+  invalidateUserRowCache(userId);
+}
+
+export async function updateUserPassword(userId: number, hashedPassword: string) {
+  const db = await getDb();
+  assertDb(db);
+
+  await db
+    .update(users)
+    .set({
+      passwordHash: hashedPassword,
+      failedLoginAttempts: 0,
+      lockedUntil: null,
+      updatedAt: new Date(),
+    })
+    .where(eq(users.id, userId));
+  invalidateUserRowCache(userId);
+}
+
+/**
+ * Update (or clear) the TOTP secret for 2FA.
+ * Pass null to disable 2FA.
+ */
+export async function updateUserTotpSecret(userId: number, totpSecret: string | null) {
+  const db = await getDb();
+  assertDb(db);
+
+  await db
+    .update(users)
+    .set({
+      totpSecret,
+      updatedAt: new Date(),
+    } as any)
+    .where(eq(users.id, userId));
+  invalidateUserRowCache(userId);
+}
+
+/**
+ * Store or clear a pending TOTP secret for 2FA setup.
+ * The secret is temporary and expires after 10 minutes.
+ * Pass null for both to clear.
+ */
+export async function updatePendingTotpSecret(
+  userId: number,
+  pendingTotpSecret: string | null,
+  pendingTotpExpiresAt: Date | null,
+) {
+  const db = await getDb();
+  assertDb(db);
+
+  await db
+    .update(users)
+    .set({
+      pendingTotpSecret,
+      pendingTotpExpiresAt,
+      updatedAt: new Date(),
+    } as any)
+    .where(eq(users.id, userId));
+  invalidateUserRowCache(userId);
+}
+
+/**
+ * Get the pending TOTP secret and expiry for a user.
+ */
+export async function getPendingTotpSecret(
+  userId: number,
+): Promise<{ pendingTotpSecret: string | null; pendingTotpExpiresAt: Date | null } | null> {
+  const db = await getDb();
+  assertDb(db);
+
+  const rows = await db
+    .select({
+      pendingTotpSecret: users.pendingTotpSecret,
+      pendingTotpExpiresAt: users.pendingTotpExpiresAt,
+    })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  return rows[0] || null;
+}
+
+/**
+ * Create a new user that signed up via email + password (not OAuth).
+ * The `openId` field is still used as the session subject for JWT auth,
+ * so we generate a unique "local:" prefix to keep it distinct from
+ * OAuth-synced users.
+ */
+export async function createLocalUser(data: {
+  email: string;
+  name: string;
+  passwordHash: string;
+}): Promise<{ id: number; openId: string }> {
+  const db = await getDb();
+  assertDb(db);
+
+  const openId = `local:${crypto.randomBytes(24).toString("hex")}`;
+
+  await db.insert(users).values({
+    openId,
+    email: data.email,
+    name: data.name,
+    loginMethod: "email",
+    passwordHash: data.passwordHash,
+    lastSignedIn: new Date(),
+  });
+
+  const created = await db
+    .select({ id: users.id, openId: users.openId })
+    .from(users)
+    .where(eq(users.openId, openId))
+    .limit(1);
+
+  if (created.length === 0) {
+    throw new InternalError("Failed to create user", {
+      safeMessage: "Could not create your account. Please try again.",
+    });
+  }
+
+  return created[0];
+}
+
+/**
+ * Creates a user with no password — social sign-in only. `passwordHash`
+ * stays null; `loginMethod` records which provider ("google"/"github")
+ * so the account is never mistaken for an email/password account.
+ */
+export async function createOAuthUser(data: {
+  email: string;
+  name: string;
+  provider: string;
+}): Promise<{ id: number; openId: string }> {
+  const db = await getDb();
+  assertDb(db);
+
+  const openId = `${data.provider}:${crypto.randomBytes(24).toString("hex")}`;
+
+  await db.insert(users).values({
+    openId,
+    email: data.email,
+    name: data.name,
+    loginMethod: data.provider,
+    passwordHash: null,
+    lastSignedIn: new Date(),
+  });
+
+  const created = await db
+    .select({ id: users.id, openId: users.openId })
+    .from(users)
+    .where(eq(users.openId, openId))
+    .limit(1);
+
+  if (created.length === 0) {
+    throw new InternalError("Failed to create user", {
+      safeMessage: "Could not create your account. Please try again.",
+    });
+  }
+
+  return created[0];
+}
+
+export async function incrementFailedLoginAttempts(
+  userId: number,
+  lockThreshold = 5,
+  lockDurationMs = 15 * 60 * 1000,
+): Promise<{ attempts: number; lockedUntil: Date | null }> {
+  const db = await getDb();
+  assertDb(db);
+
+  const existing = await db
+    .select({ attempts: users.failedLoginAttempts })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  const attempts = (existing[0]?.attempts ?? 0) + 1;
+  const lockedUntil = attempts >= lockThreshold ? new Date(Date.now() + lockDurationMs) : null;
+
+  await db
+    .update(users)
+    .set({
+      failedLoginAttempts: attempts,
+      lockedUntil,
+      updatedAt: new Date(),
+    })
+    .where(eq(users.id, userId));
+  invalidateUserRowCache(userId);
+
+  return { attempts, lockedUntil };
+}
+
+export async function resetFailedLoginAttempts(userId: number): Promise<void> {
+  const db = await getDb();
+  assertDb(db);
+
+  await db
+    .update(users)
+    .set({
+      failedLoginAttempts: 0,
+      lockedUntil: null,
+      lastSignedIn: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(eq(users.id, userId));
+  invalidateUserRowCache(userId);
+}
+
+// ============================================================================
+// ACCOUNT DELETION - CASCADE DELETE EVERYTHING
+// ============================================================================
+
+export async function deleteUserAccount(
+  userId: number,
+): Promise<{ deleted: boolean; message: string }> {
+  const db = await getDb();
+  assertDb(db);
+
+  return db
+    .transaction(async (tx) => {
+      // Delete in order respecting foreign key relationships
+      await tx.delete(auditLog).where(eq(auditLog.userId, userId));
+      await tx.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, userId));
+      await tx.delete(userSessions).where(eq(userSessions.userId, userId));
+      await tx.delete(emailPreferences).where(eq(emailPreferences.userId, userId));
+      await tx.delete(tokenUsage).where(eq(tokenUsage.userId, userId));
+      await tx.delete(killSwitchEvents).where(eq(killSwitchEvents.userId, userId));
+      await tx.delete(killSwitchSettings).where(eq(killSwitchSettings.userId, userId));
+
+      await tx
+        .delete(teamMembers)
+        .where(and(eq(teamMembers.userId, userId), sql`${teamMembers.memberUserId} IS NULL`));
+      await tx.delete(teamMembers).where(eq(teamMembers.memberUserId, userId));
+
+      await tx.delete(onboardingProgress).where(eq(onboardingProgress.userId, userId));
+      await tx.delete(complianceReports).where(eq(complianceReports.userId, userId));
+
+      const userScans = await tx
+        .select({ id: scans.id })
+        .from(scans)
+        .where(eq(scans.userId, userId));
+      const scanIds = userScans.map((s) => s.id);
+      if (scanIds.length > 0) {
+        await tx.delete(findings).where(inArray(findings.scanId, scanIds));
+        await tx.delete(shadowAPIs).where(inArray(shadowAPIs.scanId, scanIds));
+      }
+
+      await tx.delete(scans).where(eq(scans.userId, userId));
+      await tx.delete(collections).where(eq(collections.userId, userId));
+      await tx.delete(subscriptions).where(eq(subscriptions.userId, userId));
+      await tx.delete(payments).where(eq(payments.userId, userId));
+      await tx.delete(scanReports).where(eq(scanReports.ownerUserId, userId));
+      await tx.delete(webhookEndpoints).where(eq(webhookEndpoints.userId, userId));
+      await tx.delete(gatewayAudit).where(eq(gatewayAudit.userId, userId));
+      await tx.delete(shadowAiEvents).where(eq(shadowAiEvents.userId, userId));
+      await tx.delete(aiAllowlist).where(eq(aiAllowlist.userId, userId));
+
+      // Workspace tenancy cleanup — leave shared workspaces; delete personal ones
+      const ownedPersonal = await tx
+        .select({ id: workspaces.id })
+        .from(workspaces)
+        .where(and(eq(workspaces.ownerUserId, userId), eq(workspaces.isPersonal, true)));
       const personalIds = ownedPersonal.map((row) => row.id);
       if (personalIds.length > 0) {
         await tx.delete(apiKeys).where(inArray(apiKeys.workspaceId, personalIds));
