@@ -82,7 +82,11 @@ export default function BlogPortkeyAlternative() {
                   ["Shadow API detection", "❌", "✅"],
                   ["Kill switch / hard stop", "❌", "✅"],
                   ["Cost anomaly detection", "⚠️ Basic", "✅ Advanced"],
-                  ["Compliance evidence export", "❌", "✅ Mapping and evidence, not a certification"],
+                  [
+                    "Compliance evidence export",
+                    "❌",
+                    "✅ Mapping and evidence, not a certification",
+                  ],
                   ["Self-hosted", "❌ Enterprise only", "✅ All tiers"],
                 ].map(([cap, port, dev]) => (
                   <tr key={cap}>
@@ -119,12 +123,6 @@ export default function BlogPortkeyAlternative() {
 
         <div className="mt-10 p-6 bg-blue-900/20 border border-blue-500/30 rounded-xl text-center">
           <p className="text-blue-300 mb-4">See the security layer Portkey does not provide.</p>
-          <Link
-            href="/demo"
-            className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors"
-          >
-            Try RaksHex Free →
-          </Link>
         </div>
       </div>
     </article>

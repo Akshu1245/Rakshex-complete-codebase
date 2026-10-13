@@ -192,12 +192,6 @@
         "category": "Rakshex"
       },
       {
-        "command": "rakshex.runDemo",
-        "title": "Rakshex: Run Demo Scenarios",
-        "icon": "$(play-circle)",
-        "category": "Rakshex"
-      },
-      {
         "command": "rakshex.copyFindingId",
         "title": "Rakshex: Copy finding ID",
         "icon": "$(copy)",
@@ -321,7 +315,7 @@
     "viewsWelcome": [
       {
         "view": "rakshex.findings",
-        "contents": "Connect an API key to see your workspace findings.\n[Connect API key](command:rakshex.authenticate)\n\nCreate a key in Rakshex Dashboard → Settings → API keys.\n\n---\n\n**Shortcuts:**\nCtrl+Shift+D — Refresh\nCtrl+Shift+S — Run scan\nCtrl+Shift+R — Rerun last scan\nCtrl+Shift+1-4 — Filter by severity\nEnter — Resolve finding"
+        "contents": "Connect an API key to see your workspace findings.\n[Connect API key](command:rakshex.authenticate)\n\nCreate a key in Rakshex Dashboard \u2192 Settings \u2192 API keys.\n\n---\n\n**Shortcuts:**\nCtrl+Shift+D \u2014 Refresh\nCtrl+Shift+S \u2014 Run scan\nCtrl+Shift+R \u2014 Rerun last scan\nCtrl+Shift+1-4 \u2014 Filter by severity\nEnter \u2014 Resolve finding"
       }
     ],
     "menus": {

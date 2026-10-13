@@ -142,12 +142,6 @@ export default function HealthcareSolutionPage() {
           <p className="text-slate-400 text-sm mb-6 max-w-md mx-auto leading-relaxed">
             Walk through how RaksHex can govern PHI-handling agent actions in your environment.
           </p>
-          <Link
-            href="/demo"
-            className="inline-block bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm py-3 px-8 rounded-lg transition-colors shadow-lg shadow-blue-500/20"
-          >
-            Book a demo
-          </Link>
         </div>
       </div>
     </div>

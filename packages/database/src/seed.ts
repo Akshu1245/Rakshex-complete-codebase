@@ -8,21 +8,10 @@
 import { createHash, randomBytes } from "node:crypto";
 import pg from "pg";
 
-export const PRODUCTION_SEED_CONFIRMATION = "I_UNDERSTAND_THIS_WRITES_SYNTHETIC_DATA";
-
-/**
- * Protect production databases from an accidental local/demo seed.
- * The explicit confirmation exists for controlled recovery/test environments only;
- * normal production deployment must never set it.
- */
-export function assertSeedEnvironment(
-  nodeEnv = process.env.NODE_ENV,
-  confirmation = process.env.RAKSHEX_ALLOW_PRODUCTION_SEED,
-): void {
-  if (nodeEnv === "production" && confirmation !== PRODUCTION_SEED_CONFIRMATION) {
-    throw new Error(
-      "Refusing to seed with NODE_ENV=production. Synthetic seed data is local-development-only.",
-    );
+/** Synthetic fixtures are restricted to explicit local development and test runs. */
+export function assertSeedEnvironment(nodeEnv = process.env.NODE_ENV): void {
+  if (nodeEnv !== "development" && nodeEnv !== "test") {
+    throw new Error("Refusing to seed outside explicit development or test environments.");
   }
 }
 

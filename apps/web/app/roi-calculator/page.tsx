@@ -286,12 +286,6 @@ export default function ROICalculator() {
 
             {/* Trial CTA */}
             <div className="text-center pt-2">
-              <Link
-                href="/demo"
-                className="w-full block text-center px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold text-base rounded-xl transition-all shadow-lg shadow-blue-500/20"
-              >
-                Start Free Trial
-              </Link>
               <p className="text-[11px] text-slate-500 mt-2">
                 14-day full featured trial. Setup in 5 minutes.
               </p>

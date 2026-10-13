@@ -11,11 +11,7 @@ import { scanCollectionForGateway } from "../services/gatewayCollectionScan";
 import { parseBrunoCollection } from "../services/brunoImport";
 import { logger } from "../_core/logger";
 import { logSecurityEvent } from "../services/securityEvents";
-import {
-  parseCollectionImport,
-  MAX_IMPORT_BYTES,
-  SAFE_SAMPLE_COLLECTIONS,
-} from "../services/collectionImport/secureParse";
+import { parseCollectionImport, MAX_IMPORT_BYTES } from "../services/collectionImport/secureParse";
 import { assertWorkspacePermission } from "../services/authorization";
 import { requireCollectionAccess, resolveCallerWorkspace } from "../services/tenantAccess";
 
@@ -40,9 +36,6 @@ function checkDataSize(value: unknown): number {
 }
 
 export const collectionsRouter = router({
-  /** Safe sample payloads for demos (no real secrets). */
-  samples: protectedProcedure.query(() => SAFE_SAMPLE_COLLECTIONS),
-
   create: editorProcedure
     .input(
       z.object({

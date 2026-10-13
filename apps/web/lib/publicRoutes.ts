@@ -22,7 +22,6 @@ export const PUBLIC_PATH_PREFIXES = [
   "/research",
   "/playbooks",
   "/api-docs",
-  "/demo",
   "/quick-scan",
   "/blog",
   "/docs",

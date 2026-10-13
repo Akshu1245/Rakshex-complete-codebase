@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, PlayCircle } from "lucide-react";
-import { TerminalDemo } from "./TerminalDemo";
+import { ArrowRight } from "lucide-react";
 import { LogoMarquee } from "../ui/LogoMarquee";
 
 const PROOF_POINTS = [
@@ -18,7 +17,7 @@ export function HeroSection() {
   const [activeLogoName, setActiveLogoName] = useState("OpenAI");
 
   const handleCopyCommand = async () => {
-    await navigator.clipboard.writeText("financial.refund({ amount: 400, orderId })");
+    await navigator.clipboard.writeText("pnpm --filter @rakshex/cli exec tsx src/index.ts scan .");
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1800);
   };
@@ -55,13 +54,6 @@ export function HeroSection() {
             >
               Request beta access <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
-            <Link
-              href="/demo"
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md border border-white/15 bg-white/[0.03] px-5 py-3 text-sm font-semibold text-white no-underline hover:border-[#14B8A6]/50 hover:bg-[#14B8A6]/[0.06]"
-            >
-              <PlayCircle className="h-4 w-4 text-[#14B8A6]" aria-hidden="true" />
-              See an action get blocked
-            </Link>
           </div>
 
           <p className="mb-8 text-xs leading-5 text-neutral-500">
@@ -71,7 +63,7 @@ export function HeroSection() {
           <div className="mb-6 flex max-w-full flex-wrap items-center gap-3">
             <div className="hero-cli-pill flex max-w-full items-center gap-3 rounded-lg border border-white/10 bg-black/20 px-3 py-2.5 sm:px-4">
               <span className="cli-text min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-[11px] text-[#B7EAE4] sm:text-xs">
-                financial.refund({"{ amount: 400, orderId }"})
+                pnpm --filter @rakshex/cli exec tsx src/index.ts scan .
               </span>
               <button
                 type="button"
@@ -87,7 +79,10 @@ export function HeroSection() {
           <div className="grid max-w-[650px] grid-cols-1 gap-x-5 gap-y-2 border-y border-white/[0.07] py-4 sm:grid-cols-2">
             {PROOF_POINTS.map((point) => (
               <span key={point} className="flex items-center gap-2 text-xs text-neutral-400">
-                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#14B8A6]" aria-hidden="true" />
+                <span
+                  className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#14B8A6]"
+                  aria-hidden="true"
+                />
                 {point}
               </span>
             ))}
@@ -97,10 +92,6 @@ export function HeroSection() {
             <span className="marquee-label">Works with</span>
             <span className="marquee-active-name">{activeLogoName}</span>
           </div>
-        </div>
-
-        <div className="hero-right flex items-center justify-center" aria-label="RaksHex action denial demo">
-          <TerminalDemo />
         </div>
       </div>
 

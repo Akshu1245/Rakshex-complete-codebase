@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assertSeedEnvironment, PRODUCTION_SEED_CONFIRMATION } from "./seed";
+import { assertSeedEnvironment } from "./seed";
 
 describe("database seed environment guard", () => {
   it("allows development and test environments", () => {
@@ -11,8 +11,8 @@ describe("database seed environment guard", () => {
     expect(() => assertSeedEnvironment("production")).toThrow(/Refusing to seed/);
   });
 
-  it("requires the exact explicit production confirmation", () => {
-    expect(() => assertSeedEnvironment("production", "yes")).toThrow(/Refusing to seed/);
-    expect(() => assertSeedEnvironment("production", PRODUCTION_SEED_CONFIRMATION)).not.toThrow();
+  it("refuses unspecified and staging environments", () => {
+    expect(() => assertSeedEnvironment("")).toThrow(/Refusing to seed/);
+    expect(() => assertSeedEnvironment("staging")).toThrow(/Refusing to seed/);
   });
 });
