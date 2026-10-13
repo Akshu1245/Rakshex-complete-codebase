@@ -4898,7 +4898,11 @@ export async function addWaitlistEmail(
     await db.insert(waitlist).values({ email, plan, source });
     return { success: true, alreadyExists: false };
   } catch (err: any) {
-    if (err?.code === "ER_DUP_ENTRY" || err?.message?.includes("Duplicate entry")) {
+    if (
+      err?.code === "23505" ||
+      err?.code === "ER_DUP_ENTRY" ||
+      err?.message?.includes("Duplicate entry")
+    ) {
       return { success: true, alreadyExists: true };
     }
     logger.error({ err }, "[Database] Failed to insert waitlist email");
