@@ -7,6 +7,7 @@ import { basename, extname, resolve } from "node:path";
 import { parse as parseYaml } from "yaml";
 import { diffOpenApiContracts } from "@rakshex/scanner-core";
 import { runOasdiff } from "./oasdiffAdapter.js";
+import { analyzeApiImpact } from "./apiImpact.js";
 
 const MAX_SPEC_BYTES = 5 * 1024 * 1024;
 
@@ -50,7 +51,7 @@ function validateOpenApiDocument(input: unknown): void {
 export function cmdApiDiff(positional: string[], flags: Record<string, string | boolean>): number {
   if (positional.length !== 3 || positional[0] !== "diff") {
     console.error(
-      "Usage: rakshex api diff <old.json|yaml> <new.json|yaml> [--engine basic|oasdiff] [--format terminal|json]",
+      "Usage: rakshex api diff <old.json|yaml> <new.json|yaml> [--engine basic|oasdiff] [--format terminal|json] [--impact-dir <source-dir>]",
     );
     return 2;
   }
@@ -64,7 +65,12 @@ export function cmdApiDiff(positional: string[], flags: Record<string, string | 
     console.error("api diff: --engine must be basic or oasdiff");
     return 2;
   }
-  if (Object.keys(flags).some((key) => key !== "format" && key !== "engine")) {
+  const impactDir = flags["impact-dir"];
+  if (impactDir !== undefined && (typeof impactDir !== "string" || !impactDir.trim())) {
+    console.error("api diff: --impact-dir must be a local source directory");
+    return 2;
+  }
+  if (Object.keys(flags).some((key) => !["format", "engine", "impact-dir"].includes(key))) {
     console.error("api diff: unsupported option");
     return 2;
   }
@@ -77,8 +83,9 @@ export function cmdApiDiff(positional: string[], flags: Record<string, string | 
       engine === "oasdiff"
         ? runOasdiff(resolve(positional[1]!), resolve(positional[2]!))
         : diffOpenApiContracts(before, after);
+    const impact = impactDir ? analyzeApiImpact(impactDir, result.changes) : undefined;
     if (format === "json") {
-      console.log(JSON.stringify(result, null, 2));
+      console.log(JSON.stringify(impact ? { ...result, impact } : result, null, 2));
     } else {
       console.log("Detected " + result.changes.length + " supported breaking change(s).");
       for (const change of result.changes) {
@@ -88,6 +95,20 @@ export function cmdApiDiff(positional: string[], flags: Record<string, string | 
         console.log("  [" + kind + "] " + method + " " + change.path + ": " + detail);
       }
       console.log("Coverage: " + result.scope);
+      if (impact) {
+        console.log(
+          "Impact candidates: " + impact.matches.length + " in " + impact.filesScanned + " files; " +
+          impact.dynamicCalls + " dynamic calls and " + impact.changesWithoutMatches +
+          " changes without mapped source calls.",
+        );
+        for (const match of impact.matches) {
+          console.log(
+            "  [candidate] " + match.file + ":" + match.line + ":" + match.column +
+            " " + match.method + " " + match.path + " (" + match.rule + ")",
+          );
+        }
+        console.log("Impact coverage: " + impact.scope);
+      }
     }
     // Exit 0 means no *supported* breaking changes were detected, NOT full compatibility.
     return result.breaking ? 1 : 0;
