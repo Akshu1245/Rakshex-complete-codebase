@@ -53,8 +53,6 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Print canonical formatting for the new membership regression test
-        run: pnpm exec prettier scripts/cloudflare/membership-foundation.test.mjs
       - run: pnpm run format:check
 
   lint:
