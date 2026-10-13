@@ -1,0 +1,746 @@
+[
+  {
+    "name": "normal allow",
+    "input": {
+      "mode": "enforce",
+      "now": "2026-10-13T00:00:00.000Z",
+      "action": {
+        "name": "financial.refund",
+        "effect": "write",
+        "known": true,
+        "resource": "customer:1827",
+        "environment": "production",
+        "amountMinor": 100000,
+        "currency": "INR"
+      },
+      "authority": {
+        "actions": [
+          "financial.*",
+          "database.read"
+        ],
+        "resources": [
+          "customer:*"
+        ],
+        "environments": [
+          "production"
+        ],
+        "maxAmountMinor": 500000,
+        "currency": "INR"
+      }
+    },
+    "expected": {
+      "decision": "ALLOW",
+      "effectiveDecision": "ALLOW",
+      "wouldBlock": false,
+      "enforced": true,
+      "reasons": [
+        "Action is within delegated authority and policy"
+      ],
+      "policyVersion": "builtin:0.1"
+    }
+  },
+  {
+    "name": "frozen overrides allow",
+    "input": {
+      "mode": "enforce",
+      "now": "2026-10-13T00:00:00.000Z",
+      "action": {
+        "name": "financial.refund",
+        "effect": "write",
+        "known": true,
+        "resource": "customer:1827",
+        "environment": "production",
+        "amountMinor": 100000,
+        "currency": "INR"
+      },
+      "authority": {
+        "actions": [
+          "financial.*",
+          "database.read"
+        ],
+        "resources": [
+          "customer:*"
+        ],
+        "environments": [
+          "production"
+        ],
+        "maxAmountMinor": 500000,
+        "currency": "INR"
+      },
+      "frozen": true
+    },
+    "expected": {
+      "decision": "FREEZE",
+      "effectiveDecision": "DENY",
+      "wouldBlock": true,
+      "enforced": true,
+      "reasons": [
+        "Agent or workspace is frozen"
+      ],
+      "policyVersion": "builtin:0.1"
+    }
+  },
+  {
+    "name": "missing authority",
+    "input": {
+      "mode": "enforce",
+      "now": "2026-10-13T00:00:00.000Z",
+      "action": {
+        "name": "financial.refund",
+        "effect": "write",
+        "known": true,
+        "resource": "customer:1827",
+        "environment": "production",
+        "amountMinor": 100000,
+        "currency": "INR"
+      },
+      "authority": null
+    },
+    "expected": {
+      "decision": "DENY",
+      "effectiveDecision": "DENY",
+      "wouldBlock": true,
+      "enforced": true,
+      "reasons": [
+        "No active delegated authority was supplied"
+      ],
+      "policyVersion": "builtin:0.1"
+    }
+  },
+  {
+    "name": "amount above authority",
+    "input": {
+      "mode": "enforce",
+      "now": "2026-10-13T00:00:00.000Z",
+      "action": {
+        "name": "financial.refund",
+        "effect": "write",
+        "known": true,
+        "resource": "customer:1827",
+        "environment": "production",
+        "amountMinor": 900000,
+        "currency": "INR"
+      },
+      "authority": {
+        "actions": [
+          "financial.*",
+          "database.read"
+        ],
+        "resources": [
+          "customer:*"
+        ],
+        "environments": [
+          "production"
+        ],
+        "maxAmountMinor": 500000,
+        "currency": "INR"
+      }
+    },
+    "expected": {
+      "decision": "DENY",
+      "effectiveDecision": "DENY",
+      "wouldBlock": true,
+      "enforced": true,
+      "reasons": [
+        "Amount exceeds delegated limit of 500000 minor units"
+      ],
+      "policyVersion": "builtin:0.1"
+    }
+  },
+  {
+    "name": "missing permitted resource",
+    "input": {
+      "mode": "enforce",
+      "now": "2026-10-13T00:00:00.000Z",
+      "action": {
+        "name": "financial.refund",
+        "effect": "write",
+        "known": true,
+        "resource": "vendor:2",
+        "environment": "production",
+        "amountMinor": 100000,
+        "currency": "INR"
+      },
+      "authority": {
+        "actions": [
+          "financial.*",
+          "database.read"
+        ],
+        "resources": [
+          "customer:*"
+        ],
+        "environments": [
+          "production"
+        ],
+        "maxAmountMinor": 500000,
+        "currency": "INR"
+      }
+    },
+    "expected": {
+      "decision": "DENY",
+      "effectiveDecision": "DENY",
+      "wouldBlock": true,
+      "enforced": true,
+      "reasons": [
+        "Resource is outside delegated authority"
+      ],
+      "policyVersion": "builtin:0.1"
+    }
+  },
+  {
+    "name": "unknown writes denied",
+    "input": {
+      "mode": "enforce",
+      "now": "2026-10-13T00:00:00.000Z",
+      "action": {
+        "name": "semantic.unknown",
+        "effect": "unknown",
+        "known": false
+      },
+      "authority": {
+        "actions": [
+          "*"
+        ]
+      }
+    },
+    "expected": {
+      "decision": "DENY",
+      "effectiveDecision": "DENY",
+      "wouldBlock": true,
+      "enforced": true,
+      "reasons": [
+        "Unknown write or destructive action follows the restrictive path"
+      ],
+      "policyVersion": "builtin:0.1"
+    }
+  },
+  {
+    "name": "unknown writes require approval",
+    "input": {
+      "mode": "enforce",
+      "now": "2026-10-13T00:00:00.000Z",
+      "action": {
+        "name": "semantic.unknown",
+        "effect": "unknown",
+        "known": false
+      },
+      "authority": {
+        "actions": [
+          "*"
+        ]
+      },
+      "policy": {
+        "version": "v1",
+        "unknownWriteDecision": "APPROVAL_REQUIRED"
+      }
+    },
+    "expected": {
+      "decision": "APPROVAL_REQUIRED",
+      "effectiveDecision": "PENDING_APPROVAL",
+      "wouldBlock": true,
+      "enforced": true,
+      "reasons": [
+        "Unknown write or destructive action follows the restrictive path"
+      ],
+      "policyVersion": "v1"
+    }
+  },
+  {
+    "name": "policy deny",
+    "input": {
+      "mode": "enforce",
+      "now": "2026-10-13T00:00:00.000Z",
+      "action": {
+        "name": "financial.refund",
+        "effect": "write",
+        "known": true,
+        "resource": "customer:1827",
+        "environment": "production",
+        "amountMinor": 100000,
+        "currency": "INR"
+      },
+      "authority": {
+        "actions": [
+          "financial.*",
+          "database.read"
+        ],
+        "resources": [
+          "customer:*"
+        ],
+        "environments": [
+          "production"
+        ],
+        "maxAmountMinor": 500000,
+        "currency": "INR"
+      },
+      "policy": {
+        "version": "v1",
+        "denyActions": [
+          "financial.*"
+        ]
+      }
+    },
+    "expected": {
+      "decision": "DENY",
+      "effectiveDecision": "DENY",
+      "wouldBlock": true,
+      "enforced": true,
+      "reasons": [
+        "Organization policy denies this action"
+      ],
+      "policyVersion": "v1"
+    }
+  },
+  {
+    "name": "policy approval",
+    "input": {
+      "mode": "enforce",
+      "now": "2026-10-13T00:00:00.000Z",
+      "action": {
+        "name": "financial.refund",
+        "effect": "write",
+        "known": true,
+        "resource": "customer:1827",
+        "environment": "production",
+        "amountMinor": 100000,
+        "currency": "INR"
+      },
+      "authority": {
+        "actions": [
+          "financial.*",
+          "database.read"
+        ],
+        "resources": [
+          "customer:*"
+        ],
+        "environments": [
+          "production"
+        ],
+        "maxAmountMinor": 500000,
+        "currency": "INR"
+      },
+      "policy": {
+        "version": "v1",
+        "approvalActions": [
+          "financial.refund"
+        ]
+      }
+    },
+    "expected": {
+      "decision": "APPROVAL_REQUIRED",
+      "effectiveDecision": "PENDING_APPROVAL",
+      "wouldBlock": true,
+      "enforced": true,
+      "reasons": [
+        "Organization policy requires approval for this action"
+      ],
+      "policyVersion": "v1"
+    }
+  },
+  {
+    "name": "approval threshold",
+    "input": {
+      "mode": "enforce",
+      "now": "2026-10-13T00:00:00.000Z",
+      "action": {
+        "name": "financial.refund",
+        "effect": "write",
+        "known": true,
+        "resource": "customer:1827",
+        "environment": "production",
+        "amountMinor": 100000,
+        "currency": "INR"
+      },
+      "authority": {
+        "actions": [
+          "financial.*",
+          "database.read"
+        ],
+        "resources": [
+          "customer:*"
+        ],
+        "environments": [
+          "production"
+        ],
+        "maxAmountMinor": 500000,
+        "currency": "INR"
+      },
+      "policy": {
+        "version": "v1",
+        "approvalAboveMinor": 50000
+      }
+    },
+    "expected": {
+      "decision": "APPROVAL_REQUIRED",
+      "effectiveDecision": "PENDING_APPROVAL",
+      "wouldBlock": true,
+      "enforced": true,
+      "reasons": [
+        "Action amount exceeds the approval threshold"
+      ],
+      "policyVersion": "v1"
+    }
+  },
+  {
+    "name": "count limit",
+    "input": {
+      "mode": "enforce",
+      "now": "2026-10-13T00:00:00.000Z",
+      "action": {
+        "name": "financial.refund",
+        "effect": "write",
+        "known": true,
+        "resource": "customer:1827",
+        "environment": "production",
+        "amountMinor": 100000,
+        "currency": "INR"
+      },
+      "authority": {
+        "actions": [
+          "financial.*",
+          "database.read"
+        ],
+        "resources": [
+          "customer:*"
+        ],
+        "environments": [
+          "production"
+        ],
+        "maxAmountMinor": 500000,
+        "currency": "INR",
+        "maxCount": 3
+      },
+      "cumulative": {
+        "actionCount": 3,
+        "amountMinor": 0
+      }
+    },
+    "expected": {
+      "decision": "LIMIT",
+      "effectiveDecision": "DENY",
+      "wouldBlock": true,
+      "enforced": true,
+      "reasons": [
+        "Delegated action-count limit has been reached"
+      ],
+      "policyVersion": "builtin:0.1"
+    }
+  },
+  {
+    "name": "daily spend cap",
+    "input": {
+      "mode": "enforce",
+      "now": "2026-10-13T00:00:00.000Z",
+      "action": {
+        "name": "financial.refund",
+        "effect": "write",
+        "known": true,
+        "resource": "customer:1827",
+        "environment": "production",
+        "amountMinor": 100000,
+        "currency": "INR"
+      },
+      "authority": {
+        "actions": [
+          "financial.*",
+          "database.read"
+        ],
+        "resources": [
+          "customer:*"
+        ],
+        "environments": [
+          "production"
+        ],
+        "maxAmountMinor": 500000,
+        "currency": "INR"
+      },
+      "policy": {
+        "version": "v1",
+        "dailyAmountLimitMinor": 150000
+      },
+      "cumulative": {
+        "actionCount": 1,
+        "amountMinor": 100000
+      }
+    },
+    "expected": {
+      "decision": "PAUSE",
+      "effectiveDecision": "DENY",
+      "wouldBlock": true,
+      "enforced": true,
+      "reasons": [
+        "Cumulative daily amount limit would be exceeded"
+      ],
+      "policyVersion": "v1"
+    }
+  },
+  {
+    "name": "sequence flagged",
+    "input": {
+      "mode": "enforce",
+      "now": "2026-10-13T00:00:00.000Z",
+      "action": {
+        "name": "financial.refund",
+        "effect": "write",
+        "known": true,
+        "resource": "customer:1827",
+        "environment": "production",
+        "amountMinor": 100000,
+        "currency": "INR"
+      },
+      "authority": {
+        "actions": [
+          "financial.*",
+          "database.read"
+        ],
+        "resources": [
+          "customer:*"
+        ],
+        "environments": [
+          "production"
+        ],
+        "maxAmountMinor": 500000,
+        "currency": "INR"
+      },
+      "policy": {
+        "version": "v1",
+        "dangerousSequences": [
+          [
+            "database.read",
+            "financial.refund"
+          ]
+        ]
+      },
+      "cumulative": {
+        "actionCount": 1,
+        "amountMinor": 0,
+        "recentActions": [
+          "database.read"
+        ]
+      }
+    },
+    "expected": {
+      "decision": "APPROVAL_REQUIRED",
+      "effectiveDecision": "PENDING_APPROVAL",
+      "wouldBlock": true,
+      "enforced": true,
+      "reasons": [
+        "Action completes a configured high-risk sequence"
+      ],
+      "policyVersion": "v1"
+    }
+  },
+  {
+    "name": "shadow mode does not enforce",
+    "input": {
+      "mode": "shadow",
+      "now": "2026-10-13T00:00:00.000Z",
+      "action": {
+        "name": "financial.refund",
+        "effect": "write",
+        "known": true,
+        "resource": "customer:1827",
+        "environment": "production",
+        "amountMinor": 900000,
+        "currency": "INR"
+      },
+      "authority": {
+        "actions": [
+          "financial.*",
+          "database.read"
+        ],
+        "resources": [
+          "customer:*"
+        ],
+        "environments": [
+          "production"
+        ],
+        "maxAmountMinor": 500000,
+        "currency": "INR"
+      }
+    },
+    "expected": {
+      "decision": "DENY",
+      "effectiveDecision": "ALLOW",
+      "wouldBlock": true,
+      "enforced": false,
+      "reasons": [
+        "Amount exceeds delegated limit of 500000 minor units"
+      ],
+      "policyVersion": "builtin:0.1"
+    }
+  },
+  {
+    "name": "expired authority",
+    "input": {
+      "mode": "enforce",
+      "now": "2026-10-13T00:00:00.000Z",
+      "action": {
+        "name": "financial.refund",
+        "effect": "write",
+        "known": true,
+        "resource": "customer:1827",
+        "environment": "production",
+        "amountMinor": 100000,
+        "currency": "INR"
+      },
+      "authority": {
+        "actions": [
+          "financial.*",
+          "database.read"
+        ],
+        "resources": [
+          "customer:*"
+        ],
+        "environments": [
+          "production"
+        ],
+        "maxAmountMinor": 500000,
+        "currency": "INR",
+        "expiresAt": "2026-10-12T00:00:00.000Z"
+      }
+    },
+    "expected": {
+      "decision": "DENY",
+      "effectiveDecision": "DENY",
+      "wouldBlock": true,
+      "enforced": true,
+      "reasons": [
+        "Authority has expired"
+      ],
+      "policyVersion": "builtin:0.1"
+    }
+  },
+  {
+    "name": "inactive authority",
+    "input": {
+      "mode": "enforce",
+      "now": "2026-10-13T00:00:00.000Z",
+      "action": {
+        "name": "financial.refund",
+        "effect": "write",
+        "known": true,
+        "resource": "customer:1827",
+        "environment": "production",
+        "amountMinor": 100000,
+        "currency": "INR"
+      },
+      "authority": {
+        "actions": [
+          "financial.*",
+          "database.read"
+        ],
+        "resources": [
+          "customer:*"
+        ],
+        "environments": [
+          "production"
+        ],
+        "maxAmountMinor": 500000,
+        "currency": "INR",
+        "validFrom": "2026-10-14T00:00:00.000Z"
+      }
+    },
+    "expected": {
+      "decision": "DENY",
+      "effectiveDecision": "DENY",
+      "wouldBlock": true,
+      "enforced": true,
+      "reasons": [
+        "Authority is not active yet"
+      ],
+      "policyVersion": "builtin:0.1"
+    }
+  },
+  {
+    "name": "currency scope",
+    "input": {
+      "mode": "enforce",
+      "now": "2026-10-13T00:00:00.000Z",
+      "action": {
+        "name": "financial.refund",
+        "effect": "write",
+        "known": true,
+        "resource": "customer:1827",
+        "environment": "production",
+        "amountMinor": 100000,
+        "currency": "INR"
+      },
+      "authority": {
+        "actions": [
+          "financial.*",
+          "database.read"
+        ],
+        "resources": [
+          "customer:*"
+        ],
+        "environments": [
+          "production"
+        ],
+        "maxAmountMinor": 500000,
+        "currency": "USD"
+      }
+    },
+    "expected": {
+      "decision": "DENY",
+      "effectiveDecision": "DENY",
+      "wouldBlock": true,
+      "enforced": true,
+      "reasons": [
+        "Currency INR is outside delegated authority"
+      ],
+      "policyVersion": "builtin:0.1"
+    }
+  },
+  {
+    "name": "approval wins before limit",
+    "input": {
+      "mode": "enforce",
+      "now": "2026-10-13T00:00:00.000Z",
+      "action": {
+        "name": "financial.refund",
+        "effect": "write",
+        "known": true,
+        "resource": "customer:1827",
+        "environment": "production",
+        "amountMinor": 100000,
+        "currency": "INR"
+      },
+      "authority": {
+        "actions": [
+          "financial.*",
+          "database.read"
+        ],
+        "resources": [
+          "customer:*"
+        ],
+        "environments": [
+          "production"
+        ],
+        "maxAmountMinor": 500000,
+        "currency": "INR",
+        "maxCount": 0
+      },
+      "policy": {
+        "version": "v1",
+        "approvalActions": [
+          "financial.refund"
+        ]
+      },
+      "cumulative": {
+        "actionCount": 1,
+        "amountMinor": 0
+      }
+    },
+    "expected": {
+      "decision": "APPROVAL_REQUIRED",
+      "effectiveDecision": "PENDING_APPROVAL",
+      "wouldBlock": true,
+      "enforced": true,
+      "reasons": [
+        "Organization policy requires approval for this action"
+      ],
+      "policyVersion": "v1"
+    }
+  }
+]
