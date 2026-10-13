@@ -11,7 +11,9 @@
 import type { ActionDomain, ActionEffect, SemanticAction } from "./types";
 
 export type ActionClass = "A" | "B";
-export type FailMode = "DENY_UNLESS_AUTHORITATIVE_AND_RECEIPTED" | "ALLOW_ONLY_WITH_DURABLE_INTENT";
+export type FailMode =
+  | "DENY_UNLESS_AUTHORITATIVE_AND_RECEIPTED"
+  | "ALLOW_ONLY_WITH_DURABLE_INTENT";
 export type BReadiness = "not-eligible" | "candidate-requires-review";
 
 export interface ActionClassRow {
@@ -33,17 +35,116 @@ const DATABASE = [...COMMON, "database/tenant access permissions"] as const;
 
 /** Explicit, deliberately conservative policy inventory. No production router imports it yet. */
 export const ACTION_CLASS_MATRIX: readonly ActionClassRow[] = [
-  { name: "financial.refund", domain: "financial", effect: "write", actionClass: "A", revocationSources: FINANCIAL, failMode: A, bReadiness: "not-eligible", rationale: "Refund moves money" },
-  { name: "financial.payment.create", domain: "financial", effect: "write", actionClass: "A", revocationSources: FINANCIAL, failMode: A, bReadiness: "not-eligible", rationale: "Payment can transfer money" },
-  { name: "financial.subscription.cancel", domain: "financial", effect: "destructive", actionClass: "A", revocationSources: FINANCIAL, failMode: A, bReadiness: "not-eligible", rationale: "Cancellation has customer impact" },
-  { name: "code.pr.create", domain: "code", effect: "write", actionClass: "A", revocationSources: CODE, failMode: A, bReadiness: "not-eligible", rationale: "PR creation mutates repository state" },
-  { name: "code.merge", domain: "code", effect: "destructive", actionClass: "A", revocationSources: CODE, failMode: A, bReadiness: "not-eligible", rationale: "Merge changes executable code" },
-  { name: "code.branch.delete", domain: "code", effect: "destructive", actionClass: "A", revocationSources: CODE, failMode: A, bReadiness: "not-eligible", rationale: "Branch deletion destroys references" },
-  { name: "code.deploy", domain: "code", effect: "destructive", actionClass: "A", revocationSources: CODE, failMode: A, bReadiness: "not-eligible", rationale: "Deploy affects live systems" },
-  { name: "database.read", domain: "database", effect: "read", actionClass: "A", revocationSources: DATABASE, failMode: A, bReadiness: "candidate-requires-review", rationale: "Read queries may expose PII/secrets or invoke side-effecting SQL; cannot safely infer low risk from SQL regex" },
-  { name: "database.write", domain: "database", effect: "write", actionClass: "A", revocationSources: DATABASE, failMode: A, bReadiness: "not-eligible", rationale: "Mutation requires live authorization" },
-  { name: "database.delete", domain: "database", effect: "destructive", actionClass: "A", revocationSources: DATABASE, failMode: A, bReadiness: "not-eligible", rationale: "Deletion is destructive" },
-  { name: "database.schema.change", domain: "database", effect: "destructive", actionClass: "A", revocationSources: DATABASE, failMode: A, bReadiness: "not-eligible", rationale: "Schema changes are high impact" },
+  {
+    name: "financial.refund",
+    domain: "financial",
+    effect: "write",
+    actionClass: "A",
+    revocationSources: FINANCIAL,
+    failMode: A,
+    bReadiness: "not-eligible",
+    rationale: "Refund moves money" ,
+  },
+  {
+    name: "financial.payment.create",
+    domain: "financial",
+    effect: "write",
+    actionClass: "A",
+    revocationSources: FINANCIAL,
+    failMode: A,
+    bReadiness: "not-eligible",
+    rationale: "Payment can transfer money" ,
+  },
+  {
+    name: "financial.subscription.cancel",
+    domain: "financial",
+    effect: "destructive",
+    actionClass: "A",
+    revocationSources: FINANCIAL,
+    failMode: A,
+    bReadiness: "not-eligible",
+    rationale: "Cancellation has customer impact" ,
+  },
+  {
+    name: "code.pr.create",
+    domain: "code",
+    effect: "write",
+    actionClass: "A",
+    revocationSources: CODE,
+    failMode: A,
+    bReadiness: "not-eligible",
+    rationale: "PR creation mutates repository state" ,
+  },
+  {
+    name: "code.merge",
+    domain: "code",
+    effect: "destructive",
+    actionClass: "A",
+    revocationSources: CODE,
+    failMode: A,
+    bReadiness: "not-eligible",
+    rationale: "Merge changes executable code" ,
+  },
+  {
+    name: "code.branch.delete",
+    domain: "code",
+    effect: "destructive",
+    actionClass: "A",
+    revocationSources: CODE,
+    failMode: A,
+    bReadiness: "not-eligible",
+    rationale: "Branch deletion destroys references" ,
+  },
+  {
+    name: "code.deploy",
+    domain: "code",
+    effect: "destructive",
+    actionClass: "A",
+    revocationSources: CODE,
+    failMode: A,
+    bReadiness: "not-eligible",
+    rationale: "Deploy affects live systems" ,
+  },
+  {
+    name: "database.read",
+    domain: "database",
+    effect: "read",
+    actionClass: "A",
+    revocationSources: DATABASE,
+    failMode: A,
+    bReadiness: "candidate-requires-review",
+    rationale: "Read queries may expose PII/secrets or invoke side-effecting SQL; cannot safely infer low risk from SQL regex" ,
+  },
+  {
+    name: "database.write",
+    domain: "database",
+    effect: "write",
+    actionClass: "A",
+    revocationSources: DATABASE,
+    failMode: A,
+    bReadiness: "not-eligible",
+    rationale: "Mutation requires live authorization" ,
+  },
+  {
+    name: "database.delete",
+    domain: "database",
+    effect: "destructive",
+    actionClass: "A",
+    revocationSources: DATABASE,
+    failMode: A,
+    bReadiness: "not-eligible",
+    rationale: "Deletion is destructive" ,
+  },
+  {
+    name: "database.schema.change",
+    domain: "database",
+    effect: "destructive",
+    actionClass: "A",
+    revocationSources: DATABASE,
+    failMode: A,
+    bReadiness: "not-eligible",
+    rationale: "Schema changes are high impact" ,
+  },
 ];
 
 export const UNKNOWN_ACTION_CLASS: ActionClassRow = {
