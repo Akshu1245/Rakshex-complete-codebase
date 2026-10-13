@@ -410,6 +410,11 @@ export const agentFirewallRouter = router({
       await requireWorkspaceMembership(input.workspaceId, ctx.user.id);
       assertRuntimeApiKeyScope(ctx.user, input.workspaceId, "agent:execute");
       const database = requireDb(await db.getDb());
+      // A caller without a capability must prove workspace policy-write access
+      // before entering the serialized transactional critical section.
+      if (!input.capabilityToken) {
+        await requireWorkspacePermission(input.workspaceId, ctx.user.id, "security", "write");
+      }
       // This xact lock serializes evaluate() within a workspace so the
       // prior hash, cumulative policy limits, idempotency and approval rows
       // are decided and committed atomically. Measure workspace lock wait
@@ -427,6 +432,38 @@ export const agentFirewallRouter = router({
           )
           .limit(1);
         if (existing) {
+          // The idempotency key belongs to exactly one logical request.
+          // Returning a previous ALLOW for a different action is unsafe.
+          const replayAction = normalizeSemanticAction({
+            provider: input.provider,
+            operation: input.operation,
+            toolName: input.toolName,
+            requestId: input.requestId,
+            parameters: input.parameters,
+            resource: input.resource,
+            environment: input.environment ?? existing.environment ?? undefined,
+            amountMinor: input.amountMinor,
+            currency: input.currency,
+          });
+          const normalizedJson = (value: unknown) =>
+            canonical(JSON.parse(JSON.stringify(value)) as unknown);
+          if (
+            existing.agentId !== input.agentId ||
+            existing.projectId !== (input.projectId ?? null) ||
+            existing.semanticAction !== replayAction.name ||
+            existing.resource !== (replayAction.resource ?? null) ||
+            existing.environment !== (replayAction.environment ?? null) ||
+            existing.amountMinor !==
+              (replayAction.amountMinor == null ? null : String(replayAction.amountMinor)) ||
+            existing.currency !== (replayAction.currency ?? null) ||
+            normalizedJson(existing.rawReference) !== normalizedJson(replayAction.raw) ||
+            normalizedJson(existing.parametersRedacted) !== normalizedJson(replayAction.parameters)
+          ) {
+            throw new TRPCError({
+              code: "CONFLICT",
+              message: "Idempotency key was already used for a different action",
+            });
+          }
           return {
             ...existing,
             amountMinor: existing.amountMinor == null ? null : numeric(existing.amountMinor),
@@ -460,9 +497,9 @@ export const agentFirewallRouter = router({
                 eq(delegatedAuthorities.status, "active"),
               ),
             )
-            .limit(1);
+            .limit(1)
+            .for("share");
         } else {
-          await requireWorkspacePermission(input.workspaceId, ctx.user.id, "security", "write");
           if (input.authorityId) {
             [authority] = await tx
               .select()
@@ -475,7 +512,8 @@ export const agentFirewallRouter = router({
                   eq(delegatedAuthorities.status, "active"),
                 ),
               )
-              .limit(1);
+              .limit(1)
+              .for("share");
           }
         }
   
@@ -539,7 +577,7 @@ export const agentFirewallRouter = router({
           .select({ recordHash: actionLedger.recordHash })
           .from(actionLedger)
           .where(eq(actionLedger.workspaceId, input.workspaceId))
-          .orderBy(desc(actionLedger.occurredAt))
+          .orderBy(desc(actionLedger.occurredAt), desc(actionLedger.id))
           .limit(1);
         const ledgerId = id("act");
         const approvalId = result.decision === "APPROVAL_REQUIRED" ? id("apr") : undefined;
@@ -572,7 +610,11 @@ export const agentFirewallRouter = router({
           previousHash: previous?.recordHash,
         };
         const recordHash = sha256(`${previous?.recordHash ?? "GENESIS"}\n${canonical(record)}`);
-        await tx.insert(actionLedger).values({ ...record, recordHash });
+        await tx.insert(actionLedger).values({
+          ...record,
+          recordHash,
+          occurredAt: sql`clock_timestamp()`,
+        });
         if (approvalId) {
           await tx.insert(actionApprovals).values({
             id: approvalId,
