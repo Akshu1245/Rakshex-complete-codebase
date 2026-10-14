@@ -1,5 +1,11 @@
 # DevPulse backend on Cloudflare
 
+## Zero-spend requirement (14 October 2026)
+
+The owner requires free services only. Do not upgrade the account or enable paid resources. The Container configuration below is retained for reference; it is **not** the free deployment target.
+
+Source optimizations are implemented, but the new application is **not live** on the free plan. See [FREE_PLAN.md](FREE_PLAN.md) for the runtime incompatibility, implemented savings, and remaining migration work. `RESOURCE_PROFILE=free` reduces work in FastAPI; it does not make Containers available on a free account.
+
 ## Provisioned infrastructure
 
 - PostgreSQL project: `billowing-hat-28677330` (`rakshex-devpulse`), database `devpulse`, AWS Singapore. Default branch is `production`; no archived RaksHex data was reused.
@@ -12,7 +18,7 @@
 
 **Not live.** Cloudflare returned: `Unauthorized: You do not have access to Cloudflare Containers. Deploying containers requires the Workers Paid plan`.
 
-Enable Workers Paid on account `b3225f198c6d2286afbb6f416c230f10`, then deploy from this directory with `npm ci --workspaces=false` and `npm run deploy` (Docker must be available). Wait for container provisioning. Existing Cloudflare Workers and archived data were preserved.
+This command path requires Workers Paid and must not be used for the owner's zero-spend deployment. Existing Cloudflare Workers and archived data were preserved.
 
 The expected backend address after deployment is `https://rakshex-devpulse-backend.rakshex.workers.dev`. It is not currently a verified live endpoint.
 

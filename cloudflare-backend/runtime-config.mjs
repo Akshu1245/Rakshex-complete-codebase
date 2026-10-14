@@ -7,6 +7,8 @@ const OPTIONAL = [
   'OPENWEATHER_API_KEY', 'FROM_EMAIL', 'FROM_NAME', 'SENDGRID_FROM_EMAIL',
   'SLACK_WEBHOOK_URL', 'DISCORD_WEBHOOK_URL', 'JWT_EXPIRY_HOURS',
   'DB_POOL_MIN', 'DB_POOL_MAX', 'DB_POOL_RECYCLE',
+  'RESOURCE_PROFILE', 'HEALTH_PROBE_INTERVAL_SECONDS', 'CHANGE_PROBE_INTERVAL_SECONDS',
+  'HEALTH_WEBSOCKET_INTERVAL_SECONDS',
 ];
 
 export async function resolveRuntimeConfig(env) {
@@ -18,5 +20,5 @@ export async function resolveRuntimeConfig(env) {
   }));
   const config = Object.fromEntries(values.filter(([, value]) => value));
   if (REQUIRED.some(name => !config[name])) throw new Error('Missing runtime configuration');
-  return {ENV: 'production', ...config};
+  return {ENV: 'production', RESOURCE_PROFILE: 'free', ...config};
 }

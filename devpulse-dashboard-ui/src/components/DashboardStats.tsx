@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { startPolling } from '@/lib/polling';
 import { apiClient, DashboardData } from '@/lib/api';
 
 export default function DashboardStats() {
@@ -8,7 +9,7 @@ export default function DashboardStats() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchDashboard = async () => {
+  const fetchDashboard = useCallback(async () => {
     try {
       const data = await apiClient.getDashboard();
       setDashboard(data);
@@ -18,13 +19,9 @@ export default function DashboardStats() {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchDashboard();
-    const interval = setInterval(fetchDashboard, 60000);
-    return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => startPolling(fetchDashboard), [fetchDashboard]);
 
   if (loading) {
     return (

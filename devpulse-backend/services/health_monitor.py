@@ -1,13 +1,14 @@
 """
 Health Monitor Service - Production-grade async API health monitoring.
 
-Probes 15 real APIs every 60 seconds with proper classification,
+Probes 15 real APIs at a configured interval (five minutes by default), with classification,
 error handling, and thread-safe storage.
 """
 import asyncio
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 import httpx
+from services.resource_config import HEALTH_INTERVAL
 
 # Module-level health data storage
 health_data: Dict[str, Dict[str, Any]] = {}
@@ -232,7 +233,7 @@ async def _update_health_data(new_data: Dict[str, Dict[str, Any]]) -> None:
 async def _monitor_loop() -> None:
     """
     Background monitoring loop.
-    Runs every 60 seconds indefinitely.
+    Runs at HEALTH_PROBE_INTERVAL_SECONDS (five minutes in the free resource profile).
     """
     print("[HEALTH] Starting health monitor background task...")
     
@@ -259,9 +260,9 @@ async def _monitor_loop() -> None:
         except Exception as e:
             print(f"[HEALTH] Error in monitor loop: {e}")
         
-        # Wait 60 seconds before next run
+        # Keep probes shared across viewers, at the configured resource budget.
         try:
-            await asyncio.sleep(60)
+            await asyncio.sleep(HEALTH_INTERVAL)
         except asyncio.CancelledError:
             print("[HEALTH] Sleep cancelled, shutting down...")
             raise

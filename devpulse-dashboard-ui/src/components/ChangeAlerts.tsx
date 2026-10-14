@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { startPolling } from '@/lib/polling';
 import { apiClient, ChangeAlert } from '@/lib/api';
 import { Card, CardHeader, CardSkeleton } from '@/components/ui/Card';
 import { Badge, EmptyState } from '@/components/ui/Shared';
@@ -18,18 +19,7 @@ export default function ChangeAlerts() {
     setLoading(false);
   }, []);
 
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      void fetchAlerts();
-    }, 0);
-    const intervalId = setInterval(() => {
-      void fetchAlerts();
-    }, 30000);
-    return () => {
-      clearTimeout(timeoutId);
-      clearInterval(intervalId);
-    };
-  }, [fetchAlerts]);
+  useEffect(() => startPolling(fetchAlerts), [fetchAlerts]);
 
   const handleAck = async (id: string) => {
     await apiClient.ackChangeAlert(id);
