@@ -1,7 +1,7 @@
 """
 WebSocket Routes - Real-time health monitoring via WebSocket.
 
-Pushes health data to connected clients every 10 seconds.
+Pushes health snapshots at the configured interval (60 seconds in the free resource profile).
 """
 import asyncio
 import json
@@ -11,6 +11,7 @@ from typing import Set
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from services import health_monitor
+from services.resource_config import WEBSOCKET_INTERVAL
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +26,7 @@ async def health_websocket(websocket: WebSocket):
     """
     WebSocket endpoint for real-time health updates.
     
-    Sends health data every 10 seconds to all connected clients.
+    Sends health snapshots periodically, and immediately on manual refresh.
     """
     await websocket.accept()
     connected_clients.add(websocket)
@@ -37,10 +38,10 @@ async def health_websocket(websocket: WebSocket):
         
         # Keep connection alive and push updates
         while True:
-            # Wait for 10 seconds or until client sends a message
+            # Avoid retransmitting an unchanged snapshot six times per minute.
             try:
                 # Use wait_for to allow periodic pushes
-                msg = await asyncio.wait_for(websocket.receive_text(), timeout=10.0)
+                msg = await asyncio.wait_for(websocket.receive_text(), timeout=float(WEBSOCKET_INTERVAL))
                 
                 # Client can request immediate refresh
                 if msg == "refresh":

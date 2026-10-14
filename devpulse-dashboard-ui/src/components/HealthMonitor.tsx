@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { startPolling } from '@/lib/polling';
 import { apiClient, HealthStatus } from '@/lib/api';
 import { Card, CardHeader, CardSkeleton } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/Shared';
@@ -11,7 +12,7 @@ export default function HealthMonitor() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchHealth = async () => {
+  const fetchHealth = useCallback(async () => {
     try {
       setLoading(true);
       const data = await apiClient.getHealth();
@@ -22,36 +23,74 @@ export default function HealthMonitor() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchHealth();
-    const interval = setInterval(fetchHealth, 30000);
     let active = true;
+    let connecting = false;
     let socket: WebSocket | undefined;
     let retry: ReturnType<typeof setTimeout> | undefined;
+    let retryDelay = 5000;
+    let lastSocketUpdate = 0;
+    const available = () => document.visibilityState !== 'hidden' && navigator.onLine !== false;
+    const stopPolling = startPolling(async () => {
+      // A live socket already supplies the data. HTTP recovers stale/silent sockets.
+      if (!lastSocketUpdate || Date.now() - lastSocketUpdate >= 90000) await fetchHealth();
+    });
+    function retryConnection() {
+      if (!active || !available() || retry) return;
+      retry = setTimeout(() => { retry = undefined; void connect(); }, retryDelay);
+      retryDelay = Math.min(retryDelay * 2, 60000);
+    }
     async function connect() {
+      if (!active || !available() || connecting || (socket && socket.readyState < WebSocket.CLOSING)) return;
+      connecting = true;
       try {
-        const response = await fetch('/connection-info', {cache: 'no-store'});
-        if (!response.ok || !active) return;
+        const response = await fetch('/connection-info', {cache: 'no-store', signal: AbortSignal.timeout(10000)});
+        if (!response.ok) { retryConnection(); return; }
         const config = await response.json();
-        if (!active) return;
+        if (!active || !available()) return;
         socket = new WebSocket(config.health_websocket_url);
         socket.onmessage = event => {
-          if (!active) return;
+          if (!active || !available()) return;
           try {
             const data = JSON.parse(event.data) as {type: string; timestamp: string; apis: Record<string, {status: string; latency_ms: number; last_checked: string}>};
             if (data.type !== 'health_update' || !data.apis) return;
+            lastSocketUpdate = Date.now();
+            retryDelay = 5000;
             setHealth({status: 'success', timestamp: data.timestamp, apis: Object.fromEntries(Object.entries(data.apis).map(([name, info]) => [name, {...info, last_check: info.last_checked}]))});
             setLoading(false); setError(null);
-          } catch { /* Keep the HTTP refresh path when an update cannot be decoded. */ }
+          } catch { /* HTTP polling recovers malformed or silent streams. */ }
         };
-        socket.onclose = () => { if (active) retry = setTimeout(connect, 5000); };
-      } catch { /* HTTP polling remains available when WebSockets cannot connect. */ }
+        socket.onclose = retryConnection;
+        socket.onerror = () => socket?.close();
+      } catch { retryConnection(); }
+      finally { connecting = false; }
     }
+    function connectionVisibility() {
+      if (retry) { clearTimeout(retry); retry = undefined; }
+      if (available()) {
+        // Replace a closing socket immediately when returning to the tab.
+        if (socket && socket.readyState >= WebSocket.CLOSING) socket = undefined;
+        void connect();
+      } else {
+        if (socket) { socket.onclose = null; socket.close(); socket = undefined; }
+        lastSocketUpdate = 0;
+      }
+    }
+    document.addEventListener('visibilitychange', connectionVisibility);
+    window.addEventListener('online', connectionVisibility);
+    window.addEventListener('offline', connectionVisibility);
     void connect();
-    return () => { active = false; clearInterval(interval); if (retry) clearTimeout(retry); socket?.close(); };
-  }, []);
+    return () => {
+      active = false; stopPolling();
+      if (retry) clearTimeout(retry);
+      if (socket) { socket.onclose = null; socket.close(); }
+      document.removeEventListener('visibilitychange', connectionVisibility);
+      window.removeEventListener('online', connectionVisibility);
+      window.removeEventListener('offline', connectionVisibility);
+    };
+  }, [fetchHealth]);
 
   if (loading && !health) return <CardSkeleton rows={4} />;
 

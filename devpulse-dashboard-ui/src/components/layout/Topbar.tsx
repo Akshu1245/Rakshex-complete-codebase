@@ -1,6 +1,7 @@
 'use client';
 
 import { Badge } from '@/components/ui/Shared';
+import { startPolling } from '@/lib/polling';
 import AccountMenu from '@/components/AccountMenu';
 import { useEffect, useState } from 'react';
 import { apiFetch, getBackendStatus } from '@/lib/api';
@@ -13,9 +14,8 @@ export default function Topbar() {
       try { await apiFetch('/health'); } catch {}
       if (active) setConnected(getBackendStatus().online);
     }
-    void probe();
-    const timer = setInterval(probe, 30000);
-    return () => { active = false; clearInterval(timer); };
+    const stop = startPolling(probe);
+    return () => { active = false; stop(); };
   }, []);
   return (
     <header className="h-16 border-b border-zinc-800/40 bg-zinc-950/80 backdrop-blur-xl sticky top-0 z-20 flex items-center justify-between px-8">

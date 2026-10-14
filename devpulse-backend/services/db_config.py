@@ -7,8 +7,8 @@ so dev/test workflows keep working without PostgreSQL.
 
 Environment variables:
   DATABASE_URL    — postgresql+asyncpg://user:pass@host:5432/devpulse
-  DB_POOL_MIN     — minimum pool size  (default: 5)
-  DB_POOL_MAX     — maximum pool size  (default: 20)
+  DB_POOL_MIN     — retained pool capacity (default: 1 in free resource profile)
+  DB_POOL_MAX     — total pool capacity (default: 3 in free resource profile)
   DB_POOL_RECYCLE — connection recycle seconds (default: 1800)
   SQL_ECHO        — echo SQL statements (default: false)
 """
@@ -17,6 +17,7 @@ import logging
 import ssl
 from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
 from typing import AsyncGenerator
+from services.resource_config import POOL_MIN, POOL_MAX
 
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
@@ -62,8 +63,8 @@ _engine_kwargs: dict = {
 }
 
 if IS_POSTGRES:
-    _pool_min = int(os.getenv("DB_POOL_MIN", "5"))
-    _pool_max = int(os.getenv("DB_POOL_MAX", "20"))
+    _pool_min = POOL_MIN
+    _pool_max = POOL_MAX
     _engine_kwargs.update(
         pool_size=_pool_min,
         max_overflow=max(0, _pool_max - _pool_min),

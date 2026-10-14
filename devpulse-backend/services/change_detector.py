@@ -13,6 +13,7 @@ from typing import Dict, Any, List, Optional
 from collections import OrderedDict
 
 import httpx
+from services.resource_config import CHANGE_INTERVAL
 
 logger = logging.getLogger(__name__)
 
@@ -151,7 +152,7 @@ async def _detection_loop():
             raise
         except Exception as e:
             logger.error(f"[CHANGE] Loop error: {e}")
-        await asyncio.sleep(300)
+        await asyncio.sleep(CHANGE_INTERVAL)
 
 
 async def start_detector():

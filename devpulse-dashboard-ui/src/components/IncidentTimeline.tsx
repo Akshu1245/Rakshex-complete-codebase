@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { startPolling } from '@/lib/polling';
 import { apiClient, Incident, IncidentStats } from '@/lib/api';
 import { Card, CardHeader, CardSkeleton } from '@/components/ui/Card';
 import { Badge, EmptyState } from '@/components/ui/Shared';
@@ -26,18 +27,7 @@ export default function IncidentTimeline() {
     setLoading(false);
   }, [filter]);
 
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      void fetchData();
-    }, 0);
-    const intervalId = setInterval(() => {
-      void fetchData();
-    }, 30000);
-    return () => {
-      clearTimeout(timeoutId);
-      clearInterval(intervalId);
-    };
-  }, [fetchData]);
+  useEffect(() => startPolling(fetchData), [fetchData]);
 
   const handleCreate = async () => {
     if (!newInc.api_name || !newInc.title) return;
