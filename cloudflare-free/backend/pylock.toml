@@ -1,0 +1,147 @@
+lock-version = "1.0"
+created-by = "uv"
+requires-python = ">=3.14.2"
+
+[[packages]]
+name = "annotated-doc"
+version = "0.0.5"
+wheels = [{ url = "https://files.pythonhosted.org/packages/3e/30/e900b21425a860e195f32e37657aa1f7c7f2b1bfb26f03ca209b90933c06/annotated_doc-0.0.5-py3-none-any.whl", upload-time = 2026-07-28T13:50:57Z, size = 5302, hashes = { sha256 = "117bac03a25ede5df5440e855b32d556049ca169ead221505badf432fed4b101" } }]
+
+[[packages]]
+name = "annotated-types"
+version = "0.8.0"
+wheels = [{ url = "https://files.pythonhosted.org/packages/99/91/8acff4f5e50511b911bbccb72b8628a49c68ce14148cd9f6431094859a90/annotated_types-0.8.0-py3-none-any.whl", upload-time = 2026-07-23T20:16:12Z, size = 13427, hashes = { sha256 = "f072f4d804ea359e4eaf198b1af7a8b0943881a87f31bb764f8bf219bb9419e0" } }]
+
+[[packages]]
+name = "anyio"
+version = "4.15.1"
+wheels = [{ url = "https://files.pythonhosted.org/packages/12/b8/4bd346e22b28902df4d651910f5242c28d84e4a5c2435ca5c3f797ed7e2e/anyio-4.15.1-py3-none-any.whl", upload-time = 2026-09-05T10:42:37Z, size = 132079, hashes = { sha256 = "6152fdbbf9a77fdec97731721bebf7c4c44f7c29b424b0065826173efc7ed101" } }]
+
+[[packages]]
+name = "asn1crypto"
+version = "1.5.1"
+wheels = [{ url = "https://files.pythonhosted.org/packages/c9/7f/09065fd9e27da0eda08b4d6897f1c13535066174cc023af248fc2a8d5e5a/asn1crypto-1.5.1-py2.py3-none-any.whl", upload-time = 2022-03-15T14:46:51Z, size = 105045, hashes = { sha256 = "db4e40728b728508912cbb3d44f19ce188f218e9eba635821bb4b68564f8fd67" } }]
+
+[[packages]]
+name = "deprecated"
+version = "3.0.0"
+wheels = [{ url = "https://files.pythonhosted.org/packages/83/ae/676feae8e4644a6d7169951a97f61c56f416c73f67bf1761f2461d75cc81/deprecated-3.0.0-py3-none-any.whl", upload-time = 2026-09-26T13:58:09Z, size = 21912, hashes = { sha256 = "58204cf4a7f6270d547af5c278ee7a6bb56045a4b3d8441a1cd11660f41b7939" } }]
+
+[[packages]]
+name = "fastapi"
+version = "0.143.0"
+wheels = [{ url = "https://files.pythonhosted.org/packages/bd/f4/27e386913417ad32aae42bba48b0c0cce40e9ff2fba1a871ca2702c37324/fastapi-0.143.0-py3-none-any.whl", upload-time = 2026-10-08T12:29:44Z, size = 144665, hashes = { sha256 = "3e9395fd35276425b61b516a31fdd7c77fe2af83e41b4da22e30696fb1304c5d" } }]
+
+[[packages]]
+name = "httpx"
+version = "0.28.1"
+wheels = [
+    { url = "https://cdn.jsdelivr.net/pyodide/v314.0.7/full/httpx-0.28.1-py3-none-any.whl", hashes = { sha256 = "830cb1ec73bb4c46f2e38ebeb3dd50ffb45f62b804dd040519d34fe36f8fdfc7" } },
+    { url = "https://files.pythonhosted.org/packages/2a/39/e50c7c3a983047577ee07d2a9e53faf5a69493943ec3f6a384bdc792deb2/httpx-0.28.1-py3-none-any.whl", hashes = { sha256 = "d909fcccc110f8c7faf814ca82a9a4d816bc5a6dbfea25d6591d6985b8ba59ad" } },
+]
+
+[[packages]]
+name = "idna"
+version = "3.20"
+wheels = [{ url = "https://files.pythonhosted.org/packages/58/a2/bb081bab032533a855d44de1d56f8e8426114ff1ba5d1f07a438a0a654f8/idna-3.20-py3-none-any.whl", upload-time = 2026-09-17T14:11:03Z, size = 69583, hashes = { sha256 = "ab7ae7122974553370f0bdb919e1a960b2cd1bc1ef0276416d896db81c14582c" } }]
+
+[[packages]]
+name = "limits"
+version = "5.8.0"
+wheels = [{ url = "https://files.pythonhosted.org/packages/b9/98/cb5ca20618d205a09d5bec7591fbc4130369c7e6308d9a676a28ff3ab22c/limits-5.8.0-py3-none-any.whl", upload-time = 2026-02-05T07:17:34Z, size = 60954, hashes = { sha256 = "ae1b008a43eb43073c3c579398bd4eb4c795de60952532dc24720ab45e1ac6b8" } }]
+
+[[packages]]
+name = "opentelemetry-api"
+version = "1.45.1"
+wheels = [{ url = "https://files.pythonhosted.org/packages/1e/41/f7dcf80b81ee8e71c1a2b59f14208bc723edbd89ed027a73b175abf6348e/opentelemetry_api-1.45.1-py3-none-any.whl", upload-time = 2026-10-06T17:32:33Z, size = 60256, hashes = { sha256 = "b31553efa588ae44bc306f863c785c5333a9ecc091248c6ee68b4b6c87fdedfb" } }]
+
+[[packages]]
+name = "packaging"
+version = "26.3"
+wheels = [{ url = "https://files.pythonhosted.org/packages/63/34/ba1c580383c9eada3711951fef0795c80b829a078d72188184bcab9dd527/packaging-26.3-py3-none-any.whl", upload-time = 2026-08-04T18:15:27Z, size = 129956, hashes = { sha256 = "d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c" } }]
+
+[[packages]]
+name = "pg8000"
+version = "1.31.5"
+wheels = [{ url = "https://files.pythonhosted.org/packages/45/07/5fd183858dff4d24840f07fc845f213cd371a19958558607ba22035dadd7/pg8000-1.31.5-py3-none-any.whl", upload-time = 2025-09-14T09:16:47Z, size = 57816, hashes = { sha256 = "0af2c1926b153307639868d2ee5cef6cd3a7d07448e12736989b10e1d491e201" } }]
+
+[[packages]]
+name = "pydantic"
+version = "2.14.1"
+wheels = [{ url = "https://files.pythonhosted.org/packages/35/ea/a56b9fe5066f3537b7882f77e9c5dfb26d8c2eefdaed9b5fc73d57b4dc22/pydantic-2.14.1-py3-none-any.whl", upload-time = 2026-10-11T18:37:53Z, size = 488106, hashes = { sha256 = "9195d967ec791692a04438115466764fb8b9a27b31f14a760437694f40d6b454" } }]
+
+[[packages]]
+name = "pydantic-core"
+version = "2.50.1"
+wheels = [{ url = "https://files.pythonhosted.org/packages/10/08/21a3f237b264389f6219d053ee78fc1b5c2fd402c1b1cb2b6cb8b85f9834/pydantic_core-2.50.1-cp314-cp314-pyemscripten_2026_0_wasm32.whl", upload-time = 2026-10-11T18:33:28Z, size = 1484400, hashes = { sha256 = "99ba9bc2b8062ea0c326a990f7f00e6530c23579de66dd246e72c4cafef950a5" } }]
+
+[[packages]]
+name = "pyjwt"
+version = "2.15.1"
+wheels = [{ url = "https://files.pythonhosted.org/packages/50/ca/44de4e75f8aadc457f0634be3b542815078ded46dca30efb960edeecad6e/pyjwt-2.15.1-py3-none-any.whl", upload-time = 2026-09-28T18:40:41Z, size = 33860, hashes = { sha256 = "42d59d631f7768a1028a64c7ff581a9bf7519804daf91fc5b6c56e30eec5e193" } }]
+
+[[packages]]
+name = "python-dateutil"
+version = "2.9.0.post0"
+wheels = [
+    { url = "https://cdn.jsdelivr.net/pyodide/v314.0.7/full/python_dateutil-2.9.0.post0-py2.py3-none-any.whl", hashes = { sha256 = "9b13365edf9c188f570baf9c540bbb3029ada2a2dacb9694b3659941693ee9e5" } },
+    { url = "https://files.pythonhosted.org/packages/ec/57/56b9bcc3c9c6a792fcbaf139543cee77261f3651ca9da0c93f5c1221264b/python_dateutil-2.9.0.post0-py2.py3-none-any.whl", hashes = { sha256 = "a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427" } },
+]
+
+[[packages]]
+name = "python-dotenv"
+version = "1.2.4"
+wheels = [{ url = "https://files.pythonhosted.org/packages/60/d1/38f3a3405989a89ac18390803e70c6ad7c7760da4f9b83cbeca0c44a0c72/python_dotenv-1.2.4-py3-none-any.whl", upload-time = 2026-10-01T05:36:08Z, size = 23266, hashes = { sha256 = "42269a8a5b3fd54ffa6f3d84b18abed50064717576b4ecf03dc4a55d8aa04fdc" } }]
+
+[[packages]]
+name = "pyyaml"
+version = "6.0.3"
+wheels = [{ url = "https://cdn.jsdelivr.net/pyodide/v314.0.7/full/pyyaml-6.0.3-cp314-cp314-pyemscripten_2026_0_wasm32.whl", hashes = { sha256 = "a05d2a48c13ed72a8c60c73b30b753a25c3a591bb66c15428b7e95e69a9e806f" } }]
+
+[[packages]]
+name = "scramp"
+version = "1.4.17"
+wheels = [{ url = "https://files.pythonhosted.org/packages/7f/99/0e372781210cd36b2f2727e5be3ea93066edad7edd6fa2dfdec3b3e28845/scramp-1.4.17-py3-none-any.whl", upload-time = 2026-08-07T17:19:39Z, size = 16131, hashes = { sha256 = "a4e3fd2e8169461a28a13777a166d3da94274454f0714a7d3023fee124474ac8" } }]
+
+[[packages]]
+name = "six"
+version = "1.17.0"
+wheels = [
+    { url = "https://cdn.jsdelivr.net/pyodide/v314.0.7/full/six-1.17.0-py2.py3-none-any.whl", hashes = { sha256 = "228c50f73aa7addf2c2ccf2979c256802a59ab69cad8152b31b9443cc8140f42" } },
+    { url = "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl", hashes = { sha256 = "4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274" } },
+]
+
+[[packages]]
+name = "slowapi"
+version = "0.1.10"
+wheels = [{ url = "https://files.pythonhosted.org/packages/c4/8b/1d359f38706b4097d9a943bf8bd22599f537de4cbaff1e622d3e3936e164/slowapi-0.1.10-py3-none-any.whl", upload-time = 2026-06-13T11:59:30Z, size = 14921, hashes = { sha256 = "3acb61561dc9d687e3d3669362ff6a439de9ba44e2fed3a9c165da26b4b83e28" } }]
+
+[[packages]]
+name = "sqlalchemy"
+version = "2.0.39"
+wheels = [{ url = "https://files.pythonhosted.org/packages/7b/0f/d69904cb7d17e65c65713303a244ec91fd3c96677baf1d6331457fd47e16/sqlalchemy-2.0.39-py3-none-any.whl", upload-time = 2025-03-11T19:20:33Z, size = 1898621, hashes = { sha256 = "a1c6b0a5e3e326a466d809b651c63f278b1256146a377a528b6938a279da334f" } }]
+
+[[packages]]
+name = "starlette"
+version = "1.8.0"
+wheels = [{ url = "https://files.pythonhosted.org/packages/c1/b0/5742e4ac7af5eb58ec3470a537a49d7aa507e5539413e504b3a65ef50ba8/starlette-1.8.0-py3-none-any.whl", upload-time = 2026-10-13T07:54:38Z, size = 79612, hashes = { sha256 = "dfdd6b29c26483288088d990eee59631dedadd66ce20d203402a7ca8e3c4656f" } }]
+
+[[packages]]
+name = "typing-extensions"
+version = "4.16.0"
+wheels = [{ url = "https://files.pythonhosted.org/packages/49/d3/b8441a820a491ddfc024b0b0cf0393375b75ea13866d9c66727e54c2fc80/typing_extensions-4.16.0-py3-none-any.whl", upload-time = 2026-07-02T08:40:04Z, size = 45571, hashes = { sha256 = "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8" } }]
+
+[[packages]]
+name = "typing-inspection"
+version = "0.4.4"
+wheels = [{ url = "https://files.pythonhosted.org/packages/67/81/4add07e5172b7ac40d8ed5ff580409a7801a4fe26d529bdd915401dabfbe/typing_inspection-0.4.4-py3-none-any.whl", upload-time = 2026-08-12T12:37:24Z, size = 14750, hashes = { sha256 = "65b8397ba37ccbce054456aaccddfc91e6e3083c92824df348d96ca832f3f147" } }]
+
+[[packages]]
+name = "workers-runtime-sdk"
+version = "1.9.3"
+wheels = [{ url = "https://files.pythonhosted.org/packages/aa/06/9472faa56bf7f3925d1128fda0532a9ec8adf3291a6003a4cf9c9d7972d0/workers_runtime_sdk-1.9.3-py3-none-any.whl", upload-time = 2026-10-06T04:01:16Z, size = 39541, hashes = { sha256 = "b3982ef01b824703258bbdd2c65980b8acc64f9dc5797f6b193eaf4f0808860f" } }]
+
+[[packages]]
+name = "wrapt"
+version = "2.5.1"
+wheels = [{ url = "https://files.pythonhosted.org/packages/bc/0c/7da7513ddcc8f1d831ec4bfbedc9f7f174ecb91042bc16916fc1e0d06b22/wrapt-2.5.1-py3-none-any.whl", upload-time = 2026-10-14T00:39:37Z, size = 81849, hashes = { sha256 = "c6e6c226b1ca5402d7ae5fb34a0d21f1b49124fe4200e5884d1e19e53c47ac1d" } }]

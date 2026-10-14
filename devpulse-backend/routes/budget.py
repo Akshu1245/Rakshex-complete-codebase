@@ -39,6 +39,7 @@ from services.database import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+from services.storage_crypto import encrypt_for_storage
 
 # =============================================================================
 # REQUEST MODELS
@@ -124,7 +125,7 @@ async def create_api_key(req: AddApiKeyRequest, user: Dict = Depends(require_aut
             return {"status": "error", "message": error_msg}
         
         # Encrypt the API key with AES-256
-        encrypted_key = encrypt_aes256(req.api_key)
+        encrypted_key = await encrypt_for_storage(req.api_key)
         
         key_id = await add_api_key(
             user_id=user["id"],
@@ -164,7 +165,8 @@ async def list_api_keys(user: Dict = Depends(require_auth)) -> Dict[str, Any]:
         
         return {
             "status": "success",
-            "keys": keys,
+            "keys": [{**{name: value for name, value in key.items() if name != 'encrypted_key'},
+                      "masked_key": "••••••••"} for key in keys],
             "count": len(keys),
         }
     except Exception as e:
@@ -185,7 +187,7 @@ async def update_key(
         if req.key_name is not None:
             updates["key_name"] = sanitize_for_storage(req.key_name)
         if req.is_active is not None:
-            updates["is_active"] = 1 if req.is_active else 0
+            updates["is_active"] = req.is_active
         if req.budget_limit is not None:
             updates["budget_limit"] = req.budget_limit
         if req.budget_period is not None:

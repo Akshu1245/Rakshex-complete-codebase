@@ -70,7 +70,10 @@ jobs:
         run: docker compose down
 
   backend-tests:
-    name: Backend Tests (Python)
+    name: Backend Tests (${{ matrix.database_mode }})
+    strategy:
+      matrix:
+        database_mode: [async, workers]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -98,6 +101,8 @@ jobs:
       - name: Run tests
         working-directory: devpulse-backend
         run: python -m pytest tests/ -v --tb=short
+        env:
+          TEST_SYNC_DATABASE: ${{ matrix.database_mode == 'workers' && 'true' || 'false' }}
 
   frontend-tests:
     name: Frontend Tests (Node.js)
@@ -130,6 +135,13 @@ jobs:
       - name: Build frontend and runtime API routes
         working-directory: devpulse-dashboard-ui
         run: npm run build
+
+      - name: Verify free edge routing and static frontend build
+        run: |
+          node --test cloudflare-free/frontend/worker.test.mjs
+          python cloudflare-free/build_frontend.py
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
 
   frontend-e2e:
     name: Frontend E2E Tests (Cypress)

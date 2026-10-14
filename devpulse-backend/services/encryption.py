@@ -1,5 +1,9 @@
 """
-AES-256 Encryption Service - Production-grade encryption for DevPulse.
+Legacy storage codec and shared signing utilities.
+
+New API-key writes use services.storage_crypto (standard AES-256-GCM).
+The historical codec below is retained for compatibility with existing data;
+its HMAC-derived stream construction is not AES.
 
 Provides AES-256-GCM encryption/decryption for:
 - API keys stored in the database
@@ -40,12 +44,16 @@ def _get_master_key() -> bytes:
     Get the 256-bit master encryption key.
     Priority: DEVPULSE_ENCRYPTION_KEY env var > derived from JWT_SECRET.
     """
-    if _MASTER_KEY_ENV and len(_MASTER_KEY_ENV) >= 32:
+    master_key_env = _MASTER_KEY_ENV
+    if os.getenv('WORKERS_RUNTIME') == 'true':
+        from services.runtime_context import required_secret
+        master_key_env = required_secret('DEVPULSE_ENCRYPTION_KEY')
+    if master_key_env and len(master_key_env) >= 32:
         # Use the environment variable directly (must be base64 or hex)
         try:
-            return base64.b64decode(_MASTER_KEY_ENV)[:KEY_SIZE]
+            return base64.b64decode(master_key_env)[:KEY_SIZE]
         except Exception:
-            return hashlib.sha256(_MASTER_KEY_ENV.encode()).digest()
+            return hashlib.sha256(master_key_env.encode()).digest()
     
     # Derive from JWT_SECRET using PBKDF2
     return hashlib.pbkdf2_hmac(
@@ -83,12 +91,10 @@ def _xor_bytes(a: bytes, b: bytes) -> bytes:
 
 def _aes_block_encrypt(key: bytes, block: bytes) -> bytes:
     """
-    Single AES-256 block encryption using a minimal implementation.
-    For production, this uses hashlib-based stream cipher construction.
+    Historical HMAC-based keystream block (not a standard AES block).
     """
     # Use HMAC-SHA256 as a PRF (Pseudo-Random Function) to create
-    # a deterministic block cipher. While not standard AES, this provides
-    # equivalent 256-bit security for our use case.
+    # a deterministic legacy keystream. Retained only for old-format records.
     return hmac.new(key, block, hashlib.sha256).digest()[:16]
 
 
@@ -245,6 +251,9 @@ def sign_request(payload: str, secret: Optional[str] = None) -> str:
     Sign a request payload using HMAC-SHA256.
     Used for webhook verification and request integrity.
     """
+    if secret is None and os.getenv('WORKERS_RUNTIME') == 'true':
+        from services.runtime_context import required_secret
+        secret = required_secret('JWT_SECRET')
     key = (secret or _JWT_SECRET).encode("utf-8")
     return hmac.new(key, payload.encode("utf-8"), hashlib.sha256).hexdigest()
 

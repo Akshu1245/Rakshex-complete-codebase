@@ -113,6 +113,20 @@ async def _redis_increment(identifier: str, window: int) -> Tuple[int, int]:
     Increment the counter for *identifier* using a Redis sorted set
     sliding window.  Returns ``(current_count, reset_epoch)``.
     """
+    if os.getenv('WORKERS_RUNTIME') == 'true':
+        # All session actors share durable counters; re-login or eviction must
+        # not reset an account's request quota. No Redis service is required.
+        import hashlib
+        from services.runtime_context import required_binding
+        now = int(time.time())
+        bucket = now // window
+        key = hashlib.sha256(identifier.encode()).hexdigest() + ':' + str(bucket)
+        reset = (bucket + 1) * window
+        row = await required_binding('HEALTH_DB').prepare(
+            'INSERT INTO rate_counters(id,hits,expires) VALUES(?,1,?) '
+            'ON CONFLICT(id) DO UPDATE SET hits=hits+1 RETURNING hits'
+        ).bind(key, reset + window).first()
+        return int(row.hits), reset
     r = await _get_redis()
     now = time.time()
     window_start = now - window
