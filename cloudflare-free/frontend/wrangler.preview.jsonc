@@ -1,0 +1,35 @@
+{
+  "name": "rakshex-free-frontend-preview",
+  "main": "worker.mjs",
+  "account_id": "b3225f198c6d2286afbb6f416c230f10",
+  "compatibility_date": "2026-10-14",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "workers_dev": true,
+  "services": [
+    {
+      "binding": "BACKEND",
+      "service": "rakshex-free-backend-preview"
+    }
+  ],
+  "assets": {
+    "directory": "build/out",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page",
+    "run_worker_first": [
+      "/api",
+      "/api/*",
+      "/ws/*",
+      "/health",
+      "/openapi.json",
+      "/backend-docs",
+      "/connection-info"
+    ]
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 0.1
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "name": "rakshex-free-backend",
+  "main": "src/entry.py",
+  "account_id": "b3225f198c6d2286afbb6f416c230f10",
+  "compatibility_date": "2026-10-14",
+  "compatibility_flags": [
+    "python_workers"
+  ],
+  "workers_dev": true,
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "APP_SESSION",
+        "class_name": "AppSession"
+      }
+    ]
+  },
+  "unsafe": {
+    "metadata": {
+      "exports": {
+        "default": {
+          "type": "worker"
+        },
+        "AppSession": {
+          "type": "durable-object",
+          "storage": "sqlite"
+        }
+      }
+    }
+  },
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "1379ebde7849424392f78185001d561f"
+    }
+  ],
+  "d1_databases": [
+    {
+      "binding": "HEALTH_DB",
+      "database_name": "rakshex-free-runtime",
+      "database_id": "f7e5f19b-8273-469f-bd64-8106f448b0dd"
+    }
+  ],
+  "secrets_store_secrets": [
+    {
+      "binding": "JWT_SECRET",
+      "store_id": "7f1fc7c778ff41cab15f8726f1f51625",
+      "secret_name": "DEVPULSE_JWT_SECRET"
+    },
+    {
+      "binding": "DEVPULSE_ENCRYPTION_KEY",
+      "store_id": "7f1fc7c778ff41cab15f8726f1f51625",
+      "secret_name": "DEVPULSE_DEVPULSE_ENCRYPTION_KEY"
+    }
+  ],
+  "python_modules": {
+    "exclude": [
+      "**/*.pyc",
+      "**/__pycache__/**",
+      "sqlalchemy/testing/**",
+      "sqlalchemy/dialects/mysql/**",
+      "sqlalchemy/dialects/mssql/**",
+      "sqlalchemy/dialects/oracle/**",
+      "sqlalchemy/dialects/sqlite/**",
+      "yaml/_yaml*.so"
+    ]
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 0.1
+  },
+  "triggers": {
+    "crons": [
+      "*/5 * * * *"
+    ]
+  }
+}

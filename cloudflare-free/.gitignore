@@ -1,0 +1,4 @@
+backend/build/
+frontend/build/
+*.enc
+.dev.vars*

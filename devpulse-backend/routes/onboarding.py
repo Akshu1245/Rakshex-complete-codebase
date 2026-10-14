@@ -11,7 +11,7 @@ import logging
 from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, List
 
-import bcrypt
+from services.passwords import hash_password
 import jwt
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -45,9 +45,7 @@ class CompleteStepRequest(BaseModel):
 async def signup_with_trial(req: OnboardingSignupRequest) -> Dict[str, Any]:
     """Register a new user with a 14-day Pro trial."""
     try:
-        password_hash = bcrypt.hashpw(
-            req.password.encode("utf-8"), bcrypt.gensalt()
-        ).decode("utf-8")
+        password_hash = await hash_password(req.password)
 
         user_id = await create_user(req.email, req.username, password_hash)
         if user_id is None:

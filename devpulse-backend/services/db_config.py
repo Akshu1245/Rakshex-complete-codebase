@@ -76,13 +76,18 @@ if IS_POSTGRES:
         _engine_kwargs["connect_args"] = _connect_args
 
 # ── Engine & Session Factory ────────────────────────────────────────────────
-engine: AsyncEngine = create_async_engine(DATABASE_URL, **_engine_kwargs)
-
-AsyncSessionLocal: async_sessionmaker[AsyncSession] = async_sessionmaker(
-    engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-)
+if os.getenv('WORKERS_RUNTIME') == 'true':
+    from services.workers_database import build_database, hyperdrive_connection
+    engine, AsyncSessionLocal = build_database('postgresql+pg8000://', creator=hyperdrive_connection)
+elif os.getenv('TEST_SYNC_DATABASE') == 'true':
+    # Exercise the same facade against SQLite in CI, without the Workers SDK.
+    from services.workers_database import build_database
+    engine, AsyncSessionLocal = build_database(DATABASE_URL.replace('sqlite+aiosqlite:', 'sqlite:'))
+else:
+    engine: AsyncEngine = create_async_engine(DATABASE_URL, **_engine_kwargs)
+    AsyncSessionLocal: async_sessionmaker[AsyncSession] = async_sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False,
+    )
 
 
 # ── FastAPI dependency ──────────────────────────────────────────────────────

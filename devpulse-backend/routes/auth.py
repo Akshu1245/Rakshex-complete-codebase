@@ -13,7 +13,7 @@ from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, Optional
 
 import jwt
-import bcrypt
+from services.passwords import hash_password, verify_password
 from fastapi import APIRouter, Request, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field, field_validator
@@ -26,12 +26,19 @@ router = APIRouter()
 
 # JWT configuration
 JWT_SECRET = os.getenv("JWT_SECRET", "devpulse-secret-key-change-in-production")
-if os.getenv("ENV") == "production" and (len(JWT_SECRET) < 32 or JWT_SECRET == "devpulse-secret-key-change-in-production"):
+if os.getenv("ENV") == "production" and os.getenv('WORKERS_RUNTIME') != 'true' and (len(JWT_SECRET) < 32 or JWT_SECRET == "devpulse-secret-key-change-in-production"):
     raise RuntimeError("Production JWT_SECRET is missing or unsafe")
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRY_HOURS = int(os.getenv("JWT_EXPIRY_HOURS", "24"))
 
 security = HTTPBearer(auto_error=False)
+
+
+def signing_secret():
+    if os.getenv('WORKERS_RUNTIME') == 'true':
+        from services.runtime_context import required_secret
+        return required_secret('JWT_SECRET')
+    return JWT_SECRET
 
 
 async def expire_trial(user):
@@ -100,13 +107,13 @@ def create_token(user_id: int, email: str) -> str:
         "exp": datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRY_HOURS),
         "iat": datetime.now(timezone.utc),
     }
-    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    return jwt.encode(payload, signing_secret(), algorithm=JWT_ALGORITHM)
 
 
 def verify_token(token: str) -> Optional[Dict[str, Any]]:
     """Verify and decode a JWT token."""
     try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        payload = jwt.decode(token, signing_secret(), algorithms=[JWT_ALGORITHM])
         if not isinstance(payload.get("sub"), str) or not payload["sub"].isdigit():
             return None
         return payload
@@ -160,10 +167,7 @@ async def register(req: RegisterRequest) -> Dict[str, Any]:
     """Register a new user account."""
     try:
         # Hash password
-        password_hash = bcrypt.hashpw(
-            req.password.encode("utf-8"),
-            bcrypt.gensalt()
-        ).decode("utf-8")
+        password_hash = await hash_password(req.password)
         
         user_id = await create_user(req.email, req.username, password_hash)
         
@@ -207,10 +211,7 @@ async def login(req: LoginRequest) -> Dict[str, Any]:
             }
         
         # Verify password
-        if not bcrypt.checkpw(
-            req.password.encode("utf-8"),
-            user["password_hash"].encode("utf-8")
-        ):
+        if not await verify_password(req.password, user["password_hash"]):
             return {
                 "status": "error",
                 "message": "Invalid email or password"

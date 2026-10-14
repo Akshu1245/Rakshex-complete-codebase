@@ -1,5 +1,7 @@
 # DevPulse backend on Cloudflare
 
+The free Python/Durable Object runtime now supersedes this Container path. See [the current runtime](../cloudflare-free/README.md). The historical Container configuration is retained for reference and must not be used for the owner's zero-spend deployment.
+
 ## Zero-spend requirement (14 October 2026)
 
 The owner requires free services only. Do not upgrade the account or enable paid resources. The Container configuration below is retained for reference; it is **not** the free deployment target.

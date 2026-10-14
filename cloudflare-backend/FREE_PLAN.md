@@ -1,5 +1,7 @@
 # Free-only resource policy and migration status
 
+The runtime migration described as outstanding below has now been implemented in [`cloudflare-free`](../cloudflare-free/README.md). This document preserves the earlier resource-optimization analysis; use the current runtime document for deployment details and limits.
+
 The owner's requirement is zero spending. No account upgrade, paid fallback, or paid provider call is authorized by this configuration. Existing Cloudflare services and PostgreSQL data must be preserved. A free quota is finite: availability can stop at quota exhaustion. This document does not claim a deployed free replacement.
 
 ## Implemented resource reductions

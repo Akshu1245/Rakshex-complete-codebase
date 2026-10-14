@@ -5,6 +5,8 @@ from datetime import datetime, timezone, timedelta
 from sqlalchemy import select
 from services.db_config import AsyncSessionLocal
 from models.tables import User
+from models.tables import ApiKey
+from services.storage_crypto import decrypt_from_storage
 
 
 async def signup(client, trial=False):
@@ -14,6 +16,31 @@ async def signup(client, trial=False):
     assert result.json()["status"] == "success", result.text
     data = result.json()
     return data, {"Authorization": "Bearer " + data["token"]}
+
+
+@pytest.mark.asyncio
+async def test_key_storage_period_masking_and_account_isolation(client):
+    first, a = await signup(client)
+    second, b = await signup(client)
+    plaintext = 'not-a-real-provider-key-12345'
+    result = (await client.post('/api/keys', headers=a, json={
+        'key_name': 'integration key', 'api_provider': 'custom', 'api_key': plaintext,
+        'budget_period': 'weekly', 'budget_limit': 10,
+    })).json()
+    assert result['status'] == 'success', result
+    key_id = result['key']['id']
+    async with AsyncSessionLocal() as session:
+        row = await session.get(ApiKey, key_id)
+        assert row.budget_period == 'weekly'
+        assert row.encrypted_key.startswith('v2:')
+        assert await decrypt_from_storage(row.encrypted_key) == plaintext
+    listed = (await client.get('/api/keys', headers=a)).json()
+    assert listed['count'] == 1 and 'encrypted_key' not in listed['keys'][0]
+    budget = (await client.get('/api/budget', headers=a)).json()
+    assert 'encrypted_key' not in budget['keys'][0]
+    assert (await client.get('/api/keys', headers=b)).json()['count'] == 0
+    assert (await client.put(f'/api/keys/{key_id}', headers=b, json={'is_active': False})).json()['status'] == 'error'
+    assert (await client.put(f'/api/keys/{key_id}', headers=a, json={'is_active': False})).json()['status'] == 'success'
 
 
 @pytest.mark.asyncio

@@ -71,7 +71,9 @@ from services.change_detector import start_detector, stop_detector
 from services.posthog_analytics import init_analytics
 
 # Rate limiter instance
-limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute"])
+# The actual per-user/IP limiter below remains active. SlowAPI's unused
+# decorator limiter starts a cleanup thread, which Workers does not support.
+limiter = None if os.getenv('WORKERS_RUNTIME') == 'true' else Limiter(key_func=get_remote_address, default_limits=["60/minute"])
 
 
 # =============================================================================
@@ -123,6 +125,11 @@ def print_startup_banner(port: str) -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan — startup / shutdown."""
+    if os.getenv('WORKERS_RUNTIME') == 'true':
+        # Workers invokes ASGI lifespan per HTTP request. Never create tables,
+        # launch indefinite loops or dispose another request's engine here.
+        yield
+        return
     # STARTUP
     validate_environment()
     port = os.getenv("PORT", "8000")
