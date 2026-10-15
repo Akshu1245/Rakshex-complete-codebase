@@ -73,4 +73,20 @@ describe("stripe-node SDK-aware impact", () => {
     expect(site).toMatchObject({ method: "POST", path: "/v1/payment_intents/{*}", sdkMethod: "paymentIntents.update" });
     expect(site.payload.keys).toEqual(["payment_method_types"]);
   });
+  it("held-out regression: require('stripe')(key) one-liner is resolved", () => {
+    src("server.js", "const stripe = require('stripe')(process.env.K);\nasync function f(){\n  return stripe.checkout.sessions.create({ mode: 'payment', payment_method_types: ['card'] });\n}\nmodule.exports = f;\n");
+    const { ci } = run(root);
+    expect(breaks(ci)).toContain("server.js:3");
+  });
+
+  it("held-out regression: array-of-object payloads use oasdiff /items/ paths", async () => {
+    const { fromObjectLiteral } = await import("./payloadEvidence.js");
+    const ts = (await import("typescript")).default;
+    const sf = ts.createSourceFile("x.ts", "x({ phases: [{ items: [{ price: 'p' }], iterations: 12 }], tags: ['a'] })", ts.ScriptTarget.Latest, true);
+    const obj = ((sf.statements[0] as any).expression.arguments[0]);
+    const p = fromObjectLiteral(obj);
+    expect(p.keys).toContain("phases/items/iterations");
+    expect(p.keys).toContain("phases/items/items/items/price");
+    expect(p.values["tags"]).toBe("[a]");
+  });
 });
