@@ -1,0 +1,14 @@
+{
+  "pair": "stripe-v2516-v2517",
+  "about": "Held-out stress cases written AFTER the engine passed the other repos, to expose misses. Ground truth is by hand.",
+  "affected": [
+    { "file": "src/cjs.js", "line": 4, "method": "POST", "path": "/v1/checkout/sessions", "property": "payment_method_types", "kind": "cjs-factory-without-new" },
+    { "file": "src/di.ts", "line": 3, "method": "POST", "path": "/v1/payment_intents", "property": "payment_method_types", "kind": "typed-dependency-object" }
+  ],
+  "unknown": [
+    { "file": "src/mutate.ts", "line": 6, "kind": "const object mutated after declaration (conditional property)" },
+    { "file": "src/mutate.ts", "line": 9, "kind": "spread of helper return value" }
+  ],
+  "mustNotFlag": [],
+  "semanticWarning": []
+}
