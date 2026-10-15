@@ -8,6 +8,7 @@
 import { lstatSync, readFileSync, readdirSync } from "node:fs";
 import { extname, join, relative, resolve } from "node:path";
 import ts from "typescript";
+import { emptyPayload, fromBodyExpression, fromObjectLiteral, fromQuery, mergePayload } from "./payloadEvidence.js";
 
 const SOURCE_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts", ".cts"]);
 const SKIP_DIRS = new Set([
@@ -45,6 +46,34 @@ export interface ApiImpactMatch {
   confidence: "candidate";
 }
 
+/**
+ * Request-payload evidence for one call site. `keys` are slash-joined nested
+ * property paths (oasdiff style, e.g. "risk_assessment/card_testing_risk/level").
+ * status "resolved" = every key was statically known; "partial" = some keys known,
+ * something (spread, computed key, non-literal body) could not be resolved;
+ * "unknown" = nothing could be resolved. Never upgrade unknown to "absent".
+ */
+export interface PayloadEvidence {
+  status: "resolved" | "partial" | "unknown";
+  keys: string[];
+  values: Record<string, string>;
+  unresolved: string[];
+  via: string[];
+}
+
+export interface ApiCallSite {
+  file: string;
+  line: number;
+  column: number;
+  call: "fetch" | "axios" | "stripe-sdk";
+  method: string | null;
+  path: string | null;
+  host: string | null;
+  sdkMethod?: string;
+  payload: PayloadEvidence;
+  reason?: string;
+}
+
 export interface ApiImpactReport {
   status: "partial";
   filesScanned: number;
@@ -54,7 +83,14 @@ export interface ApiImpactReport {
   unlocatedChanges: number;
   changesWithoutMatches: number;
   matches: ApiImpactMatch[];
+  /** Every inspected outbound call (matched or not), with payload evidence. */
+  sites: ApiCallSite[];
   scope: string;
+}
+
+export interface ApiImpactOptions {
+  /** Only absolute URLs whose host is in this list are attributed to the spec (e.g. api.stripe.com). Relative URLs are kept. */
+  hosts?: string[];
 }
 
 function property(object: ts.ObjectLiteralExpression, name: string): ts.Expression | undefined {
@@ -126,6 +162,15 @@ interface Candidate {
   call: "fetch" | "axios";
   method: string | null;
   path: string | null;
+  url: string | null;
+  body?: ts.Expression;
+  params?: ts.Expression;
+}
+
+function urlHost(value: string | null): string | null {
+  if (!value) return null;
+  const m = /^https?:\/\/([^/?#]+)/i.exec(value.trim());
+  return m ? m[1]!.toLowerCase() : null;
 }
 
 function candidate(node: ts.CallExpression, axiosNames: Set<string>): Candidate | null {
@@ -144,16 +189,21 @@ function candidate(node: ts.CallExpression, axiosNames: Set<string>): Candidate 
         : null
       : "GET";
     const text = staticText(node.arguments[0]);
-    return { call: "fetch", method, path: text === null ? null : urlPath(text) };
+    const body = opts && ts.isObjectLiteralExpression(opts) ? property(opts, "body") : undefined;
+    return { call: "fetch", method, path: text === null ? null : urlPath(text), url: text, body };
   }
 
   let method: string | null = null;
   let url: ts.Expression | undefined;
+  let body: ts.Expression | undefined;
+  let params: ts.Expression | undefined;
   if (ts.isIdentifier(callee) && axiosNames.has(callee.text)) {
     const opts = node.arguments[0];
     if (opts && ts.isObjectLiteralExpression(opts)) {
       method = methodFromOptions(opts);
       url = property(opts, "url");
+      body = property(opts, "data");
+      params = property(opts, "params");
     } else {
       method = "GET";
       url = opts;
@@ -167,11 +217,17 @@ function candidate(node: ts.CallExpression, axiosNames: Set<string>): Candidate 
     if (METHODS.has(operation)) {
       method = operation.toUpperCase();
       url = node.arguments[0];
+      const hasBody = ["post", "put", "patch"].includes(operation);
+      body = hasBody ? node.arguments[1] : undefined;
+      const cfg = node.arguments[hasBody ? 2 : 1];
+      if (cfg && ts.isObjectLiteralExpression(cfg)) params = property(cfg, "params");
     } else if (operation === "request") {
       const opts = node.arguments[0];
       if (opts && ts.isObjectLiteralExpression(opts)) {
         method = methodFromOptions(opts);
         url = property(opts, "url");
+        body = property(opts, "data");
+        params = property(opts, "params");
       }
     } else {
       return null;
@@ -180,7 +236,7 @@ function candidate(node: ts.CallExpression, axiosNames: Set<string>): Candidate 
     return null;
   }
   const text = staticText(url);
-  return { call: "axios", method, path: text === null ? null : urlPath(text) };
+  return { call: "axios", method, path: text === null ? null : urlPath(text), url: text, body, params };
 }
 
 function axiosImports(source: ts.SourceFile): Set<string> {
@@ -198,7 +254,12 @@ function axiosImports(source: ts.SourceFile): Set<string> {
   return names;
 }
 
-export function analyzeApiImpact(rootInput: string, changes: ImpactChange[]): ApiImpactReport {
+export function analyzeApiImpact(
+  rootInput: string,
+  changes: ImpactChange[],
+  options: ApiImpactOptions = {},
+): ApiImpactReport {
+  const hosts = options.hosts?.map((h) => h.toLowerCase());
   const root = resolve(rootInput);
   if (!lstatSync(root).isDirectory()) {
     throw new Error("Impact target must be a real directory (not a file or symlink).");
@@ -211,6 +272,7 @@ export function analyzeApiImpact(rootInput: string, changes: ImpactChange[]): Ap
   });
   const queue = [{ dir: root, depth: 0 }];
   const matches: ApiImpactMatch[] = [];
+  const sites: ApiCallSite[] = [];
   let filesScanned = 0;
   let bytesScanned = 0;
   let callsInspected = 0;
@@ -256,8 +318,30 @@ export function analyzeApiImpact(rootInput: string, changes: ImpactChange[]): Ap
           const call = candidate(node, axiosNames);
           if (call) {
             callsInspected++;
+            const loc0 = sf.getLineAndCharacterOfPosition(node.getStart(sf));
+            const host = urlHost(call.url);
+            let payload = call.body ? fromBodyExpression(call.body) : emptyPayload();
+            if (call.url) payload = mergePayload(payload, fromQuery(call.url));
+            if (call.params) {
+              const pe = ts.isObjectLiteralExpression(call.params) ? fromObjectLiteral(call.params) : fromBodyExpression(call.params);
+              payload = mergePayload(payload, pe);
+            }
+            const foreignHost = !!(hosts && host && !hosts.includes(host));
+            sites.push({
+              file: relative(root, file).replace(/\\/g, "/"),
+              line: loc0.line + 1,
+              column: loc0.character + 1,
+              call: call.call,
+              method: call.method,
+              path: call.path,
+              host,
+              payload,
+              ...(foreignHost ? { reason: "host not in spec servers; not attributed" } : {}),
+            });
             if (!call.method || !call.path) {
               dynamicCalls++;
+            } else if (foreignHost) {
+              // Same path on another API host is not this provider's endpoint.
             } else {
               for (const { change, method, path } of actionable) {
                 if (method !== call.method || !pathMatches(path, call.path)) continue;
@@ -299,6 +383,7 @@ export function analyzeApiImpact(rootInput: string, changes: ImpactChange[]): Ap
     unlocatedChanges: changes.length - actionable.length,
     changesWithoutMatches: changes.length - matchedChanges.size,
     matches,
+    sites,
     scope:
       "Static fetch/axios literal and template URL candidates only, method+path matching. " +
       "No imported client instances, interprocedural flow, provider-host verification, generated SDK " +
