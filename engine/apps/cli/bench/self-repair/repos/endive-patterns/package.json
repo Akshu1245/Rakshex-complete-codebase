@@ -1,0 +1,1 @@
+{ "name": "endive-patterns", "private": true, "type": "module", "dependencies": { "stripe": "22.6.2", "axios": "^1.7.0" } }

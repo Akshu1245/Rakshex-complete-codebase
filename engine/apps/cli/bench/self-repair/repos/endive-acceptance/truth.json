@@ -1,0 +1,12 @@
+{
+  "pair": "stripe-v2516-v2517",
+  "about": "Exact copy of the competitor-intel 1-of-3 fixture (secret-scan files removed). Ground truth written by hand.",
+  "affected": [
+    { "file": "src/payments/checkout.ts", "line": 4, "method": "POST", "path": "/v1/checkout/sessions", "property": "payment_method_types", "kind": "sdk-call-via-wrapper-module" },
+    { "file": "src/payments/intents.ts", "line": 5, "method": "POST", "path": "/v1/payment_intents", "property": "payment_method_types", "kind": "sdk-call-object-spread" },
+    { "file": "src/billing/raw.ts", "line": 4, "method": "POST", "path": "/v1/checkout/sessions", "property": "payment_method_types", "kind": "raw-http-form" }
+  ],
+  "unknown": [],
+  "mustNotFlag": [ { "file": "src/unrelated/notes.ts", "kind": "string-mention-only" } ],
+  "semanticWarning": [ { "file": "src/payments/checkout.ts", "line": 4 }, { "file": "src/billing/raw.ts", "line": 4 } ]
+}

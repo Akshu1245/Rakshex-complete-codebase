@@ -54,7 +54,17 @@ function normalizeChanges(value: unknown): OasdiffChange[] {
   });
 }
 
-export function runOasdiff(beforeFile: string, afterFile: string): OasdiffReport {
+const DEFAULT_OUTPUT_MIB = 5;
+const HARD_MAX_OUTPUT_MIB = 256;
+
+export function runOasdiff(
+  beforeFile: string,
+  afterFile: string,
+  options: { maxOutputMib?: number; timeoutMs?: number } = {},
+): OasdiffReport {
+  // Bounded: a full Stripe diff is ~30 MiB of JSON; never unbounded.
+  const maxOutputMib = Math.min(Math.max(options.maxOutputMib ?? DEFAULT_OUTPUT_MIB, 1), HARD_MAX_OUTPUT_MIB);
+  const timeout = Math.min(options.timeoutMs ?? (maxOutputMib > DEFAULT_OUTPUT_MIB ? 180_000 : 30_000), 300_000);
   const processResult = spawnSync(
     "oasdiff",
     [
@@ -70,8 +80,8 @@ export function runOasdiff(beforeFile: string, afterFile: string): OasdiffReport
     ],
     {
       encoding: "utf8",
-      timeout: 30_000,
-      maxBuffer: 5 * 1024 * 1024,
+      timeout,
+      maxBuffer: maxOutputMib * 1024 * 1024,
       shell: false,
       windowsHide: true,
     },

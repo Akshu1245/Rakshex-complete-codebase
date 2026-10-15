@@ -1,0 +1,13 @@
+{
+  "pair": "stripe-v2203-v2204",
+  "about": "Nested rename risk_level -> level (removed + new required) on test-helper issuing authorizations.",
+  "affected": [
+    { "file": "src/issuing.ts", "line": 5, "method": "POST", "path": "/v1/test_helpers/issuing/authorizations", "property": "risk_assessment/card_testing_risk/risk_level", "kind": "sdk-nested-removed" },
+    { "file": "src/issuing.ts", "line": 5, "method": "POST", "path": "/v1/test_helpers/issuing/authorizations", "property": "risk_assessment/card_testing_risk/level", "kind": "sdk-nested-new-required" },
+    { "file": "src/issuing.ts", "line": 8, "method": "POST", "path": "/v1/test_helpers/issuing/authorizations", "property": "risk_assessment/merchant_dispute_risk/risk_level", "kind": "raw-http-nested-removed" },
+    { "file": "src/issuing.ts", "line": 8, "method": "POST", "path": "/v1/test_helpers/issuing/authorizations", "property": "risk_assessment/merchant_dispute_risk/level", "kind": "raw-http-nested-new-required" }
+  ],
+  "unknown": [],
+  "mustNotFlag": [ { "file": "src/issuing.ts", "line": 6, "kind": "no risk_assessment sent" } ],
+  "semanticWarning": []
+}
