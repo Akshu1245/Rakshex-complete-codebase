@@ -1022,6 +1022,48 @@ async def update_team_member_role(team_id: str, user_id: int,
         return result.rowcount > 0
 
 
+async def _lock_owner_rows(session, team_id: str):
+    """Owner memberships of a team, row-locked on PostgreSQL so concurrent demotions/removals serialize."""
+    stmt = select(TeamMember).where(and_(TeamMember.team_id == team_id, TeamMember.role == "owner"))
+    if session.bind.dialect.name == "postgresql":
+        stmt = stmt.with_for_update()
+    return (await session.execute(stmt)).scalars().all()
+
+
+async def update_team_member_role_guarded(team_id: str, user_id: int, role: str) -> str:
+    """Change a role atomically; refuses to leave a team without an owner.
+    Returns "ok" | "not_found" | "last_owner"."""
+    async with AsyncSessionLocal() as session:
+        owners = await _lock_owner_rows(session, team_id)
+        target = (await session.execute(select(TeamMember).where(and_(
+            TeamMember.team_id == team_id, TeamMember.user_id == user_id)))).scalar_one_or_none()
+        if target is None:
+            return "not_found"
+        if target.role == "owner" and role != "owner" and len([o for o in owners if o.user_id != user_id]) == 0:
+            await session.rollback()
+            return "last_owner"
+        target.role = role
+        await session.commit()
+        return "ok"
+
+
+async def remove_team_member_guarded(team_id: str, user_id: int) -> str:
+    """Remove a membership atomically; refuses to remove the last owner.
+    Returns "ok" | "not_found" | "last_owner"."""
+    async with AsyncSessionLocal() as session:
+        owners = await _lock_owner_rows(session, team_id)
+        target = (await session.execute(select(TeamMember).where(and_(
+            TeamMember.team_id == team_id, TeamMember.user_id == user_id)))).scalar_one_or_none()
+        if target is None:
+            return "not_found"
+        if target.role == "owner" and len([o for o in owners if o.user_id != user_id]) == 0:
+            await session.rollback()
+            return "last_owner"
+        await session.delete(target)
+        await session.commit()
+        return "ok"
+
+
 async def remove_team_member(team_id: str, user_id: int) -> bool:
     """Remove a member from a team (cannot remove owner)."""
     async with AsyncSessionLocal() as session:

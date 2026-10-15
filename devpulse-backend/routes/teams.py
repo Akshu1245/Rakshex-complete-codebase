@@ -40,11 +40,11 @@ class CreateWorkspaceRequest(BaseModel):
 
 class InviteMemberRequest(BaseModel):
     user_id: int = Field(..., description="User ID to invite")
-    role: str = Field(default="member", description="owner, admin, member, viewer")
+    role: str = Field(default="member", pattern="^(owner|admin|member|viewer)$", description="owner, admin, member, viewer")
 
 
 class ChangeRoleRequest(BaseModel):
-    role: str = Field(..., description="owner, admin, member, viewer")
+    role: str = Field(..., pattern="^(owner|admin|member|viewer)$", description="owner, admin, member, viewer")
 
 
 @router.post("/api/teams/workspaces")
@@ -107,6 +107,30 @@ async def invite_to_workspace(
         return {"status": "error", "error": "Failed to invite member"}
 
 
+async def _target_member(workspace_id: str, user_id: int) -> Dict[str, Any]:
+    workspace = await get_workspace(workspace_id)
+    member = next((m for m in (workspace or {}).get("members", []) if int(m["user_id"]) == int(user_id)), None)
+    if not workspace or not member:
+        raise HTTPException(404, "Member not found")
+    return {"workspace": workspace, "member": member}
+
+
+def _authorize_member_change(actor_role: str, actor_id: int, target_role: str, target_id: int,
+                             primary_owner_id: int, new_role: Optional[str]) -> None:
+    """Role-management rules (raise 403 on violation):
+    - nobody can grant "owner" here (no ownership-transfer flow);
+    - the primary owner (teams.owner_id) can never be removed or demoted;
+    - only owners can change or remove owners and admins, or grant "admin";
+    - admins can change/remove members and viewers only.
+    The last-owner rule is enforced atomically in the DB layer."""
+    if new_role == "owner":
+        raise HTTPException(403, "Ownership cannot be granted here")
+    if int(target_id) == int(primary_owner_id):
+        raise HTTPException(403, "The workspace owner cannot be removed or demoted")
+    if actor_role != "owner" and (target_role in ("owner", "admin") or new_role == "admin"):
+        raise HTTPException(403, "Only an owner can change owners or admins")
+
+
 @router.put("/api/teams/workspaces/{workspace_id}/members/{user_id}/role")
 async def update_member_role(
     workspace_id: str,
@@ -115,27 +139,39 @@ async def update_member_role(
     user: Dict = Depends(require_auth),
 ) -> Dict[str, Any]:
     """Change a member's role in a workspace."""
+    from services.database import update_team_member_role_guarded
     access = await workspace_access(workspace_id, user, admin=True)
-    if user_id == access["owner_id"] or req.role == "owner" or (access["role"] != "owner" and req.role == "admin"):
-        raise HTTPException(403, "Ownership or admin elevation is not allowed")
+    t = await _target_member(workspace_id, user_id)
+    _authorize_member_change(access["role"], user["id"], t["member"]["role"], user_id, t["workspace"]["owner_id"], req.role)
     try:
-        result = await change_member_role(workspace_id, user_id, req.role)
-        return {"status": "success", **result}
+        outcome = await update_team_member_role_guarded(workspace_id, user_id, req.role)
     except Exception as e:
         logger.error(f"Error changing member role: {e}")
-        return {"status": "error", "error": "Failed to change role"}
+        raise HTTPException(500, "Failed to change role")
+    if outcome == "not_found":
+        raise HTTPException(404, "Member not found")
+    if outcome == "last_owner":
+        raise HTTPException(409, "A workspace must keep at least one owner")
+    return {"status": "success", "message": f"Role changed to {req.role}"}
 
 
 @router.delete("/api/teams/workspaces/{workspace_id}/members/{user_id}")
 async def delete_member(workspace_id: str, user_id: int, user: Dict = Depends(require_auth)) -> Dict[str, Any]:
     """Remove a member from a workspace."""
-    await workspace_access(workspace_id, user, admin=True)
+    from services.database import remove_team_member_guarded
+    access = await workspace_access(workspace_id, user, admin=True)
+    t = await _target_member(workspace_id, user_id)
+    _authorize_member_change(access["role"], user["id"], t["member"]["role"], user_id, t["workspace"]["owner_id"], None)
     try:
-        result = await remove_member(workspace_id, user_id)
-        return {"status": "success", **result}
+        outcome = await remove_team_member_guarded(workspace_id, user_id)
     except Exception as e:
         logger.error(f"Error removing member: {e}")
-        return {"status": "error", "error": "Failed to remove member"}
+        raise HTTPException(500, "Failed to remove member")
+    if outcome == "not_found":
+        raise HTTPException(404, "Member not found")
+    if outcome == "last_owner":
+        raise HTTPException(409, "A workspace must keep at least one owner")
+    return {"status": "success", "message": "Member removed"}
 
 
 @router.get("/api/teams/roles")
