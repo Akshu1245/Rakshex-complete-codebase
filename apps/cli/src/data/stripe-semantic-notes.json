@@ -1,0 +1,11 @@
+{
+  "_about": "Documented behavioural notes that a schema diff cannot express. Each entry cites its source. Keys: '<METHOD> <path> <request property>'.",
+  "notes": {
+    "POST /v1/checkout/sessions payment_method_types": {
+      "apiVersion": "2026-09-30.endive",
+      "note": "Replacement allowed_payment_method_types silently filters incompatible payment methods instead of returning an error; non-default methods may need enabling in the Dashboard (dynamic payment methods). Whether allowed_payment_method_types itself requires Dashboard enablement is NOT VERIFIED. A rename alone can change which methods customers see: human review required.",
+      "source": "https://docs.stripe.com/changelog/endive/2026-09-30/remove-payment-method-types-checkout-sessions",
+      "fetched": "2026-10-15"
+    }
+  }
+}

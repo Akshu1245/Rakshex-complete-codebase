@@ -1,0 +1,2 @@
+{ "name": "fixture-stripe-app", "version": "0.0.0", "private": true, "type": "module",
+  "dependencies": { "stripe": "^22.0.0", "axios": "^1.7.0" } }
