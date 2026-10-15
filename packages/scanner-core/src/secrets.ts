@@ -295,11 +295,93 @@ const LOWER: Record<SecretConfidence, SecretConfidence> = {
   low: "low",
 };
 
+/** Minimum base64 characters for a body that could hold a real private key (smallest EC keys are ~120). */
+export const PEM_MIN_BODY = 64;
+
+/**
+ * Extract the key body that follows a BEGIN header: on the same line after the header (handles
+ * escaped "\\n" in JSON/env strings) and on the following lines, up to an END marker.
+ */
+export function extractPemBody(
+  raw: string,
+  line: string,
+  following: string[],
+): { body: string; ended: boolean } {
+  const tail = line.slice(line.indexOf(raw) + raw.length);
+  const chunks = [tail.replace(/\\[nr]/g, "\n"), ...following];
+  let body = "";
+  for (const chunk of chunks) {
+    for (const part of chunk.split("\n")) {
+      if (/-----END [A-Z ]*PRIVATE KEY-----/.test(part)) {
+        body += part.split("-----END")[0]!.replace(/[^A-Za-z0-9+/=]/g, "");
+        return { body, ended: true };
+      }
+      const t = part
+        .trim()
+        .replace(/^["'`]|["'`,;]+$/g, "")
+        .trim();
+      if (t === "") continue;
+      if (/^[A-Za-z-]+: /.test(t)) continue; // legacy PEM headers (Proc-Type, DEK-Info)
+      if (!/^[A-Za-z0-9+/=]+$/.test(t)) return { body, ended: false };
+      body += t;
+    }
+  }
+  return { body, ended: false };
+}
+
+function classifyPemBlock(
+  rule: Pick<SecretRule, "impactIfReal">,
+  raw: string,
+  line: string,
+  following: string[],
+  signals: string[],
+): Classification {
+  const { body, ended } = extractPemBody(raw, line, following);
+  if (body.length < PEM_MIN_BODY) {
+    // A header with no key material cannot leak a key. Reported transparently, never gating.
+    return {
+      state: "pattern_match",
+      confidence: "low",
+      severity: "Low",
+      classification: "ambiguous",
+      signals: [...signals, "structural-marker", `pem:header-without-key-body(${body.length}b64)`],
+    };
+  }
+  // Long-body checks (the short-token residual ratios don't apply to 100s of base64 chars).
+  const syn: string[] = [];
+  const run = Math.max(...(body.match(/(.)\1*/g) ?? [""]).map((r) => r.length));
+  if (run >= 16) syn.push("synthetic:repeated-run");
+  if (isPeriodic(body.slice(0, 96))) syn.push("synthetic:periodic");
+  if (new Set(body).size < 24) syn.push("synthetic:low-variety");
+  if (shannonEntropy(body) < 4.5) syn.push("synthetic:low-entropy");
+  if (syn.length > 0) {
+    return {
+      state: "pattern_match",
+      confidence: "low",
+      severity: "Info",
+      classification: "synthetic_placeholder",
+      signals: [...signals, "structural-marker", "pem:body-synthetic", ...syn],
+    };
+  }
+  return {
+    state: "pattern_match",
+    confidence: ended ? "high" : "medium",
+    severity: rule.impactIfReal,
+    classification: "plausible_credential",
+    signals: [
+      ...signals,
+      "structural-marker",
+      `pem:key-body(${body.length}b64${ended ? ",end-marker" : ""})`,
+    ],
+  };
+}
+
 export function classifyMatch(
   rule: Pick<SecretRule, "impactIfReal" | "prefix" | "structural">,
   raw: string,
   line: string,
   filePath: string,
+  following: string[] = [],
 ): Classification {
   const signals: string[] = [];
   const inTestPath = TEST_PATH.test(filePath);
@@ -308,15 +390,7 @@ export function classifyMatch(
   const comment = line.replace(raw, "");
   if (/\b(placeholder|example|fake|dummy|not a real|sample)\b/i.test(comment))
     signals.push("context:comment-claims-placeholder(no-exemption)");
-  if (rule.structural) {
-    return {
-      state: "pattern_match",
-      confidence: "medium",
-      severity: rule.impactIfReal,
-      classification: "ambiguous",
-      signals: [...signals, "structural-marker"],
-    };
-  }
+  if (rule.structural) return classifyPemBlock(rule, raw, line, following, signals);
   if (KNOWN_DUMMY_SHA256.has(sha256Hex(raw))) {
     return {
       state: "pattern_match",
@@ -437,7 +511,13 @@ export function scanTextForSecrets(content: string, filePath = "<memory>"): Secr
       let m: RegExpExecArray | null;
       while ((m = rule.pattern.exec(line)) !== null) {
         const raw = m[1] ?? m[0]!;
-        const c = classifyMatch(rule, raw, line, filePath);
+        const c = classifyMatch(
+          rule,
+          raw,
+          line,
+          filePath,
+          rule.structural ? lines.slice(i + 1, i + 120) : [],
+        );
         findings.push({
           ruleId: rule.id,
           title: rule.title,

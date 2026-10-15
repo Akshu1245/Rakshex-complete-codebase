@@ -76,7 +76,7 @@ describe("LeakShield truthful confidence", () => {
     });
   });
 
-  it("private key headers are pattern_match (no key material analysed)", () => {
+  it("private key headers are pattern_match (never verified)", () => {
     expect(
       classifyMatch({ impactIfReal: "Critical", prefix: 0, structural: true }, "", "", "src/k.pem")
         .state,
