@@ -30,7 +30,7 @@ from models.tables import (
     ApiCallLog, CostBudget,
     Incident, IncidentEvent,
     AlertConfig, AlertHistory, KillSwitch,
-    Team, TeamMember,
+    Team, TeamMember, ChangeAlertAudit, UpstreamChangeEvent, WorkspaceApiSubscription,
     MarketplaceTemplate, MarketplaceReview,
     CicdRun, BillingEvent, CustomApi,
 )
@@ -534,8 +534,8 @@ async def get_api_response_history(api_name: str,
 
 async def save_change_alert(api_name: str, severity: str, summary: str,
                             diff_json: str, old_hash: str,
-                            new_hash: str) -> int:
-    """Save a change detection alert."""
+                            new_hash: str, workspace_id: Optional[str] = None) -> int:
+    """Save a change detection alert. workspace_id=None -> not visible via the API until migrated."""
     async with AsyncSessionLocal() as session:
         obj = ChangeAlert(
             api_name=api_name,
@@ -544,6 +544,7 @@ async def save_change_alert(api_name: str, severity: str, summary: str,
             diff_json=diff_json,
             old_hash=old_hash,
             new_hash=new_hash,
+            workspace_id=workspace_id,
         )
         session.add(obj)
         await session.commit()
@@ -552,33 +553,204 @@ async def save_change_alert(api_name: str, severity: str, summary: str,
 
 
 async def get_change_alerts_db(limit: int = 50, api_name: Optional[str] = None,
-                               unacked_only: bool = False) -> List[Dict[str, Any]]:
-    """Get change alerts from DB."""
+                               unacked_only: bool = False,
+                               severity: Optional[str] = None,
+                               workspace_ids: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+    """Get change alerts from DB, restricted to workspace_ids.
+
+    workspace_ids is mandatory for tenant safety: None or [] returns nothing.
+    Alerts with NULL workspace_id are never returned.
+    """
+    if not workspace_ids:
+        return []
     async with AsyncSessionLocal() as session:
-        stmt = select(ChangeAlert)
-        conditions = []
+        conditions = [ChangeAlert.workspace_id.in_(list(workspace_ids))]
         if api_name:
             conditions.append(ChangeAlert.api_name == api_name)
         if unacked_only:
             conditions.append(ChangeAlert.acknowledged == False)  # noqa: E712
-        if conditions:
-            stmt = stmt.where(and_(*conditions))
-        stmt = stmt.order_by(desc(ChangeAlert.detected_at)).limit(limit)
+        if severity:
+            conditions.append(ChangeAlert.severity == severity)
+        stmt = (select(ChangeAlert).where(and_(*conditions))
+                .order_by(desc(ChangeAlert.detected_at)).limit(limit))
         result = await session.execute(stmt)
         return [_row_to_dict(r) for r in result.scalars().all()]
 
 
-async def ack_change_alert_db(alert_id: int) -> bool:
-    """Acknowledge a change alert."""
+async def get_change_alert_db(alert_id: int) -> Optional[Dict[str, Any]]:
+    """Fetch one alert by id (no access check; callers must enforce workspace access)."""
     async with AsyncSessionLocal() as session:
-        stmt = (
+        obj = await session.get(ChangeAlert, alert_id)
+        return _row_to_dict(obj) if obj else None
+
+
+async def set_change_alert_state_db(alert_id: int, workspace_id: str, actor_user_id: int,
+                                    action: str) -> bool:
+    """Ack or resolve an alert AND write an audit row in the same transaction."""
+    if action not in ("ack", "resolve"):
+        raise ValueError("invalid action")
+    now = datetime.now(timezone.utc)
+    values = ({"acknowledged": True, "acknowledged_by": actor_user_id, "acknowledged_at": now}
+              if action == "ack" else
+              {"acknowledged": True, "resolved_by": actor_user_id, "resolved_at": now})
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(
             update(ChangeAlert)
-            .where(ChangeAlert.id == alert_id)
-            .values(acknowledged=True)
+            .where(and_(ChangeAlert.id == alert_id, ChangeAlert.workspace_id == workspace_id))
+            .values(**values)
         )
-        result = await session.execute(stmt)
+        if result.rowcount == 0:
+            await session.rollback()
+            return False
+        session.add(ChangeAlertAudit(alert_id=alert_id, workspace_id=workspace_id,
+                                     actor_user_id=actor_user_id, action=action, created_at=now))
         await session.commit()
-        return result.rowcount > 0
+        return True
+
+
+# ── Workspace API subscriptions + upstream events + fan-out (migration 004) ──
+
+async def add_workspace_subscription_db(workspace_id: str, api_name: str, source: str = "manual",
+                                        created_by: Optional[int] = None) -> Dict[str, Any]:
+    """Idempotent. api_name MUST be a canonical, SUPPORTED provider id from services.provider_registry."""
+    from services.provider_registry import get_supported
+    key = (api_name or "").strip()
+    if not get_supported(key):
+        raise ValueError(f"unsupported provider id: {api_name!r}")
+    async with AsyncSessionLocal() as session:
+        existing = (await session.execute(select(WorkspaceApiSubscription).where(and_(
+            WorkspaceApiSubscription.workspace_id == workspace_id,
+            WorkspaceApiSubscription.api_name == key)))).scalar_one_or_none()
+        if existing:
+            return _row_to_dict(existing)
+        obj = WorkspaceApiSubscription(workspace_id=workspace_id, api_name=key, source=source, created_by=created_by)
+        session.add(obj)
+        if created_by is not None:
+            session.add(_subscription_audit(workspace_id, created_by, f"sub:{key}"))
+        try:
+            await session.commit()
+        except IntegrityError:  # concurrent subscribe of the same provider: idempotent, not a 500
+            await session.rollback()
+            existing = (await session.execute(select(WorkspaceApiSubscription).where(and_(
+                WorkspaceApiSubscription.workspace_id == workspace_id,
+                WorkspaceApiSubscription.api_name == key)))).scalar_one()
+            return _row_to_dict(existing)
+        await session.refresh(obj)
+        return _row_to_dict(obj)
+
+
+def _subscription_audit(workspace_id: str, actor: int, action: str) -> "ChangeAlertAudit":
+    """Subscription changes share the append-only change_alert_audit table: alert_id=0 marks a
+    workspace-level entry; action is 'sub:<provider>' or 'unsub:<provider>' (<= 20 chars)."""
+    return ChangeAlertAudit(alert_id=0, workspace_id=workspace_id, actor_user_id=actor, action=action[:20],
+                            created_at=datetime.now(timezone.utc))
+
+
+async def list_workspace_subscriptions_db(workspace_id: str) -> List[Dict[str, Any]]:
+    async with AsyncSessionLocal() as session:
+        res = await session.execute(select(WorkspaceApiSubscription)
+                                    .where(WorkspaceApiSubscription.workspace_id == workspace_id)
+                                    .order_by(WorkspaceApiSubscription.api_name))
+        return [_row_to_dict(r) for r in res.scalars().all()]
+
+
+async def delete_workspace_subscription_db(workspace_id: str, api_name: str, actor: Optional[int] = None) -> bool:
+    key = (api_name or "").strip()
+    async with AsyncSessionLocal() as session:
+        res = await session.execute(delete(WorkspaceApiSubscription).where(and_(
+            WorkspaceApiSubscription.workspace_id == workspace_id,
+            WorkspaceApiSubscription.api_name == key)))
+        if res.rowcount > 0 and actor is not None:
+            session.add(_subscription_audit(workspace_id, actor, f"unsub:{key}"))
+        await session.commit()
+        return res.rowcount > 0
+
+
+async def record_upstream_event_and_fan_out(api_name: str, severity: str, summary: str, diff_json: str,
+                                            old_hash: str, new_hash: str,
+                                            change_type: str = "schema_change") -> Dict[str, Any]:
+    """Store one shared upstream event, then create one workspace-owned alert per workspace
+    subscribed to exactly this API (normalized name match, never provider/prefix guessing).
+    (event_id, workspace_id) is unique, so re-running fan-out never duplicates.
+    No subscribers -> event stored, zero alerts (nothing exposed)."""
+    async with AsyncSessionLocal() as session:
+        ev = UpstreamChangeEvent(api_name=api_name, severity=severity, change_type=change_type,
+                                 summary=summary, diff_json=diff_json, old_hash=old_hash,
+                                 new_hash=new_hash, source="detector")
+        session.add(ev)
+        await session.commit()
+        await session.refresh(ev)
+    created = await fan_out_event_db(ev.id)
+    return {"event_id": ev.id, "alert_ids": created}
+
+
+async def fan_out_event_db(event_id: int) -> List[int]:
+    async with AsyncSessionLocal() as session:
+        ev = await session.get(UpstreamChangeEvent, event_id)
+        if not ev:
+            return []
+        from services.provider_registry import provider_id_for_detector
+        provider_id = provider_id_for_detector(ev.api_name)
+        if not provider_id:
+            return []  # unknown source -> quarantined (no workspace alerts)
+        subs = (await session.execute(select(WorkspaceApiSubscription.workspace_id).where(
+            WorkspaceApiSubscription.api_name == provider_id))).scalars().all()
+        # Per-row INSERT .. ON CONFLICT DO NOTHING on UNIQUE(event_id, workspace_id): concurrent fan-outs
+        # (several detector instances) can never duplicate an alert, and one collision never drops the
+        # inserts for other workspaces.
+        if session.bind.dialect.name == "postgresql":
+            from sqlalchemy.dialects.postgresql import insert as _ins
+        else:
+            from sqlalchemy.dialects.sqlite import insert as _ins
+        created = []
+        for ws in sorted(set(subs)):
+            stmt = _ins(ChangeAlert).values(
+                api_name=ev.api_name, severity=ev.severity, change_type=ev.change_type, summary=ev.summary,
+                diff_json=ev.diff_json, old_hash=ev.old_hash, new_hash=ev.new_hash, workspace_id=ws,
+                event_id=ev.id, acknowledged=False,
+            ).on_conflict_do_nothing(index_elements=["event_id", "workspace_id"]).returning(ChangeAlert.id)
+            new_id = (await session.execute(stmt)).scalar_one_or_none()
+            if new_id is not None:
+                created.append(int(new_id))
+        await session.commit()
+        return created
+
+
+async def backfill_legacy_alerts_to_events_db() -> Dict[str, int]:
+    """Copy each quarantined legacy alert (workspace_id NULL, no event) into an upstream event
+    and link it. NEVER assigns a workspace: legacy alerts stay quarantined. Idempotent via
+    upstream_change_events.legacy_alert_id UNIQUE."""
+    copied = 0
+    async with AsyncSessionLocal() as session:
+        rows = (await session.execute(select(ChangeAlert).where(and_(
+            ChangeAlert.workspace_id.is_(None), ChangeAlert.event_id.is_(None))))).scalars().all()
+        for a in rows:
+            ev = UpstreamChangeEvent(api_name=a.api_name, severity=a.severity or "warning",
+                                     change_type=a.change_type or "schema_change", summary=a.summary,
+                                     diff_json=a.diff_json, old_hash=a.old_hash, new_hash=a.new_hash,
+                                     source="legacy_backfill", legacy_alert_id=a.id,
+                                     detected_at=a.detected_at)
+            session.add(ev)
+            await session.flush()
+            a.event_id = ev.id
+            copied += 1
+        await session.commit()
+        quarantined = (await session.execute(select(func.count()).select_from(ChangeAlert)
+                                             .where(ChangeAlert.workspace_id.is_(None)))).scalar_one()
+    return {"copied_to_events": copied, "still_quarantined": quarantined}
+
+
+async def get_change_alert_audit_db(alert_id: int) -> List[Dict[str, Any]]:
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(
+            select(ChangeAlertAudit).where(ChangeAlertAudit.alert_id == alert_id)
+            .order_by(ChangeAlertAudit.id))
+        return [_row_to_dict(r) for r in result.scalars().all()]
+
+
+async def ack_change_alert_db(alert_id: int) -> bool:
+    """DEPRECATED: unscoped ack with no audit. Kept only for backward compatibility; not used by routes."""
+    raise RuntimeError("ack_change_alert_db is disabled; use set_change_alert_state_db")
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -1343,7 +1515,8 @@ async def delete_custom_api(api_id: int, user_id: int) -> bool:
     async with AsyncSessionLocal() as session:
         stmt = (
             update(CustomApi)
-            .where(and_(CustomApi.id == api_id, CustomApi.user_id == user_id))
+            .where(and_(CustomApi.id == api_id, CustomApi.user_id == user_id,
+                        CustomApi.is_active == True))  # noqa: E712  (already-deleted -> not found)
             .values(is_active=False)
         )
         result = await session.execute(stmt)

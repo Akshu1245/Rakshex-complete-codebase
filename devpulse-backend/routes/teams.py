@@ -40,11 +40,11 @@ class CreateWorkspaceRequest(BaseModel):
 
 class InviteMemberRequest(BaseModel):
     user_id: int = Field(..., description="User ID to invite")
-    role: str = Field(default="member", description="owner, admin, member, viewer")
+    role: str = Field(default="member", pattern="^(owner|admin|member|viewer)$", description="owner, admin, member, viewer")
 
 
 class ChangeRoleRequest(BaseModel):
-    role: str = Field(..., description="owner, admin, member, viewer")
+    role: str = Field(..., pattern="^(owner|admin|member|viewer)$", description="owner, admin, member, viewer")
 
 
 @router.post("/api/teams/workspaces")

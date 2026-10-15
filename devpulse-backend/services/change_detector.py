@@ -92,7 +92,11 @@ async def _probe_api(client: httpx.AsyncClient, api: Dict[str, str]) -> Optional
 
 
 async def _detect_changes() -> List[Dict[str, Any]]:
-    from services.database import save_api_response, get_last_api_response, save_change_alert
+    from services.alert_schema_guard import missing_alert_schema
+    if await missing_alert_schema():
+        logger.error("[CHANGE] alert schema not migrated; skipping detection run (no alerts written)")
+        return []
+    from services.database import save_api_response, get_last_api_response, record_upstream_event_and_fan_out
     new_alerts = []
     async with httpx.AsyncClient(
         timeout=httpx.Timeout(8.0), follow_redirects=True,
@@ -118,12 +122,13 @@ async def _detect_changes() -> List[Dict[str, Any]]:
                 total = len(diff["added"]) + len(diff["removed"]) + len(diff["type_changed"])
                 severity = "critical" if diff["removed"] or diff["type_changed"] else "warning"
                 summary = f"{total} schema change(s) detected in {api_name}"
-                alert_id = await save_change_alert(
+                # Shared upstream event + fan-out to subscribed workspaces only.
+                fan = await record_upstream_event_and_fan_out(
                     api_name, severity, summary, json.dumps(diff),
                     prev["response_hash"], result["schema_hash"],
                 )
                 alert = {
-                    "id": alert_id, "api_name": api_name, "severity": severity,
+                    "id": fan["event_id"], "workspace_alert_ids": fan["alert_ids"], "api_name": api_name, "severity": severity,
                     "change_type": "schema_change", "summary": summary, "details": diff,
                     "detected_at": result["timestamp"], "acknowledged": False,
                 }
@@ -174,9 +179,13 @@ async def stop_detector():
 
 
 async def get_change_alerts(limit: int = 50, api_name: Optional[str] = None,
-                            unacked_only: bool = False) -> List[Dict[str, Any]]:
+                            severity: Optional[str] = None,
+                            unacked_only: bool = False,
+                            workspace_ids: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+    """List alerts limited to workspace_ids (empty/None -> nothing)."""
     from services.database import get_change_alerts_db
-    alerts = await get_change_alerts_db(limit, api_name, unacked_only)
+    alerts = await get_change_alerts_db(limit, api_name, unacked_only,
+                                        severity=severity, workspace_ids=workspace_ids)
     for a in alerts:
         if a.get("diff_json"):
             try:
@@ -184,11 +193,6 @@ async def get_change_alerts(limit: int = 50, api_name: Optional[str] = None,
             except Exception:
                 a["details"] = {}
     return alerts
-
-
-async def acknowledge_alert(alert_id: int) -> bool:
-    from services.database import ack_change_alert_db
-    return await ack_change_alert_db(alert_id)
 
 
 async def get_schema_history(api_name: str, limit: int = 20) -> List[Dict[str, Any]]:

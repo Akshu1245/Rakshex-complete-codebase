@@ -150,6 +150,59 @@ class ChangeAlert(Base):
     new_hash = Column(String(128))
     acknowledged = Column(Boolean, default=False)
     detected_at = Column(DateTime(timezone=True), server_default=func.now())
+    # Tenant scoping (migration 003). NULL = no verified workspace -> inaccessible via API.
+    workspace_id = Column(String(64), ForeignKey("teams.id", ondelete="SET NULL"), nullable=True, index=True)
+    acknowledged_by = Column(BigInt, nullable=True)
+    acknowledged_at = Column(DateTime(timezone=True), nullable=True)
+    resolved_by = Column(BigInt, nullable=True)
+    resolved_at = Column(DateTime(timezone=True), nullable=True)
+    # Link to the shared upstream event this workspace alert was fanned out from (migration 004).
+    event_id = Column(BigInt, ForeignKey("upstream_change_events.id", ondelete="SET NULL"), nullable=True, index=True)
+
+    __table_args__ = (UniqueConstraint("event_id", "workspace_id", name="uq_change_alerts_event_workspace"),)
+
+
+class UpstreamChangeEvent(Base):
+    """Provider-level change, shared across workspaces. Never exposed directly via alert APIs (migration 004)."""
+    __tablename__ = "upstream_change_events"
+
+    id = Column(BigInt, primary_key=True, autoincrement=True)
+    api_name = Column(String(255), nullable=False, index=True)
+    severity = Column(String(20), nullable=False, default="warning")
+    change_type = Column(String(50), nullable=False, default="schema_change")
+    summary = Column(Text)
+    diff_json = Column(Text)
+    old_hash = Column(String(128))
+    new_hash = Column(String(128))
+    source = Column(String(30), nullable=False, default="detector")  # detector | legacy_backfill
+    legacy_alert_id = Column(BigInt, nullable=True, unique=True)
+    detected_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class WorkspaceApiSubscription(Base):
+    """A workspace declares it depends on a specific monitored API (migration 004)."""
+    __tablename__ = "workspace_api_subscriptions"
+
+    id = Column(BigInt, primary_key=True, autoincrement=True)
+    workspace_id = Column(String(64), ForeignKey("teams.id", ondelete="CASCADE"), nullable=False, index=True)
+    api_name = Column(String(255), nullable=False, index=True)
+    source = Column(String(30), nullable=False, default="manual")  # manual | integration | repo_connect
+    created_by = Column(BigInt, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (UniqueConstraint("workspace_id", "api_name", name="uq_workspace_api"),)
+
+
+class ChangeAlertAudit(Base):
+    """Append-only audit trail for change-alert state changes (migration 003)."""
+    __tablename__ = "change_alert_audit"
+
+    id = Column(BigInt, primary_key=True, autoincrement=True)
+    alert_id = Column(BigInt, nullable=False, index=True)
+    workspace_id = Column(String(64), nullable=False, index=True)
+    actor_user_id = Column(BigInt, nullable=False)
+    action = Column(String(20), nullable=False)  # "ack" | "resolve"
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
 # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -360,7 +413,11 @@ class TeamMember(Base):
     accepted = Column(Boolean, default=False)
     joined_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    __table_args__ = (UniqueConstraint("team_id", "user_id"),)
+    __table_args__ = (
+        UniqueConstraint("team_id", "user_id"),
+        # migration 005
+        CheckConstraint("role IN ('owner','admin','member','viewer')", name="ck_team_members_role"),
+    )
 
 
 # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -462,3 +519,13 @@ class CustomApi(Base):
     metadata_json = Column(JSON, default=dict)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class RateLimitCounter(Base):
+    """Fixed-window rate-limit counters shared by all backend instances (migration 005)."""
+    __tablename__ = "rate_limit_counters"
+
+    key = Column(String(200), primary_key=True)
+    window_start = Column(BigInteger, primary_key=True)
+    count = Column(Integer, nullable=False, default=0)
+    expires_at = Column(BigInteger, nullable=False, index=True)

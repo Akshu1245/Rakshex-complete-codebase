@@ -131,6 +131,11 @@ async def lifespan(app: FastAPI):
     try:
         await init_db()
         logger.info("Database initialized")
+        from services.alert_schema_guard import missing_alert_schema
+        _missing = await missing_alert_schema()
+        if _missing:
+            logger.error(f"ALERT SCHEMA NOT MIGRATED (missing {_missing}). Alert endpoints will return 503 "
+                         "and the change detector will not write alerts until `alembic upgrade head` is run.")
     except Exception as e:
         logger.error(f"Database init failed: {type(e).__name__}: {e}")
 

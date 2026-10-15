@@ -25,8 +25,8 @@ ENV = os.getenv("ENV", "development")
 IS_PRODUCTION = ENV == "production"
 
 # Rate tracking for suspicious activity detection
-_request_counts: Dict[str, list] = defaultdict(list)
-SUSPICIOUS_THRESHOLD = 200  # requests per minute from single IP
+# Per-IP abuse limiting moved to middleware/rate_limit.py (proxy-aware, shared store).
+_request_counts: Dict[str, list] = defaultdict(list)  # kept for backwards-compatible imports; unused
 MAX_BODY_SIZE = 1_048_576  # 1MB max request body
 
 
@@ -47,22 +47,6 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             return Response(
                 content='{"status":"error","error":"Request body too large (max 1MB)"}',
                 status_code=413,
-                media_type="application/json",
-            )
-        
-        # Suspicious activity check
-        client_ip = request.client.host if request.client else "unknown"
-        now = time.time()
-        _request_counts[client_ip] = [
-            t for t in _request_counts[client_ip] if now - t < 60
-        ]
-        _request_counts[client_ip].append(now)
-        
-        if len(_request_counts[client_ip]) > SUSPICIOUS_THRESHOLD:
-            logger.warning(f"Suspicious activity from {client_ip}: {len(_request_counts[client_ip])} req/min")
-            return Response(
-                content='{"status":"error","error":"Too many requests. Please slow down."}',
-                status_code=429,
                 media_type="application/json",
             )
         
