@@ -77,7 +77,7 @@ function parentOf(prop: string): string | null {
 export function normalizeConsumerImpact(changes: ContractChange[], sites: ApiCallSite[]): ConsumerImpactSummary {
   const impacts: ConsumerImpact[] = [];
   let requestSide = 0, onCalled = 0, suppressed = 0;
-  const attributable = sites.filter((s) => s.method && s.path && !s.reason);
+  const attributable = sites.filter((s) => s.method && s.path && !s.reason?.startsWith("host not in spec"));
   const responseSeen = new Set<string>();
   for (const raw of changes) {
     const c = { ...raw, id: raw.id ?? raw.kind ?? "unknown" };
