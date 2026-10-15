@@ -63,6 +63,8 @@ export class StripeSdkResolver {
       return !!s?.declarations?.some((d) => this.isStripeImportDecl(d));
     }
     if (ts.isPropertyAccessExpression(x) && x.name.text === "Stripe") return this.isStripeClass(x.expression);
+    // Stripe docs one-liner: require('stripe')(key) -- the require call itself yields the class.
+    if (ts.isCallExpression(x) && ts.isIdentifier(x.expression) && x.expression.text === "require" && x.arguments.length === 1 && ts.isStringLiteral(x.arguments[0]!) && x.arguments[0].text === "stripe") return true;
     return false;
   }
 
