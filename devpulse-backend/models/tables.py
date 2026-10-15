@@ -150,6 +150,24 @@ class ChangeAlert(Base):
     new_hash = Column(String(128))
     acknowledged = Column(Boolean, default=False)
     detected_at = Column(DateTime(timezone=True), server_default=func.now())
+    # Tenant scoping (migration 003). NULL = no verified workspace -> inaccessible via API.
+    workspace_id = Column(String(64), ForeignKey("teams.id", ondelete="SET NULL"), nullable=True, index=True)
+    acknowledged_by = Column(BigInt, nullable=True)
+    acknowledged_at = Column(DateTime(timezone=True), nullable=True)
+    resolved_by = Column(BigInt, nullable=True)
+    resolved_at = Column(DateTime(timezone=True), nullable=True)
+
+
+class ChangeAlertAudit(Base):
+    """Append-only audit trail for change-alert state changes (migration 003)."""
+    __tablename__ = "change_alert_audit"
+
+    id = Column(BigInt, primary_key=True, autoincrement=True)
+    alert_id = Column(BigInt, nullable=False, index=True)
+    workspace_id = Column(String(64), nullable=False, index=True)
+    actor_user_id = Column(BigInt, nullable=False)
+    action = Column(String(20), nullable=False)  # "ack" | "resolve"
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
 # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•

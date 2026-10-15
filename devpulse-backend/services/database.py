@@ -30,7 +30,7 @@ from models.tables import (
     ApiCallLog, CostBudget,
     Incident, IncidentEvent,
     AlertConfig, AlertHistory, KillSwitch,
-    Team, TeamMember,
+    Team, TeamMember, ChangeAlertAudit,
     MarketplaceTemplate, MarketplaceReview,
     CicdRun, BillingEvent, CustomApi,
 )
@@ -534,8 +534,8 @@ async def get_api_response_history(api_name: str,
 
 async def save_change_alert(api_name: str, severity: str, summary: str,
                             diff_json: str, old_hash: str,
-                            new_hash: str) -> int:
-    """Save a change detection alert."""
+                            new_hash: str, workspace_id: Optional[str] = None) -> int:
+    """Save a change detection alert. workspace_id=None -> not visible via the API until migrated."""
     async with AsyncSessionLocal() as session:
         obj = ChangeAlert(
             api_name=api_name,
@@ -544,6 +544,7 @@ async def save_change_alert(api_name: str, severity: str, summary: str,
             diff_json=diff_json,
             old_hash=old_hash,
             new_hash=new_hash,
+            workspace_id=workspace_id,
         )
         session.add(obj)
         await session.commit()
@@ -553,35 +554,71 @@ async def save_change_alert(api_name: str, severity: str, summary: str,
 
 async def get_change_alerts_db(limit: int = 50, api_name: Optional[str] = None,
                                unacked_only: bool = False,
-                               severity: Optional[str] = None) -> List[Dict[str, Any]]:
-    """Get change alerts from DB."""
+                               severity: Optional[str] = None,
+                               workspace_ids: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+    """Get change alerts from DB, restricted to workspace_ids.
+
+    workspace_ids is mandatory for tenant safety: None or [] returns nothing.
+    Alerts with NULL workspace_id are never returned.
+    """
+    if not workspace_ids:
+        return []
     async with AsyncSessionLocal() as session:
-        stmt = select(ChangeAlert)
-        conditions = []
+        conditions = [ChangeAlert.workspace_id.in_(list(workspace_ids))]
         if api_name:
             conditions.append(ChangeAlert.api_name == api_name)
         if unacked_only:
             conditions.append(ChangeAlert.acknowledged == False)  # noqa: E712
         if severity:
             conditions.append(ChangeAlert.severity == severity)
-        if conditions:
-            stmt = stmt.where(and_(*conditions))
-        stmt = stmt.order_by(desc(ChangeAlert.detected_at)).limit(limit)
+        stmt = (select(ChangeAlert).where(and_(*conditions))
+                .order_by(desc(ChangeAlert.detected_at)).limit(limit))
         result = await session.execute(stmt)
         return [_row_to_dict(r) for r in result.scalars().all()]
 
 
-async def ack_change_alert_db(alert_id: int) -> bool:
-    """Acknowledge a change alert."""
+async def get_change_alert_db(alert_id: int) -> Optional[Dict[str, Any]]:
+    """Fetch one alert by id (no access check; callers must enforce workspace access)."""
     async with AsyncSessionLocal() as session:
-        stmt = (
+        obj = await session.get(ChangeAlert, alert_id)
+        return _row_to_dict(obj) if obj else None
+
+
+async def set_change_alert_state_db(alert_id: int, workspace_id: str, actor_user_id: int,
+                                    action: str) -> bool:
+    """Ack or resolve an alert AND write an audit row in the same transaction."""
+    if action not in ("ack", "resolve"):
+        raise ValueError("invalid action")
+    now = datetime.now(timezone.utc)
+    values = ({"acknowledged": True, "acknowledged_by": actor_user_id, "acknowledged_at": now}
+              if action == "ack" else
+              {"acknowledged": True, "resolved_by": actor_user_id, "resolved_at": now})
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(
             update(ChangeAlert)
-            .where(ChangeAlert.id == alert_id)
-            .values(acknowledged=True)
+            .where(and_(ChangeAlert.id == alert_id, ChangeAlert.workspace_id == workspace_id))
+            .values(**values)
         )
-        result = await session.execute(stmt)
+        if result.rowcount == 0:
+            await session.rollback()
+            return False
+        session.add(ChangeAlertAudit(alert_id=alert_id, workspace_id=workspace_id,
+                                     actor_user_id=actor_user_id, action=action, created_at=now))
         await session.commit()
-        return result.rowcount > 0
+        return True
+
+
+async def get_change_alert_audit_db(alert_id: int) -> List[Dict[str, Any]]:
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(
+            select(ChangeAlertAudit).where(ChangeAlertAudit.alert_id == alert_id)
+            .order_by(ChangeAlertAudit.id))
+        return [_row_to_dict(r) for r in result.scalars().all()]
+
+
+async def ack_change_alert_db(alert_id: int) -> bool:
+    """DEPRECATED: unscoped ack with no audit. Kept only for backward compatibility; not used by routes."""
+    raise RuntimeError("ack_change_alert_db is disabled; use set_change_alert_state_db")
 
 
 # ═════════════════════════════════════════════════════════════════════════════

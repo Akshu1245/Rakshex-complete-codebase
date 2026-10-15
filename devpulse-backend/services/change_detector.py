@@ -175,9 +175,12 @@ async def stop_detector():
 
 async def get_change_alerts(limit: int = 50, api_name: Optional[str] = None,
                             severity: Optional[str] = None,
-                            unacked_only: bool = False) -> List[Dict[str, Any]]:
+                            unacked_only: bool = False,
+                            workspace_ids: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+    """List alerts limited to workspace_ids (empty/None -> nothing)."""
     from services.database import get_change_alerts_db
-    alerts = await get_change_alerts_db(limit, api_name, unacked_only, severity=severity)
+    alerts = await get_change_alerts_db(limit, api_name, unacked_only,
+                                        severity=severity, workspace_ids=workspace_ids)
     for a in alerts:
         if a.get("diff_json"):
             try:
@@ -185,11 +188,6 @@ async def get_change_alerts(limit: int = 50, api_name: Optional[str] = None,
             except Exception:
                 a["details"] = {}
     return alerts
-
-
-async def acknowledge_alert(alert_id: int) -> bool:
-    from services.database import ack_change_alert_db
-    return await ack_change_alert_db(alert_id)
 
 
 async def get_schema_history(api_name: str, limit: int = 20) -> List[Dict[str, Any]]:
