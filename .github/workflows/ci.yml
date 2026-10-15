@@ -3,8 +3,16 @@ name: CI
 on:
   push:
     branches: [main, master]
+  # Any base branch, so stacked PRs (e.g. onto fix/change-alerts-auth-severity) get the full suite.
+  # Plain pull_request (never pull_request_target): fork PRs run with a read-only token and no secrets.
   pull_request:
-    branches: [main, master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   cloudflare-container-build:
@@ -183,3 +191,43 @@ jobs:
         run: npm run test:e2e
         env:
           CYPRESS_BASE_URL: http://localhost:5000
+
+  dashboard-polling-budget:
+    name: Dashboard polling budget (Playwright + PostgreSQL)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci-only
+          POSTGRES_DB: rl_stage
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ci" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TEST_PG_URL: postgresql+asyncpg://ci:ci-only@localhost:5432/rl_stage
+      PGPASSWORD: ci-only
+      PSQL: psql
+      PSQL_ARGS: -h localhost -U ci -d rl_stage
+      E2E_PYTHON: python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: devpulse-dashboard-ui/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: |
+          (cd devpulse-dashboard-ui && npm ci)
+          (cd devpulse-backend && pip install -r requirements.txt)
+          (cd e2e/change-alerts && npm ci && npx playwright install --with-deps chromium)
+      - name: 1/2/5 tabs, one simulated hour, free plan, PG rate-limit store
+        working-directory: e2e/change-alerts
+        run: npx playwright test -c playwright.staging.config.ts
