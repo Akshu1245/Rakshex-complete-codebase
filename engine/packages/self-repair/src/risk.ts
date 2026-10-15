@@ -12,7 +12,12 @@ export function assess(impact: Impact, rules: RepairRule[], siteValues: Record<s
   if (!rule) { level = "HIGH"; reasons.push("No documented mechanical repair rule for this change; a human must write the fix."); }
   if (impact.verdict !== "breaks_call") { level = "HIGH"; reasons.push(`Verdict is ${impact.verdict}, not a proven break.`); }
   if (impact.evidence.payloadStatus !== "resolved") { level = "HIGH"; reasons.push(`Payload only ${impact.evidence.payloadStatus}ly resolved: ${impact.evidence.unresolved.join("; ") || "unknown parts"}.`); }
-  if (impact.semanticWarning) { level = "HIGH"; reasons.push(`Behaviour change: ${impact.semanticWarning.note} (${impact.semanticWarning.source})`); }
+  // A documented behaviour change is acceptable only when the rule's low-risk value set proves it moot
+  // (e.g. card-only: "silently filters incompatible methods" cannot drop anything).
+  if (impact.semanticWarning) {
+    reasons.push(`Behaviour change: ${impact.semanticWarning.note} (${impact.semanticWarning.source})`);
+    if (!rule?.lowRiskValues) level = "HIGH";
+  }
   if (rule?.lowRiskValues) {
     const v = siteValues[rule.removed];
     if (v === undefined) { level = "HIGH"; reasons.push(`Value of \`${rule.removed}\` is not a static literal; cannot prove equivalence.`); }
@@ -22,5 +27,6 @@ export function assess(impact: Impact, rules: RepairRule[], siteValues: Record<s
       if (odd.length) { level = "HIGH"; reasons.push(`Values [${odd.join(", ")}] are outside the low-risk set [${rule.lowRiskValues.join(", ")}].`); }
     }
   }
+  reasons.push("NOT checked by RaksHex: error-handling code that relied on the old 400 error, and provider Dashboard settings. A human must confirm before merge.");
   return { id: siteId(impact), impact, rule, level, reasons, autoApprovable: level === "LOW" };
 }

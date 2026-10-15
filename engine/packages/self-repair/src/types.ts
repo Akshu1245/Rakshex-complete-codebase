@@ -17,6 +17,8 @@ export interface RepairRule {
   /** Values that make the rename behaviour-equivalent. Anything else -> HIGH risk. */
   lowRiskValues?: string[];
   source: string;               // changelog URL
+  /** SDK version that knows the replacement key (e.g. stripe-node 23 for Endive). */
+  dependencyBump?: { package: string; to: string };
 }
 
 export type SiteId = string; // "<file>:<line>"

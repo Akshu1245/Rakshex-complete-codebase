@@ -51,7 +51,10 @@ describe("risk", () => {
     expect(assess(impact(3), [RULE], {}).level).toBe("HIGH");
     expect(assess(impact(3, { verdict: "possibly_breaks" }), [RULE], { payment_method_types: "[card]" }).level).toBe("HIGH");
     expect(assess(impact(3), [], { payment_method_types: "[card]" }).rule).toBeNull();
-    expect(assess(impact(3, { semanticWarning: { note: "filters", source: "x" } }), [RULE], { payment_method_types: "[card]" }).level).toBe("HIGH");
+    const sem = { semanticWarning: { note: "filters", source: "x" } };
+    expect(assess(impact(3, sem), [RULE], { payment_method_types: "[card]" }).level).toBe("LOW");
+    expect(assess(impact(3, sem), [{ ...RULE, lowRiskValues: undefined }], { payment_method_types: "[card]" }).level).toBe("HIGH");
+    expect(assess(impact(4, sem), [RULE], { payment_method_types: "[card,ideal]" }).level).toBe("HIGH");
   });
 });
 
@@ -67,6 +70,18 @@ describe("bounded patch", () => {
   it("refuses to guess or escape the repo", () => {
     expect(() => planPatch(base, [{ file: "src/checkout.ts", line: 1, removed: RULE.removed, added: RULE.added }])).toThrow(/refusing to guess/);
     expect(() => planPatch(base, [{ file: "../x.ts", line: 1, removed: "a", added: "b" }])).toThrow(/outside repo/);
+  });
+});
+
+describe("dependency bump", () => {
+  it("bumps one dependency on the same line and includes it in the hashed diff", async () => {
+    const { planDependencyBump, withEdit } = await import("./patch.js");
+    writeFileSync(join(base, "package.json"), '{\n  "dependencies": { "stripe": "22.6.2" }\n}\n');
+    const p0 = planPatch(base, [{ file: "src/checkout.ts", line: 3, removed: RULE.removed, added: RULE.added }]);
+    const p = withEdit(p0, planDependencyBump(base, "stripe", "23.0.0"));
+    expect(p.diff).toMatch(/\+  "dependencies": \{ "stripe": "23.0.0" \}/);
+    expect(p.sha256).not.toBe(p0.sha256);
+    expect(planDependencyBump(base, "left-pad", "1.0.0")).toBeNull();
   });
 });
 

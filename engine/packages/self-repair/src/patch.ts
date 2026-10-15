@@ -61,6 +61,25 @@ export function planPatch(root: string, targets: PatchTarget[]): PatchResult {
   return { edits, diff, sha256: sha(diff) };
 }
 
+/** Bump one dependency version in package.json, same line count (so the diff stays bounded). */
+export function planDependencyBump(root: string, pkg: string, to: string): FileEdit | null {
+  const abs = inside(root, "package.json");
+  const before = readFileSync(abs, "utf8");
+  const json = JSON.parse(before) as { dependencies?: Record<string, string> };
+  const cur = json.dependencies?.[pkg];
+  if (!cur || cur === to) return null;
+  const re = new RegExp(`("${pkg.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&")}"\\s*:\\s*)"[^"]*"`);
+  if (!re.test(before)) throw new Error(`cannot locate ${pkg} in package.json`);
+  return { file: "package.json", before, after: before.replace(re, `$1"${to}"`) };
+}
+
+export function withEdit(p: PatchResult, e: FileEdit | null): PatchResult {
+  if (!e) return p;
+  const edits = [...p.edits.filter((x) => x.file !== e.file), e].sort((a, b) => a.file.localeCompare(b.file));
+  const diff = edits.map(unifiedDiff).join("");
+  return { edits, diff, sha256: sha(diff) };
+}
+
 export function applyPatch(root: string, p: PatchResult): void {
   for (const e of p.edits) {
     const abs = inside(root, e.file);

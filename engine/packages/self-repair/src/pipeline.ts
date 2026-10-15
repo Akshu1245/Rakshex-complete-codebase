@@ -1,7 +1,7 @@
 import type { Impact, RepairRule } from "./types.js";
 import { siteId } from "./types.js";
 import { assess, type Assessment } from "./risk.js";
-import { planPatch, applyPatch, type PatchResult, type PatchTarget } from "./patch.js";
+import { planPatch, applyPatch, planDependencyBump, withEdit, type PatchResult, type PatchTarget } from "./patch.js";
 import { runChecks, allPassed, type CheckRecord, type CheckSpec } from "./checks.js";
 import { verifyReceipt, type Receipt, type Bound } from "./approval.js";
 import { renderPrBody, renderReview } from "./report.js";
@@ -52,7 +52,12 @@ export function runRepair(i: RepairInput): RepairReport {
     r.checks = notRunAll("not run: STOPPED, nothing mechanically patchable");
     r.status = "STOPPED_NEEDS_REVIEW"; r.body = renderReview(r); return r;
   }
-  r.patch = planPatch(i.workspace, targets); r.patchSha256 = r.patch.sha256;
+  r.patch = planPatch(i.workspace, targets);
+  for (const b of new Map(r.assessments.filter((a) => a.rule?.dependencyBump).map((a) => [a.rule!.dependencyBump!.package, a.rule!.dependencyBump!])).values()) {
+    try { r.patch = withEdit(r.patch, planDependencyBump(i.workspace, b.package, b.to)); }
+    catch (e) { r.problems.push(`dependency bump skipped: ${(e as Error).message}`); }
+  }
+  r.patchSha256 = r.patch.sha256;
   applyPatch(i.workspace, r.patch);
   r.checks = runChecks(i.checks, i.checksNotRun);
   if (!allPassed(r.checks)) { r.status = "CHECKS_FAILED"; r.body = renderReview(r); return r; }

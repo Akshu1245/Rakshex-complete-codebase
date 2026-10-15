@@ -14,6 +14,7 @@ export const STRIPE_ENDIVE_RULES: RepairRule[] = [{
   added: "allowed_payment_method_types",
   lowRiskValues: ["card"],
   source: "https://docs.stripe.com/changelog/endive/2026-09-30/remove-payment-method-types-checkout-sessions",
+  dependencyBump: { package: "stripe", to: "23.0.0" },
 }];
 
 export function repairFromContractChanges(

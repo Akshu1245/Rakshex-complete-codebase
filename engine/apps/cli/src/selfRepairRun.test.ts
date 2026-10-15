@@ -10,12 +10,12 @@ const ws = () => { const d = mkdtempSync(join(tmpdir(), "sr-e2e-")); cpSync(join
 const base = { title: "t", repo: "o/r", baseSha: "x", workspaceId: "w", rules: STRIPE_ENDIVE_RULES, checks: [{ name: "noop", cmd: process.execPath, args: ["-e", "0"], cwd: tmpdir() }] };
 
 describe("cli -> @rakshex/self-repair end to end", () => {
-  it("acceptance repo: card-only checkout is patched; semantic warning forces human review (STOPPED)", () => {
+  it("acceptance repo: card-only checkout is patched; raw form-string site cannot be patched mechanically -> STOPPED", () => {
     const d = ws();
     const r = repairFromContractChanges(d, changes, base);
     expect(r.assessments.length).toBeGreaterThan(0);
     expect(r.assessments.every((a) => a.impact.change.path === "/v1/checkout/sessions")).toBe(true);
-    // The Endive note (allowed_ filters silently) is a documented behaviour change -> HIGH -> STOPPED.
+    expect(r.problems.join()).toMatch(/src\/billing\/raw.ts:4/);
     expect(r.status).toBe("STOPPED_NEEDS_REVIEW");
     expect(r.patch?.diff).toMatch(/\+\s*allowed_payment_method_types: \['card'\]/);
     expect(readFileSync(join(d, "src/payments/checkout.ts"), "utf8")).toMatch(/allowed_payment_method_types/);
