@@ -17,7 +17,8 @@
     "@rakshex/config": "workspace:*",
     "@rakshex/scanner-core": "workspace:*",
     "yaml": "^2.4.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "@rakshex/self-repair": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

@@ -26,6 +26,9 @@ importers:
       '@rakshex/scanner-core':
         specifier: workspace:*
         version: link:../../packages/scanner-core
+      '@rakshex/self-repair':
+        specifier: workspace:*
+        version: link:../../packages/self-repair
       typescript:
         specifier: ^5.7.0
         version: 5.9.3
@@ -57,6 +60,19 @@ importers:
       typescript:
         specifier: ^5.7.0
         version: 5.9.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@22.20.5)(vite@8.3.4(@types/node@22.20.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))
+
+  packages/self-repair:
+    dependencies:
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.20.5
       vitest:
         specifier: 4.1.11
         version: 4.1.11(@types/node@22.20.5)(vite@8.3.4(@types/node@22.20.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))

@@ -1,0 +1,15 @@
+{
+  "name": "@rakshex/self-repair",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "description": "Single reusable Self-Repair core: risk, bounded patch, checks, report, signed approval. Consumes impacts produced by @rakshex/cli (detect/locate live there only).",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "build": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": { "typescript": "^5.7.0" },
+  "devDependencies": { "@types/node": "^22.0.0", "vitest": "^4.1.11" }
+}
