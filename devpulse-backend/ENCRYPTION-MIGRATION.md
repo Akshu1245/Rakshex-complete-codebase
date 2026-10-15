@@ -1,0 +1,22 @@
+# Draft encryption rollout and non-destructive migration
+
+No production migration is included or run by this PR. Existing ciphertext is never updated on read. The standard codec is extracted from existing PR #239 (`9aaa3bfcc3018b5cccd4cd5e7512c67821d5008f`), not independently reinvented. New API-key rows use its **`v2:`** format: base64 of a 12-byte random nonce and AES-256-GCM ciphertext/tag16. The AES key is SHA-256 of the historically resolved master bytes; AAD is `devpulse-api-key:v2`. The existing legacy master interpretation is preserved. This format does not bind a tenant/row ID or key ID; separately design versioned AAD/key rotation if those guarantees are needed. Never make nonces deterministic in production.
+
+Unprefixed historical records are a custom HMAC-derived stream plus MAC, not AES or GCM. The exact legacy derivation and authenticated reader remain. The old synchronous writer now fails explicitly; the only runtime caller (API-key creation) awaits `storage_crypto.encrypt_for_storage`. The shared `add_api_key` budget_period signature correction is also reused from #239, so the create path can actually persist. No equivalent-security or historical-compromise claim is made. This is an isolated native security extraction, not the free-Worker runtime migration.
+
+## Before any production rollout
+
+1. Inventory ciphertext formats/counts and key provenance using an authorized operator. Do not display/export plaintext. Preserve the current master material and JWT-dependent legacy fallback; rotating the JWT or interpreting old hex-like/base64 strings differently can break legacy reads. `_get_master_key` intentionally keeps historical interpretation. A malformed existing master that resolves to fewer than 32 bytes is rejected for new writes, but the old reader remains available.
+2. Back up the database and key material separately under existing access controls. Demonstrate restore and decrypt using synthetic/staging data first. Do not fetch production credentials for tests.
+3. Deploy compatible readers to every consumer before enabling new-format writers. This single draft contains both; split the reader/writer rollout operationally if mixed application versions are possible. Old code cannot read v2. Never roll back to an old-only reader after v2 rows exist.
+4. Verify target-runtime availability of the vetted `cryptography` wheel and bounded KDF CPU cost. No free-Worker compatibility is implied by installing it in FastAPI. Master-key policy remains an explicit launch review: production must have protected, adequately random material; retaining a development fallback for legacy reads is not approval to use it in production.
+
+## Optional migration, separately approved
+
+Use an additive sidecar column/table for v2 values. Keep `api_keys.encrypted_key` byte-for-byte intact for every legacy row. Async `storage_crypto.upgrade_ciphertext` only creates a candidate in memory and performs no DB write. An operator-reviewed job should lock/check the source version, decrypt the legacy value, create the v2 candidate, verify that both decrypt identically, then insert the sidecar atomically with the original ciphertext digest and migration state. Use compare-and-set against the original digest to avoid races. Never log plaintext, key material or complete ciphertext.
+
+Make the job resumable: a matching verified sidecar is a no-op; unknown version, missing key, MAC/tag failure or verification mismatch stops that row without updating it. Record counts/IDs/error categories only. A partial job must not cause readers to prefer an unverified sidecar. Retain backups and legacy material until an independently approved retention/key-retirement policy is satisfied. This PR does not create the sidecar schema, schedule a job, retire a key, delete data or automatically migrate anything.
+
+## Validation
+
+`python -B tests/test_encryption_envelope.py` uses synthetic master material and a fixed historical fixture. Eight checks cover independent AESGCM interoperability with #239's format, legacy reads, no input mutation, idempotent candidate upgrade, randomness, malformed/unknown versions, tampering, wrong/short keys, and the API-key create function against in-memory SQLite. No production DB, provider API or production secret is used. Worker WebCrypto execution and real production interoperability are not claimed. Set `RAKSHEX_TEST_SOURCE` to the read-only baseline backend path to reproduce the old behavior with the same test file.

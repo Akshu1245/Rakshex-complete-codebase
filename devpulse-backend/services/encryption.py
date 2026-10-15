@@ -1,16 +1,7 @@
-"""
-AES-256 Encryption Service - Production-grade encryption for DevPulse.
+"""Historical HMAC stream codec (NOT AES) and shared signing utilities.
 
-Provides AES-256-GCM encryption/decryption for:
-- API keys stored in the database
-- Sensitive user data
-- Token payloads
-
-Uses:
-- AES-256-GCM (Galois/Counter Mode) for authenticated encryption
-- PBKDF2-HMAC-SHA256 for key derivation (600,000 iterations)
-- Random 12-byte nonces (IV) per encryption
-- HMAC-SHA256 for data integrity verification
+New writes use services.storage_crypto, extracted from the existing PR #239.
+Legacy derivation and authenticated reads are retained unchanged for stored data.
 """
 import os
 import base64
@@ -69,12 +60,11 @@ def _derive_key(master_key: bytes, salt: bytes) -> bytes:
 
 
 # =============================================================================
-# AES-256-GCM ENCRYPTION (using Python's built-in)
+# LEGACY READ SUPPORT — this is not AES or GCM
 # =============================================================================
 
-# We use a pure-Python AES-CTR + HMAC-SHA256 construction for
-# authenticated encryption, avoiding external crypto dependencies.
-# Format: base64(salt + nonce + hmac_tag + ciphertext)
+# Historical format: base64(salt + nonce + hmac_tag + ciphertext).
+# Preserve these helpers only for authenticated legacy reads.
 
 def _xor_bytes(a: bytes, b: bytes) -> bytes:
     """XOR two byte strings of equal length."""
@@ -82,18 +72,12 @@ def _xor_bytes(a: bytes, b: bytes) -> bytes:
 
 
 def _aes_block_encrypt(key: bytes, block: bytes) -> bytes:
-    """
-    Single AES-256 block encryption using a minimal implementation.
-    For production, this uses hashlib-based stream cipher construction.
-    """
-    # Use HMAC-SHA256 as a PRF (Pseudo-Random Function) to create
-    # a deterministic block cipher. While not standard AES, this provides
-    # equivalent 256-bit security for our use case.
+    """Historical HMAC-derived keystream block, NOT an AES block cipher."""
     return hmac.new(key, block, hashlib.sha256).digest()[:16]
 
 
 def _aes256_ctr_encrypt(key: bytes, nonce: bytes, plaintext: bytes) -> bytes:
-    """AES-256-CTR mode encryption using HMAC-SHA256 as the block cipher."""
+    """Historical symmetric stream transform, retained for legacy reads only."""
     ciphertext = bytearray()
     block_count = (len(plaintext) + 15) // 16
     
@@ -113,53 +97,13 @@ def _aes256_ctr_encrypt(key: bytes, nonce: bytes, plaintext: bytes) -> bytes:
 
 
 def encrypt_aes256(plaintext: str) -> str:
-    """
-    Encrypt a string using AES-256 with authenticated encryption.
-    
-    Output format (base64-encoded):
-        salt (32 bytes) + nonce (12 bytes) + hmac_tag (32 bytes) + ciphertext
-    
-    Args:
-        plaintext: The string to encrypt
-        
-    Returns:
-        Base64-encoded encrypted string
-    """
-    if not plaintext:
-        return ""
-    
-    try:
-        master_key = _get_master_key()
-        salt = secrets.token_bytes(SALT_SIZE)
-        nonce = secrets.token_bytes(NONCE_SIZE)
-        
-        # Derive encryption key from master key + salt
-        derived_key = _derive_key(master_key, salt)
-        
-        # Encrypt
-        plaintext_bytes = plaintext.encode("utf-8")
-        ciphertext = _aes256_ctr_encrypt(derived_key, nonce, plaintext_bytes)
-        
-        # Compute HMAC-SHA256 tag over nonce + ciphertext for authentication
-        tag = hmac.new(
-            derived_key,
-            nonce + ciphertext,
-            hashlib.sha256
-        ).digest()
-        
-        # Combine: salt + nonce + tag + ciphertext
-        combined = salt + nonce + tag + ciphertext
-        
-        return base64.b64encode(combined).decode("ascii")
-    
-    except Exception as e:
-        logger.error(f"Encryption failed: {type(e).__name__}")
-        raise ValueError("Encryption failed") from e
+    """Legacy writes are disabled; use await storage_crypto.encrypt_for_storage."""
+    raise RuntimeError("Legacy encryption writes are disabled; use encrypt_for_storage")
 
 
 def decrypt_aes256(encrypted: str) -> str:
     """
-    Decrypt an AES-256 encrypted string.
+    Read an authenticated historical custom-format value; no storage writes.
     
     Args:
         encrypted: Base64-encoded encrypted string from encrypt_aes256()
