@@ -13,7 +13,7 @@
     "test:e2e": "cd devpulse-dashboard-ui && npm run test:e2e"
   },
   "engines": {
-    "node": "20.x",
+    "node": "24.x",
     "npm": "10.x"
   }
 }
