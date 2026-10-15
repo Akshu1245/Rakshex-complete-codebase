@@ -28,6 +28,12 @@ branch_labels = None
 depends_on = None
 
 
+def _has_table(name):
+    # Production startup runs create_all(), which may already have created NEW tables
+    # (empty) before this migration runs. Skip creating them instead of failing.
+    return sa.inspect(op.get_bind()).has_table(name)
+
+
 def upgrade():
     with op.batch_alter_table("change_alerts") as b:
         b.add_column(sa.Column("workspace_id", sa.String(64), nullable=True))
@@ -37,7 +43,8 @@ def upgrade():
         b.add_column(sa.Column("resolved_at", sa.DateTime(timezone=True), nullable=True))
         b.create_foreign_key("fk_change_alerts_workspace", "teams", ["workspace_id"], ["id"], ondelete="SET NULL")
         b.create_index("ix_change_alerts_workspace_id", ["workspace_id"])
-    op.create_table(
+    if not _has_table("change_alert_audit"):
+      op.create_table(
         "change_alert_audit",
         sa.Column("id", sa.BigInteger().with_variant(sa.Integer, "sqlite"), primary_key=True, autoincrement=True),
         sa.Column("alert_id", sa.BigInteger, nullable=False, index=True),

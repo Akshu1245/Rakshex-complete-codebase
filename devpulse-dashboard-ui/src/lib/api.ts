@@ -95,7 +95,14 @@ export interface ChangeAlert {
   id: string;
   api_name: string;
   change_type: string;
-  changes: {
+  workspace_id?: string;
+  summary?: string;
+  details?: {
+    added: string[];
+    removed: string[];
+    type_changed: Record<string, { old: string; new: string }>;
+  };
+  changes?: {
     added: string[];
     removed: string[];
     type_changed: Record<string, { old: string; new: string }>;
@@ -529,11 +536,16 @@ class APIClient {
 
   // ---- CHANGE DETECTION ----
 
-  async getChangeAlerts(limit = 50): Promise<{ alerts: ChangeAlert[]; count: number }> {
+  async getChangeAlerts(limit = 50, workspaceId?: string): Promise<{ alerts: ChangeAlert[]; count: number }> {
+    const ws = workspaceId ? `&workspace_id=${encodeURIComponent(workspaceId)}` : '';
     return this.safeRequest(
-      `/api/changes/alerts?limit=${limit}`,
+      `/api/changes/alerts?limit=${limit}${ws}`,
       undefined
     );
+  }
+
+  async listMyWorkspaces(): Promise<{ workspaces: (Workspace & { role?: string })[]; count: number }> {
+    return this.safeRequest('/api/teams/workspaces', undefined);
   }
 
   async ackChangeAlert(alertId: string): Promise<{ status: string }> {

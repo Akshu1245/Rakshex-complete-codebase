@@ -25,8 +25,15 @@ depends_on = None
 BIGPK = sa.BigInteger().with_variant(sa.Integer, "sqlite")
 
 
+def _has_table(name):
+    # Production startup runs create_all(), which may already have created NEW tables
+    # (empty) before this migration runs. Skip creating them instead of failing.
+    return sa.inspect(op.get_bind()).has_table(name)
+
+
 def upgrade():
-    op.create_table(
+    if not _has_table("upstream_change_events"):
+      op.create_table(
         "upstream_change_events",
         sa.Column("id", BIGPK, primary_key=True, autoincrement=True),
         sa.Column("api_name", sa.String(255), nullable=False, index=True),
@@ -40,7 +47,8 @@ def upgrade():
         sa.Column("legacy_alert_id", sa.BigInteger, nullable=True, unique=True),
         sa.Column("detected_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
     )
-    op.create_table(
+    if not _has_table("workspace_api_subscriptions"):
+      op.create_table(
         "workspace_api_subscriptions",
         sa.Column("id", BIGPK, primary_key=True, autoincrement=True),
         sa.Column("workspace_id", sa.String(64), sa.ForeignKey("teams.id", ondelete="CASCADE"), nullable=False, index=True),

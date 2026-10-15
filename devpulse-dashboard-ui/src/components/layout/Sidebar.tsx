@@ -232,14 +232,16 @@ const NAV: NavGroup[] = [
 
 /* ─── Sidebar Component ──────────────────────────────────────── */
 
-export default function Sidebar() {
+export default function Sidebar({ mobileOpen = false }: { mobileOpen?: boolean }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
 
   return (
     <aside
+      data-testid="sidebar"
       className={`
-        fixed left-0 top-0 bottom-0 z-30
+        fixed left-0 top-0 bottom-0 z-40
+        ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0
         flex flex-col
         bg-zinc-950 border-r border-zinc-800/50
         transition-all duration-200 ease-out

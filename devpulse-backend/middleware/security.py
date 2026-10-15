@@ -26,7 +26,7 @@ IS_PRODUCTION = ENV == "production"
 
 # Rate tracking for suspicious activity detection
 _request_counts: Dict[str, list] = defaultdict(list)
-SUSPICIOUS_THRESHOLD = 200  # requests per minute from single IP
+SUSPICIOUS_THRESHOLD = int(os.getenv("SUSPICIOUS_THRESHOLD", "200"))  # requests per minute from single IP (env override for local e2e)
 MAX_BODY_SIZE = 1_048_576  # 1MB max request body
 
 
