@@ -4,7 +4,7 @@ import json
 
 import pytest
 import pytest_asyncio
-from sqlalchemy import select, func
+from sqlalchemy import select, func, and_
 
 from models.tables import ChangeAlert, UpstreamChangeEvent
 from services.db_config import AsyncSessionLocal
@@ -264,3 +264,37 @@ async def test_api_rejects_invalid_role(client):
     assert r.status_code == 422
     r = await client.put(f"/api/teams/workspaces/{ws}/members/{other}/role", json={"role": "god"}, headers=h)
     assert r.status_code == 422
+
+
+# ── security review: concurrency + subscription audit ─────────────────────────
+@pytest.mark.asyncio
+async def test_concurrent_subscribe_is_idempotent_and_audited(db):
+    import asyncio
+    from sqlalchemy import select, func
+    from services.db_config import AsyncSessionLocal
+    from models.tables import WorkspaceApiSubscription, ChangeAlertAudit
+    from services.database import add_workspace_subscription_db, delete_workspace_subscription_db
+    res = await asyncio.gather(*[add_workspace_subscription_db("wsC", "github", "manual", 7) for _ in range(6)],
+                               return_exceptions=True)
+    assert not [r for r in res if isinstance(r, Exception)], res
+    async with AsyncSessionLocal() as s:
+        n = (await s.execute(select(func.count()).select_from(WorkspaceApiSubscription).where(
+            WorkspaceApiSubscription.workspace_id == "wsC"))).scalar_one()
+    assert n == 1
+    assert await delete_workspace_subscription_db("wsC", "github", 7)
+    async with AsyncSessionLocal() as s:
+        acts = (await s.execute(select(ChangeAlertAudit.action).where(and_(
+            ChangeAlertAudit.workspace_id == "wsC", ChangeAlertAudit.alert_id == 0)).order_by(ChangeAlertAudit.id))).scalars().all()
+    assert acts[0] == "sub:github" and acts[-1] == "unsub:github" and acts.count("sub:github") >= 1
+
+
+@pytest.mark.asyncio
+async def test_concurrent_fan_out_never_duplicates(db):
+    import asyncio
+    from services.database import add_workspace_subscription_db, record_upstream_event_and_fan_out, fan_out_event_db
+    for ws in ("wsD1", "wsD2", "wsD3"):
+        await add_workspace_subscription_db(ws, "slack", "manual", None)
+    fan = await record_upstream_event_and_fan_out("Slack", "warning", "s", "{}", "a", "b")
+    assert len(fan["alert_ids"]) == 3
+    again = await asyncio.gather(*[fan_out_event_db(fan["event_id"]) for _ in range(5)])
+    assert all(r == [] for r in again)

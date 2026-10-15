@@ -159,3 +159,35 @@ async def test_cleanup_expired_counters(db):
         s.add(RateLimitCounter(key="old", window_start=1, count=5, expires_at=2))
         await s.commit()
     assert await rl.cleanup_expired() >= 1
+
+
+# ── store outage policy ─────────────────────────────────────────────────────
+@pytest.fixture
+def store_down(monkeypatch):
+    import middleware.rate_limit as rl
+    async def boom(*a, **k):
+        raise RuntimeError("store down")
+    monkeypatch.setattr(rl, "increment", boom)
+    rl._local_counts.clear()
+    return rl
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("method,path", [
+    ("POST", "/api/auth/login"), ("POST", "/api/auth/register"),
+    ("POST", "/api/changes/alerts/1/ack"), ("POST", "/api/changes/alerts/1/resolve"),
+    ("POST", "/api/custom-apis/import"), ("POST", "/api/changes/workspaces/w/subscriptions"),
+    ("DELETE", "/api/changes/workspaces/w/subscriptions/github"),
+])
+async def test_store_down_writes_fail_closed(db, store_down, method, path):
+    async with _client() as c:
+        r = await c.request(method, path, json={})
+    assert r.status_code == 503 and r.headers["retry-after"] == "30"
+
+
+@pytest.mark.asyncio
+async def test_store_down_reads_use_local_fallback_and_still_limit(db, store_down, monkeypatch):
+    monkeypatch.setenv("RL_ANON_PER_MIN", "3")
+    async with _client() as c:
+        codes = [(await c.get("/api/changes/providers")).status_code for _ in range(5)]
+    assert codes[:3] == [200, 200, 200] and codes[3:] == [429, 429]

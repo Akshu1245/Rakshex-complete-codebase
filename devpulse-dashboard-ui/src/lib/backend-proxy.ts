@@ -1,14 +1,27 @@
 const MAX_BODY_BYTES = 4 * 1024 * 1024;
 
-/** Client IP as reported by the hosting platform's edge (only meaningful on Vercel/Cloudflare,
- * which overwrite these headers). Signed so the backend never trusts raw forwarded headers. */
-function platformClientIp(request: Request): string | null {
-  const cf = request.headers.get('cf-connecting-ip');
-  if (cf) return cf.trim();
-  const real = request.headers.get('x-real-ip');
-  if (real) return real.trim();
-  const xff = request.headers.get('x-forwarded-for');
-  return xff ? xff.split(',')[0].trim() : null;
+/**
+ * Client IP taken ONLY from the header the configured hosting edge overwrites (CLIENT_IP_SOURCE):
+ *  - "cloudflare": CF-Connecting-IP (set by Cloudflare's edge; X-Real-IP is stripped; XFF is appended to, so its
+ *    left-most entry is client-controlled and is never used).
+ *  - "vercel": X-Vercel-Forwarded-For / X-Real-IP (Vercel overwrites both and XFF; it does NOT strip
+ *    CF-Connecting-IP, so that header is client-controlled on Vercel and is never used there).
+ *  - unset/other: no client IP is signed (self-hosted/unknown edge: every forwarded header is spoofable).
+ * The value must parse as a single IPv4/IPv6 literal. */
+const IPV4 = /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
+function isIpLiteral(v: string): boolean {
+  if (IPV4.test(v)) return true;
+  if (!/^[0-9a-fA-F:.]+$/.test(v) || !v.includes(':') || v.length > 45) return false;
+  try { return new URL(`http://[${v}]/`).hostname.length > 2; } catch { return false; }
+}
+export function platformClientIp(request: Request, source = process.env.CLIENT_IP_SOURCE): string | null {
+  let raw: string | null = null;
+  if (source === 'cloudflare') raw = request.headers.get('cf-connecting-ip');
+  else if (source === 'vercel') raw = request.headers.get('x-vercel-forwarded-for') || request.headers.get('x-real-ip');
+  else return null;
+  if (!raw) return null;
+  const ip = raw.trim();
+  return isIpLiteral(ip) ? ip : null;
 }
 
 export async function signedClientIpHeaders(request: Request): Promise<Record<string, string>> {

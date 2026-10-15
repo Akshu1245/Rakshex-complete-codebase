@@ -168,7 +168,7 @@ async def remove_subscription(workspace_id: str, provider_id: str,
     from services.database import delete_workspace_subscription_db
     if await _workspace_role(workspace_id, user) not in MANAGE_ROLES:
         raise HTTPException(status_code=403, detail="Insufficient role")
-    if not await delete_workspace_subscription_db(workspace_id, provider_id):
+    if not await delete_workspace_subscription_db(workspace_id, provider_id, user["id"]):
         raise HTTPException(status_code=404, detail="Subscription not found")
     return {"status": "success"}
 

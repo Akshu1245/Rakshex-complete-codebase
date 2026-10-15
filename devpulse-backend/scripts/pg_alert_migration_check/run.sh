@@ -27,6 +27,14 @@ echo "== 4. app checks after migration (isolation, roles, fan-out, dedupe, backf
 python scripts/pg_alert_migration_check/pg_app_checks.py postmigration
 q "SELECT 'audit rows: '||count(*) FROM change_alert_audit"
 q "SELECT 'quarantined (ws NULL): '||count(*) FROM change_alerts WHERE workspace_id IS NULL"
+echo "== 4b. backup + restore drill (pg_dump custom format -> fresh DB -> compare)"
+pg_dump -h $PGH -p $PGP -U postgres -Fc -f /tmp/${DB}.dump $DB
+psql -h $PGH -p $PGP -U postgres -qc "DROP DATABASE IF EXISTS ${DB}_restore" -c "CREATE DATABASE ${DB}_restore"
+pg_restore -h $PGH -p $PGP -U postgres -d ${DB}_restore --no-owner /tmp/${DB}.dump
+SNAP="SELECT (SELECT version_num FROM alembic_version)||'|'||(SELECT count(*) FROM users)||'|'||(SELECT count(*) FROM team_members)||'|'||(SELECT count(*) FROM change_alerts)||'|'||(SELECT count(*) FROM change_alert_audit)||'|'||(SELECT count(*) FROM workspace_api_subscriptions)||'|'||(SELECT count(*) FROM upstream_change_events)||'|'||(SELECT count(*) FROM pg_constraint WHERE conname IN ('ck_team_members_role','uq_change_alerts_event_workspace'))"
+A=$(q "$SNAP"); B=$(psql -h $PGH -p $PGP -U postgres -d ${DB}_restore -tAc "$SNAP")
+[ "$A" = "$B" ] && echo "  PASS restore identical (version|users|members|alerts|audit|subs|events|constraints): $A" || { echo "  FAIL restore differs: $A vs $B"; exit 1; }
+psql -h $PGH -p $PGP -U postgres -qc "DROP DATABASE ${DB}_restore"
 echo "== 5. downgrade to 002"
 alembic downgrade 002_onboarding_progress 2>&1 | grep -v '^INFO' || true
 q "SELECT 'cols after down: '||string_agg(column_name, ',' ORDER BY ordinal_position) FROM information_schema.columns WHERE table_name='change_alerts'"

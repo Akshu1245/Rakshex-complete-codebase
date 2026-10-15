@@ -14,8 +14,23 @@ It tested migrate, rollback, re-upgrade, data preservation, isolation and idempo
 Each revision checks whether its table or column already exists (`_has_table`), because the app's startup
 `create_all()` can create the new tables before Alembic runs.
 
+## Backup / restore procedure (drill run locally on PG 17; see run.sh step 4b)
+- Backup: `pg_dump -Fc --no-owner -f rakshex-pre-003.dump "$DATABASE_URL"`, using a pg_dump version >= the server version.
+  Store it off-host. If the provider offers point-in-time recovery, also note the exact timestamp.
+- Verify the dump before migrating:
+  1. `pg_restore -l rakshex-pre-003.dump | head`
+  2. Restore into a scratch DB: `createdb scratch && pg_restore --no-owner -d scratch rakshex-pre-003.dump`
+  3. Compare row counts of users, team_members, change_alerts and alembic_version.
+- Restore (last resort):
+  1. Stop the backend.
+  2. `createdb rakshex_restored && pg_restore --no-owner -d rakshex_restored rakshex-pre-003.dump`
+  3. Repoint `DATABASE_URL`.
+  4. Redeploy the previous image.
+  Writes made after the dump are lost unless they are replayed.
+- Local drill result: restored DB identical on version, row counts of 6 tables, and both new constraints.
+
 ## Order
-1. Freeze deploys. Take a backup or snapshot of the production DB and confirm it can be restored.
+1. Freeze deploys. Take the backup above and verify it by restoring into a scratch DB.
 2. Pre-check roles (read-only):
    `SELECT role, count(*) FROM team_members GROUP BY role;`
    Any value outside owner/admin/member/viewer (after lowercasing) must be fixed by hand first. Otherwise 005 aborts.
@@ -29,6 +44,7 @@ Each revision checks whether its table or column already exists (`_has_table`), 
 6. Optionally run `backfill_legacy_alerts_to_events_db()` (idempotent). It copies legacy alerts into the shared events
    table. It does not assign them to any workspace.
 7. Set env vars on the backend container:
+   - Dashboard `CLIENT_IP_SOURCE=cloudflare|vercel`: which edge header is trusted. Unset means no IP is signed.
    - `PROXY_SIGNING_SECRET`: must match the dashboard's value. The dashboard proxy signs the client IP. Without it,
      every dashboard user shares the proxy's IP bucket for anonymous limits.
    - Or `TRUSTED_PROXY_CIDRS`: only real proxy ranges. Never `0.0.0.0/0`.

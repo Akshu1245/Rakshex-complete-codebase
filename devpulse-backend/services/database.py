@@ -625,9 +625,25 @@ async def add_workspace_subscription_db(workspace_id: str, api_name: str, source
             return _row_to_dict(existing)
         obj = WorkspaceApiSubscription(workspace_id=workspace_id, api_name=key, source=source, created_by=created_by)
         session.add(obj)
-        await session.commit()
+        if created_by is not None:
+            session.add(_subscription_audit(workspace_id, created_by, f"sub:{key}"))
+        try:
+            await session.commit()
+        except IntegrityError:  # concurrent subscribe of the same provider: idempotent, not a 500
+            await session.rollback()
+            existing = (await session.execute(select(WorkspaceApiSubscription).where(and_(
+                WorkspaceApiSubscription.workspace_id == workspace_id,
+                WorkspaceApiSubscription.api_name == key)))).scalar_one()
+            return _row_to_dict(existing)
         await session.refresh(obj)
         return _row_to_dict(obj)
+
+
+def _subscription_audit(workspace_id: str, actor: int, action: str) -> "ChangeAlertAudit":
+    """Subscription changes share the append-only change_alert_audit table: alert_id=0 marks a
+    workspace-level entry; action is 'sub:<provider>' or 'unsub:<provider>' (<= 20 chars)."""
+    return ChangeAlertAudit(alert_id=0, workspace_id=workspace_id, actor_user_id=actor, action=action[:20],
+                            created_at=datetime.now(timezone.utc))
 
 
 async def list_workspace_subscriptions_db(workspace_id: str) -> List[Dict[str, Any]]:
@@ -638,11 +654,14 @@ async def list_workspace_subscriptions_db(workspace_id: str) -> List[Dict[str, A
         return [_row_to_dict(r) for r in res.scalars().all()]
 
 
-async def delete_workspace_subscription_db(workspace_id: str, api_name: str) -> bool:
+async def delete_workspace_subscription_db(workspace_id: str, api_name: str, actor: Optional[int] = None) -> bool:
+    key = (api_name or "").strip()
     async with AsyncSessionLocal() as session:
         res = await session.execute(delete(WorkspaceApiSubscription).where(and_(
             WorkspaceApiSubscription.workspace_id == workspace_id,
-            WorkspaceApiSubscription.api_name == (api_name or "").strip())))
+            WorkspaceApiSubscription.api_name == key)))
+        if res.rowcount > 0 and actor is not None:
+            session.add(_subscription_audit(workspace_id, actor, f"unsub:{key}"))
         await session.commit()
         return res.rowcount > 0
 
@@ -676,22 +695,24 @@ async def fan_out_event_db(event_id: int) -> List[int]:
             return []  # unknown source -> quarantined (no workspace alerts)
         subs = (await session.execute(select(WorkspaceApiSubscription.workspace_id).where(
             WorkspaceApiSubscription.api_name == provider_id))).scalars().all()
-        already = set((await session.execute(select(ChangeAlert.workspace_id).where(
-            ChangeAlert.event_id == event_id))).scalars().all())
+        # Per-row INSERT .. ON CONFLICT DO NOTHING on UNIQUE(event_id, workspace_id): concurrent fan-outs
+        # (several detector instances) can never duplicate an alert, and one collision never drops the
+        # inserts for other workspaces.
+        if session.bind.dialect.name == "postgresql":
+            from sqlalchemy.dialects.postgresql import insert as _ins
+        else:
+            from sqlalchemy.dialects.sqlite import insert as _ins
         created = []
-        for ws in sorted(set(subs) - already):
-            a = ChangeAlert(api_name=ev.api_name, severity=ev.severity, change_type=ev.change_type,
-                            summary=ev.summary, diff_json=ev.diff_json, old_hash=ev.old_hash,
-                            new_hash=ev.new_hash, workspace_id=ws, event_id=ev.id)
-            session.add(a)
-            await session.flush()
-            created.append(a.id)
-        try:
-            await session.commit()
-        except IntegrityError:
-            # Concurrent fan-out already inserted (event, workspace); unique constraint dedupes.
-            await session.rollback()
-            return []
+        for ws in sorted(set(subs)):
+            stmt = _ins(ChangeAlert).values(
+                api_name=ev.api_name, severity=ev.severity, change_type=ev.change_type, summary=ev.summary,
+                diff_json=ev.diff_json, old_hash=ev.old_hash, new_hash=ev.new_hash, workspace_id=ws,
+                event_id=ev.id, acknowledged=False,
+            ).on_conflict_do_nothing(index_elements=["event_id", "workspace_id"]).returning(ChangeAlert.id)
+            new_id = (await session.execute(stmt)).scalar_one_or_none()
+            if new_id is not None:
+                created.append(int(new_id))
+        await session.commit()
         return created
 
 

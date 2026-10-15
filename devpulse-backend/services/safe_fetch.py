@@ -24,7 +24,8 @@ import httpx
 
 MAX_BYTES = 2 * 1024 * 1024
 MAX_REDIRECTS = 3
-TIMEOUT = httpx.Timeout(10.0, connect=5.0)
+TIMEOUT = httpx.Timeout(10.0, connect=5.0)   # per operation
+TOTAL_DEADLINE = 15.0                          # whole fetch incl. redirects (stops slow-drip bodies)
 ALLOWED_PORTS = {443, 80}
 
 
@@ -80,6 +81,15 @@ async def validate_url(url: str) -> Tuple[str, str, int, str]:
     host = parts.hostname
     if not host:
         raise SpecFetchError(400, "URL has no host")
+    if "%" in host:
+        raise SpecFetchError(400, "IPv6 zone identifiers are not allowed")
+    host = host.rstrip(".")
+    if not host:
+        raise SpecFetchError(400, "URL has no host")
+    try:  # IDN -> ASCII (punycode) so DNS, Host header and SNI all use the same name
+        host = host.encode("idna").decode("ascii").lower()
+    except UnicodeError:
+        raise SpecFetchError(400, "Invalid hostname")
     try:
         port = parts.port or (443 if scheme == "https" else 80)
     except ValueError:
@@ -103,6 +113,11 @@ async def validate_url(url: str) -> Tuple[str, str, int, str]:
     return scheme, host, port, ips[0]
 
 
+
+
+async def _aiter(items):
+    for i in items:
+        yield i
 
 
 def _yaml_load(text: str) -> Any:
@@ -134,10 +149,25 @@ def parse_spec(body: bytes, content_type: str, url_path: str) -> Dict[str, Any]:
     return spec
 
 
-async def fetch_spec(url: str) -> Dict[str, Any]:
+async def fetch_spec(url: str, deadline: float = None) -> Dict[str, Any]:
+    try:
+        return await asyncio.wait_for(_fetch_spec(url), TOTAL_DEADLINE if deadline is None else deadline)
+    except asyncio.TimeoutError:
+        raise SpecFetchError(504, "Timed out fetching spec")
+
+
+async def stream_pinned(url: str, sink: Callable[[bytes], None], *, max_bytes: int = MAX_BYTES,
+                        allowed_hosts: Optional[set] = None, max_redirects: int = MAX_REDIRECTS,
+                        accept: str = "application/json, application/yaml, text/yaml") -> Tuple[str, str]:
+    """GET url with SSRF defences (validated, DNS-pinned, TLS verified for the original host, every redirect
+    re-validated, identity encoding, size cap). Body chunks go to sink; returns (content_type, final_path).
+    allowed_hosts, if given, must contain the host of the URL and of every redirect target."""
     current = url
-    for _ in range(MAX_REDIRECTS + 1):
+    limit_mb = f"{max_bytes // (1024 * 1024)} MB"
+    for _ in range(max_redirects + 1):
         scheme, host, port, ip = await validate_url(current)
+        if allowed_hosts is not None and host not in allowed_hosts:
+            raise SpecFetchError(400, "Host is not on the allowlist")
         parts = urlsplit(current)
         ip_host = f"[{ip}]" if ":" in ip else ip
         netloc = ip_host if port in (80, 443) and ((scheme == "https") == (port == 443)) else f"{ip_host}:{port}"
@@ -148,7 +178,8 @@ async def fetch_spec(url: str) -> Dict[str, Any]:
             kwargs["transport"] = transport_factory()
         try:
             async with httpx.AsyncClient(**kwargs) as client:
-                req = client.build_request("GET", pinned, headers={"Host": host_header, "Accept": "application/json, application/yaml, text/yaml"},
+                req = client.build_request("GET", pinned, headers={"Host": host_header, "Accept": accept,
+                                                                   "Accept-Encoding": "identity"},
                                            extensions={"sni_hostname": host} if scheme == "https" else {})
                 resp = await client.send(req, stream=True)
                 try:
@@ -160,15 +191,21 @@ async def fetch_spec(url: str) -> Dict[str, Any]:
                         continue
                     if resp.status_code != 200:
                         raise SpecFetchError(502, f"Spec URL returned HTTP {resp.status_code}")
+                    if resp.headers.get("content-encoding", "identity").lower() not in ("", "identity"):
+                        # compressed bodies are refused: a small gzip can expand far past the cap in one chunk
+                        raise SpecFetchError(422, "Compressed responses are not accepted")
                     declared = resp.headers.get("content-length")
-                    if declared and declared.isdigit() and int(declared) > MAX_BYTES:
-                        raise SpecFetchError(413, "Spec too large (max 2 MB)")
-                    buf = bytearray()
-                    async for chunk in resp.aiter_bytes():
-                        buf += chunk
-                        if len(buf) > MAX_BYTES:
-                            raise SpecFetchError(413, "Spec too large (max 2 MB)")
-                    return parse_spec(bytes(buf), resp.headers.get("content-type", ""), parts.path)
+                    if declared and declared.isdigit() and int(declared) > max_bytes:
+                        raise SpecFetchError(413, f"Spec too large (max {limit_mb})")
+                    size = 0
+                    # (in-memory test transports pre-read the body; real transports stream it)
+                    chunks = [resp.content] if resp.is_stream_consumed else None
+                    async for chunk in (_aiter(chunks) if chunks is not None else resp.aiter_raw()):
+                        size += len(chunk)
+                        if size > max_bytes:
+                            raise SpecFetchError(413, f"Spec too large (max {limit_mb})")
+                        sink(chunk)
+                    return resp.headers.get("content-type", ""), parts.path
                 finally:
                     await resp.aclose()
         except SpecFetchError:
@@ -178,3 +215,9 @@ async def fetch_spec(url: str) -> Dict[str, Any]:
         except httpx.HTTPError:
             raise SpecFetchError(502, "Failed to fetch spec")
     raise SpecFetchError(400, "Too many redirects")
+
+
+async def _fetch_spec(url: str) -> Dict[str, Any]:
+    buf = bytearray()
+    ctype, path = await stream_pinned(url, buf.extend)
+    return parse_spec(bytes(buf), ctype, path)

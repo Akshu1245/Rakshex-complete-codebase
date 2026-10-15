@@ -92,6 +92,16 @@ async def main():
         async def burst(k):
             return (await rl.increment(k, 3600))[0]
         res = await asyncio.gather(*[burst("ipm:203.0.113.9") for _ in range(10)])
+        # concurrency on real PG: subscribe races and fan-out races
+        subs = await asyncio.gather(*[add_workspace_subscription_db("wsB", "slack", "manual", 3) for _ in range(8)], return_exceptions=True)
+        check(not [x for x in subs if isinstance(x, Exception)], f"8 concurrent subscribes: no errors ({[type(x).__name__ for x in subs if isinstance(x, Exception)]})")
+        fan2 = await record_upstream_event_and_fan_out("Slack", "warning", "pg race", "{}", "c", "d")
+        races = await asyncio.gather(*[fan_out_event_db(fan2["event_id"]) for _ in range(8)])
+        async with AsyncSessionLocal() as s:
+            n = (await s.execute(text("SELECT count(*) FROM change_alerts WHERE event_id=:e"), {"e": fan2["event_id"]})).scalar_one()
+            aud = (await s.execute(text("SELECT count(*) FROM change_alert_audit WHERE alert_id=0 AND action='sub:slack'"))).scalar_one()
+        check(n == 1 and all(r == [] for r in races), f"8 concurrent fan-outs -> exactly 1 alert for wsB: {n}")
+        check(aud == 1, f"subscription change audited exactly once: {aud}")
         check(sorted(res) == list(range(1, 11)), f"concurrent upserts give unique counts: {sorted(res)}")
 
 asyncio.run(main())

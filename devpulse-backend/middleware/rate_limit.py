@@ -239,6 +239,43 @@ async def _extract_identifier(request: Request) -> Tuple[str, str]:
     return f"ip:{resolve_client_ip(request)}", "free"
 
 
+# ── Store-failure policy ────────────────────────────────────────────────────
+# If the shared store (Redis and the SQL fallback) is unreachable:
+#  * state-changing requests (POST/PUT/PATCH/DELETE: login/register, ack/resolve, custom-API import, subscription
+#    writes, ...) FAIL CLOSED with 503 so brute force / write floods cannot ride a store outage;
+#  * read requests (GET/HEAD) continue with a process-local fixed-window counter using the same limits
+#    (per instance, so the effective limit is limit x instances during the outage).
+SAFE_METHODS = {"GET", "HEAD"}
+_local_counts: Dict[Tuple[str, int], int] = {}
+
+
+class StoreUnavailable(Exception):
+    pass
+
+
+def _local_increment(key: str, window: int) -> Tuple[int, int]:
+    now = int(time.time())
+    ws = now - (now % window)
+    if len(_local_counts) > 50_000:  # bound memory during long outages
+        for k in [k for k in _local_counts if k[1] + window < now]:
+            _local_counts.pop(k, None)
+        if len(_local_counts) > 50_000:
+            _local_counts.clear()
+    _local_counts[(key, ws)] = _local_counts.get((key, ws), 0) + 1
+    return _local_counts[(key, ws)], ws + window
+
+
+async def _count(key: str, window: int, method: str) -> Tuple[int, int]:
+    try:
+        return await increment(key, window)
+    except Exception as exc:
+        if method.upper() in SAFE_METHODS:
+            logger.error(f"Rate-limit store down ({exc}); local fallback for read {key.split(':')[0]}")
+            return _local_increment(key, window)
+        logger.error(f"Rate-limit store down ({exc}); failing closed for {method}")
+        raise StoreUnavailable() from exc
+
+
 def _too_many(limit: int, reset: int, scope: str) -> JSONResponse:
     retry = max(1, reset - int(time.time()))
     return JSONResponse(
@@ -254,32 +291,33 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         if _is_exempt(request.url.path) or request.method == "OPTIONS":
             return await call_next(request)
+        m = request.method
         try:
             user = await _authenticated_user(request)
             if user:
                 limit = TIER_LIMITS.get(user.get("plan", "free"), DEFAULT_LIMIT)
-                count, reset = await increment(f"user:{user['id']}", WINDOW_SECONDS)
+                count, reset = await _count(f"user:{user['id']}", WINDOW_SECONDS, m)
                 if count > limit:
                     return _too_many(limit, reset, "user")
                 ws = _target_workspace(request)
                 if ws and await _is_member(user["id"], ws):
                     ws_limit = _env_int("RL_WORKSPACE_PER_HOUR", 5000)
-                    wcount, wreset = await increment(f"ws:{ws}", WINDOW_SECONDS)
+                    wcount, wreset = await _count(f"ws:{ws}", WINDOW_SECONDS, m)
                     if wcount > ws_limit:
                         return _too_many(ws_limit, wreset, "workspace")
             else:
                 ip = resolve_client_ip(request)
                 per_min = _env_int("RL_ANON_PER_MIN", 60)
-                mcount, mreset = await increment(f"ipm:{ip}", 60)
+                mcount, mreset = await _count(f"ipm:{ip}", 60, m)
                 if mcount > per_min:
                     return _too_many(per_min, mreset, "ip")
                 limit = _env_int("RL_ANON_PER_HOUR", TIER_LIMITS["free"])
-                count, reset = await increment(f"ip:{ip}", WINDOW_SECONDS)
+                count, reset = await _count(f"ip:{ip}", WINDOW_SECONDS, m)
                 if count > limit:
                     return _too_many(limit, reset, "ip")
-        except Exception as exc:  # fail open, never take the API down because of the limiter
-            logger.error(f"Rate limiter store error, allowing request: {exc}")
-            return await call_next(request)
+        except StoreUnavailable:
+            return JSONResponse(status_code=503, headers={"Retry-After": "30"},
+                                content={"status": "error", "error": "Temporarily unavailable, please retry."})
 
         response = await call_next(request)
         response.headers["X-RateLimit-Limit"] = str(limit)
