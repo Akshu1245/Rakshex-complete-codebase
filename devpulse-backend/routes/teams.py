@@ -40,11 +40,11 @@ class CreateWorkspaceRequest(BaseModel):
 
 class InviteMemberRequest(BaseModel):
     user_id: int = Field(..., description="User ID to invite")
-    role: str = Field(default="member", description="owner, admin, member, viewer")
+    role: str = Field(default="member", pattern="^(owner|admin|member|viewer)$", description="owner, admin, member, viewer")
 
 
 class ChangeRoleRequest(BaseModel):
-    role: str = Field(..., description="owner, admin, member, viewer")
+    role: str = Field(..., pattern="^(owner|admin|member|viewer)$", description="owner, admin, member, viewer")
 
 
 @router.post("/api/teams/workspaces")
@@ -86,56 +86,40 @@ async def get_team_workspace(workspace_id: str, user: Dict = Depends(require_aut
         return {"status": "error", "error": "Failed to get workspace"}
 
 
+_HTTP = {"forbidden": 403, "not_found": 404, "last_owner": 409, "conflict": 409}
+
+
+def _respond(result: Dict[str, Any]) -> Dict[str, Any]:
+    if result["outcome"] != "ok":
+        raise HTTPException(_HTTP.get(result["outcome"], 400), result["message"])
+    return {"status": "success", "message": result["message"]}
+
+
+# The API-level workspace_access() check only avoids leaking workspace existence. The authoritative
+# decision (actor role, target role, primary owner, last owner) is re-made inside the locked
+# transaction in services.database.apply_team_member_change, so it cannot go stale.
+
 @router.post("/api/teams/workspaces/{workspace_id}/invite")
-async def invite_to_workspace(
-    workspace_id: str,
-    req: InviteMemberRequest,
-    user: Dict = Depends(require_auth),
-) -> Dict[str, Any]:
+async def invite_to_workspace(workspace_id: str, req: InviteMemberRequest,
+                              user: Dict = Depends(require_auth)) -> Dict[str, Any]:
     """Invite a user to a workspace."""
     await workspace_access(workspace_id, user, admin=True)
-    if req.role == "owner":
-        raise HTTPException(400, "Ownership cannot be assigned by invitation")
-    try:
-        result = await invite_member(
-            workspace_id=workspace_id, user_id=req.user_id,
-            role=req.role, invited_by=user["id"],
-        )
-        return {"status": "success", **result}
-    except Exception as e:
-        logger.error(f"Error inviting member: {e}")
-        return {"status": "error", "error": "Failed to invite member"}
+    return _respond(await invite_member(workspace_id, req.user_id, req.role, actor_id=user["id"]))
 
 
 @router.put("/api/teams/workspaces/{workspace_id}/members/{user_id}/role")
-async def update_member_role(
-    workspace_id: str,
-    user_id: int,
-    req: ChangeRoleRequest,
-    user: Dict = Depends(require_auth),
-) -> Dict[str, Any]:
+async def update_member_role(workspace_id: str, user_id: int, req: ChangeRoleRequest,
+                             user: Dict = Depends(require_auth)) -> Dict[str, Any]:
     """Change a member's role in a workspace."""
-    access = await workspace_access(workspace_id, user, admin=True)
-    if user_id == access["owner_id"] or req.role == "owner" or (access["role"] != "owner" and req.role == "admin"):
-        raise HTTPException(403, "Ownership or admin elevation is not allowed")
-    try:
-        result = await change_member_role(workspace_id, user_id, req.role)
-        return {"status": "success", **result}
-    except Exception as e:
-        logger.error(f"Error changing member role: {e}")
-        return {"status": "error", "error": "Failed to change role"}
+    await workspace_access(workspace_id, user, admin=True)
+    return _respond(await change_member_role(workspace_id, user_id, req.role, actor_id=user["id"]))
 
 
 @router.delete("/api/teams/workspaces/{workspace_id}/members/{user_id}")
 async def delete_member(workspace_id: str, user_id: int, user: Dict = Depends(require_auth)) -> Dict[str, Any]:
     """Remove a member from a workspace."""
     await workspace_access(workspace_id, user, admin=True)
-    try:
-        result = await remove_member(workspace_id, user_id)
-        return {"status": "success", **result}
-    except Exception as e:
-        logger.error(f"Error removing member: {e}")
-        return {"status": "error", "error": "Failed to remove member"}
+    return _respond(await remove_member(workspace_id, user_id, actor_id=user["id"]))
 
 
 @router.get("/api/teams/roles")

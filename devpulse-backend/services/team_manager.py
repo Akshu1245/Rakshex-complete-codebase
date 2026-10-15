@@ -38,36 +38,26 @@ async def get_user_workspaces(user_id: int) -> List[Dict[str, Any]]:
     return await get_user_teams(user_id)
 
 
-async def invite_member(workspace_id: str, user_id: int,
-                        role: str = "viewer", invited_by: int = 0) -> Dict[str, Any]:
-    """Invite a member to a workspace."""
-    from services.database import add_team_member
-    if role not in ROLES:
-        return {"status": "error", "message": f"Invalid role: {role}"}
-    success = await add_team_member(workspace_id, user_id, role, invited_by)
-    if not success:
-        return {"status": "error", "message": "User already a member or invite failed"}
-    return {"status": "success", "message": f"Invited user {user_id} as {role}"}
+async def invite_member(workspace_id: str, user_id: int, role: str = "viewer", *,
+                        actor_id: int) -> Dict[str, Any]:
+    """Invite a member. Authorization is enforced centrally (see apply_team_member_change)."""
+    from services.database import apply_team_member_change
+    outcome, message = await apply_team_member_change(workspace_id, actor_id, user_id, "add", role, invited_by=actor_id)
+    return {"outcome": outcome, "message": f"Invited user {user_id} as {role}" if outcome == "ok" else message}
 
 
-async def change_member_role(workspace_id: str, user_id: int, new_role: str) -> Dict[str, Any]:
-    """Change a member's role."""
-    from services.database import update_team_member_role
-    if new_role not in ROLES:
-        return {"status": "error", "message": f"Invalid role: {new_role}"}
-    success = await update_team_member_role(workspace_id, user_id, new_role)
-    if not success:
-        return {"status": "error", "message": "Member not found"}
-    return {"status": "success", "message": f"Role changed to {new_role}"}
+async def change_member_role(workspace_id: str, user_id: int, new_role: str, *, actor_id: int) -> Dict[str, Any]:
+    """Change a member's role. Authorization is enforced centrally."""
+    from services.database import apply_team_member_change
+    outcome, message = await apply_team_member_change(workspace_id, actor_id, user_id, "set_role", new_role)
+    return {"outcome": outcome, "message": f"Role changed to {new_role}" if outcome == "ok" else message}
 
 
-async def remove_member(workspace_id: str, user_id: int) -> Dict[str, Any]:
-    """Remove a member from a workspace."""
-    from services.database import remove_team_member
-    success = await remove_team_member(workspace_id, user_id)
-    if not success:
-        return {"status": "error", "message": "Cannot remove owner or member not found"}
-    return {"status": "success", "message": "Member removed"}
+async def remove_member(workspace_id: str, user_id: int, *, actor_id: int) -> Dict[str, Any]:
+    """Remove a member. Authorization is enforced centrally."""
+    from services.database import apply_team_member_change
+    outcome, message = await apply_team_member_change(workspace_id, actor_id, user_id, "remove")
+    return {"outcome": outcome, "message": "Member removed" if outcome == "ok" else message}
 
 
 def check_permission(role: str, permission: str) -> bool:

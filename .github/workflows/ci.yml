@@ -74,6 +74,17 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    # Throwaway PostgreSQL for row-lock tests (tests/test_teams_pg_locking.py). Local-only credentials.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci-only
+          POSTGRES_DB: teams_race
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ci" --health-interval 5s --health-timeout 5s --health-retries 10
 
     steps:
       - uses: actions/checkout@v4
@@ -97,7 +108,9 @@ jobs:
 
       - name: Run tests
         working-directory: devpulse-backend
-        run: python -m pytest tests/ -v --tb=short
+        env:
+          TEST_PG_URL: postgresql+asyncpg://ci:ci-only@localhost:5432/teams_race
+        run: python -m pytest tests/ -v --tb=short -rs
 
   frontend-tests:
     name: Frontend Tests (Node.js)
