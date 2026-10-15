@@ -42,7 +42,7 @@ async def scan_code_endpoint(req: CodeScanRequest) -> Dict[str, Any]:
         )
         return {"status": "success", **result}
     except Exception as e:
-        logger.error(f"Code scan error: {e}")
+        logger.error("Code scan error (%s)", type(e).__name__)
         return {"status": "error", "error": "Failed to scan code"}
 
 
@@ -58,7 +58,7 @@ async def scan_api_endpoint(req: ApiScanRequest) -> Dict[str, Any]:
         )
         return {"status": "success", **result}
     except Exception as e:
-        logger.error(f"API scan error: {e}")
+        logger.error("API scan error (%s)", type(e).__name__)
         return {"status": "error", "error": "Failed to scan API configuration"}
 
 
@@ -71,5 +71,5 @@ async def list_scans(
         scans = await get_security_scans(limit=limit)
         return {"status": "success", "scans": scans, "count": len(scans)}
     except Exception as e:
-        logger.error(f"Error listing scans: {e}")
+        logger.error("Error listing scans (%s)", type(e).__name__)
         return {"status": "error", "error": "Failed to list scans"}

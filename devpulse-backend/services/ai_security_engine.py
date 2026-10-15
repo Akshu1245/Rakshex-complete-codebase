@@ -163,7 +163,7 @@ def _run_patterns(code: str, patterns: List[Dict[str, Any]], category: str) -> L
                     "severity": rule.get("severity", "medium"),
                     "line": lineno,
                     "column": match.start() + 1,
-                    "matched_text": match.group()[:120],
+                    "matched_text": "[REDACTED]",
                     "description": rule.get("description", ""),
                     "fix": rule.get("fix", rule.get("description", "")),
                 })
@@ -274,6 +274,27 @@ async def generate_fix_suggestions(findings: List[Dict[str, Any]], code: str) ->
     if not findings:
         return []
 
+    # Client-supplied descriptions/snippets are untrusted. Use detector metadata
+    # only; original submitted source is never sent to the fix provider.
+    rules = {rule["id"]: rule for rule in TOKEN_PATTERNS + AGENT_ATTACK_PATTERNS + OWASP_API_2023}
+    safe_findings = []
+    for finding in findings[:10]:
+        if not isinstance(finding, dict) or not isinstance(finding.get("rule_id"), str):
+            continue
+        rule = rules.get(finding["rule_id"])
+        if rule is None:
+            continue
+        line = finding.get("line", finding.get("line_number"))
+        safe_findings.append({
+            "rule_id": rule["id"], "severity": rule.get("severity", "medium"),
+            "name": rule["name"], "description": rule.get("description", ""),
+            "fix": rule.get("fix", rule.get("description", "")),
+            "line": line if type(line) is int and line > 0 else None,
+        })
+    findings = safe_findings
+    if not findings:
+        return []
+
     # Static fallback suggestions
     suggestions: List[Dict[str, Any]] = []
     for f in findings[:10]:  # Cap at 10
@@ -300,8 +321,7 @@ async def generate_fix_suggestions(findings: List[Dict[str, Any]], code: str) ->
                 "provide a specific, actionable fix with a corrected code snippet.\n\n"
                 "Findings:\n"
                 + json.dumps(top_critical, indent=2)
-                + "\n\nOriginal code (first 2000 chars):\n"
-                + code[:2000]
+                + "\n\nSource omitted for credential safety. Give generic remediation guidance."
                 + "\n\nRespond in JSON array format: "
                 '[{"rule_id": "...", "fix_code": "...", "explanation": "..."}]'
             )
@@ -330,7 +350,7 @@ async def generate_fix_suggestions(findings: List[Dict[str, Any]], code: str) ->
                                     s["explanation"] = afix.get("explanation", "")
                                     s["ai_generated"] = True
         except Exception as exc:
-            logger.warning(f"Groq AI fix generation failed: {exc}")
+            logger.warning("Groq AI fix generation failed (%s)", type(exc).__name__)
 
     return suggestions
 
@@ -431,7 +451,7 @@ def scan_api_inventory(code: str) -> Dict[str, Any]:
         usages = []
         for lineno, line in enumerate(lines, 1):
             if pat.search(line):
-                usages.append({"line": lineno, "snippet": line.strip()[:100]})
+                usages.append({"line": lineno, "snippet": "[REDACTED]"})
         if usages:
             inventory.append({
                 "provider": pp["provider"],
