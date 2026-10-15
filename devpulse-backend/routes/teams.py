@@ -86,92 +86,40 @@ async def get_team_workspace(workspace_id: str, user: Dict = Depends(require_aut
         return {"status": "error", "error": "Failed to get workspace"}
 
 
+_HTTP = {"forbidden": 403, "not_found": 404, "last_owner": 409, "conflict": 409}
+
+
+def _respond(result: Dict[str, Any]) -> Dict[str, Any]:
+    if result["outcome"] != "ok":
+        raise HTTPException(_HTTP.get(result["outcome"], 400), result["message"])
+    return {"status": "success", "message": result["message"]}
+
+
+# The API-level workspace_access() check only avoids leaking workspace existence. The authoritative
+# decision (actor role, target role, primary owner, last owner) is re-made inside the locked
+# transaction in services.database.apply_team_member_change, so it cannot go stale.
+
 @router.post("/api/teams/workspaces/{workspace_id}/invite")
-async def invite_to_workspace(
-    workspace_id: str,
-    req: InviteMemberRequest,
-    user: Dict = Depends(require_auth),
-) -> Dict[str, Any]:
+async def invite_to_workspace(workspace_id: str, req: InviteMemberRequest,
+                              user: Dict = Depends(require_auth)) -> Dict[str, Any]:
     """Invite a user to a workspace."""
     await workspace_access(workspace_id, user, admin=True)
-    if req.role == "owner":
-        raise HTTPException(400, "Ownership cannot be assigned by invitation")
-    try:
-        result = await invite_member(
-            workspace_id=workspace_id, user_id=req.user_id,
-            role=req.role, invited_by=user["id"],
-        )
-        return {"status": "success", **result}
-    except Exception as e:
-        logger.error(f"Error inviting member: {e}")
-        return {"status": "error", "error": "Failed to invite member"}
-
-
-async def _target_member(workspace_id: str, user_id: int) -> Dict[str, Any]:
-    workspace = await get_workspace(workspace_id)
-    member = next((m for m in (workspace or {}).get("members", []) if int(m["user_id"]) == int(user_id)), None)
-    if not workspace or not member:
-        raise HTTPException(404, "Member not found")
-    return {"workspace": workspace, "member": member}
-
-
-def _authorize_member_change(actor_role: str, actor_id: int, target_role: str, target_id: int,
-                             primary_owner_id: int, new_role: Optional[str]) -> None:
-    """Role-management rules (raise 403 on violation):
-    - nobody can grant "owner" here (no ownership-transfer flow);
-    - the primary owner (teams.owner_id) can never be removed or demoted;
-    - only owners can change or remove owners and admins, or grant "admin";
-    - admins can change/remove members and viewers only.
-    The last-owner rule is enforced atomically in the DB layer."""
-    if new_role == "owner":
-        raise HTTPException(403, "Ownership cannot be granted here")
-    if int(target_id) == int(primary_owner_id):
-        raise HTTPException(403, "The workspace owner cannot be removed or demoted")
-    if actor_role != "owner" and (target_role in ("owner", "admin") or new_role == "admin"):
-        raise HTTPException(403, "Only an owner can change owners or admins")
+    return _respond(await invite_member(workspace_id, req.user_id, req.role, actor_id=user["id"]))
 
 
 @router.put("/api/teams/workspaces/{workspace_id}/members/{user_id}/role")
-async def update_member_role(
-    workspace_id: str,
-    user_id: int,
-    req: ChangeRoleRequest,
-    user: Dict = Depends(require_auth),
-) -> Dict[str, Any]:
+async def update_member_role(workspace_id: str, user_id: int, req: ChangeRoleRequest,
+                             user: Dict = Depends(require_auth)) -> Dict[str, Any]:
     """Change a member's role in a workspace."""
-    from services.database import update_team_member_role_guarded
-    access = await workspace_access(workspace_id, user, admin=True)
-    t = await _target_member(workspace_id, user_id)
-    _authorize_member_change(access["role"], user["id"], t["member"]["role"], user_id, t["workspace"]["owner_id"], req.role)
-    try:
-        outcome = await update_team_member_role_guarded(workspace_id, user_id, req.role)
-    except Exception as e:
-        logger.error(f"Error changing member role: {e}")
-        raise HTTPException(500, "Failed to change role")
-    if outcome == "not_found":
-        raise HTTPException(404, "Member not found")
-    if outcome == "last_owner":
-        raise HTTPException(409, "A workspace must keep at least one owner")
-    return {"status": "success", "message": f"Role changed to {req.role}"}
+    await workspace_access(workspace_id, user, admin=True)
+    return _respond(await change_member_role(workspace_id, user_id, req.role, actor_id=user["id"]))
 
 
 @router.delete("/api/teams/workspaces/{workspace_id}/members/{user_id}")
 async def delete_member(workspace_id: str, user_id: int, user: Dict = Depends(require_auth)) -> Dict[str, Any]:
     """Remove a member from a workspace."""
-    from services.database import remove_team_member_guarded
-    access = await workspace_access(workspace_id, user, admin=True)
-    t = await _target_member(workspace_id, user_id)
-    _authorize_member_change(access["role"], user["id"], t["member"]["role"], user_id, t["workspace"]["owner_id"], None)
-    try:
-        outcome = await remove_team_member_guarded(workspace_id, user_id)
-    except Exception as e:
-        logger.error(f"Error removing member: {e}")
-        raise HTTPException(500, "Failed to remove member")
-    if outcome == "not_found":
-        raise HTTPException(404, "Member not found")
-    if outcome == "last_owner":
-        raise HTTPException(409, "A workspace must keep at least one owner")
-    return {"status": "success", "message": "Member removed"}
+    await workspace_access(workspace_id, user, admin=True)
+    return _respond(await remove_member(workspace_id, user_id, actor_id=user["id"]))
 
 
 @router.get("/api/teams/roles")

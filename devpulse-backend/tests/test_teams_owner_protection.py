@@ -109,11 +109,15 @@ async def test_last_owner_cannot_demote_self(client, team):
 
 @pytest.mark.asyncio
 async def test_last_owner_guard_at_db_level(team):
-    from services.database import update_team_member_role_guarded, remove_team_member_guarded
+    """Legacy/inconsistent data: primary owner row no longer 'owner'; the remaining co-owner can't leave."""
+    from sqlalchemy import update
+    from services.database import apply_team_member_change
     ids, _ = team
-    assert await remove_team_member_guarded(WS, ids["coowner"]) == "ok"
-    assert await update_team_member_role_guarded(WS, ids["owner"], "member") == "last_owner"
-    assert await remove_team_member_guarded(WS, ids["owner"]) == "last_owner"
+    async with AsyncSessionLocal() as s:
+        await s.execute(update(TeamMember).where(TeamMember.user_id == ids["owner"]).values(role="member"))
+        await s.commit()
+    assert (await apply_team_member_change(WS, ids["coowner"], ids["coowner"], "set_role", "admin"))[0] == "last_owner"
+    assert (await apply_team_member_change(WS, ids["coowner"], ids["coowner"], "remove"))[0] == "last_owner"
 
 
 @pytest.mark.asyncio

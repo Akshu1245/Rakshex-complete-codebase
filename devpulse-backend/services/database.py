@@ -1,3 +1,4 @@
+import asyncio
 """
 Database Service — SQLAlchemy 2.0 async ORM layer for DevPulse.
 
@@ -11,7 +12,7 @@ ORM models come from ``models.tables``.
 import json
 import logging
 from datetime import datetime, timezone
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 
 from sqlalchemy import select, update, delete, func, and_, or_, desc, asc, text
 from sqlalchemy.exc import IntegrityError
@@ -989,99 +990,97 @@ async def get_user_teams(user_id: int) -> List[Dict[str, Any]]:
         return teams
 
 
-async def add_team_member(team_id: str, user_id: int, role: str,
-                          invited_by: int) -> bool:
-    """Add a member to a team."""
+
+
+# ── Central, race-safe team membership changes ─────────────────────────────
+# Every role change / removal / invitation goes through apply_team_member_change(). It re-reads the
+# ACTOR's and TARGET's roles inside the same transaction that writes, after taking a lock that
+# serializes all membership changes of the team:
+#   * PostgreSQL: SELECT ... FROM teams WHERE id=? FOR UPDATE (row lock held until commit), then the
+#     membership rows are also read FOR UPDATE.
+#   * Other dialects (SQLite in dev/tests): a per-team asyncio.Lock (single-process only).
+# So an authorization decision can never be based on a role that changed after the API-level check.
+
+_TEAM_LOCKS: Dict[str, asyncio.Lock] = {}
+MEMBER_ROLES = ("owner", "admin", "member", "viewer")
+
+
+def member_change_violation(actor_role: Optional[str], target_role: Optional[str], target_is_primary: bool,
+                            action: str, new_role: Optional[str]) -> Optional[str]:
+    """Pure permission rules. Returns a reason string if forbidden, else None.
+    - only owners/admins manage members; nobody can grant "owner" (no ownership-transfer flow);
+    - the primary owner (teams.owner_id) can never be removed or demoted;
+    - only owners can change/remove owners or admins, or grant "admin";
+    - admins manage members and viewers only."""
+    if actor_role not in ("owner", "admin"):
+        return "Workspace access denied"
+    if new_role is not None and new_role not in MEMBER_ROLES:
+        return "Invalid role"
+    if new_role == "owner":
+        return "Ownership cannot be granted here"
+    if action != "add" and target_is_primary:
+        return "The workspace owner cannot be removed or demoted"
+    if actor_role != "owner" and (target_role in ("owner", "admin") or new_role == "admin"):
+        return "Only an owner can change owners or admins"
+    return None
+
+
+async def apply_team_member_change(team_id: str, actor_id: int, target_id: int, action: str,
+                                   new_role: Optional[str] = None, invited_by: Optional[int] = None) -> Tuple[str, str]:
+    """action: "set_role" | "remove" | "add". Returns (outcome, message) where outcome is one of
+    ok | not_found | forbidden | last_owner | conflict."""
+    if action not in ("set_role", "remove", "add"):
+        raise ValueError(action)
     async with AsyncSessionLocal() as session:
+        pg = session.bind.dialect.name == "postgresql"
+        lock = None if pg else _TEAM_LOCKS.setdefault(team_id, asyncio.Lock())
+        if lock:
+            await lock.acquire()
         try:
-            member = TeamMember(
-                team_id=team_id,
-                user_id=user_id,
-                role=role,
-                invited_by=invited_by,
-            )
-            session.add(member)
-            await session.commit()
-            return True
-        except IntegrityError:
-            await session.rollback()
-            return False
+            tstmt = select(Team).where(Team.id == team_id)
+            team = (await session.execute(tstmt.with_for_update() if pg else tstmt)).scalar_one_or_none()
+            if team is None:
+                return "not_found", "Workspace not found"
+            mstmt = select(TeamMember).where(TeamMember.team_id == team_id)
+            members = (await session.execute(mstmt.with_for_update() if pg else mstmt)).scalars().all()
+            by_user = {int(m.user_id): m for m in members}
+            actor = by_user.get(int(actor_id))
+            actor_role = actor.role if actor else None
+            if actor_role not in ("owner", "admin"):
+                return "forbidden", "Workspace access denied"
+            target = by_user.get(int(target_id))
+            if action == "add":
+                if target is not None:
+                    return "conflict", "User is already a member"
+            elif target is None:
+                return "not_found", "Member not found"
+            reason = member_change_violation(actor_role, target.role if target else None,
+                                             int(target_id) == int(team.owner_id), action, new_role)
+            if reason:
+                return "forbidden", reason
+            if target is not None and target.role == "owner" and (action == "remove" or new_role != "owner"):
+                if not any(m.role == "owner" and int(m.user_id) != int(target_id) for m in members):
+                    return "last_owner", "A workspace must keep at least one owner"
+            if action == "add":
+                session.add(TeamMember(team_id=team_id, user_id=target_id, role=new_role or "member",
+                                       invited_by=invited_by if invited_by is not None else actor_id))
+            elif action == "remove":
+                await session.delete(target)
+            else:
+                target.role = new_role
+            try:
+                await session.commit()
+            except IntegrityError:
+                await session.rollback()
+                return "conflict", "Membership changed concurrently or user does not exist"
+            return "ok", "ok"
+        finally:
+            if session.in_transaction():
+                await session.rollback()
+            if lock:
+                lock.release()
 
 
-async def update_team_member_role(team_id: str, user_id: int,
-                                  role: str) -> bool:
-    """Update a team member's role."""
-    async with AsyncSessionLocal() as session:
-        stmt = (
-            update(TeamMember)
-            .where(and_(TeamMember.team_id == team_id, TeamMember.user_id == user_id))
-            .values(role=role)
-        )
-        result = await session.execute(stmt)
-        await session.commit()
-        return result.rowcount > 0
-
-
-async def _lock_owner_rows(session, team_id: str):
-    """Owner memberships of a team, row-locked on PostgreSQL so concurrent demotions/removals serialize."""
-    stmt = select(TeamMember).where(and_(TeamMember.team_id == team_id, TeamMember.role == "owner"))
-    if session.bind.dialect.name == "postgresql":
-        stmt = stmt.with_for_update()
-    return (await session.execute(stmt)).scalars().all()
-
-
-async def update_team_member_role_guarded(team_id: str, user_id: int, role: str) -> str:
-    """Change a role atomically; refuses to leave a team without an owner.
-    Returns "ok" | "not_found" | "last_owner"."""
-    async with AsyncSessionLocal() as session:
-        owners = await _lock_owner_rows(session, team_id)
-        target = (await session.execute(select(TeamMember).where(and_(
-            TeamMember.team_id == team_id, TeamMember.user_id == user_id)))).scalar_one_or_none()
-        if target is None:
-            return "not_found"
-        if target.role == "owner" and role != "owner" and len([o for o in owners if o.user_id != user_id]) == 0:
-            await session.rollback()
-            return "last_owner"
-        target.role = role
-        await session.commit()
-        return "ok"
-
-
-async def remove_team_member_guarded(team_id: str, user_id: int) -> str:
-    """Remove a membership atomically; refuses to remove the last owner.
-    Returns "ok" | "not_found" | "last_owner"."""
-    async with AsyncSessionLocal() as session:
-        owners = await _lock_owner_rows(session, team_id)
-        target = (await session.execute(select(TeamMember).where(and_(
-            TeamMember.team_id == team_id, TeamMember.user_id == user_id)))).scalar_one_or_none()
-        if target is None:
-            return "not_found"
-        if target.role == "owner" and len([o for o in owners if o.user_id != user_id]) == 0:
-            await session.rollback()
-            return "last_owner"
-        await session.delete(target)
-        await session.commit()
-        return "ok"
-
-
-async def remove_team_member(team_id: str, user_id: int) -> bool:
-    """Remove a member from a team (cannot remove owner)."""
-    async with AsyncSessionLocal() as session:
-        stmt = delete(TeamMember).where(
-            and_(
-                TeamMember.team_id == team_id,
-                TeamMember.user_id == user_id,
-                TeamMember.role != "owner",
-            )
-        )
-        result = await session.execute(stmt)
-        await session.commit()
-        return result.rowcount > 0
-
-
-# ═════════════════════════════════════════════════════════════════════════════
-# MARKETPLACE
-# ═════════════════════════════════════════════════════════════════════════════
 
 async def save_marketplace_template(template_id: str, name: str, description: str,
                                     author: str, author_id: Optional[int],
