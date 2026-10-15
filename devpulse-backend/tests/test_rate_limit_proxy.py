@@ -69,14 +69,14 @@ async def proxied(db):
 
 @pytest.mark.asyncio
 async def test_one_user_cannot_block_another_behind_same_proxy(proxied, monkeypatch):
-    monkeypatch.setitem(rl.TIER_LIMITS, "free", 3)
+    monkeypatch.setitem(rl.READ_TIER_LIMITS, "free", 3)  # GETs use the read bucket
     _, ha = await _user(proxied, "rla")
     _, hb = await _user(proxied, "rlb")
     codes = [(await proxied.get("/api/changes/providers", headers=ha)).status_code for _ in range(4)]
     assert codes == [200, 200, 200, 429]
     r = await proxied.get("/api/changes/providers", headers=hb)
     assert r.status_code == 200
-    assert (await proxied.get("/api/changes/providers", headers=ha)).json()["scope"] == "user"
+    assert (await proxied.get("/api/changes/providers", headers=ha)).json()["scope"] == "user-read"
 
 
 @pytest.mark.asyncio

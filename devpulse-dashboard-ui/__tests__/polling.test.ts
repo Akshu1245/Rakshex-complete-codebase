@@ -74,7 +74,10 @@ describe('quota-aware polling', () => {
   it('retries rejected work without an unhandled rejection or busy loop', async () => {
     const task = jest.fn().mockRejectedValue(new Error('503'));
     stop = startPolling(task);
+    // Exponential backoff: 0s, +120s, +240s (no busy loop).
     await jest.advanceTimersByTimeAsync(120000);
+    expect(task).toHaveBeenCalledTimes(2);
+    await jest.advanceTimersByTimeAsync(240000);
     expect(task).toHaveBeenCalledTimes(3);
   });
 });
