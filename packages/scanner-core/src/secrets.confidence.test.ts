@@ -2,7 +2,12 @@ import { describe, expect, it } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { classifyMatch, scanTextForSecrets, scanPathForSecrets, placeholderSignals } from "./secrets.js";
+import {
+  classifyMatch,
+  scanTextForSecrets,
+  scanPathForSecrets,
+  placeholderSignals,
+} from "./secrets.js";
 // @ts-expect-error plain ESM helper
 import { makeFixture } from "../bench/leakshield/make-fixture.mjs";
 
@@ -20,36 +25,66 @@ describe("LeakShield truthful confidence", () => {
   });
 
   it("placeholders are reported as pattern_match / low / Info, never Critical", () => {
-    for (const body of ["0".repeat(32), "FAKEabcdabcdabcdabcdabcdabcd", "1234567890abcdefghijklmnopqrstuv", "EXAMPLEXXXXXXXXXXXXXXXXXXXXXXXXX"]) {
+    for (const body of [
+      "0".repeat(32),
+      "FAKEabcdabcdabcdabcdabcdabcd",
+      "1234567890abcdefghijklmnopqrstuv",
+      "EXAMPLEXXXXXXXXXXXXXXXXXXXXXXXXX",
+    ]) {
       const f = scanTextForSecrets(j("x = '", "sk", "_live_", body, "'"), "src/a.ts");
-      expect(f[0]).toMatchObject({ state: "pattern_match", confidence: "low", severity: "Info", impactIfReal: "Critical" });
+      expect(f[0]).toMatchObject({
+        state: "pattern_match",
+        confidence: "low",
+        severity: "Info",
+        impactIfReal: "Critical",
+        classification: "synthetic_placeholder",
+      });
     }
   });
 
-  it("separates impact from confidence: test paths lower confidence, not detection", () => {
+  it("separates impact from confidence: a test path lowers confidence but never severity", () => {
     const line = j("k='", "gh", "p_", RANDOM_BODY, "abcd'");
     const prod = scanTextForSecrets(line, "src/x.ts")[0]!;
     const test = scanTextForSecrets(line, "tests/fixtures/x.ts")[0]!;
-    expect(prod).toMatchObject({ impactIfReal: "Critical", severity: "Critical", confidence: "high" });
-    expect(test).toMatchObject({ impactIfReal: "Critical", severity: "High", confidence: "medium" });
+    expect(prod).toMatchObject({
+      potential_impact: "Critical",
+      severity: "Critical",
+      detection_confidence: "high",
+    });
+    expect(test).toMatchObject({
+      potential_impact: "Critical",
+      severity: "Critical",
+      detection_confidence: "medium",
+    });
+    expect(test.signals).toContain("context:test-path(no-exemption)");
   });
 
   it("detects OpenAI project keys (sk-proj-…) that the legacy rule missed", () => {
-    const f = scanTextForSecrets(j("OPENAI='", "sk", "-proj-", RANDOM_BODY, "-", RANDOM_BODY, "'"), "src/a.ts");
+    const f = scanTextForSecrets(
+      j("OPENAI='", "sk", "-proj-", RANDOM_BODY, "-", RANDOM_BODY, "'"),
+      "src/a.ts",
+    );
     expect(f.map((x) => x.ruleId)).toEqual(["secret.openai_project_key"]);
   });
 
   it("Stripe test-mode keys are Low impact", () => {
     const f = scanTextForSecrets(j("'", "sk", "_test_", RANDOM_BODY, "'"), "src/a.ts");
-    expect(f[0]).toMatchObject({ ruleId: "secret.stripe_test_key", impactIfReal: "Low", severity: "Low" });
+    expect(f[0]).toMatchObject({
+      ruleId: "secret.stripe_test_key",
+      impactIfReal: "Low",
+      severity: "Low",
+    });
   });
 
   it("private key headers are pattern_match (no key material analysed)", () => {
-    expect(classifyMatch({ impactIfReal: "Critical", prefix: 0, structural: true }, "", "", "src/k.pem").state).toBe("pattern_match");
+    expect(
+      classifyMatch({ impactIfReal: "Critical", prefix: 0, structural: true }, "", "", "src/k.pem")
+        .state,
+    ).toBe("pattern_match");
   });
 
   it("placeholder signals", () => {
-    expect(placeholderSignals("000000000000", "")).toContain("placeholder:repeated-run");
+    expect(placeholderSignals("000000000000", "")).toContain("synthetic:repeated-run");
     expect(placeholderSignals(RANDOM_BODY, "")).toEqual([]);
   });
 
@@ -58,9 +93,17 @@ describe("LeakShield truthful confidence", () => {
     try {
       const truth = makeFixture(dir) as { file: string; line: number; kind: string }[];
       const found = scanPathForSecrets(dir);
-      const at = (t: { file: string; line: number }) => found.filter((f) => f.file === t.file && f.line === t.line);
-      for (const t of truth.filter((t) => t.kind !== "placeholder")) expect(at(t).length, t.file).toBeGreaterThan(0);
-      for (const t of truth.filter((t) => t.kind === "placeholder")) expect(at(t).every((f) => f.severity === "Info"), t.file).toBe(true);
-    } finally { rmSync(dir, { recursive: true, force: true }); }
+      const at = (t: { file: string; line: number }) =>
+        found.filter((f) => f.file === t.file && f.line === t.line);
+      for (const t of truth.filter((t) => t.kind !== "placeholder"))
+        expect(at(t).length, t.file).toBeGreaterThan(0);
+      for (const t of truth.filter((t) => t.kind === "placeholder"))
+        expect(
+          at(t).every((f) => f.severity === "Info"),
+          t.file,
+        ).toBe(true);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

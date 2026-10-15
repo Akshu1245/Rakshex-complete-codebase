@@ -12,33 +12,55 @@ import { join, relative, extname } from "node:path";
 export type SecretSeverity = "Critical" | "High" | "Medium" | "Low" | "Info";
 
 /**
- * What RaksHex actually knows about a match.
- * - pattern_match: the provider format matched; nothing else supports it (or it looks like a placeholder).
+ * What RaksHex actually knows about a match (legacy field, kept for API consumers).
+ * - pattern_match: the provider format matched, but the value is synthetic or the evidence is weak.
  * - likely_secret: format matched AND the value has the statistical shape of a generated credential.
- * - verified_valid: a real validity check against the provider succeeded. This scanner NEVER sets it:
- *   no verifier is implemented, and RaksHex does not call providers with customer values.
+ * - verified_valid: a real, authorized validity check succeeded. NEVER set by this scanner.
  */
 export type SecretState = "pattern_match" | "likely_secret" | "verified_valid";
 export type SecretConfidence = "low" | "medium" | "high";
+/** Only an authorized live check may move this off "not_verified"; no verifier exists, so it never does. */
+export type VerificationStatus = "not_verified" | "verified_valid" | "verified_invalid";
+/**
+ * known_dummy: exact match (by SHA-256) of a published documentation dummy (e.g. AWS / Stripe docs examples).
+ * synthetic_placeholder: the value itself is demonstrably synthetic (repeated chars, periodic filler, templates,
+ *   sequences, or nothing random left once filler words are removed). A substring such as "example" alone is
+ *   NEVER enough.
+ * ambiguous: credential-shaped but randomness is weak; shown with reasons, never silently dropped.
+ * plausible_credential: high-entropy, credential-shaped value. Stays suspicious regardless of substrings,
+ *   file path or comments.
+ */
+export type SecretClassification =
+  "known_dummy" | "synthetic_placeholder" | "ambiguous" | "plausible_credential";
 
 export interface SecretFinding {
   ruleId: string;
   title: string;
-  /** Effective severity used for --fail-on: impactIfReal, downgraded for placeholders / weak evidence. */
+  /** Effective severity used by the CI gate. */
   severity: SecretSeverity;
   /** Severity if this were a real exposed credential (rule property, not evidence). */
-  impactIfReal: SecretSeverity;
-  state: SecretState;
-  /** Confidence that the value is a real credential. Never "confirmed" from a regex. */
-  confidence: SecretConfidence;
-  /** Why the state/confidence was chosen (e.g. "placeholder:repeated-run", "entropy:4.6"). */
+  potential_impact: SecretSeverity;
+  /** How likely the value is a real credential (evidence, not impact). */
+  detection_confidence: SecretConfidence;
+  verification_status: VerificationStatus;
+  classification: SecretClassification;
+  /** Why (e.g. "synthetic:periodic", "entropy:4.61", "context:test-path", "word:example(no-exemption)"). */
   signals: string[];
-  verification: { ran: false; reason: string };
   file: string;
   line: number;
   /** Redacted match preview */
   preview: string;
+  /** sha256(ruleId|file|line|value) prefix: dedupe key. */
   fingerprint: string;
+  /** sha256(ruleId|file|line): allowlist key that survives value rotation at the same place. */
+  location_fingerprint: string;
+  /** sha256(value): allowlist key for an exact value. Never the value itself. */
+  value_sha256: string;
+  /** Legacy aliases (same data as above). */
+  impactIfReal: SecretSeverity;
+  confidence: SecretConfidence;
+  state: SecretState;
+  verification: { ran: false; reason: string };
 }
 
 interface SecretRule {
@@ -57,25 +79,121 @@ interface SecretRule {
 const P = (...parts: string[]) => parts.join("");
 
 const SECRET_RULES: SecretRule[] = [
-  { id: "secret.aws_access_key", title: "AWS access key ID", impactIfReal: "Critical", pattern: new RegExp("\\b(" + P("AK", "IA") + "[0-9A-Z]{16})\\b", "g"), prefix: 4 },
-  { id: "secret.github_pat", title: "GitHub personal access token", impactIfReal: "Critical", pattern: new RegExp("\\b(" + P("gh", "p_") + "[A-Za-z0-9_]{36,})\\b", "g"), prefix: 4 },
-  { id: "secret.github_oauth_or_app", title: "GitHub OAuth/app/user token", impactIfReal: "Critical", pattern: new RegExp("\\b(gh[osu]_[A-Za-z0-9_]{36,})\\b", "g"), prefix: 4 },
-  { id: "secret.github_fine_grained", title: "GitHub fine-grained PAT", impactIfReal: "Critical", pattern: new RegExp("\\b(" + P("github", "_pat_") + "[A-Za-z0-9_]{20,})\\b", "g"), prefix: 11 },
-  { id: "secret.openai_project_key", title: "OpenAI project/service-account/admin key", impactIfReal: "Critical", pattern: new RegExp("(?<![A-Za-z0-9_-])(" + P("sk", "-") + "(?:proj|svcacct|admin)-[A-Za-z0-9_-]{20,})", "g"), prefix: 8 },
-  { id: "secret.openai_api_key", title: "OpenAI API key (legacy format)", impactIfReal: "Critical", pattern: new RegExp("\\b(" + P("sk", "-") + "[A-Za-z0-9]{20,})\\b", "g"), prefix: 3 },
-  { id: "secret.anthropic_api_key", title: "Anthropic API key", impactIfReal: "Critical", pattern: new RegExp("(?<![A-Za-z0-9_-])(" + P("sk", "-ant-") + "[A-Za-z0-9_-]{20,})", "g"), prefix: 7 },
-  { id: "secret.slack_bot_token", title: "Slack bot token", impactIfReal: "High", pattern: new RegExp("\\b(" + P("xo", "xb-") + "[0-9A-Za-z-]{10,})\\b", "g"), prefix: 5 },
-  { id: "secret.slack_user_token", title: "Slack user token", impactIfReal: "High", pattern: new RegExp("\\b(" + P("xo", "xp-") + "[0-9A-Za-z-]{10,})\\b", "g"), prefix: 5 },
-  { id: "secret.private_key_header", title: "Private key block", impactIfReal: "Critical", pattern: /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/g, prefix: 0, structural: true },
-  { id: "secret.stripe_live_key", title: "Stripe live secret key", impactIfReal: "Critical", pattern: new RegExp("\\b(" + P("sk", "_live_") + "[0-9A-Za-z]{16,})\\b", "g"), prefix: 8 },
-  { id: "secret.stripe_restricted_live_key", title: "Stripe restricted live key", impactIfReal: "High", pattern: new RegExp("\\b(" + P("rk", "_live_") + "[0-9A-Za-z]{16,})\\b", "g"), prefix: 8 },
-  { id: "secret.stripe_test_key", title: "Stripe test-mode secret key", impactIfReal: "Low", pattern: new RegExp("\\b(" + P("sk", "_test_") + "[0-9A-Za-z]{16,})\\b", "g"), prefix: 8 },
+  {
+    id: "secret.aws_access_key",
+    title: "AWS access key ID",
+    impactIfReal: "Critical",
+    pattern: new RegExp("\\b(" + P("AK", "IA") + "[0-9A-Z]{16})\\b", "g"),
+    prefix: 4,
+  },
+  {
+    id: "secret.github_pat",
+    title: "GitHub personal access token",
+    impactIfReal: "Critical",
+    pattern: new RegExp("\\b(" + P("gh", "p_") + "[A-Za-z0-9_]{36,})\\b", "g"),
+    prefix: 4,
+  },
+  {
+    id: "secret.github_oauth_or_app",
+    title: "GitHub OAuth/app/user token",
+    impactIfReal: "Critical",
+    pattern: new RegExp("\\b(gh[osu]_[A-Za-z0-9_]{36,})\\b", "g"),
+    prefix: 4,
+  },
+  {
+    id: "secret.github_fine_grained",
+    title: "GitHub fine-grained PAT",
+    impactIfReal: "Critical",
+    pattern: new RegExp("\\b(" + P("github", "_pat_") + "[A-Za-z0-9_]{20,})\\b", "g"),
+    prefix: 11,
+  },
+  {
+    id: "secret.openai_project_key",
+    title: "OpenAI project/service-account/admin key",
+    impactIfReal: "Critical",
+    pattern: new RegExp(
+      "(?<![A-Za-z0-9_-])(" + P("sk", "-") + "(?:proj|svcacct|admin)-[A-Za-z0-9_-]{20,})",
+      "g",
+    ),
+    prefix: 8,
+  },
+  {
+    id: "secret.openai_api_key",
+    title: "OpenAI API key (legacy format)",
+    impactIfReal: "Critical",
+    pattern: new RegExp("\\b(" + P("sk", "-") + "[A-Za-z0-9]{20,})\\b", "g"),
+    prefix: 3,
+  },
+  {
+    id: "secret.anthropic_api_key",
+    title: "Anthropic API key",
+    impactIfReal: "Critical",
+    pattern: new RegExp("(?<![A-Za-z0-9_-])(" + P("sk", "-ant-") + "[A-Za-z0-9_-]{20,})", "g"),
+    prefix: 7,
+  },
+  {
+    id: "secret.slack_bot_token",
+    title: "Slack bot token",
+    impactIfReal: "High",
+    pattern: new RegExp("\\b(" + P("xo", "xb-") + "[0-9A-Za-z-]{10,})\\b", "g"),
+    prefix: 5,
+  },
+  {
+    id: "secret.slack_user_token",
+    title: "Slack user token",
+    impactIfReal: "High",
+    pattern: new RegExp("\\b(" + P("xo", "xp-") + "[0-9A-Za-z-]{10,})\\b", "g"),
+    prefix: 5,
+  },
+  {
+    id: "secret.private_key_header",
+    title: "Private key block",
+    impactIfReal: "Critical",
+    pattern: /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/g,
+    prefix: 0,
+    structural: true,
+  },
+  {
+    id: "secret.stripe_live_key",
+    title: "Stripe live secret key",
+    impactIfReal: "Critical",
+    pattern: new RegExp("\\b(" + P("sk", "_live_") + "[0-9A-Za-z]{16,})\\b", "g"),
+    prefix: 8,
+  },
+  {
+    id: "secret.stripe_restricted_live_key",
+    title: "Stripe restricted live key",
+    impactIfReal: "High",
+    pattern: new RegExp("\\b(" + P("rk", "_live_") + "[0-9A-Za-z]{16,})\\b", "g"),
+    prefix: 8,
+  },
+  {
+    id: "secret.stripe_test_key",
+    title: "Stripe test-mode secret key",
+    impactIfReal: "Low",
+    pattern: new RegExp("\\b(" + P("sk", "_test_") + "[0-9A-Za-z]{16,})\\b", "g"),
+    prefix: 8,
+  },
 ];
 
-const PLACEHOLDER_WORDS = /(fake|example|dummy|placeholder|sample|redacted|changeme|replace|your[_-]?(?:key|token)|xxxx|test(?:key|token)|not[_-]?real|invalid)/i;
-const SEQUENCES = ["0123456789", "1234567890", "abcdefghij", "ABCDEFGHIJ", "qwertyuiop"];
-const TEST_PATH = /(^|[\\/])(test|tests|__tests__|spec|fixtures?|examples?|mocks?|docs?)([\\/]|$)|\.(test|spec)\.[a-z]+$/i;
-const VERIFICATION = { ran: false as const, reason: "no provider validity check implemented; RaksHex never sends customer values to providers" };
+/** SHA-256 of exact, published documentation dummies (no literal token is stored in this file). */
+export const KNOWN_DUMMY_SHA256 = new Set<string>([
+  "1a5d44a2dca19669d72edf4c4f1c27c4c1ca4b4408fbb17f6ce4ad452d78ddb3", // AWS docs example access key id
+  "c6ea27c534f993d31f0aef882e3d200e7b87470c379ae79c8f9b19d3bd363dc9", // AWS docs example access key id (2nd)
+  "2cafc0970149a84f3b9e62eaf169f36f59907a3b3e31f7b82e68c69cd27f7326", // Stripe docs test secret key
+  "f2d6ca16515033e5dce14eba840b979d27b5cbae24bb3e5bf484339667f86397", // Stripe docs test secret key (older)
+  "7e8de44ea9ecf6d53415c90f5b249a8591f7abafbf7d65a2c0d855afeca3ec09", // Stripe docs test secret key (older)
+]);
+
+const FILLER_WORDS =
+  /(example|examples|fake|dummy|sample|placeholder|redacted|changeme|replace|insert|your|here|key|token|secret|test|invalid|notreal|xxx+)/gi;
+const TEST_PATH =
+  /(^|[\\/])(test|tests|__tests__|spec|fixtures?|examples?|mocks?|docs?)([\\/]|$)|\.(test|spec)\.[a-z]+$/i;
+const VERIFICATION = {
+  ran: false as const,
+  reason:
+    "no provider validity check implemented; RaksHex never sends customer values to providers",
+};
 
 export function shannonEntropy(value: string): number {
   if (!value) return 0;
@@ -89,46 +207,164 @@ export function shannonEntropy(value: string): number {
   return h;
 }
 
-/** Returns placeholder reasons for a token body (prefix removed) and its line. */
-export function placeholderSignals(body: string, line: string): string[] {
-  const out: string[] = [];
-  if (PLACEHOLDER_WORDS.test(body)) out.push("placeholder:word");
-  if (/(.)\1{5,}/.test(body)) out.push("placeholder:repeated-run");
-  if (SEQUENCES.some((seq) => body.includes(seq))) out.push("placeholder:sequence");
-  const uniq = new Set(body).size;
-  if (body.length >= 16 && uniq / body.length < 0.25) out.push("placeholder:low-variety");
-  if (/\b(placeholder|example|fake|dummy|not a real|sample)\b/i.test(line.replace(body, ""))) out.push("placeholder:line-comment");
+export function sha256Hex(v: string): string {
+  return createHash("sha256").update(v).digest("hex");
+}
+
+/** Removes ascending/descending runs (>= 5) like 12345 / abcde / EDCBA. */
+function stripSequences(v: string): string {
+  let out = "",
+    i = 0;
+  while (i < v.length) {
+    let j = i + 1;
+    const step = v.charCodeAt(i + 1) - v.charCodeAt(i);
+    if (step === 1 || step === -1)
+      while (j < v.length && v.charCodeAt(j) - v.charCodeAt(j - 1) === step) j++;
+    if (j - i >= 5) {
+      i = j;
+      continue;
+    }
+    out += v[i];
+    i++;
+  }
   return out;
 }
+
+/** True if v is some unit of length <= 8 repeated at least 3 times (partial last unit allowed). */
+function isPeriodic(v: string): boolean {
+  if (v.length < 8) return false;
+  for (let p = 1; p <= Math.min(8, Math.floor(v.length / 3)); p++) {
+    let ok = true;
+    for (let k = p; k < v.length; k++)
+      if (v[k] !== v[k % p]) {
+        ok = false;
+        break;
+      }
+    if (ok) return true;
+  }
+  return false;
+}
+
+/**
+ * Evidence that the VALUE ITSELF is synthetic. Returns [] for anything with real randomness left,
+ * even if it contains words such as "example" or "test".
+ */
+export function syntheticSignals(body: string): string[] {
+  const out: string[] = [];
+  if (!body) return ["synthetic:empty"];
+  const longestRun = Math.max(...(body.match(/(.)\1*/g) ?? [""]).map((r) => r.length));
+  if (longestRun >= Math.max(6, body.length / 2)) out.push("synthetic:repeated-run");
+  if (isPeriodic(body)) out.push("synthetic:periodic");
+  if (/^[xX*#._-]+$/.test(body)) out.push("synthetic:template");
+  // Strip filler words, repeated runs and sequences: what remains is the "random" part.
+  const residual = stripSequences(body.replace(FILLER_WORDS, ""))
+    .replace(/(.)\1{2,}/g, "")
+    .replace(/[_-]/g, "");
+  // Short formats (16-char AWS IDs) get a proportionally lower bar for "random content left".
+  const minResidual = Math.min(8, Math.ceil(body.length * 0.3));
+  if (residual.length < minResidual) out.push(`synthetic:no-random-residual(${residual.length})`);
+  else if (isPeriodic(residual)) out.push("synthetic:periodic-residual");
+  else if (residual.length >= 16 && new Set(residual).size / residual.length < 0.25)
+    out.push("synthetic:low-variety");
+  else if (residual.length >= 16 && shannonEntropy(residual) < 2.5)
+    out.push("synthetic:low-entropy-residual");
+  return out;
+}
+
+/** Back-compat name used by older tests/consumers. */
+export const placeholderSignals = (body: string, _line = ""): string[] => syntheticSignals(body);
 
 export interface Classification {
   state: SecretState;
   confidence: SecretConfidence;
   severity: SecretSeverity;
+  classification: SecretClassification;
   signals: string[];
 }
 
-const DOWN: Record<SecretSeverity, SecretSeverity> = { Critical: "High", High: "Medium", Medium: "Low", Low: "Low", Info: "Info" };
+const DOWN: Record<SecretSeverity, SecretSeverity> = {
+  Critical: "High",
+  High: "Medium",
+  Medium: "Low",
+  Low: "Low",
+  Info: "Info",
+};
+const LOWER: Record<SecretConfidence, SecretConfidence> = {
+  high: "medium",
+  medium: "low",
+  low: "low",
+};
 
-export function classifyMatch(rule: Pick<SecretRule, "impactIfReal" | "prefix" | "structural">, raw: string, line: string, filePath: string): Classification {
+export function classifyMatch(
+  rule: Pick<SecretRule, "impactIfReal" | "prefix" | "structural">,
+  raw: string,
+  line: string,
+  filePath: string,
+): Classification {
   const signals: string[] = [];
   const inTestPath = TEST_PATH.test(filePath);
-  if (inTestPath) signals.push("context:test-or-fixture-path");
+  // Context is recorded for transparency only: a test path or a comment never exempts a finding.
+  if (inTestPath) signals.push("context:test-path(no-exemption)");
+  const comment = line.replace(raw, "");
+  if (/\b(placeholder|example|fake|dummy|not a real|sample)\b/i.test(comment))
+    signals.push("context:comment-claims-placeholder(no-exemption)");
   if (rule.structural) {
-    // A key header alone says nothing about the key material; treat as unverified pattern.
-    return { state: "pattern_match", confidence: inTestPath ? "low" : "medium", severity: inTestPath ? DOWN[rule.impactIfReal] : rule.impactIfReal, signals: [...signals, "structural-marker"] };
+    return {
+      state: "pattern_match",
+      confidence: "medium",
+      severity: rule.impactIfReal,
+      classification: "ambiguous",
+      signals: [...signals, "structural-marker"],
+    };
+  }
+  if (KNOWN_DUMMY_SHA256.has(sha256Hex(raw))) {
+    return {
+      state: "pattern_match",
+      confidence: "low",
+      severity: "Info",
+      classification: "known_dummy",
+      signals: [...signals, "known-dummy:exact-hash"],
+    };
   }
   const body = raw.slice(rule.prefix);
-  const ph = placeholderSignals(body, line);
   const h = shannonEntropy(body);
   signals.push("entropy:" + h.toFixed(2));
-  if (ph.length > 0) return { state: "pattern_match", confidence: "low", severity: "Info", signals: [...signals, ...ph] };
+  const syn = syntheticSignals(body);
+  if (syn.length > 0)
+    return {
+      state: "pattern_match",
+      confidence: "low",
+      severity: "Info",
+      classification: "synthetic_placeholder",
+      signals: [...signals, ...syn],
+    };
+  const words = body.match(FILLER_WORDS);
+  if (words) signals.push(`word:${words[0]!.toLowerCase()}(no-exemption)`);
   const classes = [/[a-z]/, /[A-Z]/, /[0-9]/].filter((r) => r.test(body)).length;
   // Short bodies (AWS key IDs: 16 chars) cannot reach the entropy of long tokens.
-  const strong = h >= (body.length < 24 ? 3.0 : 3.5) && body.length >= 16 && classes >= 2;
-  if (!strong) return { state: "pattern_match", confidence: "low", severity: DOWN[DOWN[rule.impactIfReal]], signals: [...signals, "weak-randomness"] };
-  if (inTestPath) return { state: "likely_secret", confidence: "medium", severity: DOWN[rule.impactIfReal], signals };
-  return { state: "likely_secret", confidence: "high", severity: rule.impactIfReal, signals };
+  // Upper-case alphanumeric formats (AWS key IDs) cannot have lower-case letters.
+  const strong =
+    h >= (body.length < 24 ? 3.0 : 3.5) &&
+    body.length >= 16 &&
+    (classes >= 2 || /^[A-Z0-9]+$/.test(body));
+  if (!strong) {
+    return {
+      state: "pattern_match",
+      confidence: "low",
+      severity: DOWN[rule.impactIfReal],
+      classification: "ambiguous",
+      signals: [...signals, "ambiguous:weak-randomness"],
+    };
+  }
+  let confidence: SecretConfidence = "high";
+  if (inTestPath) confidence = LOWER[confidence];
+  return {
+    state: "likely_secret",
+    confidence,
+    severity: rule.impactIfReal,
+    classification: "plausible_credential",
+    signals,
+  };
 }
 
 const TEXT_EXTS = new Set([
@@ -180,6 +416,10 @@ function redact(match: string): string {
   return `${match.slice(0, 4)}…${match.slice(-4)}`;
 }
 
+export function locationFingerprint(ruleId: string, file: string, line: number): string {
+  return sha256Hex(`${ruleId}|${file.replace(/\\/g, "/")}|${line}`).slice(0, 32);
+}
+
 function fingerprint(ruleId: string, file: string, line: number, match: string): string {
   return createHash("sha256")
     .update(`${ruleId}|${file}|${line}|${match}`)
@@ -202,15 +442,21 @@ export function scanTextForSecrets(content: string, filePath = "<memory>"): Secr
           ruleId: rule.id,
           title: rule.title,
           severity: c.severity,
-          impactIfReal: rule.impactIfReal,
-          state: c.state,
-          confidence: c.confidence,
+          potential_impact: rule.impactIfReal,
+          detection_confidence: c.confidence,
+          verification_status: "not_verified",
+          classification: c.classification,
           signals: c.signals,
-          verification: VERIFICATION,
           file: filePath,
           line: i + 1,
           preview: redact(raw),
           fingerprint: fingerprint(rule.id, filePath, i + 1, raw),
+          location_fingerprint: locationFingerprint(rule.id, filePath, i + 1),
+          value_sha256: sha256Hex(raw),
+          impactIfReal: rule.impactIfReal,
+          confidence: c.confidence,
+          state: c.state,
+          verification: VERIFICATION,
         });
       }
     }

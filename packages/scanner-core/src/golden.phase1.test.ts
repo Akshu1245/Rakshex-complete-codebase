@@ -197,7 +197,14 @@ describe("Phase 1 scanner golden behavior", () => {
     const matches = scanTextForSecrets(`line one\nconst token = '${fake}';\n`, "fictional.ts");
     expect(matches).toEqual([
       // A run of one repeated character is a placeholder: still reported, never Critical/confirmed.
-      expect.objectContaining({ ruleId: "secret.github_pat", severity: "Info", impactIfReal: "Critical", state: "pattern_match", confidence: "low", line: 2 }),
+      expect.objectContaining({
+        ruleId: "secret.github_pat",
+        severity: "Info",
+        impactIfReal: "Critical",
+        state: "pattern_match",
+        confidence: "low",
+        line: 2,
+      }),
     ]);
     expect(matches[0]?.preview).not.toContain(fake);
   });

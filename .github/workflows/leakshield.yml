@@ -1,0 +1,36 @@
+name: LeakShield tests
+
+# Runs the secret-scanner tests on pull requests into ANY base, including archive/** branches,
+# which the main CI workflow does not cover.
+on:
+  pull_request:
+    paths:
+      - "packages/scanner-core/**"
+      - "apps/cli/**"
+      - ".github/workflows/leakshield.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  leakshield:
+    name: LeakShield (scanner-core + CLI + benchmark)
+    runs-on: ubuntu-latest
+    env:
+      HUSKY: "0"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rakshex/scanner-core typecheck
+      - run: pnpm --filter @rakshex/scanner-core test
+      - run: pnpm --filter @rakshex/cli test
+      - name: Benchmark (synthetic fixture generated at runtime; no external calls)
+        run: pnpm --filter @rakshex/cli exec tsx ../../packages/scanner-core/bench/leakshield/run.ts
+      - name: Secret gate dogfood (fails on plausible High/Critical in scanner sources)
+        run: pnpm --filter @rakshex/cli exec tsx src/index.ts secrets ../../packages/scanner-core/src
