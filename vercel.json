@@ -1,4 +1,5 @@
 {
+  "git": { "deploymentEnabled": { "codex/security-aead-v2-review": false } },
   "buildCommand": "npm run build",
   "outputDirectory": "devpulse-dashboard-ui/.next",
   "installCommand": "npm install",

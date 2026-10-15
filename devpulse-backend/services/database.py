@@ -210,7 +210,7 @@ async def get_usage_stats(user_id: Optional[int] = None,
 
 async def add_api_key(user_id: int, key_name: str, api_provider: str,
                       encrypted_key: str, budget_limit: float = 0,
-                      call_limit: int = 0) -> int:
+                      call_limit: int = 0, budget_period: str = 'monthly') -> int:
     """Store a new API key. Returns the key id."""
     async with AsyncSessionLocal() as session:
         key = ApiKey(
@@ -219,6 +219,7 @@ async def add_api_key(user_id: int, key_name: str, api_provider: str,
             api_provider=api_provider,
             encrypted_key=encrypted_key,
             budget_limit=budget_limit,
+            budget_period=budget_period,
             call_limit=call_limit,
         )
         session.add(key)

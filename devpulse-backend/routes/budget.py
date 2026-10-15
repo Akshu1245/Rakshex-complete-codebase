@@ -19,12 +19,11 @@ from pydantic import BaseModel, Field, field_validator
 
 from routes.auth import require_auth
 from services.encryption import (
-    encrypt_aes256,
-    decrypt_aes256,
     mask_api_key,
     validate_api_key_format,
     sanitize_for_storage,
 )
+from services.storage_crypto import encrypt_for_storage
 from services.database import (
     add_api_key,
     get_api_keys,
@@ -124,7 +123,7 @@ async def create_api_key(req: AddApiKeyRequest, user: Dict = Depends(require_aut
             return {"status": "error", "message": error_msg}
         
         # Encrypt the API key with AES-256
-        encrypted_key = encrypt_aes256(req.api_key)
+        encrypted_key = await encrypt_for_storage(req.api_key)
         
         key_id = await add_api_key(
             user_id=user["id"],
