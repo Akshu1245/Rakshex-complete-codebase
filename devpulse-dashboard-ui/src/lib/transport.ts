@@ -18,6 +18,10 @@ export function getAuthToken(): string | null {
   return typeof window === 'undefined' ? null : localStorage.getItem('devpulse_token');
 }
 
+let rateLimitedUntil = 0;
+/** Epoch ms until which the server asked us (HTTP 429 Retry-After) not to send more requests. */
+export function getRateLimitedUntil() { return rateLimitedUntil; }
+
 export class APIError extends Error {
   constructor(message: string, public status: number) { super(message); this.name = 'APIError'; }
 }
@@ -48,6 +52,10 @@ export async function apiFetch(path: string, init: RequestInit = {}): Promise<Re
       const detail = data.detail || data.error || data.message;
       const message = typeof detail === 'string' ? detail : `Request failed (${response.status})`;
       if (response.status === 401 && token) setAuthToken(null);
+      if (response.status === 429) {
+        const seconds = Number(response.headers.get('Retry-After') ?? data.retry_after_seconds ?? 60);
+        rateLimitedUntil = Date.now() + (Number.isFinite(seconds) && seconds > 0 ? seconds : 60) * 1000;
+      }
       throw new APIError(message, response.status);
     }
     return response;

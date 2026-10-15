@@ -333,9 +333,23 @@ interface DashboardResponse {
 // API CLIENT
 // =============================================================================
 
+export const DASHBOARD_SHARE_MS = 30000;
+
 class APIClient {
   private async safeRequest<T>(path: string, init?: RequestInit): Promise<T> {
     return apiRequest<T>(path, init);
+  }
+
+  // Several widgets (DashboardStats, HealthMonitor) render the same /api/dashboard payload.
+  // Share one in-flight request and reuse the result briefly so a page costs one budgeted read per tick.
+  private dashboardCache?: { at: number; promise: Promise<DashboardResponse> };
+  private sharedDashboard(): Promise<DashboardResponse> {
+    const c = this.dashboardCache;
+    if (c && Date.now() - c.at < DASHBOARD_SHARE_MS) return c.promise;
+    const promise = this.safeRequest<DashboardResponse>('/api/dashboard', undefined);
+    this.dashboardCache = { at: Date.now(), promise };
+    promise.catch(() => { if (this.dashboardCache?.promise === promise) this.dashboardCache = undefined; });
+    return promise;
   }
 
   // ---- AUTH ----
@@ -364,10 +378,7 @@ class APIClient {
 
   async getHealth(): Promise<HealthStatus> {
 
-    const data = await this.safeRequest<DashboardResponse>(
-      '/api/dashboard',
-      undefined
-    );
+    const data = await this.sharedDashboard();
 
     const apis = data.apis || {};
     return {
@@ -390,10 +401,7 @@ class APIClient {
 
   async getDashboard(): Promise<DashboardData> {
 
-    const data = await this.safeRequest<DashboardResponse>(
-      '/api/dashboard',
-      undefined
-    );
+    const data = await this.sharedDashboard();
 
     const summary = data.summary || {};
     const total = Number(summary.total || 0);

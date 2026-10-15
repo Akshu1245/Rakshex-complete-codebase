@@ -43,6 +43,10 @@ logger = logging.getLogger(__name__)
 WINDOW_SECONDS = 3600  # 1 hour (per-user / per-workspace / anon hourly)
 
 TIER_LIMITS: Dict[str, int] = {"free": 100, "pro": 2_000, "team": 10_000, "enterprise": 10_000}
+# Safe reads (GET/HEAD) have their own, larger hourly bucket so dashboard polling cannot exhaust the
+# write/expensive-operation budget above. Measured: one open dashboard tab polls ~120-180 budgeted
+# GETs/hour (60s intervals, several widgets); free=1000 covers ~5 tabs/hour while still bounding scraping.
+READ_TIER_LIMITS: Dict[str, int] = {"free": 1_000, "pro": 20_000, "team": 50_000, "enterprise": 50_000}
 DEFAULT_LIMIT = TIER_LIMITS["free"]
 
 EXEMPT_PREFIXES: List[str] = ["/health", "/docs", "/openapi.json", "/redoc", "/"]
@@ -295,10 +299,17 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         try:
             user = await _authenticated_user(request)
             if user:
-                limit = TIER_LIMITS.get(user.get("plan", "free"), DEFAULT_LIMIT)
-                count, reset = await _count(f"user:{user['id']}", WINDOW_SECONDS, m)
-                if count > limit:
-                    return _too_many(limit, reset, "user")
+                plan = user.get("plan", "free")
+                if m.upper() in SAFE_METHODS:
+                    limit = _env_int(f"RL_READ_PER_HOUR_{plan.upper()}", READ_TIER_LIMITS.get(plan, READ_TIER_LIMITS["free"]))
+                    count, reset = await _count(f"user-read:{user['id']}", WINDOW_SECONDS, m)
+                    if count > limit:
+                        return _too_many(limit, reset, "user-read")
+                else:
+                    limit = TIER_LIMITS.get(plan, DEFAULT_LIMIT)
+                    count, reset = await _count(f"user:{user['id']}", WINDOW_SECONDS, m)
+                    if count > limit:
+                        return _too_many(limit, reset, "user")
                 ws = _target_workspace(request)
                 if ws and await _is_member(user["id"], ws):
                     ws_limit = _env_int("RL_WORKSPACE_PER_HOUR", 5000)
