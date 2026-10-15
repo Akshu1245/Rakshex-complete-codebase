@@ -1,0 +1,28 @@
+{
+  "pair": "stripe-v2516-v2517",
+  "about": "HELD-OUT. Stripe-docs-style Express + Next.js code. Truth from Endive changelog entries.",
+  "sources": [
+    "https://docs.stripe.com/changelog/endive/2026-09-30/remove-payment-method-types-checkout-sessions",
+    "https://docs.stripe.com/changelog/endive/2026-09-30/removes-the-payment-method-types-parameter-from-payment-intents-and-setup-intents",
+    "https://docs.stripe.com/changelog/endive/2026-09-30/polymorphic-billing-cycle-anchor",
+    "https://docs.stripe.com/changelog/endive/2026-09-30/rename-financial-connections-countries-filter-to-country"
+  ],
+  "affected": [
+    { "file": "server/server.js", "line": 8, "method": "POST", "path": "/v1/checkout/sessions", "property": "payment_method_types", "kind": "require-one-liner + checkout" },
+    { "file": "server/server.js", "line": 28, "method": "POST", "path": "/v1/payment_intents/{intent}/confirm", "property": "payment_method_types", "kind": "confirm with path param" },
+    { "file": "server/server.js", "line": 36, "method": "POST", "path": "/v1/subscriptions/{subscription_exposed_id}", "property": "billing_cycle_anchor", "kind": "string anchor now an object" },
+    { "file": "server/server.js", "line": 36, "method": "POST", "path": "/v1/subscriptions/{subscription_exposed_id}", "property": "billing_cycle_anchor/type", "kind": "new required type" },
+    { "file": "routes/connect.ts", "line": 8, "method": "POST", "path": "/v1/financial_connections/sessions", "property": "filters/countries", "kind": "renamed filter" },
+    { "file": "routes/billing.ts", "line": 10, "method": "POST", "path": "/v1/invoices/create_preview", "property": "subscription_details/billing_cycle_anchor", "kind": "class member client, nested anchor" },
+    { "file": "routes/billing.ts", "line": 10, "method": "POST", "path": "/v1/invoices/create_preview", "property": "subscription_details/billing_cycle_anchor/type", "kind": "new required nested type" },
+    { "file": "routes/billing.ts", "line": 18, "method": "POST", "path": "/v1/subscriptions/{subscription}/resume", "property": "billing_cycle_anchor", "kind": "resume anchor" },
+    { "file": "routes/billing.ts", "line": 18, "method": "POST", "path": "/v1/subscriptions/{subscription}/resume", "property": "billing_cycle_anchor/type", "kind": "resume new required type" }
+  ],
+  "unknown": [],
+  "mustNotFlag": [
+    { "file": "server/server.js", "line": 19, "kind": "PaymentIntent with automatic_payment_methods only" },
+    { "file": "routes/connect.ts", "line": 17, "kind": "prices.list read" },
+    { "file": "routes/billing.ts", "line": 22, "kind": "SetupIntent without payment_method_types" }
+  ],
+  "semanticWarning": [ { "file": "server/server.js", "line": 8 } ]
+}

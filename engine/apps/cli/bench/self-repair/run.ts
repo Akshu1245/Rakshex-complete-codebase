@@ -1,6 +1,6 @@
 /**
  * Self-Repair impact accuracy benchmark.
- *   npx tsx bench/self-repair/run.ts [--engine current|legacy] [--legacy-src <dir with apiImpact.ts>] [--out file.json]
+ *   npx tsx bench/self-repair/run.ts [--engine current|legacy] [--legacy-src <dir with apiImpact.ts>] [--out file.json] [--set repos|heldout]
  * Needs: network once (spec download, hash-verified) and the oasdiff binary on PATH.
  * Metrics are computed against hand-written ground truth on SYNTHETIC repos only.
  */
@@ -47,11 +47,11 @@ const key = (c: { file: string; line: number; method?: string; path?: string; pr
 async function main() {
   const legacyDir = flag("legacy-src");
   const legacy = engine === "legacy" ? await import(pathToFileURL(resolve(legacyDir!, "apiImpact.ts")).href) : null;
-  const reposDir = join(here, "repos");
+  const reposDir = join(here, flag("set") === "heldout" ? "heldout" : "repos");
   const results: any[] = [];
   const pairs = lock.pairs as Record<string, { before: string; after: string }>;
   const changeCache: Record<string, OasdiffChange[]> = {};
-  for (const repo of readdirSync(reposDir).sort()) {
+  for (const repo of readdirSync(reposDir).sort().filter((d) => existsSync(join(reposDir, d, "truth.json")))) {
     const truth = JSON.parse(readFileSync(join(reposDir, repo, "truth.json"), "utf8"));
     const p = pairs[truth.pair]!;
     changeCache[truth.pair] ??= changesFor(truth.pair, await spec(p.before), await spec(p.after));

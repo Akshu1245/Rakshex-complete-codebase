@@ -1,0 +1,18 @@
+{
+  "pair": "stripe-v2017-v2018",
+  "about": "HELD-OUT. Basil -> 2025-09-30.clover. Truth from Clover changelog entries.",
+  "sources": [
+    "https://docs.stripe.com/changelog/clover/2025-09-30/remove-iterations",
+    "https://docs.stripe.com/changelog/clover/2025-09-30/polymorphic-coupon"
+  ],
+  "affected": [
+    { "file": "src/schedules.ts", "line": 7, "method": "POST", "path": "/v1/subscription_schedules", "property": "phases/items/iterations", "kind": "iterations inside phases array" },
+    { "file": "src/schedules.ts", "line": 22, "method": "POST", "path": "/v1/promotion_codes", "property": "coupon", "kind": "top-level coupon removed" },
+    { "file": "src/schedules.ts", "line": 22, "method": "POST", "path": "/v1/promotion_codes", "property": "promotion", "kind": "new required promotion" },
+    { "file": "src/schedules.ts", "line": 27, "method": "POST", "path": "/v1/promotion_codes", "property": "coupon", "kind": "coupon after const spread" },
+    { "file": "src/schedules.ts", "line": 27, "method": "POST", "path": "/v1/promotion_codes", "property": "promotion", "kind": "new required promotion after spread" }
+  ],
+  "unknown": [],
+  "mustNotFlag": [ { "file": "src/schedules.ts", "line": 16, "kind": "uses duration already" } ],
+  "semanticWarning": []
+}
