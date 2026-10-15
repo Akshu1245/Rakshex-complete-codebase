@@ -1,0 +1,86 @@
+name: Self-Repair PR checks
+
+# Archive-layout branches (PRs #242/#243/#244). The archive's ci.yml only runs for PRs into
+# main/master, so stacked PRs got no test CI at all. This runs on every PR touching the engine.
+on:
+  pull_request:
+    paths: ["apps/cli/**", "packages/scanner-core/**", "packages/config/**", ".github/workflows/self-repair-pr-checks.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: self-repair-pr-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: cli + scanner-core typecheck and tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      HUSKY: "0"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --filter @rakshex/cli... --filter @rakshex/scanner-core...
+      - run: pnpm --filter @rakshex/scanner-core --filter @rakshex/cli typecheck
+      - run: pnpm --filter @rakshex/scanner-core --filter @rakshex/cli test
+
+  benchmark:
+    name: Self-Repair benchmark gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      HUSKY: "0"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Skip when this branch has no benchmark
+        id: has
+        run: test -f apps/cli/bench/self-repair/run.ts && echo "yes=1" >> "$GITHUB_OUTPUT" || echo "no benchmark on this branch"
+      - uses: pnpm/action-setup@v4
+        if: steps.has.outputs.yes
+      - uses: actions/setup-node@v4
+        if: steps.has.outputs.yes
+        with:
+          node-version: "22"
+          cache: pnpm
+      - name: Install oasdiff v1.33.0 (sha256-pinned)
+        if: steps.has.outputs.yes
+        working-directory: ${{ runner.temp }}
+        run: |
+          curl -sSfL -o oasdiff.tgz https://github.com/oasdiff/oasdiff/releases/download/v1.33.0/oasdiff_1.33.0_linux_amd64.tar.gz
+          echo "43a4e328e2d13ba1552d760aa68d2485c75c5621f309f6ff64ae895188345247  oasdiff.tgz" | sha256sum -c -
+          tar xzf oasdiff.tgz oasdiff && echo "$PWD" >> "$GITHUB_PATH"
+      - if: steps.has.outputs.yes
+        run: pnpm install --frozen-lockfile --filter @rakshex/cli...
+      - name: Run benchmark sets present on this branch
+        if: steps.has.outputs.yes
+        working-directory: apps/cli
+        run: |
+          npx tsx bench/self-repair/run.ts --set repos --out "$RUNNER_TEMP/bench-repos.json"
+          if [ -d bench/self-repair/heldout ]; then npx tsx bench/self-repair/run.ts --set heldout --out "$RUNNER_TEMP/bench-heldout.json"; fi
+          for f in "$RUNNER_TEMP"/bench-*.json; do node -e 'console.log(process.argv[1], JSON.stringify(require(process.argv[1]).totals))' "$f"; done
+      - uses: actions/upload-artifact@v4
+        if: steps.has.outputs.yes
+        with:
+          name: self-repair-benchmark
+          path: ${{ runner.temp }}/bench-*.json
+
+  secrets:
+    name: gitleaks (changed engine paths)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - working-directory: ${{ runner.temp }}
+        run: |
+          curl -sSfL -o gl.tgz https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
+          echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  gl.tgz" | sha256sum -c -
+          tar xzf gl.tgz gitleaks
+          for d in apps/cli packages/scanner-core; do ./gitleaks dir "$GITHUB_WORKSPACE/$d" --no-banner --redact --config "$GITHUB_WORKSPACE/.gitleaks.toml"; done
