@@ -156,6 +156,41 @@ class ChangeAlert(Base):
     acknowledged_at = Column(DateTime(timezone=True), nullable=True)
     resolved_by = Column(BigInt, nullable=True)
     resolved_at = Column(DateTime(timezone=True), nullable=True)
+    # Link to the shared upstream event this workspace alert was fanned out from (migration 004).
+    event_id = Column(BigInt, ForeignKey("upstream_change_events.id", ondelete="SET NULL"), nullable=True, index=True)
+
+    __table_args__ = (UniqueConstraint("event_id", "workspace_id", name="uq_change_alerts_event_workspace"),)
+
+
+class UpstreamChangeEvent(Base):
+    """Provider-level change, shared across workspaces. Never exposed directly via alert APIs (migration 004)."""
+    __tablename__ = "upstream_change_events"
+
+    id = Column(BigInt, primary_key=True, autoincrement=True)
+    api_name = Column(String(255), nullable=False, index=True)
+    severity = Column(String(20), nullable=False, default="warning")
+    change_type = Column(String(50), nullable=False, default="schema_change")
+    summary = Column(Text)
+    diff_json = Column(Text)
+    old_hash = Column(String(128))
+    new_hash = Column(String(128))
+    source = Column(String(30), nullable=False, default="detector")  # detector | legacy_backfill
+    legacy_alert_id = Column(BigInt, nullable=True, unique=True)
+    detected_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class WorkspaceApiSubscription(Base):
+    """A workspace declares it depends on a specific monitored API (migration 004)."""
+    __tablename__ = "workspace_api_subscriptions"
+
+    id = Column(BigInt, primary_key=True, autoincrement=True)
+    workspace_id = Column(String(64), ForeignKey("teams.id", ondelete="CASCADE"), nullable=False, index=True)
+    api_name = Column(String(255), nullable=False, index=True)
+    source = Column(String(30), nullable=False, default="manual")  # manual | integration | repo_connect
+    created_by = Column(BigInt, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (UniqueConstraint("workspace_id", "api_name", name="uq_workspace_api"),)
 
 
 class ChangeAlertAudit(Base):

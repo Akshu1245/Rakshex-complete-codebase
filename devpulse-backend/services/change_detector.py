@@ -92,7 +92,11 @@ async def _probe_api(client: httpx.AsyncClient, api: Dict[str, str]) -> Optional
 
 
 async def _detect_changes() -> List[Dict[str, Any]]:
-    from services.database import save_api_response, get_last_api_response, save_change_alert
+    from services.alert_schema_guard import missing_alert_schema
+    if await missing_alert_schema():
+        logger.error("[CHANGE] alert schema not migrated; skipping detection run (no alerts written)")
+        return []
+    from services.database import save_api_response, get_last_api_response, record_upstream_event_and_fan_out
     new_alerts = []
     async with httpx.AsyncClient(
         timeout=httpx.Timeout(8.0), follow_redirects=True,
@@ -118,12 +122,13 @@ async def _detect_changes() -> List[Dict[str, Any]]:
                 total = len(diff["added"]) + len(diff["removed"]) + len(diff["type_changed"])
                 severity = "critical" if diff["removed"] or diff["type_changed"] else "warning"
                 summary = f"{total} schema change(s) detected in {api_name}"
-                alert_id = await save_change_alert(
+                # Shared upstream event + fan-out to subscribed workspaces only.
+                fan = await record_upstream_event_and_fan_out(
                     api_name, severity, summary, json.dumps(diff),
                     prev["response_hash"], result["schema_hash"],
                 )
                 alert = {
-                    "id": alert_id, "api_name": api_name, "severity": severity,
+                    "id": fan["event_id"], "workspace_alert_ids": fan["alert_ids"], "api_name": api_name, "severity": severity,
                     "change_type": "schema_change", "summary": summary, "details": diff,
                     "detected_at": result["timestamp"], "acknowledged": False,
                 }

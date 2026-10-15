@@ -11,7 +11,7 @@ import logging
 from typing import Dict, Any, Optional
 
 import httpx
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
 
 from routes.auth import require_auth
@@ -25,11 +25,20 @@ class ImportRequest(BaseModel):
     url: Optional[str] = Field(default=None, max_length=500, description="URL to OpenAPI spec")
     spec_json: Optional[Dict[str, Any]] = Field(default=None, description="OpenAPI spec as JSON")
     protocol: str = Field(default="rest", description="rest, graphql, grpc, websocket")
+    workspace_id: Optional[str] = Field(default=None, max_length=64,
+                                        description="If set, register this API as a monitored dependency of the workspace (OWNER/ADMIN only)")
 
 
 @router.post("/api/custom/import")
 async def import_api(req: ImportRequest, user: Dict = Depends(require_auth)) -> Dict[str, Any]:
     """Import an OpenAPI/Swagger specification."""
+    if req.workspace_id:
+        from services.database import get_user_teams
+        roles = {t["id"]: (t.get("role") or "").lower() for t in await get_user_teams(user["id"])}
+        if req.workspace_id not in roles:
+            raise HTTPException(status_code=404, detail="Workspace not found")
+        if roles[req.workspace_id] not in ("owner", "admin"):
+            raise HTTPException(status_code=403, detail="Insufficient role")
     try:
         spec: Optional[Dict[str, Any]] = req.spec_json
 
@@ -69,7 +78,14 @@ async def import_api(req: ImportRequest, user: Dict = Depends(require_auth)) -> 
         await save_custom_api(
             user_id=user["id"], name=api_name, protocol=req.protocol,
             base_url=base_url, spec_json=spec,
+            # Pre-existing bug: metadata_json was required but never passed, so every import failed.
+            metadata_json={"version": version, "endpoint_count": endpoint_count},
         )
+        subscribed = None
+        if req.workspace_id:
+            from services.database import add_workspace_subscription_db
+            subscribed = (await add_workspace_subscription_db(
+                req.workspace_id, api_name, "integration", user["id"]))["api_name"]
 
         return {
             "status": "success",
@@ -79,6 +95,7 @@ async def import_api(req: ImportRequest, user: Dict = Depends(require_auth)) -> 
             "endpoint_count": endpoint_count,
             "protocol": req.protocol,
             "paths": list(paths.keys())[:20],
+            "workspace_subscription": subscribed,
         }
     except httpx.HTTPError as e:
         logger.error(f"Failed to fetch spec: {e}")

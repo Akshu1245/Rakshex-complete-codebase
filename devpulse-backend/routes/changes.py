@@ -6,6 +6,9 @@ Endpoints:
 - GET  /api/changes/alerts/{id}            - View one alert (workspace member)
 - POST /api/changes/alerts/{id}/ack        - Acknowledge (workspace OWNER/ADMIN)
 - POST /api/changes/alerts/{id}/resolve    - Resolve (workspace OWNER/ADMIN)
+- GET    /api/changes/workspaces/{ws}/subscriptions          - list (member)
+- POST   /api/changes/workspaces/{ws}/subscriptions          - add (OWNER/ADMIN)
+- DELETE /api/changes/workspaces/{ws}/subscriptions/{api}    - remove (OWNER/ADMIN)
 - GET  /api/changes/history/{api}          - Schema history for an API (public provider data)
 - GET  /api/changes/monitored              - List monitored APIs (public provider data)
 
@@ -21,12 +24,15 @@ import logging
 from typing import Dict, Any, Optional, List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
 
 from routes.auth import require_auth
+from services.alert_schema_guard import require_alert_schema
 from services.change_detector import get_change_alerts, get_schema_history, get_monitored_apis
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+_SCHEMA = [Depends(require_alert_schema)]
 
 MANAGE_ROLES = {"owner", "admin"}
 _NOT_FOUND = "Alert not found"
@@ -48,7 +54,7 @@ async def _load_visible_alert(alert_id: int, user: Dict[str, Any]):
     return alert, roles[ws]
 
 
-@router.get("/api/changes/alerts")
+@router.get("/api/changes/alerts", dependencies=_SCHEMA)
 async def list_change_alerts(
     limit: int = Query(50, ge=1, le=200),
     api_name: Optional[str] = Query(None),
@@ -72,7 +78,7 @@ async def list_change_alerts(
     return {"status": "success", "alerts": alerts, "count": len(alerts)}
 
 
-@router.get("/api/changes/alerts/{alert_id}")
+@router.get("/api/changes/alerts/{alert_id}", dependencies=_SCHEMA)
 async def get_change_alert(alert_id: int, user: Dict[str, Any] = Depends(require_auth)) -> Dict[str, Any]:
     alert, _ = await _load_visible_alert(alert_id, user)
     return {"status": "success", "alert": alert}
@@ -95,14 +101,57 @@ async def _change_state(alert_id: int, user: Dict[str, Any], action: str) -> Dic
     return {"status": "success", "message": f"Alert {alert_id} {verb}"}
 
 
-@router.post("/api/changes/alerts/{alert_id}/ack")
+@router.post("/api/changes/alerts/{alert_id}/ack", dependencies=_SCHEMA)
 async def ack_change_alert(alert_id: int, user: Dict[str, Any] = Depends(require_auth)) -> Dict[str, Any]:
     return await _change_state(alert_id, user, "ack")
 
 
-@router.post("/api/changes/alerts/{alert_id}/resolve")
+@router.post("/api/changes/alerts/{alert_id}/resolve", dependencies=_SCHEMA)
 async def resolve_change_alert(alert_id: int, user: Dict[str, Any] = Depends(require_auth)) -> Dict[str, Any]:
     return await _change_state(alert_id, user, "resolve")
+
+
+class SubscriptionRequest(BaseModel):
+    api_name: str = Field(..., min_length=1, max_length=255)
+    source: str = Field(default="manual", pattern="^(manual|integration|repo_connect)$")
+
+
+async def _workspace_role(workspace_id: str, user: Dict[str, Any]) -> str:
+    roles = await _memberships(user)
+    if workspace_id not in roles:
+        raise HTTPException(status_code=404, detail="Workspace not found")
+    return roles[workspace_id]
+
+
+@router.get("/api/changes/workspaces/{workspace_id}/subscriptions", dependencies=_SCHEMA)
+async def list_subscriptions(workspace_id: str, user: Dict[str, Any] = Depends(require_auth)) -> Dict[str, Any]:
+    from services.database import list_workspace_subscriptions_db
+    await _workspace_role(workspace_id, user)
+    subs = await list_workspace_subscriptions_db(workspace_id)
+    return {"status": "success", "subscriptions": subs, "count": len(subs)}
+
+
+@router.post("/api/changes/workspaces/{workspace_id}/subscriptions", dependencies=_SCHEMA, status_code=201)
+async def add_subscription(workspace_id: str, req: SubscriptionRequest,
+                           user: Dict[str, Any] = Depends(require_auth)) -> Dict[str, Any]:
+    """Register that this workspace depends on a monitored API (called on repo connect /
+    integration register, or manually). Future upstream changes fan out only to subscribers."""
+    from services.database import add_workspace_subscription_db
+    if await _workspace_role(workspace_id, user) not in MANAGE_ROLES:
+        raise HTTPException(status_code=403, detail="Insufficient role")
+    sub = await add_workspace_subscription_db(workspace_id, req.api_name, req.source, user["id"])
+    return {"status": "success", "subscription": sub}
+
+
+@router.delete("/api/changes/workspaces/{workspace_id}/subscriptions/{api_name}", dependencies=_SCHEMA)
+async def remove_subscription(workspace_id: str, api_name: str,
+                              user: Dict[str, Any] = Depends(require_auth)) -> Dict[str, Any]:
+    from services.database import delete_workspace_subscription_db
+    if await _workspace_role(workspace_id, user) not in MANAGE_ROLES:
+        raise HTTPException(status_code=403, detail="Insufficient role")
+    if not await delete_workspace_subscription_db(workspace_id, api_name):
+        raise HTTPException(status_code=404, detail="Subscription not found")
+    return {"status": "success"}
 
 
 @router.get("/api/changes/history/{api_name}")

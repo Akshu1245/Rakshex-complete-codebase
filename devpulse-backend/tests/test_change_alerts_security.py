@@ -11,6 +11,15 @@ from services.database import save_change_alert, get_change_alert_audit_db
 from services.db_config import AsyncSessionLocal
 from models.tables import Team, TeamMember, ChangeAlert
 
+@pytest.fixture(autouse=True)
+def _reset_ip_throttle():
+    """These suites send many requests from one test IP; don't starve later suites
+    of the per-IP suspicious-activity budget in middleware/security.py."""
+    yield
+    from middleware.security import _request_counts
+    _request_counts.clear()
+
+
 
 async def _user(client, tag):
     """Create a user directly (avoids register rate limits) and mint a real JWT."""
