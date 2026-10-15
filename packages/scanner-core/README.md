@@ -6,7 +6,7 @@ Deterministic API (and soon AI/agent) security scanner used by the Rakshex API, 
 
 - **Rules are pure** — no I/O, no LLM calls
 - **Evidence required** — every finding includes `evidence[]`
-- **Confidence labels** — `confirmed | high | potential | informational`
+- **Confidence labels** — collection rules: `confirmed | high | potential | informational`. Secret scanning (`secrets.ts`) uses state `pattern_match | likely_secret` (+ `verified_valid`, never set: no verifier exists), confidence `low | medium | high`, and a separate severity. A regex match is never "confirmed".
 - **Stable fingerprints** — `ruleId|METHOD|path` for dedup / baseline
 
 ## Usage
