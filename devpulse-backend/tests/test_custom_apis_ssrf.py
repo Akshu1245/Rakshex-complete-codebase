@@ -284,7 +284,7 @@ def tls_server(tmp_path, monkeypatch):
             self.send_header("content-length", str(len(body))); self.end_headers(); self.wfile.write(body)
         def log_message(self, *a): pass
     srv = http.server.HTTPServer(("127.0.0.1", 0), H)
-    sctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER); sctx.load_cert_chain(str(crt), str(key))
+    sctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER); sctx.minimum_version = ssl.TLSVersion.TLSv1_2; sctx.load_cert_chain(str(crt), str(key))
     srv.socket = sctx.wrap_socket(srv.socket, server_side=True)
     port = srv.server_address[1]
     threading.Thread(target=srv.serve_forever, daemon=True).start()
