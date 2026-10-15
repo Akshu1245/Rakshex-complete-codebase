@@ -91,7 +91,8 @@ def scan_code(code: str, language: str = "python") -> Dict[str, Any]:
                     "title": rule["title"],
                     "description": rule["description"],
                     "line_number": i + 1,
-                    "matched_text": match.group()[:100],
+                    "matched_text": "[REDACTED]",
+                    "column": match.start() + 1,
                     "recommendation": rule["recommendation"],
                 })
 

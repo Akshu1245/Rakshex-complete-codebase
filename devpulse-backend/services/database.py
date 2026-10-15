@@ -16,6 +16,7 @@ from typing import Dict, Any, List, Optional
 from sqlalchemy import select, update, delete, func, and_, or_, desc, asc, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from services.security_evidence import redact_scan_evidence
 
 from services.db_config import (
     AsyncSessionLocal,
@@ -52,6 +53,8 @@ def _row_to_dict(obj) -> Dict[str, Any]:
         # Convert datetime to ISO string (matches SQLite behaviour)
         if isinstance(val, datetime):
             val = val.isoformat()
+        if isinstance(obj, (SecurityScan, AiSecurityScan, CicdRun)) and c.name.endswith("_json"):
+            val = redact_scan_evidence(val)
         d[c.name] = val
     return d
 
@@ -605,7 +608,7 @@ async def save_security_scan(user_id: Optional[int], scan_type: str, target: str
             score=score,
             grade=grade,
             total_issues=total_issues,
-            results_json=parsed,
+            results_json=redact_scan_evidence(parsed),
         )
         session.add(obj)
         await session.commit()
@@ -1188,7 +1191,7 @@ async def save_cicd_run(run_id: str, pipeline_id: str, repo: str, branch: str,
             security_score=security_score,
             compatibility_score=compatibility_score,
             budget_ok=budget_ok,
-            details_json=details,
+            details_json=redact_scan_evidence(details),
             triggered_by=triggered_by,
         )
         session.add(obj)
@@ -1550,9 +1553,9 @@ async def save_ai_security_scan(
             high_count=high_count,
             medium_count=medium_count,
             low_count=low_count,
-            results_json=results_json or {},
-            fix_suggestions_json=fix_suggestions_json or [],
-            owasp_results_json=owasp_results_json or {},
+            results_json=redact_scan_evidence(results_json or {}),
+            fix_suggestions_json=redact_scan_evidence(fix_suggestions_json or []),
+            owasp_results_json=redact_scan_evidence(owasp_results_json or {}),
         )
         session.add(obj)
         await session.commit()

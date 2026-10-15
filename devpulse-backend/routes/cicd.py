@@ -78,7 +78,7 @@ async def cicd_check(req: CICDCheckRequest) -> Dict[str, Any]:
             "details": scan.get("vulnerabilities", []),
         }
     except Exception as e:
-        logger.error(f"CI/CD check error: {e}")
+        logger.error("CI/CD check error (%s)", type(e).__name__)
         return {"status": "error", "error": "CI/CD check failed"}
 
 
@@ -108,7 +108,7 @@ async def cicd_webhook(payload: WebhookPayload) -> Dict[str, Any]:
         )
         return {"status": "success", **result}
     except Exception as e:
-        logger.error(f"CI/CD webhook error: {e}")
+        logger.error("CI/CD webhook error (%s)", type(e).__name__)
         return {"status": "error", "error": "Webhook processing failed"}
 
 

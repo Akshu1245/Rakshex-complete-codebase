@@ -76,7 +76,7 @@ if IS_POSTGRES:
         _engine_kwargs["connect_args"] = _connect_args
 
 # ── Engine & Session Factory ────────────────────────────────────────────────
-engine: AsyncEngine = create_async_engine(DATABASE_URL, **_engine_kwargs)
+engine: AsyncEngine = create_async_engine(DATABASE_URL, hide_parameters=True, **_engine_kwargs)
 
 AsyncSessionLocal: async_sessionmaker[AsyncSession] = async_sessionmaker(
     engine,
