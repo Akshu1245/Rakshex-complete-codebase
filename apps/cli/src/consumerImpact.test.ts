@@ -32,7 +32,14 @@ describe("consumer-impact normalizer", () => {
     const rep = analyzeApiImpact(join(bench, "repos", "dahlia-issuing"), changes, { hosts: ["api.stripe.com"] });
     const ci = normalizeConsumerImpact(changes, rep.sites);
     const props = ci.impacts.filter((i) => i.verdict === "breaks_call").map((i) => i.change.property).sort();
-    expect(props).toEqual(["risk_assessment/merchant_dispute_risk/level", "risk_assessment/merchant_dispute_risk/risk_level"]);
+    expect(props).toEqual([
+      "risk_assessment/card_testing_risk/level",
+      "risk_assessment/card_testing_risk/risk_level",
+      "risk_assessment/merchant_dispute_risk/level",
+      "risk_assessment/merchant_dispute_risk/risk_level",
+    ]);
+    // the SDK call without risk_assessment (line 6) is not affected by the nested requirement
+    expect(ci.impacts.some((i) => i.site.line === 6 && i.verdict !== "response_review")).toBe(false);
   });
 
   it("does not attribute the same path on a foreign host", () => {

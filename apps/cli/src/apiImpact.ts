@@ -8,6 +8,7 @@
 import { lstatSync, readFileSync, readdirSync } from "node:fs";
 import { extname, join, relative, resolve } from "node:path";
 import ts from "typescript";
+import { StripeSdkResolver } from "./stripeSdkImpact.js";
 import { emptyPayload, fromBodyExpression, fromObjectLiteral, fromQuery, mergePayload } from "./payloadEvidence.js";
 
 const SOURCE_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts", ".cts"]);
@@ -42,7 +43,7 @@ export interface ApiImpactMatch {
   file: string;
   line: number;
   column: number;
-  call: "fetch" | "axios";
+  call: "fetch" | "axios" | "stripe-sdk";
   confidence: "candidate";
 }
 
@@ -279,6 +280,7 @@ export function analyzeApiImpact(
   let dynamicCalls = 0;
   let parseErrors = 0;
   const matchedChanges = new Set<ImpactChange>();
+  const files: string[] = [];
 
   while (queue.length > 0) {
     const { dir, depth } = queue.pop()!;
@@ -303,11 +305,32 @@ export function analyzeApiImpact(
       if (filesScanned > MAX_FILES || bytesScanned > MAX_TOTAL_BYTES) {
         throw new Error("Impact scan exceeded source limits; narrow the source directory.");
       }
-      const content = readFileSync(file, "utf8");
-      const scriptKind = [".tsx", ".jsx"].includes(extname(file).toLowerCase())
-        ? ts.ScriptKind.TSX
-        : ts.ScriptKind.TS;
-      const sf = ts.createSourceFile(file, content, ts.ScriptTarget.Latest, true, scriptKind);
+      files.push(file);
+    }
+  }
+
+  const compilerOptions: ts.CompilerOptions = {
+    allowJs: true, noEmit: true, noLib: true, types: [], skipLibCheck: true,
+    module: ts.ModuleKind.ESNext, moduleResolution: ts.ModuleResolutionKind.Bundler,
+  };
+  const host = ts.createCompilerHost(compilerOptions, true);
+  // Only resolve relative imports inside the scanned tree; never load node_modules typings.
+  host.resolveModuleNameLiterals = (literals, containingFile) =>
+    literals.map((lit) => {
+      if (!lit.text.startsWith(".")) return { resolvedModule: undefined };
+      const r = ts.resolveModuleName(lit.text, containingFile, compilerOptions, host).resolvedModule;
+      return { resolvedModule: r && resolve(r.resolvedFileName).startsWith(root) ? r : undefined };
+    });
+  const program = ts.createProgram({ rootNames: files, options: compilerOptions, host });
+  const sourceFiles = files.map((f) => program.getSourceFile(f)).filter((x): x is ts.SourceFile => !!x);
+  const sdk = new StripeSdkResolver(program.getTypeChecker(), sourceFiles);
+  for (const sf of sourceFiles) {
+    const file = sf.fileName;
+    const siteOf = (n: ts.Node) => {
+      const nsf = n.getSourceFile();
+      const p = nsf.getLineAndCharacterOfPosition(n.getStart(nsf));
+      return { file: relative(root, nsf.fileName).replace(/\\/g, "/"), line: p.line + 1, column: p.character + 1 };
+    };
       const parseDiagnostics = (
         sf as ts.SourceFile & { parseDiagnostics?: readonly ts.Diagnostic[] }
       ).parseDiagnostics;
@@ -315,15 +338,28 @@ export function analyzeApiImpact(
       const axiosNames = axiosImports(sf);
       const walk = (node: ts.Node): void => {
         if (ts.isCallExpression(node)) {
-          const call = candidate(node, axiosNames);
+          const sdkSites = sdk.sitesFor(node, siteOf);
+          if (sdkSites) {
+            callsInspected++;
+            for (const site of sdkSites) {
+              sites.push(site);
+              if (!site.method || !site.path) { dynamicCalls++; continue; }
+              for (const { change, method, path } of actionable) {
+                if (method !== site.method || !pathMatches(path, site.path)) continue;
+                matchedChanges.add(change);
+                matches.push({ rule: change.kind ?? change.id ?? "contract-change", method, path, file: site.file, line: site.line, column: site.column, call: "stripe-sdk", confidence: "candidate" });
+              }
+            }
+          }
+          const call = sdkSites ? null : candidate(node, axiosNames);
           if (call) {
             callsInspected++;
             const loc0 = sf.getLineAndCharacterOfPosition(node.getStart(sf));
             const host = urlHost(call.url);
-            let payload = call.body ? fromBodyExpression(call.body) : emptyPayload();
+            let payload = call.body ? fromBodyExpression(call.body, sdk.resolver) : emptyPayload();
             if (call.url) payload = mergePayload(payload, fromQuery(call.url));
             if (call.params) {
-              const pe = ts.isObjectLiteralExpression(call.params) ? fromObjectLiteral(call.params) : fromBodyExpression(call.params);
+              const pe = ts.isObjectLiteralExpression(call.params) ? fromObjectLiteral(call.params) : fromBodyExpression(call.params, sdk.resolver);
               payload = mergePayload(payload, pe);
             }
             const foreignHost = !!(hosts && host && !hosts.includes(host));
@@ -364,7 +400,6 @@ export function analyzeApiImpact(
         ts.forEachChild(node, walk);
       };
       walk(sf);
-    }
   }
 
   matches.sort(

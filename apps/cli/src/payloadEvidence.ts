@@ -87,7 +87,14 @@ function walkObject(obj: ts.ObjectLiteralExpression, prefix: string, out: Payloa
         if (r && ts.isObjectLiteralExpression(unwrap(r.node))) { out.via.push(r.via); init = unwrap(r.node); }
       }
       if (ts.isObjectLiteralExpression(init)) walkObject(init, key, out, resolve, depth + 1);
-      else { const v = literalValue(init); if (v !== null) out.values[key] = v; }
+      else if (ts.isArrayLiteralExpression(init) && init.elements.some((el) => ts.isObjectLiteralExpression(unwrap(el)))) {
+        // Array of objects: OpenAPI/oasdiff name element properties as <key>/items/<prop>.
+        for (const el of init.elements) {
+          const u = unwrap(el);
+          if (ts.isObjectLiteralExpression(u)) walkObject(u, key + "/items", out, resolve, depth + 1);
+          else out.unresolved.push(key + "/items: non-literal element");
+        }
+      } else { const v = literalValue(init); if (v !== null) out.values[key] = v; }
       continue;
     }
     // methods/accessors are not request data
