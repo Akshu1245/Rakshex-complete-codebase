@@ -91,6 +91,14 @@ export interface HistoryResponse {
 
 // ─── Change Detection Types ─────────────────────────────────
 
+export interface ProviderInfo {
+  id: string;
+  name: string;
+  coverage: 'SUPPORTED' | 'NOT_SUPPORTED';
+  coverage_detail: string;
+  endpoint?: string;
+}
+
 export interface ChangeAlert {
   id: string;
   api_name: string;
@@ -542,6 +550,24 @@ class APIClient {
       `/api/changes/alerts?limit=${limit}${ws}`,
       undefined
     );
+  }
+
+  async getProviderCatalog(): Promise<{ supported: ProviderInfo[]; unsupported: ProviderInfo[] }> {
+    return this.safeRequest('/api/changes/providers', undefined);
+  }
+
+  async getWorkspaceSubscriptions(workspaceId: string): Promise<{ subscriptions: { provider_id: string; provider_name: string; coverage: string }[] }> {
+    return this.safeRequest(`/api/changes/workspaces/${encodeURIComponent(workspaceId)}/subscriptions`, undefined);
+  }
+
+  async addWorkspaceSubscription(workspaceId: string, providerId: string): Promise<{ status: string }> {
+    return this.safeRequest(`/api/changes/workspaces/${encodeURIComponent(workspaceId)}/subscriptions`,
+      { method: 'POST', body: JSON.stringify({ provider_id: providerId, source: 'manual' }) });
+  }
+
+  async removeWorkspaceSubscription(workspaceId: string, providerId: string): Promise<{ status: string }> {
+    return this.safeRequest(`/api/changes/workspaces/${encodeURIComponent(workspaceId)}/subscriptions/${encodeURIComponent(providerId)}`,
+      { method: 'DELETE' });
   }
 
   async listMyWorkspaces(): Promise<{ workspaces: (Workspace & { role?: string })[]; count: number }> {

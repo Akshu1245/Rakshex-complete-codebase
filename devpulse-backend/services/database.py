@@ -610,16 +610,13 @@ async def set_change_alert_state_db(alert_id: int, workspace_id: str, actor_user
 
 # ── Workspace API subscriptions + upstream events + fan-out (migration 004) ──
 
-def _norm_api(name: str) -> str:
-    return (name or "").strip().lower()
-
-
 async def add_workspace_subscription_db(workspace_id: str, api_name: str, source: str = "manual",
                                         created_by: Optional[int] = None) -> Dict[str, Any]:
-    """Idempotent: returns existing row if (workspace, api) already subscribed."""
-    key = _norm_api(api_name)
-    if not key:
-        raise ValueError("api_name required")
+    """Idempotent. api_name MUST be a canonical, SUPPORTED provider id from services.provider_registry."""
+    from services.provider_registry import get_supported
+    key = (api_name or "").strip()
+    if not get_supported(key):
+        raise ValueError(f"unsupported provider id: {api_name!r}")
     async with AsyncSessionLocal() as session:
         existing = (await session.execute(select(WorkspaceApiSubscription).where(and_(
             WorkspaceApiSubscription.workspace_id == workspace_id,
@@ -645,7 +642,7 @@ async def delete_workspace_subscription_db(workspace_id: str, api_name: str) -> 
     async with AsyncSessionLocal() as session:
         res = await session.execute(delete(WorkspaceApiSubscription).where(and_(
             WorkspaceApiSubscription.workspace_id == workspace_id,
-            WorkspaceApiSubscription.api_name == _norm_api(api_name))))
+            WorkspaceApiSubscription.api_name == (api_name or "").strip())))
         await session.commit()
         return res.rowcount > 0
 
@@ -673,8 +670,12 @@ async def fan_out_event_db(event_id: int) -> List[int]:
         ev = await session.get(UpstreamChangeEvent, event_id)
         if not ev:
             return []
+        from services.provider_registry import provider_id_for_detector
+        provider_id = provider_id_for_detector(ev.api_name)
+        if not provider_id:
+            return []  # unknown source -> quarantined (no workspace alerts)
         subs = (await session.execute(select(WorkspaceApiSubscription.workspace_id).where(
-            WorkspaceApiSubscription.api_name == _norm_api(ev.api_name)))).scalars().all()
+            WorkspaceApiSubscription.api_name == provider_id))).scalars().all()
         already = set((await session.execute(select(ChangeAlert.workspace_id).where(
             ChangeAlert.event_id == event_id))).scalars().all())
         created = []
@@ -1493,7 +1494,8 @@ async def delete_custom_api(api_id: int, user_id: int) -> bool:
     async with AsyncSessionLocal() as session:
         stmt = (
             update(CustomApi)
-            .where(and_(CustomApi.id == api_id, CustomApi.user_id == user_id))
+            .where(and_(CustomApi.id == api_id, CustomApi.user_id == user_id,
+                        CustomApi.is_active == True))  # noqa: E712  (already-deleted -> not found)
             .values(is_active=False)
         )
         result = await session.execute(stmt)

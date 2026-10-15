@@ -413,7 +413,11 @@ class TeamMember(Base):
     accepted = Column(Boolean, default=False)
     joined_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    __table_args__ = (UniqueConstraint("team_id", "user_id"),)
+    __table_args__ = (
+        UniqueConstraint("team_id", "user_id"),
+        # migration 005
+        CheckConstraint("role IN ('owner','admin','member','viewer')", name="ck_team_members_role"),
+    )
 
 
 # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -515,3 +519,13 @@ class CustomApi(Base):
     metadata_json = Column(JSON, default=dict)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class RateLimitCounter(Base):
+    """Fixed-window rate-limit counters shared by all backend instances (migration 005)."""
+    __tablename__ = "rate_limit_counters"
+
+    key = Column(String(200), primary_key=True)
+    window_start = Column(BigInteger, primary_key=True)
+    count = Column(Integer, nullable=False, default=0)
+    expires_at = Column(BigInteger, nullable=False, index=True)

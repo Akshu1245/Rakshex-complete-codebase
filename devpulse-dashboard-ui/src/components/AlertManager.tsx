@@ -101,8 +101,8 @@ export default function AlertManager() {
           {activeKS.length > 0 && (
             <div className="space-y-2 mb-3">
               {activeKS.map((api) => (
-                <div key={api} className="flex items-center justify-between p-2.5 bg-red-500/10 border border-red-500/10 rounded-lg">
-                  <div>
+                <div key={api} className="flex flex-wrap items-center justify-between gap-2 min-w-0 p-2.5 bg-red-500/10 border border-red-500/10 rounded-lg">
+                  <div className="min-w-0 break-words">
                     <span className="text-sm font-medium text-red-300">{api}</span>
                     {killSwitches[api]?.reason && <span className="text-xs text-zinc-500 ml-2">— {killSwitches[api].reason}</span>}
                   </div>
@@ -114,11 +114,11 @@ export default function AlertManager() {
             </div>
           )}
 
-          <div className="flex gap-2">
+          <div data-testid="ks-row" className="flex flex-col sm:flex-row gap-2 min-w-0">
             <input value={ksApi} onChange={(e) => setKsApi(e.target.value)} placeholder="API name to kill..."
-              className="flex-1 bg-zinc-800/40 text-zinc-300 border border-zinc-700/40 rounded-xl px-3 py-2 text-sm placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-violet-500/30" />
+              className="w-full sm:flex-1 min-w-0 bg-zinc-800/40 text-zinc-300 border border-zinc-700/40 rounded-xl px-3 py-2 text-sm placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-violet-500/30" />
             <input value={ksReason} onChange={(e) => setKsReason(e.target.value)} placeholder="Reason"
-              className="flex-1 bg-zinc-800/40 text-zinc-300 border border-zinc-700/40 rounded-xl px-3 py-2 text-sm placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-violet-500/30" />
+              className="w-full sm:flex-1 min-w-0 bg-zinc-800/40 text-zinc-300 border border-zinc-700/40 rounded-xl px-3 py-2 text-sm placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-violet-500/30" />
             <Button variant="danger" size="sm" onClick={handleActivateKS} disabled={!ksApi}>
               KILL
             </Button>
@@ -138,7 +138,7 @@ export default function AlertManager() {
             <div className="bg-zinc-800/30 rounded-xl p-4 mb-3 border border-zinc-700/30 space-y-2">
               <input value={newAlert.name} onChange={(e) => setNewAlert({ ...newAlert, name: e.target.value })} placeholder="Alert name"
                 className="w-full bg-zinc-800/40 text-zinc-300 border border-zinc-700/40 rounded-xl px-3 py-2 text-sm placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-violet-500/30" />
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2 min-w-0">
                 <select value={newAlert.channel} onChange={(e) => setNewAlert({ ...newAlert, channel: e.target.value })}
                   className="bg-zinc-800/40 text-zinc-300 border border-zinc-700/40 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30">
                   <option value="in_app">In-App</option>
@@ -147,7 +147,7 @@ export default function AlertManager() {
                   <option value="email">Email</option>
                 </select>
                 <input value={newAlert.target} onChange={(e) => setNewAlert({ ...newAlert, target: e.target.value })} placeholder="Target URL/Email"
-                  className="flex-1 bg-zinc-800/40 text-zinc-300 border border-zinc-700/40 rounded-xl px-3 py-2 text-sm placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-violet-500/30" />
+                  className="flex-1 min-w-[10rem] bg-zinc-800/40 text-zinc-300 border border-zinc-700/40 rounded-xl px-3 py-2 text-sm placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-violet-500/30" />
                 <select value={newAlert.priority} onChange={(e) => setNewAlert({ ...newAlert, priority: e.target.value })}
                   className="bg-zinc-800/40 text-zinc-300 border border-zinc-700/40 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30">
                   <option value="critical">Critical</option>

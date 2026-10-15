@@ -7,6 +7,7 @@ import { APIError, getAuthToken } from '@/lib/transport';
 import { Card, CardHeader, CardSkeleton } from '@/components/ui/Card';
 import { Badge, EmptyState } from '@/components/ui/Shared';
 import { Button } from '@/components/ui/Button';
+import MonitoredApis from '@/components/MonitoredApis';
 
 type WS = Workspace & { role?: string };
 const MANAGE = new Set(['owner', 'admin']);
@@ -16,7 +17,9 @@ function describeError(e: unknown): string {
     if (e.status === 401) return 'Sign in to view change alerts.';
     if (e.status === 403) return 'Only workspace owners and admins can acknowledge alerts.';
     if (e.status === 404) return 'Alert or workspace not found.';
-    if (e.status === 503) return 'Change alerts are temporarily unavailable (database migration pending).';
+    if (e.status === 503) return /migration/i.test(e.message)
+      ? 'Change alerts are temporarily unavailable (database migration pending).'
+      : `Service unavailable: ${e.message}`;
     if (e.status === 0) return 'Unable to reach the backend. Please retry.';
     return `Could not load change alerts (${e.status}).`;
   }
@@ -97,6 +100,8 @@ export default function ChangeAlerts() {
         </div>
       )}
 
+      {wsId && !error && <MonitoredApis key={wsId} workspaceId={wsId} canManage={canManage} onChange={fetchAlerts} />}
+
       {actionError && <p role="alert" data-testid="ca-action-error" className="mb-2 text-xs text-red-400">{actionError}</p>}
 
       {error ? (
@@ -120,7 +125,7 @@ export default function ChangeAlerts() {
               </svg>
             }
             title="No change alerts for this workspace"
-            description="Alerts appear only for APIs this workspace has registered as dependencies."
+            description="Alerts appear only for supported APIs this workspace monitors, and only for changes detected after you select them."
           />
         </div>
       ) : (

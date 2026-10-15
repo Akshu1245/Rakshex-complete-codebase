@@ -42,10 +42,14 @@ async def _alerts_for(event_id):
 
 @pytest.mark.asyncio
 async def test_fan_out_only_to_exact_subscribers(client, ws):
-    await add_workspace_subscription_db(ws["a"], "Stripe")
-    await add_workspace_subscription_db(ws["b"], "stripe-connect")   # same provider family, different API
-    r = await record_upstream_event_and_fan_out("stripe", "critical", "s", "{}", "h1", "h2")
+    await add_workspace_subscription_db(ws["a"], "github")
+    await add_workspace_subscription_db(ws["b"], "slack")
+    r = await record_upstream_event_and_fan_out("GitHub", "critical", "s", "{}", "h1", "h2")
     assert await _alerts_for(r["event_id"]) == [ws["a"]]
+    # unknown/near-miss source names never fan out (no fuzzy matching)
+    for name in ("github", "GitHub Enterprise", "Stripe"):
+        r2 = await record_upstream_event_and_fan_out(name, "critical", "s", "{}", "x", name)
+        assert r2["alert_ids"] == []
 
 
 @pytest.mark.asyncio
@@ -60,7 +64,7 @@ async def test_no_subscribers_event_stored_no_alerts(client, ws):
 async def test_fan_out_is_idempotent(client, ws):
     await add_workspace_subscription_db(ws["a"], "github")
     await add_workspace_subscription_db(ws["c"], "github")
-    r = await record_upstream_event_and_fan_out("github", "critical", "s", "{}", "h1", "h2")
+    r = await record_upstream_event_and_fan_out("GitHub", "critical", "s", "{}", "h1", "h2")
     assert len(r["alert_ids"]) == 2
     assert await fan_out_event_db(r["event_id"]) == []
     assert await fan_out_event_db(r["event_id"]) == []
@@ -82,7 +86,7 @@ async def test_unique_event_workspace_enforced_by_db(client, ws):
 async def test_fanned_out_alerts_visible_only_in_own_workspace(client, ws):
     await add_workspace_subscription_db(ws["a"], "github")
     await add_workspace_subscription_db(ws["b"], "github")
-    await record_upstream_event_and_fan_out("github", "critical", "s", "{}", "h1", "h2")
+    await record_upstream_event_and_fan_out("GitHub", "critical", "s", "{}", "h1", "h2")
     ra = (await client.get("/api/changes/alerts", headers=ws["h_member"])).json()["alerts"]
     assert {x["workspace_id"] for x in ra} == {ws["a"]}
     rb = (await client.get("/api/changes/alerts", params={"workspace_id": ws["b"]}, headers=ws["h_other"])).json()["alerts"]
@@ -92,7 +96,7 @@ async def test_fanned_out_alerts_visible_only_in_own_workspace(client, ws):
 @pytest.mark.asyncio
 async def test_backfill_never_assigns_workspace(client, ws):
     await add_workspace_subscription_db(ws["a"], "github")     # a subscriber exists, still must not guess
-    legacy = await save_change_alert("github", "critical", "old", "{}", "o", "n")
+    legacy = await save_change_alert("GitHub", "critical", "old", "{}", "o", "n")
     out = await backfill_legacy_alerts_to_events_db()
     assert out["copied_to_events"] == 1 and out["still_quarantined"] >= 1
     async with AsyncSessionLocal() as s:
@@ -110,12 +114,12 @@ async def test_backfill_never_assigns_workspace(client, ws):
 async def test_subscription_endpoints_authz(client, ws):
     url = f"/api/changes/workspaces/{ws['a']}/subscriptions"
     assert (await client.get(url)).status_code == 401
-    assert (await client.post(url, json={"api_name": "github"})).status_code == 401
-    assert (await client.post(url, json={"api_name": "github"}, headers=ws["h_member"])).status_code == 403
-    assert (await client.post(url, json={"api_name": "github"}, headers=ws["h_other"])).status_code == 404
-    r = await client.post(url, json={"api_name": "GitHub", "source": "repo_connect"}, headers=ws["h_owner"])
+    assert (await client.post(url, json={"provider_id": "github"})).status_code == 401
+    assert (await client.post(url, json={"provider_id": "github"}, headers=ws["h_member"])).status_code == 403
+    assert (await client.post(url, json={"provider_id": "github"}, headers=ws["h_other"])).status_code == 404
+    r = await client.post(url, json={"provider_id": "github", "source": "repo_connect"}, headers=ws["h_owner"])
     assert r.status_code == 201 and r.json()["subscription"]["api_name"] == "github"
-    r2 = await client.post(url, json={"api_name": "github"}, headers=ws["h_owner"])
+    r2 = await client.post(url, json={"provider_id": "github"}, headers=ws["h_owner"])
     assert r2.json()["subscription"]["id"] == r.json()["subscription"]["id"]  # idempotent
     lst = await client.get(url, headers=ws["h_member"])
     assert lst.status_code == 200 and lst.json()["count"] == 1
@@ -123,19 +127,70 @@ async def test_subscription_endpoints_authz(client, ws):
     assert (await client.delete(f"{url}/github", headers=ws["h_member"])).status_code == 403
     assert (await client.delete(f"{url}/github", headers=ws["h_owner"])).status_code == 200
     assert (await client.delete(f"{url}/github", headers=ws["h_owner"])).status_code == 404
-    bad = await client.post(url, json={"api_name": "x", "source": "evil"}, headers=ws["h_owner"])
+    bad = await client.post(url, json={"provider_id": "github", "source": "evil"}, headers=ws["h_owner"])
     assert bad.status_code == 422
 
 
 @pytest.mark.asyncio
-async def test_integration_register_hook_checks_role(client, ws):
-    spec = {"openapi": "3.0.0", "info": {"title": "Acme Billing", "version": "1"}, "paths": {}}
-    r = await client.post("/api/custom/import", json={"spec_json": spec, "workspace_id": ws["a"]}, headers=ws["h_member"])
-    assert r.status_code == 403
-    r = await client.post("/api/custom/import", json={"spec_json": spec, "workspace_id": ws["a"]}, headers=ws["h_other"])
-    assert r.status_code == 404
-    r = await client.post("/api/custom/import", json={"spec_json": spec, "workspace_id": ws["a"]}, headers=ws["h_owner"])
-    assert r.status_code == 200 and r.json()["workspace_subscription"] == "acme billing"
+async def test_subscribe_rejects_unsupported_and_unknown(client, ws):
+    url = f"/api/changes/workspaces/{ws['a']}/subscriptions"
+    r = await client.post(url, json={"provider_id": "stripe"}, headers=ws["h_owner"])
+    assert r.status_code == 422 and "not supported" in r.json()["detail"].lower()
+    r = await client.post(url, json={"provider_id": "GitHub"}, headers=ws["h_owner"])   # not canonical id
+    assert r.status_code == 422
+    r = await client.post(url, json={"provider_id": "acme-billing"}, headers=ws["h_owner"])
+    assert r.status_code == 422
+    with pytest.raises(ValueError):
+        await add_workspace_subscription_db(ws["a"], "stripe")
+
+
+@pytest.mark.asyncio
+async def test_providers_catalog_is_honest(client):
+    r = await client.get("/api/changes/providers")
+    assert r.status_code == 200
+    sup = {p["id"]: p for p in r.json()["supported"]}
+    uns = {p["id"]: p for p in r.json()["unsupported"]}
+    assert "stripe" not in sup and uns["stripe"]["coverage"] == "NOT_SUPPORTED"
+    from services.change_detector import MONITORED_APIS
+    assert {p["detector_name"] for p in sup.values()} == {a["name"] for a in MONITORED_APIS}
+    assert all(p["coverage"] == "SUPPORTED" for p in sup.values())
+
+
+@pytest.mark.asyncio
+async def test_imported_openapi_title_is_not_a_provider_subscription(client, ws):
+    spec = {"openapi": "3.0.0", "info": {"title": "GitHub", "version": "1"}, "paths": {}}
+    r = await client.post("/api/custom/import", json={"spec_json": spec}, headers=ws["h_owner"])
+    assert r.status_code == 200
+    lst = await client.get(f"/api/changes/workspaces/{ws['a']}/subscriptions", headers=ws["h_owner"])
+    assert lst.json()["count"] == 0
+
+
+@pytest.mark.asyncio
+async def test_subscription_then_detector_run_shows_real_alert(client, ws, monkeypatch):
+    """End-to-end through the real detector code: subscribe -> two probe runs with a schema
+    change (upstream response simulated) -> alert visible only to the subscribed workspace."""
+    import services.change_detector as cd
+    import services.alert_schema_guard as g
+    g._reset_for_tests()
+    url = f"/api/changes/workspaces/{ws['a']}/subscriptions"
+    assert (await client.post(url, json={"provider_id": "github"}, headers=ws["h_owner"])).status_code == 201
+    payloads = iter([{"current_user_url": "x", "rate": 1}, {"current_user_url": "x"}])
+
+    async def probe(client_, api):
+        if api["name"] != "GitHub":
+            return None
+        data = next(payloads)
+        schema = cd._extract_schema(data)
+        return {"api_name": "GitHub", "schema": schema, "schema_hash": cd._compute_hash(schema),
+                "status_code": 200, "response_keys": list(data), "field_count": len(schema),
+                "timestamp": "2026-10-15T00:00:00+00:00"}
+    monkeypatch.setattr(cd, "_probe_api", probe)
+    assert await cd._detect_changes() == []          # baseline snapshot, no change yet
+    new = await cd._detect_changes()                 # 'rate' removed -> change
+    assert len(new) == 1 and new[0]["severity"] == "critical"
+    a = (await client.get("/api/changes/alerts", headers=ws["h_member"])).json()["alerts"]
+    assert len(a) == 1 and a[0]["api_name"] == "GitHub" and a[0]["workspace_id"] == ws["a"]
+    assert (await client.get("/api/changes/alerts", headers=ws["h_other"])).json()["alerts"] == []
 
 
 # ── schema guard ────────────────────────────────────────────────────────────
@@ -184,3 +239,28 @@ def test_websocket_health_payload_has_no_alert_data(sync_client):
     blob = json.dumps(msg).lower()
     for k in ("alert", "workspace", "diff_json", "summary"):
         assert k not in blob
+
+
+# ── role validation ─────────────────────────────────────────────────────────
+@pytest.mark.asyncio
+async def test_db_rejects_invalid_role(client):
+    from sqlalchemy.exc import IntegrityError
+    from models.tables import Team, TeamMember
+    owner, _ = await _user(client, "rolechk")
+    async with AsyncSessionLocal() as s:
+        s.add(Team(id="ws_rolechk", name="r", owner_id=owner))
+        await s.flush()
+        s.add(TeamMember(team_id="ws_rolechk", user_id=owner, role="superadmin", accepted=True))
+        with pytest.raises(IntegrityError):
+            await s.commit()
+
+
+@pytest.mark.asyncio
+async def test_api_rejects_invalid_role(client):
+    owner, h = await _user(client, "rolapi")
+    other, _ = await _user(client, "rolapi2")
+    ws = await _workspace(owner)
+    r = await client.post(f"/api/teams/workspaces/{ws}/invite", json={"user_id": other, "role": "superadmin"}, headers=h)
+    assert r.status_code == 422
+    r = await client.put(f"/api/teams/workspaces/{ws}/members/{other}/role", json={"role": "god"}, headers=h)
+    assert r.status_code == 422

@@ -8,7 +8,8 @@ Endpoints:
 - POST /api/changes/alerts/{id}/resolve    - Resolve (workspace OWNER/ADMIN)
 - GET    /api/changes/workspaces/{ws}/subscriptions          - list (member)
 - POST   /api/changes/workspaces/{ws}/subscriptions          - add (OWNER/ADMIN)
-- DELETE /api/changes/workspaces/{ws}/subscriptions/{api}    - remove (OWNER/ADMIN)
+- DELETE /api/changes/workspaces/{ws}/subscriptions/{provider_id} - remove (OWNER/ADMIN)
+- GET    /api/changes/providers                              - canonical provider catalog + coverage
 - GET  /api/changes/history/{api}          - Schema history for an API (public provider data)
 - GET  /api/changes/monitored              - List monitored APIs (public provider data)
 
@@ -112,8 +113,15 @@ async def resolve_change_alert(alert_id: int, user: Dict[str, Any] = Depends(req
 
 
 class SubscriptionRequest(BaseModel):
-    api_name: str = Field(..., min_length=1, max_length=255)
+    provider_id: str = Field(..., min_length=1, max_length=64, description="Canonical id from GET /api/changes/providers")
     source: str = Field(default="manual", pattern="^(manual|integration|repo_connect)$")
+
+
+@router.get("/api/changes/providers")
+async def list_providers() -> Dict[str, Any]:
+    """Canonical provider catalog with honest coverage status."""
+    from services.provider_registry import catalog
+    return {"status": "success", **catalog()}
 
 
 async def _workspace_role(workspace_id: str, user: Dict[str, Any]) -> str:
@@ -126,8 +134,14 @@ async def _workspace_role(workspace_id: str, user: Dict[str, Any]) -> str:
 @router.get("/api/changes/workspaces/{workspace_id}/subscriptions", dependencies=_SCHEMA)
 async def list_subscriptions(workspace_id: str, user: Dict[str, Any] = Depends(require_auth)) -> Dict[str, Any]:
     from services.database import list_workspace_subscriptions_db
+    from services.provider_registry import get_supported
     await _workspace_role(workspace_id, user)
     subs = await list_workspace_subscriptions_db(workspace_id)
+    for sub in subs:
+        p = get_supported(sub["api_name"])
+        sub["provider_id"] = sub["api_name"]
+        sub["provider_name"] = p["name"] if p else sub["api_name"]
+        sub["coverage"] = p["coverage"] if p else "NOT_SUPPORTED"
     return {"status": "success", "subscriptions": subs, "count": len(subs)}
 
 
@@ -137,19 +151,24 @@ async def add_subscription(workspace_id: str, req: SubscriptionRequest,
     """Register that this workspace depends on a monitored API (called on repo connect /
     integration register, or manually). Future upstream changes fan out only to subscribers."""
     from services.database import add_workspace_subscription_db
+    from services.provider_registry import get_supported, is_known_unsupported
     if await _workspace_role(workspace_id, user) not in MANAGE_ROLES:
         raise HTTPException(status_code=403, detail="Insufficient role")
-    sub = await add_workspace_subscription_db(workspace_id, req.api_name, req.source, user["id"])
+    if not get_supported(req.provider_id):
+        detail = ("Provider not supported by the change detector yet" if is_known_unsupported(req.provider_id)
+                  else "Unknown provider id")
+        raise HTTPException(status_code=422, detail=detail)
+    sub = await add_workspace_subscription_db(workspace_id, req.provider_id, req.source, user["id"])
     return {"status": "success", "subscription": sub}
 
 
-@router.delete("/api/changes/workspaces/{workspace_id}/subscriptions/{api_name}", dependencies=_SCHEMA)
-async def remove_subscription(workspace_id: str, api_name: str,
+@router.delete("/api/changes/workspaces/{workspace_id}/subscriptions/{provider_id}", dependencies=_SCHEMA)
+async def remove_subscription(workspace_id: str, provider_id: str,
                               user: Dict[str, Any] = Depends(require_auth)) -> Dict[str, Any]:
     from services.database import delete_workspace_subscription_db
     if await _workspace_role(workspace_id, user) not in MANAGE_ROLES:
         raise HTTPException(status_code=403, detail="Insufficient role")
-    if not await delete_workspace_subscription_db(workspace_id, api_name):
+    if not await delete_workspace_subscription_db(workspace_id, provider_id):
         raise HTTPException(status_code=404, detail="Subscription not found")
     return {"status": "success"}
 

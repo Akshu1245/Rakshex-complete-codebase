@@ -15,6 +15,7 @@ REQUIRED = {
     "change_alert_audit": {"alert_id", "workspace_id", "actor_user_id", "action", "created_at"},
     "upstream_change_events": {"api_name", "severity", "legacy_alert_id"},
     "workspace_api_subscriptions": {"workspace_id", "api_name"},
+    "rate_limit_counters": {"key", "window_start", "count", "expires_at"},
 }
 _ok = False
 

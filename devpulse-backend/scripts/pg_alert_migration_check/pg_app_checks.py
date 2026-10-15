@@ -38,9 +38,15 @@ async def main():
             return
         from services.database import (add_workspace_subscription_db, record_upstream_event_and_fan_out,
                                        fan_out_event_db, backfill_legacy_alerts_to_events_db)
-        await add_workspace_subscription_db("wsA", "GitHub", "repo_connect", 1)
-        await add_workspace_subscription_db("wsB", "github-enterprise", "manual", 3)
-        fan = await record_upstream_event_and_fan_out("github", "critical", "pg change", "{}", "a", "b")
+        await add_workspace_subscription_db("wsA", "github", "manual", 1)
+        again = await add_workspace_subscription_db("wsA", "github", "manual", 1)
+        check(True, f"re-subscribe is idempotent (no error): {again}")
+        for bad in ("GitHub", "github-enterprise", "stripe"):
+            try:
+                await add_workspace_subscription_db("wsB", bad, "manual", 3); check(False, f"non-canonical/unsupported id accepted: {bad}")
+            except ValueError:
+                check(True, f"non-canonical/unsupported id rejected: {bad}")
+        fan = await record_upstream_event_and_fan_out("GitHub", "critical", "pg change", "{}", "a", "b")
         check(len(fan["alert_ids"]) == 1, f"fan-out only to exact subscriber wsA: {fan}")
         check(await fan_out_event_db(fan["event_id"]) == [], "re-fan-out creates nothing (dedupe)")
         aid = fan["alert_ids"][0]
@@ -67,6 +73,26 @@ async def main():
         check(out["copied_to_events"] == 2 and out["still_quarantined"] == 2, f"backfill copies legacy to events, assigns none: {out}")
         out = await backfill_legacy_alerts_to_events_db()
         check(out["copied_to_events"] == 0, "backfill idempotent")
+        # 005: role CHECK constraint
+        try:
+            async with AsyncSessionLocal() as s:
+                await s.execute(text("UPDATE team_members SET role='superuser' WHERE team_id='wsA' AND user_id=2"))
+                await s.commit()
+            check(False, "DB CHECK should reject role 'superuser'")
+        except Exception as e:
+            check("ck_team_members_role" in str(e), "DB CHECK ck_team_members_role rejects invalid role")
+        async with AsyncSessionLocal() as s:
+            roles = (await s.execute(text("SELECT role FROM team_members ORDER BY team_id, user_id"))).scalars().all()
+        check(set(roles) <= {"owner", "admin", "member", "viewer"}, f"all roles canonical after migration: {roles}")
+        # 005: shared rate-limit counters in PostgreSQL (two app instances share this table)
+        from middleware import rate_limit as rl
+        counts = [(await rl.increment("user:9001", 3600))[0] for _ in range(5)]
+        other = (await rl.increment("user:9002", 3600))[0]
+        check(counts == [1, 2, 3, 4, 5] and other == 1, f"PG counters atomic per key, user:9002 unaffected by user:9001: {counts} / {other}")
+        async def burst(k):
+            return (await rl.increment(k, 3600))[0]
+        res = await asyncio.gather(*[burst("ipm:203.0.113.9") for _ in range(10)])
+        check(sorted(res) == list(range(1, 11)), f"concurrent upserts give unique counts: {sorted(res)}")
 
 asyncio.run(main())
 if fails:
