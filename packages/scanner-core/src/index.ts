@@ -34,7 +34,19 @@ export {
   listSecretRuleIds,
   type SecretFinding,
   type SecretSeverity,
+  type SecretClassification,
+  type VerificationStatus,
 } from "./secrets.js";
+export {
+  evaluateGate,
+  loadAllowlist,
+  loadPolicy,
+  validateAllowlist,
+  DEFAULT_POLICY,
+  type GateResult,
+  type AllowlistEntry,
+  type SecretsPolicy,
+} from "./secrets-policy.js";
 
 // YC #13 (beta): static, conservative OpenAPI contract differences.
 export {

@@ -6,7 +6,15 @@ Deterministic API (and soon AI/agent) security scanner used by the Rakshex API, 
 
 - **Rules are pure** — no I/O, no LLM calls
 - **Evidence required** — every finding includes `evidence[]`
-- **Confidence labels** — `confirmed | high | potential | informational`
+- **Confidence labels**: collection rules use `confirmed | high | potential | informational`.
+- **Secret findings** (`secrets.ts`):
+  - Each finding carries separate `detection_confidence` (low / medium / high), `potential_impact` (impact if real), `verification_status` (always `not_verified`: no authorized verifier exists, and values are never sent anywhere) and `classification`:
+    - `known_dummy`: exact SHA-256 match of a published docs dummy.
+    - `synthetic_placeholder`: the value itself is synthetic (repeated, periodic, template, sequence, or no random content left).
+    - `ambiguous`: weak randomness. Shown, one step below impact.
+    - `plausible_credential`: full impact.
+  - Substrings such as "example"/"test", test paths and comments are recorded as signals and **never exempt** a finding.
+  - CI gate: `rakshex secrets` fails on `failOn` severities (default Critical, High; `.rakshex/secrets-policy.json`). It passes only if a reviewed entry in `.rakshex/secrets-allowlist.json` covers the finding. An entry needs: an exact value hash or a rule+path+line fingerprint, a justification, an owner, a reviewer, and an expiry no more than 365 days after creation. Expired entries are ignored.
 - **Stable fingerprints** — `ruleId|METHOD|path` for dedup / baseline
 
 ## Usage
