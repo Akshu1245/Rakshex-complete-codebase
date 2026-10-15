@@ -552,7 +552,8 @@ async def save_change_alert(api_name: str, severity: str, summary: str,
 
 
 async def get_change_alerts_db(limit: int = 50, api_name: Optional[str] = None,
-                               unacked_only: bool = False) -> List[Dict[str, Any]]:
+                               unacked_only: bool = False,
+                               severity: Optional[str] = None) -> List[Dict[str, Any]]:
     """Get change alerts from DB."""
     async with AsyncSessionLocal() as session:
         stmt = select(ChangeAlert)
@@ -561,6 +562,8 @@ async def get_change_alerts_db(limit: int = 50, api_name: Optional[str] = None,
             conditions.append(ChangeAlert.api_name == api_name)
         if unacked_only:
             conditions.append(ChangeAlert.acknowledged == False)  # noqa: E712
+        if severity:
+            conditions.append(ChangeAlert.severity == severity)
         if conditions:
             stmt = stmt.where(and_(*conditions))
         stmt = stmt.order_by(desc(ChangeAlert.detected_at)).limit(limit)

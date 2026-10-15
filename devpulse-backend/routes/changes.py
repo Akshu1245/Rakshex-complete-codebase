@@ -10,7 +10,9 @@ Endpoints:
 import logging
 from typing import Dict, Any, Optional
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+
+from routes.auth import get_current_user
 
 from services.change_detector import (
     get_change_alerts, acknowledge_alert, get_schema_history, get_monitored_apis,
@@ -36,11 +38,21 @@ async def list_change_alerts(
 
 
 @router.post("/api/changes/alerts/{alert_id}/ack")
-async def ack_change_alert(alert_id: int) -> Dict[str, Any]:
-    """Acknowledge a change alert."""
+async def ack_change_alert(
+    alert_id: int,
+    user: Optional[Dict[str, Any]] = Depends(get_current_user),
+) -> Dict[str, Any]:
+    """Acknowledge a change alert. Requires an authenticated user.
+
+    NOTE: change_alerts has no owner/tenant column, so any authenticated user can
+    still ack any alert. Tenant scoping or a role check is a follow-up (see FINDINGS.md).
+    """
+    if not user:
+        raise HTTPException(status_code=401, detail="Authentication required")
     try:
         ok = await acknowledge_alert(alert_id)
         if ok:
+            logger.info(f"Alert {alert_id} acknowledged by user {user.get('id')}")
             return {"status": "success", "message": f"Alert {alert_id} acknowledged"}
         return {"status": "error", "error": "Alert not found"}
     except Exception as e:

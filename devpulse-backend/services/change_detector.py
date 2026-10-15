@@ -174,9 +174,10 @@ async def stop_detector():
 
 
 async def get_change_alerts(limit: int = 50, api_name: Optional[str] = None,
+                            severity: Optional[str] = None,
                             unacked_only: bool = False) -> List[Dict[str, Any]]:
     from services.database import get_change_alerts_db
-    alerts = await get_change_alerts_db(limit, api_name, unacked_only)
+    alerts = await get_change_alerts_db(limit, api_name, unacked_only, severity=severity)
     for a in alerts:
         if a.get("diff_json"):
             try:
