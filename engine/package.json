@@ -1,0 +1,13 @@
+{
+  "name": "rakshex-engine",
+  "private": true,
+  "description": "RaksHex Self-Repair engine (imported from archive/rakshex-pre-devpulse-20261013 @ 9ca85cf). Self-contained pnpm workspace; does not touch the DevPulse npm app at the repo root.",
+  "packageManager": "pnpm@10.32.1",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test": "pnpm -r --if-present test",
+    "build": "pnpm -r --if-present build"
+  },
+  "devDependencies": { "typescript": "^5.7.0", "vitest": "4.1.11" }
+}
