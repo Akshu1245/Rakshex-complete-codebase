@@ -91,3 +91,36 @@ describe("offline oasdiff adapter", () => {
     }
   });
 });
+
+describe("oasdiff adapter regression guards", () => {
+  beforeEach(() => mockedSpawn.mockReset());
+
+  it("keeps before-to-after and after-to-before verdicts distinct", () => {
+    mockedSpawn
+      .mockReturnValueOnce(result(1, '[{"id":"api-path-removed","level":3,"operation":"GET","path":"/orders"}]'))
+      .mockReturnValueOnce(result(0, "[]"));
+    expect(runOasdiff("/before", "/after").breaking).toBe(true);
+    expect(runOasdiff("/after", "/before").breaking).toBe(false);
+    expect(mockedSpawn).toHaveBeenCalledTimes(2);
+  });
+
+  it("fails closed for unsupported severities or malformed field types", () => {
+    for (const payload of [
+      '[{"id":"x","level":1}]',
+      '[{"id":"x","level":2.5}]',
+      '[{"id":"","level":3}]',
+      '[{"id":"x","level":3,"path":{"unexpected":true}}]',
+    ]) {
+      mockedSpawn.mockReturnValue(result(1, payload));
+      expect(() => runOasdiff("/before", "/after")).toThrow(/Unexpected oasdiff change format/);
+    }
+  });
+
+  it("rejects invalid resource limits before executing a subprocess", () => {
+    for (const n of [0, -1, Infinity, NaN, 1.5]) {
+      expect(() => runOasdiff("/before", "/after", { timeoutMs: n })).toThrow(/positive, finite integer/);
+      expect(() => runOasdiff("/before", "/after", { maxOutputMib: n })).toThrow(/positive, finite integer/);
+    }
+    expect(mockedSpawn).not.toHaveBeenCalled();
+  });
+});
