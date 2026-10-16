@@ -39,7 +39,11 @@ function normalizeChanges(value: unknown): OasdiffChange[] {
       !item ||
       typeof item !== "object" ||
       typeof (item as OasdiffChange).id !== "string" ||
-      typeof (item as OasdiffChange).level !== "number"
+      !(item as OasdiffChange).id.trim() ||
+      ![2, 3].includes((item as OasdiffChange).level) ||
+      (["operation", "path", "text"] as const).some((key) =>
+        key in item && (item as Record<string, unknown>)[key] != null &&
+        typeof (item as Record<string, unknown>)[key] !== "string")
     ) {
       throw new Error("Unexpected oasdiff change format; no compatibility verdict issued.");
     }
@@ -57,14 +61,23 @@ function normalizeChanges(value: unknown): OasdiffChange[] {
 const DEFAULT_OUTPUT_MIB = 5;
 const HARD_MAX_OUTPUT_MIB = 256;
 
+/** Keep subprocess resource options finite, predictable, and non-zero. */
+function boundedPositiveInteger(value: number | undefined, defaultValue: number, ceiling: number, label: string): number {
+  const n = value ?? defaultValue;
+  if (!Number.isSafeInteger(n) || n < 1) {
+    throw new Error(`oasdiff ${label} must be a positive, finite integer.`);
+  }
+  return Math.min(n, ceiling);
+}
+
 export function runOasdiff(
   beforeFile: string,
   afterFile: string,
   options: { maxOutputMib?: number; timeoutMs?: number } = {},
 ): OasdiffReport {
   // Bounded: a full Stripe diff is ~30 MiB of JSON; never unbounded.
-  const maxOutputMib = Math.min(Math.max(options.maxOutputMib ?? DEFAULT_OUTPUT_MIB, 1), HARD_MAX_OUTPUT_MIB);
-  const timeout = Math.min(options.timeoutMs ?? (maxOutputMib > DEFAULT_OUTPUT_MIB ? 180_000 : 30_000), 300_000);
+  const maxOutputMib = boundedPositiveInteger(options.maxOutputMib, DEFAULT_OUTPUT_MIB, HARD_MAX_OUTPUT_MIB, "maxOutputMib");
+  const timeout = boundedPositiveInteger(options.timeoutMs, maxOutputMib > DEFAULT_OUTPUT_MIB ? 180_000 : 30_000, 300_000, "timeoutMs");
   const processResult = spawnSync(
     "oasdiff",
     [
