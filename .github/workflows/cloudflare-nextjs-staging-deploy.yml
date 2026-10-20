@@ -1,5 +1,10 @@
 name: Deploy full dashboard to isolated Cloudflare staging
 on:
+  push:
+    branches: [integration/self-repair-engine]
+    paths:
+      - "devpulse-dashboard-ui/**"
+      - ".github/workflows/cloudflare-nextjs-staging-deploy.yml"
   pull_request:
     branches: [integration/self-repair-engine]
     paths:
@@ -9,7 +14,7 @@ permissions:
   contents: read
 jobs:
   stage:
-    if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'integration/cloudflare-nextjs-preview-20261020')
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref_name == 'integration/self-repair-engine') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'integration/cloudflare-nextjs-preview-20261020')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
