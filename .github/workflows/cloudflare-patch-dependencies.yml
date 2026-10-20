@@ -1,0 +1,62 @@
+name: Prepare patched dashboard dependency lockfile
+on:
+  pull_request:
+    branches: [integration/self-repair-engine]
+    paths:
+      - ".github/workflows/cloudflare-patch-dependencies.yml"
+permissions:
+  contents: write
+jobs:
+  patch-and-test:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'integration/cloudflare-nextjs-preview-20261020'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Update within current compatible majors
+        working-directory: devpulse-dashboard-ui
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --save-exact 'next@^16' react@19.3.1 react-dom@19.3.1
+          npm audit fix --no-audit --no-fund
+      - name: Verify new production dependencies contain no high or critical advisories
+        working-directory: devpulse-dashboard-ui
+        run: npm audit --omit=dev --audit-level=high
+      - name: Verify frontend tests, typecheck and production build
+        working-directory: devpulse-dashboard-ui
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm test -- --watch=false --runInBand ImpactReviewPanel backend-proxy
+          npx tsc --noEmit
+          npm run build
+      - name: Commit reviewed lockfile updates to this PR branch only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- devpulse-dashboard-ui/package.json devpulse-dashboard-ui/package-lock.json package-lock.json
+          if git diff --cached --quiet; then
+            echo 'No dependency changes needed.'
+          else
+            git commit -m 'fix(deps): patch dashboard production advisories within supported major versions'
+            git push origin HEAD:integration/cloudflare-nextjs-preview-20261020
+          fi
+      - name: Upload revised lockfiles for recovery and review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-dependency-update
+          path: |
+            devpulse-dashboard-ui/package.json
+            devpulse-dashboard-ui/package-lock.json
+            package-lock.json
+          if-no-files-found: ignore
