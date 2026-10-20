@@ -10,7 +10,12 @@ export async function proxyBackend(request: Request, path?: string) {
       !['', '/'].includes(origin.pathname) || origin.search || origin.hash || origin.origin === incoming.origin) {
     return Response.json({ error: 'Invalid backend configuration' }, { status: 503 });
   }
-  if (process.env.NODE_ENV === 'production' && origin.protocol !== 'https:' && !['localhost', '127.0.0.1', '[::1]'].includes(origin.hostname) && process.env.ALLOW_HTTP_BACKEND !== 'true') {
+  if (process.env.NODE_ENV === 'production' && (
+    origin.protocol !== 'https:' ||
+    ['localhost', '127.0.0.1', '[::1]'].includes(origin.hostname) ||
+    origin.hostname.endsWith('.localhost') ||
+    origin.hostname.endsWith('.local')
+  )) {
     return Response.json({ error: 'Backend HTTPS is required' }, { status: 503 });
   }
   const headers = new Headers();
