@@ -36,3 +36,19 @@ jobs:
           node -e 'let j=require("./capabilities.json");if(j.production_ready!==false||j.github_access!==false||j.scans!==false)process.exit(1)'
           code=$(curl -sS -o /dev/null -w '%{http_code}' -X POST "$URL/api/health")
           test "$code" = 405
+      - name: Browser smoke in Chromium (desktop + mobile)
+        working-directory: cloudflare-impact-review
+        run: |
+          npm init -y
+          npm install --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+          node browser-smoke.mjs
+      - name: Upload visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rakshex-impact-review-screenshots
+          path: |
+            cloudflare-impact-review/rakshex-impact-review-desktop.png
+            cloudflare-impact-review/rakshex-impact-review-mobile.png
+          if-no-files-found: ignore
