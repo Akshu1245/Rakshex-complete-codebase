@@ -1,0 +1,39 @@
+{
+  "schema_version": "change-event.v1",
+  "id": "synthetic-orders-v1-to-v2-post-2026-10-19",
+  "source_type": "synthetic",
+  "detected_at": "2026-10-19T19:30:00+05:30",
+  "method": "POST",
+  "old_path": "/v1/orders",
+  "new_path": "/v2/orders",
+  "severity": "breaking",
+  "change_type": "endpoint_removed_with_replacement",
+  "response_schema_identical": true,
+  "replacement_confirmed": false,
+  "summary": "POST /v1/orders was removed without deprecation; POST /v2/orders was added with an identical response schema.",
+  "evidence": {
+    "tool": "oasdiff",
+    "tool_version": "1.34.0",
+    "command": "oasdiff breaking orders-old.yaml orders-new.yaml",
+    "finding_id": "api-path-removed-without-deprecation",
+    "finding_message": "api path removed without deprecation",
+    "finding_location": "orders-old.yaml",
+    "note": "Synthetic second event for integration testing; produced by the same method as the Person 1 widgets event."
+  },
+  "hashes": {
+    "algorithm": "SHA-256",
+    "old_spec": "50e0601922366cc4af70ab14d8da74beef1765aeee87c9d23bdcd3c282360108",
+    "new_spec": "86e1197314c6c842d2f98942af9bbb7b862173785af8eab1b17c5755585e33b3"
+  },
+  "facts": {
+    "verified": [
+      "POST /v1/orders exists in orders-old.yaml and is absent in orders-new.yaml"
+    ],
+    "inferred": [
+      "The removal and the addition represent a single rename event (interpretation, not tool output)."
+    ]
+  },
+  "uncertainties": [
+    "oasdiff did NOT establish that the removal and the addition are a rename."
+  ]
+}

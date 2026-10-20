@@ -1,0 +1,22 @@
+# SYNTHETIC sample spec (BEFORE). Not a real API.
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Synthetic Orders API (OLD)
+servers:
+  - url: https://api.example.com
+paths:
+  /v1/orders:
+    post:
+      summary: Create order (v1)
+      operationId: createOrderV1
+      responses:
+        '201':
+          description: Order created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orderId:
+                    type: integer
