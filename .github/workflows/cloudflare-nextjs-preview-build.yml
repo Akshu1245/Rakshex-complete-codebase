@@ -32,7 +32,9 @@ jobs:
         run: |
           set -euo pipefail
           # Changes below exist only on this disposable CI runner, not in git or production.
-          # vinext 1.2.1 requires React >=19.3.1; test that version only in CI.\n          npm pkg set dependencies.react=19.3.1 dependencies.react-dom=19.3.1\n          npm install --no-save --no-audit --no-fund react@19.3.1 react-dom@19.3.1 vinext@1.2.1 vite @vitejs/plugin-react @vitejs/plugin-rsc react-server-dom-webpack
+          # vinext 1.2.1 requires React >=19.3.1; test that version only in CI.
+          npm pkg set dependencies.react=19.3.1 dependencies.react-dom=19.3.1
+          npm install --no-save --no-audit --no-fund react@19.3.1 react-dom@19.3.1 vinext@1.2.1 vite @vitejs/plugin-react @vitejs/plugin-rsc react-server-dom-webpack
           cat > vite.config.ts <<'EOF'
           import { defineConfig } from "vite";
           import vinext from "vinext";
