@@ -27,6 +27,8 @@ describe("verified P1/P2 local bridge",()=>{
     expect(r.schema).toBe("impact-report.v1");
     expect(r.privacy_mode).toBe(true);
     expect(r.spec_hashes_verified).toBe(true);
+    expect(r.event_source).toBe("synthetic");
+    expect(r.provider_authenticated).toBe(false);
     expect(r.metrics.candidate_matches).toBe(1);
     expect(r.findings.filter(x=>x.classification==="UNCERTAIN")).toHaveLength(1);
     expect(r.findings.some(x=>x.classification==="UNKNOWN")).toBe(true);
@@ -38,6 +40,12 @@ describe("verified P1/P2 local bridge",()=>{
   it("rejects tampered spec bytes",()=>{
     const f=fixture();writeFileSync(f.fresh,JSON.stringify({openapi:"3.0.3",paths:{"/v2/widgets":{get:{responses:{200:{description:"modified but still valid"}}}}}}));
     expect(()=>createP1P2Report(f.eventFile,f.old,f.fresh,f.src)).toThrow("SHA-256 mismatch");
+  });
+
+  it("fails closed on an unverified provider claim even when local spec hashes match",()=>{
+    const f=fixture({source_type:"provider"});
+    expect(()=>createP1P2Report(f.eventFile,f.old,f.fresh,f.src))
+      .toThrow(/Provider event not authenticated/);
   });
   it("rejects malicious path and unknown source",()=>{
     let f=fixture({old_path:"/v1/widgets\nnew: payload"});
