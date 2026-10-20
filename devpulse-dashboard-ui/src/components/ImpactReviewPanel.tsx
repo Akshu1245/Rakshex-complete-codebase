@@ -8,7 +8,8 @@ const MAX_BYTES = 512 * 1024;
 
 function normalize(json: unknown): Finding[] {
   if (!json || typeof json !== 'object' || Array.isArray(json)) throw new Error('Expected a JSON report object');
-  const report = json as Report;
+  const report = json as Report & { schema?: string };
+  if (report.schema !== 'impact-report.v1' || report.privacy_mode !== true) throw new Error('Only privacy-sanitised impact-report.v1 files are accepted');
   const raw = report.findings ?? report.results ?? report.impacted_calls;
   if (!Array.isArray(raw)) throw new Error('Report must include findings, results or impacted_calls as an array');
   if (raw.length > 2000) throw new Error('Too many findings (maximum 2000)');
