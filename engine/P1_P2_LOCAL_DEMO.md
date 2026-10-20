@@ -11,7 +11,8 @@ This is a **working synthetic acceptance flow**, not a claim of provider-verifie
 ```bash
 cd engine
 pnpm install --frozen-lockfile
-pnpm --filter @rakshex/cli dev api event-impact \
+cd apps/cli
+node --import tsx src/index.ts api event-impact \
   test-fixtures/p1p2-orders/change-event-orders.json \
   test-fixtures/p1p2-orders/src \
   --old-spec test-fixtures/p1p2-orders/orders-old.yaml \
