@@ -18,6 +18,7 @@ try {
     name: 'impact.json',
     mimeType: 'application/json',
     buffer: Buffer.from(JSON.stringify({
+      schema: 'impact-report.v1', privacy_mode: true,
       findings: [
         { classification: 'AFFECTED', filepath: '/private/customer/secret.ts', snippet: 'SECRET_SOURCE_DO_NOT_SHOW' },
         { classification: 'UNCERTAIN', reason: 'sensitive details here' }
