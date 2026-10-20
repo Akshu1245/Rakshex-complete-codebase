@@ -46,6 +46,8 @@ export interface PrivacyImpactReport {
   schema:"impact-report.v1";
   privacy_mode:true;
   spec_hashes_verified:true;
+  event_source:"synthetic";
+  provider_authenticated:false;
   scanner:{tool:"rakshex-ts-ast",evidence:"candidate-only"};
   findings:PrivacyImpactFinding[];
   metrics:{files_scanned:number,calls_inspected:number,dynamic_calls:number,parse_errors:number,candidate_matches:number,changes_without_matches:number};
@@ -56,9 +58,13 @@ export function createP1P2Report(eventFile:string,oldFile:string,newFile:string,
   let e:unknown;
   try {e=JSON.parse(bytes(eventFile,256*1024).toString("utf8"));}
   catch {throw new Error("Invalid change event JSON");}
+  // A hash pair verifies local file integrity, not that a provider issued an event.
+  // Until GitHub/provider provenance can be verified, refuse provider claims.
+  if(object(e) && e.source_type==="provider")
+    throw new Error("Provider event not authenticated; live provider events are disabled");
   if(!object(e)||e.schema_version!=="change-event.v1"||
      typeof e.id!=="string"|| !/^[a-zA-Z0-9][a-zA-Z0-9_.:-]{0,127}$/.test(e.id)||
-     !["synthetic","provider"].includes(String(e.source_type))||
+     e.source_type!=="synthetic"||
      typeof e.method!=="string"||!METHODS.has(e.method)||
      !safePath(e.old_path)||(e.new_path!==undefined&&!safePath(e.new_path)))
     throw new Error("Invalid P1 change-event.v1");
@@ -80,6 +86,7 @@ export function createP1P2Report(eventFile:string,oldFile:string,newFile:string,
     findings.push({classification:"UNKNOWN",rule_id:"dynamic-call"});
   return {
     schema:"impact-report.v1",privacy_mode:true,spec_hashes_verified:true,
+    event_source:"synthetic",provider_authenticated:false,
     scanner:{tool:"rakshex-ts-ast",evidence:"candidate-only"},
     findings,
     metrics:{
@@ -91,6 +98,7 @@ export function createP1P2Report(eventFile:string,oldFile:string,newFile:string,
     limitations:[
       "Candidate call sites are not proof of breakage.",
       "Dynamic calls, wrappers and unknown usage can be missed; zero matches is not a safety approval.",
+      "Synthetic change-event only. Provider-sourced events are blocked pending authenticated provenance verification.",
       "Hashes verify the provided local specs, not the authenticity of an API provider.",
       "No repair, repository write, upload or production rollout is authorised."
     ]
