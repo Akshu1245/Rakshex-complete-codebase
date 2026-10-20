@@ -1,0 +1,121 @@
+name: Deploy full dashboard to isolated Cloudflare staging
+on:
+  pull_request:
+    branches: [integration/self-repair-engine]
+    paths:
+      - ".github/workflows/cloudflare-nextjs-staging-deploy.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  stage:
+    if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'integration/cloudflare-nextjs-preview-20261020')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CLOUDFLARE_ACCOUNT_ID: b3225f198c6d2286afbb6f416c230f10
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN || secrets.CF_API_TOKEN }}
+      STAGING_URL: https://rakshex-nextjs-runtime-staging.rakshex.workers.dev
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: devpulse-dashboard-ui/package-lock.json
+      - name: Install pinned frontend
+        working-directory: devpulse-dashboard-ui
+        run: npm ci
+      - name: Release security gate (high and critical production advisories fail)
+        working-directory: devpulse-dashboard-ui
+        run: npm audit --omit=dev --audit-level=high
+      - name: Dashboard regression tests and production compile
+        working-directory: devpulse-dashboard-ui
+        run: |
+          npm test -- --watch=false --runInBand ImpactReviewPanel backend-proxy
+          npx tsc --noEmit
+          npm run build
+      - name: Prepare isolated Cloudflare Worker bundle
+        working-directory: devpulse-dashboard-ui
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm pkg set type=module
+          npm install --no-save --no-audit --no-fund vinext@1.2.1 vite @vitejs/plugin-react @vitejs/plugin-rsc react-server-dom-webpack @cloudflare/vite-plugin wrangler
+          mkdir -p worker
+          cat > worker/index.ts <<'EOF'
+          import handler from "vinext/server/fetch-handler";
+          export default {
+            fetch(request: Request, env: unknown, ctx: ExecutionContext): Promise<Response> {
+              return handler.fetch(request, env, ctx);
+            },
+          };
+          EOF
+          cat > wrangler.jsonc <<'EOF'
+          {
+            "name": "rakshex-nextjs-runtime-staging",
+            "main": "./worker/index.ts",
+            "compatibility_date": "2026-10-19",
+            "compatibility_flags": ["nodejs_compat"],
+            "workers_dev": true,
+            "vars": {"BACKEND_URL": "https://rakshex-free-backend.rakshex.workers.dev"},
+            "assets": {"not_found_handling": "none"}
+          }
+          EOF
+          cat > vite.config.ts <<'EOF'
+          import { defineConfig } from "vite";
+          import vinext from "vinext";
+          import { cloudflare } from "@cloudflare/vite-plugin";
+          export default defineConfig({
+            plugins: [vinext(), cloudflare({viteEnvironment:{name:"rsc",childEnvironments:["ssr"]}})],
+          });
+          EOF
+          npx vite build > worker-stage-build.log 2>&1 || { tail -n 100 worker-stage-build.log; exit 1; }
+      - name: Runtime smoke with real Cloudflare backend (unauthenticated only)
+        working-directory: devpulse-dashboard-ui
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx vite preview --host 127.0.0.1 --port 8790 > worker-stage-preview.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          for i in $(seq 1 25); do
+            if curl -fsS --max-time 4 http://127.0.0.1:8790/ -o stage-home.html; then break; fi
+            sleep 2
+          done
+          test -s stage-home.html
+          grep -qi 'RaksHex' stage-home.html
+          code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 12 http://127.0.0.1:8790/api/auth/me)
+          echo "Unauthenticated auth status: $code"
+          test "$code" = 401
+          code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 12 http://127.0.0.1:8790/health)
+          echo "Proxied backend health status: $code"
+          test "$code" = 200
+      - name: Deploy ONLY the isolated staging Worker when credentials exist
+        working-directory: devpulse-dashboard-ui
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${CLOUDFLARE_API_TOKEN:-}" ]]; then
+            echo "::warning::CLOUDFLARE_API_TOKEN/CF_API_TOKEN repository secret not configured. Workerd build and smoke passed but remote deploy skipped."
+            echo "Remote staging deploy skipped: no Cloudflare repository token." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          npx wrangler deploy --name rakshex-nextjs-runtime-staging > wrangler-stage-deploy.log 2>&1 || { tail -n 80 wrangler-stage-deploy.log; exit 1; }
+          echo "Published isolated staging Worker: $STAGING_URL" >> "$GITHUB_STEP_SUMMARY"
+          for i in 1 2 3 4 5; do
+            if curl -fsS --max-time 12 "$STAGING_URL/" -o remote-stage-home.html; then break; fi
+            sleep 3
+          done
+          test -s remote-stage-home.html
+          grep -qi 'RaksHex' remote-stage-home.html
+      - name: Save build/runtime evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-cloudflare-staging-evidence
+          path: |
+            devpulse-dashboard-ui/worker-stage-build.log
+            devpulse-dashboard-ui/worker-stage-preview.log
+            devpulse-dashboard-ui/wrangler-stage-deploy.log
+          if-no-files-found: ignore
