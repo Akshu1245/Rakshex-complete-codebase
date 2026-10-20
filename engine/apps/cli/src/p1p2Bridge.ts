@@ -4,7 +4,7 @@
  * Output is an allowlisted privacy-safe impact-report.v1.
  */
 import { createHash } from "node:crypto";
-import { lstatSync, readFileSync } from "node:fs";
+import { closeSync, constants, fstatSync, lstatSync, openSync, readSync } from "node:fs";
 import { extname } from "node:path";
 import { parse as parseYaml } from "yaml";
 import { analyzeApiImpact } from "./apiImpact.js";
@@ -16,10 +16,39 @@ function object(x:unknown): x is Obj { return !!x && typeof x === "object" && !A
 function safePath(x:unknown): x is string {
   return typeof x === "string" && PATH.test(x) && !x.includes("..") && !x.includes("//") && !x.includes("\\");
 }
+/**
+ * Read only a stable regular-file descriptor, never a symlink target.
+ * A pre-read size check alone is insufficient: another process can swap or
+ * extend a file between lstat and readFile, bypassing the cap.
+ */
 function bytes(file:string, cap:number):Buffer {
-  const st=lstatSync(file);
-  if(!st.isFile() || st.size>cap) throw new Error("Invalid local input file");
-  return readFileSync(file);
+  const initial=lstatSync(file);
+  if(!initial.isFile() || initial.size>cap)
+    throw new Error("Invalid local input file");
+  // O_NOFOLLOW prevents replacing a regular file with a final-component
+  // symlink on POSIX. The inode/device check also catches a regular-file swap
+  // and protects platforms without O_NOFOLLOW.
+  const fd=openSync(file,constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
+  try {
+    const actual=fstatSync(fd);
+    if(!actual.isFile() || actual.size>cap ||
+       actual.dev!==initial.dev || actual.ino!==initial.ino)
+      throw new Error("Invalid local input file");
+    const chunks:Buffer[]=[];
+    let total=0;
+    while(true) {
+      // Read one extra byte to detect files that grow after the fstat check.
+      const chunk=Buffer.allocUnsafe(Math.min(64*1024,cap-total+1));
+      const count=readSync(fd,chunk,0,chunk.length,null);
+      if(count===0) break;
+      total+=count;
+      if(total>cap) throw new Error("Invalid local input file");
+      chunks.push(chunk.subarray(0,count));
+    }
+    return Buffer.concat(chunks,total);
+  } finally {
+    closeSync(fd);
+  }
 }
 function spec(file:string):{data:Obj,raw:Buffer}{
   const raw=bytes(file,32*1024*1024);
