@@ -22,6 +22,26 @@ describe('Cloudflare production backend origin validation', () => {
     expect(resolveBackendOrigin(backend, incoming, true)).toBeNull();
   });
 
+  it('allows an explicitly opted-in Docker Compose service only at backend:8000', () => {
+    expect(resolveBackendOrigin('http://backend:8000', incoming, true)).toBeNull();
+    expect(resolveBackendOrigin('http://backend:8000', incoming, true, true)?.origin)
+      .toBe('http://backend:8000');
+  });
+
+  it.each([
+    'http://api.example.com',
+    'http://backend:8001',
+    'http://backend.evil.example:8000',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+    'http://169.254.169.254:8000',
+    'http://user:secret@backend:8000',
+    'http://backend:8000/admin',
+    'http://backend:8000?redirect=evil',
+  ])('rejects arbitrary or malformed HTTP origins even with Docker opt-in: %s', (backend) => {
+    expect(resolveBackendOrigin(backend, incoming, true, true)).toBeNull();
+  });
+
   it('preserves explicit localhost only in local development', () => {
     expect(resolveBackendOrigin('http://127.0.0.1:8000', incoming, false)?.port).toBe('8000');
     expect(resolveBackendOrigin('http://127.0.0.1:8000', incoming, true)).toBeNull();
