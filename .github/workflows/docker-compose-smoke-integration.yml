@@ -1,0 +1,45 @@
+name: Docker Compose smoke (integration)
+
+on:
+  pull_request:
+    branches: [integration/self-repair-engine]
+    paths:
+      - 'devpulse-dashboard-ui/**'
+      - 'devpulse-backend/**'
+      - 'docker-compose.yml'
+      - 'scripts/smoke_stack.py'
+      - '.github/workflows/docker-compose-smoke-integration.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  full-stack:
+    name: Docker PostgreSQL and frontend proxy smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure synthetic CI credentials
+        run: |
+          python - <<'PY'
+          import secrets
+          from pathlib import Path
+          Path('devpulse-backend/.env').write_text(
+              'JWT_SECRET=' + secrets.token_urlsafe(48) +
+              '\nFRONTEND_URL=http://localhost:3000\n'
+          )
+          PY
+      - name: Build and start disposable Docker stack
+        run: docker compose up --build -d
+      - name: Verify auth, scan, cost and frontend proxy with PostgreSQL
+        run: python scripts/smoke_stack.py
+      - name: Print diagnostics on failure (no source or token dumps)
+        if: failure()
+        run: |
+          docker compose ps
+          docker compose logs --no-color --tail=60 backend frontend
+      - name: Clean up isolated CI stack
+        if: always()
+        run: docker compose down
