@@ -1,23 +1,30 @@
 const MAX_BODY_BYTES = 4 * 1024 * 1024;
 
+/** Return a safe, fixed upstream origin. Never proxy customer requests to local/private networks in production. */
+export function resolveBackendOrigin(configured: string, incomingUrl: string, production: boolean): URL | null {
+  let origin: URL;
+  try { origin = new URL(configured); } catch { return null; }
+  const incoming = new URL(incomingUrl);
+  if (!['http:', 'https:'].includes(origin.protocol) || origin.username || origin.password ||
+      !['', '/'].includes(origin.pathname) || origin.search || origin.hash ||
+      origin.origin === incoming.origin) return null;
+  if (production) {
+    if (origin.protocol !== 'https:') return null;
+    const host = origin.hostname.toLowerCase();
+    if (host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.local') ||
+        host.startsWith('[')) return null;
+    // Numeric IPs and local address ranges should not be production API backends.
+    if (/^\\d+\\.\\d+\\.\\d+\\.\\d+$/.test(host)) return null;
+  }
+  return origin;
+}
+
 export async function proxyBackend(request: Request, path?: string) {
   const configured = process.env.BACKEND_URL || (process.env.NODE_ENV === 'production' ? '' : 'http://127.0.0.1:8000');
   if (!configured) return Response.json({ error: 'Backend address is not configured' }, { status: 503 });
   const incoming = new URL(request.url);
-  let origin: URL;
-  try { origin = new URL(configured); } catch { return Response.json({ error: 'Invalid backend configuration' }, { status: 503 }); }
-  if (!['http:', 'https:'].includes(origin.protocol) || origin.username || origin.password ||
-      !['', '/'].includes(origin.pathname) || origin.search || origin.hash || origin.origin === incoming.origin) {
-    return Response.json({ error: 'Invalid backend configuration' }, { status: 503 });
-  }
-  if (process.env.NODE_ENV === 'production' && (
-    origin.protocol !== 'https:' ||
-    ['localhost', '127.0.0.1', '[::1]'].includes(origin.hostname) ||
-    origin.hostname.endsWith('.localhost') ||
-    origin.hostname.endsWith('.local')
-  )) {
-    return Response.json({ error: 'Backend HTTPS is required' }, { status: 503 });
-  }
+  const origin = resolveBackendOrigin(configured, incoming.href, process.env.NODE_ENV === 'production');
+  if (!origin) return Response.json({ error: 'Invalid or insecure backend configuration' }, { status: 503 });
   const headers = new Headers();
   for (const name of ['authorization', 'content-type', 'accept', 'stripe-signature', 'origin']) {
     const value = request.headers.get(name);
