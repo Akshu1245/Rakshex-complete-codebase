@@ -1,0 +1,66 @@
+name: Cloudflare backend and production dependency gate
+on:
+  pull_request:
+    branches: [integration/self-repair-engine]
+    paths:
+      - "devpulse-dashboard-ui/**"
+      - ".github/workflows/cloudflare-backend-security-gate.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cloudflare-backend-health:
+    name: Existing backend public health (read-only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Check existing Cloudflare backend without credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://rakshex-free-backend.rakshex.workers.dev"
+          for path in /health /api/auth/me /api/dashboard; do
+            code=$(curl -sS -L --max-redirs 0 --max-time 12 -o /dev/null -w '%{http_code}' "$url$path" || true)
+            echo "$path : HTTP $code"
+            if [[ "$path" == "/health" ]] && [[ "$code" != 200 ]]; then
+              echo "::error::Existing Cloudflare backend is not healthy over its public staging route."
+              exit 1
+            fi
+          done
+  production-dependency-audit:
+    name: Production dependency security audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: devpulse-dashboard-ui
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: devpulse-dashboard-ui/package-lock.json
+      - name: Install exact lockfile
+        run: npm ci
+      - name: Audit production dependency tree
+        shell: bash
+        run: |
+          npm audit --omit=dev --json > npm-production-audit.json || true
+          node - <<'NODE'
+          const fs=require('fs');
+          const report=JSON.parse(fs.readFileSync('npm-production-audit.json','utf8'));
+          const vulnerabilities=report.vulnerabilities||{};
+          const flagged=Object.entries(vulnerabilities)
+            .filter(([,v])=>['high','critical'].includes(v.severity))
+            .map(([name,v])=>({package:name,severity:v.severity,fixAvailable:v.fixAvailable}));
+          console.log('Production high/critical dependencies:',JSON.stringify(flagged,null,2));
+          if(flagged.length) process.exitCode=1;
+          NODE
+      - name: Preserve audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rakshex-production-dependency-audit
+          path: devpulse-dashboard-ui/npm-production-audit.json
+          if-no-files-found: ignore
