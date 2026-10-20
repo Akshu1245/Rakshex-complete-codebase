@@ -25,7 +25,11 @@ jobs:
         run: |
           set -euo pipefail
           npm install --save-exact 'next@^16' react@19.3.1 react-dom@19.3.1
-          npm audit fix --no-audit --no-fund
+          # npm audit fix may return 1 for development-only advisories requiring
+          # breaking changes. Do not use --force; enforce the production gate below.
+          if ! npm audit fix --no-audit --no-fund; then
+            echo 'Remaining advisory chains require review; enforcing production audit next.'
+          fi
       - name: Verify new production dependencies contain no high or critical advisories
         working-directory: devpulse-dashboard-ui
         run: npm audit --omit=dev --audit-level=high
