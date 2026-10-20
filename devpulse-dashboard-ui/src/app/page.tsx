@@ -4,6 +4,7 @@ import SecurityScoreCard from '@/components/SecurityScoreCard';
 import CostIntelligenceDashboard from '@/components/CostIntelligenceDashboard';
 import OnboardingChecklist from '@/components/OnboardingChecklist';
 import ChangeAlerts from '@/components/ChangeAlerts';
+import ImpactReviewPanel from '@/components/ImpactReviewPanel';
 
 export default function Home() {
   return (
@@ -13,6 +14,9 @@ export default function Home() {
         <h1 className="text-2xl font-bold text-zinc-100 tracking-tight">Dashboard</h1>
         <p className="text-sm text-zinc-500 mt-1">Monitor your API security, costs, and health at a glance.</p>
       </div>
+
+      {/* P1/P2: local impact review (no backend integration yet) */}
+      <ImpactReviewPanel />
 
       {/* Onboarding — dismissible */}
       <OnboardingChecklist />

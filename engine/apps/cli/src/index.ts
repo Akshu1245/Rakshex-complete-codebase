@@ -30,6 +30,7 @@ import {
 } from "@rakshex/scanner-core";
 import { cmdSecrets } from "./secrets.js";
 import { cmdApiDiff } from "./apiDiff.js";
+import { cmdApiEventImpact } from "./p1p2Bridge.js";
 
 const CONFIG_DIR = join(homedir(), ".rakshex");
 const CONFIG_PATH = join(CONFIG_DIR, "config.json");
@@ -93,6 +94,7 @@ Usage:
   rakshex configure --fail-on Critical,High [--ignore-rules id1,id2]
   rakshex scan <file-or-dir> [--format terminal|json|sarif] [--fail-on High] [--baseline] [--upload]
   rakshex api diff <old.json|yaml> <new.json|yaml> [--engine basic|oasdiff] [--impact-dir <source-dir>] [--format terminal|json]
+  rakshex api event-impact <change-event.json> <source-dir> --old-spec <old.json|yaml> --new-spec <new.json|yaml> [--format json]
   rakshex secrets <path> [--format terminal|json] [--fail-on Critical,High]
   rakshex secrets rules
   rakshex policy check <file> [--format json]
@@ -518,7 +520,7 @@ async function main(): Promise<number> {
     case "scan":
       return cmdScan(positional, flags);
     case "api":
-      return cmdApiDiff(positional, flags);
+      return positional[0] === "event-impact" ? cmdApiEventImpact(positional, flags) : cmdApiDiff(positional, flags);
     case "secrets":
       return cmdSecrets(positional, flags);
     case "policy":
