@@ -1,7 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import ts from "typescript";
 import { mkdtempSync, mkdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { analyzeApiImpact } from "./apiImpact.js";
 
 let root: string;
@@ -101,5 +102,36 @@ describe("static API impact analysis", () => {
     ]);
     expect(report.filesScanned).toBe(1);
     expect(report.matches).toHaveLength(1);
+  });
+
+  it("does not read imports outside the approved tree, including same-prefix siblings and symlinks", () => {
+    const privateDir = root + "-private";
+    const privateFile = join(privateDir, "secret.ts");
+    const linkedFile = join(root, "external", "secret.ts");
+    mkdirSync(privateDir, { recursive: true });
+    writeFileSync(privateFile, 'export const privateToken = "NEVER_READ_OUTSIDE_ROOT";');
+    symlinkSync(privateDir, join(root, "external"), "dir");
+    source("src/client.ts", [
+      `import { privateToken as direct } from "../../${basename(privateDir)}/secret";`,
+      'import { privateToken as linked } from "../external/secret";',
+      "void direct; void linked;",
+      'fetch("/orders");',
+    ].join("\n"));
+    const seen: string[] = [];
+    const readFile = ts.sys.readFile;
+    const spy = vi.spyOn(ts.sys, "readFile").mockImplementation((path, encoding) => {
+      seen.push(path);
+      return readFile(path, encoding);
+    });
+    try {
+      const report = analyzeApiImpact(root, [{ method: "GET", path: "/orders" }]);
+      expect(report.filesScanned).toBe(1);
+      expect(report.matches).toHaveLength(1);
+      expect(seen).not.toContain(privateFile);
+      expect(seen).not.toContain(linkedFile);
+    } finally {
+      spy.mockRestore();
+      rmSync(privateDir, { recursive: true, force: true });
+    }
   });
 });
