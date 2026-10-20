@@ -1,0 +1,56 @@
+name: P1/P2 original event to Cloudflare UI end-to-end
+on:
+  push:
+    branches: [integration/self-repair-engine]
+    paths:
+      - ".github/workflows/p1p2-e2e-cloudflare.yml"
+      - "cloudflare-impact-review/p1p2-endtoend-smoke.mjs"
+      - "engine/P1_P2_LOCAL_DEMO.md"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+          cache-dependency-path: engine/pnpm-lock.yaml
+      - name: Install pinned scanner dependencies
+        working-directory: engine
+        run: pnpm install --frozen-lockfile
+      - name: Generate sanitised P1/P2 report with actual CLI
+        working-directory: engine/apps/cli
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --import tsx src/index.ts api event-impact \
+            test-fixtures/p1p2-orders/change-event-orders.json \
+            test-fixtures/p1p2-orders/src \
+            --old-spec test-fixtures/p1p2-orders/orders-old.yaml \
+            --new-spec test-fixtures/p1p2-orders/orders-new.yaml \
+            --format json > orders-impact-report.json
+          node -e 'const r=require("./orders-impact-report.json");if(r.metrics.candidate_matches!==2||r.metrics.dynamic_calls!==1||r.privacy_mode!==true)process.exit(1)'
+      - name: Install Chromium browser test runner
+        working-directory: cloudflare-impact-review
+        run: |
+          npm init -y
+          npm install --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Verify local report appears correctly in deployed Cloudflare staging UI
+        working-directory: cloudflare-impact-review
+        run: node p1p2-endtoend-smoke.mjs
+      - name: Attach acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: original-p1p2-cloudflare-endtoend
+          path: cloudflare-impact-review/p1p2-actual-cli-to-cloudflare.png
+          if-no-files-found: ignore
