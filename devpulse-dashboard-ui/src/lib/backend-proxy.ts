@@ -21,7 +21,7 @@ export function resolveBackendOrigin(configured: string, incomingUrl: string, pr
         (host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.local') ||
          host.startsWith('['))) return null;
     // Numeric IPs and local address ranges should not be production API backends.
-    if (/^\\d+\\.\\d+\\.\\d+\\.\\d+$/.test(host)) return null;
+    if (/^\d+\.\d+\.\d+\.\d+$/.test(host)) return null;
   }
   return origin;
 }
