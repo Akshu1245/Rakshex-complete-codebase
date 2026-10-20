@@ -1,0 +1,48 @@
+name: Cloudflare Next.js preview build
+on:
+  pull_request:
+    branches: [integration/self-repair-engine]
+    paths:
+      - "devpulse-dashboard-ui/**"
+      - ".github/workflows/cloudflare-nextjs-preview-build.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build-vinext:
+    name: Build existing Next.js dashboard for Cloudflare (no deploy)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: devpulse-dashboard-ui/package-lock.json
+      - name: Install locked dashboard dependencies
+        working-directory: devpulse-dashboard-ui
+        run: npm ci
+      - name: Confirm Next.js app still builds
+        working-directory: devpulse-dashboard-ui
+        run: npm run build
+      - name: Build isolated Cloudflare vinext preview
+        working-directory: devpulse-dashboard-ui
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Changes below exist only on this disposable CI runner, not in git or production.
+          npm install --no-save --no-audit --no-fund vinext vite @vitejs/plugin-react @vitejs/plugin-rsc react-server-dom-webpack
+          cat > vite.config.ts <<'EOF'
+          import { defineConfig } from "vite";
+          import vinext from "vinext";
+          export default defineConfig({ plugins: [vinext()] });
+          EOF
+          npx vite build 2>&1 | tee vinext-preview-build.log
+      - name: Preserve build diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloudflare-nextjs-preview-build-log
+          path: devpulse-dashboard-ui/vinext-preview-build.log
+          if-no-files-found: ignore
