@@ -116,7 +116,7 @@ describe("static API impact analysis", () => {
       'import { privateToken as linked } from "../external/secret";',
       "void direct; void linked;",
       'fetch("/orders");',
-    ].join("\\n"));
+    ].join("\n"));
     const seen: string[] = [];
     const readFile = ts.sys.readFile;
     const spy = vi.spyOn(ts.sys, "readFile").mockImplementation((path, encoding) => {
