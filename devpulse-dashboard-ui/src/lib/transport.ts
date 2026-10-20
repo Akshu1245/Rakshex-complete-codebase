@@ -1,5 +1,5 @@
 export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL ||
-  (typeof window === 'undefined' ? process.env.BACKEND_URL || 'http://localhost:8000' : '')).replace(/\/$/, '');
+  (typeof window === 'undefined' ? (process.env.BACKEND_URL || (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:8000')) : '')).replace(/\/$/, '');
 
 let backendOnline = false;
 let lastCheck = 0;

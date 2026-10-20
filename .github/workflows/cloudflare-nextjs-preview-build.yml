@@ -1,0 +1,98 @@
+name: Cloudflare Next.js preview build
+on:
+  pull_request:
+    branches: [integration/self-repair-engine]
+    paths:
+      - "devpulse-dashboard-ui/**"
+      - ".github/workflows/cloudflare-nextjs-preview-build.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build-vinext:
+    name: Build existing Next.js dashboard for Cloudflare (no deploy)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: devpulse-dashboard-ui/package-lock.json
+      - name: Install locked dashboard dependencies
+        working-directory: devpulse-dashboard-ui
+        run: npm ci
+      - name: Test production backend restrictions
+        working-directory: devpulse-dashboard-ui
+        run: npm test -- --watch=false --runInBand backend-proxy
+      - name: Confirm Next.js app still builds
+        working-directory: devpulse-dashboard-ui
+        run: npm run build
+      - name: Build isolated Cloudflare vinext preview
+        working-directory: devpulse-dashboard-ui
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Changes below exist only on this disposable CI runner, not in git or production.
+          # vinext 1.2.1 requires React >=19.3.1; test that version only in CI.
+          npm pkg set dependencies.react=19.3.1 dependencies.react-dom=19.3.1 type=module
+          npm install --no-save --no-audit --no-fund react@19.3.1 react-dom@19.3.1 vinext@1.2.1 vite @vitejs/plugin-react @vitejs/plugin-rsc react-server-dom-webpack @cloudflare/vite-plugin wrangler
+          mkdir -p worker
+          cat > worker/index.ts <<'EOF'
+          import handler from "vinext/server/fetch-handler";
+          export default {
+            fetch(request: Request, env: unknown, ctx: ExecutionContext): Promise<Response> {
+              return handler.fetch(request, env, ctx);
+            },
+          };
+          EOF
+          cat > wrangler.jsonc <<'EOF'
+          {
+            "name": "rakshex-nextjs-runtime-staging",
+            "main": "./worker/index.ts",
+            "compatibility_date": "2026-10-19",
+            "compatibility_flags": ["nodejs_compat"],
+            "assets": {"not_found_handling": "none"}
+          }
+          EOF
+          cat > vite.config.ts <<'EOF'
+          import { defineConfig } from "vite";
+          import vinext from "vinext";
+          import { cloudflare } from "@cloudflare/vite-plugin";
+          export default defineConfig({
+            plugins: [
+              vinext(),
+              cloudflare({ viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] } }),
+            ],
+          });
+          EOF
+          npx vite build 2>&1 | tee vinext-preview-build.log
+      - name: Exercise Cloudflare Worker runtime locally
+        working-directory: devpulse-dashboard-ui
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx vite preview --host 127.0.0.1 --port 8787 > vinext-runtime-preview.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -fsS --max-time 4 http://127.0.0.1:8787/ -o vinext-page.html; then break; fi
+            sleep 2
+          done
+          test -s vinext-page.html
+          grep -qi 'RaksHex' vinext-page.html
+          code=$(curl -sS -o vinext-api.json -w '%{http_code}' --max-time 8 http://127.0.0.1:8787/api/dashboard)
+          test "$code" = 503
+      
+      - name: Preserve build diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloudflare-nextjs-preview-build-log
+          path: |
+            devpulse-dashboard-ui/vinext-preview-build.log
+            devpulse-dashboard-ui/vinext-runtime-preview.log
+            devpulse-dashboard-ui/vinext-page.html
+            devpulse-dashboard-ui/vinext-api.json
+          if-no-files-found: ignore

@@ -1,0 +1,66 @@
+{
+  "about": "Source-verified Stripe OpenAPI specs. Downloaded from the official github.com/stripe/openapi release tags; SHA-256 pinned. run.ts refuses a file whose hash differs.",
+  "specs": {
+    "v2203": {
+      "apiVersion": "2026-02-25.clover",
+      "url": "https://raw.githubusercontent.com/stripe/openapi/v2203/openapi/spec3.json",
+      "sha256": "9d681f6248d786481d69030cabdf30722b2a65e30fec89f37d59b7f8fa9c5d68",
+      "bytes": 7598844
+    },
+    "v2204": {
+      "apiVersion": "2026-03-25.dahlia",
+      "url": "https://raw.githubusercontent.com/stripe/openapi/v2204/openapi/spec3.json",
+      "sha256": "28f3e5b3965b3fd9cdb28d813f80a8607c2f44af3f267b8e9fa1f6cdf579d113",
+      "bytes": 7660895
+    },
+    "v2516": {
+      "apiVersion": "2026-08-26.dahlia",
+      "url": "https://raw.githubusercontent.com/stripe/openapi/v2516/openapi/spec3.json",
+      "sha256": "f0e0fc8fffbffda45bf5f3df59846443c1d47a3cfcbfae232eedf4743124ebee",
+      "bytes": 8028700
+    },
+    "v2517": {
+      "apiVersion": "2026-09-30.endive",
+      "url": "https://raw.githubusercontent.com/stripe/openapi/v2517/openapi/spec3.json",
+      "sha256": "6b4680299e7b7743811c41537e828b0eae363a11cea44441511013b55e52f7ad",
+      "bytes": 8316029
+    },
+    "v2017": {
+      "apiVersion": "2025-08-27.basil",
+      "url": "https://raw.githubusercontent.com/stripe/openapi/v2017/openapi/spec3.json",
+      "sha256": "7b79777e9bbdf01a378bdf2747833f6b0982f8af945a21eb76f70ab584bdda42",
+      "bytes": 7051265
+    },
+    "v2018": {
+      "apiVersion": "2025-09-30.clover",
+      "url": "https://raw.githubusercontent.com/stripe/openapi/v2018/openapi/spec3.json",
+      "sha256": "8e15c585d9b0616921e45a08294821deadb9559ec54414892963b8d6e397c917",
+      "bytes": 7144522
+    }
+  },
+  "pairs": {
+    "stripe-v2516-v2517": {
+      "before": "v2516",
+      "after": "v2517",
+      "documentedChange": [
+        "https://docs.stripe.com/changelog/endive/2026-09-30/remove-payment-method-types-checkout-sessions",
+        "https://docs.stripe.com/changelog/endive/2026-09-30/removes-the-payment-method-types-parameter-from-payment-intents-and-setup-intents",
+        "https://docs.stripe.com/changelog/endive/2026-09-30/polymorphic-billing-cycle-anchor",
+        "https://docs.stripe.com/changelog/endive/2026-09-30/rename-financial-connections-countries-filter-to-country"
+      ]
+    },
+    "stripe-v2203-v2204": {
+      "before": "v2203",
+      "after": "v2204",
+      "documentedChange": "NOT VERIFIED against a Stripe changelog entry; ground truth derived from the spec diff (risk_level -> level)"
+    },
+    "stripe-v2017-v2018": {
+      "before": "v2017",
+      "after": "v2018",
+      "documentedChange": [
+        "https://docs.stripe.com/changelog/clover/2025-09-30/remove-iterations",
+        "https://docs.stripe.com/changelog/clover/2025-09-30/polymorphic-coupon"
+      ]
+    }
+  }
+}

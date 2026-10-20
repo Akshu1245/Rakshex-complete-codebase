@@ -1,0 +1,135 @@
+/**
+ * Optional oasdiff adapter for broader offline OpenAPI compatibility checks.
+ * Requires a separately installed, trusted oasdiff executable on PATH.
+ *
+ * Important: never pass URLs, shell commands, or default external-ref loading
+ * to this subprocess. The caller validates both inputs as local documents.
+ */
+import { spawnSync } from "node:child_process";
+
+export interface OasdiffChange {
+  id: string;
+  level: number;
+  operation?: string;
+  path?: string;
+  text?: string;
+}
+
+export interface OasdiffReport {
+  engine: "oasdiff";
+  breaking: boolean;
+  changes: OasdiffChange[];
+  scope: string;
+}
+
+function normalizeChanges(value: unknown): OasdiffChange[] {
+  const candidate = Array.isArray(value)
+    ? value
+    : value === null
+      ? []
+      : value &&
+          typeof value === "object" &&
+          Array.isArray((value as { breaking?: unknown }).breaking)
+        ? (value as { breaking: unknown[] }).breaking
+        : null;
+  if (!candidate)
+    throw new Error("Unexpected oasdiff JSON output; no compatibility verdict issued.");
+  return candidate.map((item) => {
+    if (
+      !item ||
+      typeof item !== "object" ||
+      typeof (item as OasdiffChange).id !== "string" ||
+      !(item as OasdiffChange).id.trim() ||
+      ![2, 3].includes((item as OasdiffChange).level) ||
+      (["operation", "path", "text"] as const).some((key) =>
+        key in item && (item as Record<string, unknown>)[key] != null &&
+        typeof (item as Record<string, unknown>)[key] !== "string")
+    ) {
+      throw new Error("Unexpected oasdiff change format; no compatibility verdict issued.");
+    }
+    const change = item as OasdiffChange;
+    return {
+      id: change.id,
+      level: change.level,
+      ...(typeof change.operation === "string" ? { operation: change.operation } : {}),
+      ...(typeof change.path === "string" ? { path: change.path } : {}),
+      ...(typeof change.text === "string" ? { text: change.text } : {}),
+    };
+  });
+}
+
+const DEFAULT_OUTPUT_MIB = 5;
+const HARD_MAX_OUTPUT_MIB = 256;
+
+/** Keep subprocess resource options finite, predictable, and non-zero. */
+function boundedPositiveInteger(value: number | undefined, defaultValue: number, ceiling: number, label: string): number {
+  const n = value ?? defaultValue;
+  if (!Number.isSafeInteger(n) || n < 1) {
+    throw new Error(`oasdiff ${label} must be a positive, finite integer.`);
+  }
+  return Math.min(n, ceiling);
+}
+
+export function runOasdiff(
+  beforeFile: string,
+  afterFile: string,
+  options: { maxOutputMib?: number; timeoutMs?: number } = {},
+): OasdiffReport {
+  // Bounded: a full Stripe diff is ~30 MiB of JSON; never unbounded.
+  const maxOutputMib = boundedPositiveInteger(options.maxOutputMib, DEFAULT_OUTPUT_MIB, HARD_MAX_OUTPUT_MIB, "maxOutputMib");
+  const timeout = boundedPositiveInteger(options.timeoutMs, maxOutputMib > DEFAULT_OUTPUT_MIB ? 180_000 : 30_000, 300_000, "timeoutMs");
+  const processResult = spawnSync(
+    "oasdiff",
+    [
+      "breaking",
+      "--format",
+      "json",
+      "--fail-on",
+      "WARN",
+      "--allow-external-refs=false",
+      "--",
+      beforeFile,
+      afterFile,
+    ],
+    {
+      encoding: "utf8",
+      timeout,
+      maxBuffer: maxOutputMib * 1024 * 1024,
+      shell: false,
+      windowsHide: true,
+    },
+  );
+
+  if (processResult.error) {
+    const code = (processResult.error as NodeJS.ErrnoException).code;
+    if (code === "ENOENT") {
+      throw new Error("oasdiff executable not found. Install oasdiff and place it on PATH.");
+    }
+    throw new Error("oasdiff failed to execute (timeout, resource limit, or process error).");
+  }
+  if (processResult.status !== 0 && processResult.status !== 1) {
+    // Do not expose stderr: parsers can echo potentially confidential specification text.
+    throw new Error("oasdiff comparison failed; check local documents and installed version.");
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(processResult.stdout.trim() || "null");
+  } catch {
+    throw new Error("oasdiff returned invalid JSON; no compatibility verdict issued.");
+  }
+
+  const changes = normalizeChanges(parsed);
+  const breaking = changes.length > 0;
+  if (breaking !== (processResult.status === 1)) {
+    throw new Error("oasdiff output and exit status disagree; no compatibility verdict issued.");
+  }
+
+  return {
+    engine: "oasdiff",
+    breaking,
+    changes,
+    scope:
+      "oasdiff ERR/WARN contract checks; offline local input with external references disabled. A clean result does NOT prove runtime compatibility or cover undocumented behavior.",
+  };
+}

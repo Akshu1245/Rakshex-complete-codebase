@@ -1,0 +1,7 @@
+{
+  "name": "rakshex-impact-review-staging",
+  "main": "worker.mjs",
+  "account_id": "b3225f198c6d2286afbb6f416c230f10",
+  "compatibility_date": "2026-10-20",
+  "workers_dev": true
+}

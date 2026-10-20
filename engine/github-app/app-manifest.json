@@ -1,0 +1,16 @@
+{
+  "_about": "Least-privilege GitHub App manifest for RaksHex Self-Repair (draft PRs only). Register via https://docs.github.com/en/apps/sharing-github-apps/registering-a-github-app-from-a-manifest. Install on SELECTED repositories only.",
+  "name": "RaksHex Self-Repair",
+  "url": "https://rakshex.example.invalid",
+  "hook_attributes": { "url": "https://REPLACE-ME.example.invalid/webhooks/github", "active": true },
+  "redirect_url": "https://REPLACE-ME.example.invalid/github/setup",
+  "setup_url": "https://REPLACE-ME.example.invalid/github/setup",
+  "setup_on_update": true,
+  "public": false,
+  "default_permissions": {
+    "contents": "write",
+    "pull_requests": "write",
+    "metadata": "read"
+  },
+  "default_events": ["pull_request"]
+}

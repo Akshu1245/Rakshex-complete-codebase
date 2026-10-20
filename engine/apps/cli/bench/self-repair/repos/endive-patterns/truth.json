@@ -1,0 +1,22 @@
+{
+  "pair": "stripe-v2516-v2517",
+  "about": "Hand-written synthetic patterns: wrappers, getter, class member, URLSearchParams raw HTTP, other-host decoy, local-object decoy, dynamic payloads.",
+  "affected": [
+    { "file": "src/lib/client.ts", "line": 13, "method": "POST", "path": "/v1/setup_intents", "property": "payment_method_types", "kind": "sdk-call-class-member-typed" },
+    { "file": "src/billing/flows.ts", "line": 4, "method": "POST", "path": "/v1/checkout/sessions", "property": "payment_method_types", "kind": "wrapper-caller" },
+    { "file": "src/billing/flows.ts", "line": 11, "method": "POST", "path": "/v1/payment_intents", "property": "payment_method_types", "kind": "sdk-getter-ambiguous-value" },
+    { "file": "src/billing/flows.ts", "line": 17, "method": "POST", "path": "/v1/setup_intents", "property": "payment_method_types", "kind": "raw-http-urlsearchparams" }
+  ],
+  "unknown": [
+    { "file": "src/dynamic/dyn.ts", "line": 4, "kind": "json-parse-payload" },
+    { "file": "src/dynamic/dyn.ts", "line": 7, "kind": "spread-of-untyped-param" },
+    { "file": "src/dynamic/dyn.ts", "line": 10, "kind": "computed-resource" }
+  ],
+  "mustNotFlag": [
+    { "file": "src/decoys/fake.ts", "kind": "local-object-named-stripe / GET retrieve / string" },
+    { "file": "src/billing/flows.ts", "line": 7, "kind": "wrapper caller without the property" },
+    { "file": "src/billing/flows.ts", "line": 14, "kind": "same endpoint, property not sent" },
+    { "file": "src/billing/flows.ts", "line": 24, "kind": "same path on a different host" }
+  ],
+  "semanticWarning": [ { "file": "src/billing/flows.ts", "line": 4 } ]
+}

@@ -1,0 +1,38 @@
+name: Cloudflare Next.js compatibility audit
+on:
+  pull_request:
+    branches: [integration/self-repair-engine]
+    paths:
+      - "devpulse-dashboard-ui/**"
+      - ".github/workflows/cloudflare-nextjs-compat.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  vinext-check:
+    name: Cloudflare vinext compatibility (no deploy)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: devpulse-dashboard-ui/package-lock.json
+      - name: Install pinned application dependencies
+        working-directory: devpulse-dashboard-ui
+        run: npm ci
+      - name: Test Cloudflare Next.js compatibility without modifying source
+        working-directory: devpulse-dashboard-ui
+        shell: bash
+        run: |
+          set -o pipefail
+          npx --yes vinext check 2>&1 | tee vinext-compatibility.log
+      - name: Preserve diagnostic report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloudflare-vinext-compatibility
+          path: devpulse-dashboard-ui/vinext-compatibility.log
+          if-no-files-found: ignore

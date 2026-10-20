@@ -1,0 +1,7 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+overrides:
+  vitest: "4.1.11"
+allowBuilds:
+  esbuild: true

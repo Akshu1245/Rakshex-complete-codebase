@@ -1,0 +1,54 @@
+name: Cloudflare P1 P2 staging smoke
+on:
+  pull_request:
+    branches: [integration/self-repair-engine]
+    paths:
+      - "cloudflare-impact-review/**"
+      - ".github/workflows/cloudflare-impact-review-smoke.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cloudflare-worker-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Worker syntax
+        run: node --check cloudflare-impact-review/worker.mjs
+      - name: Verify staged Cloudflare page and API
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="https://rakshex-impact-review-staging.rakshex.workers.dev"
+          for i in 1 2 3 4 5; do
+            if curl -fsS --retry 2 --max-time 15 "$URL/api/health" -o health.json; then break; fi
+            sleep 4
+          done
+          node -e 'let j=require("./health.json");if(j.status!=="ok"||j.production!==false||j.live_scanner!==false)process.exit(1)'
+          curl -fsS --max-time 15 "$URL/" -o index.html
+          grep -q 'API CHANGE INTELLIGENCE' index.html
+          curl -fsS --max-time 15 "$URL/assets/app.js" -o app.js
+          node --check app.js
+          curl -fsS --max-time 15 "$URL/assets/style.css" -o style.css
+          grep -q 'stats' style.css
+          curl -fsS --max-time 15 "$URL/api/capabilities" -o capabilities.json
+          node -e 'let j=require("./capabilities.json");if(j.production_ready!==false||j.github_access!==false||j.scans!==false)process.exit(1)'
+          code=$(curl -sS -o /dev/null -w '%{http_code}' -X POST "$URL/api/health")
+          test "$code" = 405
+      - name: Browser smoke in Chromium (desktop + mobile)
+        working-directory: cloudflare-impact-review
+        run: |
+          npm init -y
+          npm install --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+          node browser-smoke.mjs
+      - name: Upload visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rakshex-impact-review-screenshots
+          path: |
+            cloudflare-impact-review/rakshex-impact-review-desktop.png
+            cloudflare-impact-review/rakshex-impact-review-mobile.png
+          if-no-files-found: ignore
