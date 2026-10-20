@@ -12,7 +12,7 @@ function fixture(overrides:Record<string,unknown>={}){
   const before=JSON.stringify({openapi:"3.0.3",paths:{"/v1/widgets":{get:{responses:{200:{description:"ok"}}}}}});
   const after=JSON.stringify({openapi:"3.0.3",paths:{"/v2/widgets":{get:{responses:{200:{description:"ok"}}}}}});
   const old=join(dir,"old.json"),fresh=join(dir,"new.json"),eventFile=join(dir,"event.json"),src=join(dir,"source");
-  mkdirSync(src);writeFileSync(old,before);writeFileSync(fresh,after);
+  mkdirSync(src,{recursive:true});writeFileSync(old,before);writeFileSync(fresh,after);
   writeFileSync(join(src,"confidential.ts"),'fetch("/v1/widgets");\nfetch(buildUrl());\n// PRIVATE_SOURCE_TOKEN');
   const sha=(s:string)=>createHash("sha256").update(s).digest("hex");
   const e={schema_version:"change-event.v1",id:"synthetic-widgets",source_type:"synthetic",
@@ -36,7 +36,7 @@ describe("verified P1/P2 local bridge",()=>{
       expect(serialized).not.toContain(forbidden);
   });
   it("rejects tampered spec bytes",()=>{
-    const f=fixture();writeFileSync(f.fresh,"{}");
+    const f=fixture();writeFileSync(f.fresh,JSON.stringify({openapi:"3.0.3",paths:{"/v2/widgets":{get:{responses:{200:{description:"modified but still valid"}}}}}}));
     expect(()=>createP1P2Report(f.eventFile,f.old,f.fresh,f.src)).toThrow("SHA-256 mismatch");
   });
   it("rejects malicious path and unknown source",()=>{
