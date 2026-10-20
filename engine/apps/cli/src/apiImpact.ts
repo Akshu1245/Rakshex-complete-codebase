@@ -5,8 +5,8 @@
  * Do not turn "no matches" into a deployment approval. Dynamic calls, aliases
  * and generated clients can be missed; the report makes these limits explicit.
  */
-import { lstatSync, readFileSync, readdirSync } from "node:fs";
-import { extname, join, relative, resolve } from "node:path";
+import { lstatSync, readFileSync, readdirSync, realpathSync } from "node:fs";
+import { extname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import ts from "typescript";
 import { StripeSdkResolver } from "./stripeSdkImpact.js";
 import { emptyPayload, fromBodyExpression, fromObjectLiteral, fromQuery, mergePayload } from "./payloadEvidence.js";
@@ -265,6 +265,18 @@ export function analyzeApiImpact(
   if (!lstatSync(root).isDirectory()) {
     throw new Error("Impact target must be a real directory (not a file or symlink).");
   }
+  // Import resolution must obey the same privacy boundary as the directory
+  // walker. String prefix checks are insufficient: /repo-private is not /repo.
+  // A realpath check also rejects imports reached through in-tree symlinks.
+  const canonicalRoot = realpathSync(root);
+  const insideRoot = (candidate: string): boolean => {
+    try {
+      const rel = relative(canonicalRoot, realpathSync(candidate));
+      return rel === "" || (rel !== ".." && !rel.startsWith(`..${sep}`) && !isAbsolute(rel));
+    } catch {
+      return false;
+    }
+  };
   const actionable = changes.flatMap((change) => {
     const method = (change.method ?? change.operation ?? "").toUpperCase();
     const path = change.path ? urlPath(change.path) : null;
@@ -314,12 +326,26 @@ export function analyzeApiImpact(
     module: ts.ModuleKind.ESNext, moduleResolution: ts.ModuleResolutionKind.Bundler,
   };
   const host = ts.createCompilerHost(compilerOptions, true);
+  // TypeScript may follow imports even if the explicit source walker skipped
+  // symlinks. Refuse all compiler-host reads and resolutions outside the
+  // consented tree, including prefix-sibling paths and symlink targets.
+  const originalReadFile = host.readFile.bind(host);
+  host.readFile = (file) => insideRoot(file) ? originalReadFile(file) : undefined;
+  const originalFileExists = host.fileExists.bind(host);
+  host.fileExists = (file) => insideRoot(file) && originalFileExists(file);
+  const originalDirectoryExists = host.directoryExists?.bind(host);
+  host.directoryExists = (dir) => insideRoot(dir) && !!originalDirectoryExists?.(dir);
+  const originalGetSourceFile = host.getSourceFile.bind(host);
+  host.getSourceFile = (file, languageVersion, onError, shouldCreateNewSourceFile) =>
+    insideRoot(file)
+      ? originalGetSourceFile(file, languageVersion, onError, shouldCreateNewSourceFile)
+      : undefined;
   // Only resolve relative imports inside the scanned tree; never load node_modules typings.
   host.resolveModuleNameLiterals = (literals, containingFile) =>
     literals.map((lit) => {
       if (!lit.text.startsWith(".")) return { resolvedModule: undefined };
       const r = ts.resolveModuleName(lit.text, containingFile, compilerOptions, host).resolvedModule;
-      return { resolvedModule: r && resolve(r.resolvedFileName).startsWith(root) ? r : undefined };
+      return { resolvedModule: r && insideRoot(r.resolvedFileName) ? r : undefined };
     });
   const program = ts.createProgram({ rootNames: files, options: compilerOptions, host });
   const sourceFiles = files.map((f) => program.getSourceFile(f)).filter((x): x is ts.SourceFile => !!x);
