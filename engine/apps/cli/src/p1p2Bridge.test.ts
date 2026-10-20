@@ -1,6 +1,6 @@
 import { beforeEach, afterEach, describe, expect, it } from "vitest";
 import { createHash } from "node:crypto";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, symlinkSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { createP1P2Report, cmdApiEventImpact } from "./p1p2Bridge.js";
@@ -34,6 +34,26 @@ describe("verified P1/P2 local bridge",()=>{
     const serialized=JSON.stringify(r);
     for(const forbidden of ["confidential.ts","PRIVATE_SOURCE_TOKEN","/v1/widgets","synthetic-widgets"])
       expect(serialized).not.toContain(forbidden);
+  });
+
+  it("refuses symlink event files and spec files without reading their targets",()=>{
+    const f=fixture();
+    const specAlias=join(dir,"alias-old.json");
+    const eventAlias=join(dir,"alias-event.json");
+    symlinkSync(f.old,specAlias);
+    symlinkSync(f.eventFile,eventAlias);
+    expect(()=>createP1P2Report(f.eventFile,specAlias,f.fresh,f.src))
+      .toThrow();
+    expect(()=>createP1P2Report(eventAlias,f.old,f.fresh,f.src))
+      .toThrow("Invalid change event JSON");
+    // The originals remain readable and their hashes still match.
+    expect(createP1P2Report(f.eventFile,f.old,f.fresh,f.src).metrics.candidate_matches).toBe(1);
+  });
+  it("refuses an oversized local event before scanning customer source",()=>{
+    const f=fixture();
+    writeFileSync(f.eventFile,"x".repeat(256*1024+1));
+    expect(()=>createP1P2Report(f.eventFile,f.old,f.fresh,f.src))
+      .toThrow("Invalid change event JSON");
   });
   it("rejects tampered spec bytes",()=>{
     const f=fixture();writeFileSync(f.fresh,JSON.stringify({openapi:"3.0.3",paths:{"/v2/widgets":{get:{responses:{200:{description:"modified but still valid"}}}}}}));
