@@ -12,6 +12,7 @@ describe('ImpactReviewPanel', () => {
     render(<ImpactReviewPanel />);
     const report = {
       schema: 'impact-report.v1',
+      privacy_mode: true,
       findings: [
         { classification: 'AFFECTED', filepath: '/private/customer/secret.ts', snippet_redacted: 'PRIVATE_CODE_TOKEN' },
         { classification: 'UNKNOWN', filepath: '/private/customer/secret2.ts' },
