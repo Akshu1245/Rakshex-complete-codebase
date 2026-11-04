@@ -48,6 +48,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
                 content='{"status":"error","error":"Request body too large (max 1MB)"}',
                 status_code=413,
                 media_type="application/json",
+                headers={"X-Robots-Tag": "noindex, nofollow, noarchive"},
             )
         
         # Suspicious activity check
@@ -64,6 +65,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
                 content='{"status":"error","error":"Too many requests. Please slow down."}',
                 status_code=429,
                 media_type="application/json",
+                headers={"X-Robots-Tag": "noindex, nofollow, noarchive"},
             )
         
         # Process request
@@ -76,6 +78,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         # SECURITY HEADERS (aligned with OWASP recommendations)
         # =================================================================
         
+        # API, auth, health, and generated docs are not public search landing pages.
+        response.headers["X-Robots-Tag"] = "noindex, nofollow, noarchive"
+
         # Prevent clickjacking
         response.headers["X-Frame-Options"] = "DENY"
         
