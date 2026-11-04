@@ -222,6 +222,16 @@ app.add_middleware(
 )
 
 
+# Search engines should index the separate public marketing site, never API output.
+# An outer HTTP middleware also covers responses returned by rate limiting, CORS,
+# and input-validation middleware. No user data is sent to third-party analytics.
+@app.middleware("http")
+async def prevent_api_indexing(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Robots-Tag"] = "noindex, nofollow, noarchive"
+    return response
+
+
 # Global exception handlers - return proper HTTP status codes
 # Note: Error messages are sanitized to not expose internal details
 

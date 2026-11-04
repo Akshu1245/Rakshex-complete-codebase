@@ -18,6 +18,8 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "DevPulse — API Security & Cost Intelligence",
   description: "The API Security & Cost Intelligence Platform built for the AI Agent Era.",
+  // This is the private application, NOT the indexable www.rakshex.in marketing site.
+  robots: { index: false, follow: false, noarchive: true },
 };
 
 export default function RootLayout({
